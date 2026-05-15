@@ -1,0 +1,118 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>fr Unit & repeat() — CSS Grid Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .prop-tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.8rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .grid-play { display: grid; padding: 10px; background: #1e1e2e; border-radius: 12px; margin: 1rem 0; transition: all 0.3s; gap: 8px; }
+    .grid-play > div { border-radius: 8px; padding: 14px 10px; text-align: center; color: white; font-weight: bold; font-size: 0.8rem; }
+    .fr-demo-1 > div:nth-child(1) { background: linear-gradient(135deg,#3b82f6,#8b5cf6); }
+    .fr-demo-1 > div:nth-child(2) { background: linear-gradient(135deg,#f472b6,#ec4899); }
+    .fr-demo-1 > div:nth-child(3) { background: linear-gradient(135deg,#10b981,#059669); }
+    .fr-demo-1 > div:nth-child(4) { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .fr-demo-1 > div:nth-child(5) { background: linear-gradient(135deg,#ef4444,#dc2626); }
+    .fr-demo-1 > div:nth-child(6) { background: linear-gradient(135deg,#06b6d4,#0891b2); }
+    .fr-demo-1 > div:nth-child(7) { background: linear-gradient(135deg,#8b5cf6,#7c3aed); }
+    .fr-demo-1 > div:nth-child(8) { background: linear-gradient(135deg,#f97316,#ea580c); }
+    .fr-demo-1 > div:nth-child(9) { background: linear-gradient(135deg,#14b8a6,#0d9488); }
+    .fr-demo-1 > div:nth-child(10) { background: linear-gradient(135deg,#e11d48,#be123c); }
+    input[type=range] { width: 200px; accent-color: #10b981; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-arrows-alt-h text-3xl text-emerald-400"></i>
+      <h1 class="text-3xl font-bold">fr Unit & repeat()</h1>
+    </div>
+    <div class="info-card mb-6">
+      <p class="text-gray-300">The <span class="prop-tag">fr</span> unit represents a <strong>fraction of the available space</strong> in the grid container. It grows and shrinks proportionally. <span class="prop-tag">repeat()</span> lets you define repeating track patterns concisely.</p>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-chart-pie mr-2"></i>fr Unit — Proportional Sizing</h2>
+      <div class="flex flex-wrap gap-4 items-center mb-3">
+        <select onchange="updateFrDemo()" id="frSelect" class="bg-slate-700 rounded px-3 py-1 text-sm font-mono">
+          <option value="1fr 1fr 1fr">1fr 1fr 1fr</option>
+          <option value="1fr 2fr 1fr">1fr 2fr 1fr</option>
+          <option value="2fr 1fr 1fr">2fr 1fr 1fr</option>
+          <option value="1fr 1fr 2fr">1fr 1fr 2fr</option>
+          <option value="1fr 3fr 1fr">1fr 3fr 1fr</option>
+          <option value="100px 1fr 2fr">100px 1fr 2fr</option>
+        </select>
+        <span class="text-xs text-gray-400">grid-template-columns:</span>
+        <span id="frVal" class="prop-tag">1fr 1fr 1fr</span>
+      </div>
+      <div id="frDemo" class="grid-play fr-demo-1" style="grid-template-columns:1fr 1fr 1fr">
+        <div style="background:linear-gradient(135deg,#3b82f6,#8b5cf6)">1fr</div>
+        <div style="background:linear-gradient(135deg,#f472b6,#ec4899)">1fr</div>
+        <div style="background:linear-gradient(135deg,#10b981,#059669)">1fr</div>
+      </div>
+      <p class="text-xs text-gray-500">fr units divide available space proportionally. Combine with fixed px for hybrid layouts.</p>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-redo mr-2"></i>repeat() Notation</h2>
+      <div class="flex flex-wrap gap-3 items-center mb-3">
+        <select onchange="updateRepeatDemo()" id="repSelect" class="bg-slate-700 rounded px-3 py-1 text-sm font-mono">
+          <option value="repeat(3, 1fr)">repeat(3, 1fr) — 3 equal cols</option>
+          <option value="repeat(4, 1fr)">repeat(4, 1fr) — 4 equal cols</option>
+          <option value="repeat(2, 2fr 1fr)">repeat(2, 2fr 1fr) — 2x(2fr+1fr)</option>
+          <option value="repeat(3, 100px 1fr)">repeat(3, 100px 1fr) — 3x(px+fr)</option>
+          <option value="20px repeat(2, 1fr) 20px">20px repeat(2,1fr) 20px</option>
+          <option value="repeat(5, 1fr)">repeat(5, 1fr) — 5 equal cols</option>
+        </select>
+        <span class="text-xs text-gray-400">grid-template-columns:</span>
+        <span id="repVal" class="prop-tag">repeat(3, 1fr)</span>
+      </div>
+      <div id="repDemo" class="grid-play fr-demo-1" style="grid-template-columns:repeat(3,1fr)">
+        <div>col 1</div><div>col 2</div><div>col 3</div>
+        <div>col 4</div><div>col 5</div><div>col 6</div>
+      </div>
+      <div class="bg-[#1e1e2e] rounded-xl p-4 font-mono text-sm mt-3 overflow-x-auto">
+        <div><span class="text-purple-400">/* 3 columns each with 1 fraction of available space */</span></div>
+        <div><span class="text-blue-400">grid-template-columns</span>: <span class="text-green-400">repeat(3, 1fr)</span>;</div>
+        <br>
+        <div><span class="text-purple-400">/* 8 cols: first 20px, 6×1fr, last 20px */</span></div>
+        <div><span class="text-blue-400">grid-template-columns</span>: <span class="text-green-400">20px repeat(6, 1fr) 20px</span>;</div>
+        <br>
+        <div><span class="text-purple-400">/* 10 cols: 5× (1fr + 2fr) pattern */</span></div>
+        <div><span class="text-blue-400">grid-template-columns</span>: <span class="text-green-400">repeat(5, 1fr 2fr)</span>;</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-list mr-2"></i>Key Points</h2>
+      <div class="space-y-2 text-sm">
+        <p>✦ <strong class="text-emerald-300">fr</strong> = fraction of <strong>available</strong> space (after fixed-size tracks)</p>
+        <p>✦ Use <span class="prop-tag">fr</span> for responsive layouts that adapt to any viewport</p>
+        <p>✦ <span class="prop-tag">repeat(count, pattern)</span> repeats track definitions</p>
+        <p>✦ Combine fixed and flexible: <span class="prop-tag">200px repeat(2, 1fr) 200px</span></p>
+        <p>✦ Resize your browser to see how fr units fluidly adjust</p>
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">CSS Grid Cheatsheet — Based on Vanessa A Costa's Guide</div>
+  </div>
+  <script>
+    function updateFrDemo() {
+      const v = document.getElementById('frSelect').value;
+      document.getElementById('frDemo').style.gridTemplateColumns = v;
+      document.getElementById('frVal').textContent = v;
+    }
+    function updateRepeatDemo() {
+      const v = document.getElementById('repSelect').value;
+      document.getElementById('repDemo').style.gridTemplateColumns = v;
+      document.getElementById('repVal').textContent = v;
+    }
+  </script>
+</body>
+</html>

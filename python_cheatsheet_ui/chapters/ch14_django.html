@@ -1,0 +1,144 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Django — Python Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .code-block { background: #1e1e2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 1rem; font-family: 'Fira Code', monospace; font-size: 0.9rem; overflow-x: auto; }
+    .code-block .kw { color: #c792ea; } .code-block .fn { color: #82aaff; } .code-block .str { color: #c3e88d; }
+    .code-block .cm { color: #546e7a; font-style: italic; } .code-block .num { color: #f78c6c; } .code-block .op { color: #89ddff; }
+    .code-block .bool { color: #ff5370; } .code-block .sel { color: #ffcb6b; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .output-box { background: #0a1a0f; border: 1px solid #1a4a2a; border-radius: 8px; padding: 0.5rem 1rem; margin-top: 0.5rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; color: #86efac; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .output-box i { color: #4ade80; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-green-400 hover:text-green-300 mb-6">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fab fa-python text-3xl text-green-400"></i>
+      <h1 class="text-3xl font-bold">Django</h1>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-flask mr-2"></i>Setup</h2>
+      <div class="code-block">
+$ python -m venv ll_env<br>
+$ source ll_env/bin/activate<br>
+(ll_env)$ pip install Django<br>
+$ django-admin startproject ll_project .<br>
+$ python manage.py migrate<br>
+$ python manage.py runserver
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Starting development server at http://127.0.0.1:8000/</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-plus-circle mr-2"></i>Create App & Model</h2>
+      <div class="code-block">
+$ python manage.py startapp learning_logs
+      </div>
+      <div class="code-block mt-2">
+<span class="cm"># learning_logs/models.py</span><br>
+<span class="kw">class</span> <span class="dec">Topic</span>(models.Model):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;text = models.CharField(max_length=<span class="num">200</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;date_added = models.DateTimeField(auto_now_add=<span class="bool">True</span>)<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">__str__</span>(<span class="sel">self</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="sel">self</span>.text
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-database mr-2"></i>Migrations & Admin</h2>
+      <div class="code-block">
+<span class="cm"># settings.py: add 'learning_logs' to INSTALLED_APPS</span><br><br>
+$ python manage.py makemigrations learning_logs<br>
+$ python manage.py migrate<br>
+$ python manage.py createsuperuser
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Migrations for 'learning_logs':<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;0001_initial.py<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;OK (migrated)</div>
+      <div class="code-block mt-2">
+<span class="cm"># admin.py</span><br>
+<span class="kw">from</span> .models <span class="kw">import</span> Topic<br>
+admin.site.register(Topic)
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-route mr-2"></i>URLs, Views, Templates</h2>
+      <div class="code-block">
+<span class="cm"># ll_project/urls.py</span><br>
+urlpatterns = [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;path(<span class="str">'admin/'</span>, admin.site.urls),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;path(<span class="str">''</span>, include(<span class="str">'learning_logs.urls'</span>)),<br>
+]<br><br>
+<span class="cm"># learning_logs/urls.py</span><br>
+app_name = <span class="str">'learning_logs'</span><br>
+urlpatterns = [path(<span class="str">''</span>, views.index, name=<span class="str">'index'</span>)]
+      </div>
+      <div class="code-block mt-2">
+<span class="cm"># views.py</span><br>
+<span class="kw">def</span> <span class="fn">index</span>(request):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> render(request, <span class="str">'learning_logs/index.html'</span>)
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> http://localhost:8000/ — displays the home page template</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-file-code mr-2"></i>Template Inheritance</h2>
+      <div class="code-block">
+<span class="cm">&lt;!-- base.html (parent) --&gt;</span><br>
+&lt;p&gt;&lt;a href="<span class="cm">{% url 'learning_logs:index' %}</span>"&gt;Learning Log&lt;/a&gt;&lt;/p&gt;<br>
+<span class="cm">{% block content %}{% endblock content %}</span>
+      </div>
+      <div class="code-block mt-2">
+<span class="cm">&lt;!-- index.html (child) --&gt;</span><br>
+<span class="cm">{% extends 'learning_logs/base.html' %}</span><br>
+<span class="cm">{% block content %}</span><br>
+  &lt;p&gt;Learning Log helps you keep track...&lt;/p&gt;<br>
+<span class="cm">{% endblock content %}</span>
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Child template inherits nav from base, fills content block</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-link mr-2"></i>Foreign Keys & Data</h2>
+      <div class="code-block">
+<span class="kw">class</span> <span class="dec">Entry</span>(models.Model):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;topic = models.ForeignKey(Topic, on_delete=models.CASCADE)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;text = models.TextField()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;date_added = models.DateTimeField(auto_now_add=<span class="bool">True</span>)<br><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">__str__</span>(<span class="sel">self</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">f"<span class="op">{</span><span class="sel">self</span>.text[:<span class="num">50</span>]<span class="op">}</span>..."</span>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-terminal mr-2"></i>Django Shell</h2>
+      <div class="code-block">
+$ python manage.py shell
+      </div>
+      <div class="code-block mt-2">
+<span class="op">&gt;&gt;&gt;</span> <span class="kw">from</span> learning_logs.models <span class="kw">import</span> Topic<br>
+<span class="op">&gt;&gt;&gt;</span> Topic.objects.all()<br>
+[&lt;Topic: Chess&gt;, &lt;Topic: Rock Climbing&gt;]<br>
+<span class="op">&gt;&gt;&gt;</span> t = Topic.objects.get(id=<span class="num">1</span>)<br>
+<span class="op">&gt;&gt;&gt;</span> t.text<br>
+'Chess'<br>
+<span class="op">&gt;&gt;&gt;</span> t.entry_set.all()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Interactive shell to query/manage data</div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">Python Crash Course — Beginner's Python Cheatsheet</div>
+  </div>
+</body>
+</html>

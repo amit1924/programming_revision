@@ -1,0 +1,5 @@
+i have cheatsheet but it so hard to read this pdf so i want you to build beautiful ui using html tailwind css font awesome icons dark theme multicolors this pdf has 28 pages so divide this into chpaters when you will make html file and listen carefully dont skip any content at any situation and you will make awesome ui to read on smartphone and use examples from this pdf more visually appealing and easy to remember and make awesome ui and divide in many files and dont skip anything
+
+you did one mistake in every chapters you should show answer of code and examples so that it will be easy to visualise and for desktop ui should be big and mobile ui is responsive so you should show examples for all code and answers so that it will be easy to remember
+
+now listen now it will be different approach see css_cheatsheet and you will use every properties and examples from pages and you will show css stying in ui so that it will be easily to visualise so this ui will be very different than python cheatsheet ui suppose for example there is hover properties so you will make ui like when user user hover then it shouls show this is working

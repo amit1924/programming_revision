@@ -1,0 +1,133 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pygame — Python Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .code-block { background: #1e1e2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 1rem; font-family: 'Fira Code', monospace; font-size: 0.9rem; overflow-x: auto; }
+    .code-block .kw { color: #c792ea; } .code-block .fn { color: #82aaff; } .code-block .str { color: #c3e88d; }
+    .code-block .cm { color: #546e7a; font-style: italic; } .code-block .num { color: #f78c6c; } .code-block .op { color: #89ddff; }
+    .code-block .bool { color: #ff5370; } .code-block .dec { color: #f07178; } .code-block .sel { color: #ffcb6b; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .output-box { background: #0a1a0f; border: 1px solid #1a4a2a; border-radius: 8px; padding: 0.5rem 1rem; margin-top: 0.5rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; color: #86efac; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .output-box i { color: #4ade80; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-rose-400 hover:text-rose-300 mb-6">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-gamepad text-3xl text-rose-400"></i>
+      <h1 class="text-3xl font-bold">Pygame</h1>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-download mr-2"></i>Install</h2>
+      <div class="code-block">
+$ python -m pip install --user pygame
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Successfully installed pygame-2.5.0</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-window-maximize mr-2"></i>Empty Game Window</h2>
+      <div class="code-block">
+<span class="kw">import</span> sys<br>
+<span class="kw">import</span> pygame<br><br>
+pygame.init()<br>
+screen = pygame.display.set_mode((<span class="num">1200</span>, <span class="num">800</span>))<br>
+pygame.display.set_caption(<span class="str">"Alien Invasion"</span>)<br>
+clock = pygame.time.Clock()<br><br>
+<span class="kw">while</span> <span class="bool">True</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> event.type == pygame.QUIT:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sys.exit()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;pygame.display.flip()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;clock.tick(<span class="num">60</span>)
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Opens a 1200x800 game window titled "Alien Invasion"</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-image mr-2"></i>Working with Images</h2>
+      <div class="code-block">
+ship = pygame.image.load(<span class="str">'images/ship.bmp'</span>)<br>
+ship_rect = ship.get_rect()<br>
+screen_rect = screen.get_rect()<br>
+ship_rect.midbottom = screen_rect.midbottom<br>
+screen.blit(ship, ship_rect)  <span class="cm"># draw to screen</span>
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Ship image loaded and positioned at bottom center</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-keyboard mr-2"></i>Keyboard Input</h2>
+      <div class="code-block">
+<span class="kw">for</span> event <span class="kw">in</span> pygame.event.get():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> event.type == pygame.KEYDOWN:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> event.key == pygame.K_RIGHT:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ship_rect.x += <span class="num">1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">elif</span> event.key == pygame.K_LEFT:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ship_rect.x -= <span class="num">1</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">elif</span> event.key == pygame.K_SPACE:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;ship.fire_bullet()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">elif</span> event.key == pygame.K_q:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;sys.exit()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> ← → moves ship, SPACE fires, Q quits</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-mouse mr-2"></i>Mouse Events</h2>
+      <div class="code-block">
+<span class="cm"># Click</span><br>
+<span class="kw">if</span> event.type == pygame.MOUSEBUTTONDOWN:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;ship.fire_bullet()<br><br>
+<span class="cm"># Position & collision</span><br>
+mouse_pos = pygame.mouse.get_pos()<br>
+<span class="kw">if</span> button_rect.collidepoint(mouse_pos):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;start_game()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Mouse click fires, button_rect detects hover</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-layer-group mr-2"></i>Groups & Collisions</h2>
+      <div class="code-block">
+<span class="kw">from</span> pygame.sprite <span class="kw">import</span> Sprite, Group<br><br>
+bullets = Group()<br>
+bullets.add(new_bullet)<br><br>
+<span class="cm"># Single vs group</span><br>
+pygame.sprite.spritecollideany(ship, aliens)<br><br>
+<span class="cm"># Group vs group</span><br>
+collisions = pygame.sprite.groupcollide(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;bullets, aliens, <span class="bool">True</span>, <span class="bool">True</span>)<br>
+score += <span class="fn">len</span>(collisions) * <span class="num">10</span>
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Collisions detected, aliens removed, score updated</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-font mr-2"></i>Rendering Text</h2>
+      <div class="code-block">
+msg = <span class="str">"Play again?"</span><br>
+f = pygame.font.SysFont(<span class="kw">None</span>, <span class="num">48</span>)<br>
+img = f.render(msg, <span class="bool">True</span>, (<span class="num">100</span>,<span class="num">100</span>,<span class="num">100</span>))<br>
+rect = img.get_rect()<br>
+rect.center = screen_rect.center<br>
+screen.blit(img, rect)
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> "Play again?" centered on screen</div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">Python Crash Course — Beginner's Python Cheatsheet</div>
+  </div>
+</body>
+</html>

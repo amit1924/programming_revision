@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Implicit & Explicit Grid — CSS Grid Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .prop-tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.8rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .grid-play { display: grid; padding: 10px; background: #1e1e2e; border-radius: 12px; margin: 1rem 0; gap: 8px; transition: all 0.3s; }
+    .grid-play > div { border-radius: 8px; padding: 14px 10px; text-align: center; color: white; font-weight: bold; font-size: 0.8rem; }
+    .grid-play > div:nth-child(1) { background: linear-gradient(135deg,#3b82f6,#8b5cf6); }
+    .grid-play > div:nth-child(2) { background: linear-gradient(135deg,#f472b6,#ec4899); }
+    .grid-play > div:nth-child(3) { background: linear-gradient(135deg,#10b981,#059669); }
+    .grid-play > div:nth-child(4) { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .grid-play > div:nth-child(5) { background: linear-gradient(135deg,#ef4444,#dc2626); }
+    .grid-play > div:nth-child(6) { background: linear-gradient(135deg,#06b6d4,#0891b2); }
+    .grid-play > div:nth-child(7) { background: linear-gradient(135deg,#8b5cf6,#7c3aed); }
+    .grid-play > div:nth-child(8) { background: linear-gradient(135deg,#f97316,#ea580c); }
+    .explicit-label { background: rgba(59,130,246,0.15); border: 1px solid #3b82f6; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; }
+    .implicit-label { background: rgba(16,185,129,0.15); border: 1px solid #10b981; border-radius: 4px; padding: 2px 8px; font-size: 0.7rem; }
+    input[type=range] { width: 160px; accent-color: #f59e0b; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-magic text-3xl text-rose-400"></i>
+      <h1 class="text-3xl font-bold">Implicit & Explicit Grid</h1>
+    </div>
+    <div class="info-card mb-6">
+      <p class="text-gray-300">The <strong>explicit grid</strong> is defined with <span class="prop-tag">grid-template-columns</span> and <span class="prop-tag">grid-template-rows</span>. The <strong>implicit grid</strong> is auto-generated when content exceeds the explicit grid. Control implicit tracks with <span class="prop-tag">grid-auto-rows</span> and <span class="prop-tag">grid-auto-columns</span>.</p>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-magic mr-2"></i>Explicit vs Implicit Demo</h2>
+      <p class="text-sm text-gray-400 mb-2"><span class="explicit-label">Explicit Grid</span> 3 columns defined. Extra items create <span class="implicit-label">Implicit Rows</span> automatically.</p>
+      <div class="flex flex-wrap gap-3 items-center mb-3">
+        <label class="text-sm">Auto-row height: <input type="range" min="40" max="120" value="60" oninput="updateImplicit()" id="autoRowRange"> <span id="autoRowVal" class="prop-tag">60px</span></label>
+        <select onchange="updateImplicit()" id="autoRowType" class="bg-slate-700 rounded px-3 py-1 text-sm font-mono">
+          <option value="px">px (fixed)</option>
+          <option value="auto">auto (content-based)</option>
+          <option value="fr">1fr</option>
+        </select>
+      </div>
+      <div id="implicitDemo" class="grid-play" style="grid-template-columns:repeat(3,1fr);grid-auto-rows:60px">
+        <div>Item 1</div><div>Item 2</div><div>Item 3</div>
+        <div>Item 4</div><div>Item 5</div><div>Item 6</div>
+        <div>Item 7</div><div>Item 8</div>
+      </div>
+      <p class="text-xs text-gray-500 mt-1">Items 1-6 are in the explicit grid. Items 7-8 create implicit rows. Adjust the auto-row height above.</p>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-code mr-2"></i>How It Works</h2>
+      <div class="bg-[#1e1e2e] rounded-xl p-4 font-mono text-sm space-y-2">
+        <div><span class="text-purple-400">/* Explicit: define 3 columns */</span></div>
+        <div><span class="text-blue-400">grid-template-columns</span>: <span class="text-green-400">repeat(3, 1fr)</span>;</div>
+        <br>
+        <div><span class="text-purple-400">/* Implicit: auto-sized rows for extra content */</span></div>
+        <div><span class="text-blue-400">grid-auto-rows</span>: <span class="text-green-400">100px</span>; <span class="text-gray-500">/* fixed size */</span></div>
+        <div><span class="text-blue-400">grid-auto-rows</span>: <span class="text-green-400">minmax(100px, auto)</span>; <span class="text-gray-500">/* flexible */</span></div>
+        <br>
+        <div><span class="text-purple-400">/* Auto columns for extra columns */</span></div>
+        <div><span class="text-blue-400">grid-auto-columns</span>: <span class="text-green-400">150px</span>;</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-list mr-2"></i>Key Points</h2>
+      <div class="space-y-2 text-sm">
+        <p>✦ <strong class="text-blue-300">Explicit grid</strong> — you define column/row count with <span class="prop-tag">grid-template-columns</span> and <span class="prop-tag">grid-template-rows</span></p>
+        <p>✦ <strong class="text-emerald-300">Implicit grid</strong> — auto-created rows/columns when there's more content than the explicit grid</p>
+        <p>✦ <span class="prop-tag">grid-auto-rows</span> — set size for implicitly created rows</p>
+        <p>✦ <span class="prop-tag">grid-auto-columns</span> — set size for implicitly created columns</p>
+        <p>✦ Without <span class="prop-tag">grid-auto-rows</span>, implicit tracks are <strong>auto-sized</strong> based on content</p>
+        <p>✦ <span class="prop-tag">minmax(min, max)</span> works well with implicit tracks for flexible sizing</p>
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">CSS Grid Cheatsheet — Based on Vanessa A Costa's Guide</div>
+  </div>
+  <script>
+    function updateImplicit() {
+      const v = document.getElementById('autoRowRange').value;
+      const t = document.getElementById('autoRowType').value;
+      const el = document.getElementById('implicitDemo');
+      if (t === 'px') {
+        el.style.gridAutoRows = v + 'px';
+        document.getElementById('autoRowVal').textContent = v + 'px';
+      } else if (t === 'auto') {
+        el.style.gridAutoRows = 'auto';
+        document.getElementById('autoRowVal').textContent = 'auto';
+      } else {
+        el.style.gridAutoRows = '1fr';
+        document.getElementById('autoRowVal').textContent = '1fr';
+      }
+    }
+  </script>
+</body>
+</html>

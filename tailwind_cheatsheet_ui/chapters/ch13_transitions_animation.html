@@ -1,0 +1,195 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Transitions & Animation - Tailwind Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; font-family: system-ui, sans-serif; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .prop-tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.8rem; color: #82aaff; display: inline-block; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-2px); }
+    input[type="range"] { -webkit-appearance: none; width: 100%; height: 6px; background: #2d2d44; border-radius: 3px; outline: none; }
+    input[type="range"]::-webkit-slider-thumb { -webkit-appearance: none; width: 18px; height: 18px; background: #82aaff; border-radius: 50%; cursor: pointer; }
+    select { background: #2d2d44; color: #e2e8f0; border: 1px solid #2a2a4a; border-radius: 8px; padding: 6px 12px; outline: none; cursor: pointer; }
+    .trans-box { width: 160px; height: 120px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; cursor: pointer; }
+    .trans-box:hover { background: linear-gradient(135deg, #f472b6, #ec4899); transform: scale(1.1) rotate(5deg); box-shadow: 0 20px 40px rgba(0,0,0,0.4); }
+    .anim-box { width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 16px; display: flex; align-items: center; justify-content: center; color: white; font-weight: bold; font-size: 0.7rem; }
+    .ping-dot { width: 24px; height: 24px; background: #f472b6; border-radius: 50%; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 p-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="mb-6 flex items-center gap-4">
+      <a href="../index.html" class="text-gray-400 hover:text-white transition flex items-center gap-2"><i class="fas fa-arrow-left"></i> Back</a>
+      <h1 class="text-3xl font-bold"><i class="fas fa-play text-violet-400 mr-3"></i>Transitions & Animation</h1>
+    </div>
+
+    <!-- Transition Property -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-4"><i class="fas fa-exchange-alt text-violet-400"></i><h2 class="text-xl font-semibold">Transition Property</h2><span class="prop-tag">transition-*</span></div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label class="text-sm text-gray-400 mb-2 block">Select Property:</label>
+          <select id="transProp" onchange="updateTransProperty(this.value)" class="w-full mb-2">
+            <option value="all">transition-all</option>
+            <option value="none">transition-none</option>
+            <option value="colors">transition-colors</option>
+            <option value="opacity">transition-opacity</option>
+            <option value="shadow">transition-shadow</option>
+            <option value="transform">transition-transform</option>
+          </select>
+          <p class="text-xs text-gray-500 mt-2"><i class="fas fa-info-circle mr-1"></i>Hover the box to see the transition effect</p>
+        </div>
+        <div class="flex justify-center">
+          <div id="transDemoBox" class="trans-box transition-all duration-300 ease-in-out">Hover Me</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transition Duration -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-4"><i class="fas fa-hourglass-half text-violet-400"></i><h2 class="text-xl font-semibold">Transition Duration</h2><span class="prop-tag">duration-*</span></div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label class="text-sm text-gray-400 mb-1 block">Duration: <span id="durVal" class="text-white font-mono">duration-300</span></label>
+          <input type="range" id="durSlider" min="0" max="11" value="3" class="mb-2" oninput="updateDuration(this.value)">
+          <div class="flex flex-wrap gap-2 mt-2">
+            <button onclick="setDur(0)" class="text-xs px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 transition">0</button>
+            <button onclick="setDur(1)" class="text-xs px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 transition">75</button>
+            <button onclick="setDur(2)" class="text-xs px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 transition">150</button>
+            <button onclick="setDur(4)" class="text-xs px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 transition">500</button>
+            <button onclick="setDur(7)" class="text-xs px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 transition">700</button>
+            <button onclick="setDur(10)" class="text-xs px-2 py-1 rounded bg-indigo-600/30 hover:bg-indigo-600/50 transition">1000</button>
+          </div>
+        </div>
+        <div class="flex justify-center">
+          <div id="durBox" class="trans-box transition-all duration-300">Hover</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Timing Function + Delay -->
+    <div class="grid md:grid-cols-2 gap-5 mb-5">
+      <div class="info-card">
+        <div class="flex items-center gap-2 mb-4"><i class="fas fa-chart-line text-violet-400"></i><h2 class="text-xl font-semibold">Timing Function</h2><span class="prop-tag">ease-*</span></div>
+        <select id="easeSelect" onchange="updateEase(this.value)" class="w-full mb-2">
+          <option value="linear">ease-linear</option>
+          <option value="in">ease-in</option>
+          <option value="out">ease-out</option>
+          <option value="in-out">ease-in-out</option>
+        </select>
+        <div class="flex justify-center mt-3">
+          <div id="easeBox" class="trans-box transition-all duration-500 ease-in-out">Hover</div>
+        </div>
+      </div>
+      <div class="info-card">
+        <div class="flex items-center gap-2 mb-4"><i class="fas fa-clock text-violet-400"></i><h2 class="text-xl font-semibold">Transition Delay</h2><span class="prop-tag">delay-*</span></div>
+        <label class="text-sm text-gray-400 mb-1 block">Delay: <span id="delayVal" class="text-white font-mono">delay-0</span></label>
+        <input type="range" id="delaySlider" min="0" max="8" value="0" class="mb-2" oninput="updateDelay(this.value)">
+        <p class="text-xs text-gray-500 mb-2">Hover and wait — the transition starts after the delay</p>
+        <div class="flex justify-center">
+          <div id="delayBox" class="trans-box transition-all duration-300 delay-0">Hover</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Transition Behavior Info -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-3"><i class="fas fa-info-circle text-violet-400"></i><h2 class="text-xl font-semibold">Transition Behavior</h2><span class="prop-tag">transition-behavior-*</span></div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-3 rounded-lg bg-[#2d2d44]/50 border border-[#2a2a4a]">
+          <span class="prop-tag">transition-behavior-normal</span>
+          <p class="text-sm text-gray-400 mt-2">Default. Only animates properties that have an interpolable discrete behavior.</p>
+        </div>
+        <div class="p-3 rounded-lg bg-[#2d2d44]/50 border border-[#2a2a4a]">
+          <span class="prop-tag">transition-behavior-discrete</span>
+          <p class="text-sm text-gray-400 mt-2">Allows discrete properties (like <span class="font-mono text-xs">visibility</span>) to transition at the appropriate point.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Animation -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-4"><i class="fas fa-film text-violet-400"></i><h2 class="text-xl font-semibold">Animation</h2><span class="prop-tag">animate-*</span></div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <label class="text-sm text-gray-400 mb-1 block">Select Animation:</label>
+          <select id="animSelect" onchange="updateAnimation(this.value)" class="w-full mb-3">
+            <option value="none">animate-none</option>
+            <option value="spin">animate-spin</option>
+            <option value="ping">animate-ping</option>
+            <option value="pulse">animate-pulse</option>
+            <option value="bounce">animate-bounce</option>
+          </select>
+          <p class="text-xs text-gray-500"><i class="fas fa-info-circle mr-1"></i>Tailwind arbitrary values: <span class="font-mono">animate-[spin_2s_ease-in-out]</span></p>
+        </div>
+        <div class="flex justify-center items-center gap-8">
+          <div id="animBox" class="anim-box">Spin</div>
+          <div id="pingContainer" class="flex items-center justify-center w-20 h-20">
+            <div id="pingDot" class="ping-dot"></div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-4 p-3 rounded-lg bg-[#2d2d44]/50 border border-[#2a2a4a]">
+        <p class="text-sm text-gray-300"><span class="text-violet-400 font-semibold">Arbitrary Animation Values:</span> Use <span class="prop-tag">animate-[spin_2s_ease-in-out]</span> or <span class="prop-tag">animate-[bounce_1s_infinite]</span> for custom keyframes.</p>
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-sm mt-6"><a href="../index.html" class="hover:text-gray-300 transition"><i class="fas fa-arrow-left mr-1"></i>Back to Cheatsheet</a></div>
+  </div>
+
+  <script>
+    const durVals = [0, 75, 100, 150, 200, 300, 500, 700, 750, 1000];
+    const durLabels = ['duration-0','duration-75','duration-100','duration-150','duration-200','duration-300','duration-500','duration-700','duration-750','duration-1000'];
+
+    function updateTransProperty(v) {
+      const box = document.getElementById('transDemoBox');
+      box.className = box.className.split(' ').filter(c => !c.startsWith('transition-')).join(' ') + ' trans-box transition-' + v + ' duration-300 ease-in-out';
+    }
+
+    function updateDuration(v) {
+      const i = parseInt(v);
+      const ms = i <= 10 ? [0,75,100,150,200,300,500,700,750,1000][i] : 1000;
+      const label = i <= 10 ? durLabels[i] || 'duration-1000' : 'duration-1000';
+      document.getElementById('durVal').textContent = label;
+      document.getElementById('durBox').style.transitionDuration = ms + 'ms';
+    }
+    function setDur(v) { document.getElementById('durSlider').value = v; updateDuration(v); }
+
+    function updateEase(v) {
+      const box = document.getElementById('easeBox');
+      const easeMap = { linear: 'linear', in: 'ease-in', out: 'ease-out', 'in-out': 'ease-in-out' };
+      box.style.transitionTimingFunction = easeMap[v];
+    }
+
+    function updateDelay(v) {
+      const i = parseInt(v);
+      const ms = [0,75,100,150,200,300,500,700,750,1000][i] || 0;
+      const labels = ['delay-0','delay-75','delay-100','delay-150','delay-200','delay-300','delay-500','delay-700','delay-750','delay-1000'];
+      document.getElementById('delayVal').textContent = labels[i] || 'delay-1000';
+      document.getElementById('delayBox').style.transitionDelay = ms + 'ms';
+    }
+
+    function updateAnimation(v) {
+      const box = document.getElementById('animBox');
+      const dot = document.getElementById('pingDot');
+      box.className = box.className.split(' ').filter(c => !c.startsWith('animate-')).join(' ') + ' anim-box';
+      dot.className = dot.className.split(' ').filter(c => !c.startsWith('animate-')).join(' ') + ' ping-dot';
+      if (v !== 'none') {
+        box.classList.add('animate-' + v);
+        if (v === 'ping') {
+          dot.classList.add('animate-ping');
+        }
+      }
+      if (v !== 'ping') {
+        dot.classList.remove('animate-ping');
+      }
+      document.getElementById('pingContainer').style.display = v === 'ping' ? 'flex' : 'none';
+    }
+  </script>
+</body>
+</html>

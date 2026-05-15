@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>minmax() & Gap — CSS Grid Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .prop-tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.8rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .grid-play { display: grid; padding: 10px; background: #1e1e2e; border-radius: 12px; margin: 1rem 0; transition: all 0.3s; }
+    .grid-play > div { border-radius: 8px; padding: 14px 10px; text-align: center; color: white; font-weight: bold; font-size: 0.8rem; }
+    .grid-play > div:nth-child(1) { background: linear-gradient(135deg,#3b82f6,#8b5cf6); }
+    .grid-play > div:nth-child(2) { background: linear-gradient(135deg,#f472b6,#ec4899); }
+    .grid-play > div:nth-child(3) { background: linear-gradient(135deg,#10b981,#059669); }
+    .grid-play > div:nth-child(4) { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .grid-play > div:nth-child(5) { background: linear-gradient(135deg,#ef4444,#dc2626); }
+    .grid-play > div:nth-child(6) { background: linear-gradient(135deg,#06b6d4,#0891b2); }
+    input[type=range] { width: 200px; accent-color: #8b5cf6; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-compress-arrows-alt text-3xl text-yellow-400"></i>
+      <h1 class="text-3xl font-bold">minmax() & Gap</h1>
+    </div>
+    <div class="info-card mb-6">
+      <p class="text-gray-300"><span class="prop-tag">minmax(min, max)</span> gives tracks a minimum and maximum size. <span class="prop-tag">gap</span> (formerly <span class="prop-tag">grid-gap</span>) creates gutters between grid cells.</p>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-arrows-alt-h mr-2"></i>minmax() Demo</h2>
+      <p class="text-sm text-gray-400 mb-2">Each column has <span class="prop-tag">minmax(80px, 1fr)</span> — minimum 80px, maximum 1fr. Resize browser to see it in action.</p>
+      <div class="flex flex-wrap gap-4 items-center mb-3">
+        <label class="text-sm">Min: <input type="range" min="40" max="200" value="80" step="10" oninput="updateMinmax()" id="minRange"> <span id="minVal" class="prop-tag">80px</span></label>
+        <select onchange="updateMinmax()" id="maxType" class="bg-slate-700 rounded px-3 py-1 text-sm font-mono">
+          <option value="1fr">1fr</option>
+          <option value="2fr">2fr</option>
+          <option value="auto">auto</option>
+          <option value="300px">300px</option>
+        </select>
+      </div>
+      <div id="minmaxDemo" class="grid-play" style="grid-template-columns:repeat(3,minmax(80px,1fr));gap:8px">
+        <div>minmax</div><div>minmax</div><div>minmax</div>
+        <div>flexible</div><div>flexible</div><div>flexible</div>
+      </div>
+      <div class="bg-[#1e1e2e] rounded-xl p-3 font-mono text-sm mt-2">
+        <div><span class="text-blue-400">grid-template-columns</span>: <span class="text-green-400">repeat(3, minmax(<span id="codeMin">80px</span>, <span id="codeMax">1fr</span>))</span>;</div>
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-grip-vertical mr-2"></i>Gap (Gutters)</h2>
+      <div class="flex flex-wrap gap-4 items-center mb-3">
+        <label class="text-sm">Column gap: <input type="range" min="0" max="40" value="8" oninput="updateGap()" id="colGap"> <span id="colGapVal" class="prop-tag">8px</span></label>
+        <label class="text-sm">Row gap: <input type="range" min="0" max="40" value="8" oninput="updateGap()" id="rowGap"> <span id="rowGapVal" class="prop-tag">8px</span></label>
+        <button onclick="document.getElementById('colGap').value=0;document.getElementById('rowGap').value=0;updateGap()" class="px-2 py-1 rounded bg-slate-700 hover:bg-slate-600 text-xs">zero gaps</button>
+      </div>
+      <div id="gapDemo" class="grid-play" style="grid-template-columns:repeat(3,1fr);column-gap:8px;row-gap:8px">
+        <div>1</div><div>2</div><div>3</div>
+        <div>4</div><div>5</div><div>6</div>
+      </div>
+      <div class="bg-[#1e1e2e] rounded-xl p-3 font-mono text-sm mt-2">
+        <div><span class="text-blue-400">column-gap</span>: <span class="text-green-400">10px</span>; <span class="text-gray-500">/* or grid-column-gap */</span></div>
+        <div><span class="text-blue-400">row-gap</span>: <span class="text-green-400">1em</span>; <span class="text-gray-500">/* or grid-row-gap */</span></div>
+        <div><span class="text-blue-400">gap</span>: <span class="text-green-400">10px</span>; <span class="text-gray-500">/* shorthand for both */</span></div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-list mr-2"></i>Properties</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 text-sm">
+        <div><span class="prop-tag">minmax(min, max)</span> min size / max size for tracks</div>
+        <div><span class="prop-tag">gap</span> Shorthand for row-gap and column-gap</div>
+        <div><span class="prop-tag">row-gap</span> Gap between rows (formerly grid-row-gap)</div>
+        <div><span class="prop-tag">column-gap</span> Gap between columns (formerly grid-column-gap)</div>
+        <div><span class="prop-tag">grid-gap</span> Legacy shorthand for gap (still supported)</div>
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">CSS Grid Cheatsheet — Based on Vanessa A Costa's Guide</div>
+  </div>
+  <script>
+    function updateMinmax() {
+      const min = document.getElementById('minRange').value;
+      const max = document.getElementById('maxType').value;
+      const val = 'minmax(' + min + 'px, ' + max + ')';
+      document.getElementById('minmaxDemo').style.gridTemplateColumns = 'repeat(3, ' + val + ')';
+      document.getElementById('minVal').textContent = min + 'px';
+      document.getElementById('codeMin').textContent = min + 'px';
+      document.getElementById('codeMax').textContent = max;
+    }
+    function updateGap() {
+      const c = document.getElementById('colGap').value;
+      const r = document.getElementById('rowGap').value;
+      document.getElementById('gapDemo').style.columnGap = c + 'px';
+      document.getElementById('gapDemo').style.rowGap = r + 'px';
+      document.getElementById('colGapVal').textContent = c + 'px';
+      document.getElementById('rowGapVal').textContent = r + 'px';
+    }
+  </script>
+</body>
+</html>

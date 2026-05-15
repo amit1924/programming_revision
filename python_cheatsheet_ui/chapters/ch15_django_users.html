@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Django Users & Forms — Python Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .code-block { background: #1e1e2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 1rem; font-family: 'Fira Code', monospace; font-size: 0.9rem; overflow-x: auto; }
+    .code-block .kw { color: #c792ea; } .code-block .fn { color: #82aaff; } .code-block .str { color: #c3e88d; }
+    .code-block .cm { color: #546e7a; font-style: italic; } .code-block .num { color: #f78c6c; } .code-block .op { color: #89ddff; }
+    .code-block .bool { color: #ff5370; } .code-block .sel { color: #ffcb6b; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .output-box { background: #0a1a0f; border: 1px solid #1a4a2a; border-radius: 8px; padding: 0.5rem 1rem; margin-top: 0.5rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; color: #86efac; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .output-box i { color: #4ade80; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-orange-400 hover:text-orange-300 mb-6">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-users text-3xl text-orange-400"></i>
+      <h1 class="text-3xl font-bold">Django Users & Forms</h1>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-user-plus mr-2"></i>Accounts App</h2>
+      <div class="code-block">
+$ python manage.py startapp accounts
+      </div>
+      <div class="code-block mt-2">
+<span class="cm"># settings.py — add 'accounts' to INSTALLED_APPS</span><br><br>
+<span class="cm"># ll_project/urls.py</span><br>
+urlpatterns = [<br>
+&nbsp;&nbsp;&nbsp;&nbsp;path(<span class="str">'admin/'</span>, admin.site.urls),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;path(<span class="str">'accounts/'</span>, include(<span class="str">'accounts.urls'</span>)),<br>
+&nbsp;&nbsp;&nbsp;&nbsp;path(<span class="str">''</span>, include(<span class="str">'learning_logs.urls'</span>)),<br>
+]
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-key mr-2"></i>Registration View</h2>
+      <div class="code-block">
+<span class="cm"># accounts/views.py</span><br>
+<span class="kw">def</span> <span class="fn">register</span>(request):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> request.method != <span class="str">'POST'</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;form = UserCreationForm()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">else</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;form = UserCreationForm(data=request.POST)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> form.is_valid():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;user = form.save()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;login(request, user)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> redirect(<span class="str">'learning_logs:index'</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;context = {<span class="str">'form'</span>: form}<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> render(request, <span class="str">'registration/register.html'</span>, context)
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-sign-in-alt mr-2"></i>Login Template</h2>
+      <div class="code-block">
+<span class="cm">&lt;!-- registration/login.html --&gt;</span><br>
+<span class="cm">{% extends "learning_logs/base.html" %}</span><br>
+<span class="cm">{% block content %}</span><br>
+&lt;form action="<span class="cm">{% url 'users:login' %}</span>" method="post"&gt;<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">{% csrf_token %}</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="cm">{{ form.as_div }}</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;&lt;button&gt;Log in&lt;/button&gt;<br>
+&lt;/form&gt;<br>
+<span class="cm">{% endblock content %}</span>
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Renders login form with CSRF protection</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-user mr-2"></i>Showing Login Status</h2>
+      <div class="code-block">
+<span class="cm">{% if user.is_authenticated %}</span><br>
+  Hello, <span class="cm">{{ user.username }}</span>.<br>
+  &lt;a href="<span class="cm">{% url 'accounts:logout' %}</span>"&gt;Log out&lt;/a&gt;<br>
+<span class="cm">{% else %}</span><br>
+  &lt;a href="<span class="cm">{% url 'accounts:register' %}</span>"&gt;Register&lt;/a&gt;<br>
+  &lt;a href="<span class="cm">{% url 'accounts:login' %}</span>"&gt;Log in&lt;/a&gt;<br>
+<span class="cm">{% endif %}</span>
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Logged in: shows "Hello, username" + logout link.<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;Logged out: shows Register + Log in links</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-lock mr-2"></i>Restricting Access</h2>
+      <div class="code-block">
+<span class="kw">from</span> django.contrib.auth.decorators <span class="kw">import</span> login_required<br><br>
+<span class="op">@</span>login_required<br>
+<span class="kw">def</span> <span class="fn">topic</span>(request, topic_id):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;...
+      </div>
+      <div class="code-block mt-2">
+<span class="cm"># settings.py</span><br>
+LOGIN_URL = <span class="str">'accounts:login'</span>
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Unauthenticated users redirected to login page</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-database mr-2"></i>Connecting Data to Users</h2>
+      <div class="code-block">
+<span class="kw">from</span> django.contrib.auth.models <span class="kw">import</span> User<br><br>
+<span class="kw">class</span> <span class="dec">Topic</span>(models.Model):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;owner = models.ForeignKey(User, on_delete=models.CASCADE)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;...
+      </div>
+      <div class="code-block mt-2">
+<span class="cm"># Filter by current user</span><br>
+topics = Topic.objects.filter(owner=request.user)<br><br>
+<span class="cm"># Prevent access to other users' data</span><br>
+<span class="kw">if</span> topic.owner != request.user:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">raise</span> Http404
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Users only see/edit their own data</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-edit mr-2"></i>Forms & Saving Data</h2>
+      <div class="code-block">
+<span class="cm"># Form with existing instance</span><br>
+form = EntryForm(instance=entry)<br><br>
+<span class="cm"># Set owner before saving</span><br>
+new_topic = form.save(commit=<span class="bool">False</span>)<br>
+new_topic.owner = request.user<br>
+new_topic.save()
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-paint-brush mr-2"></i>Styling & Deployment</h2>
+      <ul class="list-disc list-inside text-gray-300 text-sm space-y-1">
+        <li><span class="text-cyan-300">django-bootstrap5</span> — makes UI beautiful with Bootstrap</li>
+        <li><span class="text-cyan-300">Platform.sh</span> — free deployment, see platform.sh/marketplace/django</li>
+        <li>Always restart dev server: <span class="text-cyan-300">python manage.py runserver</span></li>
+        <li>Logout redirect setting: <span class="text-cyan-300">LOGOUT_REDIRECT_URL = 'learning_logs:index'</span></li>
+      </ul>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">Python Crash Course — Beginner's Python Cheatsheet</div>
+  </div>
+</body>
+</html>

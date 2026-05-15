@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Accessibility - Tailwind Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; font-family: system-ui, sans-serif; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .prop-tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.8rem; color: #82aaff; display: inline-block; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-2px); }
+    select { background: #2d2d44; color: #e2e8f0; border: 1px solid #2a2a4a; border-radius: 8px; padding: 6px 12px; outline: none; cursor: pointer; }
+    button.toggle-btn { padding: 6px 16px; border-radius: 8px; font-size: 0.875rem; font-weight: 600; transition: all 0.2s; }
+    .demo-anim-box { width: 80px; height: 80px; background: linear-gradient(135deg, #6366f1, #8b5cf6); border-radius: 16px; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%, 100% { transform: scale(1); opacity: 1; } 50% { transform: scale(1.15); opacity: 0.7; } }
+    @keyframes spin-slow { from { transform: rotate(0deg); } to { transform: rotate(360deg); } }
+    .theme-demo { transition: all 0.3s; }
+    .sr-only-demo { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border-width: 0; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 p-6">
+  <div class="max-w-6xl mx-auto">
+    <div class="mb-6 flex items-center gap-4">
+      <a href="../index.html" class="text-gray-400 hover:text-white transition flex items-center gap-2"><i class="fas fa-arrow-left"></i> Back</a>
+      <h1 class="text-3xl font-bold"><i class="fas fa-universal-access text-green-400 mr-3"></i>Accessibility</h1>
+    </div>
+
+    <!-- SR Only -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-4"><i class="fas fa-eye-slash text-green-400"></i><h2 class="text-xl font-semibold">Screen Reader Only</h2><span class="prop-tag">sr-only / not-sr-only</span></div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-sm text-gray-400 mb-3">Toggle to show/hide content for screen readers.</p>
+          <button onclick="toggleSr()" class="toggle-btn bg-indigo-600 hover:bg-indigo-700 text-white mr-2">
+            <i class="fas fa-toggle-on mr-1"></i> Toggle sr-only
+          </button>
+          <p class="text-xs text-gray-500 mt-3"><i class="fas fa-info-circle mr-1"></i><span class="prop-tag">sr-only</span> hides content visually but keeps it accessible to screen readers.</p>
+        </div>
+        <div class="p-4 rounded-lg bg-[#2d2d44]/50 border border-[#2a2a4a]">
+          <p class="text-sm text-gray-300"><i class="fas fa-comment text-blue-400 mr-2"></i>Visible text: "This is visible to everyone"</p>
+          <p id="srContent" class="sr-only-demo text-sm text-yellow-400 mt-2"><i class="fas fa-ear-listen mr-2"></i>SR-ONLY: This text is only visible to screen readers!</p>
+          <p id="srStatus" class="text-xs text-gray-500 mt-2">Status: <span id="srState" class="text-yellow-400">sr-only (hidden visually)</span></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Forced Color Adjust -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-4"><i class="fas fa-palette text-green-400"></i><h2 class="text-xl font-semibold">Forced Color Adjust</h2><span class="prop-tag">forced-color-adjust-*</span></div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-lg bg-[#2d2d44]/50 border border-[#2a2a4a]">
+          <span class="prop-tag">forced-color-adjust-auto</span>
+          <p class="text-sm text-gray-400 mt-2">Default. The browser may adjust colors when forced color mode is active (e.g., Windows High Contrast).</p>
+        </div>
+        <div class="p-4 rounded-lg bg-[#2d2d44]/50 border border-[#2a2a4a]">
+          <span class="prop-tag">forced-color-adjust-none</span>
+          <p class="text-sm text-gray-400 mt-2">Opts the element out of forced color mode adjustments, preserving the authored colors.</p>
+        </div>
+      </div>
+      <div class="mt-3 p-3 rounded-lg bg-[#2d2d44]/30 border border-[#2a2a4a]">
+        <p class="text-xs text-gray-400"><i class="fas fa-info-circle mr-1"></i>Use <span class="prop-tag">forced-color-adjust-none</span> on elements where preserving custom colors is critical (buttons, badges, etc).</p>
+      </div>
+    </div>
+
+    <!-- Prefers Reduced Motion -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-4"><i class="fas fa-running text-green-400"></i><h2 class="text-xl font-semibold">Prefers Reduced Motion</h2><span class="prop-tag">motion-safe / motion-reduce</span></div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-sm text-gray-400 mb-3">Simulate reduced motion preference to see how animations respond.</p>
+          <button onclick="setMotion('safe')" class="toggle-btn bg-green-600 hover:bg-green-700 text-white mr-2 mb-2"><i class="fas fa-play mr-1"></i> motion-safe</button>
+          <button onclick="setMotion('reduce')" class="toggle-btn bg-amber-600 hover:bg-amber-700 text-white mr-2 mb-2"><i class="fas fa-pause mr-1"></i> motion-reduce</button>
+          <p id="motionStatus" class="text-xs text-gray-500 mt-2">Current: <span id="motionState" class="text-green-400">motion-safe</span></p>
+        </div>
+        <div class="flex justify-center items-center">
+          <div id="motionBox" class="demo-anim-box motion-safe"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prefers Color Scheme -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-4"><i class="fas fa-moon text-green-400"></i><h2 class="text-xl font-semibold">Prefers Color Scheme</h2><span class="prop-tag">dark / light</span></div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-sm text-gray-400 mb-3">Toggle between light and dark theme to preview the color scheme preference utilities.</p>
+          <button onclick="setScheme('dark')" class="toggle-btn bg-indigo-600 hover:bg-indigo-700 text-white mr-2 mb-2"><i class="fas fa-moon mr-1"></i> dark</button>
+          <button onclick="setScheme('light')" class="toggle-btn bg-yellow-600 hover:bg-yellow-700 text-white mb-2"><i class="fas fa-sun mr-1"></i> light</button>
+          <p id="schemeStatus" class="text-xs text-gray-500 mt-2">Current: <span id="schemeState" class="text-indigo-400">dark</span></p>
+        </div>
+        <div id="themeDemoBox" class="theme-demo p-6 rounded-xl bg-slate-800 border border-slate-600 text-center">
+          <p class="text-lg font-semibold text-white dark:text-white light:text-gray-900">Theme Preview</p>
+          <p class="text-sm text-gray-400 dark:text-gray-400 light:text-gray-600">This card responds to dark/light mode</p>
+          <div class="flex justify-center gap-3 mt-3">
+            <span class="px-3 py-1 rounded bg-blue-500 text-white text-xs">dark:bg-blue-500</span>
+            <span class="px-3 py-1 rounded bg-green-500 text-white text-xs">dark:bg-green-500</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Prefers Contrast -->
+    <div class="info-card mb-5">
+      <div class="flex items-center gap-2 mb-4"><i class="fas fa-adjust text-green-400"></i><h2 class="text-xl font-semibold">Prefers Contrast</h2><span class="prop-tag">contrast-more / contrast-less</span></div>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-lg bg-[#2d2d44]/50 border border-[#2a2a4a]">
+          <span class="prop-tag">contrast-more</span>
+          <p class="text-sm text-gray-400 mt-2">Styles applied when the user has requested higher contrast in their OS settings. Use for stronger borders, darker text, etc.</p>
+          <div class="mt-2 p-2 rounded border-2 border-yellow-500 bg-yellow-500/10 contrast-more:border-4 contrast-more:border-yellow-300">
+            <p class="text-xs text-yellow-300">This box has stronger borders in high contrast mode</p>
+          </div>
+        </div>
+        <div class="p-4 rounded-lg bg-[#2d2d44]/50 border border-[#2a2a4a]">
+          <span class="prop-tag">contrast-less</span>
+          <p class="text-sm text-gray-400 mt-2">Styles applied when the user has requested less contrast. Use for softer colors and reduced visual intensity.</p>
+          <div class="mt-2 p-2 rounded border border-gray-600 bg-gray-700/50 contrast-less:border-gray-500 contrast-less:bg-gray-600/50">
+            <p class="text-xs text-gray-400">This box adapts for reduced contrast preference</p>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 p-3 rounded-lg bg-[#2d2d44]/30 border border-[#2a2a4a]">
+        <p class="text-xs text-gray-400"><i class="fas fa-info-circle mr-1"></i>These utilities work automatically based on OS/browser contrast settings. No JavaScript needed for production.</p>
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-sm mt-6"><a href="../index.html" class="hover:text-gray-300 transition"><i class="fas fa-arrow-left mr-1"></i>Back to Cheatsheet</a></div>
+  </div>
+
+  <script>
+    let srHidden = true;
+    function toggleSr() {
+      const el = document.getElementById('srContent');
+      const state = document.getElementById('srState');
+      srHidden = !srHidden;
+      if (srHidden) {
+        el.className = 'sr-only-demo text-sm text-yellow-400 mt-2';
+        state.textContent = 'sr-only (hidden visually)';
+        state.className = 'text-yellow-400';
+      } else {
+        el.className = 'text-sm text-yellow-400 mt-2';
+        state.textContent = 'not-sr-only (visible)';
+        state.className = 'text-green-400';
+      }
+    }
+
+    function setMotion(v) {
+      const box = document.getElementById('motionBox');
+      const state = document.getElementById('motionState');
+      box.className = box.className.split(' ').filter(c => !c.startsWith('motion-')).join(' ') + ' demo-anim-box motion-' + v;
+      state.textContent = 'motion-' + v;
+      state.className = v === 'safe' ? 'text-green-400' : 'text-amber-400';
+      if (v === 'reduce') {
+        box.style.animation = 'none';
+      } else {
+        box.style.animation = '';
+      }
+    }
+
+    function setScheme(v) {
+      const state = document.getElementById('schemeState');
+      state.textContent = v;
+      state.className = v === 'dark' ? 'text-indigo-400' : 'text-yellow-400';
+      if (v === 'light') {
+        document.documentElement.classList.remove('dark');
+        document.documentElement.classList.add('light');
+      } else {
+        document.documentElement.classList.remove('light');
+        document.documentElement.classList.add('dark');
+      }
+      const box = document.getElementById('themeDemoBox');
+      if (v === 'light') {
+        box.className = 'theme-demo p-6 rounded-xl bg-white border border-gray-300 text-center';
+        box.querySelector('p:first-child').className = 'text-lg font-semibold text-gray-900';
+        box.querySelectorAll('span').forEach(s => {
+          if (s.classList.contains('bg-blue-500')) s.className = 'px-3 py-1 rounded bg-blue-600 text-white text-xs';
+          if (s.classList.contains('bg-green-500')) s.className = 'px-3 py-1 rounded bg-green-600 text-white text-xs';
+        });
+      } else {
+        box.className = 'theme-demo p-6 rounded-xl bg-slate-800 border border-slate-600 text-center';
+        box.querySelector('p:first-child').className = 'text-lg font-semibold text-white';
+        box.querySelectorAll('span').forEach(s => {
+          if (s.classList.contains('bg-blue-600')) s.className = 'px-3 py-1 rounded bg-blue-500 text-white text-xs';
+          if (s.classList.contains('bg-green-600')) s.className = 'px-3 py-1 rounded bg-green-500 text-white text-xs';
+        });
+      }
+    }
+  </script>
+</body>
+</html>

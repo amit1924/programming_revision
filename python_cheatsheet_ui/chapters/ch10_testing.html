@@ -1,0 +1,134 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Testing — Python Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .code-block { background: #1e1e2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 1rem; font-family: 'Fira Code', monospace; font-size: 0.9rem; overflow-x: auto; }
+    .code-block .kw { color: #c792ea; } .code-block .fn { color: #82aaff; } .code-block .str { color: #c3e88d; }
+    .code-block .cm { color: #546e7a; font-style: italic; } .code-block .num { color: #f78c6c; } .code-block .op { color: #89ddff; }
+    .code-block .bool { color: #ff5370; } .code-block .dec { color: #f07178; } .code-block .sel { color: #ffcb6b; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .output-box { background: #0a1a0f; border: 1px solid #1a4a2a; border-radius: 8px; padding: 0.5rem 1rem; margin-top: 0.5rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; color: #86efac; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .output-box i { color: #4ade80; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-lime-400 hover:text-lime-300 mb-6">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-vial text-3xl text-lime-400"></i>
+      <h1 class="text-3xl font-bold">Testing Your Code</h1>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-download mr-2"></i>Installing pytest</h2>
+      <div class="code-block">
+$ python -m pip install --user pytest
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Successfully installed pytest-7.1.2</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-check-circle mr-2"></i>Writing a Passing Test</h2>
+      <div class="code-block">
+<span class="cm"># full_names.py</span><br>
+<span class="kw">def</span> <span class="fn">get_full_name</span>(first, last):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> <span class="str">f"<span class="op">{</span>first<span class="op">}</span> <span class="op">{</span>last<span class="op">}</span>"</span>.title()<br><br>
+<span class="cm"># test_full_names.py</span><br>
+<span class="kw">def</span> <span class="fn">test_first_last</span>():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;full_name = get_full_name(<span class="str">'janis'</span>, <span class="str">'joplin'</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">assert</span> full_name == <span class="str">'Janis Joplin'</span>
+      </div>
+      <div class="code-block mt-2">
+$ pytest
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> test_full_names.py . [100%]<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;1 passed in 0.01s</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-times-circle mr-2"></i>Failing Test & Fix</h2>
+      <div class="code-block">
+<span class="cm"># Broken: added middle name param</span><br>
+<span class="kw">def</span> <span class="fn">get_full_name</span>(first, middle, last):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;...
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> TypeError: missing 1 required arg: 'last'</div>
+      <div class="code-block mt-2">
+<span class="cm"># Fix: make middle optional</span><br>
+<span class="kw">def</span> <span class="fn">get_full_name</span>(first, last, middle=<span class="str">''</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">if</span> middle:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full_name = <span class="str">f"<span class="op">{</span>first<span class="op">}</span> <span class="op">{</span>middle<span class="op">}</span> <span class="op">{</span>last<span class="op">}</span>"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">else</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;full_name = <span class="str">f"<span class="op">{</span>first<span class="op">}</span> <span class="op">{</span>last<span class="op">}</span>"</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> full_name.title()<br><br>
+<span class="cm"># Test for middle names too</span><br>
+<span class="kw">def</span> <span class="fn">test_middle</span>():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;full_name = get_full_name(<span class="str">'david'</span>, <span class="str">'roth'</span>, <span class="str">'lee'</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">assert</span> full_name == <span class="str">'David Lee Roth'</span>
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> test_full_names.py .. [100%]<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2 passed in 0.01s</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-shapes mr-2"></i>Assert Statements</h2>
+      <div class="code-block">
+<span class="kw">assert</span> a == b          <span class="cm"># equal</span><br>
+<span class="kw">assert</span> a != b          <span class="cm"># not equal</span><br>
+<span class="kw">assert</span> x               <span class="cm"># truthy</span><br>
+<span class="kw">assert</span> <span class="kw">not</span> x           <span class="cm"># falsy</span><br>
+<span class="kw">assert</span> item <span class="kw">in</span> my_list <span class="cm"># in list</span><br>
+<span class="kw">assert</span> item <span class="kw">not in</span> my_list
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-university mr-2"></i>Testing a Class</h2>
+      <div class="code-block">
+<span class="cm"># account.py</span><br>
+<span class="kw">class</span> <span class="dec">Account</span>:<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">__init__</span>(<span class="sel">self</span>, balance=<span class="num">0</span>):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sel">self</span>.balance = balance<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">def</span> <span class="fn">deposit</span>(<span class="sel">self</span>, amount):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="sel">self</span>.balance += amount<br><br>
+<span class="cm"># test_account.py</span><br>
+<span class="kw">def</span> <span class="fn">test_initial_balance</span>():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;account = Account()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">assert</span> account.balance == <span class="num">0</span><br><br>
+<span class="kw">def</span> <span class="fn">test_deposit</span>():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;account = Account()<br>
+&nbsp;&nbsp;&nbsp;&nbsp;account.deposit(<span class="num">100</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">assert</span> account.balance == <span class="num">100</span>
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> test_account.py .. [100%]<br>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;2 passed in 0.01s</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-tools mr-2"></i>Fixtures & pytest Flags</h2>
+      <div class="code-block">
+<span class="kw">import</span> pytest<br><br>
+<span class="op">@</span>pytest.fixture<br>
+<span class="kw">def</span> <span class="fn">account</span>():<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">return</span> Account()<br><br>
+<span class="kw">def</span> <span class="fn">test_deposit</span>(account):<br>
+&nbsp;&nbsp;&nbsp;&nbsp;account.deposit(<span class="num">100</span>)<br>
+&nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">assert</span> account.balance == <span class="num">100</span>
+      </div>
+      <div class="mt-2 text-gray-400 text-sm">
+        <span class="text-cyan-300">pytest -x</span> — stop at first failure<br>
+        <span class="text-cyan-300">pytest test_file.py</span> — run one file<br>
+        <span class="text-cyan-300">pytest --last-failed</span> — re-run only failures
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">Python Crash Course — Beginner's Python Cheatsheet</div>
+  </div>
+</body>
+</html>

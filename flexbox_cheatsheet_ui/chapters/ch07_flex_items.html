@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flex Items — Flexbox Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .prop-tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.8rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .flex-demo { display: flex; gap: 8px; padding: 12px; background: #1e1e2e; border-radius: 12px; margin: 1rem 0; min-height: 80px; transition: all 0.3s; border: 1px dashed #334155; }
+    .flex-demo > div { border-radius: 8px; padding: 16px 14px; color: white; font-weight: bold; font-size: 0.8rem; text-align: center; transition: all 0.3s; }
+    .flex-demo > div:nth-child(1) { background: linear-gradient(135deg,#3b82f6,#1d4ed8); }
+    .flex-demo > div:nth-child(2) { background: linear-gradient(135deg,#f472b6,#db2777); }
+    .flex-demo > div:nth-child(3) { background: linear-gradient(135deg,#10b981,#059669); }
+    input[type=range] { width: 160px; accent-color: #8b5cf6; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-cube text-3xl text-indigo-400"></i>
+      <h1 class="text-3xl font-bold">Flex Items</h1>
+    </div>
+    <div class="info-card mb-6">
+      <p class="text-gray-300">Individual flex items can be customized with <span class="prop-tag">order</span>, <span class="prop-tag">flex-grow</span>, <span class="prop-tag">flex-shrink</span>, and <span class="prop-tag">flex-basis</span>. These override the container-level behavior for a specific item.</p>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-sort mr-2"></i>Order</h2>
+      <p class="text-sm text-gray-400 mb-2">Change the visual order of items. Default is 0. Lower numbers come first.</p>
+      <div class="flex flex-wrap gap-2 items-center mb-3">
+        <button onclick="setOrder([1,2,3])" class="px-3 py-1 rounded text-xs bg-slate-700 hover:bg-slate-600">Default (1 2 3)</button>
+        <button onclick="setOrder([3,2,1])" class="px-3 py-1 rounded text-xs bg-slate-700 hover:bg-slate-600">Reverse (3 2 1)</button>
+        <button onclick="setOrder([2,3,1])" class="px-3 py-1 rounded text-xs bg-slate-700 hover:bg-slate-600">Shuffle (2 3 1)</button>
+      </div>
+      <div id="orderDemo" class="flex-demo">
+        <div style="order:1">Item 1</div>
+        <div style="order:2">Item 2</div>
+        <div style="order:3">Item 3</div>
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-expand mr-2"></i>Flex Grow</h2>
+      <p class="text-sm text-gray-400 mb-2">Items with <span class="prop-tag">flex-grow</span> &gt; 0 will take up extra space proportionally.</p>
+      <div class="flex flex-wrap gap-4 items-center mb-3">
+        <label class="text-sm">Item 2 grow: <input type="range" min="0" max="5" value="0" oninput="updateGrow()" id="growRange"> <span id="growVal" class="prop-tag">0</span></label>
+      </div>
+      <div id="growDemo" class="flex-demo">
+        <div style="flex-grow:0;flex-basis:80px">grow: 0</div>
+        <div id="growItem" style="flex-grow:0;flex-basis:80px">grow: <span id="growDisplay">0</span></div>
+        <div style="flex-grow:0;flex-basis:80px">grow: 0</div>
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-compress mr-2"></i>Flex Shrink & Basis</h2>
+      <p class="text-sm text-gray-400 mb-2"><span class="prop-tag">flex-shrink</span> controls how an item shrinks when there isn't enough space. <span class="prop-tag">flex-basis</span> sets the initial size before growing/shrinking.</p>
+      <div class="flex flex-wrap gap-4 items-center mb-3">
+        <label class="text-sm">Shrink: <input type="range" min="0" max="5" value="1" oninput="updateShrink()" id="shrinkRange"> <span id="shrinkVal" class="prop-tag">1</span></label>
+        <label class="text-sm">Basis: <input type="range" min="60" max="300" value="150" oninput="updateShrink()" id="basisRange"> <span id="basisVal" class="prop-tag">150px</span></label>
+      </div>
+      <div id="shrinkDemo" class="flex-demo" style="max-width:100%">
+        <div style="flex:1 1 100px;min-width:0">flex: 1 1 100px</div>
+        <div id="shrinkItem" style="flex:1 1 150px;min-width:0">flex: 1 <span id="shrinkDisplay">1</span> <span id="basisDisplay">150px</span></div>
+        <div style="flex:1 1 100px;min-width:0">flex: 1 1 100px</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-code mr-2"></i>Flex Shorthand</h2>
+      <div class="bg-[#1e1e2e] rounded-xl p-3 font-mono text-sm">
+        <div><span class="text-blue-400">flex</span>: <span class="text-green-400">flex-grow flex-shrink flex-basis</span>;</div>
+        <div><span class="text-gray-500">/* example: flex: 2 2 10%; */</span></div>
+        <br>
+        <div><span class="text-gray-500">/* Common shorthands: */</span></div>
+        <div><span class="text-blue-400">flex</span>: <span class="text-green-400">1</span>; <span class="text-gray-500">/* flex-grow: 1, flex-shrink: 1, flex-basis: 0 */</span></div>
+        <div><span class="text-blue-400">flex</span>: <span class="text-green-400">auto</span>; <span class="text-gray-500">/* 1 1 auto */</span></div>
+        <div><span class="text-blue-400">flex</span>: <span class="text-green-400">none</span>; <span class="text-gray-500">/* 0 0 auto */</span></div>
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">Flexbox Cheatsheet — Based on Bootstrap 4 Flexbox Cheat Sheet</div>
+  </div>
+  <script>
+    function setOrder(orders) {
+      const items = document.getElementById('orderDemo').children;
+      for (let i = 0; i < items.length; i++) {
+        items[i].style.order = orders[i];
+      }
+    }
+    function updateGrow() {
+      const v = document.getElementById('growRange').value;
+      document.getElementById('growItem').style.flexGrow = v;
+      document.getElementById('growVal').textContent = v;
+      document.getElementById('growDisplay').textContent = v;
+    }
+    function updateShrink() {
+      const s = document.getElementById('shrinkRange').value;
+      const b = document.getElementById('basisRange').value;
+      document.getElementById('shrinkItem').style.flexShrink = s;
+      document.getElementById('shrinkItem').style.flexBasis = b + 'px';
+      document.getElementById('shrinkVal').textContent = s;
+      document.getElementById('basisVal').textContent = b + 'px';
+      document.getElementById('shrinkDisplay').textContent = s;
+      document.getElementById('basisDisplay').textContent = b + 'px';
+    }
+  </script>
+</body>
+</html>

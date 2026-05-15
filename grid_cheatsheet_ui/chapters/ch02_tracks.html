@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Grid Tracks — CSS Grid Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .prop-tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.8rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .grid-play { display: grid; padding: 10px; background: #1e1e2e; border-radius: 12px; margin: 1rem 0; transition: all 0.3s; }
+    .grid-play > div { border-radius: 8px; padding: 14px 10px; text-align: center; color: white; font-weight: bold; font-size: 0.8rem; }
+    .grid-play > div:nth-child(1) { background: linear-gradient(135deg,#3b82f6,#8b5cf6); }
+    .grid-play > div:nth-child(2) { background: linear-gradient(135deg,#f472b6,#ec4899); }
+    .grid-play > div:nth-child(3) { background: linear-gradient(135deg,#10b981,#059669); }
+    .grid-play > div:nth-child(4) { background: linear-gradient(135deg,#f59e0b,#d97706); }
+    .grid-play > div:nth-child(5) { background: linear-gradient(135deg,#ef4444,#dc2626); }
+    .grid-play > div:nth-child(6) { background: linear-gradient(135deg,#06b6d4,#0891b2); }
+    .track-label { display: flex; justify-content: center; gap: 4px; flex-wrap: wrap; }
+    input[type=range] { width: 120px; accent-color: #8b5cf6; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6"><i class="fas fa-arrow-left"></i> Back</a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-columns text-3xl text-cyan-400"></i>
+      <h1 class="text-3xl font-bold">Grid Tracks</h1>
+    </div>
+    <div class="info-card mb-6">
+      <p class="text-gray-300">Grid tracks are defined with <span class="prop-tag">grid-template-columns</span> and <span class="prop-tag">grid-template-rows</span>. A track is the space between any two grid lines. You can use fixed units (px), flexible units (fr, %), or the <span class="prop-tag">minmax()</span> function.</p>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-arrows-alt-h mr-2"></i>grid-template-columns</h2>
+      <div class="flex flex-wrap gap-3 items-center mb-3">
+        <select onchange="updateTracks()" id="colTemplate" class="bg-slate-700 rounded px-3 py-1 text-sm font-mono">
+          <option value="1fr 1fr 1fr">1fr 1fr 1fr</option>
+          <option value="100px 1fr 100px">100px 1fr 100px</option>
+          <option value="2fr 1fr 1fr">2fr 1fr 1fr</option>
+          <option value="1fr 2fr 1fr">1fr 2fr 1fr</option>
+          <option value="100px 200px 1fr">100px 200px 1fr</option>
+          <option value="200px 200px 200px">200px 200px 200px</option>
+          <option value="repeat(3, 1fr)">repeat(3, 1fr)</option>
+          <option value="repeat(2, 1fr) 100px">repeat(2, 1fr) 100px</option>
+        </select>
+        <span class="text-xs text-gray-400">grid-template-columns:</span>
+        <span id="colVal" class="prop-tag">1fr 1fr 1fr</span>
+      </div>
+      <div id="trackColDemo" class="grid-play" style="grid-template-columns:1fr 1fr 1fr;gap:8px">
+        <div>1</div><div>2</div><div>3</div>
+        <div>4</div><div>5</div><div>6</div>
+      </div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-arrows-alt-v mr-2"></i>grid-template-rows</h2>
+      <div class="flex flex-wrap gap-3 items-center mb-3">
+        <select onchange="updateRows()" id="rowTemplate" class="bg-slate-700 rounded px-3 py-1 text-sm font-mono">
+          <option value="auto auto auto">auto auto auto</option>
+          <option value="80px 80px 80px">80px 80px 80px</option>
+          <option value="50px 100px 150px">50px 100px 150px</option>
+          <option value="1fr 2fr 1fr">1fr 2fr 1fr</option>
+          <option value="100px 1fr 100px">100px 1fr 100px</option>
+        </select>
+        <span class="text-xs text-gray-400">grid-template-rows:</span>
+        <span id="rowVal" class="prop-tag">auto auto auto</span>
+      </div>
+      <div id="trackRowDemo" class="grid-play" style="grid-template-columns:1fr 1fr;grid-template-rows:auto auto auto;gap:8px">
+        <div>1</div><div>2</div><div>3</div>
+        <div>4</div><div>5</div><div>6</div>
+      </div>
+    </div>
+
+    <div class="info-card">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-list mr-2"></i>Key Concepts</h2>
+      <div class="space-y-3 text-sm">
+        <p>✦ <strong class="text-cyan-300">Fixed tracks</strong> use px, pt, cm — grid stays at exact sizes regardless of viewport.</p>
+        <p>✦ <strong class="text-cyan-300">Flexible tracks</strong> use %, fr — grid adapts to available space.</p>
+        <p>✦ The <span class="prop-tag">fr</span> unit represents a <strong class="text-yellow-300">fraction of available space</strong> in the grid container.</p>
+        <p>✦ <span class="prop-tag">fr</span> grows and shrinks proportionally. Combine with fixed sizes freely.</p>
+        <p>✦ <span class="prop-tag">repeat()</span> notation repeats track patterns. E.g. <span class="prop-tag">repeat(3, 1fr)</span> = <span class="prop-tag">1fr 1fr 1fr</span>.</p>
+        <p>✦ Grid lines are <strong class="text-yellow-300">automatically numbered</strong> — track count + 1 lines per axis.</p>
+        <p class="text-xs text-gray-500 mt-2">Try different combinations above to see how tracks resize in real-time.</p>
+      </div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">CSS Grid Cheatsheet — Based on Vanessa A Costa's Guide</div>
+  </div>
+  <script>
+    function updateTracks() {
+      const v = document.getElementById('colTemplate').value;
+      document.getElementById('trackColDemo').style.gridTemplateColumns = v;
+      document.getElementById('colVal').textContent = v;
+    }
+    function updateRows() {
+      const v = document.getElementById('rowTemplate').value;
+      document.getElementById('trackRowDemo').style.gridTemplateRows = v;
+      document.getElementById('rowVal').textContent = v;
+    }
+  </script>
+</body>
+</html>

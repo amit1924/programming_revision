@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Plotly — Python Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .code-block { background: #1e1e2e; border: 1px solid #2d2d44; border-radius: 12px; padding: 1rem; font-family: 'Fira Code', monospace; font-size: 0.9rem; overflow-x: auto; }
+    .code-block .kw { color: #c792ea; } .code-block .fn { color: #82aaff; } .code-block .str { color: #c3e88d; }
+    .code-block .cm { color: #546e7a; font-style: italic; } .code-block .num { color: #f78c6c; } .code-block .op { color: #89ddff; }
+    .code-block .bool { color: #ff5370; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .output-box { background: #0a1a0f; border: 1px solid #1a4a2a; border-radius: 8px; padding: 0.5rem 1rem; margin-top: 0.5rem; font-family: 'Fira Code', monospace; font-size: 0.85rem; color: #86efac; display: flex; align-items: center; gap: 0.5rem; flex-wrap: wrap; }
+    .output-box i { color: #4ade80; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-teal-400 hover:text-teal-300 mb-6">
+      <i class="fas fa-arrow-left"></i> Back
+    </a>
+    <div class="flex items-center gap-3 mb-6">
+      <i class="fas fa-chart-bar text-3xl text-teal-400"></i>
+      <h1 class="text-3xl font-bold">Plotly</h1>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-download mr-2"></i>Install</h2>
+      <div class="code-block">
+$ python -m pip install --user plotly pandas
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Plotly express + pandas installed</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-chart-line mr-2"></i>Line / Scatter / Bar</h2>
+      <div class="code-block">
+<span class="kw">import</span> plotly.express <span class="kw">as</span> px<br>
+x = <span class="fn">list</span>(<span class="fn">range</span>(<span class="num">5</span>))<br>
+y = [x<span class="op">**</span><span class="num">2</span> <span class="kw">for</span> x <span class="kw">in</span> x]<br><br>
+fig = px.line(x=x, y=y)   <span class="cm"># line chart</span><br>
+fig.show()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Interactive line chart opens in browser</div>
+      <div class="code-block mt-2">
+fig = px.scatter(x=x, y=y)  <span class="cm"># scatter</span><br>
+fig = px.bar(x=x, y=y)      <span class="cm"># bar chart</span><br>
+fig.show()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Interactive scatter or bar chart in browser</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-tag mr-2"></i>Titles & Labels</h2>
+      <div class="code-block">
+title = <span class="str">"Square Numbers"</span><br>
+labels = {<span class="str">'x'</span>: <span class="str">'Value'</span>, <span class="str">'y'</span>: <span class="str">'Square'</span>}<br>
+fig = px.scatter(x=x, y=y, title=title, labels=labels)<br>
+fig.show()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Chart with title "Square Numbers" and labeled axes</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-paint-brush mr-2"></i>Advanced Customization</h2>
+      <div class="code-block">
+fig = px.scatter(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;x=x, y=y,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title=title, labels=labels,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;size=y,        <span class="cm"># bigger dots for bigger values</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;color=y,       <span class="cm"># color by value</span><br>
+&nbsp;&nbsp;&nbsp;&nbsp;opacity=<span class="num">0.5</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;template=<span class="str">'plotly_dark'</span>,<br>
+)<br>
+fig.update_layout(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title_font_size=<span class="num">30</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;xaxis_title_font_size=<span class="num">24</span>,<br>
+)<br>
+fig.show()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Dark-themed scatter plot with size/color mapped to values</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-layer-group mr-2"></i>Subplots & Multiple Traces</h2>
+      <div class="code-block">
+<span class="kw">from</span> plotly.subplots <span class="kw">import</span> make_subplots<br>
+<span class="kw">import</span> plotly.graph_objects <span class="kw">as</span> go<br><br>
+fig = make_subplots(rows=<span class="num">1</span>, cols=<span class="num">2</span>, shared_yaxes=<span class="bool">True</span>)<br>
+fig.add_trace(go.Scatter(x=x, y=y), row=<span class="num">1</span>, col=<span class="num">1</span>)<br>
+cubes = [x<span class="op">**</span><span class="num">3</span> <span class="kw">for</span> x <span class="kw">in</span> x]<br>
+fig.add_trace(go.Scatter(x=x, y=cubes), row=<span class="num">1</span>, col=<span class="num">2</span>)<br>
+fig.update_layout(title_text=<span class="str">"Squares & Cubes"</span>)<br>
+fig.show()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Two side-by-side charts: Left=squares, Right=cubes</div>
+    </div>
+
+    <div class="info-card mb-4">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-plus-circle mr-2"></i>Adding Traces</h2>
+      <div class="code-block">
+days = <span class="fn">list</span>(<span class="fn">range</span>(<span class="num">1</span>, <span class="num">10</span>))<br>
+highs = [<span class="num">60</span>, <span class="num">63</span>, <span class="num">68</span>, <span class="num">70</span>, <span class="num">68</span>, <span class="num">70</span>, <span class="num">66</span>, <span class="num">62</span>, <span class="num">64</span>]<br>
+lows = [<span class="num">51</span>, <span class="num">54</span>, <span class="num">53</span>, <span class="num">57</span>, <span class="num">54</span>, <span class="num">56</span>, <span class="num">52</span>, <span class="num">53</span>, <span class="num">49</span>]<br>
+fig = px.line(x=days, y=lows)<br>
+fig.add_trace(go.Scatter(x=days, y=highs, mode=<span class="str">'lines'</span>))<br>
+fig.show()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Two lines: lows (blue) and highs (second trace added)</div>
+    </div>
+
+    <div class="info-card">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-globe mr-2"></i>Geo Maps</h2>
+      <div class="code-block">
+lats = [<span class="num">63.069</span>, <span class="num">60.5671</span>, <span class="num">46.8529</span>]<br>
+lons = [<span class="op">-</span><span class="num">151.0063</span>, <span class="op">-</span><span class="num">140.4055</span>, <span class="op">-</span><span class="num">121.7604</span>]<br>
+names = [<span class="str">"Denali"</span>, <span class="str">"Mt Logan"</span>, <span class="str">"Mt Rainier"</span>]<br>
+fig = px.scatter_geo(<br>
+&nbsp;&nbsp;&nbsp;&nbsp;lat=lats, lon=lons,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;title=<span class="str">"High Peaks"</span>,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;text=names,<br>
+&nbsp;&nbsp;&nbsp;&nbsp;scope=<span class="str">"north america"</span>,<br>
+)<br>
+fig.update_traces(textposition=<span class="str">"middle right"</span>)<br>
+fig.show()
+      </div>
+      <div class="output-box"><i class="fas fa-terminal"></i> Map of North America with labeled mountain peaks</div>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">Python Crash Course — Beginner's Python Cheatsheet</div>
+  </div>
+</body>
+</html>
