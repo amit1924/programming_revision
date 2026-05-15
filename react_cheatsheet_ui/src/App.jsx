@@ -37,7 +37,7 @@ export default function App() {
 
       {/* Hamburger toggle (mobile) */}
       <button className="hamburger" onClick={() => setNavOpen(!navOpen)}>
-        <i className={`fas ${navOpen ? 'fa-times' : 'fa-bars'}`}></i>
+        <span className="ham-icon">{navOpen ? '✕' : '☰'}</span>
         <span>Sections</span>
       </button>
 
