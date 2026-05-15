@@ -1,0 +1,1413 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Loading...</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; font-family: system-ui, sans-serif; }
+    .info-card { transition: all 0.3s; }
+    .info-card:hover { box-shadow: 0 0 20px rgba(99,102,241,0.15); transform: translateY(-2px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.75rem; color: #ffd700; display: inline-block; }
+    .demo-btn { transition: all 0.2s; }
+    .demo-btn:hover { filter: brightness(1.3); transform: scale(1.02); }
+    .code-wrap { white-space: pre-wrap; word-break: break-word; }
+    .demo-box { border: 1px solid #334155; border-radius: 0.5rem; padding: 0.75rem; background: #1e293b; transition: all 0.3s; }
+    .bar { height: 24px; border-radius: 4px; transition: all 0.3s; display: inline-block; margin: 1px; }
+    @keyframes pulse-glow { 0%,100% { box-shadow: 0 0 5px rgba(99,102,241,0.3); } 50% { box-shadow: 0 0 15px rgba(99,102,241,0.6); } }
+    .pulsing { animation: pulse-glow 1.5s ease-in-out infinite; }
+    .phase-active { background: #3b82f6 !important; color: white !important; }
+    .loading-spinner { border: 3px solid #1e293b; border-top: 3px solid #60a5fa; border-radius: 50%; width: 40px; height: 40px; animation: spin 0.8s linear infinite; margin: 2rem auto; }
+    @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeSlide 0.3s ease-out; }
+    .proto-node { display: inline-flex; align-items: center; justify-content: center; width: 80px; height: 50px; border-radius: 8px; margin: 4px; font-size: 0.65rem; font-weight: 600; flex-direction: column; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div id="app" class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+    <div id="loading" class="text-center py-20">
+      <div class="loading-spinner"></div>
+      <p class="text-gray-400 mt-4">Loading JavaScript Cheatsheet...</p>
+    </div>
+    <div id="content" style="display:none"></div>
+    <div id="footer" class="text-center text-gray-500 text-xs mt-8" style="display:none">Interactive JavaScript Cheatsheet — 478 Questions with Live Visualizations</div>
+  </div>
+
+  <script>
+    const COLORS = {
+      yellow: { icon: 'text-yellow-400', bg: 'bg-yellow-900/30', accent: 'text-yellow-300', border: 'border-yellow-800/40', btn: 'bg-yellow-700 hover:bg-yellow-600', light: '#eab308' },
+      emerald: { icon: 'text-emerald-400', bg: 'bg-emerald-900/30', accent: 'text-emerald-300', border: 'border-emerald-800/40', btn: 'bg-emerald-700 hover:bg-emerald-600', light: '#10b981' },
+      blue: { icon: 'text-blue-400', bg: 'bg-blue-900/30', accent: 'text-blue-300', border: 'border-blue-800/40', btn: 'bg-blue-700 hover:bg-blue-600', light: '#3b82f6' },
+      purple: { icon: 'text-purple-400', bg: 'bg-purple-900/30', accent: 'text-purple-300', border: 'border-purple-800/40', btn: 'bg-purple-700 hover:bg-purple-600', light: '#a855f7' },
+      cyan: { icon: 'text-cyan-400', bg: 'bg-cyan-900/30', accent: 'text-cyan-300', border: 'border-cyan-800/40', btn: 'bg-cyan-700 hover:bg-cyan-600', light: '#06b6d4' },
+      pink: { icon: 'text-pink-400', bg: 'bg-pink-900/30', accent: 'text-pink-300', border: 'border-pink-800/40', btn: 'bg-pink-700 hover:bg-pink-600', light: '#ec4899' },
+      orange: { icon: 'text-orange-400', bg: 'bg-orange-900/30', accent: 'text-orange-300', border: 'border-orange-800/40', btn: 'bg-orange-700 hover:bg-orange-600', light: '#f97316' },
+      teal: { icon: 'text-teal-400', bg: 'bg-teal-900/30', accent: 'text-teal-300', border: 'border-teal-800/40', btn: 'bg-teal-700 hover:bg-teal-600', light: '#14b8a6' },
+      rose: { icon: 'text-rose-400', bg: 'bg-rose-900/30', accent: 'text-rose-300', border: 'border-rose-800/40', btn: 'bg-rose-700 hover:bg-rose-600', light: '#f43f5e' },
+      amber: { icon: 'text-amber-400', bg: 'bg-amber-900/30', accent: 'text-amber-300', border: 'border-amber-800/40', btn: 'bg-amber-700 hover:bg-amber-600', light: '#f59e0b' },
+    };
+
+    const DEMO_RENDERERS = {};
+
+    // ────── Demo Renderers ──────
+
+    DEMO_RENDERERS['code-runner'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-terminal mr-1"></i>${q.demo.label || 'Click to run:'}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-3 rounded text-green-300 overflow-x-auto max-h-32 overflow-y-auto">Click a button to execute</pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['object-creation'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-cubes mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-3">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div class="flex flex-wrap gap-2">
+          <div id="obj-box-${q.id}" class="flex items-center justify-center w-full h-20 rounded bg-gradient-to-br from-slate-700 to-slate-800 border border-slate-600">
+            <span id="obj-val-${q.id}" class="text-xs text-gray-300">Click a button above</span>
+          </div>
+        </div>
+        <pre class="text-xs font-mono bg-black/40 p-2 rounded text-cyan-300 mt-2 overflow-x-auto" id="code-${q.id}"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['prototype-chain'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-link mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Build Chain</button>
+        <div id="proto-viz-${q.id}" class="flex flex-wrap items-center justify-center gap-1 mt-3 min-h-[100px]"></div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['call-apply-bind'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-hand-pointer mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div id="bind-box-${q.id}" class="text-xs text-gray-300 bg-slate-800/50 p-3 rounded border border-slate-600 min-h-[40px]"></div>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['json-converter'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-exchange-alt mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-3 rounded text-green-300 overflow-x-auto max-h-40 overflow-y-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['array-slice'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-cut mr-1"></i>${q.demo.label}</p>
+        <div class="flex items-center gap-2 mb-2 flex-wrap">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div class="flex flex-wrap gap-0.5 mb-2" id="array-vis-${q.id}"></div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['array-splice'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-edit mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div class="flex flex-wrap gap-0.5 mb-2" id="array-vis-${q.id}"></div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['comparison'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-balance-scale mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${q.demo.options[0]?.label || 'Run'}</button>
+        <div class="grid grid-cols-2 gap-2 mt-2">
+          <div class="bg-slate-800/60 p-2 rounded border border-slate-600">
+            <p class="text-xs font-bold text-cyan-400 mb-1">Left</p>
+            <pre id="compare-left-${q.id}" class="text-xs font-mono text-green-300"></pre>
+          </div>
+          <div class="bg-slate-800/60 p-2 rounded border border-slate-600">
+            <p class="text-xs font-bold text-pink-400 mb-1">Right</p>
+            <pre id="compare-right-${q.id}" class="text-xs font-mono text-green-300"></pre>
+          </div>
+        </div>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['comparison-table'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-table mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${q.demo.options[0]?.label || 'Run'}</button>
+        <div id="compare-table-${q.id}" class="mt-2 text-xs"></div>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['map-vs-object'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-columns mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div id="map-obj-${q.id}" class="grid grid-cols-2 gap-2 text-xs"></div>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['promise-states'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-spinner mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div class="flex items-center gap-2 mt-2" id="promise-viz-${q.id}">
+          <div class="px-3 py-1 rounded text-xs font-bold bg-slate-600 text-gray-300" id="ps-pending-${q.id}">⏳ Pending</div>
+          <i class="fas fa-arrow-right text-gray-600 text-xs"></i>
+          <div class="px-3 py-1 rounded text-xs font-bold bg-slate-600 text-gray-300" id="ps-resolve-${q.id}">✅ Fulfilled</div>
+          <i class="fas fa-arrow-right text-gray-600 text-xs"></i>
+          <div class="px-3 py-1 rounded text-xs font-bold bg-slate-600 text-gray-300" id="ps-reject-${q.id}">❌ Rejected</div>
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['promise-all'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-layer-group mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['promise-race'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-tachometer-alt mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${q.demo.options[0]?.label || 'Race'}</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['currying'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-layer-group mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div class="flex items-center gap-1 text-xs font-mono" id="curry-chain-${q.id}">
+          <span class="text-gray-500">curriedAdd</span>
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['type-checker'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-tag mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Check All Types</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['hoisting'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-arrow-up mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Show Hoisting</button>
+        <div class="flex flex-col gap-1 mt-2" id="hoist-viz-${q.id}"></div>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['closure'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-lock mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['scope'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-sitemap mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Show Scope</button>
+        <div class="flex flex-col items-center gap-1 mt-2" id="scope-viz-${q.id}"></div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['class-demo'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-cube mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Run Demo</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['event-flow'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-project-diagram mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['event-loop'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-redo mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Run</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['call-stack'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-layer-group mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Show Stack</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['debounce'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-hourglass mr-1"></i>${q.demo.label}</p>
+        <input type="text" id="debounce-input-${q.id}" placeholder="Type here..." class="w-full text-xs bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white mb-2" oninput="debounceTest(event, ${q.id})">
+        <div class="flex justify-between text-xs"><span class="text-gray-500">Events fired: <span id="debounce-count-${q.id}">0</span></span><span class="text-gray-500">Actual calls: <span id="debounce-calls-${q.id}">0</span></span></div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto max-h-16">Results appear here after typing stops...</pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['throttle'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-tachometer-alt mr-1"></i>${q.demo.label}</p>
+        <button id="throttle-btn-${q.id}" onclick="throttleTest(${q.id})" class="demo-btn text-xs px-4 py-2 ${c.btn} rounded font-mono mb-2">Click rapidly!</button>
+        <div class="flex justify-between text-xs"><span class="text-gray-500">Clicks: <span id="throttle-clicks-${q.id}">0</span></span><span class="text-gray-500">Calls: <span id="throttle-calls-${q.id}">0</span></span></div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto max-h-16"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['memoization'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-brain mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Test Memoization</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['tdz'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-skull mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['url-encoder'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-link mr-1"></i>${q.demo.label}</p>
+        <input type="text" id="url-input-${q.id}" value="hello world & more=?" class="w-full text-xs bg-slate-700 border border-slate-600 rounded px-3 py-2 text-white mb-2">
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="urlDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['json-formatter'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-brackets-curly mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Format</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto max-h-40"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['spread'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-expand-arrows-alt mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Show Spread</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['destructuring'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-box-open mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Demo</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['freeze'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-icicles mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Demo</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['proxy'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-robot mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Run</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['higher-order'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-arrow-up mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Run</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['higer-order'] = DEMO_RENDERERS['higher-order'];
+
+    DEMO_RENDERERS['collection'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-boxes mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['compose-pipe'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-arrows-alt-h mr-1"></i>${q.demo.label}</p>
+        <button onclick="executeDemo(${q.id},0)" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">Run</button>
+        <pre id="demo-${q.id}" class="text-xs font-mono bg-black/60 p-2 rounded text-green-300 mt-2 overflow-x-auto"></pre>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['animation'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-play mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div class="h-20 bg-slate-800/60 rounded border border-slate-600 relative overflow-hidden" id="raf-box-${q.id}">
+          <div id="raf-ball-${q.id}" class="w-6 h-6 rounded-full bg-blue-500 absolute" style="top:50%;transform:translateY(-50%)"></div>
+        </div>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['sort-visualizer'] = function(q, c) {
+      return `<div class="demo-box mt-3">
+        <p class="text-xs text-gray-400 mb-2"><i class="fas fa-sort mr-1"></i>${q.demo.label}</p>
+        <div class="flex flex-wrap gap-2 mb-2">
+          ${q.demo.options.map((o, i) => `<button onclick="executeDemo(${q.id},${i})" class="demo-btn text-xs px-3 py-1 ${c.btn} rounded font-mono">${o.label}</button>`).join('')}
+        </div>
+        <div class="flex items-end gap-0.5 h-20" id="sort-vis-${q.id}"></div>
+      </div>`;
+    };
+
+    DEMO_RENDERERS['info'] = function() { return ''; };
+    DEMO_RENDERERS['this-demo'] = DEMO_RENDERERS['code-runner'];
+    DEMO_RENDERERS['event-loop-vis'] = DEMO_RENDERERS['event-loop'];
+
+    // ────── Global demo state ──────
+    const demoStates = {};
+
+    // ────── Execute demo function ──────
+    window.executeDemo = function(qid, optIdx) {
+      const data = window.allQuestionsData?.find(q => q.id === qid);
+      if (!data) return;
+      const opt = data.demo?.options?.[optIdx];
+      const el = document.getElementById('demo-' + qid);
+      if (!el) return;
+
+      const q = data.text.toLowerCase();
+
+      try {
+        let result = '';
+
+        if (q.includes('prototype chain')) {
+          const viz = document.getElementById('proto-viz-' + qid);
+          if (viz) {
+            viz.innerHTML = `
+              <div class="proto-node bg-amber-700/60 border border-amber-500 text-amber-200">rabbit<br><span class="opacity-70">jumps: true</span></div>
+              <i class="fas fa-arrow-down text-xs text-gray-500 mx-1"></i>
+              <div class="proto-node bg-emerald-700/60 border border-emerald-500 text-emerald-200">animal<br><span class="opacity-70">eats: true</span></div>
+              <i class="fas fa-arrow-down text-xs text-gray-500 mx-1"></i>
+              <div class="proto-node bg-blue-700/60 border border-blue-500 text-blue-200">Object.prototype<br><span class="opacity-70">toString: fn</span></div>
+              <i class="fas fa-arrow-down text-xs text-gray-500 mx-1"></i>
+              <div class="proto-node bg-red-700/60 border border-red-500 text-red-200">null</div>
+            `;
+          }
+          result = '✅ Prototype chain: rabbit → animal → Object.prototype → null\nrabbit.jumps = true\nrabbit.eats = true (inherited)\nrabbit.toString = fn (inherited from Object)';
+        }
+        else if (q.includes('call, apply') || q.includes('call apply')) {
+          const box = document.getElementById('bind-box-' + qid);
+          const outputs = {
+            'call()': 'greet.call(person, "Hello", "!") → "Hello, Alice!"',
+            'apply()': 'greet.apply(person, ["Hi", "?"]) → "Hi, Alice?"',
+            'bind()': 'const bound = greet.bind(person); bound("Hey",".") → "Hey, Alice."'
+          };
+          result = outputs[opt?.label] || 'Click a method above';
+          if (box) box.innerHTML = `<span class="text-green-300">${result}</span>`;
+          return;
+        }
+        else if (q.includes('json') && (q.includes('stringify') || q.includes('parse') || q.includes('common'))) {
+          const obj = { name: 'Alice', age: 25, hobbies: ['reading', 'coding'] };
+          if (opt?.id === 'parse') {
+            const str = JSON.stringify(obj);
+            result = 'JSON string:\n' + str + '\n\nParsed:\n' + JSON.stringify(JSON.parse(str), null, 2);
+          } else {
+            result = 'Object:\n' + JSON.stringify(obj, null, 2) + '\n\nStringified:\n' + JSON.stringify(obj);
+          }
+        }
+        else if (q.includes('slice') && q.includes('splice')) {
+          const a = [1,2,3,4,5], b = [1,2,3,4,5];
+          const sliced = a.slice(1, 3);
+          const spliced = b.splice(1, 2);
+          result = 'Original: [1,2,3,4,5]\n\nslice(1,3) → [' + sliced + ']\nOriginal after slice: [1,2,3,4,5] (unchanged)\n\nsplice(1,2) → [' + spliced + ']\nOriginal after splice: [' + b + '] (changed!)';
+        }
+        else if (q.includes('array slice')) {
+          const arr = [10, 20, 30, 40, 50];
+          const vis = document.getElementById('array-vis-' + qid);
+          let sliced;
+          if (opt?.id === 'slice-2') sliced = arr.slice(2);
+          else if (opt?.id === 'slice--2') sliced = arr.slice(-2);
+          else sliced = arr.slice(1, 3);
+
+          if (vis) {
+            vis.innerHTML = arr.map(v => `<span class="bar bg-blue-600" style="width:40px;text-align:center;line-height:24px;font-size:11px;color:white">${v}</span>`).join('');
+          }
+          result = 'Original: [' + arr + ']\n' + opt?.label + ' → [' + sliced + ']';
+        }
+        else if (q.includes('array splice')) {
+          const arr = [10, 20, 30, 40, 50];
+          let removed, msg;
+          if (opt?.id === 'splice-remove') { removed = arr.splice(1, 2); msg = 'Removed 2 from index 1'; }
+          else if (opt?.id === 'splice-insert') { arr.splice(1, 0, 99); removed = []; msg = 'Inserted 99 at index 1'; }
+          else { arr.splice(2, 1, 11, 22); removed = []; msg = 'Replaced 1 with 11,22 at index 2'; }
+          result = msg + '\nResult: [' + arr + ']' + (removed.length ? '\nRemoved: [' + removed + ']' : '');
+        }
+        else if (q.includes('map') && q.includes('object') && !q.includes('array') && !q.includes('foreach')) {
+          const mapPart = document.getElementById('map-obj-' + qid);
+          if (mapPart) {
+            if (opt?.id === 'demo-map') {
+              mapPart.innerHTML = `<div class="bg-slate-800/80 p-2 rounded border border-cyan-700"><p class="font-bold text-cyan-400 mb-1">Map</p><pre class="font-mono text-green-300 text-xs">const m = new Map();\nm.set('key', 'value');\nm.set({id:1}, 'obj');\nm.set(()=>{}, 'fn');\nconsole.log(m.size); // 3</pre></div>
+              <div class="bg-slate-800/80 p-2 rounded border border-slate-600"><p class="font-bold text-gray-400 mb-1">Object</p><pre class="font-mono text-green-300 text-xs">const o = {};\no.key = 'value';\n// Object keys: strings/symbols only\nconsole.log(Object.keys(o).length); // 1</pre></div>`;
+            }
+          }
+          result = '';
+        }
+        else if (q.includes('promise') && q.includes('state')) {
+          const pending = document.getElementById('ps-pending-' + qid);
+          const resolve = document.getElementById('ps-resolve-' + qid);
+          const reject = document.getElementById('ps-reject-' + qid);
+          [pending, resolve, reject].forEach(e => { if(e) { e.className = 'px-3 py-1 rounded text-xs font-bold bg-slate-600 text-gray-300'; } });
+
+          if (opt?.id === 'pending') {
+            if (pending) pending.className = 'px-3 py-1 rounded text-xs font-bold bg-yellow-600 text-yellow-200 pulsing';
+            result = '⏳ Promise is pending... waiting for async operation';
+          } else if (opt?.id === 'resolve') {
+            if (resolve) resolve.className = 'px-3 py-1 rounded text-xs font-bold bg-green-600 text-green-200';
+            result = '✅ Promise fulfilled with value: "Success!"';
+          } else {
+            if (reject) reject.className = 'px-3 py-1 rounded text-xs font-bold bg-red-600 text-red-200';
+            result = '❌ Promise rejected with error: "Something went wrong"';
+          }
+        }
+        else if (q.includes('promise.all')) {
+          result = opt?.id === 'all-resolve'
+            ? '✅ Promise.all([p1, p2, p3]) → [1, 2, 3]\nAll promises resolved successfully!'
+            : '❌ Promise.all([p1, Promise.reject("FAIL"), p3])\n→ Rejected with: "FAIL"\n(First rejection immediately fails all)';
+        }
+        else if (q.includes('promise.race')) {
+          result = '🏁 Promise.race([slow(500ms), fast(100ms)])\n→ "fast" (fastest wins!)\n\nThe race settled with the first result.';
+        }
+        else if (q.includes('currying function') || q.includes('curry')) {
+          const chain = document.getElementById('curry-chain-' + qid);
+          if (opt?.id === 'step1') {
+            if (chain) chain.innerHTML = '<span class="text-gray-500">curriedAdd</span><span class="text-yellow-300">(1)</span><span class="text-gray-600">(2)(3)</span>';
+            result = 'curriedAdd(1) → returns function expecting next argument\n→ [Function: fn]';
+          } else if (opt?.id === 'step2') {
+            if (chain) chain.innerHTML = '<span class="text-gray-500">curriedAdd(1)</span><span class="text-yellow-300">(2)</span><span class="text-gray-600">(3)</span>';
+            result = 'curriedAdd(1)(2) → returns function expecting last argument\n→ [Function: fn]';
+          } else {
+            if (chain) chain.innerHTML = '<span class="text-gray-500">curriedAdd(1)(2)</span><span class="text-yellow-300">(3)</span><span class="text-gray-200 font-bold"> = 6</span>';
+            result = 'curriedAdd(1)(2)(3) → 6\n\nPartial application:\nconst add5 = curriedAdd(5);\nadd5(3)(2) = 10';
+          }
+        }
+        else if (q.includes('typeof')) {
+          result = `typeof 42 → "number"
+typeof "hello" → "string"
+typeof true → "boolean"
+typeof undefined → "undefined"
+typeof null → "object" ⚠️ (historic bug)
+typeof {} → "object"
+typeof [] → "object"
+typeof function(){} → "function"
+typeof Symbol() → "symbol"
+typeof 1n → "bigint"`;
+        }
+        else if (q.includes('hoisting')) {
+          result = `// What JavaScript sees (hoisted):
+var x;          // → hoisted with 'undefined'
+function foo() { return 'ok'; }  // → fully hoisted
+
+// Your code:
+console.log(x); // undefined (not error!)
+foo();          // 'ok'
+
+console.log(z); // ReferenceError! (let TDZ)
+let z = 3;`;
+        }
+        else if (q.includes('closure')) {
+          if (!demoStates[qid]) demoStates[qid] = { count: 0 };
+          const cs = demoStates[qid];
+          if (opt?.id === 'create') {
+            cs.count = 0;
+            result = 'Counter created! count = 0. Click "Increment" to see closure in action.';
+          } else if (opt?.id === 'increment') {
+            cs.count++;
+            result = `Counter incremented! count = ${cs.count}\n\nThe inner function 'remembers' the count variable\nfrom the outer scope (closure!).`;
+          } else {
+            result = `Counter value: ${cs.count || 0}`;
+          }
+        }
+        else if (q.includes('scope in javascript')) {
+          const viz = document.getElementById('scope-viz-' + qid);
+          if (viz) {
+            viz.innerHTML = `
+              <div class="border border-red-700 bg-red-900/20 rounded p-2 text-xs w-full text-center">🌐 Global Scope: const global = 'global'</div>
+              <i class="fas fa-arrow-down text-xs text-gray-600 my-0.5"></i>
+              <div class="border border-blue-700 bg-blue-900/20 rounded p-2 text-xs w-full text-center">🔵 Function outer(): const outerVar = 'outer'</div>
+              <i class="fas fa-arrow-down text-xs text-gray-600 my-0.5"></i>
+              <div class="border border-green-700 bg-green-900/20 rounded p-2 text-xs w-full text-center">🟢 Function inner(): const innerVar = 'inner'<br><span class="text-gray-400">Can access: innerVar, outerVar, global</span></div>
+            `;
+          }
+          result = 'Lexical scope: inner functions can access outer variables.\nScope chain: inner → outer → global';
+        }
+        else if (q.includes('event loop')) {
+          result = `⏱️ Event Loop Execution:
+
+1. console.log('Start');        // → Call stack
+2. setTimeout(() => log('CB'), 0); // → Browser API → Task queue
+3. console.log('End');          // → Call stack
+4. [Call stack empty!]          // → Event loop picks task
+5. console.log('CB');           // → Logs "CB" last
+
+Output: Start → End → CB`;
+        }
+        else if (q.includes('call stack')) {
+          result = `📚 Call Stack Visualization:
+
+function c() { return 'c'; }
+function b() { return c() + 'b'; }
+function a() { return b() + 'a'; }
+
+a() called:
+Stack: [a]
+  → a calls b: [a, b]
+    → b calls c: [a, b, c]
+      ← c returns: [a, b]
+    ← b returns: [a]
+  ← a returns: []
+
+Result: "cba"`;
+        }
+        else if (q.includes('debounc')) {
+          result = 'Debounce demo active! Type in the input above. The function only runs after you stop typing for 500ms.';
+        }
+        else if (q.includes('throttl')) {
+          result = 'Throttle demo active! Click the button rapidly. The function runs at most once every 500ms.';
+        }
+        else if (q.includes('memoization')) {
+          result = `🧠 Memoization Performance Test:
+
+fib(40) WITHOUT memo: 1,023,334,155 calls... (too slow!)
+fib(40) WITH memo: 41 calls (compute each once)
+
+First call: fib(40) → computes all
+Second call: fib(40) → "Cache hit!" → instant!
+
+Speed improvement: ~10,000,000x faster!`;
+        }
+        else if (q.includes('event delegation')) {
+          result = `🎯 Event Delegation Pattern:
+
+Parent <ul> has ONE click listener.
+When any <li> is clicked, event bubbles up.
+e.target tells us which <li> was clicked.
+
+✅ Single listener
+✅ Works for dynamically added elements
+✅ Better memory usage`;
+        }
+        else if (q.includes('compose') || q.includes('pipe')) {
+          result = `🔀 Function Composition:
+
+const add1 = x => x + 1;
+const double = x => x * 2;
+const square = x => x * x;
+
+// Compose (right-to-left):
+compose(square, double, add1)(3)
+→ square(double(add1(3)))
+→ square(double(4))
+→ square(8)
+→ 64
+
+// Pipe (left-to-right):
+pipe(add1, double, square)(3)
+→ square(double(add1(3)))
+→ 64`;
+        }
+        else if (q.includes('freeze')) {
+          result = `🧊 Object.freeze() Demo:
+
+const config = Object.freeze({ API_KEY: 'xyz', port: 3000 });
+
+config.port = 5000;  // ❌ Silently fails (or TypeError in strict)
+config.newProp = 1;  // ❌ Cannot add
+delete config.port;  // ❌ Cannot delete
+
+Object.isFrozen(config); // → true
+
+⚠️ Shallow: nested objects are NOT frozen!`;
+        }
+        else if (q.includes('proxy')) {
+          result = `🦾 Proxy Demo:
+
+const handler = {
+  get(target, prop) {
+    console.log(\`Accessing "\${prop}"\`);
+    return prop in target ? target[prop] : 'NOT FOUND';
+  },
+  set(target, prop, value) {
+    console.log(\`Setting "\${prop}" = "\${value}"\`);
+    target[prop] = value;
+    return true;
+  }
+};
+
+const p = new Proxy({ name: 'Alice' }, handler);
+p.name;  // Logs: Accessing "name" → 'Alice'
+p.age;   // Logs: Accessing "age" → 'NOT FOUND'
+p.age = 25; // Logs: Setting "age" = "25"`;
+        }
+        else if (q.includes('higher order function') || q.includes('hof')) {
+          result = `⬆️ Higher-Order Functions:
+
+const nums = [1, 2, 3, 4, 5];
+
+// map: transforms each element
+nums.map(n => n * 2);     // [2, 4, 6, 8, 10]
+
+// filter: keeps elements passing test
+nums.filter(n => n > 2);  // [3, 4, 5]
+
+// reduce: accumulates values
+nums.reduce((a, b) => a + b, 0); // 15
+
+// Functions that RETURN functions:
+const multiplyBy = factor => x => x * factor;
+const triple = multiplyBy(3);
+triple(5); // 15`;
+        }
+        else if (q.includes('spread operator')) {
+          result = `🌱 Spread Operator (...):
+
+// Arrays
+const arr1 = [1, 2, 3];
+const arr2 = [4, 5];
+const merged = [...arr1, ...arr2]; // [1,2,3,4,5]
+const clone = [...arr1];           // [1,2,3] (shallow)
+
+// Objects
+const obj1 = { a: 1, b: 2 };
+const obj2 = { c: 3 };
+const mergedObj = { ...obj1, ...obj2 }; // {a:1, b:2, c:3}
+
+// Function calls
+Math.max(...[1, 5, 3]); // 5`;
+        }
+        else if (q.includes('destructur')) {
+          result = `📦 Destructuring:
+
+// Array
+const [a, b, ...rest] = [1, 2, 3, 4, 5];
+a = 1, b = 2, rest = [3, 4, 5]
+
+// Object
+const { name, age } = { name: 'Alice', age: 30 };
+name = 'Alice', age = 30
+
+// Rename (alias)
+const { name: userName } = { name: 'Bob' };
+userName = 'Bob'
+
+// Default values
+const [x = 10] = [];  // x = 10
+
+// Swap
+[x, y] = [y, x];`;
+        }
+        else if (q.includes('sort')) {
+          const arr = [5, 3, 8, 1, 2];
+          const vis = document.getElementById('sort-vis-' + qid);
+          const sorted = opt?.id === 'asc'
+            ? [...arr].sort((a,b) => a - b)
+            : [...arr].sort((a,b) => b - a);
+          if (vis) {
+            const max = Math.max(...sorted);
+            vis.innerHTML = sorted.map(v =>
+              `<div class="flex flex-col items-center"><div class="bar bg-blue-500" style="width:30px;height:${(v/max)*70}px"></div><span class="text-xs text-gray-400 mt-0.5">${v}</span></div>`
+            ).join('');
+          }
+          result = `Original: [${arr}]\nSorted: [${sorted}]`;
+        }
+        else if (q.includes('map') && q.includes('foreach')) {
+          result = `🗺️ map() vs forEach():
+
+const arr = [1, 2, 3];
+
+// map → returns new array
+const doubled = arr.map(n => n * 2);
+console.log(doubled); // [2, 4, 6]
+console.log(arr);     // [1, 2, 3] (unchanged)
+
+// forEach → returns undefined
+const result = arr.forEach(n => console.log(n));
+console.log(result);  // undefined
+
+// Chainable? map: ✅, forEach: ❌`;
+        }
+        else if (q.includes('class') && !q.includes('class=') && !q.includes('css')) {
+          result = `🏫 ES6 Classes:
+
+class Animal {
+  constructor(name) { this.name = name; }
+  speak() { return this.name + ' makes a sound'; }
+  static category() { return 'Living'; }
+}
+
+class Dog extends Animal {
+  constructor(name, breed) {
+    super(name);
+    this.breed = breed;
+  }
+  speak() { return this.name + ' barks!'; }
+}
+
+const rex = new Dog('Rex', 'Lab');
+rex.speak(); // 'Rex barks!'
+Dog.category(); // 'Living'`;
+        }
+        else if (q.includes('object') && q.includes('create')) {
+          const objBox = document.getElementById('obj-box-' + qid);
+          const valSpan = document.getElementById('obj-val-' + qid);
+          const codeEl = document.getElementById('code-' + qid);
+          if (opt?.id === 'literal') {
+            if (valSpan) valSpan.textContent = '{ name: "Alice", age: 30 }';
+            if (codeEl) codeEl.textContent = 'const obj = { name: "Alice", age: 30 };';
+            result = '✅ Object literal created!';
+          } else if (opt?.id === 'constructor') {
+            if (valSpan) valSpan.textContent = 'Person { name: "Bob" }';
+            if (codeEl) codeEl.textContent = 'function Person(n) { this.name = n; }\nconst p = new Person("Bob");';
+            result = '✅ Constructor function instance created!';
+          } else {
+            if (valSpan) valSpan.textContent = 'Animal { name: "Rex" } → "Rex says hi"';
+            if (codeEl) codeEl.textContent = 'class Animal { constructor(n) { this.name = n; } speak() { ... } }';
+            result = '✅ ES6 class instance created!';
+          }
+        }
+        else if (q.includes('event') && (q.includes('capture') || q.includes('bubbl') || q.includes('flow'))) {
+          result = `🌊 Event Propagation Phases:
+
+[CAPTURE PHASE]
+document → html → body → div → button
+
+[TARGET PHASE]
+→ button (the clicked element) ←
+
+[BUBBLE PHASE]
+button → div → body → html → document
+
+// Capture listener: addEventListener('click', fn, true)
+// Bubble listener: addEventListener('click', fn) [default]
+
+${opt?.id === 'capture' ? '🔽 Capture: root → target (top-down)' : '🔼 Bubble: target → root (bottom-up)'}`;
+        }
+        else if (q.includes('url') && (q.includes('encode') || q.includes('decode'))) {
+          const input = document.getElementById('url-input-' + qid);
+          const val = input?.value || 'hello world & more=?';
+          result = opt?.id === 'encode'
+            ? `encodeURI: ${encodeURI(val)}\n\nencodeURIComponent: ${encodeURIComponent(val)}`
+            : `decodeURI: ${decodeURI(val)}\n\ndecodeURIComponent: ${decodeURIComponent(val)}`;
+        }
+        else if (q.includes('json') && (q.includes('stringify') || q.includes('parse') || q.includes('format'))) {
+          const sample = { name: 'Alice', age: 25, hobbies: ['reading', 'coding'], address: { city: 'NYC', zip: 10001 } };
+          result = `Pretty-printed JSON:\n${JSON.stringify(sample, null, 2)}\n\nMinified:\n${JSON.stringify(sample)}`;
+        }
+        else if (q.includes('optional chain') || q.includes('optional chaining')) {
+          result = `🛡️ Optional Chaining (?.):
+
+const user = { profile: { name: 'Alice' } };
+
+// Without ?.
+const city = user && user.address && user.address.city;
+// or: user.address.city → TypeError!
+
+// With ?.
+const city = user?.address?.city; // undefined (safe!)
+const name = user?.profile?.name; // 'Alice'
+
+// Also works for methods:
+const result = obj?.method?.();    // undefined if no method
+
+// Dynamic access:
+const val = arr?.[index];`;
+        }
+        else if (q.includes('nullish coalescing')) {
+          result = `?? (Nullish Coalescing) vs || (OR):
+
+const val1 = 0, val2 = null, val3 = '', val4 = false;
+
+// || (treats all falsy as "no value")
+val1 || 'default' → 'default'  ⚠️ (0 is lost!)
+val2 || 'default' → 'default'
+val3 || 'default' → 'default'  ⚠️ ('' is lost!)
+val4 || 'default' → 'default'  ⚠️ (false is lost!)
+
+// ?? (treats ONLY null/undefined as "no value")
+val1 ?? 'default' → 0          ✅ (preserved!)
+val2 ?? 'default' → 'default'
+val3 ?? 'default' → ''          ✅ (preserved!)
+val4 ?? 'default' → false       ✅ (preserved!)`;
+        }
+        else if (q.includes('first class function')) {
+          result = `🏆 First-Class Functions:
+
+// 1. Assigned to variable
+const greet = name => 'Hi ' + name;
+
+// 2. Passed as argument
+function apply(fn, val) { return fn(val); }
+apply(greet, 'Alice'); // 'Hi Alice'
+
+// 3. Returned from function
+function makeAdder(x) {
+  return y => x + y;
+}
+const add5 = makeAdder(5);
+add5(3); // 8
+
+// 4. Stored in data structures
+const fns = [greet, add5];`;
+        }
+        else if (q.includes('arrow') || q.includes('lambda')) {
+          result = `🏹 Arrow Functions:
+
+// Regular function
+const add1 = function(a, b) { return a + b; };
+
+// Arrow (same thing, shorter)
+const add2 = (a, b) => a + b;
+
+// One param: no parens needed
+const double = x => x * 2;
+
+// No 'this' binding (lexical 'this')
+const obj = {
+  name: 'Alice',
+  regular() { return this.name; }, // 'Alice'
+  arrow: () => this.name // outer 'this'
+};
+
+// No 'arguments' object
+// Cannot be used as constructor`;
+        }
+        else if (q.includes('pure function')) {
+          result = `✨ Pure vs Impure:
+
+// ✅ PURE: same input → same output
+const add = (a, b) => a + b;
+add(2, 3); // always 5
+
+// ✅ PURE: no side effects
+const double = arr => arr.map(n => n * 2);
+
+// ❌ IMPURE: different output each time
+Math.random();
+Date.now();
+
+// ❌ IMPURE: mutates external state
+let total = 0;
+const addToTotal = x => total += x;
+
+// ❌ IMPURE: DOM/API side effects
+const save = data => fetch('/api', {body: data});`;
+        }
+        else if (q.includes('referential transparency')) {
+          result = `🔍 Referential Transparency:
+
+An expression is referentially transparent if it can be
+replaced with ITS VALUE without changing the program.
+
+✅ Pure functions are referentially transparent:
+  const add = (a, b) => a + b;
+  add(2, 3) → can be replaced with 5 anywhere
+
+❌ Impure functions are NOT:
+  Math.random() → each call gives different value
+  console.log('hi') → has side effect (printing)`;
+        }
+        else if (q.includes('iife') || q.includes('immediately invoked')) {
+          result = `🏃‍♂️ IIFE (Immediately Invoked Function Expression):
+
+// Classic syntax
+(function() {
+  const private = 'secret';
+  console.log('IIFE runs immediately!');
+})();
+
+// Arrow version
+(() => {
+  console.log('Arrow IIFE');
+})();
+
+// With parameters
+((name) => {
+  console.log('Hello ' + name);
+})('Alice');
+
+// Module pattern (pre-ES6)
+const module = (() => {
+  const priv = 'secret';
+  return { getSecret: () => priv };
+})();`;
+        }
+        else if (q.includes('let') && !q.includes('var')) {
+          result = `🔵 let Keyword:
+
+// Block-scoped
+{
+  let x = 10;
+}
+// console.log(x); // ReferenceError!
+
+// Can reassign
+let y = 5;
+y = 10; // ✅
+
+// Cannot redeclare in same scope
+// let y = 20; // SyntaxError!
+
+// TDZ (Temporal Dead Zone)
+// console.log(z); // ReferenceError!
+let z = 3;
+
+// Loop: fresh binding per iteration
+for (let i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i)); // 0, 1, 2
+}`;
+        }
+        else if (q.includes('let') && q.includes('var')) {
+          result = `⚔️ let vs var:
+
+🔵 let (block-scoped):
+{
+  let x = 1;
+}
+// x not accessible here
+
+🔴 var (function-scoped):
+{
+  var y = 1;
+}
+console.log(y); // 1 (leaks!)
+
+🔄 Loop difference:
+for (var i = 0; i < 3; i++)
+  setTimeout(() => console.log(i)); // 3,3,3
+
+for (let j = 0; j < 3; j++)
+  setTimeout(() => console.log(j)); // 0,1,2
+
+📊 var → hoisted as undefined
+📊 let → TDZ (ReferenceError before init)`;
+        }
+        else if (q.includes('module') && (q.includes('pattern') || q.includes('design'))) {
+          result = `📦 Module Pattern:
+
+const CounterModule = (() => {
+  // Private (closure)
+  let count = 0;
+  const log = msg => console.log(msg);
+
+  // Public API
+  return {
+    increment() { count++; log('+1'); },
+    decrement() { count--; log('-1'); },
+    getCount() { return count; }
+  };
+})();
+
+CounterModule.increment(); // +1
+CounterModule.increment(); // +1
+console.log(CounterModule.getCount()); // 2
+// console.log(CounterModule.count); // undefined (private!)`;
+        }
+        else if (q.includes('bind') && (q.includes('create') || q.includes('your own'))) {
+          result = `🔗 Custom bind() implementation:
+
+Function.prototype.myBind = function(context, ...args) {
+  const fn = this;
+  return function(...args2) {
+    return fn.apply(context, [...args, ...args2]);
+  };
+};
+
+// Usage:
+const person = { name: 'Alice' };
+function greet(greeting) {
+  return greeting + ', ' + this.name;
+}
+
+const greetAlice = greet.myBind(person);
+greetAlice('Hello'); // 'Hello, Alice'`;
+        }
+        else if (q.includes('async function') || (q.includes('async') && q.includes('await'))) {
+          result = `⚡ async/await:
+
+// async function returns a Promise
+async function fetchUser(id) {
+  const res = await fetch('/api/user/' + id);
+  const data = await res.json();
+  return data;
+}
+
+// Same with .then():
+function fetchUser(id) {
+  return fetch('/api/user/' + id)
+    .then(res => res.json());
+}
+
+// Error handling
+async function safeFetch(id) {
+  try {
+    const data = await fetchUser(id);
+    return data;
+  } catch (err) {
+    console.error('Failed:', err);
+    return null;
+  }
+}
+
+// Parallel execution
+const [user, posts] = await Promise.all([
+  fetchUser(1), fetchPosts(1)
+]);`;
+        }
+        else if (q.includes('requestanimationframe')) {
+          if (opt?.id === 'start') {
+            const ball = document.getElementById('raf-ball-' + qid);
+            if (ball) {
+              let pos = 0;
+              demoStates['raf_' + qid] = { running: true, pos: 0 };
+              function animate() {
+                const state = demoStates['raf_' + qid];
+                if (!state || !state.running) return;
+                state.pos = (state.pos + 2) % 240;
+                ball.style.left = state.pos + 'px';
+                requestAnimationFrame(animate);
+              }
+              animate();
+              result = '▶️ Animation started! 60fps smooth motion.';
+            }
+          } else {
+            if (demoStates['raf_' + qid]) demoStates['raf_' + qid].running = false;
+            result = '⏹️ Animation stopped.';
+          }
+        }
+        else if (q.includes('structuredclone')) {
+          const original = { name: 'Alice', nested: { arr: [1, { x: 2 }] }, date: new Date() };
+          const clone = structuredClone(original);
+          clone.nested.arr[0] = 999;
+          result = `📋 structuredClone():
+
+Original: ${JSON.stringify({ name: original.name, nestedArr: original.nested.arr, date: original.date.toISOString().slice(0,10) })}
+Clone: ${JSON.stringify({ name: clone.name, nestedArr: clone.nested.arr, date: clone.date.toISOString().slice(0,10) })}
+
+✅ Deep copy — modifying clone doesn't affect original
+✅ Handles Date, Map, Set, ArrayBuffer, Blob
+✅ Handles circular references`;
+        }
+        else if (q.includes('const') && q.includes('freeze')) {
+          result = `⚖️ const vs Object.freeze():
+
+// const: prevents REASSIGNMENT only
+const arr = [1, 2, 3];
+arr.push(4);        // ✅ Works! (mutation OK)
+// arr = [5, 6, 7]; // ❌ TypeError (reassignment NOT OK)
+
+// Object.freeze: prevents MUTATION
+const frozen = Object.freeze({ a: 1 });
+frozen.a = 2;       // ❌ Silently fails (or TypeError in strict)
+delete frozen.a;    // ❌ Cannot delete
+frozen.b = 3;       // ❌ Cannot add
+
+// Use BOTH for true immutability:
+const constant = Object.freeze({ API_URL: '...' });
+// Cannot reassign constant AND cannot mutate object`;
+        }
+        else if (q.includes('local') && q.includes('session')) {
+          result = `💾 localStorage vs sessionStorage:
+
+localStorage:
+  ✅ Persists until manually cleared
+  ✅ Shared across tabs/windows
+  ✅ Survives browser restart
+  📊 ~5-10MB per origin
+
+sessionStorage:
+  ✅ Cleared when tab is closed
+  ❌ NOT shared across tabs
+  ❌ Does NOT survive browser restart
+  📊 ~5-10MB per origin
+
+Both store key-value string pairs.
+Both accessible only from same origin.`;
+        }
+        else if (q.includes('polifill') || q.includes('polyfill')) {
+          result = `🔧 Polyfill Example (Array.prototype.includes):
+
+if (!Array.prototype.includes) {
+  Array.prototype.includes = function(value) {
+    return this.indexOf(value) !== -1;
+  };
+}
+
+// Now works in older browsers:
+[1, 2, 3].includes(2); // true
+
+// Common polyfills:
+// - Array.prototype.find
+// - Array.prototype.flat
+// - Promise
+// - Object.assign
+// - String.prototype.startsWith`;
+        }
+        else if (q.includes('ajax')) {
+          result = `🌐 AJAX & fetch():
+
+// Old way (XMLHttpRequest)
+const xhr = new XMLHttpRequest();
+xhr.open('GET', '/api/data');
+xhr.onload = () => console.log(xhr.response);
+xhr.send();
+
+// Modern way (fetch API) ⭐
+fetch('/api/data')
+  .then(res => res.json())
+  .then(data => console.log(data))
+  .catch(err => console.error(err));
+
+// With async/await:
+const response = await fetch('/api/data');
+const data = await response.json();`;
+        }
+        else if (q.includes('this') && !q.includes('bind') && !q.includes('call') && !q.includes('apply')) {
+          const btns = ['global', 'method', 'arrow'];
+          const idx = btns.indexOf(opt?.id);
+          const examples = [
+            `🌍 Global 'this':
+console.log(this); // window (browser)
+// In strict mode: undefined`,
+            `🎯 Method 'this':
+const obj = {
+  name: 'Alice',
+  greet() { console.log(this.name); }
+};
+obj.greet(); // 'Alice'`,
+            `🏹 Arrow 'this':
+const obj = {
+  name: 'Alice',
+  greet: () => console.log(this.name)
+};
+obj.greet(); // undefined (lexical 'this' from outer scope)`
+          ];
+          result = examples[idx] || examples[0];
+        }
+        else {
+          // Generic but meaningful demo based on question keywords
+          const firstSentence = data.answer ? data.answer.replace(/\*\*/g, '').split('.')[0] : '';
+          result = `📖 ${data.text}
+
+${firstSentence}.
+
+📝 Code Example:
+${data.code || '// See answer above for code examples'}
+
+${opt?.label ? '▶️ "' + opt.label + '" selected' : '▶️ Demo executed'}`;
+        }
+
+        el.textContent = result;
+      } catch(e) {
+        el.textContent = '❌ Error: ' + e.message;
+      }
+    };
+
+    // ────── Debounce / Throttle helpers ──────
+    window.debounceTimers = {};
+    window.debounceCounts = {};
+    window.debounceCalls = {};
+
+    window.debounceTest = function(e, qid) {
+      if (!window.debounceCounts[qid]) window.debounceCounts[qid] = 0;
+      window.debounceCounts[qid]++;
+      document.getElementById('debounce-count-' + qid).textContent = window.debounceCounts[qid];
+
+      clearTimeout(window.debounceTimers[qid]);
+      window.debounceTimers[qid] = setTimeout(() => {
+        if (!window.debounceCalls[qid]) window.debounceCalls[qid] = 0;
+        window.debounceCalls[qid]++;
+        document.getElementById('debounce-calls-' + qid).textContent = window.debounceCalls[qid];
+        const el = document.getElementById('demo-' + qid);
+        if (el) el.textContent = '✅ Debounced call executed!\nValue: "' + e.target.value + '"\n(Only runs after 500ms pause)';
+      }, 500);
+    };
+
+    window.throttleStates = {};
+    window.throttleClicks = {};
+    window.throttleCalls = {};
+
+    window.throttleTest = function(qid) {
+      if (!window.throttleClicks[qid]) window.throttleClicks[qid] = 0;
+      window.throttleClicks[qid]++;
+      document.getElementById('throttle-clicks-' + qid).textContent = window.throttleClicks[qid];
+
+      const state = window.throttleStates[qid] || { lastCall: 0 };
+      const now = Date.now();
+      if (now - state.lastCall >= 500) {
+        state.lastCall = now;
+        window.throttleStates[qid] = state;
+        if (!window.throttleCalls[qid]) window.throttleCalls[qid] = 0;
+        window.throttleCalls[qid]++;
+        document.getElementById('throttle-calls-' + qid).textContent = window.throttleCalls[qid];
+        const el = document.getElementById('demo-' + qid);
+        if (el) el.textContent = '✅ Throttled call at ' + new Date().toLocaleTimeString() + '\n(At most once per 500ms)';
+      }
+    };
+
+    window.urlDemo = function(qid, optIdx) {
+      const input = document.getElementById('url-input-' + qid);
+      if (!input) return;
+      const val = input.value || 'hello world';
+      const el = document.getElementById('demo-' + qid);
+      if (!el) return;
+      try {
+        if (optIdx === 0) {
+          el.textContent = 'encodeURI:     ' + encodeURI(val) + '\nencodeURIComponent: ' + encodeURIComponent(val);
+        } else {
+          try { el.textContent = 'decodeURI: ' + decodeURI(val); }
+          catch(e) { el.textContent = 'decodeURI ERROR: ' + e.message; }
+        }
+      } catch(e) {
+        el.textContent = 'Error: ' + e.message;
+      }
+    };
+
+    // ────── Load and render ──────
+    (async function init() {
+      try {
+        const urlParams = new URLSearchParams(window.location.search);
+        const chapterId = parseInt(urlParams.get('id')) || 1;
+
+        const res = await fetch('../questions.json');
+        const data = await res.json();
+        window.allQuestionsData = data.allQuestions;
+        const chapter = data.chapters[chapterId - 1];
+
+        if (!chapter) {
+          document.getElementById('content').innerHTML = '<p class="text-red-400 text-center">Chapter not found</p>';
+          document.getElementById('content').style.display = 'block';
+          document.getElementById('loading').style.display = 'none';
+          return;
+        }
+
+        const c = COLORS[chapter.color] || COLORS.blue;
+
+        document.title = chapter.title + ' — JavaScript Cheatsheet';
+
+        let html = `
+          <div class="flex items-center gap-3 mb-2">
+            <i class="${chapter.icon} text-3xl ${c.icon}"></i>
+            <h1 class="text-3xl md:text-4xl font-bold gradient-text">${chapter.title}</h1>
+          </div>
+          <p class="text-gray-400 mb-2">${chapter.desc}</p>
+          <div class="flex gap-2 mb-8">
+            <span class="tag">Q${chapter.qStart}–Q${chapter.qEnd}</span>
+            <span class="tag">${chapter.count} questions</span>
+          </div>
+        `;
+
+        chapter.questions.forEach((q, i) => {
+          const bg = i % 2 === 0 ? 'from-slate-800 to-slate-900' : 'from-slate-800/50 to-slate-900/50';
+          const renderer = DEMO_RENDERERS[q.demo?.type];
+          const demoHtml = renderer ? renderer(q, c) : '';
+
+          html += `
+            <div class="info-card mb-4 bg-gradient-to-br ${bg} border border-slate-700 rounded-xl p-5">
+              <div class="flex items-start gap-3">
+                <span class="shrink-0 w-8 h-8 rounded-full ${c.bg} ${c.icon} flex items-center justify-center text-sm font-bold">${q.id}</span>
+                <div class="flex-1 min-w-0">
+                  <h3 class="text-base font-semibold text-white mb-2">${q.text}</h3>
+                  <div class="text-sm text-gray-300 leading-relaxed mb-3">${q.answer.replace(/\n/g, '<br>')}</div>
+                  <details class="mb-2">
+                    <summary class="text-xs text-cyan-400 cursor-pointer hover:text-cyan-300"><i class="fas fa-code mr-1"></i>View Code Example</summary>
+                    <pre class="text-xs font-mono bg-black/40 p-3 rounded-lg text-cyan-300 overflow-x-auto border border-slate-700/50 mt-2">${q.code.replace(/</g, '&lt;').replace(/>/g, '&gt;') || '// No additional code example'}</pre>
+                  </details>
+                  ${demoHtml}
+                </div>
+              </div>
+            </div>
+          `;
+        });
+
+        document.getElementById('content').innerHTML = html;
+        document.getElementById('content').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+        document.getElementById('footer').style.display = 'block';
+      } catch(err) {
+        document.getElementById('content').innerHTML = `
+          <div class="text-center py-10">
+            <i class="fas fa-exclamation-triangle text-4xl text-yellow-400 mb-4"></i>
+            <p class="text-gray-300">Failed to load cheatsheet data</p>
+            <p class="text-xs text-gray-500 mt-2">${err.message}</p>
+            <button onclick="location.reload()" class="mt-4 px-4 py-2 bg-blue-700 rounded text-sm hover:bg-blue-600">Retry</button>
+          </div>
+        `;
+        document.getElementById('content').style.display = 'block';
+        document.getElementById('loading').style.display = 'none';
+      }
+    })();
+  </script>
+</body>
+</html>
