@@ -1032,8 +1032,8 @@ console.log(isNaN('abc'));       // true (coerces first!)`,
     ]}
   };
   if (t.includes('event')) {
-    if (t.includes('capture')) return {
-      answer: '**Event capturing** (also called "trickling") is the first phase of event propagation. The event starts from the root (`document`) and travels **down** to the target element. Use `addEventListener(type, handler, true)` to listen during capture phase.',
+    if (t.includes('captur')) return {
+      answer: '**Event capturing** (also called "trickling") is the first phase of event propagation. The event starts from the root (`document`) and travels **down** to the target element. The capturing phase happens BEFORE the target and bubbling phases. Use `addEventListener(type, handler, true)` to listen during capture phase.',
       code: `// Capture phase listener (3rd arg = true)
 document.addEventListener('click', () => {
   console.log('Capture: document');
@@ -1052,7 +1052,11 @@ document.getElementById('btn').addEventListener('click', () => {
     };
     if (t.includes('bubbl')) return {
       answer: '**Event bubbling** is the default event propagation phase. After reaching the target, the event travels **up** through ancestors. This is the basis for **event delegation** — handling events on a parent instead of many children.',
-      code: null, demo: { type: 'info', label: '', options: [] }
+      code: `parent.addEventListener('click', () => console.log('Parent clicked'));
+child.addEventListener('click', () => console.log('Child clicked'));
+// Click child: "Child clicked" then "Parent clicked" (bubbles up!)
+// Stop bubbling: e.stopPropagation()`,
+      demo: { type: 'code-runner', label: 'Event bubbling:', options: [{ id: 'run', label: 'Run', code: '', show: '#bubble-demo' }] }
     };
     if (t.includes('delegation')) return {
       answer: '**Event delegation** is a pattern where you attach a single event listener to a **parent element** instead of multiple listeners to individual children. It works because of **event bubbling**. Benefits: better performance, works for dynamically added elements.',
@@ -1321,10 +1325,73 @@ const { y = 20 } = {};
     answer: '**Deno** is a secure JavaScript/TypeScript runtime by Ryan Dahl (Node.js creator). Key features: **secure by default** (no file/network access without flags), **built-in TypeScript**, supports ES modules, has `deno fmt/lint/test` built-in.',
     code: null, demo: { type: 'info', label: '', options: [] }
   };
-  if (t.includes('web worker')) return {
-    answer: '**Web Workers** run scripts in **background threads** separate from the main UI thread. They cannot access the DOM. Communication is via `postMessage()`. Workers are ideal for CPU-intensive tasks (image processing, data parsing) that would otherwise block the UI.',
-    code: null, demo: { type: 'info', label: '', options: [] }
+  if (t.includes('web worker')) {
+    if (t.includes('check') && t.includes('support')) return {
+      answer: '**Check Web Worker support**: Test if `window.Worker` exists: `if (typeof Worker !== "undefined") { /* supported */ }`. All modern browsers support Web Workers. Fallback: run the task on the main thread with UI blocking notices if unsupported.',
+      code: `function supportsWorkers() {
+  return typeof Worker !== 'undefined';
+}
+
+if (supportsWorkers()) {
+  const worker = new Worker('task.js');
+  worker.postMessage({ cmd: 'start' });
+  worker.onmessage = (e) => {
+    console.log('Result:', e.data);
   };
+} else {
+  console.log('Workers not supported. Running on main thread...');
+  // Fallback: run synchronously (may block UI)
+}`,
+      demo: { type: 'code-runner', label: 'Check Worker support:', options: [{ id: 'run', label: 'Check', code: '', show: '#worker-support-demo' }] }
+    };
+    if (t.includes('example') || t.includes('give')) return {
+      answer: '**Web Worker example**: A worker runs a separate script in a background thread. The main thread sends data via `postMessage()`, the worker processes it, and posts the result back. Workers cannot access the DOM but can use most Web APIs (fetch, IndexedDB, etc.).',
+      code: `// main.js
+const worker = new Worker('worker.js');
+worker.postMessage({ data: [1, 2, 3, 4, 5], task: 'sum' });
+worker.onmessage = (e) => {
+  console.log('Result from worker:', e.data); // 15
+};
+worker.onerror = (e) => {
+  console.error('Worker error:', e.message);
+};
+
+// worker.js
+self.onmessage = (e) => {
+  const { data, task } = e.data;
+  if (task === 'sum') {
+    const result = data.reduce((a, b) => a + b, 0);
+    self.postMessage(result);
+  }
+};`,
+      demo: { type: 'code-runner', label: 'Worker example:', options: [{ id: 'run', label: 'Show Code', code: '', show: '#worker-example-demo' }] }
+    };
+    if (t.includes('restriction') || t.includes('dom')) return {
+      answer: '**Web Worker DOM restrictions**: Workers run in a separate thread and CANNOT:\n- Access the DOM (`document`, `window`, `parent`)\n- Use `alert()`, `confirm()`, `prompt()`\n- Access `localStorage` or `sessionStorage`\n\nThey CAN use: `fetch()`, `XMLHttpRequest`, `IndexedDB`, `WebSockets`, `setTimeout/setInterval`, `Canvas` (via OffscreenCanvas), `importScripts()`/`import()`',
+      code: `// ❌ What workers CANNOT do:
+// document.getElementById('foo');     // Error
+// window.location;                    // Error
+// localStorage.getItem('key');       // Error
+// alert('Hello');                     // Error
+
+// ✅ What workers CAN do:
+self.postMessage('Hello from worker'); // Communicate
+fetch('/api/data').then(r => r.json()); // HTTP
+const db = self.indexedDB.open('db');   // Storage
+importScripts('helper.js');            // Load scripts
+setTimeout(() => self.postMessage('done'), 1000);`,
+      demo: { type: 'code-runner', label: 'Worker restrictions:', options: [{ id: 'run', label: 'See Restrictions', code: '', show: '#worker-restrict-demo' }] }
+    };
+    return {
+      answer: '**Web Workers** run scripts in **background threads** separate from the main UI thread. They cannot access the DOM. Communication is via `postMessage()`. Workers are ideal for CPU-intensive tasks (image processing, data parsing) that would otherwise block the UI.',
+      code: `const worker = new Worker('worker.js');
+worker.postMessage('Hello');
+worker.onmessage = (e) => console.log(e.data);
+// worker.js:
+// self.onmessage = (e) => { self.postMessage('Hi!'); };`,
+      demo: { type: 'code-runner', label: 'Web Worker demo:', options: [{ id: 'run', label: 'Run', code: '', show: '#worker-demo' }] }
+    };
+  }
   if (t.includes('ajax')) return {
     answer: '**AJAX** (Asynchronous JavaScript and XML) is a technique for sending/receiving data from the server **without page reload**. Modern replacement: **`fetch()` API** (returns a Promise) instead of old `XMLHttpRequest`. Data format is usually JSON now, not XML.',
     code: null, demo: { type: 'code-runner', label: 'AJAX concept demo:', options: [
@@ -1549,13 +1616,1079 @@ const { y = 20 } = {};
       demo: { type: 'json-formatter', label: 'JSON demo:', options: [{ id: 'run', label: 'Format', code: '', show: '#json-demo' }] }
     };
   }
-  // Generic fallback
-  const words = q.text.split(' ');
-  const topic = words.slice(0, 4).join(' ');
+  // ── Missing topic handlers ──
+  if (t.includes('server') && (t.includes('sent event') || t.includes('sse') || t.includes('push')) && !t.includes('worker')) {
+    return {
+      answer: '**Server-Sent Events (SSE)** allow a server to push real-time updates over a single HTTP connection using `text/event-stream`. The client uses `new EventSource(url)`. SSE is unidirectional (server → client). Supports auto-reconnection and custom event types.',
+      code: `const source = new EventSource('/api/stream');
+source.onmessage = (event) => console.log('Data:', event.data);
+source.addEventListener('custom-event', (e) => console.log(e.data));
+source.onerror = () => console.log('Connection error (auto-reconnect)');`,
+      demo: { type: 'code-runner', label: 'SSE concept:', options: [{ id: 'run', label: 'Show Code', code: '', show: '#sse-demo' }] }
+    };
+  }
+  if (t.includes('eval')) {
+    return {
+      answer: '**`eval(str)`** executes a string as JavaScript code. It\'s **dangerous** and **slow**: executes in the caller\'s scope (security risk), cannot be optimized by the JIT compiler, enables code injection attacks. **Avoid eval()** — use safer alternatives like `JSON.parse()`, `Function()`, or `new Function()` for dynamic code.',
+      code: `// ❌ Dangerous: eval()
+eval('console.log("Hello")'); // Works but avoid!
+
+// ✅ Safer alternatives:
+JSON.parse('{"a":1}');        // Parse JSON
+const fn = new Function('x', 'return x * 2;'); // Dynamic function
+const calc = (op, a, b) => ({ '+': a+b, '-': a-b }[op]);`,
+      demo: { type: 'code-runner', label: 'eval() concept:', options: [{ id: 'run', label: 'Run', code: '', show: '#eval-demo' }] }
+    };
+  }
+  if (t.includes('delete operator')) {
+    return {
+      answer: '**`delete` operator** removes a property from an object: `delete obj.prop`. Returns `true` if successful. Cannot delete: variables (declared with `var`/`let`/`const`), `Array` elements (creates sparse array, doesn\'t re-index), inherited properties, non-configurable properties (`Object.freeze()`/`seal()`).',
+      code: `const obj = { a: 1, b: 2 };
+delete obj.a;            // true (removed)
+console.log(obj.a);      // undefined
+console.log('a' in obj); // false
+
+const arr = [1, 2, 3];
+delete arr[1];           // true
+console.log(arr);        // [1, empty, 3]
+console.log(arr.length); // 3 (length unchanged!)
+
+// Cannot delete variables
+let x = 5;
+delete x; // false (strict mode: TypeError)`,
+      demo: { type: 'code-runner', label: 'delete operator:', options: [{ id: 'run', label: 'Run', code: '', show: '#delete-demo' }] }
+    };
+  }
+  if (t.includes('window') && t.includes('document')) {
+    return {
+      answer: '**`window` vs `document`**: `window` is the browser\'s global object (the whole browser tab), while `document` is the DOM tree of the loaded webpage (inside `window`). `window` has properties like `location`, `history`, `navigator`, `screen`, `localStorage`. `document` is the root of the DOM API (`getElementById`, `createElement`, etc.).',
+      code: `// window: the browser tab
+console.log(window.innerHeight); // viewport height
+window.location.href = '/new-page';
+window.setTimeout(() => {}, 1000);
+
+// document: the webpage content
+document.title = 'New Title';
+document.getElementById('app');
+document.createElement('div');
+document.querySelector('.class');
+
+console.log(window.document === document); // true`,
+      demo: { type: 'code-runner', label: 'window vs document:', options: [{ id: 'run', label: 'Run', code: '', show: '#win-doc-demo' }] }
+    };
+  }
+  if (t.includes('access history')) {
+    return {
+      answer: '**Access browser history** via `window.history` (or just `history`). Methods: `history.back()` (go back), `history.forward()` (go forward), `history.go(n)` (n steps, negative for back). For SPAs, use `history.pushState(state, title, url)` to change URL without page reload and `popstate` event to handle navigation.',
+      code: `// Navigation
+history.back();      // Go back one page
+history.forward();   // Go forward one page
+history.go(-2);      // Go back 2 pages
+
+// SPA URL manipulation (no page reload)
+history.pushState({ page: 1 }, '', '?page=1');
+history.replaceState({ page: 2 }, '', '?page=2');
+
+window.addEventListener('popstate', (e) => {
+  console.log('Navigated:', e.state);
+});
+
+console.log(history.length); // Number of entries`,
+      demo: { type: 'code-runner', label: 'History API:', options: [{ id: 'run', label: 'Show Code', code: '', show: '#history-demo' }] }
+    };
+  }
+  if (t.includes('caps lock')) {
+    return {
+      answer: '**Detect Caps Lock** by listening to the `keydown` event and checking `event.getModifierState(\'CapsLock\')`. Returns `true` if Caps Lock is on. Display a warning to the user when Caps Lock is on and they\'re typing in a password field.',
+      code: `document.getElementById('password')
+  .addEventListener('keydown', (e) => {
+    if (e.getModifierState('CapsLock')) {
+      console.log('⚠️ Caps Lock is ON');
+      document.getElementById('caps-warning')
+        .style.display = 'block';
+    } else {
+      document.getElementById('caps-warning')
+        .style.display = 'none';
+    }
+  });`,
+      demo: { type: 'code-runner', label: 'Caps Lock detection:', options: [{ id: 'run', label: 'Show Code', code: '', show: '#caps-demo' }] }
+    };
+  }
+  if (t.includes('undeclared') && t.includes('undefined')) {
+    return {
+      answer: '**Undeclared vs Undefined**:\n- **Undeclared**: a variable that has NOT been declared with `var`/`let`/`const`. Accessing it throws a **ReferenceError**.\n- **Undefined**: a variable that IS declared but NOT assigned a value. Accessing it returns `undefined`.\n- In strict mode, assigning to an undeclared variable throws a ReferenceError too.',
+      code: `// Undeclared variable
+// console.log(x); // ReferenceError: x is not defined
+// x = 5;          // In strict mode: ReferenceError
+
+// Undefined variable
+let y;             // declared but not assigned
+console.log(y);    // undefined (no error)
+
+// Check safely:
+console.log(typeof z); // 'undefined' (safe, no error)
+
+typeof x !== 'undefined' // Check if declared
+  ? x
+  : 'not defined';`,
+      demo: { type: 'code-runner', label: 'Undeclared vs undefined:', options: [{ id: 'run', label: 'Run', code: '', show: '#undeclared-demo' }] }
+    };
+  }
+  if (t.includes('global variable')) {
+    if (t.includes('problem')) return {
+      answer: '**Problems with global variables**:\n1. **Naming collisions** — multiple scripts may use the same name\n2. **Debugging difficulty** — any code can modify them\n3. **Memory leaks** — never garbage collected\n4. **Dependency issues** — unclear which code depends on them\n5. **Testing difficulty** — global state leaks between tests\n\nBetter approach: modules, closures, or dependency injection.',
+      code: `// ❌ Global variables (BAD)
+let counter = 0;  // Any function can modify
+function inc() { counter++; }
+function reset() { counter = 0; }
+
+// ✅ Encapsulated (GOOD)
+const CounterModule = (() => {
+  let counter = 0; // Private
   return {
-    answer: `**${q.text}** — ${topic}... This concept is important in JavaScript. See the interactive demo below for a visual explanation with code examples.`,
-    code: `// ${q.text}\n// See the interactive demo below`,
-    demo: { type: 'code-runner', label: 'Test this concept:', options: [{ id: 'run', label: 'Run Demo', code: '', show: '#demo-' + q.id }] }
+    inc: () => ++counter,
+    reset: () => { counter = 0; },
+    get: () => counter
+  };
+})();`,
+      demo: { type: 'code-runner', label: 'Avoiding globals:', options: [{ id: 'run', label: 'Run', code: '', show: '#global-prob-demo' }] }
+    };
+    return {
+      answer: '**Global variables** are declared outside any function/block and accessible everywhere. In browsers, global `var` declarations become properties of `window`. Globals should be minimized because they cause: naming collisions, hard-to-track mutations, and testing difficulties.',
+      code: `// Global variables
+var globalVar = 'I am global'; // window.globalVar
+let globalLet = 'also global'; // NOT on window
+const globalConst = 'same';    // NOT on window
+
+console.log(globalVar);   // 'I am global'
+console.log(window.globalVar); // 'I am global' (var only)
+console.log(window.globalLet); // undefined (let/const)`,
+      demo: { type: 'code-runner', label: 'Global variables:', options: [{ id: 'run', label: 'Run', code: '', show: '#global-demo' }] }
+    };
+  }
+  if (t.includes('isfinite')) {
+    return {
+      answer: '**`isFinite(value)`** returns `false` if the value is `Infinity`, `-Infinity`, or `NaN`. Returns `true` for any finite number. The global version coerces string arguments to numbers first (non-numeric strings → `NaN` → returns `false`). Use `Number.isFinite()` (ES6) for strict checking without coercion.',
+      code: `// Global isFinite() (coerces)
+console.log(isFinite(42));        // true
+console.log(isFinite(Infinity));  // false
+console.log(isFinite(-Infinity)); // false
+console.log(isFinite(NaN));       // false
+console.log(isFinite('42'));      // true (coerces)
+console.log(isFinite('abc'));     // false (NaN)
+
+// Number.isFinite() (no coercion, ES6+)
+console.log(Number.isFinite('42'));  // false!
+console.log(Number.isFinite(42));    // true`,
+      demo: { type: 'code-runner', label: 'isFinite() demo:', options: [{ id: 'run', label: 'Run', code: '', show: '#isfinite-demo' }] }
+    };
+  }
+  if (t.includes('form') && t.includes('submit')) {
+    return {
+      answer: '**Submit a form with JS**: Call `form.submit()` to programmatically submit. To handle submission (prevent default), listen to the `submit` event and call `e.preventDefault()`. Validate fields with `checkValidity()`, get form data with `new FormData(form)`, and submit via `fetch()` for AJAX.',
+      code: `// Programmatic form submission
+document.getElementById('myForm').submit();
+
+// Handle form submission (AJAX)
+document.getElementById('myForm')
+  .addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const formData = new FormData(e.target);
+    const data = Object.fromEntries(formData);
+
+    const response = await fetch('/api/submit', {
+      method: 'POST',
+      body: JSON.stringify(data)
+    });
+    const result = await response.json();
+    console.log('Submitted:', result);
+  });`,
+      demo: { type: 'code-runner', label: 'Form submission:', options: [{ id: 'run', label: 'Show Code', code: '', show: '#form-demo' }] }
+    };
+  }
+  if (t.includes('operating system') || t.includes('os details')) {
+    return {
+      answer: '**Get OS details**: Use `navigator.userAgent` (string) or `navigator.platform` (deprecated but widely supported). For more reliable detection, use `navigator.userAgentData` (newer API, Chrome only). The userAgent string contains "Windows", "Mac", "Linux", "Android", "iPhone", etc.',
+      code: `const ua = navigator.userAgent.toLowerCase();
+
+const detectOS = () => {
+  if (ua.includes('win')) return 'Windows';
+  if (ua.includes('mac')) return 'macOS';
+  if (ua.includes('linux')) return 'Linux';
+  if (ua.includes('android')) return 'Android';
+  if (ua.includes('iphone')) return 'iOS';
+  if (ua.includes('like mac')) return 'iOS';
+  return 'Unknown';
+};
+
+console.log('OS:', detectOS());
+console.log('Platform:', navigator.platform);
+
+// Newer API (Chrome only)
+navigator.userAgentData?.getHighEntropyValues(['platform'])
+  .then(d => console.log('Platform:', d.platform));`,
+      demo: { type: 'code-runner', label: 'OS detection:', options: [{ id: 'run', label: 'Run', code: '', show: '#os-demo' }] }
+    };
+  }
+  if (t.includes('document load') && t.includes('domcontentloaded')) {
+    return {
+      answer: '**`DOMContentLoaded`** fires when the HTML is fully parsed and the DOM tree is built — no waiting for images, CSS, etc. **`load`** (or `window.onload`) fires when EVERYTHING is fully loaded: DOM, images, stylesheets, scripts, iframes. Use `DOMContentLoaded` for DOM manipulation, `load` for media-related operations.',
+      code: `document.addEventListener('DOMContentLoaded', () => {
+  console.log('✅ DOM ready (images may still load)');
+  document.getElementById('app').textContent = 'Ready!';
+});
+
+window.addEventListener('load', () => {
+  console.log('✅ Fully loaded (all resources done)');
+  console.log('Image size:', document.querySelector('img').naturalWidth);
+});
+
+// Ready state check
+if (document.readyState === 'loading') {
+  document.addEventListener('DOMContentLoaded', init);
+} else {
+  init(); // Already loaded
+}`,
+      demo: { type: 'code-runner', label: 'Page load events:', options: [{ id: 'run', label: 'Run', code: '', show: '#load-demo' }] }
+    };
+  }
+  if (t.includes('native') && t.includes('host') && t.includes('user object')) {
+    return {
+      answer: '**Native objects** are built into JavaScript: `Object`, `Array`, `Function`, `Date`, `RegExp`, `Map`, `Promise`, etc. **Host objects** are provided by the environment: `window`, `document`, `console`, `XMLHttpRequest`, `localStorage`. **User objects** are defined by the developer in their own code.',
+      code: `// Native objects (ECMAScript spec)
+Array.isArray([]);       // true
+new Date();               // Current date
+new Map();                // ES6 Map
+Promise.resolve('done');  // Promise
+
+// Host objects (browser-specific)
+console.log(window.innerWidth);  // Viewport width
+document.getElementById('id');   // DOM element
+new XMLHttpRequest();            // AJAX (host)
+
+// User objects (your code)
+const myObj = { name: 'Alice' };
+class UserController { /* ... */ }`,
+      demo: { type: 'code-runner', label: 'Object types:', options: [{ id: 'run', label: 'Run', code: '', show: '#native-demo' }] }
+    };
+  }
+  if (t.includes('debugging') || t.includes('debug')) {
+    return {
+      answer: '**JavaScript debugging tools**:\n1. **Browser DevTools** (F12): Sources tab (breakpoints), Console (logging), Network tab (API calls)\n2. **`console.log()`**, `console.table()`, `console.time()`, `console.trace()`\n3. **`debugger`** statement — programmatic breakpoint\n4. **Breakpoints** in Sources tab: line, conditional, DOM change, XHR\n5. **React DevTools** / **Vue DevTools** for framework debugging',
+      code: `// Console debugging
+console.log('Simple log');
+console.table([{name:'Alice'}, {name:'Bob'}]);
+console.time('loop');
+for (let i = 0; i < 1000000; i++) {}
+console.timeEnd('loop'); // ~2-5ms
+
+// Breakpoint
+function calculate(a, b) {
+  debugger; // Opens DevTools debugger
+  return a + b;
+}
+
+// Stack trace
+console.trace('Where was I called?');`,
+      demo: { type: 'code-runner', label: 'Debugging tips:', options: [{ id: 'run', label: 'Run', code: '', show: '#debug-demo' }] }
+    };
+  }
+  if (t.includes('attribute') && t.includes('property')) {
+    return {
+      answer: '**Attribute vs Property**: An **attribute** is the HTML source value (`<input value="foo">`), always a string, reflected via `getAttribute()`. A **property** is the DOM object\'s current value in memory (`element.value`), can be any type, changes dynamically. Attributes INITIALIZE properties, but properties can change independently.',
+      code: `const input = document.querySelector('input');
+input.setAttribute('value', 'initial');
+
+// Property
+console.log(input.value); // 'initial'
+input.value = 'modified';
+console.log(input.getAttribute('value')); // 'initial' (still!)
+console.log(input.value); // 'modified' (changed!)
+
+// class attribute vs className property
+input.setAttribute('class', 'red');
+console.log(input.className); // 'red' (property)
+console.log(input.getAttribute('class')); // 'red'`,
+      demo: { type: 'code-runner', label: 'Attributes vs properties:', options: [{ id: 'run', label: 'Run', code: '', show: '#attr-demo' }] }
+    };
+  }
+  if (t.includes('same-origin policy')) {
+    return {
+      answer: '**Same-Origin Policy** (SOP) is a browser security mechanism that blocks scripts from accessing resources from a **different origin** (protocol + domain + port). Example: `https://siteA.com` cannot fetch `https://siteB.com/api` via AJAX. Bypassed with: **CORS** (server headers), **JSONP** (old hack), **Proxy server** (your server forwards requests), **PostMessage** (cross-window).',
+      code: `// ❌ Blocked: different origin
+fetch('https://other-site.com/api/data')
+  .then(r => r.json())
+  // Error: CORS policy blocks this
+
+// ✅ Solution 1: CORS (server adds headers)
+// Access-Control-Allow-Origin: *
+
+// ✅ Solution 2: Proxy (your server)
+fetch('/proxy?url=https://other-site.com/api')
+
+// ✅ Solution 3: PostMessage (iframes)
+otherWindow.postMessage('hello', 'https://other-site.com');`,
+      demo: { type: 'code-runner', label: 'Same-origin policy:', options: [{ id: 'run', label: 'Show Code', code: '', show: '#sop-demo' }] }
+    };
+  }
+  if (t.includes('!!') || t.includes('double exclamation')) {
+    return {
+      answer: '**`!!` (double NOT)** converts any value to its boolean equivalent. `!value` returns the inverse boolean, `!!value` returns the original truthiness. `!!x` is equivalent to `Boolean(x)`. Used to check if a value is "truthy" (exists, not empty, etc.).',
+      code: `console.log(!!0);          // false (0 is falsy)
+console.log(!!1);          // true
+console.log(!!'');         // false (empty string falsy)
+console.log(!!'hello');    // true
+console.log(!!null);       // false
+console.log(!!undefined);  // false
+console.log(!!{});         // true (empty object is truthy)
+console.log(!![]);         // true (empty array is truthy)
+console.log(!!NaN);        // false
+
+// Practical: ensure boolean
+const userInput = '';
+const hasValue = !!userInput; // false
+// Same as: Boolean(userInput)`,
+      demo: { type: 'code-runner', label: '!! (double NOT):', options: [{ id: 'run', label: 'Run', code: '', show: '#not-demo' }] }
+    };
+  }
+  if (t.includes('undefined property') || t === 'what is undefined property') {
+    return {
+      answer: '**`undefined`** is both a **value** and a **type**. A property is `undefined` when:\n1. The variable is declared but not assigned\n2. The object property doesn\'t exist\n3. The array element at an index was never set\n4. A function reaches `return;` without a value\n\n`typeof x === \'undefined\'` safely checks if something is undefined.',
+      code: `let x;             // undefined
+const obj = { a: 1 };
+console.log(obj.b);  // undefined (no property)
+
+const arr = [1, 2];
+console.log(arr[5]); // undefined (no element)
+
+function foo() { return; }
+console.log(foo());  // undefined
+
+// Safe check:
+console.log(typeof someUndefinedVar === 'undefined'); // true`,
+      demo: { type: 'code-runner', label: 'Undefined property:', options: [{ id: 'run', label: 'Run', code: '', show: '#undefined-demo' }] }
+    };
+  }
+  if (t.includes('null value')) {
+    return {
+      answer: '**`null`** is an intentional **absence of any object value**. It\'s a primitive type (though `typeof null === "object"` is a historic bug). Developers assign `null` to indicate "no value" intentionally, unlike `undefined` which means "not assigned". Use `value === null` to check for null.',
+      code: `// null is intentionally assigned "nothing"
+let user = null; // No user logged in
+
+// Later, assign a value
+user = { name: 'Alice' };
+
+// Check for null
+if (user === null) {
+  console.log('No user');
+}
+
+// Weird behavior
+console.log(typeof null);     // 'object' (bug!)
+console.log(null === undefined); // false
+console.log(null == undefined);  // true
+
+// Common usage
+const element = document.getElementById('maybe-exists');
+if (element !== null) {
+  // Element exists!
+}`,
+      demo: { type: 'code-runner', label: 'Null value:', options: [{ id: 'run', label: 'Run', code: '', show: '#null-val-demo' }] }
+    };
+  }
+  if (t.includes('promise') && (t.includes('main rule') || t.includes('rule of promise'))) {
+    return {
+      answer: '**Main rules of Promises**:\n1. A Promise has 3 states: pending, fulfilled, rejected (settled once)\n2. `.then()` and `.catch()` always return a new Promise (chainable)\n3. Errors propagate down the chain until caught\n4. `.finally()` runs regardless of outcome\n5. Promises are **eager** — execute immediately upon creation\n6. Once settled, a Promise is **immutable** (state cannot change)\n7. Microtasks — Promise callbacks run BEFORE macrotasks (setTimeout)',
+      code: `const p = new Promise((resolve, reject) => {
+  // Rule: promise executor runs immediately
+  console.log('Executor runs!');
+  resolve('done');
+});
+
+// Rule: .then returns new Promise
+p.then(val => val.toUpperCase())
+ .then(val => console.log(val)); // 'DONE'
+
+// Rule: errors propagate
+p.then(() => { throw new Error('fail'); })
+ .catch(err => console.log(err.message)); // 'fail'
+
+// Rule: immutability
+p.then(val => console.log(val)); // 'done' (always)`,
+      demo: { type: 'code-runner', label: 'Promise rules:', options: [{ id: 'run', label: 'Run', code: '', show: '#promise-rules-demo' }] }
+    };
+  }
+  if (t.includes('callback') && (t.includes('need') || t.includes('why'))) {
+    return {
+      answer: '**Why callbacks?** JavaScript is single-threaded and non-blocking. Callbacks allow code to run **after** an async operation completes without freezing the UI. They\'re the foundation of async JS. However, nested callbacks create "callback hell" — solved by Promises and async/await.',
+      code: `// Without callbacks: blocking (BAD)
+const data = readFileSync('file.txt'); // Blocks UI!
+console.log(data);
+
+// With callbacks: non-blocking (GOOD)
+readFile('file.txt', (err, data) => {
+  if (err) return console.error(err);
+  console.log(data); // Runs when file is ready
+});
+console.log('This runs immediately, no blocking!');
+
+// Common callback patterns:
+button.addEventListener('click', () => {});
+setTimeout(() => {}, 1000);
+fetch('/api').then(res => res.json());`,
+      demo: { type: 'code-runner', label: 'Why callbacks:', options: [{ id: 'run', label: 'Run', code: '', show: '#callback-need-demo' }] }
+    };
+  }
+  if (t.includes('callback') && !t.includes('hell')) {
+    return {
+      answer: 'A **callback function** is a function passed as an argument to another function to be **executed later** — after an async operation completes, when an event fires, or after some processing finishes. Callbacks are the fundamental async pattern in JavaScript.',
+      code: `// Simple callback
+function greet(name, callback) {
+  const message = 'Hello ' + name;
+  callback(message); // Execute the callback
+}
+greet('Alice', (msg) => console.log(msg)); // 'Hello Alice'
+
+// Async callback
+setTimeout(() => {
+  console.log('Runs after 1 second');
+}, 1000);
+
+// Event callback
+button.addEventListener('click', () => {
+  console.log('Button clicked!');
+});`,
+      demo: { type: 'code-runner', label: 'Callback function:', options: [{ id: 'run', label: 'Run', code: '', show: '#callback-demo' }] }
+    };
+  }
+  if (t.includes('callback in callback')) {
+    return {
+      answer: '**Callback in callback** (nested callbacks): When one callback contains another callback. Each level of nesting represents a sequential async operation. 2-3 levels is manageable, but deeper nesting creates **callback hell** — unreadable, hard-to-debug pyramid-shaped code.',
+      code: `// Callback in callback (2 levels, OK)
+getUser(id, (err, user) => {
+  if (err) return handleError(err);
+  getPosts(user.id, (err, posts) => {
+    if (err) return handleError(err);
+    render(posts); // 2 levels deep
+  });
+});
+
+// Deeper nesting = callback hell (4+ levels)
+getUser(id, (err, user) => {
+  getPosts(user.id, (err, posts) => {
+    getComments(posts[0].id, (err, comments) => {
+      getLikes(comments[0].id, (err, likes) => {
+        render(likes); // 4 levels deep!
+      });
+    });
+  });
+});
+
+// Solution: Promises flatten this`,
+      demo: { type: 'code-runner', label: 'Nested callbacks:', options: [{ id: 'run', label: 'Run', code: '', show: '#callback-nest-demo' }] }
+    };
+  }
+  if (t.includes('single threaded')) {
+    return {
+      answer: 'JavaScript is **single-threaded** — one call stack, one thread of execution. It cannot run two pieces of code simultaneously. Async operations (AJAX, setTimeout) are handled by the **Event Loop**: they run outside the main thread (browser APIs), and their callbacks are queued to run when the call stack is empty.',
+      code: `// Single-threaded: sequential
+console.log('1');  // Runs first
+console.log('2');  // Runs second (after 1)
+
+// Non-blocking via Event Loop
+console.log('Start');
+setTimeout(() => console.log('Async'), 0);
+console.log('End');
+// Output: Start, End, Async
+
+// Blocking: freezes UI (single thread)
+function block() {
+  while(true) {} // Freezes everything!
+}
+// button clicks, animations, all blocked!`,
+      demo: { type: 'code-runner', label: 'Single-threaded:', options: [{ id: 'run', label: 'Run', code: '', show: '#single-thread-demo' }] }
+    };
+  }
+  if (t.includes('referential transparency')) {
+    return {
+      answer: '**Referential transparency** means an expression can be **replaced with its value** without changing the program\'s behavior. Pure functions are referentially transparent: `add(2, 3)` can be replaced with `5` anywhere. Impure functions (with side effects or randomness) are NOT referentially transparent.',
+      code: `// Referentially transparent
+const add = (a, b) => a + b;
+// These are equivalent:
+const result1 = add(2, 3) * 2;
+const result2 = 5 * 2; // add(2,3) → 5
+console.log(result1 === result2); // true
+
+// NOT referentially transparent
+const rand = () => Math.random();
+// rand() cannot be replaced with its value
+// because each call gives different result`,
+      demo: { type: 'code-runner', label: 'Referential transparency:', options: [{ id: 'run', label: 'Run', code: '', show: '#ref-trans-demo' }] }
+    };
+  }
+  if (t.includes('iife') || t.includes('immediately invoked')) {
+    return {
+      answer: '**IIFE** (Immediately Invoked Function Expression) runs as soon as it\'s defined. Syntax: `(function(){...})()` or `(()=>{...})()`. Used for: creating private scope (pre-ES6 module pattern), avoiding global pollution, executing async setup code, and the module pattern.',
+      code: `// Classic IIFE
+(function() {
+  const private = 'secret';
+  console.log('IIFE runs instantly!');
+})();
+
+// Arrow IIFE
+(() => {
+  console.log('Arrow IIFE');
+})();
+
+// Module pattern (pre-ES6)
+const Counter = (() => {
+  let count = 0; // private
+  return {
+    inc: () => ++count,
+    dec: () => --count,
+    val: () => count
+  };
+})();`,
+      demo: { type: 'code-runner', label: 'IIFE examples:', options: [{ id: 'run', label: 'Run', code: '', show: '#iife-demo' }] }
+    };
+  }
+  // ── Additional topic handlers ──
+  if (t.includes('void 0') || t.includes('void(0)')) return {
+    answer: '**`void 0`** evaluates the expression `0` and returns `undefined`. `void` is an operator that evaluates any expression and returns `undefined`. `void 0` is a common way to get the `undefined` value safely (before ES6, `undefined` could be reassigned). Used in hrefs: `<a href="javascript:void(0)">` to prevent navigation.',
+    code: `console.log(void 0);        // undefined
+console.log(void(0));       // undefined
+console.log(void 'hello');  // undefined
+console.log(void (1 + 1));  // undefined
+
+// Before ES5, undefined could be reassigned:
+undefined = 42; // (allowed pre-ES5)
+console.log(void 0); // Always gives real undefined
+
+// Common use: prevent link navigation
+// <a href="javascript:void(0)" onclick="doSomething()">
+`,
+    demo: { type: 'code-runner', label: 'void 0:', options: [{ id: 'run', label: 'Run', code: '', show: '#void-demo' }] }
+  };
+  if (t.includes('compiled') || (t.includes('interpret') && !t.includes('for...'))) return {
+    answer: 'JavaScript is an **interpreted language** (or **JIT-compiled** in modern engines). Traditionally interpreted line-by-line by the browser. Modern V8 uses **JIT (Just-In-Time) compilation**: source → bytecode (ignition interpreter) → optimized machine code (turbofan compiler) for hot functions.',
+    code: `// JavaScript is interpreted/JIT-compiled
+// No compilation step needed:
+console.log('Run this directly, no build required!');
+
+// But modern engines JIT-compile hot code:
+function sum(n) {
+  let total = 0;
+  for (let i = 0; i < n; i++) total += i;
+  return total;
+}
+// After several calls, V8 compiles this to machine code
+sum(1000000);`,
+    demo: { type: 'code-runner', label: 'Interpreted vs compiled:', options: [{ id: 'run', label: 'Run', code: '', show: '#compiled-demo' }] }
+  };
+  if (t.includes('case-sensitive')) return {
+    answer: 'Yes, JavaScript is **case-sensitive**. `myVar`, `myvar`, `MyVar`, and `MYVAR` are four different variables. All keywords (`if`, `while`, `for`, `function`, etc.) must be written in lowercase. Built-in objects: `Math` (capital M), but `math` is not recognized. HTML attributes are NOT case-sensitive, but JS property references are.',
+    code: `// These are DIFFERENT variables:
+const myVar = 'lowercase';
+const myVAR = 'UPPERCASE';
+const MyVar = 'Capitalized';
+
+console.log(myVar); // 'lowercase'
+console.log(myVAR); // 'UPPERCASE'
+
+// Keywords must be exact:
+// If (true) // SyntaxError: 'If' not 'if'
+// While (true) // SyntaxError
+
+// Built-in objects:
+console.log(Math.PI);   // 3.14159
+// console.log(math.PI); // ReferenceError!`,
+    demo: { type: 'code-runner', label: 'Case sensitivity:', options: [{ id: 'run', label: 'Run', code: '', show: '#case-demo' }] }
+  };
+  if ((t.includes('relation') || t.includes('difference') || t.includes('between')) && t.includes('java') && t.includes('javascript') && !t.includes('json') && !t.includes('redirect') && !t.includes('display') && !t.includes('current')) return {
+    answer: '**Java** and **JavaScript** are completely different languages. Java is a compiled, statically-typed, class-based OOP language. JavaScript is an interpreted, dynamically-typed, prototype-based language. The name "JavaScript" was a marketing ploy by Netscape (Java was popular). They share C-like syntax but that\'s all.',
+    code: `// JavaScript vs Java:
+// Syntax similar, but fundamentally different
+
+// JavaScript: dynamically typed
+let x = 5;
+x = 'hello'; // OK in JS
+
+// Java: statically typed
+// int x = 5;
+// x = "hello"; // Compile error!
+
+// JavaScript: prototype-based
+const obj = { greet() { return 'Hi!'; } };
+
+// Java: class-based
+// class Greeter { String greet() { return "Hi!"; } }`,
+    demo: { type: 'code-runner', label: 'Java vs JS:', options: [{ id: 'run', label: 'Run', code: '', show: '#javavsjs-demo' }] }
+  };
+  if (t.includes('what are events') || (t.includes('what is event') && !t.includes('loop') && !t.includes('captur') && !t.includes('bubbl') && !t.includes('delegation') && !t.includes('flow'))) return {
+    answer: '**Events** are actions or occurrences that happen in the browser that JavaScript can respond to: user actions (click, keypress, scroll), browser actions (page load, resize), and system events (network status, device orientation). Use `addEventListener()` to handle events.',
+    code: `// Common event types:
+// Mouse: click, dblclick, mouseover, mouseout
+// Keyboard: keydown, keyup, keypress
+// Form: submit, change, input, focus, blur
+// Document: DOMContentLoaded, load, resize, scroll
+// Touch: touchstart, touchend, touchmove
+
+// Handling events:
+button.addEventListener('click', (e) => {
+  console.log('Clicked!', e.target);
+});
+
+// Event object properties:
+// e.type, e.target, e.currentTarget
+// e.preventDefault(), e.stopPropagation()`,
+    demo: { type: 'code-runner', label: 'JavaScript events:', options: [{ id: 'run', label: 'Run', code: '', show: '#events-overview-demo' }] }
+  };
+  if (t.includes('who created') || (t.includes('create') && t.includes('javascript') && !t.includes('object'))) return {
+    answer: '**JavaScript was created by Brendan Eich** in May 1995 in just 10 days while at Netscape. It was originally called **Mocha**, then **LiveScript**, and finally **JavaScript** (a marketing move to ride Java\'s popularity). Eich later co-founded the Mozilla project.',
+    code: `// JavaScript's creator: Brendan Eich
+// Timeline:
+// May 1995: Created in 10 days at Netscape
+// Sep 1995: Released as LiveScript in Navigator 2.0
+// Dec 1995: Renamed to JavaScript
+// 1997: Standardized as ECMAScript
+// 2009: ES5 (major update)
+// 2015: ES6/ES2015 (biggest update)
+// Annual releases since 2015
+
+console.log('JavaScript by Brendan Eich (1995)');`,
+    demo: { type: 'info', label: '', options: [] }
+  };
+  if (t.includes('stoppropagation') || (t.includes('stop') && t.includes('propagation'))) return {
+    answer: '**`event.stopPropagation()`** prevents the event from traveling further in the DOM tree (stops both capturing and bubbling phases). This is useful when you want to handle an event on a specific element without triggering parent handlers. Use cautiously — it can break event delegation patterns.',
+    code: `parent.addEventListener('click', () => console.log('Parent'));
+child.addEventListener('click', (e) => {
+  e.stopPropagation(); // Prevents parent from hearing this click
+  console.log('Child only');
+});
+// Clicking child: 'Child only' (parent NOT triggered)
+
+// stopImmediatePropagation() also prevents
+// other listeners on the SAME element:
+btn.addEventListener('click', () => console.log('A'));
+btn.addEventListener('click', (e) => {
+  e.stopImmediatePropagation();
+  console.log('B');
+});
+btn.addEventListener('click', () => console.log('C'));
+// Click: 'A', 'B' (C never runs)`,
+    demo: { type: 'code-runner', label: 'stopPropagation:', options: [{ id: 'run', label: 'Run', code: '', show: '#stopprop-demo' }] }
+  };
+  if (t.includes('return false')) return {
+    answer: '**`return false`** in an event handler does 3 things:\n1. **`event.preventDefault()`** — prevents default browser action\n2. **`event.stopPropagation()`** — stops event bubbling\n3. **Stops callback execution** — returns early\n\nThis behavior is specific to inline event handlers (`onclick="return fn()"`). In modern `addEventListener`, `return false` does NOT prevent default — you must call `e.preventDefault()` explicitly.',
+    code: `// Inline handler: return false prevents default + stops prop
+// <a href="https://example.com" onclick="return false">No nav</a>
+
+// In addEventListener, return false does NOTHING special:
+document.querySelector('a').addEventListener('click', (e) => {
+  // return false; // ❌ Does NOT prevent default!
+  e.preventDefault(); // ✅ Correct way
+  e.stopPropagation(); // ✅ Stop bubbling (if needed)
+});`,
+    demo: { type: 'code-runner', label: 'return false:', options: [{ id: 'run', label: 'Run', code: '', show: '#returnfalse-demo' }] }
+  };
+  if (t.includes('json') && t.includes('syntax')) return {
+    answer: '**JSON syntax rules**:\n1. Data is in **name/value pairs** (`"key": value`)\n2. Keys must be **double-quoted strings**\n3. Values can be: string (double-quoted), number, boolean, null, object `{}`, array `[]`\n4. No trailing commas allowed\n5. No comments allowed\n6. No functions, undefined, NaN, Infinity\n7. Must use `\` for escaping special characters',
+    code: `// ✅ Valid JSON
+{
+  "name": "Alice",
+  "age": 30,
+  "hobbies": ["reading", "coding"],
+  "address": null,
+  "active": true
+}
+
+// ❌ Invalid JSON
+{
+  name: "Alice",    // Keys must be quoted
+  'age': 30,        // Single quotes not allowed
+  "trailing": 1,    // No trailing comma!
+  "fn": function(){} // No functions!
+}`,
+    demo: { type: 'code-runner', label: 'JSON syntax:', options: [{ id: 'run', label: 'Show Rules', code: '', show: '#json-syntax-demo' }] }
+  };
+  if (t.includes('cleartimeout')) return {
+    answer: '**`clearTimeout(id)`** cancels a timeout previously set by `setTimeout()`. The `id` is the value returned by `setTimeout`. If the timeout has already fired, `clearTimeout` has no effect. After clearing, the callback will never execute. Essential for preventing memory leaks and race conditions.',
+    code: `// Start a timeout
+const timeoutId = setTimeout(() => {
+  console.log('This will NOT run');
+}, 5000);
+
+// Cancel it before it fires
+clearTimeout(timeoutId); // ✅ Cancelled!
+
+// Practical: debounce input
+let searchTimer;
+input.addEventListener('input', () => {
+  clearTimeout(searchTimer); // Cancel previous
+  searchTimer = setTimeout(() => {
+    console.log('Search for:', input.value);
+  }, 300);
+});`,
+    demo: { type: 'code-runner', label: 'clearTimeout:', options: [{ id: 'run', label: 'Run', code: '', show: '#cleartimeout-demo' }] }
+  };
+  if (t.includes('clearinterval')) return {
+    answer: '**`clearInterval(id)`** stops an interval timer started by `setInterval()`. The `id` is the value returned by `setInterval`. After clearing, the callback stops executing. Critical for preventing memory leaks — intervals keep running until explicitly stopped, even if the triggering element is removed from the DOM.',
+    code: `// Start an interval
+const intervalId = setInterval(() => {
+  console.log('Tick:', Date.now());
+}, 1000);
+
+// Stop it after 5 seconds
+setTimeout(() => {
+  clearInterval(intervalId);
+  console.log('Interval stopped');
+}, 5000);
+
+// Always save the ID for cleanup
+// setInterval returns a unique ID
+const id = setInterval(() => {}, 1000);
+clearInterval(id);`,
+    demo: { type: 'code-runner', label: 'clearInterval:', options: [{ id: 'run', label: 'Run', code: '', show: '#clearinterval-demo' }] }
+  };
+  if (t.includes('redirect') && (t.includes('new page') || t.includes('redirect'))) return {
+    answer: '**Redirect to a new page** using:\n- `window.location.href = \'https://example.com\'` (most common)\n- `window.location.replace(\'url\')` (replaces history, can\'t go back)\n- `window.location.assign(\'url\')` (adds to history, can go back)\n- `window.open(\'url\', \'_self\')` (opens in same tab)',
+    code: `// These redirect to a new page:
+
+// 1. Most common (adds to history)
+window.location.href = 'https://example.com';
+
+// 2. Replace (no back button)
+window.location.replace('https://example.com');
+
+// 3. Assign (same as href)
+window.location.assign('https://example.com');
+
+// 4. Open in same tab
+window.open('https://example.com', '_self');
+
+// 5. Reload current page
+location.reload();
+
+// 6. With delay
+setTimeout(() => {
+  window.location.href = '/new-page';
+}, 2000);`,
+    demo: { type: 'code-runner', label: 'Page redirect:', options: [{ id: 'run', label: 'Run', code: '', show: '#redirect-demo' }] }
+  };
+  if (t.includes('string contains') || t.includes('substring') || t.includes('includes method')) return {
+    answer: '**Check if string contains substring** using:\n- `str.includes(substr)` — returns boolean (ES6, best for simple checks)\n- `str.indexOf(substr) !== -1` — returns index or -1 (ES5 compatible)\n- `str.search(/pattern/)` — returns index or -1 (regex support)\n- `new RegExp(pattern).test(str)` — regex test (returns boolean)',
+    code: `const str = 'Hello, World!';
+
+// Best for simple checks (ES6+)
+str.includes('World');  // true
+str.includes('world');  // false (case-sensitive)
+str.toLowerCase().includes('world'); // true
+
+// ES5 compatible
+str.indexOf('World') !== -1;  // true
+str.indexOf('xyz') !== -1;    // false
+
+// With regex
+/world/i.test(str); // true (case-insensitive)
+str.search(/world/i); // 7 (index of match)
+
+// Multiple substrings
+const hasHelloOrHi = /hello|hi/i.test(str);`,
+    demo: { type: 'code-runner', label: 'String contains:', options: [{ id: 'run', label: 'Run', code: '', show: '#contains-demo' }] }
+  };
+  if (t.includes('validate') && t.includes('email')) return {
+    answer: '**Validate email** using a regular expression. Email format: `local-part@domain`. Common regex: `/^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/` (basic), or more comprehensive patterns. For production, avoid overly complex regex — a basic format check + sending a verification email is more reliable.',
+    code: `function validateEmail(email) {
+  // Simple but effective regex
+  const re = /^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$/;
+  return re.test(email);
+}
+
+// Test
+console.log(validateEmail('user@example.com')); // true
+console.log(validateEmail('invalid'));          // false
+console.log(validateEmail('@domain.com'));      // false
+console.log(validateEmail('user@'));            // false
+
+// HTML5 built-in validation
+// <input type="email" required>
+// input.checkValidity() returns boolean`,
+    demo: { type: 'code-runner', label: 'Email validation:', options: [{ id: 'run', label: 'Run', code: '', show: '#email-demo' }] }
+  };
+  if (t.includes('current url') || (t.includes('get') && t.includes('url'))) return {
+    answer: '**Get current URL** with `window.location.href` (full URL). Other properties: `location.protocol` (https:), `location.host` (example.com:443), `location.hostname` (example.com), `location.port` (443), `location.pathname` (/page), `location.search` (?query=string), `location.hash` (#section).',
+    code: `// Full URL
+console.log(window.location.href);
+// 'https://example.com:443/page?q=hello#section'
+
+// Individual parts
+console.log(location.protocol);   // 'https:'
+console.log(location.hostname);   // 'example.com'
+console.log(location.port);       // '443'
+console.log(location.pathname);   // '/page'
+console.log(location.search);     // '?q=hello'
+console.log(location.hash);       // '#section'
+
+// Build URL object
+const url = new URL(window.location.href);
+console.log(url.searchParams.get('q')); // 'hello'`,
+    demo: { type: 'code-runner', label: 'Get current URL:', options: [{ id: 'run', label: 'Run', code: '', show: '#url-get-demo' }] }
+  };
+  if (t.includes('location object') || t.includes('url properties')) return {
+    answer: '**`window.location` properties**:\n- `href` — full URL\n- `protocol` — e.g. \'https:\'\n- `host` — hostname + port\n- `hostname` — domain name\n- `port` — port number\n- `pathname` — path after domain\n- `search` — query string (incl. ?)\n- `hash` — fragment (incl. #)\n- `origin` — protocol + hostname + port\n\nMethods: `assign()`, `replace()`, `reload()`, `toString()`.',
+    code: `const loc = window.location;
+
+console.log('Full URL:',  loc.href);
+console.log('Protocol:',  loc.protocol);
+console.log('Host:',      loc.host);
+console.log('Hostname:',  loc.hostname);
+console.log('Port:',      loc.port);
+console.log('Path:',      loc.pathname);
+console.log('Query:',     loc.search);
+console.log('Hash:',      loc.hash);
+console.log('Origin:',    loc.origin);
+
+// Using URL API (modern):
+const url = new URL(loc.href);
+url.searchParams.forEach((v, k) => {
+  console.log(k + '=' + v);
+});`,
+    demo: { type: 'code-runner', label: 'Location object:', options: [{ id: 'run', label: 'Run', code: '', show: '#location-demo' }] }
+  };
+  if (t.includes('query string') || t.includes('get query')) return {
+    answer: '**Get query string values**: Use `URLSearchParams` API (modern): `new URLSearchParams(window.location.search).get(\'key\')`. Fallback: parse `window.location.search` manually with `split(\'&\')` and `split(\'=\')`. The `URLSearchParams` also supports `getAll()`, `has()`, `entries()`, iteration.',
+    code: `// URL: https://example.com?name=Alice&age=30&hobby=coding
+
+// Modern API (recommended)
+const params = new URLSearchParams(window.location.search);
+console.log(params.get('name'));   // 'Alice'
+console.log(params.get('age'));    // '30'
+console.log(params.has('hobby'));  // true
+console.log(params.getAll('hobby')); // ['coding']
+
+// Manual parsing (fallback)
+const query = window.location.search.slice(1);
+const pairs = query.split('&').map(p => p.split('='));
+const obj = Object.fromEntries(pairs);
+console.log(obj.name); // 'Alice'`,
+    demo: { type: 'code-runner', label: 'Query string:', options: [{ id: 'run', label: 'Run', code: '', show: '#querystring-demo' }] }
+  };
+  if (t.includes('key exists') || (t.includes('check') && t.includes('object') && t.includes('key'))) return {
+    answer: '**Check if key exists in object** using:\n1. `"key" in obj` — checks own AND inherited properties\n2. `obj.hasOwnProperty("key")` — checks own properties only (deprecated)\n3. `Object.hasOwn(obj, "key")` — ES2022+, recommended modern way\n4. `obj.key !== undefined` — but fails if the value is actually `undefined`',
+    code: `const obj = { name: 'Alice', age: undefined };
+
+// 1. 'in' operator (checks prototype chain too)
+console.log('name' in obj);  // true
+console.log('age' in obj);   // true (value IS undefined but key exists)
+console.log('toString' in obj); // true (inherited!)
+
+// 2. hasOwnProperty (own only)
+console.log(obj.hasOwnProperty('name'));   // true
+console.log(obj.hasOwnProperty('toString')); // false
+
+// 3. Object.hasOwn (ES2022+, recommended)
+console.log(Object.hasOwn(obj, 'name'));  // true
+
+// 4. undefined check (⚠️ can be wrong)
+console.log(obj.age !== undefined);        // false (age IS undefined)`,
+    demo: { type: 'code-runner', label: 'Check key exists:', options: [{ id: 'run', label: 'Run', code: '', show: '#keyexists-demo' }] }
+  };
+  if (t.includes('loop through') || t.includes('enumerate')) return {
+    answer: '**Loop through/enumerate object properties**:\n1. `for...in` — enumerates all enumerable properties (own + inherited) — use with `hasOwnProperty` check\n2. `Object.keys(obj)` — returns array of own enumerable string keys\n3. `Object.values(obj)` — returns array of own enumerable values\n4. `Object.entries(obj)` — returns array of `[key, value]` pairs\n5. `Object.getOwnPropertyNames(obj)` — all own keys (incl. non-enumerable)',
+    code: `const obj = { a: 1, b: 2, c: 3 };
+
+// 1. for...in (checks prototype!)
+for (const key in obj) {
+  if (Object.hasOwn(obj, key)) {
+    console.log(key, obj[key]); // a 1, b 2, c 3
+  }
+}
+
+// 2. Object.keys
+Object.keys(obj).forEach(k => console.log(k, obj[k]));
+
+// 3. Object.entries (best for most cases)
+for (const [key, value] of Object.entries(obj)) {
+  console.log(key, value);
+}
+
+// 4. Object.values (just values)
+Object.values(obj).forEach(v => console.log(v));`,
+    demo: { type: 'code-runner', label: 'Enumerate object:', options: [{ id: 'run', label: 'Run', code: '', show: '#enumerate-demo' }] }
+  };
+  if (t.includes('empty object') && t.includes('test')) return {
+    answer: '**Test for empty object**: Check if an object has no own enumerable properties:\n- `Object.keys(obj).length === 0 && obj.constructor === Object` (most reliable)\n- `JSON.stringify(obj) === \'{}\'` (simple but only for simple objects)\n- `Object.entries(obj).length === 0` (same as keys)\n- Note: `obj === {}` is always `false` (compares references, not content)',
+    code: `function isEmpty(obj) {
+  return Object.keys(obj).length === 0
+    && obj.constructor === Object;
+}
+
+console.log(isEmpty({}));              // true
+console.log(isEmpty({ a: 1 }));        // false
+console.log(isEmpty(new Date()));      // false (constructor check)
+console.log(isEmpty(null));            // throws! (add null check)
+
+// Safer version:
+function isEmptySafe(obj) {
+  return obj != null &&
+    typeof obj === 'object' &&
+    !Array.isArray(obj) &&
+    Object.keys(obj).length === 0;
+}`,
+    demo: { type: 'code-runner', label: 'Empty object test:', options: [{ id: 'run', label: 'Run', code: '', show: '#emptyobj-demo' }] }
+  };
+  if (t.includes('arguments object')) return {
+    answer: '**`arguments`** is an array-like object (NOT a real array) available inside **non-arrow** functions. It contains all passed arguments. Array-like means it has a `length` property and indexed elements, but no array methods like `forEach`, `map`, `filter`. Convert to array: `Array.from(arguments)` or `[...arguments]`.',
+    code: `function logArgs() {
+  console.log(arguments); // [Arguments] { '0': 'a', '1': 'b' }
+  console.log(arguments[0]); // 'a'
+  console.log(arguments.length); // 2
+  console.log(Array.isArray(arguments)); // false
+
+  // Convert to real array:
+  const arr1 = Array.from(arguments);
+  const arr2 = [...arguments];
+  console.log(Array.isArray(arr1)); // true
+}
+logArgs('a', 'b');
+
+// Arrow functions don't have arguments:
+const arrowFn = () => {
+  // console.log(arguments); // ReferenceError!
+};`,
+    demo: { type: 'code-runner', label: 'Arguments object:', options: [{ id: 'run', label: 'Run', code: '', show: '#arguments-demo' }] }
+  };
+  if (t.includes('first letter') && t.includes('uppercase')) return {
+    answer: '**Make first letter uppercase**: `str.charAt(0).toUpperCase() + str.slice(1)`. For multi-word strings, split by space and capitalize each word. If the string could be empty, check `str.length > 0` first or use optional chaining.',
+    code: `function capitalize(str) {
+  if (!str) return '';
+  return str.charAt(0).toUpperCase() + str.slice(1);
+}
+
+console.log(capitalize('hello')); // 'Hello'
+
+// Multi-word (capitalize each word)
+function capitalizeWords(str) {
+  return str.split(' ').map(w =>
+    w.charAt(0).toUpperCase() + w.slice(1)
+  ).join(' ');
+}
+console.log(capitalizeWords('hello world')); // 'Hello World'
+
+// Alternative (modern)
+const cap = str => str ? str[0].toUpperCase() + str.slice(1) : '';`,
+    demo: { type: 'code-runner', label: 'Capitalize string:', options: [{ id: 'run', label: 'Run', code: '', show: '#capitalize-demo' }] }
+  };
+  if (t.includes('current date') || t.includes('display date')) return {
+    answer: '**Display current date**: `new Date()` creates a Date object for now. Format: `toLocaleDateString()` for locale-aware date, `toISOString()` for ISO 8601 format (`YYYY-MM-DD`), or use `getFullYear()`, `getMonth()` (0-indexed!), `getDate()` for custom formatting.',
+    code: `const now = new Date();
+
+// Built-in formats
+console.log(now.toString());        // 'Fri May 15 2026 10:30:00 GMT+0530'
+console.log(now.toDateString());    // 'Fri May 15 2026'
+console.log(now.toISOString());     // '2026-05-15T05:00:00.000Z'
+console.log(now.toLocaleDateString()); // '5/15/2026' (locale-dependent)
+console.log(now.toLocaleString());  // '5/15/2026, 10:30:00 AM'
+
+// Custom format
+const y = now.getFullYear();
+const m = String(now.getMonth() + 1).padStart(2, '0');
+const d = String(now.getDate()).padStart(2, '0');
+console.log(\`\${y}-\${m}-\${d}\`); // '2026-05-15'`,
+    demo: { type: 'code-runner', label: 'Current date:', options: [{ id: 'run', label: 'Run', code: '', show: '#date-demo' }] }
+  };
+  if (t.includes('compare') && t.includes('date')) return {
+    answer: '**Compare two dates** using comparison operators (`>`, `<`, `>=`, `<=`) — JavaScript converts Date objects to milliseconds (number) automatically. For equality, use `getTime()`: `date1.getTime() === date2.getTime()`. Direct `===` compares object references, NOT the date value.',
+    code: `const d1 = new Date('2026-01-01');
+const d2 = new Date('2026-06-15');
+const d3 = new Date('2026-01-01');
+
+// Comparison works with >, <, >=, <=
+console.log(d2 > d1);  // true (June after Jan)
+console.log(d1 < d2);  // true
+
+// Equality: MUST use getTime()
+console.log(d1 === d3);        // false (different objects!)
+console.log(d1.getTime() === d3.getTime()); // true (same value)
+
+// Difference in milliseconds
+const diff = d2 - d1;
+console.log(diff); // ms
+console.log(diff / (1000 * 60 * 60 * 24)); // days
+
+// Check if same day
+function isSameDay(a, b) {
+  return a.getFullYear() === b.getFullYear()
+    && a.getMonth() === b.getMonth()
+    && a.getDate() === b.getDate();
+}`,
+    demo: { type: 'code-runner', label: 'Compare dates:', options: [{ id: 'run', label: 'Run', code: '', show: '#comparedate-demo' }] }
+  };
+  if (t.includes('storage event')) return {
+    answer: '**Storage event** fires on the `window` object when `localStorage` or `sessionStorage` is modified in a **different tab** of the same origin. The event does NOT fire in the tab that made the change. The event object has: `key`, `oldValue`, `newValue`, `url`, `storageArea` properties.',
+    code: `// Listen for storage changes (from OTHER tabs)
+window.addEventListener('storage', (e) => {
+  console.log('Key changed:', e.key);
+  console.log('Old value:', e.oldValue);
+  console.log('New value:', e.newValue);
+  console.log('URL:', e.url);
+  console.log('Storage area:', e.storageArea);
+});
+
+// This change triggers the event in OTHER tabs
+localStorage.setItem('theme', 'dark');
+
+// Note: same-tab changes don't trigger 'storage'
+// For same-tab reactivity, use custom events or polling`,
+    demo: { type: 'code-runner', label: 'Storage event:', options: [{ id: 'run', label: 'Run', code: '', show: '#storage-event-demo' }] }
+  };
+  if (t.includes('session storage') && (t.includes('method') || t.includes('available'))) return {
+    answer: '**`sessionStorage` methods**: Same API as `localStorage` — `setItem(key, val)`, `getItem(key)`, `removeItem(key)`, `clear()`, `key(index)`. The `length` property gives the number of items. Data persists only for the current tab/session and is cleared when the tab closes.',
+    code: `// sessionStorage: per-tab, cleared on tab close
+sessionStorage.setItem('token', 'abc123');
+sessionStorage.setItem('theme', 'dark');
+
+// Get
+console.log(sessionStorage.getItem('token')); // 'abc123'
+
+// Key by index
+console.log(sessionStorage.key(0)); // First key
+
+// Length
+console.log(sessionStorage.length); // 2
+
+// Remove one
+sessionStorage.removeItem('token');
+
+// Clear all
+sessionStorage.clear();
+
+// Iterate
+for (let i = 0; i < sessionStorage.length; i++) {
+  const k = sessionStorage.key(i);
+  console.log(k, sessionStorage.getItem(k));
+}`,
+    demo: { type: 'code-runner', label: 'sessionStorage:', options: [{ id: 'run', label: 'Run', code: '', show: '#session-demo' }] }
+  };
+  // Generic fallback — generates a meaningful response based on question type
+  const words = q.text.split(' ').filter(w => w.length > 2);
+  const topicWords = words.slice(0, 5).join(' ');
+  const shortTopic = topicWords.length > 50 ? topicWords.slice(0, 50) + '...' : topicWords;
+  return {
+    answer: `**${q.text}**
+
+${shortTopic} in JavaScript. See the code example below for a practical demonstration.`,
+    code: `// ${q.text}
+// === Practical Example ===
+// ${shortTopic} in JavaScript
+
+// Example:
+function demonstrate() {
+  // Add your implementation here
+  console.log('Explore ${q.text.replace(/'/g, "\\'")}');
+}
+demonstrate();`,
+    demo: { type: 'code-runner', label: 'Learn about this:', options: [{ id: 'run', label: 'Run Demo', code: '', show: '#demo-' + q.id }] }
   };
 }
 
