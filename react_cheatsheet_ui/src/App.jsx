@@ -15,29 +15,39 @@ const sections = [
 
 export default function App() {
   const [activeSection, setActiveSection] = useState('jsx')
+  const [navOpen, setNavOpen] = useState(false)
+
+  function goTo(id) {
+    setActiveSection(id)
+    setNavOpen(false)
+  }
 
   return (
     <div className="container">
       {/* Header */}
-      <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:8,flexWrap:'wrap'}}>
+      <div className="header-row">
         <span style={{fontSize:'1.8rem'}}>⚛️</span>
-        <h1 style={{fontSize:'1.8rem',fontWeight:800,color:'#e2e8f0',margin:0}}>
-          React Cheatsheet
-        </h1>
-        <span style={{fontSize:'.8rem',color:'#64748b'}}>Interactive Visual Guide</span>
+        <div>
+          <h1 style={{fontSize:'1.5rem',fontWeight:800,color:'#e2e8f0',margin:0}}>
+            React Cheatsheet
+          </h1>
+          <span style={{fontSize:'.75rem',color:'#64748b'}}>Interactive Visual Guide</span>
+        </div>
       </div>
-      <p style={{fontSize:'.85rem',color:'#94a3b8',marginBottom:12,lineHeight:1.5}}>
-        Every concept from the Zero To Mastery React Cheatsheet — with live, interactive demos.
-        Explore JSX, Components, Hooks, Class-based Lifecycle, and Error Boundaries.
-      </p>
+
+      {/* Hamburger toggle (mobile) */}
+      <button className="hamburger" onClick={() => setNavOpen(!navOpen)}>
+        <i className={`fas ${navOpen ? 'fa-times' : 'fa-bars'}`}></i>
+        <span>Sections</span>
+      </button>
 
       {/* Sticky Nav */}
-      <nav className="sticky-nav">
+      <nav className={`sticky-nav${navOpen ? ' open' : ''}`}>
         {sections.map(s => (
           <a
             key={s.id}
             href={`#${s.id}`}
-            onClick={e => { e.preventDefault(); setActiveSection(s.id) }}
+            onClick={e => { e.preventDefault(); goTo(s.id) }}
             style={{
               color: activeSection === s.id ? '#14b8a6' : '#94a3b8',
               background: activeSection === s.id ? '#1a3a3a' : 'transparent',
