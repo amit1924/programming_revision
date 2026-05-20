@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 8: Microservices Application — K8s Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; border-radius: 0.75rem; padding: 1.25rem; font-family: 'Fira Code', 'Cascadia Code', monospace; font-size: 0.85rem; overflow-x: auto; }
+    .code-inline { background: #1e1e35; color: #a78bfa; padding: 0.15rem 0.5rem; border-radius: 0.375rem; font-family: monospace; font-size: 0.85rem; }
+    .section-link { transition: all 0.2s; }
+    .section-link:hover { color: #818cf8; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 group">
+      <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+      Back to Cheatsheet Home
+    </a>
+
+    <!-- Header -->
+    <div class="text-center mb-10 animate-fade-in">
+      <i class="fas fa-project-diagram text-6xl text-teal-400 mb-4"></i>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text">Chapter 8: Microservices Application</h1>
+      <p class="text-gray-400 mt-3 text-lg">Deploying a Multi-Tier Voting Application on Kubernetes</p>
+      <div class="flex flex-wrap justify-center gap-2 mt-4 text-xs">
+        <span class="bg-teal-900/30 text-teal-300 px-3 py-1 rounded-full"><i class="fas fa-cubes mr-1"></i>PODs</span>
+        <span class="bg-blue-900/30 text-blue-300 px-3 py-1 rounded-full"><i class="fas fa-rocket mr-1"></i>Deployments</span>
+        <span class="bg-purple-900/30 text-purple-300 px-3 py-1 rounded-full"><i class="fas fa-plug mr-1"></i>Services</span>
+        <span class="bg-cyan-900/30 text-cyan-300 px-3 py-1 rounded-full"><i class="fas fa-cloud mr-1"></i>LoadBalancer</span>
+      </div>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-3 mb-10 text-sm">
+      <a href="#voting-app" class="section-link px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-white hover:border-teal-500 transition-all">Example Voting App</a>
+      <a href="#initial-setup" class="section-link px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-white hover:border-teal-500 transition-all">Initial Setup (PODs)</a>
+      <a href="#deployments" class="section-link px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-white hover:border-teal-500 transition-all">Deployments</a>
+      <a href="#external-access" class="section-link px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-white hover:border-teal-500 transition-all">External Access</a>
+      <a href="#cloud-lb" class="section-link px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-white hover:border-teal-500 transition-all">Cloud Load Balancer</a>
+      <a href="#conclusion" class="section-link px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-white hover:border-teal-500 transition-all">Conclusion</a>
+    </div>
+
+    <!-- Section 1: Example Voting Application -->
+    <section id="voting-app" class="mb-10 scroll-mt-6">
+      <div class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <h2 class="text-2xl font-bold text-white mb-2"><i class="fas fa-th-large text-teal-400 mr-3"></i>Example Voting Application</h2>
+        <p class="text-gray-400 mb-6">A complete multi-tier microservices application that demonstrates how independent containers work together in a Kubernetes cluster. Users vote and see live results — all powered by containers.</p>
+
+        <!-- Architecture Diagram -->
+        <div class="code-block mb-6 text-gray-300 text-xs leading-relaxed">
+          <span class="text-teal-400">┌──────────────┐    ┌──────────┐    ┌──────────┐    ┌──────────────┐</span>
+          <span class="text-teal-400">│</span>  Voting App   <span class="text-teal-400">│───▶│</span>   Redis   <span class="text-teal-400">│───▶│</span>  Worker  <span class="text-teal-400">│───▶│</span>  PostgreSQL  <span class="text-teal-400">│</span>
+          <span class="text-teal-400">│</span>  (Python)     <span class="text-teal-400">│    │</span> (in-memory)<span class="text-teal-400">│    │</span>  (.NET)  <span class="text-teal-400">│    │</span>   (DB)       <span class="text-teal-400">│</span>
+          <span class="text-teal-400">│</span>  :3000        <span class="text-teal-400">│    │</span> :6379     <span class="text-teal-400">│    │</span>         <span class="text-teal-400">│    │</span>  :5432       <span class="text-teal-400">│</span>
+          <span class="text-teal-400">└──────────────┘    └──────────┘    └──────────┘    └──────┬───────┘</span>
+          <span class="text-teal-400">                                                           │</span>
+          <span class="text-teal-400">                                                   ┌──────────▼──────┐</span>
+          <span class="text-teal-400">                                                   │</span>  Result App     <span class="text-teal-400">│</span>
+          <span class="text-teal-400">                                                   │</span>  (NodeJS)        <span class="text-teal-400">│</span>
+          <span class="text-teal-400">                                                   │</span>  :3001           <span class="text-teal-400">│</span>
+          <span class="text-teal-400">                                                   └─────────────────┘</span>
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-cubes text-teal-400 mr-2"></i>The Five Components</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-8 h-8 rounded-full bg-blue-900/40 flex items-center justify-center text-blue-400 text-sm font-bold">1</span>
+              <span class="font-semibold text-white">voting-app</span>
+              <span class="text-xs bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded">Python / Flask</span>
+            </div>
+            <p class="text-sm text-gray-400">A web frontend where users cast votes. Two buttons: <strong class="text-blue-300">Cats</strong> or <strong class="text-blue-300">Dogs</strong>. Runs on port <span class="code-inline">:3000</span>.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-8 h-8 rounded-full bg-red-900/40 flex items-center justify-center text-red-400 text-sm font-bold">2</span>
+              <span class="font-semibold text-white">redis</span>
+              <span class="text-xs bg-red-900/30 text-red-300 px-2 py-0.5 rounded">In-Memory DB</span>
+            </div>
+            <p class="text-sm text-gray-400">Temporarily stores incoming votes. Acts as a buffer between the voting app and the persistent database. Port <span class="code-inline">:6379</span>.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-8 h-8 rounded-full bg-amber-900/40 flex items-center justify-center text-amber-400 text-sm font-bold">3</span>
+              <span class="font-semibold text-white">worker</span>
+              <span class="text-xs bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded">.NET</span>
+            </div>
+            <p class="text-sm text-gray-400">Background consumer. Reads votes from Redis and writes them to PostgreSQL. No external port — runs internally.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-8 h-8 rounded-full bg-emerald-900/40 flex items-center justify-center text-emerald-400 text-sm font-bold">4</span>
+              <span class="font-semibold text-white">db</span>
+              <span class="text-xs bg-emerald-900/30 text-emerald-300 px-2 py-0.5 rounded">PostgreSQL</span>
+            </div>
+            <p class="text-sm text-gray-400">Persistent database that stores the final vote counts. Port <span class="code-inline">:5432</span>. Retains data even if the container restarts.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700 md:col-span-2">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="w-8 h-8 rounded-full bg-purple-900/40 flex items-center justify-center text-purple-400 text-sm font-bold">5</span>
+              <span class="font-semibold text-white">result-app</span>
+              <span class="text-xs bg-purple-900/30 text-purple-300 px-2 py-0.5 rounded">NodeJS</span>
+            </div>
+            <p class="text-sm text-gray-400">A web frontend that displays live election results. Reads from PostgreSQL. Shows a bar chart of cat vs dog votes. Port <span class="code-inline">:3001</span>.</p>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-bullseye text-teal-400 mr-2"></i>Goals of This Exercise</h3>
+        <ul class="list-disc list-inside text-gray-400 space-y-1 mb-6 text-sm">
+          <li><strong class="text-white">Deploy containers</strong> — Get all five applications running as PODs in the cluster.</li>
+          <li><strong class="text-white">Enable connectivity</strong> — Make the right services talk to each other (e.g. voting-app → redis, worker → db).</li>
+          <li><strong class="text-white">Provide external access</strong> — Allow end users to reach voting-app and result-app from their browsers.</li>
+        </ul>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-list-ol text-teal-400 mr-2"></i>Deployment Workflow (High-Level)</h3>
+        <div class="flex flex-wrap gap-3 mb-2 text-sm">
+          <span class="bg-teal-900/30 text-teal-300 px-3 py-1.5 rounded-lg border border-teal-800/50 flex items-center gap-2"><i class="fas fa-1"></i> Create PODs</span>
+          <span class="text-gray-600 flex items-center"><i class="fas fa-arrow-right"></i></span>
+          <span class="bg-blue-900/30 text-blue-300 px-3 py-1.5 rounded-lg border border-blue-800/50 flex items-center gap-2"><i class="fas fa-2"></i> ClusterIP Services</span>
+          <span class="text-gray-600 flex items-center"><i class="fas fa-arrow-right"></i></span>
+          <span class="bg-purple-900/30 text-purple-300 px-3 py-1.5 rounded-lg border border-purple-800/50 flex items-center gap-2"><i class="fas fa-3"></i> LoadBalancer Services</span>
+          <span class="text-gray-600 flex items-center"><i class="fas fa-arrow-right"></i></span>
+          <span class="bg-green-900/30 text-green-300 px-3 py-1.5 rounded-lg border border-green-800/50 flex items-center gap-2"><i class="fas fa-4"></i> Upgrade to Deployments</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 2: Initial Setup (PODs only) -->
+    <section id="initial-setup" class="mb-10 scroll-mt-6">
+      <div class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-2">
+          <i class="fas fa-cube text-3xl text-amber-400"></i>
+          <h2 class="text-2xl font-bold text-white">Initial Setup — Deploying with PODs</h2>
+        </div>
+        <p class="text-gray-400 mb-6">The simplest approach: create each component as a standalone POD. This works but doesn't scale or self-heal. We add Services to enable internal and external communication.</p>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-plug text-blue-400 mr-2"></i>Service Strategy</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-network-wired text-blue-400 text-sm"></i>
+              <span class="font-semibold text-white">ClusterIP Services</span>
+              <span class="text-xs bg-blue-900/30 text-blue-300 px-2 py-0.5 rounded">Internal</span>
+            </div>
+            <p class="text-sm text-gray-400">Used for <strong class="text-white">redis</strong> and <strong class="text-white">db</strong>. These services need to be reachable only by other components inside the cluster (voting-app → redis, worker → db). No external access needed.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-external-link-alt text-purple-400 text-sm"></i>
+              <span class="font-semibold text-white">NodePort / LoadBalancer Services</span>
+              <span class="text-xs bg-purple-900/30 text-purple-300 px-2 py-0.5 rounded">External</span>
+            </div>
+            <p class="text-sm text-gray-400">Used for <strong class="text-white">voting-app</strong> and <strong class="text-white">result-app</strong>. End users need to access these from outside the cluster via a browser.</p>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-server text-emerald-400 mr-2"></i>Step 1: Create the PODs</h3>
+
+        <h4 class="text-white font-medium mb-2">voting-app POD</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># voting-app-pod.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Pod
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: voting-app-pod
+            <span class="text-purple-300">labels</span>:
+              <span class="text-purple-300">name</span>: voting-app-pod
+              <span class="text-purple-300">app</span>: voting-app
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">containers</span>:
+              - <span class="text-purple-300">name</span>: voting-app
+                <span class="text-purple-300">image</span>: kodekloud/examplevotingapp_vote:v1
+                <span class="text-purple-300">ports</span>:
+                  - <span class="text-purple-300">containerPort</span>: 80
+        </div>
+
+        <h4 class="text-white font-medium mb-2">redis POD</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># redis-pod.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Pod
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: redis-pod
+            <span class="text-purple-300">labels</span>:
+              <span class="text-purple-300">name</span>: redis-pod
+              <span class="text-purple-300">app</span>: redis
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">containers</span>:
+              - <span class="text-purple-300">name</span>: redis
+                <span class="text-purple-300">image</span>: redis:alpine
+                <span class="text-purple-300">ports</span>:
+                  - <span class="text-purple-300">containerPort</span>: 6379
+        </div>
+
+        <h4 class="text-white font-medium mb-2">worker POD</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># worker-pod.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Pod
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: worker-pod
+            <span class="text-purple-300">labels</span>:
+              <span class="text-purple-300">name</span>: worker-pod
+              <span class="text-purple-300">app</span>: worker
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">containers</span>:
+              - <span class="text-purple-300">name</span>: worker
+                <span class="text-purple-300">image</span>: kodekloud/examplevotingapp_worker:v1
+        </div>
+
+        <h4 class="text-white font-medium mb-2">db POD (PostgreSQL)</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># db-pod.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Pod
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: db-pod
+            <span class="text-purple-300">labels</span>:
+              <span class="text-purple-300">name</span>: db-pod
+              <span class="text-purple-300">app</span>: db
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">containers</span>:
+              - <span class="text-purple-300">name</span>: db
+                <span class="text-purple-300">image</span>: postgres:alpine
+                <span class="text-purple-300">ports</span>:
+                  - <span class="text-purple-300">containerPort</span>: 5432
+                <span class="text-purple-300">env</span>:
+                  - <span class="text-purple-300">name</span>: POSTGRES_USER
+                    <span class="text-purple-300">value</span>: postgres
+                  - <span class="text-purple-300">name</span>: POSTGRES_PASSWORD
+                    <span class="text-purple-300">value</span>: postgres
+        </div>
+
+        <h4 class="text-white font-medium mb-2">result-app POD</h4>
+        <div class="code-block mb-6 text-sm">
+          <span class="text-gray-500"># result-app-pod.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Pod
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: result-app-pod
+            <span class="text-purple-300">labels</span>:
+              <span class="text-purple-300">name</span>: result-app-pod
+              <span class="text-purple-300">app</span>: result-app
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">containers</span>:
+              - <span class="text-purple-300">name</span>: result-app
+                <span class="text-purple-300">image</span>: kodekloud/examplevotingapp_result:v1
+                <span class="text-purple-300">ports</span>:
+                  - <span class="text-purple-300">containerPort</span>: 80
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-terminal text-emerald-400 mr-2"></i>Create the PODs</h3>
+        <div class="code-block mb-6 text-sm">
+          <span class="text-green-400">$</span> kubectl apply -f voting-app-pod.yaml
+          <span class="text-green-400">$</span> kubectl apply -f redis-pod.yaml
+          <span class="text-green-400">$</span> kubectl apply -f worker-pod.yaml
+          <span class="text-green-400">$</span> kubectl apply -f db-pod.yaml
+          <span class="text-green-400">$</span> kubectl apply -f result-app-pod.yaml
+
+          <span class="text-gray-500"># Verify all PODs are running</span>
+          <span class="text-green-400">$</span> kubectl get pods
+          <span class="text-gray-400">NAME               READY   STATUS    RESTARTS</span>
+          <span class="text-gray-400">voting-app-pod     1/1     Running   0</span>
+          <span class="text-gray-400">redis-pod          1/1     Running   0</span>
+          <span class="text-gray-400">worker-pod         1/1     Running   0</span>
+          <span class="text-gray-400">db-pod             1/1     Running   0</span>
+          <span class="text-gray-400">result-app-pod     1/1     Running   0</span>
+        </div>
+
+        <div class="bg-amber-900/20 border border-amber-800/40 rounded-lg p-4 mb-6">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-triangle text-amber-400 mt-1"></i>
+            <div>
+              <p class="text-sm text-gray-300"><strong class="text-amber-300">Problem:</strong> At this point, none of the components can talk to each other. PODs have internal IPs that change if they restart. We need <strong class="text-white">Services</strong> to provide stable endpoints.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-plug text-blue-400 mr-2"></i>Step 2: Create ClusterIP Services (Internal Communication)</h3>
+        <p class="text-gray-400 text-sm mb-4">ClusterIP Services provide a stable internal IP and DNS name so that other PODs can reliably reach redis and db.</p>
+
+        <h4 class="text-white font-medium mb-2">redis Service (ClusterIP)</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># redis-service.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Service
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: redis
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">app</span>: redis
+              <span class="text-purple-300">name</span>: redis-pod
+            <span class="text-purple-300">ports</span>:
+              - <span class="text-purple-300">port</span>: 6379
+                <span class="text-purple-300">targetPort</span>: 6379
+        </div>
+
+        <h4 class="text-white font-medium mb-2">db Service (ClusterIP)</h4>
+        <div class="code-block mb-6 text-sm">
+          <span class="text-gray-500"># db-service.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Service
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: db
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">app</span>: db
+              <span class="text-purple-300">name</span>: db-pod
+            <span class="text-purple-300">ports</span>:
+              - <span class="text-purple-300">port</span>: 5432
+                <span class="text-purple-300">targetPort</span>: 5432
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-external-link-alt text-purple-400 mr-2"></i>Step 3: Create NodePort Services (External Access)</h3>
+        <p class="text-gray-400 text-sm mb-4">For the user-facing apps (voting-app, result-app), we need NodePort or LoadBalancer Services so external browsers can reach them.</p>
+
+        <h4 class="text-white font-medium mb-2">voting-app Service (NodePort)</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># voting-app-service.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Service
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: voting-app-service
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">type</span>: NodePort
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">app</span>: voting-app
+              <span class="text-purple-300">name</span>: voting-app-pod
+            <span class="text-purple-300">ports</span>:
+              - <span class="text-purple-300">port</span>: 80
+                <span class="text-purple-300">targetPort</span>: 80
+                <span class="text-purple-300">nodePort</span>: 30004
+        </div>
+
+        <h4 class="text-white font-medium mb-2">result-app Service (NodePort)</h4>
+        <div class="code-block mb-6 text-sm">
+          <span class="text-gray-500"># result-app-service.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Service
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: result-app-service
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">type</span>: NodePort
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">app</span>: result-app
+              <span class="text-purple-300">name</span>: result-app-pod
+            <span class="text-purple-300">ports</span>:
+              - <span class="text-purple-300">port</span>: 80
+                <span class="text-purple-300">targetPort</span>: 80
+                <span class="text-purple-300">nodePort</span>: 30005
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-terminal text-green-400 mr-2"></i>Create All Services</h3>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-green-400">$</span> kubectl apply -f redis-service.yaml
+          <span class="text-green-400">$</span> kubectl apply -f db-service.yaml
+          <span class="text-green-400">$</span> kubectl apply -f voting-app-service.yaml
+          <span class="text-green-400">$</span> kubectl apply -f result-app-service.yaml
+
+          <span class="text-gray-500"># List all services</span>
+          <span class="text-green-400">$</span> kubectl get services
+          <span class="text-gray-400">NAME                  TYPE        CLUSTER-IP      PORT(S)</span>
+          <span class="text-gray-400">redis                 ClusterIP   10.99.143.178   6379/TCP</span>
+          <span class="text-gray-400">db                    ClusterIP   10.108.56.45    5432/TCP</span>
+          <span class="text-gray-400">voting-app-service    NodePort    10.101.78.223   80:30004/TCP</span>
+          <span class="text-gray-400">result-app-service    NodePort    10.104.12.89    80:30005/TCP</span>
+
+          <span class="text-gray-500"># Access voting app from browser (Minikube)</span>
+          <span class="text-green-400">$</span> minikube service voting-app-service
+        </div>
+
+        <div class="bg-yellow-900/20 border border-yellow-800/40 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-circle text-yellow-400 mt-1"></i>
+            <div>
+              <p class="text-sm text-gray-300"><strong class="text-yellow-300">Note:</strong> This works but has a major limitation — if a POD crashes, it's gone forever. No automatic restart, no scaling, no rolling updates. That's why we need <strong class="text-white">Deployments</strong>.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 3: Improving with Deployments -->
+    <section id="deployments" class="mb-10 scroll-mt-6">
+      <div class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-2">
+          <i class="fas fa-rocket text-3xl text-rose-400"></i>
+          <h2 class="text-2xl font-bold text-white">Improving with Deployments</h2>
+        </div>
+        <p class="text-gray-400 mb-6">Replace all PODs with Deployments. Deployments give us <strong class="text-white">scaling</strong>, <strong class="text-white">self-healing</strong>, and <strong class="text-white">rolling updates</strong> — three essential features for production applications.</p>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-layer-group text-rose-400 mr-2"></i>Deployment Hierarchy</h3>
+        <div class="code-block mb-6 text-sm text-center">
+          <span class="text-rose-400">Deployment</span>  <span class="text-gray-500">──▶</span>  <span class="text-amber-400">ReplicaSet</span>  <span class="text-gray-500">──▶</span>  <span class="text-emerald-400">PODs</span>
+          <span class="text-gray-600 text-xs">
+  (desired state)          (replica mgmt)          (actual containers)</span>
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-cubes text-rose-400 mr-2"></i>Step 1: Convert PODs to Deployments</h3>
+        <p class="text-gray-400 text-sm mb-4">Each Deployment manages a ReplicaSet, which in turn manages the PODs. The same selector labels connect Services to PODs.</p>
+
+        <h4 class="text-white font-medium mb-2">voting-app Deployment</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># voting-app-deployment.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: apps/v1
+          <span class="text-blue-400">kind</span>: Deployment
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: voting-app-deployment
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">replicas</span>: 3
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">matchLabels</span>:
+                <span class="text-purple-300">name</span>: voting-app-pod
+                <span class="text-purple-300">app</span>: voting-app
+            <span class="text-purple-300">template</span>:
+              <span class="text-blue-400">metadata</span>:
+                <span class="text-purple-300">labels</span>:
+                  <span class="text-purple-300">name</span>: voting-app-pod
+                  <span class="text-purple-300">app</span>: voting-app
+              <span class="text-blue-400">spec</span>:
+                <span class="text-purple-300">containers</span>:
+                  - <span class="text-purple-300">name</span>: voting-app
+                    <span class="text-purple-300">image</span>: kodekloud/examplevotingapp_vote:v1
+                    <span class="text-purple-300">ports</span>:
+                      - <span class="text-purple-300">containerPort</span>: 80
+        </div>
+
+        <h4 class="text-white font-medium mb-2">redis Deployment</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># redis-deployment.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: apps/v1
+          <span class="text-blue-400">kind</span>: Deployment
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: redis-deployment
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">replicas</span>: 1
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">matchLabels</span>:
+                <span class="text-purple-300">name</span>: redis-pod
+                <span class="text-purple-300">app</span>: redis
+            <span class="text-purple-300">template</span>:
+              <span class="text-blue-400">metadata</span>:
+                <span class="text-purple-300">labels</span>:
+                  <span class="text-purple-300">name</span>: redis-pod
+                  <span class="text-purple-300">app</span>: redis
+              <span class="text-blue-400">spec</span>:
+                <span class="text-purple-300">containers</span>:
+                  - <span class="text-purple-300">name</span>: redis
+                    <span class="text-purple-300">image</span>: redis:alpine
+                    <span class="text-purple-300">ports</span>:
+                      - <span class="text-purple-300">containerPort</span>: 6379
+        </div>
+
+        <h4 class="text-white font-medium mb-2">worker Deployment</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># worker-deployment.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: apps/v1
+          <span class="text-blue-400">kind</span>: Deployment
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: worker-deployment
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">replicas</span>: 1
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">matchLabels</span>:
+                <span class="text-purple-300">name</span>: worker-pod
+                <span class="text-purple-300">app</span>: worker
+            <span class="text-purple-300">template</span>:
+              <span class="text-blue-400">metadata</span>:
+                <span class="text-purple-300">labels</span>:
+                  <span class="text-purple-300">name</span>: worker-pod
+                  <span class="text-purple-300">app</span>: worker
+              <span class="text-blue-400">spec</span>:
+                <span class="text-purple-300">containers</span>:
+                  - <span class="text-purple-300">name</span>: worker
+                    <span class="text-purple-300">image</span>: kodekloud/examplevotingapp_worker:v1
+        </div>
+
+        <h4 class="text-white font-medium mb-2">db Deployment (PostgreSQL)</h4>
+        <div class="code-block mb-4 text-sm">
+          <span class="text-gray-500"># db-deployment.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: apps/v1
+          <span class="text-blue-400">kind</span>: Deployment
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: db-deployment
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">replicas</span>: 1
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">matchLabels</span>:
+                <span class="text-purple-300">name</span>: db-pod
+                <span class="text-purple-300">app</span>: db
+            <span class="text-purple-300">template</span>:
+              <span class="text-blue-400">metadata</span>:
+                <span class="text-purple-300">labels</span>:
+                  <span class="text-purple-300">name</span>: db-pod
+                  <span class="text-purple-300">app</span>: db
+              <span class="text-blue-400">spec</span>:
+                <span class="text-purple-300">containers</span>:
+                  - <span class="text-purple-300">name</span>: db
+                    <span class="text-purple-300">image</span>: postgres:alpine
+                    <span class="text-purple-300">ports</span>:
+                      - <span class="text-purple-300">containerPort</span>: 5432
+                    <span class="text-purple-300">env</span>:
+                      - <span class="text-purple-300">name</span>: POSTGRES_USER
+                        <span class="text-purple-300">value</span>: postgres
+                      - <span class="text-purple-300">name</span>: POSTGRES_PASSWORD
+                        <span class="text-purple-300">value</span>: postgres
+        </div>
+
+        <h4 class="text-white font-medium mb-2">result-app Deployment</h4>
+        <div class="code-block mb-6 text-sm">
+          <span class="text-gray-500"># result-app-deployment.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: apps/v1
+          <span class="text-blue-400">kind</span>: Deployment
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: result-app-deployment
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">replicas</span>: 3
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">matchLabels</span>:
+                <span class="text-purple-300">name</span>: result-app-pod
+                <span class="text-purple-300">app</span>: result-app
+            <span class="text-purple-300">template</span>:
+              <span class="text-blue-400">metadata</span>:
+                <span class="text-purple-300">labels</span>:
+                  <span class="text-purple-300">name</span>: result-app-pod
+                  <span class="text-purple-300">app</span>: result-app
+              <span class="text-blue-400">spec</span>:
+                <span class="text-purple-300">containers</span>:
+                  - <span class="text-purple-300">name</span>: result-app
+                    <span class="text-purple-300">image</span>: kodekloud/examplevotingapp_result:v1
+                    <span class="text-purple-300">ports</span>:
+                      - <span class="text-purple-300">containerPort</span>: 80
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-terminal text-green-400 mr-2"></i>Deploy and Verify</h3>
+        <div class="code-block mb-6 text-sm">
+          <span class="text-gray-500"># Delete old PODs (Deployments will recreate them)</span>
+          <span class="text-green-400">$</span> kubectl delete pod voting-app-pod redis-pod worker-pod db-pod result-app-pod
+
+          <span class="text-gray-500"># Create Deployments</span>
+          <span class="text-green-400">$</span> kubectl apply -f voting-app-deployment.yaml
+          <span class="text-green-400">$</span> kubectl apply -f redis-deployment.yaml
+          <span class="text-green-400">$</span> kubectl apply -f worker-deployment.yaml
+          <span class="text-green-400">$</span> kubectl apply -f db-deployment.yaml
+          <span class="text-green-400">$</span> kubectl apply -f result-app-deployment.yaml
+
+          <span class="text-gray-500"># Check Deployments</span>
+          <span class="text-green-400">$</span> kubectl get deployments
+          <span class="text-gray-400">NAME                      READY   UP-TO-DATE   AVAILABLE</span>
+          <span class="text-gray-400">voting-app-deployment     3/3     3            3</span>
+          <span class="text-gray-400">redis-deployment          1/1     1            1</span>
+          <span class="text-gray-400">worker-deployment         1/1     1            1</span>
+          <span class="text-gray-400">db-deployment             1/1     1            1</span>
+          <span class="text-gray-400">result-app-deployment     3/3     3            3</span>
+
+          <span class="text-gray-500"># Check the PODs (notice the generated names)</span>
+          <span class="text-green-400">$</span> kubectl get pods
+          <span class="text-gray-400">NAME                                       READY   STATUS</span>
+          <span class="text-gray-400">voting-app-deployment-7d8f9c4b6f-abc12     1/1     Running</span>
+          <span class="text-gray-400">voting-app-deployment-7d8f9c4b6f-def34     1/1     Running</span>
+          <span class="text-gray-400">voting-app-deployment-7d8f9c4b6f-ghi56     1/1     Running</span>
+          <span class="text-gray-400">redis-deployment-5c6f7a8b9c-xyz78          1/1     Running</span>
+          <span class="text-gray-400">worker-deployment-4b3c2d1e0f-uvw90         1/1     Running</span>
+          <span class="text-gray-400">db-deployment-9a8b7c6d5e-rst12             1/1     Running</span>
+          <span class="text-gray-400">result-app-deployment-2f3g4h5i6j-mn34      1/1     Running</span>
+          <span class="text-gray-400">result-app-deployment-2f3g4h5i6j-op56      1/1     Running</span>
+          <span class="text-gray-400">result-app-deployment-2f3g4h5i6j-qr78      1/1     Running</span>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700 text-center">
+            <i class="fas fa-expand-arrows-alt text-green-400 text-2xl mb-2"></i>
+            <h4 class="text-white font-semibold text-sm">Scaling</h4>
+            <p class="text-xs text-gray-400">Change <span class="code-inline">replicas</span> and re-apply. Or use <span class="code-inline">kubectl scale deployment voting-app-deployment --replicas=5</span></p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700 text-center">
+            <i class="fas fa-heartbeat text-green-400 text-2xl mb-2"></i>
+            <h4 class="text-white font-semibold text-sm">Self-Healing</h4>
+            <p class="text-xs text-gray-400">If a POD crashes, the ReplicaSet creates a new one automatically. No manual intervention needed.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700 text-center">
+            <i class="fas fa-sync-alt text-green-400 text-2xl mb-2"></i>
+            <h4 class="text-white font-semibold text-sm">Rolling Updates</h4>
+            <p class="text-xs text-gray-400">Update image, re-apply. K8s gradually replaces PODs with zero downtime.</p>
+          </div>
+        </div>
+
+        <div class="bg-emerald-900/20 border border-emerald-800/40 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+            <div>
+              <p class="text-sm text-gray-300"><strong class="text-emerald-300">Key Insight:</strong> The Services remain exactly the same — their <span class="code-inline">selector</span> labels (<span class="code-inline">app: voting-app</span>) match the PODs created by the Deployment. No Service changes needed when switching from PODs to Deployments.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 4: External Access Challenge -->
+    <section id="external-access" class="mb-10 scroll-mt-6">
+      <div class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-2">
+          <i class="fas fa-exclamation-triangle text-3xl text-yellow-400"></i>
+          <h2 class="text-2xl font-bold text-white">External Access Challenge</h2>
+        </div>
+        <p class="text-gray-400 mb-6">When running Kubernetes in a multi-node environment (e.g. VirtualBox with multiple VMs), providing a single external URL for users becomes surprisingly difficult.</p>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-sitemap text-yellow-400 mr-2"></i>The Problem</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-server text-red-400"></i>
+              <span class="font-semibold text-white">Multiple Nodes = Multiple IPs</span>
+            </div>
+            <p class="text-sm text-gray-400">In a 3-node cluster, a NodePort service creates the same port (e.g. 30004) on every node. Users can reach any node IP, but each has a different address:</p>
+            <ul class="text-xs text-gray-500 mt-2 space-y-1 list-disc list-inside">
+              <li><span class="code-inline">http://192.168.1.10:30004</span></li>
+              <li><span class="code-inline">http://192.168.1.11:30004</span></li>
+              <li><span class="code-inline">http://192.168.1.12:30004</span></li>
+            </ul>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-users text-yellow-400"></i>
+              <span class="font-semibold text-white">Users Need a Single URL</span>
+            </div>
+            <p class="text-sm text-gray-400">End users shouldn't have to pick a node. They need one stable URL. Without a load balancer, you'd have to tell users "try this IP, and if it's down, try that IP" — that's terrible UX.</p>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-wrench text-yellow-400 mr-2"></i>Solution in VirtualBox: Manual Load Balancer VM</h3>
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700 mb-4">
+          <p class="text-sm text-gray-400 mb-3">In an on-prem / VirtualBox setup, you need to manually create a dedicated Load Balancer VM running software like <strong class="text-white">HAProxy</strong> or <strong class="text-white">NGINX</strong>. This VM sits between users and the cluster nodes:</p>
+          <div class="code-block text-xs text-gray-400">
+<span class="text-yellow-400">Users</span>  <span class="text-gray-500">──▶</span>  <span class="text-cyan-400">Load Balancer VM</span>  <span class="text-gray-500">──▶</span>  <span class="text-green-400">Node 1:30004</span>
+                       <span class="text-gray-500">             ──▶</span>  <span class="text-green-400">Node 2:30004</span>
+                       <span class="text-gray-500">             ──▶</span>  <span class="text-green-400">Node 3:30004</span>
+          </div>
+        </div>
+
+        <div class="bg-red-900/20 border border-red-800/40 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-times-circle text-red-400 mt-1"></i>
+            <div>
+              <p class="text-sm text-gray-300"><strong class="text-red-300">Drawback:</strong> Setting up and configuring HAProxy/NGINX is tedious. You have to manage the VM, update configuration when nodes change, handle TLS termination, and monitor the load balancer itself. It works, but it's a lot of manual work.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 5: Cloud Load Balancer Solution -->
+    <section id="cloud-lb" class="mb-10 scroll-mt-6">
+      <div class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-2">
+          <i class="fas fa-cloud text-3xl text-cyan-400"></i>
+          <h2 class="text-2xl font-bold text-white">Cloud Load Balancer Solution</h2>
+        </div>
+        <p class="text-gray-400 mb-6">On supported cloud platforms (GCP, AWS, Azure), Kubernetes can provision a native cloud load balancer <strong class="text-white">automatically</strong> — no manual VM setup needed.</p>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-magic text-cyan-400 mr-2"></i>How It Works</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl font-bold text-cyan-400">1</span>
+              <span class="font-semibold text-white">Set Service Type to LoadBalancer</span>
+            </div>
+            <p class="text-sm text-gray-400">Instead of <span class="code-inline">type: NodePort</span>, use <span class="code-inline">type: LoadBalancer</span>. K8s detects the cloud platform and communicates with its API.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl font-bold text-cyan-400">2</span>
+              <span class="font-semibold text-white">Cloud Provisions LB Automatically</span>
+            </div>
+            <p class="text-sm text-gray-400">The cloud provider (GCP, AWS, Azure) creates a native load balancer resource — e.g. GCP HTTP(S) Load Balancer, AWS ELB/NLB, Azure LB.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl font-bold text-cyan-400">3</span>
+              <span class="font-semibold text-white">Single External IP Assigned</span>
+            </div>
+            <p class="text-sm text-gray-400">The load balancer gets a public IP address. All traffic flows through this single entry point, then is distributed across cluster nodes.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <span class="text-2xl font-bold text-cyan-400">4</span>
+              <span class="font-semibold text-white">DNS Points to LB</span>
+            </div>
+            <p class="text-sm text-gray-400">Create a DNS record (e.g. <span class="code-inline">vote.myapp.com</span>) pointing to the load balancer IP. End users access via this friendly URL.</p>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-file-alt text-cyan-400 mr-2"></i>LoadBalancer Service YAML</h3>
+        <div class="code-block mb-6 text-sm">
+          <span class="text-gray-500"># voting-app-lb-service.yaml</span>
+          <span class="text-blue-400">apiVersion</span>: v1
+          <span class="text-blue-400">kind</span>: Service
+          <span class="text-blue-400">metadata</span>:
+            <span class="text-purple-300">name</span>: voting-app-service
+          <span class="text-blue-400">spec</span>:
+            <span class="text-purple-300">type</span>: LoadBalancer         <span class="text-gray-500"># ← Changed from NodePort</span>
+            <span class="text-purple-300">selector</span>:
+              <span class="text-purple-300">app</span>: voting-app
+              <span class="text-purple-300">name</span>: voting-app-pod
+            <span class="text-purple-300">ports</span>:
+              - <span class="text-purple-300">port</span>: 80
+                <span class="text-purple-300">targetPort</span>: 80
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-terminal text-green-400 mr-2"></i>Create and Verify</h3>
+        <div class="code-block mb-6 text-sm">
+          <span class="text-green-400">$</span> kubectl apply -f voting-app-lb-service.yaml
+
+          <span class="text-gray-500"># Watch for the EXTERNAL-IP to be provisioned</span>
+          <span class="text-green-400">$</span> kubectl get services
+          <span class="text-gray-400">NAME                  TYPE           CLUSTER-IP      EXTERNAL-IP      PORT(S)</span>
+          <span class="text-gray-400">voting-app-service    LoadBalancer   10.101.78.223   35.184.72.198    80:30004/TCP</span>
+
+          <span class="text-gray-500"># Access the application via the cloud load balancer</span>
+          <span class="text-green-400">$</span> curl http://35.184.72.198
+        </div>
+
+        <div class="bg-cyan-900/20 border border-cyan-800/40 rounded-lg p-4 mb-6">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-cloud-upload-alt text-cyan-400 mt-1"></i>
+            <div>
+              <p class="text-sm text-gray-300"><strong class="text-cyan-300">The Cloud Does the Heavy Lifting</strong> — No need to manually configure HAProxy or NGINX. The cloud provider's load balancer handles health checks, traffic distribution, TLS termination, and auto-scaling. Just set <span class="code-inline">type: LoadBalancer</span> and let K8s + cloud do the rest.</p>
+            </div>
+          </div>
+        </div>
+
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-list text-cyan-400 mr-2"></i>Service Type Comparison</h3>
+        <div class="overflow-x-auto mb-4">
+          <table class="w-full text-sm">
+            <thead>
+              <tr class="border-b border-slate-700">
+                <th class="text-left py-2 px-3 text-gray-300 font-semibold">Type</th>
+                <th class="text-left py-2 px-3 text-gray-300 font-semibold">Access</th>
+                <th class="text-left py-2 px-3 text-gray-300 font-semibold">Use Case</th>
+                <th class="text-left py-2 px-3 text-gray-300 font-semibold">Cloud Needed?</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-400">
+              <tr class="border-b border-slate-800">
+                <td class="py-2 px-3"><span class="code-inline text-blue-300">ClusterIP</span></td>
+                <td class="py-2 px-3">Internal only</td>
+                <td class="py-2 px-3">redis, db, worker</td>
+                <td class="py-2 px-3">No</td>
+              </tr>
+              <tr class="border-b border-slate-800">
+                <td class="py-2 px-3"><span class="code-inline text-purple-300">NodePort</span></td>
+                <td class="py-2 px-3">Node IP + static port</td>
+                <td class="py-2 px-3">Dev / testing</td>
+                <td class="py-2 px-3">No</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3"><span class="code-inline text-cyan-300">LoadBalancer</span></td>
+                <td class="py-2 px-3">Single external IP</td>
+                <td class="py-2 px-3">Production</td>
+                <td class="py-2 px-3">Yes (auto-provisions)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Section 6: Conclusion & Recap -->
+    <section id="conclusion" class="mb-10 scroll-mt-6">
+      <div class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-2">
+          <i class="fas fa-flag-checkered text-3xl text-teal-400"></i>
+          <h2 class="text-2xl font-bold text-white">Conclusion & Recap</h2>
+        </div>
+        <p class="text-gray-400 mb-6">We've covered the full journey — from understanding containers to deploying a real-world multi-tier microservices application on Kubernetes. Here's everything we've learned across all chapters:</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-box text-blue-400"></i>
+              <span class="font-semibold text-white text-sm">Containers & Docker</span>
+            </div>
+            <p class="text-xs text-gray-400">Packaging applications with dependencies into lightweight, portable containers. Running them locally with Docker.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-sitemap text-indigo-400"></i>
+              <span class="font-semibold text-white text-sm">Container Orchestration</span>
+            </div>
+            <p class="text-xs text-gray-400">Managing hundreds of containers across multiple machines. Scheduling, scaling, networking, and health monitoring.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-cogs text-purple-400"></i>
+              <span class="font-semibold text-white text-sm">K8s Setup Options</span>
+            </div>
+            <p class="text-xs text-gray-400">Minikube (local dev), kubeadm (multi-node), managed cloud (GKE, EKS, AKS). Choose based on your needs.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-cube text-emerald-400"></i>
+              <span class="font-semibold text-white text-sm">PODs</span>
+            </div>
+            <p class="text-xs text-gray-400">The smallest deployable unit. A POD wraps one or more containers with shared storage and network.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-copy text-amber-400"></i>
+              <span class="font-semibold text-white text-sm">ReplicaSets</span>
+            </div>
+            <p class="text-xs text-gray-400">Ensures a specified number of POD replicas are running at all times. Foundation for high availability.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-rocket text-rose-400"></i>
+              <span class="font-semibold text-white text-sm">Deployments</span>
+            </div>
+            <p class="text-xs text-gray-400">Declarative updates for PODs and ReplicaSets. Supports scaling, self-healing, rolling updates, rollback.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-plug text-violet-400"></i>
+              <span class="font-semibold text-white text-sm">Services</span>
+            </div>
+            <p class="text-xs text-gray-400">Stable networking for PODs. ClusterIP (internal), NodePort (external on each node), LoadBalancer (single cloud LB).</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-network-wired text-cyan-400"></i>
+              <span class="font-semibold text-white text-sm">Networking</span>
+            </div>
+            <p class="text-xs text-gray-400">POD-to-POD communication across nodes. CNI plugins (Calico, Flannel, Weave) handle the overlay network.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-terminal text-green-400"></i>
+              <span class="font-semibold text-white text-sm">kubectl Commands</span>
+            </div>
+            <p class="text-xs text-gray-400">The K8s CLI for managing clusters. <span class="code-inline">get</span>, <span class="code-inline">apply</span>, <span class="code-inline">describe</span>, <span class="code-inline">delete</span>, <span class="code-inline">logs</span>, <span class="code-inline">exec</span>, <span class="code-inline">scale</span>.</p>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700 md:col-span-3">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-cloud text-blue-400"></i>
+              <span class="font-semibold text-white text-sm">Deploying on Cloud</span>
+            </div>
+            <p class="text-xs text-gray-400">Replace NodePort with LoadBalancer, let the cloud provider provision a native load balancer, point DNS, and your app is live with a single URL. Production-ready.</p>
+          </div>
+        </div>
+
+        <!-- Final Architecture -->
+        <h3 class="text-lg font-semibold text-white mb-3"><i class="fas fa-check-double text-teal-400 mr-2"></i>Final Production Architecture</h3>
+        <div class="code-block mb-4 text-sm text-gray-300">
+          <span class="text-teal-400">┌─────────────┐</span>
+          <span class="text-teal-400">│</span>   End User  <span class="text-teal-400">│</span>
+          <span class="text-teal-400">└──────┬──────┘</span>
+                 <span class="text-gray-600">│</span>  <span class="text-gray-500">vote.myapp.com</span>
+          <span class="text-teal-400">┌──────▼──────────────────────┐</span>
+          <span class="text-teal-400">│</span>  Cloud Load Balancer (GCP)  <span class="text-teal-400">│</span>
+          <span class="text-teal-400">│</span>  ~&gt; Single External IP      <span class="text-teal-400">│</span>
+          <span class="text-teal-400">└──────┬──────────────────────┘</span>
+                 <span class="text-gray-600">│</span>
+          <span class="text-teal-400">┌──────▼──────────────────────────────────────────────────────┐</span>
+          <span class="text-teal-400">│</span>  Kubernetes Cluster (GKE)                                  <span class="text-teal-400">│</span>
+          <span class="text-teal-400">│</span>  ┌─────────────────────────────────────────────────────┐   <span class="text-teal-400">│</span>
+          <span class="text-teal-400">│</span>  │  voting-app (3 replicas)  ──▶  redis  ──▶  worker  │   <span class="text-teal-400">│</span>
+          <span class="text-teal-400">│</span>  │                                          └──▶  db  │   <span class="text-teal-400">│</span>
+          <span class="text-teal-400">│</span>  │  result-app (3 replicas)  ──────────────────────────┘   <span class="text-teal-400">│</span>
+          <span class="text-teal-400">│</span>  └─────────────────────────────────────────────────────┘   <span class="text-teal-400">│</span>
+          <span class="text-teal-400">└──────────────────────────────────────────────────────────────┘</span>
+        </div>
+
+        <div class="bg-gradient-to-r from-teal-900/30 to-blue-900/30 border border-teal-800/40 rounded-lg p-5 text-center">
+          <p class="text-lg font-semibold text-white mb-1"><i class="fas fa-graduation-cap text-teal-400 mr-2"></i>You've Completed the Kubernetes Cheatsheet!</p>
+          <p class="text-sm text-gray-400">From "what is a container?" to deploying a production-ready microservices application with load balancing on the cloud. <br>You now have the foundation to build, deploy, and manage applications on Kubernetes.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Nav -->
+    <div class="flex justify-between items-center mt-8 pt-6 border-t border-slate-800">
+      <a href="ch07_services.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors group">
+        <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i>
+        Chapter 7: Services
+      </a>
+      <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-home"></i> Home
+      </a>
+    </div>
+
+    <div class="mt-8 text-center text-gray-500 text-xs">
+      <i class="fas fa-book-open mr-1"></i> Based on "Kubernetes for Absolute Beginners" by Mumshad Mannambeth — 116 slides
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</body>
+</html>

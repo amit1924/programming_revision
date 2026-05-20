@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Working Locally — Git & GitHub Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .info-card { background: linear-gradient(135deg, #1a1a2e, #16213e); border: 1px solid #2a2a4a; border-radius: 16px; padding: 1.25rem; }
+    .cmd-tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.8rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .terminal { background: #0d1117; border-radius: 12px; padding: 1rem; font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace; font-size: 0.85rem; border: 1px solid #30363d; overflow-x: auto; }
+    .terminal .prompt { color: #7ee787; }
+    .terminal .cmd { color: #d2a8ff; }
+    .terminal .output { color: #8b949e; }
+    .terminal .highlight { color: #ffa657; }
+    .terminal .comment { color: #6e7681; font-style: italic; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes pulseGlow { 0%,100% { box-shadow: 0 0 5px rgba(99,102,241,0.2); } 50% { box-shadow: 0 0 20px rgba(99,102,241,0.5); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-in { animation: slideIn 0.6s ease-out; }
+    .animate-pulse-glow { animation: pulseGlow 2s infinite; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <!-- Back + Section Nav -->
+    <div class="flex flex-wrap items-center justify-between gap-3 mb-6">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition"><i class="fas fa-arrow-left"></i> Back</a>
+      <div class="flex flex-wrap gap-2 text-xs">
+        <a href="#init" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">init</a>
+        <a href="#commit" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">commit</a>
+        <a href="#staging" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">staging</a>
+        <a href="#update" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">update</a>
+        <a href="#bypass" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">bypass</a>
+        <a href="#delete" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">delete</a>
+        <a href="#diff" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">diff</a>
+        <a href="#reset" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">reset</a>
+        <a href="#checkout" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">checkout</a>
+        <a href="#other" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">other</a>
+        <a href="#exercises" class="bg-slate-800 hover:bg-slate-700 px-3 py-1 rounded-full transition">exercises</a>
+      </div>
+    </div>
+
+    <!-- Title -->
+    <div class="flex items-center gap-4 mb-6 animate-fade-in">
+      <i class="fas fa-laptop-code text-4xl text-emerald-400"></i>
+      <div>
+        <h1 class="text-3xl md:text-4xl font-bold gradient-text">Working Locally</h1>
+        <p class="text-gray-400 text-sm mt-1">Init, add, commit, staging area, diff, reset, and more</p>
+      </div>
+    </div>
+
+    <!-- 1. Creating a New Repository -->
+    <div id="init" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-folder-plus mr-2"></i>1. Creating a New Repository</h2>
+      <p class="text-gray-300 mb-3">Use <span class="cmd-tag">git init</span> to create a brand new Git repository in a subdirectory. Git creates the directory for you along with a hidden <span class="cmd-tag">.git/</span> subfolder containing all version control metadata.</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">git init myrepository</span></div>
+        <div><span class="output">Initialized empty Git repository in /home/user/myrepository/.git/</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">ls -la myrepository/</span></div>
+        <div><span class="output">total 12</span></div>
+        <div><span class="output">drwxr-xr-x 3 user user 4096 Jan 15 10:00 .</span></div>
+        <div><span class="output">drwxr-xr-x 4 user user 4096 Jan 15 10:00 ..</span></div>
+        <div><span class="output">drwxr-xr-x 7 user user 4096 Jan 15 10:00 .git</span></div>
+      </div>
+      <p class="text-gray-300 mb-2">The <span class="cmd-tag">.git/</span> directory contents:</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">ls -la myrepository/.git/</span></div>
+        <div><span class="output">total 40</span></div>
+        <div><span class="output">drwxr-xr-x  7 user user 4096 Jan 15 10:00 .</span></div>
+        <div><span class="output">drwxr-xr-x  3 user user 4096 Jan 15 10:00 ..</span></div>
+        <div><span class="output">-rw-r--r--  1 user user   23 Jan 15 10:00 HEAD</span></div>
+        <div><span class="output">drwxr-xr-x  2 user user 4096 Jan 15 10:00 branches</span></div>
+        <div><span class="output">-rw-r--r--  1 user user  235 Jan 15 10:00 config</span></div>
+        <div><span class="output">-rw-r--r--  1 user user   73 Jan 15 10:00 description</span></div>
+        <div><span class="output">drwxr-xr-x  2 user user 4096 Jan 15 10:00 hooks</span></div>
+        <div><span class="output">drwxr-xr-x  2 user user 4096 Jan 15 10:00 info</span></div>
+        <div><span class="output">drwxr-xr-x  4 user user 4096 Jan 15 10:00 objects</span></div>
+        <div><span class="output">drwxr-xr-x  4 user user 4096 Jan 15 10:00 refs</span></div>
+      </div>
+      <div class="bg-red-900/20 border border-red-700/40 rounded-lg p-3 text-sm text-red-300">
+        <i class="fas fa-exclamation-triangle mr-2"></i><strong>Warning:</strong> The <span class="cmd-tag">.git/</span> directory holds your entire repository history. Deleting it destroys all version control data!
+      </div>
+    </div>
+
+    <!-- 2. Committing Your First Files -->
+    <div id="commit" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-check-double mr-2"></i>2. Committing Your First Files</h2>
+      <p class="text-gray-300 mb-3">Two-step process: stage with <span class="cmd-tag">git add</span>, then commit with <span class="cmd-tag">git commit</span>.</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">cd helloworld</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">echo 'Hello World!' > hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git add hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git commit -m "added file 'hello'"</span></div>
+        <div><span class="output">[master (root-commit) f7c3d8a] added file 'hello'</span></div>
+        <div><span class="output"> 1 file changed, 1 insertion(+)</span></div>
+        <div><span class="output"> create mode 100644 hello</span></div>
+      </div>
+      <p class="text-gray-400 text-sm"><span class="cmd-tag">master</span> is the default branch name. The commit hash <span class="cmd-tag">f7c3d8a</span> uniquely identifies this snapshot.</p>
+    </div>
+
+    <!-- 3. The Staging Area (Index) -->
+    <div id="staging" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-layer-group mr-2"></i>3. The Staging Area (Index)</h2>
+      <p class="text-gray-300 mb-3">Traditional VCS has two areas: the <strong>repository</strong> (committed history) and the <strong>working tree</strong> (your files). Git adds an intermediate layer: the <strong>staging area</strong> (also called the <em>index</em>).</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div class="bg-slate-800/60 rounded-xl p-4 text-center border border-slate-600">
+          <i class="fas fa-folder-open text-2xl text-blue-400 mb-2"></i>
+          <div class="text-sm font-semibold text-blue-300">Working Tree</div>
+          <div class="text-xs text-gray-400">Your files on disk</div>
+          <div class="text-xs text-gray-500 mt-1">git add →</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-4 text-center border border-slate-600">
+          <i class="fas fa-clipboard-list text-2xl text-amber-400 mb-2"></i>
+          <div class="text-sm font-semibold text-amber-300">Index / Staging</div>
+          <div class="text-xs text-gray-400">Prepared snapshot</div>
+          <div class="text-xs text-gray-500 mt-1">git commit →</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-4 text-center border border-slate-600">
+          <i class="fas fa-database text-2xl text-emerald-400 mb-2"></i>
+          <div class="text-sm font-semibold text-emerald-300">Repository (HEAD)</div>
+          <div class="text-xs text-gray-400">Committed history</div>
+        </div>
+      </div>
+      <div class="flex items-center gap-2 text-sm text-gray-400">
+        <span class="cmd-tag">git add</span> <i class="fas fa-arrow-right text-xs"></i> copies files into the index
+        <span class="ml-3 cmd-tag">git commit</span> <i class="fas fa-arrow-right text-xs"></i> commits the content of the index
+      </div>
+    </div>
+
+    <!-- 4. Updating a File -->
+    <div id="update" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-pen mr-2"></i>4. Updating a File</h2>
+      <p class="text-gray-300 mb-3">Editing a file without re-staging it means Git sees the changes but won't include them in the next commit.</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">echo 'Goodbye World!' > hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git commit -m "updated hello"</span></div>
+        <div><span class="output">On branch master</span></div>
+        <div><span class="output">Changes not staged for commit:</span></div>
+        <div><span class="output">  (use "git add &lt;file&gt;..." to update what will be committed)</span></div>
+        <div><span class="output">  (use "git restore &lt;file&gt;..." to discard changes in working directory)</span></div>
+        <div><span class="output">        modified:   hello</span></div>
+        <div><span class="output">no changes added to commit (use "git add" and/or "git commit -a")</span></div>
+      </div>
+      <p class="text-gray-300">You must <span class="cmd-tag">git add</span> again before committing:</p>
+      <div class="terminal mt-2">
+        <div><span class="prompt">$</span> <span class="cmd">git add hello && git commit -m "updated hello"</span></div>
+        <div><span class="output">[master 2b4f1e3] updated hello</span></div>
+        <div><span class="output"> 1 file changed, 1 insertion(+), 1 deletion(-)</span></div>
+      </div>
+    </div>
+
+    <!-- 5. Bypassing the Index -->
+    <div id="bypass" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-forward mr-2"></i>5. Bypassing the Index</h2>
+      <p class="text-gray-300 mb-3">You can commit files directly from the working tree without explicitly using <span class="cmd-tag">git add</span>. However, this only works for <em>already tracked</em> (modified) files — new files are ignored.</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">git commit hello -m "direct commit of hello"</span></div>
+        <div><span class="output">[master a1b2c3d] direct commit of hello</span></div>
+        <div><span class="output"> 1 file changed, 1 insertion(+), 1 deletion(-)</span></div>
+      </div>
+      <p class="text-gray-300 mb-2">To include <em>all</em> changes (including new files), use <span class="cmd-tag">git add .</span> first:</p>
+      <div class="terminal">
+        <div><span class="prompt">$</span> <span class="cmd">git add . && git commit -m "commit everything"</span></div>
+        <div><span class="output">[master d4e5f6g] commit everything</span></div>
+        <div><span class="output"> 3 files changed, 12 insertions(+)</span></div>
+        <div><span class="output"> create mode 100644 newfile.txt</span></div>
+        <div><span class="output"> create mode 100644 another.txt</span></div>
+      </div>
+    </div>
+
+    <!-- 6. Deleting Files -->
+    <div id="delete" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-trash-alt mr-2"></i>6. Deleting Files</h2>
+      <p class="text-gray-300 mb-3"><span class="cmd-tag">git rm</span> removes a file from both the index and the working copy. Then commit the removal.</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">git rm hello</span></div>
+        <div><span class="output">rm 'hello'</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git status</span></div>
+        <div><span class="output">On branch master</span></div>
+        <div><span class="output">Changes to be committed:</span></div>
+        <div><span class="output">  (use "git restore --staged &lt;file&gt;..." to unstage)</span></div>
+        <div><span class="output">        deleted:    hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git commit -m "removed hello"</span></div>
+        <div><span class="output">[master 9a8b7c6] removed hello</span></div>
+        <div><span class="output"> 1 file changed, 0 insertions(+), 1 deletion(-)</span></div>
+        <div><span class="output"> delete mode 100644 hello</span></div>
+      </div>
+      <p class="text-gray-400 text-sm"><i class="fas fa-info-circle mr-1 text-blue-400"></i> If you delete a file manually (<span class="cmd-tag">rm file</span>), Git shows it as "deleted" in <span class="cmd-tag">git status</span>, and you can stage the removal with <span class="cmd-tag">git rm file</span> or <span class="cmd-tag">git add file</span>.</p>
+    </div>
+
+    <!-- 7. Showing Differences -->
+    <div id="diff" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-diff mr-2"></i>7. Showing Differences</h2>
+      <p class="text-gray-300 mb-3"><span class="cmd-tag">git diff</span> compares different states of your repository. By default it shows differences between the <strong>index</strong> and the <strong>working copy</strong>.</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4 text-sm">
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center border border-slate-600">
+          <span class="cmd-tag">git diff</span>
+          <div class="text-xs text-gray-400 mt-1">working copy vs index</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center border border-slate-600">
+          <span class="cmd-tag">git diff --staged</span>
+          <div class="text-xs text-gray-400 mt-1">index vs HEAD</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-3 text-center border border-slate-600">
+          <span class="cmd-tag">git diff HEAD</span>
+          <div class="text-xs text-gray-400 mt-1">working copy vs HEAD</div>
+        </div>
+      </div>
+      <p class="text-gray-300 mb-2">Scenario: start with a clean repo containing <span class="cmd-tag">hello</span>, then edit it and stage a modified version:</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">echo 'Line 2' >> hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git add hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">echo 'Line 3' >> hello</span></div>
+      </div>
+      <p class="text-gray-300 mb-2"><span class="cmd-tag">git diff</span> — shows unstaged changes (working copy vs index):</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">git diff</span></div>
+        <div><span class="output">diff --git a/hello b/hello</span></div>
+        <div><span class="output">index 3b18e51..c3f8a2d 100644</span></div>
+        <div><span class="output">--- a/hello</span></div>
+        <div><span class="output">+++ b/hello</span></div>
+        <div><span class="highlight">@@ -1 +1,2 @@</span></div>
+        <div><span class="output"> Hello World!</span></div>
+        <div><span class="highlight">+Line 3</span></div>
+      </div>
+      <p class="text-gray-300 mb-2"><span class="cmd-tag">git diff --staged</span> — shows staged changes (index vs HEAD):</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">git diff --staged</span></div>
+        <div><span class="output">diff --git a/hello b/hello</span></div>
+        <div><span class="output">index f7c3d8a..3b18e51 100644</span></div>
+        <div><span class="output">--- a/hello</span></div>
+        <div><span class="output">+++ b/hello</span></div>
+        <div><span class="highlight">@@ -1 +1,2 @@</span></div>
+        <div><span class="output"> Hello World!</span></div>
+        <div><span class="highlight">+Line 2</span></div>
+      </div>
+      <p class="text-gray-300 mb-2"><span class="cmd-tag">git diff HEAD</span> — shows all uncommitted changes (working copy vs HEAD):</p>
+      <div class="terminal">
+        <div><span class="prompt">$</span> <span class="cmd">git diff HEAD</span></div>
+        <div><span class="output">diff --git a/hello b/hello</span></div>
+        <div><span class="output">index f7c3d8a..c3f8a2d 100644</span></div>
+        <div><span class="output">--- a/hello</span></div>
+        <div><span class="output">+++ b/hello</span></div>
+        <div><span class="highlight">@@ -1 +1,3 @@</span></div>
+        <div><span class="output"> Hello World!</span></div>
+        <div><span class="highlight">+Line 2</span></div>
+        <div><span class="highlight">+Line 3</span></div>
+      </div>
+    </div>
+
+    <!-- 8. Resetting Changes -->
+    <div id="reset" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-undo mr-2"></i>8. Resetting Changes</h2>
+      <p class="text-gray-300 mb-3"><span class="cmd-tag">git reset</span> lets you undo staged changes. Use it carefully — <span class="cmd-tag">--hard</span> is destructive!</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4 text-sm">
+        <div class="bg-slate-800/60 rounded-xl p-3 border border-slate-600">
+          <span class="cmd-tag">git reset</span>
+          <div class="text-xs text-gray-400 mt-1">Unstages changes — working copy is untouched</div>
+        </div>
+        <div class="bg-slate-800/60 rounded-xl p-3 border border-red-800/40">
+          <span class="cmd-tag">git reset --hard</span>
+          <div class="text-xs text-red-400 mt-1">⚠ Drops ALL changes in index AND working copy</div>
+        </div>
+      </div>
+      <p class="text-gray-300 mb-2">Reset the index (unstages everything):</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">git add hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git status</span></div>
+        <div><span class="output">Changes to be committed:</span></div>
+        <div><span class="output">        modified:   hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git reset</span></div>
+        <div><span class="output">Unstaged changes after reset:</span></div>
+        <div><span class="output">M       hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git status</span></div>
+        <div><span class="output">Changes not staged for commit:</span></div>
+        <div><span class="output">        modified:   hello</span></div>
+      </div>
+      <p class="text-gray-300 mb-2">Reset with <span class="cmd-tag">--hard</span> — all changes are lost:</p>
+      <div class="terminal">
+        <div><span class="prompt">$</span> <span class="cmd">git reset --hard</span></div>
+        <div><span class="output">HEAD is now at f7c3d8a added file 'hello'</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git status</span></div>
+        <div><span class="output">On branch master</span></div>
+        <div><span class="output">nothing to commit, working tree clean</span></div>
+      </div>
+    </div>
+
+    <!-- 9. Resetting Changes in Working Copy -->
+    <div id="checkout" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-file-export mr-2"></i>9. Resetting Changes in Working Copy</h2>
+      <p class="text-gray-300 mb-3">To discard unstaged changes in a specific file, restore it from the index. This reverts the working copy to the last staged version.</p>
+      <div class="terminal mb-3">
+        <div><span class="prompt">$</span> <span class="cmd">echo 'Bad edit' >> hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">git checkout -- hello</span></div>
+        <div><span class="prompt">$</span> <span class="cmd">cat hello</span></div>
+        <div><span class="output">Hello World!</span></div>
+      </div>
+      <p class="text-gray-300 mb-2">Since Git v2.23 (2019), you can also use the experimental <span class="cmd-tag">git restore</span> command:</p>
+      <div class="terminal">
+        <div><span class="prompt">$</span> <span class="cmd">git restore hello</span></div>
+        <div><span class="comment"># same effect as 'git checkout -- hello'</span></div>
+      </div>
+    </div>
+
+    <!-- 10. Other Local Commands -->
+    <div id="other" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-3"><i class="fas fa-tools mr-2"></i>10. Other Local Commands</h2>
+
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-cyan-300 mb-2"><i class="fas fa-info-circle mr-2"></i>git status</h3>
+        <p class="text-gray-300 mb-2">Shows the current state of the index and working copy — which files are staged, modified, or untracked.</p>
+        <div class="terminal">
+          <div><span class="prompt">$</span> <span class="cmd">git status</span></div>
+          <div><span class="output">On branch master</span></div>
+          <div><span class="output">Changes to be committed:</span></div>
+          <div><span class="output">  (use "git restore --staged &lt;file&gt;..." to unstage)</span></div>
+          <div><span class="output">        new file:   index.html</span></div>
+          <div><span class="output">Changes not staged for commit:</span></div>
+          <div><span class="output">        modified:   style.css</span></div>
+          <div><span class="output">Untracked files:</span></div>
+          <div><span class="output">        script.js</span></div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-cyan-300 mb-2"><i class="fas fa-eye mr-2"></i>git show</h3>
+        <p class="text-gray-300 mb-2">Shows the full details of a commit — metadata and the diff.</p>
+        <div class="terminal">
+          <div><span class="prompt">$</span> <span class="cmd">git show f7c3d8a</span></div>
+          <div><span class="output">commit f7c3d8a4e1c5a2b3f4d5e6f7a8b9c0d1e2f3a4b5</span></div>
+          <div><span class="output">Author: User &lt;user@example.com&gt;</span></div>
+          <div><span class="output">Date:   Mon Jan 15 10:05:00 2026 +0100</span></div>
+          <div><span class="output"></span></div>
+          <div><span class="output">    added file 'hello'</span></div>
+          <div><span class="output"></span></div>
+          <div><span class="output">diff --git a/hello b/hello</span></div>
+          <div><span class="output">new file mode 100644</span></div>
+          <div><span class="output">index 0000000..3b18e51</span></div>
+          <div><span class="output">--- /dev/null</span></div>
+          <div><span class="output">+++ b/hello</span></div>
+          <div><span class="highlight">@@ -0,0 +1 @@</span></div>
+          <div><span class="highlight">+Hello World!</span></div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-cyan-300 mb-2"><i class="fas fa-history mr-2"></i>git log</h3>
+        <p class="text-gray-300 mb-2">Shows the commit history in reverse chronological order.</p>
+        <div class="terminal">
+          <div><span class="prompt">$</span> <span class="cmd">git log</span></div>
+          <div><span class="output">commit 2b4f1e3a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e</span></div>
+          <div><span class="output">Author: User &lt;user@example.com&gt;</span></div>
+          <div><span class="output">Date:   Mon Jan 15 10:10:00 2026 +0100</span></div>
+          <div><span class="output"></span></div>
+          <div><span class="output">    updated hello</span></div>
+          <div><span class="output"></span></div>
+          <div><span class="output">commit f7c3d8a4e1c5a2b3f4d5e6f7a8b9c0d1e2f3a4b5</span></div>
+          <div><span class="output">Author: User &lt;user@example.com&gt;</span></div>
+          <div><span class="output">Date:   Mon Jan 15 10:05:00 2026 +0100</span></div>
+          <div><span class="output"></span></div>
+          <div><span class="output">    added file 'hello'</span></div>
+        </div>
+      </div>
+
+      <div class="mb-4">
+        <h3 class="text-lg font-semibold text-cyan-300 mb-2"><i class="fas fa-exchange-alt mr-2"></i>git mv</h3>
+        <p class="text-gray-300 mb-2">Move or rename a file in one step. Equivalent to <span class="cmd-tag">cp</span> + <span class="cmd-tag">git rm</span> + <span class="cmd-tag">git add</span>.</p>
+        <div class="terminal">
+          <div><span class="prompt">$</span> <span class="cmd">git mv hello greetings.txt</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">git status</span></div>
+          <div><span class="output">On branch master</span></div>
+          <div><span class="output">Changes to be committed:</span></div>
+          <div><span class="output">        renamed:    hello -> greetings.txt</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">git commit -m "renamed hello to greetings.txt"</span></div>
+          <div><span class="output">[master e5f6a7b] renamed hello to greetings.txt</span></div>
+          <div><span class="output"> 1 file changed, 0 insertions(+), 0 deletions(-)</span></div>
+          <div><span class="output"> rename hello => greetings.txt (100%)</span></div>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-lg font-semibold text-cyan-300 mb-2"><i class="fas fa-tag mr-2"></i>git tag</h3>
+        <p class="text-gray-300 mb-2">Create lightweight or annotated tags to mark specific commits (e.g., releases).</p>
+        <div class="terminal">
+          <div><span class="prompt">$</span> <span class="cmd">git tag v1.0.0</span></div>
+          <div><span class="comment"># create a lightweight tag at HEAD</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">git tag -a v1.0.1 -m "release v1.0.1"</span></div>
+          <div><span class="comment"># create an annotated tag with a message</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">git tag</span></div>
+          <div><span class="output">v1.0.0</span></div>
+          <div><span class="output">v1.0.1</span></div>
+          <div><span class="prompt">$</span> <span class="cmd">git tag -d v1.0.0</span></div>
+          <div><span class="output">Deleted tag 'v1.0.0'</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 11. Exercises -->
+    <div id="exercises" class="info-card mb-5 animate-slide-in">
+      <h2 class="text-xl font-semibold text-yellow-300 mb-4"><i class="fas fa-dumbbell mr-2"></i>11. Exercises</h2>
+      <p class="text-gray-400 text-sm mb-4">Complete these exercises to practice working locally with Git.</p>
+
+      <div class="space-y-3">
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">1</span>
+            <div>
+              <h3 class="font-semibold text-white">Create a new repository</h3>
+              <p class="text-sm text-gray-400">Create a new directory and initialize a Git repository in it.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">2</span>
+            <div>
+              <h3 class="font-semibold text-white">Create, add, and commit</h3>
+              <p class="text-sm text-gray-400">Create a file in the repository, stage it, and commit it.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">3</span>
+            <div>
+              <h3 class="font-semibold text-white">Launch gitk</h3>
+              <p class="text-sm text-gray-400">Launch <span class="cmd-tag">gitk</span> (or <span class="cmd-tag">git log --graph --oneline</span> if gitk is unavailable) to view the commit history. Keep it open.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">4</span>
+            <div>
+              <h3 class="font-semibold text-white">Modify and commit again</h3>
+              <p class="text-sm text-gray-400">Modify the file, stage the changes, and create a new commit.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">5</span>
+            <div>
+              <h3 class="font-semibold text-white">Rename a file with git mv</h3>
+              <p class="text-sm text-gray-400">Use <span class="cmd-tag">git mv</span> to rename a file, then commit the rename.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">6</span>
+            <div>
+              <h3 class="font-semibold text-white">Delete a file and commit</h3>
+              <p class="text-sm text-gray-400">Use <span class="cmd-tag">git rm</span> to delete a file, then commit the removal.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">7</span>
+            <div>
+              <h3 class="font-semibold text-white">Create files, commit, modify, and diff</h3>
+              <p class="text-sm text-gray-400">Create two files, commit them, then modify one. Use <span class="cmd-tag">git diff</span> to show the changes.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">8</span>
+            <div>
+              <h3 class="font-semibold text-white">Stage a file and compare states</h3>
+              <p class="text-sm text-gray-400">Stage one file. Use <span class="cmd-tag">git diff</span> and <span class="cmd-tag">git diff --staged</span> to show differences between the index, working copy, and HEAD.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-emerald-600 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-emerald-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">9</span>
+            <div>
+              <h3 class="font-semibold text-white">Reset the index</h3>
+              <p class="text-sm text-gray-400">Run <span class="cmd-tag">git reset</span> to unstage all changes. Verify with <span class="cmd-tag">git status</span>.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-800/40 rounded-xl p-4 border border-slate-600 hover:border-red-700/50 transition">
+          <div class="flex items-start gap-3">
+            <span class="bg-red-700 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center shrink-0 mt-0.5">10</span>
+            <div>
+              <h3 class="font-semibold text-white">Run git reset --hard</h3>
+              <p class="text-sm text-gray-400">Run <span class="cmd-tag">git reset --hard</span> to discard all staged and unstaged changes. <strong class="text-red-400">Warning:</strong> this is destructive — any uncommitted changes will be lost!</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="text-center text-gray-500 text-xs mt-8">
+      <i class="fas fa-book-open mr-1"></i> Based on "GIT for Beginners" by Anthony Baire — 96 slides
+    </div>
+  </div>
+</body>
+</html>

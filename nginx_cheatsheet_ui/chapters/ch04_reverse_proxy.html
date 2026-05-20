@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Reverse Proxy — NGINX Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glow-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; padding: 1.25rem; transition: all 0.3s; }
+    .code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 1rem; font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85rem; overflow-x: auto; }
+    .code-block .kw { color: #ff79c6; }
+    .code-block .fn { color: #50fa7b; }
+    .code-block .str { color: #f1fa8c; }
+    .code-block .cm { color: #6272a4; font-style: italic; }
+    .code-block .num { color: #bd93f9; }
+    .code-block .op { color: #ff79c6; }
+    .code-block .prop { color: #8be9fd; }
+    .tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.75rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .slide-in-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-left.visible { opacity: 1; transform: translateX(0); }
+    .slide-in-right { opacity: 0; transform: translateX(30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-right.visible { opacity: 1; transform: translateX(0); }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out; }
+    .accordion-content.open { max-height: 800px; }
+    .pulse-icon { transition: transform 0.3s; }
+    .pulse-icon:hover { transform: scale(1.2); }
+    .comparison-table th { background: #1e293b; padding: 0.6rem 1rem; font-size: 0.85rem; }
+    .comparison-table td { padding: 0.6rem 1rem; font-size: 0.85rem; border-top: 1px solid #1e293b; }
+    .comparison-table tr:hover td { background: rgba(99,102,241,0.08); }
+    .badge-good { background: rgba(16,185,129,0.15); color: #6ee7b7; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-bad { background: rgba(239,68,68,0.15); color: #fca5a5; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .nav-link { padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.8rem; background: rgba(30,41,59,0.6); border: 1px solid #334155; transition: all 0.2s; color: #94a3b8; white-space: nowrap; }
+    .nav-link:hover { background: #334155; color: #e2e8f0; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer { background: linear-gradient(90deg, transparent, rgba(99,102,241,0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+
+    <div class="animate-fade-in mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-exchange-alt text-4xl text-cyan-400 pulse-icon"></i>
+        <h1 class="text-3xl md:text-4xl font-bold gradient-text">Reverse Proxy</h1>
+      </div>
+      <p class="text-gray-400 text-lg">Chapter 4 — Proxying dynamic applications, WebSockets, error pages, and Real IP</p>
+    </div>
+
+    <div class="overflow-x-auto pb-2 mb-8">
+      <div class="flex gap-2 min-w-max">
+        <a href="#forward-vs-reverse" class="nav-link"><i class="fas fa-sitemap mr-1"></i>Forward vs Reverse</a>
+        <a href="#basic-rails" class="nav-link"><i class="fas fa-train mr-1"></i>Basic Rails</a>
+        <a href="#robust-reverse-proxy" class="nav-link"><i class="fas fa-shield-alt mr-1"></i>Robust Proxy</a>
+        <a href="#unix-sockets" class="nav-link"><i class="fas fa-plug mr-1"></i>Unix Sockets</a>
+        <a href="#custom-errors" class="nav-link"><i class="fas fa-exclamation-triangle mr-1"></i>Error Pages</a>
+        <a href="#upstream-headers" class="nav-link"><i class="fas fa-heading mr-1"></i>Upstream Headers</a>
+        <a href="#real-ip" class="nav-link"><i class="fas fa-ip mr-1"></i>Real IP</a>
+        <a href="#nodejs" class="nav-link"><i class="fab fa-node-js mr-1"></i>Node.js</a>
+        <a href="#websockets" class="nav-link"><i class="fas fa-plug mr-1"></i>WebSockets</a>
+      </div>
+    </div>
+
+    <div id="forward-vs-reverse" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-sitemap text-2xl text-cyan-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Forward Proxy vs Reverse Proxy</h2>
+      </div>
+      <p class="text-gray-300 mb-4">Unlike Apache, nginx does not have the ability to embed the programming language interpreter into the webserver (like Apache does with <code class="text-amber-300">mod_php</code>). Instead, nginx takes a much lighter weight approach — it's just a webserver and delegates running a web application to a separate server, proxying requests upstream.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-blue-300 font-semibold mb-2"><i class="fas fa-arrow-up mr-2"></i>Forward Proxy</h3>
+          <p class="text-gray-400 text-sm">Sits between all outgoing connections and the internet. The proxy terminates outgoing requests and forwards them. To the internet, all computers appear to be coming from the same source — the forward proxy.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-green-300 font-semibold mb-2"><i class="fas fa-arrow-down mr-2"></i>Reverse Proxy</h3>
+          <p class="text-gray-400 text-sm">Multiplexes many connections from the internet to a backend application. The reverse proxy terminates the request and forwards it to the backend. This is the exact same concept as load balancing!</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300"><i class="fas fa-lightbulb text-amber-400 mr-2"></i><strong class="text-amber-300">Load balancer vs Reverse Proxy:</strong> A load balancer typically communicates with upstream servers on different physical machines, while a reverse proxy often talks to a service on the same machine. The underlying concepts are nearly identical — since a reverse proxy just proxies HTTP and most dynamic applications speak HTTP, you can think of it as a <strong class="text-cyan-300">local load balancer</strong>.</p>
+      </div>
+    </div>
+
+    <div id="basic-rails" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-train text-2xl text-rose-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Configuring a Basic Rails Application</h2>
+      </div>
+      <p class="text-gray-300 mb-3">A Rails app running on WEBrick (port 3000) is great for development but not production. We use nginx to listen on port 80 and act as a reverse proxy.</p>
+
+      <div class="code-block mb-4">
+        <span class="cm"># Basic Reverse Proxy configuration</span><br>
+        http {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;upstream rails_app {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;server 127.0.0.1:3000;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listen *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;root /path/to/application/public;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;location / {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://rails_app;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-expand-arrows-alt text-emerald-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Scalability</span>
+          <p class="text-gray-400 text-sm mt-1">WEBrick is single-threaded — nginx multiplexes incoming connections while waiting for upstream processes to finish.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-exclamation-circle text-emerald-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Error Handling</span>
+          <p class="text-gray-400 text-sm mt-1">If upstream times out or goes down, nginx gracefully returns 503 Service Unavailable or 502 Bad Gateway.</p>
+        </div>
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-image text-blue-400 mr-2"></i>Serving Static Assets via nginx</h3>
+      <p class="text-gray-300 mb-2">Add a location block for <code class="text-amber-300">/assets</code> to serve static files directly through nginx (much faster):</p>
+      <div class="code-block mb-3">
+        server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;listen *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;root /path/to/application/public;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location / {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://rails_app;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location /assets {<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <p class="text-gray-300 mb-2">With cache headers for maximum cache-ability:</p>
+      <div class="code-block mb-3">
+        location /assets {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;expires max;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;add_header Cache-Control public;<br>
+        }
+      </div>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300"><i class="fas fa-clock text-cyan-400 mr-2"></i><strong class="text-cyan-300">expires max</strong> sets the <code class="text-amber-300">Expires</code> header to <em>"Thu, 31 Dec 2037 23:55:55 GMT"</em> and <code class="text-amber-300">Cache-Control</code> to <strong>10 years</strong>. The <code class="text-amber-300">Cache-Control</code> defaults to <code class="text-amber-300">private</code> — we set it to <code class="text-amber-300">public</code> so intermediate caches can also cache shared assets.</p>
+      </div>
+
+      <div class="code-block">
+        <span class="cm"># Verify cache headers</span><br>
+        $ curl -I 127.0.0.1/assets/test.jpg<br>
+        HTTP/1.1 200 OK<br>
+        Server: nginx/1.4.6 (Ubuntu)<br>
+        Expires: Thu, 31 Dec 2037 23:55:55 GMT<br>
+        Cache-Control: max-age=315360000<br>
+        Cache-Control: public
+      </div>
+    </div>
+
+    <div id="robust-reverse-proxy" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-shield-alt text-2xl text-amber-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">A More Robust Reverse Proxy</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Use <code class="text-amber-300">try_files</code> to check for static files before proxying — enabling maintenance mode and dynamic file serving.</p>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-tools text-yellow-400 mr-2"></i>Maintenance Mode</h3>
+      <div class="code-block mb-4">
+        server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;listen *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;root /path/to/application/public;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location / {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try_files maintenance.html @rails;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location @rails {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://rails_app;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-file-search text-green-400 mr-2"></i>Dynamic File Existence Check</h3>
+      <div class="code-block mb-4">
+        server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;listen *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;root /path/to/application/public;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location / {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try_files $uri $uri/index.html @rails;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location @rails {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://rails_app;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <p class="text-gray-300 mb-3"><code class="text-amber-300">$uri</code> contains the normalized (decoded and sanitized) URI of the web request. This allows any files and folders in the root path to be served statically by nginx instead of being forwarded to the backend.</p>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300"><i class="fas fa-exclamation-triangle text-rose-400 mr-2"></i><strong class="text-rose-300">Warning:</strong> Everything in the root path will be publicly accessible — never set <code class="text-amber-300">root</code> above your <code class="text-amber-300">public</code> directory. If <code class="text-amber-300">root</code> is set to <code class="text-amber-300">/path/to/application</code>, anyone could read source code directly by accessing <code class="text-amber-300">http://example.org/app/config/secrets.yml</code>.</p>
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-code-branch text-purple-400 mr-2"></i>Equivalent Apache Configuration</h3>
+      <div class="code-block">
+        <span class="cm"># Apache equivalent of try_files $uri $uri/index.html @rails</span><br>
+        &lt;VirtualHost *:80&gt;<br>
+        &nbsp;&nbsp;DocumentRoot /path/to/application/public<br>
+        &nbsp;&nbsp;RewriteEngine On<br>
+        <br>
+        &nbsp;&nbsp;RewriteCond %{DOCUMENT_ROOT}/%{REQUEST_FILENAME} !-f<br>
+        &nbsp;&nbsp;RewriteRule ^/(.*)$ balancer://rails [P,QSA,L]<br>
+        <br>
+        &nbsp;&nbsp;&lt;Proxy balancer://rails&gt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;BalancerMember http://127.0.0.1:3000<br>
+        &nbsp;&nbsp;&lt;/Proxy&gt;<br>
+        &lt;/VirtualHost&gt;
+      </div>
+    </div>
+
+    <div id="unix-sockets" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-plug text-2xl text-emerald-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Upstream with Unix Domain Sockets</h2>
+      </div>
+      <p class="text-gray-300 mb-3">When your upstream server is on the same machine, skip the TCP/Network stack overhead by using Unix Domain Sockets — inter-process communication within the OS kernel using the file system as the namespace.</p>
+
+      <p class="text-gray-300 mb-2">Start thin with a Unix socket:</p>
+      <div class="code-block mb-3">
+        $ thin start --socket /tmp/rails.sock
+      </div>
+
+      <p class="text-gray-300 mb-2">Configure nginx to talk over the domain socket:</p>
+      <div class="code-block">
+        upstream rails_app {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server unix:/tmp/rails.sock;<br>
+        }
+      </div>
+    </div>
+
+    <div id="custom-errors" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-exclamation-triangle text-2xl text-orange-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Custom Error Pages</h2>
+      </div>
+      <p class="text-gray-300 mb-3">HTTP status codes: <span class="tag">2xx Success</span> <span class="tag">3xx Redirect</span> <span class="tag">4xx Client Error</span> <span class="tag">5xx Server Error</span>. Common errors: 403 Forbidden, 404 Not Found, 500 Internal Server Error, 502 Bad Gateway.</p>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-4">
+        <p class="text-gray-300"><i class="fas fa-shield-alt text-cyan-400 mr-2"></i><strong class="text-cyan-300">Hiding nginx version:</strong> Use <code class="text-amber-300">server_tokens off;</code> to prevent nginx from returning its version and OS in error pages and the <code class="text-amber-300">Server</code> HTTP header.</p>
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-file-alt text-blue-400 mr-2"></i>error_page Directive</h3>
+      <div class="code-block mb-4">
+        server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;listen *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;root /path/to/application/public;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location / {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error_page 404                 /404.html;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;error_page 500 502 503 504     /50x.html;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try_files $uri $uri/index.html @rails;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location @rails {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://rails_app;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-magic text-purple-400 mr-2"></i>Other Neat Things with error_page</h3>
+      <div class="space-y-3 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <p class="text-gray-200 font-medium"><i class="fas fa-sync-alt text-cyan-400 mr-2"></i>Change the status code</p>
+          <div class="code-block text-xs p-2 mt-1">
+            error_page 500 <span class="op">=</span><span class="num">200</span> /index.html;
+          </div>
+          <p class="text-gray-400 text-xs mt-1">Turns a 500 Internal Server Error into a 200 Ok (use with caution).</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <p class="text-gray-200 font-medium"><i class="fas fa-external-link-alt text-amber-400 mr-2"></i>Redirect to a different URL</p>
+          <div class="code-block text-xs p-2 mt-1">
+            error_page <span class="num">500</span> http://www.google.com;
+          </div>
+          <p class="text-gray-400 text-xs mt-1">Returns a 302 Found redirecting to an external URL.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <p class="text-gray-200 font-medium"><i class="fas fa-code-branch text-green-400 mr-2"></i>Redirect to a named location</p>
+          <div class="code-block text-xs p-2 mt-1">
+            location / {<br>
+            &nbsp;&nbsp;error_page <span class="num">404</span> <span class="op">=</span> @fallback;<br>
+            }<br>
+            <br>
+            location @fallback {<br>
+            &nbsp;&nbsp;proxy_pass http://different_backend;<br>
+            }
+          </div>
+          <p class="text-gray-400 text-xs mt-1">Forwards to a different upstream for dynamic error page generation.</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <p class="text-gray-300"><i class="fas fa-info-circle text-blue-400 mr-2"></i><strong class="text-blue-300">Note:</strong> For redundancy or high-availability (retrying a request on a different backend), use <code class="text-amber-300">proxy_next_upstream</code> instead of <code class="text-amber-300">error_page</code> (see Chapter 7).</p>
+      </div>
+    </div>
+
+    <div id="upstream-headers" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-heading text-2xl text-indigo-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Adding Headers to the Upstream</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Since reverse proxying is just HTTP, nginx can modify HTTP headers when forwarding requests using <code class="text-amber-300">proxy_set_header</code>.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-3">
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-cyan-300 font-semibold mb-2"><i class="fas fa-shield mr-2"></i>X-Forwarded-Proto</h3>
+          <div class="code-block text-xs p-2 mb-2">
+            proxy_set_header X-Forwarded-Proto <span class="op">$</span>scheme;
+          </div>
+          <p class="text-gray-400 text-sm">Tells the backend whether the original request came as HTTP or HTTPS. <code class="text-amber-300">$scheme</code> contains either <code class="text-amber-300">http</code> or <code class="text-amber-300">https</code>.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-amber-300 font-semibold mb-2"><i class="fas fa-globe mr-2"></i>Host Header</h3>
+          <div class="code-block text-xs p-2 mb-2">
+            proxy_set_header Host <span class="op">$</span>host;
+          </div>
+          <p class="text-gray-400 text-sm">By default nginx sets <code class="text-amber-300">Host</code> to <code class="text-amber-300">$proxy_host</code> (name:port from <code class="text-amber-300">proxy_pass</code>). Override with <code class="text-amber-300">$host</code> to preserve the actual domain used by the client.</p>
+        </div>
+      </div>
+
+      <div class="code-block">
+        <span class="cm"># Example: setting headers in a named location block</span><br>
+        location @rails {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header X-Forwarded-Proto $scheme;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;proxy_set_header Host $host;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://rails_app;<br>
+        }
+      </div>
+    </div>
+
+    <div id="real-ip" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-ip text-2xl text-sky-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Real IP Module</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Problem: when nginx proxies a request, the backend sees the load balancer's IP (e.g., <code class="text-amber-300">192.0.2.9</code>) instead of the original client IP (e.g., <code class="text-amber-300">203.0.113.1</code>). The Real IP module (<code class="text-amber-300">--with-http_realip_module</code>) solves this by injecting the <code class="text-amber-300">X-Real-IP</code> header.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-blue-300 font-semibold mb-2"><i class="fas fa-server mr-2"></i>On the Load Balancer</h3>
+          <div class="code-block text-xs p-2">
+            http {<br>
+            &nbsp;&nbsp;real_ip_header X-Real-IP;<br>
+            <br>
+            &nbsp;&nbsp;server {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;...<br>
+            &nbsp;&nbsp;}<br>
+            }
+          </div>
+          <p class="text-gray-400 text-sm mt-1">Enabled by default when the module is installed, but best practice to define it explicitly.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-green-300 font-semibold mb-2"><i class="fas fa-shield mr-2"></i>On the Reverse Proxy</h3>
+          <div class="code-block text-xs p-2">
+            http {<br>
+            &nbsp;&nbsp;real_ip_header X-Real-IP;<br>
+            &nbsp;&nbsp;set_real_ip_from 203.0.113.1;<br>
+            <br>
+            &nbsp;&nbsp;server {<br>
+            &nbsp;&nbsp;&nbsp;&nbsp;...<br>
+            &nbsp;&nbsp;}<br>
+            }
+          </div>
+          <p class="text-gray-400 text-sm mt-1"><code class="text-amber-300">set_real_ip_from</code> restricts which sources are trusted for the header — prevents IP spoofing.</p>
+        </div>
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-network-wired text-purple-400 mr-2"></i>Multiple Load Balancers</h3>
+      <div class="code-block mb-4">
+        http {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;real_ip_header X-Real-IP;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;set_real_ip_from 203.0.113.1;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;set_real_ip_from 203.0.113.2;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;set_real_ip_from 203.0.113.0/24;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;...<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <p class="text-gray-300"><i class="fas fa-wrench text-amber-400 mr-2"></i><strong class="text-amber-300">DIY Alternative:</strong> Use <code class="text-amber-300">proxy_set_header</code> directly: <code class="text-amber-300">proxy_set_header X-Real-IP $remote_addr;</code> — a simpler approach that doesn't require the module.</p>
+      </div>
+    </div>
+
+    <div id="nodejs" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fab fa-node-js text-2xl text-green-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Reverse Proxying Node.js</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Basic Node app listening on port 3000:</p>
+
+      <div class="code-block mb-4">
+        <span class="cm">// app.js</span><br>
+        var http = require('http');<br>
+        <br>
+        http.createServer(function (request, response) {<br>
+        &nbsp;&nbsp;time = (new Date).getTime().toString();<br>
+        &nbsp;&nbsp;response.writeHeader(200, {"Content-Type": "text/plain"});<br>
+        &nbsp;&nbsp;response.end(time);<br>
+        }).listen(3000, "127.0.0.1");<br>
+        <br>
+        console.log("Starting server running at http://127.0.0.1:3000/");
+      </div>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-4">
+        <p class="text-gray-300"><i class="fas fa-cogs text-cyan-400 mr-2"></i><strong class="text-cyan-300">Process Supervisor:</strong> For production, use a process supervisor like <strong>pm2</strong> instead of running <code class="text-amber-300">node</code> directly. Install with <code class="text-amber-300">npm install -g pm2</code>. pm2 provides CLI, monitoring tools, and log viewing.</p>
+      </div>
+
+      <p class="text-gray-300 mb-2">The nginx configuration is nearly identical to Rails:</p>
+      <div class="code-block">
+        http {<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;upstream node_app {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;server 127.0.0.1:3000;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;listen *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;root /path/to/application/public;<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;location / {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;try_files $uri $uri/index.html @node;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;location @node {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;proxy_pass http://node_app;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
+
+    <div id="websockets" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-plug text-2xl text-pink-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Reverse Proxy with WebSockets</h2>
+      </div>
+      <p class="text-gray-300 mb-3">WebSockets (standardized 2011) allow two-way communication over an HTTP connection. The client sends <code class="text-amber-300">Connection: Upgrade</code> and <code class="text-amber-300">Upgrade: websocket</code> headers; the server responds with <strong class="text-cyan-300">101 Switching Protocols</strong>.</p>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-4">
+        <div class="code-block text-xs p-2">
+          <span class="cm"># Client handshake request</span><br>
+          GET /websocket HTTP/1.1<br>
+          Host: www.example.org<br>
+          Upgrade: websocket<br>
+          Connection: Upgrade<br>
+          <br>
+          <span class="cm"># Server response</span><br>
+          HTTP/1.1 101 Switching Protocols<br>
+          Upgrade: websocket<br>
+          Connection: Upgrade
+        </div>
+      </div>
+
+      <p class="text-gray-300 mb-3">Out of the box, nginx supports WebSockets. However, reverse proxying needs HTTP 1.1 for the backend (default is 1.0), and the <code class="text-amber-300">Upgrade</code>/<code class="text-amber-300">Connection</code> headers must be explicitly forwarded (they are hop-by-hop headers).</p>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-wifi text-blue-400 mr-2"></i>Basic WebSocket Config</h3>
+      <div class="code-block mb-4">
+        location /chat {<br>
+        &nbsp;&nbsp;proxy_pass http://node_app;<br>
+        &nbsp;&nbsp;proxy_http_version 1.1;<br>
+        &nbsp;&nbsp;proxy_set_header Upgrade $http_upgrade;<br>
+        &nbsp;&nbsp;proxy_set_header Connection "upgrade";<br>
+        }
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-random text-green-400 mr-2"></i>Dynamic Mapping with map</h3>
+      <p class="text-gray-300 mb-2">The above config tries to upgrade every connection. Use <code class="text-amber-300">map</code> to dynamically set <code class="text-amber-300">Connection</code> based on the <code class="text-amber-300">Upgrade</code> header:</p>
+      <div class="code-block mb-3">
+        map $http_upgrade $connection_upgrade {<br>
+        &nbsp;&nbsp;'websocket' upgrade;<br>
+        &nbsp;&nbsp;default close;<br>
+        }<br>
+        <br>
+        location @node {<br>
+        &nbsp;&nbsp;proxy_pass http://node_app;<br>
+        &nbsp;&nbsp;proxy_http_version 1.1;<br>
+        &nbsp;&nbsp;proxy_set_header Upgrade $http_upgrade;<br>
+        &nbsp;&nbsp;proxy_set_header Connection $connection_upgrade;<br>
+        }
+      </div>
+
+      <p class="text-gray-300 mb-3">The <code class="text-amber-300">map</code> block is equivalent to this pseudo-code:</p>
+      <div class="code-block mb-4">
+        <span class="kw">switch</span> ($http_upgrade) {<br>
+        &nbsp;&nbsp;<span class="kw">case</span> <span class="str">"websocket"</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;$connection_upgrade = <span class="str">"upgrade"</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">break</span>;<br>
+        &nbsp;&nbsp;<span class="kw">default</span>:<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;$connection_upgrade = <span class="str">"close"</span>;<br>
+        }
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-server text-purple-400 mr-2"></i>WebSocket Node.js Server Example</h3>
+      <div class="code-block mb-4">
+        <span class="cm">// WebSocket server with 'websocket' library</span><br>
+        var WebSocketServer = require('websocket').server;<br>
+        var http = require('http');<br>
+        <br>
+        var server = http.createServer(function (request, response) {<br>
+        &nbsp;&nbsp;time = (new Date).getTime().toString();<br>
+        &nbsp;&nbsp;response.writeHeader(200, {"Content-Type": "text/plain"});<br>
+        &nbsp;&nbsp;response.end(time);<br>
+        });<br>
+        <br>
+        server.listen(3000, "127.0.0.1");<br>
+        <br>
+        websocketServer = new WebSocketServer({<br>
+        &nbsp;&nbsp;httpServer: server,<br>
+        &nbsp;&nbsp;autoAcceptConnections: false<br>
+        });<br>
+        <br>
+        websocketServer.on('request', function(request) {<br>
+        &nbsp;&nbsp;console.log("Received connection");<br>
+        &nbsp;&nbsp;var connection = request.accept('echo-protocol', request.origin);<br>
+        &nbsp;&nbsp;time = (new Date).getTime().toString();<br>
+        &nbsp;&nbsp;connection.SendUTF(time);<br>
+        });
+      </div>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <p class="text-gray-300"><i class="fas fa-hourglass-half text-amber-400 mr-2"></i><strong class="text-amber-300">Don't forget about timeouts!</strong> <code class="text-amber-300">proxy_read_timeout</code> defaults to <strong>60 seconds</strong>. If a WebSocket sits idle longer, nginx closes the connection. Instead of setting a very high timeout, implement a <strong>ping message</strong> every 20-30 seconds to keep the connection alive.</p>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-800">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+      <a href="ch05_load_balancing.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all">Next: Load Balancing <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">
+      <i class="fas fa-book-open mr-1"></i> Based on "nginx: A Practical Guide to High Performance" by Stephen Corona — Chapter 4: Reverse Proxy
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    });
+
+    function toggleAnswer(btn) {
+      const answer = btn.nextElementSibling;
+      const icon = btn.querySelector('i');
+      if (answer.classList.contains('hidden')) {
+        answer.classList.remove('hidden');
+        icon.className = 'fas fa-chevron-up mr-1';
+      } else {
+        answer.classList.add('hidden');
+        icon.className = 'fas fa-chevron-down mr-1';
+      }
+    }
+  </script>
+</body>
+</html>

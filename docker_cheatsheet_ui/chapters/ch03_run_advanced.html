@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Run Advanced — Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+    .terminal-block {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 0.5rem;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+      overflow-x: auto;
+    }
+    .terminal-block .line { padding: 0.25rem 1rem;  }
+    .terminal-block .prompt { color: #8b949e; }
+    .terminal-block .cmd { color: #e6edf3; }
+    .terminal-block .output { color: #7ee787; }
+    .terminal-block .output-warn { color: #d29922; }
+    .terminal-block .output-err { color: #ff7b72; }
+    .terminal-block .highlight { background: rgba(56,139,253,0.15); border-left: 3px solid #388bfd; }
+    .section-link { transition: all 0.2s; }
+    .section-link:hover { color: #60a5fa; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8 animate-fade-in">
+      <a href="../index.html" class="text-gray-400 hover:text-white transition inline-flex items-center gap-2 mb-4">
+        <i class="fas fa-arrow-left"></i> Back to Cheatsheet
+      </a>
+      <div class="flex items-center gap-4 mb-2">
+        <i class="fas fa-cog text-4xl text-amber-400"></i>
+        <h1 class="text-3xl md:text-5xl font-bold gradient-text">Run Advanced</h1>
+      </div>
+      <p class="text-gray-400 text-lg">Tags, STDIN, port mapping, volumes, inspect &amp; logs</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap gap-2 mb-8 animate-fade-in">
+      <a href="#tags" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-tag mr-1"></i>Tags</a>
+      <a href="#stdin" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-keyboard mr-1"></i>STDIN</a>
+      <a href="#ports" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-plug mr-1"></i>Port Mapping</a>
+      <a href="#volumes" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-database mr-1"></i>Volumes</a>
+      <a href="#inspect" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-search mr-1"></i>Inspect</a>
+      <a href="#logs" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-file-alt mr-1"></i>Logs</a>
+    </div>
+
+    <!-- 1. Tags -->
+    <section id="tags" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-tag text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">1. Run with Tags</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        A tag is a version label for a Docker image. When you run a container without specifying a tag, Docker automatically uses the <code class="text-cyan-300 bg-slate-700/60 px-1 rounded">latest</code> tag — which points to the most recent version.
+      </p>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2"><i class="fas fa-tag mr-1"></i>Default tag — <code>latest</code></div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run redis</span></div>
+            <div class="line"><span class="output">Unable to find image 'redis:latest' locally</span></div>
+            <div class="line"><span class="output">latest: Pulling from library/redis</span></div>
+            <div class="line"><span class="output">... (pulls the latest Redis 7.x)</span></div>
+          </div>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2"><i class="fas fa-tag mr-1"></i>Specific tag — <code>4.0</code></div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run redis:4.0</span></div>
+            <div class="line"><span class="output">Unable to find image 'redis:4.0' locally</span></div>
+            <div class="line"><span class="output">4.0: Pulling from library/redis</span></div>
+            <div class="line"><span class="output">... (pulls the older Redis 4.0)</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm">
+        <i class="fas fa-info-circle mr-1 text-blue-400"></i> Different versions may have different features, configs, and security patches. Always pin a specific tag in production so your app doesn't unexpectedly upgrade.
+      </p>
+    </section>
+
+    <!-- 2. STDIN -->
+    <section id="stdin" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-keyboard text-2xl text-emerald-400"></i>
+        <h2 class="text-xl font-bold text-white">2. Run with STDIN (<code class="text-sm bg-slate-700/60 px-1 rounded">-i</code>, <code class="text-sm bg-slate-700/60 px-1 rounded">-it</code>)</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        Some applications need keyboard input — like a prompt asking for your name. Three different ways to run:
+      </p>
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">No flags — detached from STDIN</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run kodekloud/</span></div>
+            <div class="line"><span class="cmd">  simple-prompt-docker</span></div>
+            <div class="line"><span class="output-warn">What is your name?</span></div>
+            <div class="line"><span class="output">Hello   (empty — no input provided)</span></div>
+          </div>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2"><code>-i</code> — interactive (can type)</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run -i kodekloud/</span></div>
+            <div class="line"><span class="cmd">  simple-prompt-docker</span></div>
+            <div class="line"><span class="output-warn">What is your name?</span></div>
+            <div class="line"><span class="prompt">  (type:)</span> <span class="cmd">Amit</span></div>
+            <div class="line"><span class="output">Hello Amit</span></div>
+          </div>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2"><code>-it</code> — interactive + TTY terminal</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run -it kodekloud/</span></div>
+            <div class="line"><span class="cmd">  simple-prompt-docker</span></div>
+            <div class="line"><span class="output-warn">What is your name?</span></div>
+            <div class="line"><span class="prompt">  (full terminal:)</span> <span class="cmd">Amit</span></div>
+            <div class="line"><span class="output">Hello Amit</span></div>
+          </div>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm">
+        <i class="fas fa-lightbulb mr-1 text-yellow-400"></i> <code>-i</code> keeps STDIN open so you can type input. <code>-t</code> allocates a pseudo-TTY which gives you a proper terminal experience (shell prompt, colors, etc.). Use <code class="text-cyan-300">-it</code> together for most interactive apps.
+      </p>
+    </section>
+
+    <!-- 3. Port Mapping -->
+    <section id="ports" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-plug text-2xl text-blue-400"></i>
+        <h2 class="text-xl font-bold text-white">3. Port Mapping (<code class="text-sm bg-slate-700/60 px-1 rounded">-p</code>)</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        Every container gets an internal IP on your machine (like <code class="text-cyan-300">172.17.0.2</code>). But that internal IP is only accessible from the host — not from your browser or the outside world. Port mapping bridges this gap.
+      </p>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">Basic port mapping</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">docker run -p 80:5000 kodekloud/simple-webapp</span></div>
+          <div class="line"><span class="output"> * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)</span></div>
+          <div class="line mt-1"><span class="output"># Now visit http://localhost:80 in your browser</span></div>
+        </div>
+      </div>
+      <div class="text-gray-300 mb-3 font-medium">Three real examples:</div>
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run -p 3306:3306 mysql</span></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">Host port 3306 → container 3306 (default MySQL port)</p>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run -p 8306:3306 mysql</span></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">Host port 8306 → container 3306 (custom host port)</p>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run -p 8000:5000 webapp1</span></div>
+            <div class="line"><span class="prompt">$</span> <span class="cmd">docker run -p 8001:5000 webapp2</span></div>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">Two web apps on ports 8000, 8001 → both use internal 5000</p>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <p class="text-gray-300 text-sm">
+          <i class="fas fa-lightbulb mr-1 text-yellow-400"></i> <strong>Analogy:</strong> Think of an apartment buzzer system. Your container's internal port (5000) is like an apartment unit number. The host port (80) is the main building address. You dial the building address + the apartment number to reach the specific unit. Without port mapping, nobody can reach your apartment from outside.
+        </p>
+      </div>
+    </section>
+
+    <!-- 4. Volume Mapping -->
+    <section id="volumes" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-database text-2xl text-teal-400"></i>
+        <h2 class="text-xl font-bold text-white">4. Volume Mapping (<code class="text-sm bg-slate-700/60 px-1 rounded">-v</code>)</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        Containers are ephemeral — when you delete one, all its data vanishes. Volume mapping lets you store data on your host machine so it survives container restarts and removals.
+      </p>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">Mount host directory <code>/opt/datadir</code> to MySQL's data directory</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">docker run -v /opt/datadir:/var/lib/mysql mysql</span></div>
+          <div class="line"><span class="output"># MySQL now writes all database files to /opt/datadir on your host</span></div>
+          <div class="line"><span class="output"># Delete the container: docker rm container_id</span></div>
+          <div class="line"><span class="output"># Start a new one with the same -v flag — all your data is still there!</span></div>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <p class="text-gray-300 text-sm">
+          <i class="fas fa-lightbulb mr-1 text-yellow-400"></i> <strong>Analogy:</strong> Imagine your container is a laptop and the volume is an external hard drive. If your laptop breaks (container deleted), you just plug the external drive into a new laptop (new container) and all your files are still there. Format: <code class="text-cyan-300">host_path:container_path</code>.
+        </p>
+      </div>
+    </section>
+
+    <!-- 5. docker inspect -->
+    <section id="inspect" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-search text-2xl text-violet-400"></i>
+        <h2 class="text-xl font-bold text-white">5. docker inspect</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        <code class="text-cyan-300">docker inspect</code> returns a massive JSON document with every possible detail about a container. Use it when you need to troubleshoot or understand a container's configuration.
+      </p>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">Basic usage</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">docker inspect container_name</span></div>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">Partial output (key fields shown)</div>
+        <div class="terminal-block text-sm overflow-x-auto">
+          <div class="line"><span class="output">[</span></div>
+          <div class="line highlight"><span class="output">    "Id": "abc123...",</span></div>
+          <div class="line highlight"><span class="output">    "Name": "/my_container",</span></div>
+          <div class="line"><span class="output">    "Path": "python",</span></div>
+          <div class="line"><span class="output">    "Args": ["app.py"],</span></div>
+          <div class="line highlight"><span class="output">    "State": {</span></div>
+          <div class="line highlight"><span class="output">        "Status": "running",</span></div>
+          <div class="line highlight"><span class="output">        "Running": true,</span></div>
+          <div class="line highlight"><span class="output">        "StartedAt": "2025-01-15T..."</span></div>
+          <div class="line"><span class="output">    },</span></div>
+          <div class="line highlight"><span class="output">    "Mounts": [{ "Source": "/opt/data", "Destination": "/var/lib/data" }],</span></div>
+          <div class="line highlight"><span class="output">    "Config": { "Entrypoint": ["python3"], "Env": ["APP_COLOR=blue"] },</span></div>
+          <div class="line highlight"><span class="output">    "NetworkSettings": { "IPAddress": "172.17.0.2" }</span></div>
+          <div class="line"><span class="output">}]</span></div>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm">
+        <i class="fas fa-info-circle mr-1 text-blue-400"></i> Key fields: <code class="text-cyan-300">Id</code>, <code class="text-cyan-300">Name</code>, <code class="text-cyan-300">State.Status</code>, <code class="text-cyan-300">Mounts</code>, <code class="text-cyan-300">Config.Entrypoint</code>, <code class="text-cyan-300">NetworkSettings.IPAddress</code>. Highlighted lines above are the most commonly inspected.
+      </p>
+    </section>
+
+    <!-- 6. docker logs -->
+    <section id="logs" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-file-alt text-2xl text-amber-400"></i>
+        <h2 class="text-xl font-bold text-white">6. docker logs</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        <code class="text-cyan-300">docker logs</code> shows everything your application printed to the console — useful for debugging or checking if a service started correctly.
+      </p>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">View logs of a running container</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">docker logs webapp</span></div>
+          <div class="line"><span class="output"> * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)</span></div>
+          <div class="line"><span class="output"> * Restarting with stat</span></div>
+          <div class="line"><span class="output">Enter a number to play the game: 5</span></div>
+          <div class="line"><span class="output">Enter a color: blue</span></div>
+          <div class="line"><span class="output-warn">[INFO] User chose blue — starting game...</span></div>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm">
+        <i class="fas fa-terminal mr-1 text-emerald-400"></i> Pro tip: Use <code class="text-cyan-300">docker logs -f container_name</code> (<code class="text-cyan-300">--follow</code>) to stream logs in real time — like <code class="text-cyan-300">tail -f</code>.
+      </p>
+    </section>
+
+    <!-- Footer -->
+    <div class="text-center text-gray-500 text-sm mt-10 animate-fade-in">
+      <p><i class="fas fa-book-open mr-1"></i> Based on "Docker for Beginners" by Mumshad Mannambeth</p>
+      <p class="mt-1">
+        <a href="../index.html" class="text-blue-400 hover:text-blue-300 transition"><i class="fas fa-arrow-left mr-1"></i>Back to Cheatsheet</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

@@ -1,0 +1,341 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 10 — Docker Engine & Internals | Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back to Home -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 group">
+      <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i> Back to Cheatsheet
+    </a>
+
+    <!-- Chapter Header -->
+    <div class="text-center mb-10 animate-fade-in">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-orange-500/20 to-amber-500/20 border border-orange-500/30 mb-4">
+        <i class="fas fa-engine text-3xl text-orange-400"></i>
+      </div>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text">Chapter 10: Docker Engine & Internals</h1>
+      <p class="text-gray-400 mt-3 text-lg">What happens under the hood — architecture, namespaces, and cgroups</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-10 animate-fade-in">
+      <a href="#architecture" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-sitemap mr-1 text-orange-400"></i>Architecture</a>
+      <a href="#namespaces" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-cubes mr-1 text-orange-400"></i>Namespaces</a>
+      <a href="#cgroups" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-chart-line mr-1 text-orange-400"></i>cgroups</a>
+    </div>
+
+    <!-- 1. Docker Engine Architecture -->
+    <section id="architecture" class="mb-8 animate-slide-left">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-sitemap text-2xl text-orange-400"></i>
+          <h2 class="text-2xl font-bold text-white">Docker Engine Architecture</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+
+          <p>The Docker Engine follows a <strong class="text-white">modular client-server</strong> architecture with three distinct components:</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 my-4">
+            <div class="p-4 rounded-lg bg-cyan-900/20 border border-cyan-800/40 text-center">
+              <i class="fas fa-terminal text-2xl text-cyan-400 mb-2"></i>
+              <h3 class="font-semibold text-cyan-300">CLI</h3>
+              <p class="text-xs text-gray-400 mt-1">docker run, build, pull</p>
+            </div>
+            <div class="p-4 rounded-lg bg-amber-900/20 border border-amber-800/40 text-center">
+              <i class="fas fa-exchange-alt text-2xl text-amber-400 mb-2"></i>
+              <h3 class="font-semibold text-amber-300">REST API</h3>
+              <p class="text-xs text-gray-400 mt-1">HTTP requests / responses</p>
+            </div>
+            <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 text-center">
+              <i class="fas fa-server text-2xl text-indigo-400 mb-2"></i>
+              <h3 class="font-semibold text-indigo-300">Daemon (dockerd)</h3>
+              <p class="text-xs text-gray-400 mt-1">Build, run, manage containers</p>
+            </div>
+          </div>
+
+          <p>When you type <code class="text-gray-200 bg-gray-700 px-1 rounded">docker run nginx</code>, the CLI translates your command into a REST API call and sends it to <code class="text-gray-200 bg-gray-700 px-1 rounded">dockerd</code> (the daemon). The daemon does the real work — pulling images, creating containers, and managing resources.</p>
+
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+              <i class="fas fa-arrow-right text-orange-400"></i> <span>Behind the scenes of <code class="text-gray-200 bg-gray-700 px-1 rounded">docker run nginx</code></span>
+            </div>
+            <pre class="text-sm font-mono text-green-300"><span class="text-gray-500"># 1. You type this:</span>
+<span class="text-gray-400">$</span> <span class="text-white">docker run nginx</span>
+
+<span class="text-gray-500"># 2. CLI sends REST API call to dockerd:</span>
+<span class="text-gray-400">POST</span> <span class="text-amber-300">/containers/create</span>  <span class="text-gray-500">← HTTP request to daemon</span>
+
+<span class="text-gray-500"># 3. Daemon checks if image exists locally</span>
+<span class="text-gray-500">#    If not → pulls from registry</span>
+<span class="text-gray-500">#    Then → creates writable layer, starts container</span>
+
+<span class="text-gray-500"># 4. Daemon sends response back to CLI</span>
+<span class="text-gray-400">{ "Id": "abc123..." }</span>    <span class="text-gray-500">← HTTP response</span></pre>
+          </div>
+
+          <p>You can even run the CLI on <strong class="text-white">one machine</strong> and the daemon on <strong class="text-white">another</strong>:</p>
+
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">docker -H=remote-docker-engine:2375 run nginx</span></pre>
+          </div>
+
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 flex items-start gap-4">
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <div>
+              <p class="text-sm font-semibold text-yellow-300 mb-1">Simple Analogy</p>
+              <p class="text-sm text-gray-300"><strong class="text-white">CLI = remote control</strong>, <strong class="text-white">Daemon = TV</strong>, <strong class="text-white">REST API = infrared signal</strong>. You press a button on the remote (CLI), it sends an infrared signal (REST API), and the TV (daemon) changes the channel. The remote and TV don't need to be in the same room — you could point one remote at another TV.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40 mt-4">
+            <p class="text-sm"><i class="fas fa-info-circle mr-1 text-blue-400"></i> <strong class="text-white">Port 2375</strong> is the default port for the Docker REST API (unencrypted). Port <strong class="text-white">2376</strong> is used for TLS-encrypted communication.</p>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Namespaces — Container Isolation -->
+    <section id="namespaces" class="mb-8 animate-slide-right">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-cubes text-2xl text-orange-400"></i>
+          <h2 class="text-2xl font-bold text-white">Namespaces — Container Isolation</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+
+          <p>Namespaces are a <strong class="text-white">Linux kernel feature</strong> that gives each container its own isolated view of the system. Every container <em>thinks</em> it's running on its own dedicated machine.</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 my-4">
+            <div class="p-4 rounded-lg bg-blue-900/20 border border-blue-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-microchip text-blue-400"></i>
+                <h3 class="font-semibold text-blue-300 text-sm">PID Namespace</h3>
+              </div>
+              <p class="text-xs text-gray-400">Containers see only their own processes. PID 1 inside the container is <strong class="text-white">not</strong> PID 1 on the host.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-green-900/20 border border-green-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-network-wired text-green-400"></i>
+                <h3 class="font-semibold text-green-300 text-sm">Network Namespace</h3>
+              </div>
+              <p class="text-xs text-gray-400">Each container has its own network stack — own IP address, routing table, and ports.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-purple-900/20 border border-purple-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-folder-open text-purple-400"></i>
+                <h3 class="font-semibold text-purple-300 text-sm">Mount Namespace</h3>
+              </div>
+              <p class="text-xs text-gray-400">Containers have their own filesystem. Changes inside don't affect the host.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-amber-900/20 border border-amber-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-desktop text-amber-400"></i>
+                <h3 class="font-semibold text-amber-300 text-sm">UTS Namespace</h3>
+              </div>
+              <p class="text-xs text-gray-400">Unix Timesharing — hostname isolation. Each container can have its own hostname.</p>
+            </div>
+          </div>
+
+          <p>When Docker starts a container, it creates a <strong class="text-white">new set of namespaces</strong> for that container. The container sees only what's inside its own namespace:</p>
+
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <pre class="text-sm font-mono"><span class="text-gray-500"># On the HOST — see all processes</span>
+<span class="text-gray-400">$</span> <span class="text-white">ps aux | grep nginx</span>
+root      <span class="text-yellow-300">3201</span>  ...  nginx: master process  <span class="text-gray-500">← PID 3201 on host</span>
+
+<span class="text-gray-500"># Inside the CONTAINER — different view!</span>
+<span class="text-gray-400">$</span> <span class="text-white">docker exec -it mynginx bash</span>
+root@mynginx:/<span class="text-gray-400">#</span> <span class="text-white">ps aux</span>
+root      <span class="text-yellow-300">1</span>  ...  nginx: master process   <span class="text-gray-500">← Shows as PID 1!</span></pre>
+          </div>
+
+          <p>The same process has PID <strong class="text-white">3201</strong> on the host but PID <strong class="text-white">1</strong> inside the container. That's the PID namespace in action — each container lives in its own process bubble.</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <div class="p-4 rounded-lg bg-teal-900/20 border border-teal-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-comments text-teal-400"></i>
+                <h3 class="font-semibold text-teal-300 text-sm">IPC Namespace</h3>
+              </div>
+              <p class="text-xs text-gray-400">InterProcess Communication isolation — containers can't access each other's shared memory or semaphores.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-rose-900/20 border border-rose-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-id-card text-rose-400"></i>
+                <h3 class="font-semibold text-rose-300 text-sm">User Namespace</h3>
+              </div>
+              <p class="text-xs text-gray-400">Map container's root user to a non-privileged user on the host for extra security.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-sky-900/20 border border-sky-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-cube text-sky-400"></i>
+                <h3 class="font-semibold text-sky-300 text-sm">Cgroup Namespace</h3>
+              </div>
+              <p class="text-xs text-gray-400">Hides cgroup hierarchy — each container sees only its own resource limits.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 flex items-start gap-4 mt-4">
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <div>
+              <p class="text-sm font-semibold text-yellow-300 mb-1">Simple Analogy</p>
+              <p class="text-sm text-gray-300">Each container lives in its own <strong class="text-white">"room"</strong> with its own view. The room has its own window (PID), its own phone line (network), its own furniture (filesystem), and its own room number (hostname). From inside the room, you can't see what's happening in other rooms — you only see your own space.</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. cgroups — Resource Limits -->
+    <section id="cgroups" class="mb-8 animate-slide-left">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-chart-line text-2xl text-orange-400"></i>
+          <h2 class="text-2xl font-bold text-white">cgroups — Resource Limits</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+
+          <p>While namespaces provide <strong class="text-white">isolation</strong> (what a container can see), <strong class="text-white">cgroups</strong> (Control Groups) provide <strong class="text-white">limitation</strong> — how much CPU, memory, and I/O a container is allowed to use.</p>
+
+          <p>Without cgroups, a single runaway container could <strong class="text-white">consume all system resources</strong> and starve other containers (or even the host OS). cgroups prevent that by capping each container's consumption.</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+
+            <div class="code-block rounded-lg p-4 overflow-x-auto">
+              <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                <i class="fas fa-microchip text-cyan-400"></i> <span>CPU Limit — half a core</span>
+              </div>
+              <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">docker run --cpus=.5 ubuntu</span>
+<span class="text-gray-500"># Container gets at most 50% of one CPU core</span>
+<span class="text-gray-500"># Even if the host has 16 cores, this container</span>
+<span class="text-gray-500"># can only use 0.5 cores worth of CPU time</span></pre>
+            </div>
+
+            <div class="code-block rounded-lg p-4 overflow-x-auto">
+              <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+                <i class="fas fa-memory text-amber-400"></i> <span>Memory Limit — 100 MB</span>
+              </div>
+              <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">docker run --memory=100m ubuntu</span>
+<span class="text-gray-500"># Container is capped at 100 megabytes of RAM</span>
+<span class="text-gray-500"># If it tries to use more, it gets OOM-killed</span>
+<span class="text-gray-500"># (Out Of Memory killer stops it)</span></pre>
+            </div>
+
+          </div>
+
+          <p>You can combine both limits for fine-grained control:</p>
+
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">docker run --cpus=.5 --memory=100m --memory-swap=150m nginx</span>
+
+<span class="text-gray-500"># ┌──────────┬────────────┐</span>
+<span class="text-gray-500"># │ Resource │   Limit    │</span>
+<span class="text-gray-500"># ├──────────┼────────────┤</span>
+<span class="text-gray-500"># │ CPU      │ 0.5 cores  │</span>
+<span class="text-gray-500"># │ Memory   │ 100 MB RAM │</span>
+<span class="text-gray-500"># │ Swap     │ 150 MB max │</span>
+<span class="text-gray-500"># └──────────┴────────────┘</span></pre>
+          </div>
+
+          <p>You can also inspect which cgroups a container belongs to:</p>
+
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">docker inspect mynginx --format '{{.HostConfig.CpuShares}}'</span>
+<span class="text-yellow-300">512</span>                <span class="text-gray-500"># ← relative CPU weight (default 1024 = 1 core)</span>
+
+<span class="text-gray-400">$</span> <span class="text-white">docker inspect mynginx --format '{{.HostConfig.Memory}}'</span>
+<span class="text-yellow-300">104857600</span>          <span class="text-gray-500"># ← 100 MB in bytes</span></pre>
+          </div>
+
+          <div class="p-4 rounded-lg bg-red-900/20 border border-red-800/40">
+            <p class="text-sm text-red-300"><i class="fas fa-exclamation-triangle mr-1"></i> <strong class="text-white">What happens without limits?</strong> One container could consume all CPU and memory, slowing or crashing other containers and even the host. cgroups ensure fair sharing.</p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 flex items-start gap-4 mt-4">
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <div>
+              <p class="text-sm font-semibold text-yellow-300 mb-1">Simple Analogy</p>
+              <p class="text-sm text-gray-300">Think of an <strong class="text-white">apartment building with capped utilities</strong>. Each apartment (container) has a limit on electricity (CPU) and water (memory). You can use your fair share, but you can't crank the AC so high that everyone else goes without power. If you exceed your cap, the building shuts off your utility (OOM-kill).</p>
+            </div>
+          </div>
+
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary Card -->
+    <section class="mb-8 animate-fade-in">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-check-circle text-2xl text-emerald-400"></i>
+          <h2 class="text-2xl font-bold text-white">Key Takeaways</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-sitemap text-orange-400 mt-1"></i>
+            <p class="text-sm text-gray-300"><strong class="text-white">CLI → REST API → Daemon</strong>. The CLI sends HTTP requests to <code class="text-gray-200 bg-gray-700 px-1 rounded">dockerd</code> which does the actual work</p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-cubes text-orange-400 mt-1"></i>
+            <p class="text-sm text-gray-300"><strong class="text-white">Namespaces</strong> isolate what a container can <em>see</em> — PID, network, mount, UTS, IPC</p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-chart-line text-orange-400 mt-1"></i>
+            <p class="text-sm text-gray-300"><strong class="text-white">cgroups</strong> limit what a container can <em>use</em> — CPU via <code class="text-gray-200 bg-gray-700 px-1 rounded">--cpus</code>, memory via <code class="text-gray-200 bg-gray-700 px-1 rounded">--memory</code></p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-tv text-orange-400 mt-1"></i>
+            <p class="text-sm text-gray-300">The <code class="text-gray-200 bg-gray-700 px-1 rounded">-H</code> flag lets you control a remote daemon from your local CLI</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Navigation -->
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-slate-700/50">
+      <a href="ch09_registry.html" class="glow-card flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">
+        <i class="fas fa-arrow-left text-gray-400"></i>
+        <div class="text-left">
+          <p class="text-xs text-gray-500">Previous</p>
+          <p class="text-white font-medium">Chapter 9: Docker Registry</p>
+        </div>
+      </a>
+      <a href="ch11_platforms.html" class="glow-card flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">
+        <div class="text-right">
+          <p class="text-xs text-gray-500">Next</p>
+          <p class="text-white font-medium">Chapter 11: Docker on Windows/Mac</p>
+        </div>
+        <i class="fas fa-arrow-right text-gray-400"></i>
+      </a>
+    </div>
+
+    <div class="mt-8 text-center text-gray-500 text-sm">
+      <i class="fas fa-book-open mr-1"></i> Based on "Docker for Beginners" by Mumshad Mannambeth
+    </div>
+  </div>
+</body>
+</html>

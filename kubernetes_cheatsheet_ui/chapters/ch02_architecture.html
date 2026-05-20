@@ -1,0 +1,918 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Ch 2 — Architecture & Setup | K8s Cheatsheet</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <style>
+      body {
+        background: #0f0f1a;
+      }
+      .glow-card:hover {
+        box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+        transform: translateY(-4px);
+      }
+      .gradient-text {
+        background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .terminal {
+        background: #1a1a2e;
+        border: 1px solid #334155;
+        border-radius: 0.75rem;
+        padding: 1rem;
+        font-family: 'Fira Code', 'Courier New', monospace;
+        font-size: 0.85rem;
+        color: #a5f3fc;
+        overflow-x: auto;
+      }
+      .terminal .prompt {
+        color: #22d3ee;
+      }
+      .terminal .comment {
+        color: #64748b;
+        font-style: italic;
+      }
+      .terminal .cmd {
+        color: #fbbf24;
+      }
+      .badge {
+        font-size: 0.75rem; padding: 0.125rem 0.625rem; border-radius: 9999px; font-weight: 500;
+      }
+    @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+  </head>
+  <body class="min-h-screen text-gray-200">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+      <!-- Back Nav -->
+      <a
+        href="../index.html"
+        class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 group"
+      >
+        <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i> Back to
+        Home
+      </a>
+
+      <!-- Header -->
+      <div class="text-center mb-12 animate-fade-in">
+        <div class="text-6xl mb-4 text-indigo-400"><i class="fas fa-sitemap"></i></div>
+        <h1 class="text-4xl md:text-5xl font-bold gradient-text">Architecture & Setup</h1>
+        <p class="text-gray-400 mt-3 text-lg">
+          Chapter 2 — Understanding how Kubernetes is built and how to set it up
+        </p>
+        <div class="flex flex-wrap justify-center gap-2 mt-4 text-xs">
+          <span class="bg-indigo-900/30 text-indigo-300 px-3 py-1 rounded-full"
+            ><i class="fas fa-server mr-1"></i>Nodes</span
+          >
+          <span class="bg-purple-900/30 text-purple-300 px-3 py-1 rounded-full"
+            ><i class="fas fa-layer-group mr-1"></i>Cluster</span
+          >
+          <span class="bg-blue-900/30 text-blue-300 px-3 py-1 rounded-full"
+            ><i class="fas fa-crown mr-1"></i>Master</span
+          >
+          <span class="bg-cyan-900/30 text-cyan-300 px-3 py-1 rounded-full"
+            ><i class="fas fa-cogs mr-1"></i>Components</span
+          >
+          <span class="bg-emerald-900/30 text-emerald-300 px-3 py-1 rounded-full"
+            ><i class="fas fa-terminal mr-1"></i>kubectl</span
+          >
+        </div>
+      </div>
+
+      <!-- Section Nav -->
+      <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-2 mb-10 text-xs">
+        <a
+          href="#nodes"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-server block text-lg mb-1 text-indigo-400"></i>Nodes</a
+        >
+        <a
+          href="#cluster"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-layer-group block text-lg mb-1 text-purple-400"></i>Cluster</a
+        >
+        <a
+          href="#master"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-crown block text-lg mb-1 text-yellow-400"></i>Master</a
+        >
+        <a
+          href="#components"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-cogs block text-lg mb-1 text-cyan-400"></i>Components</a
+        >
+        <a
+          href="#comparison"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-balance-scale block text-lg mb-1 text-rose-400"></i>Master vs Worker</a
+        >
+        <a
+          href="#kubectl"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-terminal block text-lg mb-1 text-emerald-400"></i>kubectl</a
+        >
+        <a
+          href="#setup"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-wrench block text-lg mb-1 text-orange-400"></i>Setup Options</a
+        >
+        <a
+          href="#minikube"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-laptop block text-lg mb-1 text-sky-400"></i>Minikube</a
+        >
+        <a
+          href="#kubeadm"
+          class="glow-card text-center p-3 rounded-lg bg-slate-800/50 border border-slate-700 text-gray-300 hover:text-white transition-all"
+          ><i class="fas fa-server block text-lg mb-1 text-violet-400"></i>kubeadm</a
+        >
+      </div>
+
+      <!-- Section 1: Nodes -->
+      <section id="nodes" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-indigo-500/20 flex items-center justify-center">
+              <i class="fas fa-server text-xl text-indigo-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">
+              1. Nodes <span class="text-sm font-normal text-gray-400">(formerly Minions)</span>
+            </h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            A <strong class="text-white">node</strong> is a machine — physical or virtual — with
+            Kubernetes installed. This is the worker machine where your containers actually run. In
+            older versions, nodes were called <strong class="text-indigo-300">"Minions"</strong>.
+          </p>
+          <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-check-circle text-emerald-400"></i
+                ><span class="font-semibold text-white">What it is</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                A node is like a <strong class="text-gray-200">single computer</strong> in a team.
+                It provides the CPU, RAM, and storage to run your application containers.
+              </p>
+            </div>
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-exclamation-triangle text-amber-400"></i
+                ><span class="font-semibold text-white">Single node problem</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                If you have only <strong class="text-gray-200">one</strong> node and it fails, your
+                app goes down. That's why you need
+                <strong class="text-gray-200">multiple nodes</strong>.
+              </p>
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3 bg-yellow-900/20 border border-yellow-700/30 p-4 rounded-lg"
+          >
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <p class="text-sm text-yellow-200/80">
+              <strong>Analogy:</strong> Nodes are like <em>workers in a factory</em>. One worker
+              gets sick (fails) → production stops. Hire multiple workers → production continues
+              even if one is absent.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 2: Cluster -->
+      <section id="cluster" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-purple-500/20 flex items-center justify-center">
+              <i class="fas fa-layer-group text-xl text-purple-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">2. Cluster</h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            A <strong class="text-white">cluster</strong> is a set of nodes grouped together. Even
+            if one node fails, your app is still accessible from the other nodes. Multiple nodes
+            also <strong class="text-purple-300">share the load</strong> so no single machine gets
+            overwhelmed.
+          </p>
+          <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-shield-alt text-emerald-400"></i
+                ><span class="font-semibold text-white">High Availability</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                One node crashes → other nodes keep serving. Users don't even notice.
+              </p>
+            </div>
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-weight-hanging text-blue-400"></i
+                ><span class="font-semibold text-white">Load Sharing</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                Work is distributed across nodes. No single node becomes a bottleneck.
+              </p>
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3 bg-yellow-900/20 border border-yellow-700/30 p-4 rounded-lg"
+          >
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <p class="text-sm text-yellow-200/80">
+              <strong>Analogy:</strong> A single worker (node) vs a
+              <strong>team of workers</strong> (cluster). One worker takes a break → the team keeps
+              going. The team also splits the workload so nobody gets exhausted.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 3: Master -->
+      <section id="master" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-yellow-500/20 flex items-center justify-center">
+              <i class="fas fa-crown text-xl text-yellow-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">3. Master</h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            The <strong class="text-white">master</strong> is the brain of the cluster. It has
+            Kubernetes installed and configured as the
+            <strong class="text-yellow-300">control plane</strong>. The master watches over all
+            nodes and is responsible for <strong class="text-yellow-300">orchestration</strong>.
+          </p>
+          <div class="space-y-3 mb-4">
+            <div
+              class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex items-start gap-3"
+            >
+              <i class="fas fa-database text-blue-400 mt-1"></i>
+              <div>
+                <span class="text-white font-medium">Stores cluster info</span>
+                <p class="text-sm text-gray-400">
+                  Keeps track of every node, pod, and service in the cluster.
+                </p>
+              </div>
+            </div>
+            <div
+              class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex items-start gap-3"
+            >
+              <i class="fas fa-eye text-cyan-400 mt-1"></i>
+              <div>
+                <span class="text-white font-medium">Monitors nodes</span>
+                <p class="text-sm text-gray-400">
+                  Constantly checks if nodes are healthy and running.
+                </p>
+              </div>
+            </div>
+            <div
+              class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex items-start gap-3"
+            >
+              <i class="fas fa-truck-loading text-rose-400 mt-1"></i>
+              <div>
+                <span class="text-white font-medium">Moves workload</span>
+                <p class="text-sm text-gray-400">
+                  When a node fails, the master shifts its containers to healthy nodes.
+                </p>
+              </div>
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3 bg-yellow-900/20 border border-yellow-700/30 p-4 rounded-lg"
+          >
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <p class="text-sm text-yellow-200/80">
+              <strong>Analogy:</strong> The master is the <strong>manager</strong> of the factory.
+              The manager doesn't build products — they assign work, track progress, and reshuffle
+              tasks when a worker is out sick.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 4: Components -->
+      <section id="components" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-cyan-500/20 flex items-center justify-center">
+              <i class="fas fa-cogs text-xl text-cyan-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">4. Components of Kubernetes</h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-6">
+            When you install Kubernetes, these components get installed automatically. Each one has
+            a specific job.
+          </p>
+
+          <div class="space-y-4">
+            <!-- API Server -->
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-md bg-blue-500/20 flex items-center justify-center">
+                  <i class="fas fa-cloud text-sm text-blue-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-white">API Server</h3>
+              </div>
+              <p class="text-sm text-gray-400">
+                The <strong class="text-gray-200">front-end</strong> of Kubernetes. All users,
+                management devices, and CLI tools talk to the API Server. It validates and processes
+                every request before sending it to the cluster.
+              </p>
+            </div>
+
+            <!-- etcd -->
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-md bg-purple-500/20 flex items-center justify-center">
+                  <i class="fas fa-server text-sm text-purple-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-white">
+                  etcd <span class="text-sm font-normal text-gray-500">(key-value store)</span>
+                </h3>
+              </div>
+              <p class="text-sm text-gray-400">
+                A <strong class="text-gray-200">distributed, reliable key-value store</strong>. It
+                stores <em>all</em> the data needed to manage the cluster — configs, state,
+                metadata. It also implements <strong class="text-gray-200">locks</strong> to prevent
+                conflicts when multiple masters try to update the cluster at the same time.
+              </p>
+            </div>
+
+            <!-- Scheduler -->
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-md bg-emerald-500/20 flex items-center justify-center">
+                  <i class="fas fa-tasks text-sm text-emerald-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-white">Scheduler</h3>
+              </div>
+              <p class="text-sm text-gray-400">
+                Distributes <strong class="text-gray-200">work and containers</strong> across
+                multiple nodes. Decides which node is best suited for each new container based on
+                CPU, memory, and other constraints.
+              </p>
+            </div>
+
+            <!-- Controllers -->
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-md bg-rose-500/20 flex items-center justify-center">
+                  <i class="fas fa-brain text-sm text-rose-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-white">
+                  Controller Manager
+                  <span class="text-sm font-normal text-gray-500">(the brain)</span>
+                </h3>
+              </div>
+              <p class="text-sm text-gray-400">
+                The <strong class="text-gray-200">brain behind orchestration</strong>. Controllers
+                notice and respond when nodes, containers, or endpoints go down. They automatically
+                bring up new containers to replace the failed ones.
+              </p>
+            </div>
+
+            <!-- Container Runtime -->
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-md bg-orange-500/20 flex items-center justify-center">
+                  <i class="fas fa-play-circle text-sm text-orange-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-white">Container Runtime</h3>
+              </div>
+              <p class="text-sm text-gray-400">
+                The actual software that
+                <strong class="text-gray-200">runs your containers</strong>. Examples:
+                <span class="text-gray-300">Docker, CRI-O, containerd, Rocket</span>. Think of it as
+                the engine that powers each container.
+              </p>
+            </div>
+
+            <!-- kubelet -->
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-3 mb-2">
+                <div class="w-8 h-8 rounded-md bg-indigo-500/20 flex items-center justify-center">
+                  <i class="fas fa-agent text-sm text-indigo-400"></i>
+                </div>
+                <h3 class="text-lg font-semibold text-white">
+                  kubelet <span class="text-sm font-normal text-gray-500">(the node agent)</span>
+                </h3>
+              </div>
+              <p class="text-sm text-gray-400">
+                An <strong class="text-gray-200">agent running on every node</strong>. It ensures
+                containers are running as expected and constantly reports back to the master. It's
+                the bridge between the master and the worker nodes.
+              </p>
+            </div>
+          </div>
+
+          <div
+            class="flex items-start gap-3 bg-yellow-900/20 border border-yellow-700/30 p-4 rounded-lg mt-4"
+          >
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <p class="text-sm text-yellow-200/80">
+              <strong>Simple view:</strong> API Server = reception desk, etcd = filing cabinet,
+              Scheduler = dispatcher, Controller Manager = supervisor, Container Runtime =
+              machinery, kubelet = floor manager.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 5: Master vs Worker -->
+      <section id="comparison" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-rose-500/20 flex items-center justify-center">
+              <i class="fas fa-balance-scale text-xl text-rose-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">5. Master vs Worker Nodes</h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            Not all nodes are created equal. Masters manage, workers do the actual work.
+          </p>
+          <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-blue-700/40">
+              <div class="flex items-center gap-2 mb-3">
+                <i class="fas fa-crown text-blue-400"></i
+                ><span class="font-semibold text-white text-lg">Master Node</span>
+              </div>
+              <ul class="space-y-2 text-sm text-gray-400">
+                <li>
+                  <i class="fas fa-check text-blue-400 w-4"></i>
+                  <span class="text-gray-200">kube-apiserver</span> — API front-end
+                </li>
+                <li>
+                  <i class="fas fa-check text-blue-400 w-4"></i>
+                  <span class="text-gray-200">etcd</span> — cluster data store
+                </li>
+                <li>
+                  <i class="fas fa-check text-blue-400 w-4"></i>
+                  <span class="text-gray-200">Controller Manager</span> — orchestration brain
+                </li>
+                <li>
+                  <i class="fas fa-check text-blue-400 w-4"></i>
+                  <span class="text-gray-200">Scheduler</span> — workload distributor
+                </li>
+              </ul>
+            </div>
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-emerald-700/40">
+              <div class="flex items-center gap-2 mb-3">
+                <i class="fas fa-hard-hat text-emerald-400"></i
+                ><span class="font-semibold text-white text-lg">Worker Node</span>
+              </div>
+              <ul class="space-y-2 text-sm text-gray-400">
+                <li>
+                  <i class="fas fa-check text-emerald-400 w-4"></i>
+                  <span class="text-gray-200">kubelet</span> — node agent
+                </li>
+                <li>
+                  <i class="fas fa-check text-emerald-400 w-4"></i>
+                  <span class="text-gray-200">Container Runtime</span> — runs containers (Docker,
+                  containerd, CRI-O)
+                </li>
+                <li>
+                  <i class="fas fa-check text-emerald-400 w-4"></i>
+                  <span class="text-gray-200">kube-proxy</span> — networking rules
+                </li>
+              </ul>
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3 bg-yellow-900/20 border border-yellow-700/30 p-4 rounded-lg"
+          >
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <p class="text-sm text-yellow-200/80">
+              <strong>Analogy:</strong> Master = <strong>manager</strong> (plans, assigns,
+              monitors). Worker = <strong>employee</strong> (actually builds the product). Both are
+              essential — a manager with no workers does nothing, and workers with no manager have
+              no direction.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 6: kubectl -->
+      <section id="kubectl" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-emerald-500/20 flex items-center justify-center">
+              <i class="fas fa-terminal text-xl text-emerald-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">6. kubectl — The CLI Tool</h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            <strong class="text-white">kubectl</strong> (kube control) is the command-line tool you
+            use to deploy and manage applications on a Kubernetes cluster. It talks to the
+            <strong class="text-emerald-300">API Server</strong> behind the scenes.
+          </p>
+          <div class="space-y-3">
+            <div>
+              <div class="terminal">
+                <span class="comment"># Deploy an application</span>
+                <span class="cmd">kubectl run hello-minikube</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Deploys an application called "hello-minikube" to the cluster.
+              </p>
+            </div>
+            <div>
+              <div class="terminal">
+                <span class="comment"># View cluster information</span>
+                <span class="cmd">kubectl cluster-info</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Shows the cluster's API server address and dashboard URL.
+              </p>
+            </div>
+            <div>
+              <div class="terminal">
+                <span class="comment"># List all nodes in the cluster</span>
+                <span class="cmd">kubectl get nodes</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Lists every node with its status, roles, and version.
+              </p>
+            </div>
+            <div>
+              <div class="terminal">
+                <span class="comment"># View all pods</span>
+                <span class="cmd">kubectl get pods</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Lists all running pods in the default namespace.
+              </p>
+            </div>
+            <div>
+              <div class="terminal">
+                <span class="comment"># Get detailed info about a resource</span>
+                <span class="cmd">kubectl describe node worker-1</span>
+              </div>
+              <p class="text-xs text-gray-500 mt-1">
+                Shows detailed status, capacity, and events of a specific node.
+              </p>
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3 bg-yellow-900/20 border border-yellow-700/30 p-4 rounded-lg mt-4"
+          >
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <p class="text-sm text-yellow-200/80">
+              <strong>Remember:</strong> <code class="text-yellow-300">kubectl</code> is like your
+              <strong>remote control</strong> for the entire cluster. Every command you type is sent
+              to the API Server, which then instructs the cluster to make it happen.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 7: Setup Options -->
+      <section id="setup" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-orange-500/20 flex items-center justify-center">
+              <i class="fas fa-wrench text-xl text-orange-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">7. Setup Options</h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            There are several ways to set up Kubernetes — from simple single-node setups to full
+            production-grade clusters.
+          </p>
+          <div class="grid md:grid-cols-2 gap-4">
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-laptop text-sky-400"></i
+                ><span class="font-semibold text-white">Minikube</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                Single-node cluster running on your
+                <strong class="text-gray-200">local machine</strong>. Easiest way to get started and
+                learn. Bundles everything into one VM.
+              </p>
+              <span class="badge bg-green-900/40 text-green-300 inline-block mt-2"
+                ><i class="fas fa-star mr-1"></i>Best for learning</span
+              >
+            </div>
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-server text-violet-400"></i
+                ><span class="font-semibold text-white">kubeadm</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                <strong class="text-gray-200">Multi-node cluster</strong> with master and workers on
+                separate machines. More realistic than Minikube.
+              </p>
+              <span class="badge bg-blue-900/40 text-blue-300 inline-block mt-2"
+                ><i class="fas fa-cog mr-1"></i>Best for practice</span
+              >
+            </div>
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-cloud text-cyan-400"></i
+                ><span class="font-semibold text-white">Cloud (GCP / AWS / Azure)</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                Hosted Kubernetes services like
+                <strong class="text-gray-200">GKE, EKS, AKS</strong>. Fully managed — the cloud
+                provider handles the master, you manage workers.
+              </p>
+              <span class="badge bg-cyan-900/40 text-cyan-300 inline-block mt-2"
+                ><i class="fas fa-rocket mr-1"></i>Best for production</span
+              >
+            </div>
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-globe text-amber-400"></i
+                ><span class="font-semibold text-white">play-with-k8s.com</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                <strong class="text-gray-200">Instant browser-based</strong> Kubernetes cluster. No
+                installation needed — just open the browser and start.
+              </p>
+              <span class="badge bg-amber-900/40 text-amber-300 inline-block mt-2"
+                ><i class="fas fa-bolt mr-1"></i>Best for quick demo</span
+              >
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 8: Minikube -->
+      <section id="minikube" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-sky-500/20 flex items-center justify-center">
+              <i class="fas fa-laptop text-xl text-sky-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">8. Minikube</h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            <strong class="text-white">Minikube</strong> bundles all Kubernetes components into a
+            single image/ISO. The executable downloads and deploys it inside a VM on your machine
+            (VirtualBox, Hyper-V, or KVM).
+          </p>
+          <div class="grid md:grid-cols-2 gap-4 mb-4">
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-check-circle text-emerald-400"></i
+                ><span class="font-semibold text-white">What you need</span>
+              </div>
+              <ul class="text-sm text-gray-400 space-y-1">
+                <li>• A hypervisor (VirtualBox / Hyper-V / KVM)</li>
+                <li>• kubectl CLI</li>
+                <li>• minikube executable</li>
+              </ul>
+            </div>
+            <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700/50">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-box text-purple-400"></i
+                ><span class="font-semibold text-white">All-in-one VM</span>
+              </div>
+              <p class="text-sm text-gray-400">
+                Everything runs inside a single VM — master, worker, etcd, scheduler — all on your
+                local machine. Perfect for
+                <strong class="text-gray-200">learning and testing</strong>.
+              </p>
+            </div>
+          </div>
+          <div class="terminal">
+            <span class="comment"># Start Minikube</span>
+            <span class="cmd">minikube start</span>
+            <br />
+            <span class="comment"># Check cluster status</span>
+            <span class="cmd">minikube status</span>
+            <br />
+            <span class="comment"># Open dashboard</span>
+            <span class="cmd">minikube dashboard</span>
+          </div>
+          <div
+            class="flex items-start gap-3 bg-yellow-900/20 border border-yellow-700/30 p-4 rounded-lg mt-4"
+          >
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <p class="text-sm text-yellow-200/80">
+              <strong>Tip:</strong> Minikube is like a <strong>practice kitchen</strong> — you have
+              all the tools, but on a smaller scale. Make mistakes here before you cook for real
+              customers!
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Section 9: kubeadm -->
+      <section id="kubeadm" class="mb-12 animate-fade-in">
+        <div
+          class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300"
+        >
+          <div class="flex items-center gap-3 mb-4">
+            <div class="w-10 h-10 rounded-lg bg-violet-500/20 flex items-center justify-center">
+              <i class="fas fa-server text-xl text-violet-400"></i>
+            </div>
+            <h2 class="text-2xl font-bold text-white">
+              9. kubeadm Setup
+              <span class="text-sm font-normal text-gray-400">(Multi-Node Cluster)</span>
+            </h2>
+          </div>
+          <p class="text-gray-300 leading-relaxed mb-4">
+            <strong class="text-white">kubeadm</strong> creates a multi-node cluster with one master
+            and multiple worker nodes on separate machines. This is more realistic and closer to a
+            production setup.
+          </p>
+          <div class="space-y-4">
+            <div class="flex items-start gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0"
+              >
+                <span class="text-indigo-300 font-bold text-sm">1</span>
+              </div>
+              <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex-1">
+                <span class="text-white font-medium">Create multiple systems / VMs</span>
+                <p class="text-sm text-gray-400">
+                  Set up at least 2 machines — one for the master, one or more for workers. Can be
+                  physical or virtual.
+                </p>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0"
+              >
+                <span class="text-indigo-300 font-bold text-sm">2</span>
+              </div>
+              <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex-1">
+                <span class="text-white font-medium">Install Docker on all nodes</span>
+                <p class="text-sm text-gray-400">
+                  Every machine needs a container runtime. Install Docker (or containerd) on
+                  <strong class="text-gray-200">every</strong> node — master and workers.
+                </p>
+                <div class="terminal mt-2">
+                  <span class="cmd">sudo apt install docker.io</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0"
+              >
+                <span class="text-indigo-300 font-bold text-sm">3</span>
+              </div>
+              <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex-1">
+                <span class="text-white font-medium">Install kubeadm on all nodes</span>
+                <p class="text-sm text-gray-400">
+                  Install <strong class="text-gray-200">kubeadm</strong>,
+                  <strong class="text-gray-200">kubelet</strong>, and
+                  <strong class="text-gray-200">kubectl</strong> on every machine. These are the
+                  Kubernetes binaries.
+                </p>
+                <div class="terminal mt-2">
+                  <span class="cmd">sudo apt install kubeadm kubelet kubectl</span>
+                  <br />
+                  <span class="cmd">sudo apt-mark hold kubeadm kubelet kubectl</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0"
+              >
+                <span class="text-indigo-300 font-bold text-sm">4</span>
+              </div>
+              <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex-1">
+                <span class="text-white font-medium">Initialize the master</span>
+                <p class="text-sm text-gray-400">
+                  On the master node, run <code class="text-cyan-300">kubeadm init</code>. This sets
+                  up the control plane components.
+                </p>
+                <div class="terminal mt-2">
+                  <span class="cmd">sudo kubeadm init</span>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0"
+              >
+                <span class="text-indigo-300 font-bold text-sm">5</span>
+              </div>
+              <div
+                class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex-1 min-w-0 overflow-hidden"
+              >
+                <span class="text-white font-medium block mb-2"> Set up the POD network </span>
+
+                <p class="text-sm text-gray-400 break-words leading-relaxed">
+                  Install a
+                  <strong class="text-gray-200"> Container Network Interface (CNI) </strong>
+                  plugin. Options: Calico, Flannel, Weave, Cilium. This allows pods to talk to each
+                  other across nodes.
+                </p>
+
+                <div
+                  class="terminal mt-3 bg-black/40 rounded-md p-3 overflow-x-auto border border-slate-700"
+                >
+                  <span class="comment block text-green-400 text-sm mb-2">
+                    # Example with Calico
+                  </span>
+
+                  <code class="cmd text-blue-300 text-sm break-all whitespace-pre-wrap block">
+                    kubectl apply -f https://docs.projectcalico.org/manifests/calico.yaml
+                  </code>
+                </div>
+              </div>
+            </div>
+            <div class="flex items-start gap-4">
+              <div
+                class="w-8 h-8 rounded-full bg-indigo-500/20 flex items-center justify-center flex-shrink-0"
+              >
+                <span class="text-indigo-300 font-bold text-sm">6</span>
+              </div>
+              <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700/50 flex-1">
+                <span class="text-white font-medium">Join worker nodes</span>
+                <p class="text-sm text-gray-400">
+                  On each worker node, run the join command with the token from
+                  <code class="text-cyan-300">kubeadm init</code>. This connects the worker to the
+                  master.
+                </p>
+                <div class="terminal mt-2">
+                  <span class="comment"># Run this on each worker node</span>
+                  <span class="cmd"
+                    >sudo kubeadm join --token &lt;token&gt; &lt;master-ip&gt;:6443</span
+                  >
+                </div>
+              </div>
+            </div>
+          </div>
+          <div
+            class="flex items-start gap-3 bg-yellow-900/20 border border-yellow-700/30 p-4 rounded-lg mt-4"
+          >
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <p class="text-sm text-yellow-200/80">
+              <strong>Analogy:</strong> kubeadm is like <strong>building a real factory</strong>.
+              You set up each machine (node), install tools (Docker), hire a manager (kubeadm init),
+              lay cables between machines (POD network), and bring workers in (kubeadm join).
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- Footer -->
+      <div
+        class="mt-12 pt-8 border-t border-slate-800 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500"
+      >
+        <div>
+          <i class="fas fa-book-open mr-1"></i> Based on "Kubernetes for Absolute Beginners" by
+          Mumshad Mannambeth
+        </div>
+        <div class="flex gap-4">
+          <a href="../index.html" class="hover:text-white transition-colors"
+            ><i class="fas fa-home mr-1"></i>Home</a
+          >
+          <a href="#" class="hover:text-white transition-colors"
+            ><i class="fas fa-arrow-up mr-1"></i>Top</a
+          >
+        </div>
+      </div>
+    </div>
+
+    <style>
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.8s ease-out;
+      }
+    @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+  </body>
+</html>

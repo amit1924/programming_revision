@@ -1,0 +1,468 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 1 — Docker Overview | Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes scaleIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+    .animate-scale-in { animation: scaleIn 0.5s ease-out; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .code-block { background: #1e293b; border: 1px solid #334155; border-radius: 0.5rem; padding: 0.75rem 1rem; font-family: 'Fira Code','Cascadia Code',monospace; font-size: 0.875rem; overflow-x: auto; }
+    .code-block .prompt { color: #22d3ee; }
+    .code-block .cmd { color: #e2e8f0; }
+    .code-block .comment { color: #64748b; font-style: italic; }
+    .comparison-table th { background: #1e293b; }
+    .comparison-table td, .comparison-table th { padding: 0.75rem 1rem; border: 1px solid #334155; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 animate-fade-in">
+      <i class="fas fa-arrow-left"></i> Back to Cheatsheet Home
+    </a>
+
+    <!-- Header -->
+    <div class="text-center mb-10 animate-fade-in">
+      <i class="fab fa-docker text-6xl docker-icon mb-3"></i>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text">Docker Overview</h1>
+      <p class="text-gray-400 mt-2">Chapter 1 — Understanding what Docker is, why we need it, and how it works</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-10 animate-fade-in delay-1">
+      <a href="#why-docker" class="glow-card px-3 py-2 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs text-gray-300 hover:text-white transition-all duration-300"><i class="fas fa-question-circle mr-1 text-cyan-400"></i>Why Docker?</a>
+      <a href="#what-can-docker-do" class="glow-card px-3 py-2 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs text-gray-300 hover:text-white transition-all duration-300"><i class="fas fa-rocket mr-1 text-emerald-400"></i>What Can It Do?</a>
+      <a href="#what-are-containers" class="glow-card px-3 py-2 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs text-gray-300 hover:text-white transition-all duration-300"><i class="fas fa-box mr-1 text-violet-400"></i>Containers</a>
+      <a href="#sharing-kernel" class="glow-card px-3 py-2 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs text-gray-300 hover:text-white transition-all duration-300"><i class="fas fa-microchip mr-1 text-amber-400"></i>Sharing Kernel</a>
+      <a href="#containers-vs-vms" class="glow-card px-3 py-2 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs text-gray-300 hover:text-white transition-all duration-300"><i class="fas fa-server mr-1 text-rose-400"></i>Containers vs VMs</a>
+      <a href="#how-its-done" class="glow-card px-3 py-2 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs text-gray-300 hover:text-white transition-all duration-300"><i class="fas fa-cogs mr-1 text-blue-400"></i>How It's Done</a>
+      <a href="#container-vs-image" class="glow-card px-3 py-2 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs text-gray-300 hover:text-white transition-all duration-300"><i class="fas fa-images mr-1 text-pink-400"></i>Container vs Image</a>
+    </div>
+
+    <!-- ============================== -->
+    <!-- 1. Why do we need Docker?      -->
+    <!-- ============================== -->
+    <section id="why-docker" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-cyan-900/40 flex items-center justify-center">
+          <i class="fas fa-question-circle text-xl text-cyan-400"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Why do we need Docker?</h2>
+      </div>
+
+      <div class="space-y-4 text-sm leading-relaxed text-gray-300">
+
+        <p><strong class="text-white">The "Matrix from Hell" Problem</strong></p>
+        <p>Before Docker, every application came with a nightmare of compatibility issues. A typical project might involve:</p>
+
+        <ul class="list-disc pl-5 space-y-1 text-gray-400">
+          <li>A <strong class="text-gray-200">web server</strong> (needs Apache or Nginx with specific modules)</li>
+          <li>A <strong class="text-gray-200">database</strong> (needs MySQL 8.0, specific collation, config flags)</li>
+          <li>A <strong class="text-gray-200">messaging queue</strong> (needs RabbitMQ with Erlang 23+)</li>
+          <li><strong class="text-gray-200">Orchestration</strong> (needs Python 3.8, requests lib, cron setup)</li>
+        </ul>
+
+        <p class="mt-3">Each service demands <strong class="text-white">different libraries, different dependency versions, and even different OS configurations</strong>. Getting them to coexist on one machine is a nightmare — upgrade one thing and you break another.</p>
+
+        <div class="code-block mt-3">
+          <span class="comment"># Typical frustration — version conflicts everywhere</span><br>
+          <span class="prompt">$</span> <span class="cmd">pip install requests==2.25</span><br>
+          <span class="prompt">$</span> <span class="cmd">npm install express@4.17</span><br>
+          <span class="prompt">$</span> <span class="cmd">apt-get install postgresql-13</span><br>
+          <span class="comment"># "But this breaks the other app that needs Postgres 12!"</span>
+        </div>
+
+        <div class="mt-4 p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+          <p class="flex items-start gap-2">
+            <i class="fas fa-lightbulb text-amber-400 mt-1"></i>
+            <span><strong class="text-amber-300">Analogy:</strong> Imagine trying to move an entire house — furniture, plumbing, wiring, foundation — every time you want to relocate. Docker is like a cargo ship: you pack each item into a standardized container, and the ship handles them all uniformly. No more moving whole houses.</span>
+          </p>
+        </div>
+
+        <p class="text-gray-400">The result: <strong class="text-white">long setup times</strong>, <strong class="text-white">"it works on my machine"</strong> syndrome, and different behaviors across dev / test / production environments.</p>
+
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 2. What can Docker do?         -->
+    <!-- ============================== -->
+    <section id="what-can-docker-do" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right delay-2">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-emerald-900/40 flex items-center justify-center">
+          <i class="fas fa-rocket text-xl text-emerald-400"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">What can Docker do?</h2>
+      </div>
+
+      <div class="space-y-4 text-sm leading-relaxed text-gray-300">
+
+        <p>Docker fixes the "Matrix from Hell" by letting you <strong class="text-white">containerize each application</strong> with its own dependencies, isolated from everything else:</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+            <div class="text-center mb-2">
+              <i class="fas fa-times-circle text-3xl text-red-400"></i>
+            </div>
+            <p class="text-center font-semibold text-gray-400 mb-2">Before Docker</p>
+            <p class="text-xs text-gray-500 text-center">App A, App B, and App C all fight over the same system libraries. One needs Python 2, another Python 3 — conflicts everywhere.</p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-900/60 border border-emerald-800">
+            <div class="text-center mb-2">
+              <i class="fas fa-check-circle text-3xl text-emerald-400"></i>
+            </div>
+            <p class="text-center font-semibold text-white mb-2">After Docker</p>
+            <p class="text-xs text-gray-400 text-center">Each app gets its own container with exactly the libraries it needs. No conflicts — they share only the host OS kernel.</p>
+          </div>
+        </div>
+
+        <ul class="list-disc pl-5 space-y-1 text-gray-400 mt-4">
+          <li>Each container has <strong class="text-gray-200">its own filesystem, libraries, and dependencies</strong></li>
+          <li>Containers are <strong class="text-gray-200">isolated from each other</strong></li>
+          <li>You can run different versions of the same software side-by-side</li>
+        </ul>
+
+        <div class="code-block mt-3">
+          <span class="comment"># Two different Postgres versions, zero conflict</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run -d --name pg12 postgres:12</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run -d --name pg13 postgres:13</span><br>
+          <span class="comment"># Both running happily on the same machine</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 3. What are containers?        -->
+    <!-- ============================== -->
+    <section id="what-are-containers" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left delay-3">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-violet-900/40 flex items-center justify-center">
+          <i class="fas fa-box text-xl text-violet-400"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">What are containers?</h2>
+      </div>
+
+      <div class="space-y-4 text-sm leading-relaxed text-gray-300">
+
+        <p>A container is a <strong class="text-white">standardized unit of software</strong>. It packages up code and all its dependencies so the application runs quickly and reliably across different environments.</p>
+
+        <p>Every container has its own isolated view of the operating system:</p>
+
+        <ul class="list-disc pl-5 space-y-1 text-gray-400">
+          <li>Its own <strong class="text-gray-200">processes</strong> (containers can't see each other's processes by default)</li>
+          <li>Its own <strong class="text-gray-200">network stack</strong> (IP address, ports, routing)</li>
+          <li>Its own <strong class="text-gray-200">mounts / filesystem</strong> (it sees its own root filesystem)</li>
+        </ul>
+
+        <p class="mt-2">But — and this is key — all containers on the same host <strong class="text-white">share the host OS kernel</strong>. This is what makes them so lightweight.</p>
+
+        <div class="mt-4 p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+          <p class="flex items-start gap-2">
+            <i class="fas fa-lightbulb text-amber-400 mt-1"></i>
+            <span><strong class="text-amber-300">Analogy — Apartments in a Building:</strong> Each apartment (container) has its own rooms, utilities, and locks (processes, network, filesystem). But all apartments share the same building foundation and plumbing (the host OS kernel). A problem in one apartment doesn't affect the others.</span>
+          </p>
+        </div>
+
+        <div class="code-block mt-3">
+          <span class="comment"># Run an nginx container — it has its own port 80, its own files, etc.</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run -d -p 8080:80 nginx</span><br>
+          <span class="comment"># Inside the container, it's isolated:</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker exec -it &lt;container-id&gt; bash</span><br>
+          <span class="prompt">root@abc123:/#</span> <span class="cmd">ps aux</span>  <span class="comment"># only sees nginx processes</span>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 4. Sharing the kernel          -->
+    <!-- ============================== -->
+    <section id="sharing-kernel" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right delay-4">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-amber-900/40 flex items-center justify-center">
+          <i class="fas fa-microchip text-xl text-amber-400"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Sharing the Kernel</h2>
+      </div>
+
+      <div class="space-y-4 text-sm leading-relaxed text-gray-300">
+
+        <p>Unlike virtual machines, containers <strong class="text-white">do not run a separate operating system</strong>. They all share the host machine's OS kernel. Here's the architecture:</p>
+
+        <div class="p-4 rounded-lg bg-slate-900/60 border border-slate-700 text-center my-4">
+          <div class="flex flex-col items-center gap-1 text-xs">
+            <span class="px-3 py-1 rounded bg-blue-900/50 text-blue-300 border border-blue-800">Application A</span>
+            <span class="px-3 py-1 rounded bg-blue-900/50 text-blue-300 border border-blue-800">Application B</span>
+            <span class="text-gray-500 text-lg">⬇</span>
+            <span class="px-3 py-1 rounded bg-cyan-900/50 text-cyan-300 border border-cyan-800">Docker Engine</span>
+            <span class="text-gray-500 text-lg">⬇</span>
+            <span class="px-3 py-2 rounded bg-slate-700 text-gray-200 border border-slate-600 font-semibold">Host OS Kernel (shared)</span>
+          </div>
+        </div>
+
+        <p>The software runs on <strong class="text-white">top of Docker</strong>, which runs on top of the <strong class="text-white">host OS</strong>. The kernel is shared, not duplicated per container.</p>
+
+        <p class="text-gray-400">For example: if your host runs Ubuntu's kernel, all Ubuntu-based containers share that same kernel. A container doesn't need its own kernel — it just <strong class="text-gray-200">uses the host's kernel</strong> with its own userspace tools and libraries.</p>
+
+        <div class="code-block mt-3">
+          <span class="comment"># Check kernel version — same for host and all containers</span><br>
+          <span class="prompt">$</span> <span class="cmd">uname -r</span><br>
+          <span class="comment"># Inside any container, same result:</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run alpine uname -r</span>
+        </div>
+
+        <div class="mt-4 p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+          <p class="flex items-start gap-2">
+            <i class="fas fa-info-circle text-blue-400 mt-1"></i>
+            <span><strong class="text-blue-300">Key benefit:</strong> Because containers share the kernel, they are incredibly lightweight — <strong class="text-white">megabytes</strong> in size, not gigabytes. They also start in <strong class="text-white">milliseconds</strong>, not minutes.</span>
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 5. Containers vs VMs           -->
+    <!-- ============================== -->
+    <section id="containers-vs-vms" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-scale-in">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-rose-900/40 flex items-center justify-center">
+          <i class="fas fa-server text-xl text-rose-400"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Containers vs Virtual Machines</h2>
+      </div>
+
+      <div class="space-y-4 text-sm leading-relaxed text-gray-300">
+
+        <p>This is the most important distinction to understand. Let's compare them side-by-side:</p>
+
+        <!-- Architecture Diagrams -->
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+          <div class="p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+            <p class="text-center font-semibold text-rose-400 mb-3"><i class="fas fa-server mr-1"></i> Virtual Machine</p>
+            <div class="flex flex-col items-center gap-1 text-xs">
+              <span class="px-3 py-1 rounded bg-rose-900/50 text-rose-300 border border-rose-800">App + Libs + Deps + OS</span>
+              <span class="px-3 py-1 rounded bg-rose-900/50 text-rose-300 border border-rose-800">App + Libs + Deps + OS</span>
+              <span class="text-gray-500 text-sm">⬇</span>
+              <span class="px-3 py-1 rounded bg-yellow-900/50 text-yellow-300 border border-yellow-800">Hypervisor</span>
+              <span class="text-gray-500 text-sm">⬇</span>
+              <span class="px-3 py-2 rounded bg-slate-700 text-gray-200 border border-slate-600">Host OS</span>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-900/60 border border-emerald-800">
+            <p class="text-center font-semibold text-emerald-400 mb-3"><i class="fas fa-box mr-1"></i> Container</p>
+            <div class="flex flex-col items-center gap-1 text-xs">
+              <span class="px-3 py-1 rounded bg-emerald-900/50 text-emerald-300 border border-emerald-800">App + Libs + Deps</span>
+              <span class="px-3 py-1 rounded bg-emerald-900/50 text-emerald-300 border border-emerald-800">App + Libs + Deps</span>
+              <span class="text-gray-500 text-sm">⬇</span>
+              <span class="px-3 py-1 rounded bg-cyan-900/50 text-cyan-300 border border-cyan-800">Docker Engine</span>
+              <span class="text-gray-500 text-sm">⬇</span>
+              <span class="px-3 py-2 rounded bg-slate-700 text-gray-200 border border-slate-600">Host OS (shared kernel)</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Comparison Table -->
+        <div class="overflow-x-auto my-4">
+          <table class="comparison-table w-full text-sm">
+            <thead>
+              <tr>
+                <th class="text-left text-gray-300">Feature</th>
+                <th class="text-left text-rose-300">Virtual Machine</th>
+                <th class="text-left text-emerald-300">Container</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-400">
+              <tr>
+                <td class="text-gray-200 font-medium">Size</td>
+                <td>Gigabytes (full OS per VM)</td>
+                <td class="text-emerald-200">Megabytes (no extra OS)</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">Boot Time</td>
+                <td>Minutes (OS boots from scratch)</td>
+                <td class="text-emerald-200">Milliseconds (process starts instantly)</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">OS Overhead</td>
+                <td>Each VM has its own full OS</td>
+                <td class="text-emerald-200">All containers share host kernel</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">Isolation</td>
+                <td>Strong (hardware-level)</td>
+                <td>Process-level (namespaces/cgroups)</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">What runs them</td>
+                <td>Hypervisor (VMware, Hyper-V, KVM)</td>
+                <td class="text-emerald-200">Docker Engine</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">Architecture</td>
+                <td>App + Libs + Deps + <strong class="text-rose-300">OS</strong></td>
+                <td class="text-emerald-200">App + Libs + Deps <em>(no separate OS)</em></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+          <p class="flex items-start gap-2">
+            <i class="fas fa-lightbulb text-amber-400 mt-1"></i>
+            <span><strong class="text-amber-300">Analogy:</strong> A VM is like a <strong class="text-white">whole house with its own foundation, plumbing, and electricity</strong> — you need to build everything from the ground up. A container is like an <strong class="text-white">apartment in a building</strong> — the foundation and infrastructure are shared, you just bring your furniture (your app and its libraries).</span>
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 6. How is it done?             -->
+    <!-- ============================== -->
+    <section id="how-its-done" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-blue-900/40 flex items-center justify-center">
+          <i class="fas fa-cogs text-xl text-blue-400"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">How is it done?</h2>
+      </div>
+
+      <div class="space-y-4 text-sm leading-relaxed text-gray-300">
+
+        <p>Docker makes everything available through <strong class="text-white">Docker Hub</strong> — a public registry where thousands of pre-built images are stored. Instead of manually installing and configuring software, you run a single command:</p>
+
+        <div class="code-block mt-3">
+          <span class="comment"># One command = one running service, zero manual setup</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run nginx</span>             <span class="comment"># Web server</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run mongo</span>              <span class="comment"># Database</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run redis</span>              <span class="comment"># Caching / message broker</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run node:18</span>            <span class="comment"># Node.js runtime</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run ansible</span>           <span class="comment"># Automation tool</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run postgres:15</span>       <span class="comment"># PostgreSQL 15</span>
+        </div>
+
+        <p class="mt-3">Each of these commands downloads the image (if not already cached), extracts it, and runs it in an isolated container with all dependencies ready to go.</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+          <div class="p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+            <p class="text-xs text-gray-500 text-center mb-2"><i class="fas fa-times-circle text-red-400 mr-1"></i> Traditional way:</p>
+            <div class="code-block text-xs">
+              <span class="comment"># Download, install, configure, troubleshoot...</span><br>
+              <span class="prompt">$</span> <span class="cmd">sudo apt-get install postgresql</span><br>
+              <span class="prompt">$</span> <span class="cmd">sudo systemctl start postgresql</span><br>
+              <span class="prompt">$</span> <span class="cmd">sudo vi /etc/postgresql/*/main/postgresql.conf</span><br>
+              <span class="prompt">$</span> <span class="cmd">sudo systemctl restart postgresql</span><br>
+              <span class="comment"># 30 minutes later... it works (maybe)</span>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-900/60 border border-emerald-800">
+            <p class="text-xs text-gray-400 text-center mb-2"><i class="fas fa-check-circle text-emerald-400 mr-1"></i> Docker way:</p>
+            <div class="code-block text-xs">
+              <span class="comment"># One command, instantly running:</span><br>
+              <span class="prompt">$</span> <span class="cmd">docker run -d -p 5432:5432 --name pg postgres:15</span><br>
+              <span class="comment"># 3 seconds later... PostgreSQL is running.</span>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 7. Container vs Image          -->
+    <!-- ============================== -->
+    <section id="container-vs-image" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-right">
+      <div class="flex items-center gap-3 mb-4">
+        <div class="w-10 h-10 rounded-lg bg-pink-900/40 flex items-center justify-center">
+          <i class="fas fa-images text-xl text-pink-400"></i>
+        </div>
+        <h2 class="text-xl font-bold text-white">Container vs Image</h2>
+      </div>
+
+      <div class="space-y-4 text-sm leading-relaxed text-gray-300">
+
+        <p>This is one of the most fundamental concepts. People often confuse images and containers, but the difference is simple:</p>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+          <div class="p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+            <div class="text-center mb-3">
+              <i class="fas fa-cubes text-3xl text-violet-400"></i>
+            </div>
+            <p class="text-center font-semibold text-violet-300">Image</p>
+            <ul class="text-xs text-gray-400 mt-2 space-y-1">
+              <li>✓ A <strong class="text-gray-200">package</strong> / <strong class="text-gray-200">template</strong> / <strong class="text-gray-200">blueprint</strong></li>
+              <li>✓ Read-only — you never modify an image</li>
+              <li>✓ Stored in a registry (like Docker Hub)</li>
+              <li>✓ Can be shared and reused</li>
+              <li>✓ Think: <strong class="text-gray-200">a cake recipe</strong></li>
+            </ul>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-900/60 border border-emerald-800">
+            <div class="text-center mb-3">
+              <i class="fas fa-box text-3xl text-emerald-400"></i>
+            </div>
+            <p class="text-center font-semibold text-emerald-300">Container</p>
+            <ul class="text-xs text-gray-400 mt-2 space-y-1">
+              <li>✓ A <strong class="text-gray-200">running instance</strong> of an image</li>
+              <li>✓ Read-write — you can modify files, install packages</li>
+              <li>✓ Runs until you stop it</li>
+              <li>✓ Ephemeral — changes are lost when removed (unless you save them)</li>
+              <li>✓ Think: <strong class="text-gray-200">a baked cake</strong></li>
+            </ul>
+          </div>
+        </div>
+
+        <p class="mt-3">One image can create <strong class="text-white">multiple containers</strong>, just like one recipe can bake multiple cakes. Each container is independent — changes in one don't affect the others.</p>
+
+        <div class="code-block mt-3">
+          <span class="comment"># One nginx image → three separate nginx containers</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run -d --name web1 -p 8080:80 nginx</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run -d --name web2 -p 8081:80 nginx</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run -d --name web3 -p 8082:80 nginx</span><br>
+          <span class="comment"># Three containers, one image. Each is fully independent.</span>
+        </div>
+
+        <div class="mt-4 p-4 rounded-lg bg-slate-900/60 border border-slate-700">
+          <p class="flex items-start gap-2">
+            <i class="fas fa-lightbulb text-amber-400 mt-1"></i>
+            <span><strong class="text-amber-300">Analogy:</strong> An <strong class="text-white">image</strong> is the recipe for a chocolate cake. The <strong class="text-white">container</strong> is the actual cake you bake from that recipe. You can bake 10 cakes from one recipe, and each cake is its own separate thing — frosting one doesn't change the recipe or the other cakes.</span>
+          </p>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-gray-500 text-sm animate-fade-in">
+      <i class="fas fa-book-open mr-1"></i> Based on "Docker for Beginners" by Mumshad Mannambeth
+      <span class="mx-2">|</span>
+      <a href="../index.html" class="text-gray-400 hover:text-white transition-colors"><i class="fas fa-arrow-left mr-1"></i>Back to Home</a>
+    </div>
+
+  </div>
+
+</body>
+</html>

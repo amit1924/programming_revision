@@ -1,0 +1,444 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ch 2 — Docker Commands | Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-in { animation: slideIn 0.6s ease-out; }
+    .code-block { background: #1a1a2e; border-radius: 0.5rem; overflow-x: auto; }
+    .code-block pre { padding: 1rem; font-size: 0.85rem; line-height: 1.6; }
+    .cmd { color: #4ade80; }
+    .output { color: #e2e8f0; }
+    .highlight { color: #facc15; }
+    .digest { color: #94a3b8; font-size: 0.75rem; }
+    .prompt { color: #6b7280; }
+    .comment { color: #6b7280; font-style: italic; }
+    .error { color: #f87171; }
+    .sect-nav a { transition: all 0.2s; }
+    .sect-nav a:hover { color: #60a5fa; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 animate-fade-in">
+      <i class="fas fa-arrow-left"></i> Back to Cheatsheet Home
+    </a>
+
+    <!-- Header -->
+    <div class="text-center mb-8 animate-fade-in">
+      <i class="fab fa-docker text-5xl docker-icon mb-3"></i>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text">Chapter 2: Docker Commands</h1>
+      <p class="text-gray-400 mt-2">Every Docker command explained simply — with real terminal output</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="sect-nav bg-slate-800/50 border border-slate-700 rounded-xl p-4 mb-8 animate-fade-in">
+      <div class="flex flex-wrap gap-2 justify-center text-sm">
+        <a href="#run" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-play mr-1 text-green-400"></i>docker run</a>
+        <a href="#ps" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-list mr-1 text-blue-400"></i>docker ps</a>
+        <a href="#stop" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-stop mr-1 text-red-400"></i>docker stop</a>
+        <a href="#rm" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-trash mr-1 text-red-400"></i>docker rm</a>
+        <a href="#images" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-cubes mr-1 text-violet-400"></i>docker images</a>
+        <a href="#rmi" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-eraser mr-1 text-orange-400"></i>docker rmi</a>
+        <a href="#pull" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-download mr-1 text-cyan-400"></i>docker pull</a>
+        <a href="#ubuntu" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fab fa-ubuntu mr-1 text-orange-400"></i>docker run ubuntu</a>
+        <a href="#exec" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-terminal mr-1 text-emerald-400"></i>docker exec</a>
+        <a href="#attach" class="px-3 py-1 rounded-full bg-slate-700/50 text-gray-300"><i class="fas fa-link mr-1 text-pink-400"></i>Attach / Detach</a>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 1. docker run -->
+    <!-- ============================================ -->
+    <div id="run" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-green-500/20 text-green-400 px-3 py-1 rounded-full text-sm font-mono">docker run</span>
+        <h2 class="text-xl font-bold text-white">Start a Container</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        The <code class="text-green-400 bg-green-900/20 px-1 rounded">docker run</code> command creates <strong>and</strong> starts a container from an image.
+        Think of it like: <em>"Take this image and spin up a living container from it."</em>
+      </p>
+
+      <div class="mb-4">
+        <p class="text-sm text-gray-400 mb-1">Basic command:</p>
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker run nginx</span>
+<span class="digest">Unable to find image 'nginx:latest' locally
+latest: Pulling from library/nginx</span>
+<span class="digest">Digest: sha256:2f7c7b4e5f5e5b2f0a1b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f</span>
+<span class="digest">Status: Downloaded newer image for nginx:latest</span>
+<span class="output">... (nginx starts and runs in foreground, blocking the terminal)</span></pre>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>What happened?</strong> Docker looked for the <code>nginx</code> image locally, didn't find it, so it pulled it from Docker Hub layer-by-layer, then started the container. The container runs in the foreground (attached mode) — your terminal is now hooked to nginx's output.
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 2. docker ps -->
+    <!-- ============================================ -->
+    <div id="ps" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-blue-500/20 text-blue-400 px-3 py-1 rounded-full text-sm font-mono">docker ps</span>
+        <h2 class="text-xl font-bold text-white">List Running Containers</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <code class="text-blue-400 bg-blue-900/20 px-1 rounded">docker ps</code> shows containers that are currently <strong>running</strong>.
+        Add <code class="text-yellow-400 bg-yellow-900/20 px-1 rounded">-a</code> to see <strong>all</strong> containers — including stopped ones.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div>
+          <p class="text-sm text-gray-400 mb-1"><i class="fas fa-play text-green-400 mr-1"></i>Running containers only:</p>
+          <div class="code-block border border-slate-600">
+            <pre><span class="prompt">$ </span><span class="cmd">docker ps</span>
+<span class="output">CONTAINER ID   IMAGE     COMMAND                  CREATED         STATUS         PORTS     NAMES
+<span class="highlight">a1b2c3d4e5f6</span>   nginx     "/docker-entrypoint.…"   2 minutes ago   Up 2 minutes   80/tcp    <span class="highlight">silly_sammet</span></span></pre>
+          </div>
+        </div>
+        <div>
+          <p class="text-sm text-gray-400 mb-1"><i class="fas fa-history text-yellow-400 mr-1"></i>All containers (including stopped):</p>
+          <div class="code-block border border-slate-600">
+            <pre><span class="prompt">$ </span><span class="cmd">docker ps -a</span>
+<span class="output">CONTAINER ID   IMAGE     COMMAND                  CREATED             STATUS                     PORTS     NAMES
+<span class="highlight">a1b2c3d4e5f6</span>   nginx     "/docker-entrypoint.…"   2 minutes ago       Up 2 minutes               80/tcp    <span class="highlight">silly_sammet</span>
+<span class="highlight">b2c3d4e5f6a7</span>   redis     "docker-entrypoint.s…"   About an hour ago   Exited (0) 5 minutes ago             <span class="highlight">focused_edison</span></span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300 mt-3">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>Columns explained:</strong> Each container gets a random <span class="text-yellow-400">CONTAINER ID</span> and <span class="text-yellow-400">NAME</span>. The <code>STATUS</code> column shows <code>Up</code> if running or <code>Exited</code> if stopped.
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 3. docker stop -->
+    <!-- ============================================ -->
+    <div id="stop" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm font-mono">docker stop</span>
+        <h2 class="text-xl font-bold text-white">Stop a Container</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <code class="text-red-400 bg-red-900/20 px-1 rounded">docker stop</code> sends a SIGTERM signal to the main process inside the container,
+        giving it time to shut down gracefully. It's like saying <em>"please finish your work and exit."</em>
+      </p>
+
+      <div class="mb-3">
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker stop silly_sammet</span>
+<span class="highlight">silly_sammet</span></pre>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300 mb-3">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        Docker echoes back the container name to confirm. After stopping, <code>docker ps</code> no longer shows it — but <code>docker ps -a</code> still will, with status <code>Exited (0)</code>.
+      </div>
+
+      <div>
+        <p class="text-sm text-gray-400 mb-1">Verify with <code>docker ps -a</code>:</p>
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker ps -a | head -3</span>
+<span class="output">CONTAINER ID   IMAGE     STATUS                      NAMES
+<span class="highlight">a1b2c3d4e5f6</span>   nginx     <span class="error">Exited (0) 2 seconds ago</span>   <span class="highlight">silly_sammet</span></span></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 4. docker rm -->
+    <!-- ============================================ -->
+    <div id="rm" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-red-500/20 text-red-400 px-3 py-1 rounded-full text-sm font-mono">docker rm</span>
+        <h2 class="text-xl font-bold text-white">Remove a Container</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <code class="text-red-400 bg-red-900/20 px-1 rounded">docker rm</code> <strong>permanently deletes</strong> a container.
+        This is different from <code>docker stop</code> — stopping keeps the container around (you can restart it).
+        Removing is like throwing it in the trash. The <strong>image</strong> is not affected — just the container instance.
+      </p>
+
+      <div class="mb-3">
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker rm silly_sammet</span>
+<span class="highlight">silly_sammet</span></pre>
+        </div>
+      </div>
+
+      <div>
+        <p class="text-sm text-gray-400 mb-1">The container is now completely gone — even <code>docker ps -a</code> won't show it:</p>
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker ps -a | grep silly_sammet</span>
+<span class="output">(no output — container is deleted!)</span></pre>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300 mt-3">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>Pro tip:</strong> Need to remove a running container? Use <code>docker rm -f container_name</code> (force remove, which stops it first).
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 5. docker images -->
+    <!-- ============================================ -->
+    <div id="images" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-violet-500/20 text-violet-400 px-3 py-1 rounded-full text-sm font-mono">docker images</span>
+        <h2 class="text-xl font-bold text-white">List Downloaded Images</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <code class="text-violet-400 bg-violet-900/20 px-1 rounded">docker images</code> lists all images you've pulled (or built) on your machine.
+        Each image has a <code>REPOSITORY</code> (name), <code>TAG</code> (version, <code>latest</code> by default),
+        <code>IMAGE ID</code>, <code>CREATED</code>, and <code>SIZE</code>.
+      </p>
+
+      <div class="mb-3">
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker images</span>
+<span class="output">REPOSITORY   TAG       IMAGE ID       CREATED       SIZE
+nginx        latest    <span class="highlight">a1b2c3d4e5f6</span>   2 weeks ago   <span class="highlight">109MB</span>
+redis        latest    <span class="highlight">b2c3d4e5f6a7</span>   3 weeks ago   <span class="highlight">107MB</span>
+ubuntu       latest    <span class="highlight">c3d4e5f6a7b8</span>   4 weeks ago   <span class="highlight">112MB</span>
+alpine       latest    <span class="highlight">d4e5f6a7b8c9</span>   4 weeks ago   <span class="highlight">4.14MB</span></span></pre>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>Notice:</strong> Alpine Linux is only <strong>4.14 MB</strong> vs Ubuntu at 112 MB. Alpine is a stripped-down Linux distro — perfect for minimal Docker images. Nginx and Redis are both around 100+ MB.
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 6. docker rmi -->
+    <!-- ============================================ -->
+    <div id="rmi" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-sm font-mono">docker rmi</span>
+        <h2 class="text-xl font-bold text-white">Remove Images</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <code class="text-orange-400 bg-orange-900/20 px-1 rounded">docker rmi</code> deletes an image from your machine.
+        You <strong>must</strong> remove any containers (stopped or running) that depend on the image first — Docker won't let you delete an image that's in use.
+      </p>
+
+      <div class="mb-3">
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker rmi nginx</span>
+<span class="output">Untagged: nginx:latest
+Untagged: nginx@sha256:2f7c7b4e5f5e5b2f0a1b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f
+Deleted: sha256:<span class="highlight">a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2</span>
+Deleted: sha256:<span class="highlight">b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3</span>
+Deleted: sha256:<span class="highlight">c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3d4</span></span></pre>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>What's with all the SHA256 hashes?</strong> Docker images are built from <strong>layers</strong>. Each <code>Deleted: sha256:...</code> line is one layer being removed. If two images share a layer, Docker won't delete it until both images are gone.
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 7. docker pull -->
+    <!-- ============================================ -->
+    <div id="pull" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-cyan-500/20 text-cyan-400 px-3 py-1 rounded-full text-sm font-mono">docker pull</span>
+        <h2 class="text-xl font-bold text-white">Download an Image (Without Running)</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <code class="text-cyan-400 bg-cyan-900/20 px-1 rounded">docker pull</code> downloads an image from a registry (like Docker Hub)
+        but does <strong>not</strong> start a container. Think of it like <em>"download the installer but don't run it yet."</em>
+      </p>
+
+      <div class="mb-3">
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker pull nginx</span>
+<span class="digest">Using default tag: latest
+latest: Pulling from library/nginx
+a603fa5e3b41: Pull complete
+c2e42a3e1a2b: Pull complete
+3d3b3c9a4a5b: Pull complete
+Digest: sha256:2f7c7b4e5f5e5b2f0a1b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b1c2d3e4f
+Status: Downloaded newer image for nginx:latest</span>
+<span class="output">docker.io/library/nginx:latest</span></pre>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>pull vs run:</strong> <code>docker run nginx</code> = <code>docker pull nginx</code> + <code>docker start container</code>. If the image is already cached locally, <code>run</code> skips the pull step.
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 8. docker run ubuntu — Interactive OS -->
+    <!-- ============================================ -->
+    <div id="ubuntu" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-orange-500/20 text-orange-400 px-3 py-1 rounded-full text-sm font-mono">docker run ubuntu</span>
+        <h2 class="text-xl font-bold text-white">Running Ubuntu — Why It Exits Immediately</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        When you run <code>docker run ubuntu</code>, the container starts and <strong>immediately exits</strong>.
+        This confuses a lot of beginners! Here's why:
+      </p>
+
+      <div class="space-y-3">
+        <div>
+          <p class="text-sm text-gray-400 mb-1">Ubuntu exits instantly — no process to keep it alive:</p>
+          <div class="code-block border border-slate-600">
+            <pre><span class="prompt">$ </span><span class="cmd">docker run ubuntu</span>
+<span class="output">(nothing happens — container starts and exits immediately)</span>
+
+<span class="prompt">$ </span><span class="cmd">docker ps -a | grep ubuntu</span>
+<span class="output">CONTAINER ID   IMAGE   STATUS                     NAMES
+<span class="highlight">e5f6a7b8c9d0</span>   ubuntu  <span class="error">Exited (0) 3 seconds ago</span>   <span class="highlight">romantic_goldberg</span></span></pre>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-sm text-gray-400 mb-1">Make it stay alive with <code>sleep</code>:</p>
+          <div class="code-block border border-slate-600">
+            <pre><span class="prompt">$ </span><span class="cmd">docker run ubuntu sleep 5</span>
+<span class="output">(waits 5 seconds, then exits)</span>
+
+<span class="prompt">$ </span><span class="cmd">docker ps -a | grep ubuntu</span>
+<span class="output">CONTAINER ID   IMAGE   STATUS                     NAMES
+<span class="highlight">f6a7b8c9d0e1</span>   ubuntu  <span class="error">Exited (0) 2 seconds ago</span>   <span class="highlight">priceless_morse</span></span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300 mt-3">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>Why?</strong> A container lives only as long as its main process is running. <br>
+        — <code>nginx</code> runs a web server process that stays alive → container stays up.<br>
+        — <code>ubuntu</code> has no default process (it's just an OS filesystem) → container exits immediately.<br>
+        — <code>sleep 5</code> runs for 5 seconds → container lives 5 seconds.
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 9. docker exec -->
+    <!-- ============================================ -->
+    <div id="exec" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-emerald-500/20 text-emerald-400 px-3 py-1 rounded-full text-sm font-mono">docker exec</span>
+        <h2 class="text-xl font-bold text-white">Execute a Command in a Running Container</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <code class="text-emerald-400 bg-emerald-900/20 px-1 rounded">docker exec</code> lets you run a command <strong>inside</strong> a container that's already running.
+        It's like SSH'ing into the container — without actually needing SSH.
+      </p>
+
+      <div class="mb-3">
+        <div class="code-block border border-slate-600">
+          <pre><span class="prompt">$ </span><span class="cmd">docker exec silly_sammet cat /etc/hosts</span>
+<span class="output"><span class="highlight">127.0.0.1</span>   localhost
+<span class="highlight">172.17.0.2</span>  a1b2c3d4e5f6</span></pre>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>Use cases:</strong> Check config files, inspect logs, run diagnostic tools, or open an interactive shell with <code>docker exec -it silly_sammet /bin/bash</code>.
+      </div>
+    </div>
+
+    <!-- ============================================ -->
+    <!-- 10. docker run — Attach and Detach -->
+    <!-- ============================================ -->
+    <div id="attach" class="glow-card bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 mb-6 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <span class="bg-pink-500/20 text-pink-400 px-3 py-1 rounded-full text-sm font-mono">attach / detach</span>
+        <h2 class="text-xl font-bold text-white">Attached vs Detached Mode</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        By default, <code>docker run</code> runs in <strong>attached mode</strong> — your terminal is hooked to the container's output.
+        Use <code class="text-cyan-400 bg-cyan-900/20 px-1 rounded">-d</code> (detach) to run in the <strong>background</strong> and reclaim your terminal.
+      </p>
+
+      <div class="space-y-3">
+        <div>
+          <p class="text-sm text-gray-400 mb-1">Attached (foreground) — blocks your terminal:</p>
+          <div class="code-block border border-slate-600">
+            <pre><span class="prompt">$ </span><span class="cmd">docker run kodekloud/simple-webapp</span>
+<span class="output"><span class="comment"> * Serving Flask app 'app'</span>
+<span class="comment"> * Running on http://0.0.0.0:5000/ (Press CTRL+C to quit)</span>
+<span class="comment">172.17.0.1 - - [20/May/2026 10:15:32] "GET / HTTP/1.1" 200 -</span>
+<span class="comment">172.17.0.1 - - [20/May/2026 10:15:33] "GET / HTTP/1.1" 200 -</span>
+<span class="comment">(terminal is blocked — you can see live logs)</span></span></pre>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-sm text-gray-400 mb-1">Detached (background) — get your terminal back:</p>
+          <div class="code-block border border-slate-600">
+            <pre><span class="prompt">$ </span><span class="cmd">docker run -d kodekloud/simple-webapp</span>
+<span class="highlight">a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b6c7d8e9f0a1b2c3</span>
+<span class="prompt">$ </span><span class="comment">(terminal is free — container runs in background)</span></pre>
+          </div>
+        </div>
+
+        <div>
+          <p class="text-sm text-gray-400 mb-1">Re-attach to a detached container:</p>
+          <div class="code-block border border-slate-600">
+            <pre><span class="prompt">$ </span><span class="cmd">docker attach a1b2c3d4e5f6</span>
+<span class="output"><span class="comment">172.17.0.1 - - [20/May/2026 10:16:00] "GET / HTTP/1.1" 200 -
+172.17.0.1 - - [20/May/2026 10:16:01] "GET / HTTP/1.1" 200 -
+(you're now re-connected to the container's output)</span></span></pre>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-blue-900/20 border border-blue-700/40 rounded-lg p-3 text-sm text-gray-300 mt-3">
+        <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+        <strong>Analogy:</strong> Attached mode is like watching a movie in the theater (you're locked in). Detached mode is like starting a movie on a server and walking away — it plays without you. Use <code>-d</code> for production services that should run in the background.
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-gray-500 text-sm animate-fade-in">
+      <i class="fas fa-book-open mr-1"></i> Based on "Docker for Beginners" by Mumshad Mannambeth
+      <span class="mx-2">|</span>
+      <a href="../index.html" class="text-blue-400 hover:text-blue-300 transition-colors">Back to Cheatsheet</a>
+    </div>
+
+  </div>
+</body>
+</html>

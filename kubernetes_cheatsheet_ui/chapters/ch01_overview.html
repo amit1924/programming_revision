@@ -1,0 +1,840 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 1 — Kubernetes Overview | K8s Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .terminal { background: #1a1b2e; border: 1px solid #2d2d4a; border-radius: 10px; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.9rem; color: #a5f3fc; overflow-x: auto; }
+    .terminal .prompt { color: #22d3ee; }
+    .terminal .comment { color: #6b7280; }
+    .terminal .output { color: #d1d5db; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-in { animation: slideIn 0.6s ease-out; }
+    .section-nav a.active { background: rgba(99,102,241,0.2); color: #818cf8; border-color: #6366f1; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+
+  <!-- ===== TOP NAVIGATION ===== -->
+  <div class="max-w-5xl mx-auto px-4 py-4">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+      <i class="fas fa-arrow-left"></i> Back to Cheatsheet Home
+    </a>
+  </div>
+
+  <!-- ===== HEADER ===== -->
+  <div class="max-w-5xl mx-auto px-4 py-4 text-center animate-fade-in">
+    <i class="fas fa-info-circle text-6xl text-blue-400 mb-4"></i>
+    <h1 class="text-4xl md:text-5xl font-bold gradient-text">Chapter 1: Kubernetes Overview</h1>
+    <p class="text-gray-400 mt-3 text-lg">Everything you need to know about containers, orchestration, and why K8s matters</p>
+  </div>
+
+  <!-- ===== SECTION NAV ===== -->
+  <div class="sticky top-0 z-50 max-w-5xl mx-auto px-4 py-2 bg-[#0f0f1a]/95 backdrop-blur-sm border-b border-slate-800 overflow-x-auto">
+    <div class="flex gap-2 text-xs whitespace-nowrap pb-1 section-nav">
+      <a href="#what-is-k8s" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">What is K8s</a>
+      <a href="#matrix-from-hell" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">Matrix from Hell</a>
+      <a href="#what-containers-can-do" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">What Containers Do</a>
+      <a href="#what-are-containers" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">Containers</a>
+      <a href="#os-basics" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">OS Basics</a>
+      <a href="#sharing-kernel" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">Sharing Kernel</a>
+      <a href="#containers-vs-vms" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">Containers vs VMs</a>
+      <a href="#how-its-done" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">How It's Done</a>
+      <a href="#container-vs-image" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">Container vs Image</a>
+      <a href="#container-advantage" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">Container Advantage</a>
+      <a href="#orchestration" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">Orchestration</a>
+      <a href="#orchestration-tech" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">Orchestration Tech</a>
+      <a href="#k8s-advantage" class="px-3 py-1.5 rounded-full border border-slate-700 text-gray-400 hover:text-white hover:border-indigo-400 transition-all">K8s Advantage</a>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-4 py-8 space-y-8">
+
+
+    <!-- ===== 1. WHAT IS KUBERNETES ===== -->
+    <section id="what-is-k8s" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fab fa-google text-4xl text-blue-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">What is Kubernetes (K8s)?</h2>
+          <p class="text-sm text-gray-400">The container orchestrator that runs the world</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="space-y-3">
+          <p class="text-gray-300 leading-relaxed">
+            Kubernetes (pronounced "koo-bur-NET-eez") is an <strong class="text-blue-300">open-source platform</strong> built by <strong class="text-blue-300">Google</strong>. 
+            It is based on Google's <em class="text-indigo-300">15+ years of experience</em> running containers in production — the same technology that powers Google Search, Gmail, and YouTube.
+          </p>
+          <p class="text-gray-300 leading-relaxed">
+            The name "Kubernetes" is Greek for <em class="text-indigo-300">"helmsman"</em> or "pilot". The abbreviation <strong class="text-blue-300">K8s</strong> replaces 
+            the 8 letters between "K" and "s" — a nerdy shorthand you'll see everywhere.
+          </p>
+          <div class="flex flex-wrap gap-2 mt-3">
+            <span class="bg-blue-900/30 text-blue-300 px-3 py-1 rounded-full text-xs"><i class="fas fa-star mr-1"></i>Open Source</span>
+            <span class="bg-purple-900/30 text-purple-300 px-3 py-1 rounded-full text-xs"><i class="fas fa-google mr-1"></i>Built by Google</span>
+            <span class="bg-green-900/30 text-green-300 px-3 py-1 rounded-full text-xs"><i class="fas fa-trophy mr-1"></i>Industry Standard</span>
+          </div>
+        </div>
+        <div class="space-y-3">
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="text-sm font-semibold text-indigo-300 mb-1"><i class="fas fa-lightbulb mr-2"></i>In Simple Terms</p>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              If containers are like <strong class="text-emerald-300">shipping containers</strong> holding your apps, Kubernetes is the <strong class="text-emerald-300">massive cargo ship</strong> that 
+              automatically loads, unloads, routes, and manages all of them — even when things go wrong.
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="text-sm font-semibold text-cyan-300 mb-1"><i class="fas fa-terminal mr-2"></i>Quick Fact</p>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              Kubernetes is the <strong class="text-amber-300">#1 most starred</strong> project on GitHub in its category. All major cloud providers (GCP, AWS, Azure) offer managed K8s services.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 2. THE MATRIX FROM HELL ===== -->
+    <section id="matrix-from-hell" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-exclamation-triangle text-4xl text-red-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Why Containers? (The Matrix from Hell)</h2>
+          <p class="text-sm text-gray-400">Before containers, deploying software was a nightmare</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <p class="text-gray-300 leading-relaxed">
+            Imagine you're building a web application with four services:
+          </p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 border border-red-900/30">
+              <i class="fas fa-server text-red-400 w-5"></i>
+              <div><span class="text-white font-semibold">Web Server</span><span class="text-gray-400 text-sm ml-2">needs Nginx + libssl 1.1</span></div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 border border-amber-900/30">
+              <i class="fas fa-database text-amber-400 w-5"></i>
+              <div><span class="text-white font-semibold">Database</span><span class="text-gray-400 text-sm ml-2">needs MySQL + libssl 1.0</span></div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 border border-green-900/30">
+              <i class="fas fa-envelope text-green-400 w-5"></i>
+              <div><span class="text-white font-semibold">Messaging</span><span class="text-gray-400 text-sm ml-2">needs RabbitMQ + Erlang R21</span></div>
+            </div>
+            <div class="flex items-center gap-3 p-3 rounded-lg bg-slate-900/50 border border-purple-900/30">
+              <i class="fas fa-tasks text-purple-400 w-5"></i>
+              <div><span class="text-white font-semibold">Orchestration</span><span class="text-gray-400 text-sm ml-2">needs Ansible + Python 2.7</span></div>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-red-900/20 border border-red-800/40">
+            <p class="text-sm text-gray-300">
+              <i class="fas fa-times-circle text-red-400 mr-2"></i>
+              Each service needs <strong>different library versions</strong>. Installing them on one machine causes <strong class="text-red-300">dependency conflicts</strong>. 
+              Your app works on your machine but breaks in production!
+            </p>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="text-sm font-semibold text-amber-300 mb-2"><i class="fas fa-lightbulb mr-2"></i>Real-World Analogy</p>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              Imagine <strong class="text-amber-300">moving a house</strong> every time you need to set up your software on a new computer. 
+              You have to pack everything — furniture, pipes, electrical wiring — and reassemble it from scratch. 
+              Now imagine instead, you put your furniture into <strong class="text-emerald-300">shipping containers</strong>. 
+              You can just pick up the containers and move them anywhere!
+            </p>
+            <div class="mt-3 text-center text-4xl text-gray-500">
+              <i class="fas fa-truck-moving mr-4"></i><i class="fas fa-arrow-right text-xl mr-4"></i><i class="fas fa-ship"></i>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40">
+            <p class="text-sm text-gray-300 leading-relaxed">
+              <i class="fas fa-check-circle text-indigo-400 mr-2"></i>
+              <strong class="text-indigo-300">Containers solve this!</strong> Each service runs in its own isolated container 
+              with exactly the libraries and dependencies it needs — no conflicts, no "works on my machine" nonsense.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 3. WHAT CAN CONTAINERS DO ===== -->
+    <section id="what-containers-can-do" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-boxes-stacked text-4xl text-emerald-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">What Can Containers Do?</h2>
+          <p class="text-sm text-gray-400">Package any app with its own dependencies, run it anywhere</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <i class="fas fa-cube text-2xl text-emerald-400 mb-2"></i>
+          <h3 class="text-white font-semibold mb-1">Containerize</h3>
+          <p class="text-sm text-gray-400">Package any application with its own dependencies, libraries, and config files into a portable container.</p>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <i class="fas fa-shield-alt text-2xl text-cyan-400 mb-2"></i>
+          <h3 class="text-white font-semibold mb-1">Isolate</h3>
+          <p class="text-sm text-gray-400">Each container has its own filesystem, network, libraries — completely isolated from other containers on the same host.</p>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <i class="fas fa-play-circle text-2xl text-green-400 mb-2"></i>
+          <h3 class="text-white font-semibold mb-1">Run Anywhere</h3>
+          <p class="text-sm text-gray-400">A container runs identically on your laptop, in testing, and in production. No more "it works on my machine!"</p>
+        </div>
+
+      </div>
+
+      <div class="mt-4 terminal">
+        <span class="prompt">$</span> <span class="text-white">docker run nginx:latest</span>
+        <div class="output">Unable to find image 'nginx:latest' locally<br>latest: Pulling from library/nginx<br>Status: Downloaded newer image for nginx:latest</div>
+        <span class="mt-2 block text-gray-500 text-xs"><i class="far fa-copy mr-1"></i>One command runs the entire Nginx web server — no installation needed!</span>
+      </div>
+    </section>
+
+
+    <!-- ===== 4. WHAT ARE CONTAINERS ===== -->
+    <section id="what-are-containers" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-cube text-4xl text-indigo-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">What Are Containers?</h2>
+          <p class="text-sm text-gray-400">Completely isolated environments sharing the same OS kernel</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <p class="text-gray-300 leading-relaxed">
+            A container is a <strong class="text-indigo-300">completely isolated environment</strong>. Each container has its own:
+          </p>
+          <ul class="space-y-2">
+            <li class="flex items-center gap-3 p-2 rounded-lg bg-slate-900/40">
+              <i class="fas fa-microchip text-cyan-400 w-5 text-center"></i>
+              <span class="text-gray-300"><strong class="text-cyan-300">Processes</strong> — own running applications</span>
+            </li>
+            <li class="flex items-center gap-3 p-2 rounded-lg bg-slate-900/40">
+              <i class="fas fa-network-wired text-cyan-400 w-5 text-center"></i>
+              <span class="text-gray-300"><strong class="text-cyan-300">Network interfaces</strong> — own IP, ports</span>
+            </li>
+            <li class="flex items-center gap-3 p-2 rounded-lg bg-slate-900/40">
+              <i class="fas fa-folder-open text-cyan-400 w-5 text-center"></i>
+              <span class="text-gray-300"><strong class="text-cyan-300">Mounts</strong> — own filesystem</span>
+            </li>
+          </ul>
+          <p class="text-gray-300 leading-relaxed">
+            But all containers on a host <strong class="text-indigo-300">share the same OS kernel</strong>. This is what makes them lightweight.
+          </p>
+          <p class="text-sm text-gray-400">
+            Docker uses <strong class="text-gray-200">LXC</strong> (Linux Containers) technology under the hood — it leverages kernel features 
+            like cgroups (resource limits) and namespaces (isolation).
+          </p>
+        </div>
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="text-sm font-semibold text-indigo-300 mb-2"><i class="fas fa-building mr-2"></i>Analogy: Apartments in a Building</p>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              Think of <strong class="text-emerald-300">containers</strong> as <strong class="text-emerald-300">apartments</strong> in a building:
+            </p>
+            <ul class="mt-2 space-y-1 text-sm text-gray-400">
+              <li><i class="fas fa-check text-green-400 mr-2"></i>Each apartment has its own rooms, plumbing, electricity</li>
+              <li><i class="fas fa-check text-green-400 mr-2"></i>But they all share the <strong>same building foundation</strong> (the kernel)</li>
+              <li><i class="fas fa-check text-green-400 mr-2"></i>You can decorate/renovate your apartment independently</li>
+              <li><i class="fas fa-check text-green-400 mr-2"></i>Neighbors don't interfere with each other</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 5. OS BASICS ===== -->
+    <section id="os-basics" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-laptop text-4xl text-amber-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Operating System Basics</h2>
+          <p class="text-sm text-gray-400">OS = Kernel + Software — the same kernel, different flavors</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700 space-y-3">
+          <p class="text-gray-300 leading-relaxed">
+            An operating system has two parts:
+          </p>
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-indigo-900/20 border border-indigo-800/30">
+            <i class="fas fa-microchip text-2xl text-indigo-400"></i>
+            <div>
+              <p class="text-white font-semibold">Kernel</p>
+              <p class="text-sm text-gray-400">The core — manages hardware, memory, processes, networking. <strong>Same Linux kernel</strong> across Ubuntu, Fedora, CentOS, Debian.</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-3 p-3 rounded-lg bg-emerald-900/20 border border-emerald-800/30">
+            <i class="fas fa-puzzle-piece text-2xl text-emerald-400"></i>
+            <div>
+              <p class="text-white font-semibold">Software</p>
+              <p class="text-sm text-gray-400">What sits on top — package managers, CLI tools, GUI, default apps. <strong>This is what makes OSes different.</strong></p>
+            </div>
+          </div>
+        </div>
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <div class="flex items-center gap-3 mb-3">
+            <i class="fas fa-code-branch text-amber-400"></i>
+            <p class="font-semibold text-white">Linux Distributions</p>
+          </div>
+          <div class="space-y-2">
+            <div class="flex items-center justify-between p-2 rounded bg-slate-800/60">
+              <span class="text-gray-300">Ubuntu</span>
+              <span class="text-xs text-gray-500">apt, GNOME, snap</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded bg-slate-800/60">
+              <span class="text-gray-300">Fedora</span>
+              <span class="text-xs text-gray-500">dnf, GNOME, rpm</span>
+            </div>
+            <div class="flex items-center justify-between p-2 rounded bg-slate-800/60">
+              <span class="text-gray-300">CentOS</span>
+              <span class="text-xs text-gray-500">yum, minimal</span>
+            </div>
+          </div>
+          <p class="text-xs text-gray-500 mt-3"><i class="fas fa-info-circle mr-1"></i>Same Linux kernel under the hood — just different software on top!</p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 6. SHARING THE KERNEL ===== -->
+    <section id="sharing-kernel" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-share-alt text-4xl text-purple-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Sharing the Kernel</h2>
+          <p class="text-sm text-gray-400">Containers share the host's kernel — with important limits</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700 space-y-3">
+          <p class="text-gray-300 leading-relaxed">
+            Docker containers share the <strong class="text-purple-300">underlying host kernel</strong>. This means:
+          </p>
+          <div class="p-3 rounded-lg bg-green-900/20 border border-green-800/30">
+            <i class="fas fa-check-circle text-green-400 mr-2"></i>
+            <span class="text-gray-300">You can run <strong class="text-green-300">Ubuntu, Debian, Fedora, CentOS</strong> containers on the same Linux host.</span>
+          </div>
+          <div class="p-3 rounded-lg bg-red-900/20 border border-red-800/30">
+            <i class="fas fa-times-circle text-red-400 mr-2"></i>
+            <span class="text-gray-300">You <strong class="text-red-300">cannot</strong> run <strong>Windows containers</strong> on a Linux host (different kernel type).</span>
+          </div>
+          <div class="p-3 rounded-lg bg-indigo-900/20 border border-indigo-800/30">
+            <i class="fas fa-lightbulb text-indigo-400 mr-2"></i>
+            <span class="text-gray-300">Docker's purpose = <strong class="text-indigo-300">containerize applications</strong>, NOT virtualize hardware.</span>
+          </div>
+        </div>
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <p class="text-sm font-semibold text-gray-200 mb-2"><i class="fas fa-arrow-right text-cyan-400 mr-2"></i>Example</p>
+          <div class="terminal text-xs">
+            <span class="comment"># Run Ubuntu, Debian, and Fedora containers on a Linux host</span><br>
+            <span class="prompt">$</span> docker run -it ubuntu bash<br>
+            <span class="prompt">$</span> docker run -it debian bash<br>
+            <span class="prompt">$</span> docker run -it fedora bash<br>
+            <span class="output mt-1 block text-gray-500">All three work because they share the Linux kernel!</span>
+          </div>
+          <div class="mt-3 terminal text-xs">
+            <span class="comment"># This will NOT work on a Linux host:</span><br>
+            <span class="prompt">$</span> docker run -it mcr.microsoft.com/windows/servercore cmd<br>
+            <span class="output mt-1 block text-red-400">Error: container needs Windows kernel</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 7. CONTAINERS vs VMs ===== -->
+    <section id="containers-vs-vms" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-arrows-left-right text-4xl text-rose-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Containers vs Virtual Machines</h2>
+          <p class="text-sm text-gray-400">Two different approaches to isolation — understanding the difference</p>
+        </div>
+      </div>
+
+      <!-- Comparison Table -->
+      <div class="overflow-x-auto rounded-xl border border-slate-700">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-slate-800/80 text-gray-300">
+              <th class="p-3 text-left font-semibold">Feature</th>
+              <th class="p-3 text-left font-semibold text-cyan-300"><i class="fas fa-cube mr-1"></i> Containers</th>
+              <th class="p-3 text-left font-semibold text-purple-300"><i class="fas fa-server mr-1"></i> Virtual Machines</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700">
+            <tr class="bg-slate-900/40">
+              <td class="p-3 font-medium text-gray-300">Size</td>
+              <td class="p-3 text-gray-400"><strong class="text-green-300">MB</strong> — only app + deps</td>
+              <td class="p-3 text-gray-400"><strong class="text-red-300">GB</strong> — full OS + kernel</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-medium text-gray-300">Boot Time</td>
+              <td class="p-3 text-gray-400"><strong class="text-green-300">Seconds</strong> — just starts the process</td>
+              <td class="p-3 text-gray-400"><strong class="text-red-300">Minutes</strong> — boots entire OS</td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 font-medium text-gray-300">Isolation</td>
+              <td class="p-3 text-gray-400"><span class="text-yellow-300">Less</span> — shares host kernel</td>
+              <td class="p-3 text-gray-400"><strong class="text-green-300">Complete</strong> — each VM has own kernel</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-medium text-gray-300">OS Types</td>
+              <td class="p-3 text-gray-400">Only same type as host (Linux on Linux)</td>
+              <td class="p-3 text-gray-400"><strong class="text-green-300">Any</strong> — Linux, Windows, BSD on same host</td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 font-medium text-gray-300">Resource Usage</td>
+              <td class="p-3 text-gray-400"><strong class="text-green-300">Low</strong> — no duplicate kernel</td>
+              <td class="p-3 text-gray-400"><strong class="text-red-300">High</strong> — each VM needs full OS resources</td>
+            </tr>
+            <tr>
+              <td class="p-3 font-medium text-gray-300">Portability</td>
+              <td class="p-3 text-gray-400"><strong class="text-green-300">Excellent</strong> — run anywhere with Docker</td>
+              <td class="p-3 text-gray-400">Good — but depends on hypervisor</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mt-4">
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <p class="font-semibold text-cyan-300 mb-2"><i class="fas fa-city mr-2"></i>Analogy: Containers = Apartments</p>
+          <p class="text-sm text-gray-400">
+            You share the building's foundation (kernel) with everyone. Your own space is small and cozy (MB). You can move in instantly (seconds).
+          </p>
+        </div>
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <p class="font-semibold text-purple-300 mb-2"><i class="fas fa-house-chimney mr-2"></i>Analogy: VMs = Detached Houses</p>
+          <p class="text-sm text-gray-400">
+            Each house has its own foundation (kernel). Huge space (GB). Takes months to build (minutes). Complete privacy.
+          </p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 8. HOW IS IT DONE ===== -->
+    <section id="how-its-done" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-play text-4xl text-green-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">How Is It Done?</h2>
+          <p class="text-sm text-gray-400">Docker Hub has ready-to-run containers for almost everything</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-3">
+          <p class="text-gray-300 leading-relaxed">
+            Docker Hub is a public registry with thousands of <strong class="text-green-300">pre-built container images</strong>. 
+            Anyone can download and run them with a single command.
+          </p>
+          <div class="terminal text-sm">
+            <span class="prompt">$</span> docker run ansible<br>
+            <span class="prompt">$</span> docker run mongodb<br>
+            <span class="prompt">$</span> docker run redis<br>
+            <span class="prompt">$</span> docker run nodejs<br>
+            <span class="prompt">$</span> docker run nginx<br>
+            <span class="prompt">$</span> docker run mysql<br>
+            <span class="mt-2 block text-gray-500 text-xs"><i class="far fa-copy mr-1"></i>All run instantly — no manual installation!</span>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="font-semibold text-emerald-300 mb-2"><i class="fas fa-database mr-2"></i>Example: Run MongoDB in 1 Command</p>
+            <div class="terminal text-xs">
+              <span class="prompt">$</span> docker run -d -p 27017:27017 mongo:6<br>
+              <span class="output">Unable to find image 'mongo:6' locally<br>6: Pulling from library/mongo<br>Digest: sha256:...<br>Status: Downloaded newer image for mongo:6<br>Container ID: a1b2c3d4e5f6</span>
+              <span class="comment mt-2 block"># MongoDB is now running! Connect at localhost:27017</span>
+            </div>
+          </div>
+          <div class="p-3 rounded-lg bg-indigo-900/20 border border-indigo-800/30">
+            <p class="text-xs text-gray-300">
+              <i class="fas fa-info-circle text-indigo-300 mr-1"></i>
+              No need to download installers, resolve dependencies, or configure paths. Docker does it all for you.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 9. CONTAINER vs IMAGE ===== -->
+    <section id="container-vs-image" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-clipboard-list text-4xl text-cyan-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Container vs Image</h2>
+          <p class="text-sm text-gray-400">The blueprint vs the building — understanding the difference</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-cyan-700/50">
+            <div class="flex items-center gap-3 mb-2">
+              <i class="fas fa-file-archive text-2xl text-cyan-400"></i>
+              <h3 class="text-lg font-bold text-white">Image</h3>
+            </div>
+            <div class="space-y-2 text-sm text-gray-400">
+              <p><strong class="text-cyan-300">Package / Template / Plan</strong> — a <strong class="text-white">read-only</strong> snapshot</p>
+              <p>Contains the app code, libraries, dependencies, and config</p>
+              <p>Think of it as a <strong class="text-emerald-300">cake recipe</strong></p>
+              <div class="flex gap-2 mt-2">
+                <span class="bg-cyan-900/30 text-cyan-300 px-2 py-0.5 rounded text-xs">Read-only</span>
+                <span class="bg-cyan-900/30 text-cyan-300 px-2 py-0.5 rounded text-xs">Reusable</span>
+                <span class="bg-cyan-900/30 text-cyan-300 px-2 py-0.5 rounded text-xs">Portable</span>
+              </div>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-emerald-700/50">
+            <div class="flex items-center gap-3 mb-2">
+              <i class="fas fa-play-circle text-2xl text-emerald-400"></i>
+              <h3 class="text-lg font-bold text-white">Container</h3>
+            </div>
+            <div class="space-y-2 text-sm text-gray-400">
+              <p><strong class="text-emerald-300">Running instance</strong> of an image — the <strong class="text-white">living, breathing</strong> app</p>
+              <p>Has its own writable layer. Can be started, stopped, moved, deleted</p>
+              <p>Think of it as a <strong class="text-emerald-300">baked cake</strong></p>
+              <div class="flex gap-2 mt-2">
+                <span class="bg-emerald-900/30 text-emerald-300 px-2 py-0.5 rounded text-xs">Runnable</span>
+                <span class="bg-emerald-900/30 text-emerald-300 px-2 py-0.5 rounded text-xs">Writable</span>
+                <span class="bg-emerald-900/30 text-emerald-300 px-2 py-0.5 rounded text-xs">Temporary</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="font-semibold text-white mb-2"><i class="fas fa-arrow-right text-indigo-400 mr-2"></i>Key Point</p>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              <strong class="text-indigo-300">One image → Many containers.</strong> Just like one cake recipe can make 
+              dozens of cakes. Each container is an independent running instance.
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="font-semibold text-white mb-2"><i class="fas fa-terminal mr-2 text-amber-400"></i>In Practice</p>
+            <div class="terminal text-xs">
+              <span class="comment"># Build an image from a Dockerfile</span><br>
+              <span class="prompt">$</span> docker build -t my-app:latest .<br>
+              <span class="comment"># Run multiple containers from the same image</span><br>
+              <span class="prompt">$</span> docker run -d --name app-1 my-app:latest<br>
+              <span class="prompt">$</span> docker run -d --name app-2 my-app:latest<br>
+              <span class="prompt">$</span> docker run -d --name app-3 my-app:latest
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 10. CONTAINER ADVANTAGE ===== -->
+    <section id="container-advantage" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-check-double text-4xl text-emerald-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Container Advantage</h2>
+          <p class="text-sm text-gray-400">"It works on my machine" — solved forever</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-red-900/20 border border-red-800/40">
+            <h3 class="font-semibold text-red-300 mb-1"><i class="fas fa-times-circle mr-2"></i>Before Docker</h3>
+            <ol class="text-sm text-gray-400 space-y-1 list-decimal list-inside">
+              <li>Dev builds an app on their machine</li>
+              <li>Dev writes a <strong class="text-gray-200">README</strong> with setup instructions</li>
+              <li>Ops team reads the guide and tries to set it up on servers</li>
+              <li>Something is different — wrong lib version, missing dep, different OS</li>
+              <li class="text-red-300 font-semibold">"It works on my machine!" — Every. Single. Time.</li>
+            </ol>
+          </div>
+          <div class="p-4 rounded-lg bg-emerald-900/20 border border-emerald-800/40">
+            <h3 class="font-semibold text-emerald-300 mb-1"><i class="fas fa-check-circle mr-2"></i>After Docker</h3>
+            <ol class="text-sm text-gray-400 space-y-1 list-decimal list-inside">
+              <li>Dev creates a <strong class="text-gray-200">Dockerfile</strong> describing the app and its deps</li>
+              <li>Dev builds an <strong class="text-gray-200">image</strong> from the Dockerfile</li>
+              <li>Dev shares the image (Docker Hub, registry)</li>
+              <li>Ops just runs <code class="text-cyan-300 bg-slate-800 px-1 rounded text-xs">docker run</code> — that's it!</li>
+              <li class="text-green-300 font-semibold">Same behavior everywhere. No more excuses.</li>
+            </ol>
+          </div>
+        </div>
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+          <p class="font-semibold text-amber-300 mb-2"><i class="fas fa-lightbulb mr-2"></i>The Big Idea</p>
+          <p class="text-gray-300 text-sm leading-relaxed">
+            Containers <strong class="text-emerald-300">package the application with everything it needs</strong> to run — 
+            code, runtime, libraries, environment variables, config files. The container <strong class="text-emerald-300">becomes the unit of deployment</strong>.
+          </p>
+          <p class="text-gray-300 text-sm leading-relaxed mt-2">
+            Whether you run it on your laptop, a test server, or a production cluster with 1000 machines — 
+            <strong class="text-indigo-300">it behaves exactly the same way</strong>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 11. CONTAINER ORCHESTRATION ===== -->
+    <section id="orchestration" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-people-carry-box text-4xl text-orange-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Container Orchestration</h2>
+          <p class="text-sm text-gray-400">When one container isn't enough — managing fleets of containers</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <p class="text-gray-300 leading-relaxed">
+            What happens when your app relies on <strong class="text-orange-300">multiple containers</strong> that need to talk to each other? 
+            What if traffic spikes and you need <strong class="text-orange-300">10x more instances</strong>?
+          </p>
+          <p class="text-gray-300 leading-relaxed">
+            <strong class="text-indigo-300">Container orchestration</strong> is the automatic deployment, management, scaling, and networking of containers.
+          </p>
+          <div class="space-y-2">
+            <div class="flex items-center gap-3 p-2 rounded-lg bg-slate-900/40">
+              <i class="fas fa-heart-circle-check text-green-400 w-5"></i>
+              <span class="text-sm text-gray-300"><strong class="text-green-300">High Availability</strong> — if a container dies, start a new one automatically</span>
+            </div>
+            <div class="flex items-center gap-3 p-2 rounded-lg bg-slate-900/40">
+              <i class="fas fa-scale-balanced text-cyan-400 w-5"></i>
+              <span class="text-sm text-gray-300"><strong class="text-cyan-300">Load Balancing</strong> — distribute traffic across containers</span>
+            </div>
+            <div class="flex items-center gap-3 p-2 rounded-lg bg-slate-900/40">
+              <i class="fas fa-up-down text-amber-400 w-5"></i>
+              <span class="text-sm text-gray-300"><strong class="text-amber-300">Scaling</strong> — add or remove containers based on demand</span>
+            </div>
+            <div class="flex items-center gap-3 p-2 rounded-lg bg-slate-900/40">
+              <i class="fas fa-magnifying-glass text-purple-400 w-5"></i>
+              <span class="text-sm text-gray-300"><strong class="text-purple-300">Service Discovery</strong> — containers find each other automatically</span>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="font-semibold text-orange-300 mb-2"><i class="fas fa-computer mr-2"></i>Real Scenario</p>
+            <p class="text-sm text-gray-400 leading-relaxed">
+              You have a web app (Nginx), API (Node.js), database (PostgreSQL), and cache (Redis). 
+              Without orchestration, you manually start each, connect them, monitor them, and restart when they crash. 
+              <strong class="text-orange-200">With orchestration, you describe what you want and the system does it for you.</strong>
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/30">
+            <p class="text-sm text-gray-300 leading-relaxed">
+              <i class="fas fa-quote-left text-indigo-300 mr-1"></i>
+              Orchestration is like having a <strong class="text-indigo-200">robot manager</strong> that watches all your containers, 
+              restarts failed ones, adds more when traffic spikes, and makes sure everything can find and talk to each other.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== 12. ORCHESTRATION TECHNOLOGIES ===== -->
+    <section id="orchestration-tech" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-toolbox text-4xl text-violet-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Orchestration Technologies</h2>
+          <p class="text-sm text-gray-400">The main players in the container orchestration space</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-green-700/50">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fab fa-docker text-2xl text-blue-400"></i>
+            <h3 class="text-lg font-bold text-white">Docker Swarm</h3>
+          </div>
+          <p class="text-sm text-gray-400 mb-3">Docker's built-in orchestration tool</p>
+          <div class="flex flex-wrap gap-1 mb-2">
+            <span class="bg-green-900/30 text-green-300 px-2 py-0.5 rounded text-xs"><i class="fas fa-plus mr-1"></i>Easy to set up</span>
+            <span class="bg-red-900/30 text-red-300 px-2 py-0.5 rounded text-xs"><i class="fas fa-minus mr-1"></i>Limited features</span>
+          </div>
+          <p class="text-xs text-gray-500">Good for simple setups. Not as powerful as K8s.</p>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-indigo-700/50 ring-1 ring-indigo-500/30">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-cubes text-2xl text-blue-400"></i>
+            <h3 class="text-lg font-bold text-white">Kubernetes</h3>
+          </div>
+          <p class="text-sm text-gray-400 mb-3">The industry standard — powerful and complex</p>
+          <div class="flex flex-wrap gap-1 mb-2">
+            <span class="bg-green-900/30 text-green-300 px-2 py-0.5 rounded text-xs"><i class="fas fa-plus mr-1"></i>Most popular</span>
+            <span class="bg-green-900/30 text-green-300 px-2 py-0.5 rounded text-xs"><i class="fas fa-plus mr-1"></i>Feature-rich</span>
+            <span class="bg-yellow-900/30 text-yellow-300 px-2 py-0.5 rounded text-xs"><i class="fas fa-minus mr-1"></i>Complex to learn</span>
+          </div>
+          <div class="flex gap-1 mt-2">
+            <span class="bg-blue-900/30 text-blue-300 text-xs px-2 py-0.5 rounded">GCP</span>
+            <span class="bg-red-900/30 text-red-300 text-xs px-2 py-0.5 rounded">Azure</span>
+            <span class="bg-orange-900/30 text-orange-300 text-xs px-2 py-0.5 rounded">AWS</span>
+          </div>
+          <p class="text-xs text-gray-500 mt-1">Available on all major clouds</p>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-900/50 border border-rose-700/50">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-diagram-project text-2xl text-rose-400"></i>
+            <h3 class="text-lg font-bold text-white">Apache Mesos</h3>
+          </div>
+          <p class="text-sm text-gray-400 mb-3">A powerful but complex alternative</p>
+          <div class="flex flex-wrap gap-1 mb-2">
+            <span class="bg-green-900/30 text-green-300 px-2 py-0.5 rounded text-xs"><i class="fas fa-plus mr-1"></i>Very powerful</span>
+            <span class="bg-red-900/30 text-red-300 px-2 py-0.5 rounded text-xs"><i class="fas fa-minus mr-1"></i>Hard to manage</span>
+          </div>
+          <p class="text-xs text-gray-500">Used by large companies but losing to K8s.</p>
+        </div>
+      </div>
+
+      <div class="mt-4 p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40">
+        <p class="text-sm text-gray-300">
+          <i class="fab fa-google text-blue-300 mr-2"></i>
+          <strong class="text-indigo-300">Kubernetes</strong> is the <strong class="text-amber-300">top-ranked GitHub project</strong> in its space. 
+          All public cloud providers offer managed Kubernetes services — <strong class="text-blue-300">GKE</strong> (Google), 
+          <strong class="text-cyan-300">EKS</strong> (AWS), <strong class="text-sky-300">AKS</strong> (Azure). 
+          It has become the <strong class="text-white">standard API</strong> for container orchestration.
+        </p>
+      </div>
+    </section>
+
+
+    <!-- ===== 13. KUBERNETES ADVANTAGE ===== -->
+    <section id="k8s-advantage" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-4 mb-4">
+        <i class="fas fa-medal text-4xl text-amber-400"></i>
+        <div>
+          <h2 class="text-2xl font-bold text-white">Kubernetes Advantage</h2>
+          <p class="text-sm text-gray-400">How K8s makes your apps resilient, scalable, and self-healing</p>
+        </div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="space-y-4">
+          <div class="flex items-start gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <i class="fas fa-heart-circle-check text-2xl text-green-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">High Availability</h3>
+              <p class="text-sm text-gray-400">Kubernetes runs <strong class="text-green-300">multiple instances</strong> of your app across different machines. If one instance or machine fails, K8s automatically starts new ones. Your app stays up.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <i class="fas fa-scale-balanced text-2xl text-cyan-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Load Balancing</h3>
+              <p class="text-sm text-gray-400">Traffic is automatically <strong class="text-cyan-300">distributed</strong> across all running instances. No single container gets overwhelmed.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <i class="fas fa-arrow-trend-up text-2xl text-amber-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Seamless Scaling</h3>
+              <p class="text-sm text-gray-400">Need more instances during peak traffic? <strong class="text-amber-300">Scale up</strong> with one command (or even automatically). Traffic dies down? <strong class="text-amber-300">Scale down</strong> to save resources.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-4 p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <i class="fas fa-file-code text-2xl text-indigo-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Declarative Config</h3>
+              <p class="text-sm text-gray-400">You write <strong class="text-indigo-300">YAML files</strong> describing the <strong class="text-indigo-300">desired state</strong> — "I want 3 copies of my app running". Then Kubernetes makes it happen and keeps it that way.</p>
+            </div>
+          </div>
+        </div>
+        <div class="space-y-4">
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="font-semibold text-amber-300 mb-2"><i class="fas fa-lightbulb mr-2"></i>In Simple Terms</p>
+            <p class="text-gray-300 text-sm leading-relaxed">
+              <strong class="text-emerald-300">Without K8s:</strong> Your app crashes at 2 AM. You get paged. You SSH into the server, debug, restart. Your users were down for 30 minutes.
+            </p>
+            <p class="text-gray-300 text-sm leading-relaxed mt-2">
+              <strong class="text-emerald-300">With K8s:</strong> Your app crashes at 2 AM. K8s detects it <strong class="text-cyan-300">in seconds</strong>, restarts it automatically, and routes traffic to healthy instances. You sleep through the night.
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-900/50 border border-slate-700">
+            <p class="font-semibold text-gray-200 mb-2"><i class="fas fa-terminal mr-2 text-cyan-400"></i>Example: Scaling with K8s</p>
+            <div class="terminal text-xs">
+              <span class="comment"># Scale from 1 instance to 5 in one command</span><br>
+              <span class="prompt">$</span> kubectl scale deployment my-app --replicas=5<br>
+              <span class="output">deployment.apps/my-app scaled</span><br><br>
+              <span class="comment"># Check the running pods</span><br>
+              <span class="prompt">$</span> kubectl get pods<br>
+              <span class="output">NAME                     READY   STATUS<br>
+my-app-6b7f8c9d4-abc12   1/1     Running<br>
+my-app-6b7f8c9d4-def34   1/1     Running<br>
+my-app-6b7f8c9d4-ghi56   1/1     Running<br>
+my-app-6b7f8c9d4-jkl78   1/1     Running<br>
+my-app-6b7f8c9d4-mno90   1/1     Running</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ===== CHAPTER SUMMARY ===== -->
+    <section class="glow-card p-6 rounded-xl bg-gradient-to-br from-indigo-900/40 to-slate-900 border border-indigo-700/40 transition-all duration-300 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-list-check text-2xl text-indigo-300"></i>
+        <h2 class="text-xl font-bold text-white">Chapter Summary</h2>
+      </div>
+      <div class="grid md:grid-cols-3 gap-3 text-sm">
+        <div class="p-3 rounded-lg bg-slate-900/50">
+          <p class="text-indigo-300 font-semibold mb-1"><i class="fas fa-cube mr-1"></i> Containers</p>
+          <p class="text-gray-400">Lightweight, isolated environments that package apps with their dependencies. Share the host kernel. MB in size, seconds to start.</p>
+        </div>
+        <div class="p-3 rounded-lg bg-slate-900/50">
+          <p class="text-indigo-300 font-semibold mb-1"><i class="fas fa-ship mr-1"></i> Orchestration</p>
+          <p class="text-gray-400">Automatic management of containers — deployment, scaling, networking, healing. Solves "it works on my machine" permanently.</p>
+        </div>
+        <div class="p-3 rounded-lg bg-slate-900/50">
+          <p class="text-indigo-300 font-semibold mb-1"><i class="fas fa-crown mr-1"></i> Kubernetes</p>
+          <p class="text-gray-400">Industry-standard orchestrator by Google. High availability, load balancing, scaling, declarative config. Available on every cloud.</p>
+        </div>
+      </div>
+    </section>
+
+  </div>
+
+  <!-- ===== FOOTER ===== -->
+  <div class="max-w-5xl mx-auto px-4 py-8 text-center text-gray-500 text-sm border-t border-slate-800 mt-8">
+    <i class="fas fa-book-open mr-1"></i> Based on "Kubernetes for Absolute Beginners" by Mumshad Mannambeth
+    <span class="mx-2">·</span>
+    <a href="../index.html" class="text-indigo-400 hover:text-indigo-300 transition-colors">Back to Cheatsheet Home</a>
+  </div>
+
+</body>
+</html>

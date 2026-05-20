@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CGI, FastCGI & uWSGI — NGINX Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glow-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; padding: 1.25rem; transition: all 0.3s; }
+    .code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 1rem; font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85rem; overflow-x: auto; }
+    .code-block .kw { color: #ff79c6; }
+    .code-block .fn { color: #50fa7b; }
+    .code-block .str { color: #f1fa8c; }
+    .code-block .cm { color: #6272a4; font-style: italic; }
+    .code-block .num { color: #bd93f9; }
+    .code-block .op { color: #ff79c6; }
+    .code-block .prop { color: #8be9fd; }
+    .tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.75rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .slide-in-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-left.visible { opacity: 1; transform: translateX(0); }
+    .slide-in-right { opacity: 0; transform: translateX(30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-right.visible { opacity: 1; transform: translateX(0); }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out; }
+    .accordion-content.open { max-height: 800px; }
+    .pulse-icon { transition: transform 0.3s; }
+    .pulse-icon:hover { transform: scale(1.2); }
+    .comparison-table th { background: #1e293b; padding: 0.6rem 1rem; font-size: 0.85rem; }
+    .comparison-table td { padding: 0.6rem 1rem; font-size: 0.85rem; border-top: 1px solid #1e293b; }
+    .comparison-table tr:hover td { background: rgba(99,102,241,0.08); }
+    .badge-good { background: rgba(16,185,129,0.15); color: #6ee7b7; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-bad { background: rgba(239,68,68,0.15); color: #fca5a5; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .nav-link { padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.8rem; background: rgba(30,41,59,0.6); border: 1px solid #334155; transition: all 0.2s; color: #94a3b8; white-space: nowrap; }
+    .nav-link:hover { background: #334155; color: #e2e8f0; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer { background: linear-gradient(90deg, transparent, rgba(99,102,241,0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+
+    <div class="animate-fade-in mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-code text-4xl text-purple-400 pulse-icon"></i>
+        <h1 class="text-3xl md:text-4xl font-bold gradient-text">CGI, FastCGI & uWSGI</h1>
+      </div>
+      <p class="text-gray-400 text-lg">Chapter 3 — Dynamic applications, PHP-FPM, and the FastCGI protocol</p>
+    </div>
+
+    <div class="overflow-x-auto pb-2 mb-8">
+      <div class="flex gap-2 min-w-max">
+        <a href="#how-cgi-works" class="nav-link"><i class="fas fa-cogs mr-1"></i>How CGI Works</a>
+        <a href="#what-is-fastcgi" class="nav-link"><i class="fas fa-bolt mr-1"></i>What is FastCGI</a>
+        <a href="#fastcgi-basic-config" class="nav-link"><i class="fas fa-cog mr-1"></i>FastCGI Basic Config</a>
+        <a href="#many-php-files" class="nav-link"><i class="fas fa-files mr-1"></i>Many PHP Files</a>
+        <a href="#route-all-requests" class="nav-link"><i class="fas fa-route mr-1"></i>Route All Requests</a>
+      </div>
+    </div>
+
+    <div id="how-cgi-works" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-cogs text-2xl text-blue-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">How CGI Works</h2>
+      </div>
+      <p class="text-gray-300 mb-3">CGI (Common Gateway Interface) was officially born in <strong class="text-amber-300">1997</strong>. It is a programming language–independent interface for web servers to communicate with programs or scripts on the web server.</p>
+      <p class="text-gray-300 mb-4">CGI gave programmers the ability to write dynamic web applications by extending the web server software. When a web server receives a request for a CGI script, it simply executes the script directly and returns the output to the browser.</p>
+
+      <div class="code-block mb-4">
+        <span class="cm">#!/usr/bin/php</span><br>
+        <br>
+        <span class="kw">&lt;?php</span><br>
+        <br>
+        <span class="fn">echo</span> <span class="str">"Content-Type: text/plain\n"</span>;<br>
+        <span class="fn">echo</span> <span class="str">"PHP-CGI Script! Woohoo&lt;br&gt;"</span>;<br>
+        <span class="fn">echo</span> <span class="fn">time</span>();<br>
+        <span class="kw">?&gt;</span>
+      </div>
+
+      <p class="text-gray-300 mb-3">The <strong class="text-amber-300">cgi-bin</strong> directory designates which programs are safe to run. CGI passes the HTTP request context to the script as <strong class="text-amber-300">environment variables</strong>, allowing the script to access things like the Request URI, Client IP Address, or Server Host.</p>
+
+      <div class="overflow-x-auto mb-4">
+        <table class="comparison-table w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th class="text-gray-200 rounded-tl-lg">Variable</th>
+              <th class="text-gray-200">Definition</th>
+              <th class="text-gray-200 rounded-tr-lg">Example</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">GATEWAY_INTERFACE</td>
+              <td class="text-gray-400">The version of the CGI protocol being used by the web server.</td>
+              <td class="text-gray-400 font-mono text-xs">CGI/1.1</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">SERVER_SOFTWARE</td>
+              <td class="text-gray-400">The name of the web server software making the CGI call.</td>
+              <td class="text-gray-400 font-mono text-xs">nginx</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">QUERY_STRING</td>
+              <td class="text-gray-400">The HTTP query string of the web request.</td>
+              <td class="text-gray-400 font-mono text-xs">foo=bar&foobar=1</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">REQUEST_METHOD</td>
+              <td class="text-gray-400">The HTTP request method.</td>
+              <td class="text-gray-400 font-mono text-xs">POST</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">CONTENT_TYPE</td>
+              <td class="text-gray-400">The HTTP Content-Type.</td>
+              <td class="text-gray-400 font-mono text-xs">text/plain</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">CONTENT_LENGTH</td>
+              <td class="text-gray-400">The Length of the HTTP Request.</td>
+              <td class="text-gray-400 font-mono text-xs">100</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">SCRIPT_FILENAME</td>
+              <td class="text-gray-400">The path of the CGI script being executed.</td>
+              <td class="text-gray-400 font-mono text-xs">/var/www/cgi-bin/test.php</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">SCRIPT_NAME</td>
+              <td class="text-gray-400">The virtual path of the CGI script.</td>
+              <td class="text-gray-400 font-mono text-xs">/cgi-bin/test.php</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">REQUEST_URI</td>
+              <td class="text-gray-400">The path to the requested file by the client.</td>
+              <td class="text-gray-400 font-mono text-xs">/cgi-bin/test.php?foo=bar</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">DOCUMENT_URI</td>
+              <td class="text-gray-400">The path part of the URL to the CGI script.</td>
+              <td class="text-gray-400 font-mono text-xs">/cgi-bin/test.php</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">DOCUMENT_ROOT</td>
+              <td class="text-gray-400">The root path of the server.</td>
+              <td class="text-gray-400 font-mono text-xs">/var/www/html</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">SERVER_PROTOCOL</td>
+              <td class="text-gray-400">The type of protocol being used by the client/server.</td>
+              <td class="text-gray-400 font-mono text-xs">HTTP/1.0</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">REMOTE_ADDR</td>
+              <td class="text-gray-400">The IP Address of the client.</td>
+              <td class="text-gray-400 font-mono text-xs">108.22.12.23</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">REMOTE_PORT</td>
+              <td class="text-gray-400">The port of the client.</td>
+              <td class="text-gray-400 font-mono text-xs">9583</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">SERVER_ADDR</td>
+              <td class="text-gray-400">The IP Address of the server.</td>
+              <td class="text-gray-400 font-mono text-xs">192.168.10.1</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">SERVER_PORT</td>
+              <td class="text-gray-400">The port of the server.</td>
+              <td class="text-gray-400 font-mono text-xs">80</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-mono text-xs">SERVER_NAME</td>
+              <td class="text-gray-400">The server hostname.</td>
+              <td class="text-gray-400 font-mono text-xs">app01</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="code-block">
+        <span class="cm"># Passing CGI environment variables from the command line</span><br>
+        REMOTE_IP=127.0.0.1 ./script.php
+      </div>
+    </div>
+
+    <div id="what-is-fastcgi" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-bolt text-2xl text-amber-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">What is FastCGI?</h2>
+      </div>
+      <p class="text-gray-300 mb-3">nginx does <strong class="text-rose-300">not</strong> support regular, old-school CGI. In the traditional CGI model, the web server forks and executes the script for each request — a slow and expensive system call.</p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <h3 class="text-gray-200 font-semibold mb-2"><i class="fas fa-times-circle text-rose-400 mr-2"></i>Traditional CGI</h3>
+          <p class="text-gray-400 text-sm">Web server executes script directly. Slow performance (fork per request). Insecure: any script in cgi-bin can be executed.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <h3 class="text-gray-200 font-semibold mb-2"><i class="fas fa-check-circle text-emerald-400 mr-2"></i>FastCGI</h3>
+          <p class="text-gray-400 text-sm">Web server talks to a FastCGI server daemon instead. Long-running process, handles many connections. Better performance and security.</p>
+        </div>
+      </div>
+
+      <p class="text-gray-300 mb-3">With FastCGI, the web server makes a TCP or Unix Socket request to the FastCGI server, which runs the script and returns the result. The FastCGI server is typically long-running and does not need to fork for each request.</p>
+
+      <p class="text-gray-300 mb-4"><strong class="text-emerald-300">PHP-FPM</strong> (PHP FastCGI Process Manager) has been built into PHP since version 5.3 and handles almost all FastCGI details automatically.</p>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <p class="text-gray-300 font-medium"><i class="fas fa-info-circle text-blue-400 mr-2"></i>Two ways to use nginx with a backend</p>
+        <p class="text-gray-400 text-sm mt-2"><strong class="text-amber-300">FastCGI</strong> — primarily for PHP applications. <strong class="text-cyan-300">Reverse Proxy</strong> — for Ruby, Node, Go, and most other languages.</p>
+      </div>
+    </div>
+
+    <div id="fastcgi-basic-config" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-cog text-2xl text-cyan-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">FastCGI Basic Config</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">Consider a simple PHP script:</p>
+
+      <div class="code-block mb-4">
+        <span class="kw">&lt;?php</span><br>
+        <br>
+        <span class="fn">echo</span> <span class="str">"Running a script from nginx&lt;br&gt;"</span>;<br>
+        <span class="fn">echo</span> <span class="fn">time</span>();<br>
+        <span class="kw">?&gt;</span>
+      </div>
+
+      <p class="text-gray-300 mb-2">Install and configure PHP-FPM:</p>
+      <ul class="space-y-1 text-gray-300 mb-4">
+        <li><i class="fas fa-chevron-right text-cyan-400 mr-2"></i>Install: <span class="tag">apt-get install php5-fpm</span></li>
+        <li><i class="fas fa-chevron-right text-cyan-400 mr-2"></i>Config: <span class="tag">/etc/php5/fpm/pool.d/www.conf</span></li>
+        <li><i class="fas fa-chevron-right text-cyan-400 mr-2"></i>Start: <span class="tag">service php5-fpm start</span></li>
+      </ul>
+
+      <p class="text-gray-300 mb-3">Basic FastCGI config that matches a single PHP script:</p>
+
+      <div class="code-block mb-4">
+        <span class="kw">location</span> ~ script.php {<br>
+        &nbsp;&nbsp;fastcgi_pass unix:/var/run/php5-fpm.sock;<br>
+        &nbsp;&nbsp;fastcgi_index index.php;<br>
+        &nbsp;&nbsp;include fastcgi_params;<br>
+        }
+      </div>
+
+      <p class="text-gray-300 mb-3">The FastCGI server uses the <code class="text-cyan-300">SCRIPT_FILENAME</code> parameter to determine which PHP script to execute. By default it is set to:</p>
+
+      <div class="code-block mb-3">
+        <span class="prop">SCRIPT_FILENAME</span> = <span class="fn">$document_root$fastcgi_script_name</span>
+      </div>
+
+      <p class="text-gray-300 mb-2"><code class="text-amber-300">$fastcgi_script_name</code> is set automatically by nginx based on the request URI path:</p>
+      <ul class="space-y-1 text-gray-300 mb-3">
+        <li><i class="fas fa-arrow-right text-amber-400 mr-2"></i>If URI ends in <code class="text-amber-300">/</code>, the <code class="text-amber-300">fastcgi_index</code> value is appended (e.g. <code class="text-gray-400">/foobar/</code> becomes <code class="text-gray-400">/foobar/index.php</code>)</li>
+        <li><i class="fas fa-arrow-right text-amber-400 mr-2"></i>Otherwise, <code class="text-amber-300">$fastcgi_script_name</code> is simply set to the request URI</li>
+      </ul>
+
+      <div class="bg-rose-900/20 border border-rose-800/40 rounded-lg p-4">
+        <p class="text-rose-300 font-medium"><i class="fas fa-exclamation-triangle mr-2"></i>Watch out for old syntax!</p>
+        <p class="text-gray-400 text-sm mt-1">Please be warned about something important! Most nginx/PHP tutorials online are <strong class="text-rose-300">wrong</strong> and can expose backdoors. Pay close attention to <code class="text-rose-300">cgi.fix_pathinfo</code> and <code class="text-rose-300">fastcgi_split_path_info</code> — they are critical for security.</p>
+      </div>
+    </div>
+
+    <div id="many-php-files" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-files text-2xl text-emerald-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Many Individual PHP Files</h2>
+      </div>
+      <p class="text-gray-300">In the real world, one common FastCGI/PHP configuration is when you have <strong class="text-emerald-300">many individual PHP files</strong> in a single directory and want them to all be individually executable. This pattern is straightforward with the basic FastCGI configuration using a <code class="text-cyan-300">\.php$</code> location block.</p>
+    </div>
+
+    <div id="route-all-requests" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-route text-2xl text-violet-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Route All Requests Through index.php</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The other typical scenario, especially for modern PHP frameworks such as <strong class="text-violet-300">Zend Framework</strong> or <strong class="text-violet-300">Laravel</strong>, is to have all requests go through a central <code class="text-amber-300">index.php</code> file:</p>
+
+      <div class="code-block mb-4">
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="kw">location</span> / {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;try_files <span class="fn">$uri</span> <span class="fn">$uri</span>/ index.php<span class="fn">$is_args$args</span>;<br>
+        &nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;<span class="kw">location</span> ~ \.php$ {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;try_files <span class="fn">$uri</span> /index.php =404;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;fastcgi_pass upstream;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;fastcgi_index index.php;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;fastcgi_split_path_info ^(.+\.php)(.*)$;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;fastcgi_param SCRIPT_FILENAME <span class="fn">$document_root$fastcgi_scriptName</span>;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <div class="bg-rose-900/20 border border-rose-800/40 rounded-lg p-4">
+        <p class="text-rose-300 font-medium"><i class="fas fa-skull-crossbones mr-2"></i>Don't trust the nginx/PHP Tutorials!</p>
+        <p class="text-gray-400 text-sm mt-2">Most websites and tutorials for configuring nginx and PHP are <strong class="text-rose-300">wrong</strong>. More than wrong, in fact, they unknowingly expose you to a <strong class="text-rose-300">backdoor</strong> — a misconfigured nginx server can allow non-PHP files to be executed as PHP. An attacker could upload their own PHP file (e.g. through an image uploader) and convince PHP-FPM to execute it.</p>
+        <div class="flex flex-wrap gap-2 mt-3">
+          <span class="tag">cgi.fix_pathinfo</span>
+          <span class="tag">fastcgi_split_path_info</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-800">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">
+      <i class="fas fa-book-open mr-1"></i> Chapter 3 — CGI, FastCGI, and uWSGI
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    });
+  </script>
+</body>
+</html>

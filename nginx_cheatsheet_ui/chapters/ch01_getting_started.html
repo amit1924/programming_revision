@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Getting Started — NGINX Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glow-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; padding: 1.25rem; transition: all 0.3s; }
+    .code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 1rem; font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85rem; overflow-x: auto; }
+    .code-block .kw { color: #ff79c6; }
+    .code-block .fn { color: #50fa7b; }
+    .code-block .str { color: #f1fa8c; }
+    .code-block .cm { color: #6272a4; font-style: italic; }
+    .code-block .num { color: #bd93f9; }
+    .code-block .op { color: #ff79c6; }
+    .code-block .prop { color: #8be9fd; }
+    .tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.75rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .slide-in-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-left.visible { opacity: 1; transform: translateX(0); }
+    .slide-in-right { opacity: 0; transform: translateX(30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-right.visible { opacity: 1; transform: translateX(0); }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out; }
+    .accordion-content.open { max-height: 800px; }
+    .pulse-icon { transition: transform 0.3s; }
+    .pulse-icon:hover { transform: scale(1.2); }
+    .comparison-table th { background: #1e293b; padding: 0.6rem 1rem; font-size: 0.85rem; }
+    .comparison-table td { padding: 0.6rem 1rem; font-size: 0.85rem; border-top: 1px solid #1e293b; }
+    .comparison-table tr:hover td { background: rgba(99,102,241,0.08); }
+    .badge-good { background: rgba(16,185,129,0.15); color: #6ee7b7; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-bad { background: rgba(239,68,68,0.15); color: #fca5a5; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .nav-link { padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.8rem; background: rgba(30,41,59,0.6); border: 1px solid #334155; transition: all 0.2s; color: #94a3b8; white-space: nowrap; }
+    .nav-link:hover { background: #334155; color: #e2e8f0; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer { background: linear-gradient(90deg, transparent, rgba(99,102,241,0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+
+    <div class="animate-fade-in mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-download text-4xl text-green-400 pulse-icon"></i>
+        <h1 class="text-3xl md:text-4xl font-bold gradient-text">Getting Started with NGINX</h1>
+      </div>
+      <p class="text-gray-400 text-lg">Chapter 1 — Installation, modules, and package management</p>
+    </div>
+
+    <div class="overflow-x-auto pb-2 mb-8">
+      <div class="flex gap-2 min-w-max">
+        <a href="#what-is-nginx" class="nav-link"><i class="fas fa-question-circle mr-1"></i>What is NGINX</a>
+        <a href="#install-source" class="nav-link"><i class="fas fa-download mr-1"></i>Installing from Source</a>
+        <a href="#modules" class="nav-link"><i class="fas fa-puzzle-piece mr-1"></i>Modules</a>
+        <a href="#third-party" class="nav-link"><i class="fas fa-plug mr-1"></i>Third Party Modules</a>
+        <a href="#package-install" class="nav-link"><i class="fas fa-archive mr-1"></i>Package Install</a>
+        <a href="#exercises" class="nav-link"><i class="fas fa-pencil-alt mr-1"></i>Exercises</a>
+      </div>
+    </div>
+
+    <div id="what-is-nginx" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-question-circle text-2xl text-blue-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">What is NGINX?</h2>
+      </div>
+      <p class="text-gray-300 mb-4"><strong class="text-blue-300">nginx</strong> (pronounced <em>"engine x"</em>) is a web server that has gained incredible popularity among the most highly visited websites on the internet.</p>
+      <p class="text-gray-300 mb-4">It isn't fair to think of nginx as just a web server. It can do so much more — it can serve HTTP and HTTPS traffic, proxy to Rails, PHP or Node applications, run as a software load balancer, HTTP cache, off-load SSL, or even act as an SMTP, POP3, and IMAP mail server.</p>
+      <p class="text-gray-300 mb-3">Most people think of nginx as a replacement to Apache. According to Netcraft, as of March 2015, nginx is used by <strong class="text-amber-300">21% of the top 1 million busiest websites</strong> on the internet.</p>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300 font-medium"><i class="fas fa-code-branch text-indigo-400 mr-2"></i>Core Concept</p>
+        <p class="text-gray-400 text-sm mt-1">At its very core, nginx is an <strong class="text-indigo-300">HTTP router</strong> — a living, breathing part of the web stack that gives developers the flexibility to build and deploy web apps easier than ever before.</p>
+      </div>
+    </div>
+
+    <div id="install-source" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-download text-2xl text-green-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Installing from Source</h2>
+      </div>
+      <p class="text-gray-300 mb-4">While it's possible to run nginx on Windows, it's not recommended. This guide assumes you're installing on a common distribution of Linux.</p>
+      <p class="text-gray-300 mb-4">You have two installation options: directly from <strong class="text-green-300">source</strong> or a <strong class="text-green-300">pre-built package</strong> for your operating system. While installing the package is much more convenient, it's typically an outdated version. Fortunately, nginx.org publishes their own set of up-to-date packages.</p>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-code-branch text-cyan-400 mr-2"></i>Stable vs Mainline Versions</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-shield-alt text-emerald-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Stable</span>
+          <p class="text-gray-400 text-sm mt-1">Even-numbered release (e.g. "1.4", "1.6"). Recommended production version. Lags behind major feature development but gets critical bug fixes backported.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-flask text-amber-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Mainline</span>
+          <p class="text-gray-400 text-sm mt-1">Odd-numbered release (e.g. "1.9"). Active development, still pretty stable. Receives new features and faster bug fixes. Many choose to run mainline in production.</p>
+        </div>
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-terminal text-purple-400 mr-2"></i>Building from Source</h3>
+      <p class="text-gray-300 mb-3">Head to <strong class="text-purple-300">nginx.org</strong> and download the source. Once you have the tarball:</p>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> tar -zxvf nginx-1.9.2.tar.gz<br>
+        <span class="kw">$</span> <span class="fn">cd</span> nginx-1.9.2<br>
+        <span class="kw">$</span> ./configure<br>
+        <span class="kw">$</span> make<br>
+        <span class="kw">$</span> sudo make install
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-wrench text-yellow-400 mr-2"></i>Installing Build Tools</h3>
+      <p class="text-gray-300 mb-3">If you don't have the basic build tools installed:</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <span class="text-gray-200 font-medium">Ubuntu / Debian</span>
+          <div class="code-block text-xs p-2 mt-1">
+            <span class="kw">$</span> apt-get install build-essential
+          </div>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <span class="text-gray-200 font-medium">RedHat / CentOS</span>
+          <div class="code-block text-xs p-2 mt-1">
+            <span class="kw">$</span> yum group install <span class="str">"Development Tools"</span>
+          </div>
+        </div>
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-cubes text-orange-400 mr-2"></i>Dependencies</h3>
+      <p class="text-gray-300 mb-3">nginx's default build configuration depends on 3 libraries:</p>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-exchange-alt text-blue-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">PCRE</span>
+          <p class="text-gray-400 text-sm mt-1">Used by the HTTP Rewrite module for regular expressions</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-compress-alt text-emerald-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Zlib</span>
+          <p class="text-gray-400 text-sm mt-1">Used by the HTTP Gzip module for compression</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-lock text-rose-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">OpenSSL</span>
+          <p class="text-gray-400 text-sm mt-1">Required for HTTPS protocol support</p>
+        </div>
+      </div>
+      <p class="text-gray-300 mb-3">Install dependencies on Ubuntu/Debian:</p>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> apt-get install libpcre3-dev zlib1g-dev libssl-dev
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-folder-open text-sky-400 mr-2"></i>Install Location</h3>
+      <p class="text-gray-300 mb-3">By default, <span class="tag">make install</span> installs nginx and all related files into <span class="tag">/usr/local/nginx/</span>. The binary is located at:</p>
+      <div class="code-block mb-4">
+        <span class="prop">/usr/local/nginx/sbin/nginx</span>
+      </div>
+      <p class="text-gray-300 mb-3">Test that everything is working:</p>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> /usr/local/nginx/sbin/nginx -V<br>
+        nginx version: nginx/1.9.2<br>
+        built by gcc 4.8.2 (Ubuntu 4.8.2-19ubuntu1)<br>
+        configure arguments:
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-cog text-indigo-400 mr-2"></i>Specifying Install Location</h3>
+      <p class="text-gray-300 mb-3">You can change the installation path with <span class="tag">--prefix</span> and <span class="tag">--conf-path</span> flags. For example, to place the binary in <span class="tag">/usr/sbin</span> and configuration in <span class="tag">/etc/nginx</span>:</p>
+      <div class="code-block">
+        <span class="kw">$</span> ./configure --prefix=/usr --conf-path=/etc/nginx
+      </div>
+    </div>
+
+    <div id="modules" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-puzzle-piece text-2xl text-purple-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Modules in nginx</h2>
+      </div>
+      <p class="text-gray-300 mb-4">nginx is an extremely modular piece of software. Even seemingly "built-in" features such as gzip or SSL are built as modules that can be enabled or disabled during build time.</p>
+      <p class="text-gray-300 mb-4">One benefit of building from source is specifying exactly which modules you want. The downside: if you need something later that you didn't include, you'll have to rebuild.</p>
+      <p class="text-gray-300 mb-4">By default, nginx comes with the following modules — some enabled and some disabled by default:</p>
+
+      <div class="overflow-x-auto mb-4">
+        <table class="comparison-table w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th class="text-gray-200 rounded-tl-lg">Module Name</th>
+              <th class="text-gray-200">Flag</th>
+              <th class="text-gray-200">Description</th>
+              <th class="text-gray-200 rounded-tr-lg">Default</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-gray-300 font-medium">Charset</td>
+              <td class="text-gray-400 font-mono text-xs">http_charset</td>
+              <td class="text-gray-400">Adds the Content-Type header to the HTTP response</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Gzip</td>
+              <td class="text-gray-400 font-mono text-xs">http_gzip</td>
+              <td class="text-gray-400">Compresses the HTTP response</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">SSI</td>
+              <td class="text-gray-400 font-mono text-xs">http_ssi</td>
+              <td class="text-gray-400">Processes Server-Side Includes</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Userid</td>
+              <td class="text-gray-400 font-mono text-xs">http_userid</td>
+              <td class="text-gray-400">Sets an HTTP Cookie suitable for Client Identification</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Access</td>
+              <td class="text-gray-400 font-mono text-xs">http_access</td>
+              <td class="text-gray-400">Allows limiting access to certain client IP addresses</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Basic Auth</td>
+              <td class="text-gray-400 font-mono text-xs">http_auth_basic</td>
+              <td class="text-gray-400">Allows limiting access by validating username and password using HTTP Basic Authentication</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Auto Index</td>
+              <td class="text-gray-400 font-mono text-xs">http_autoindex</td>
+              <td class="text-gray-400">Processes requests ending in "/" and produces a directory listing</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Geo</td>
+              <td class="text-gray-400 font-mono text-xs">http_geo</td>
+              <td class="text-gray-400">Creates variables with values depending on the IP address</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Map</td>
+              <td class="text-gray-400 font-mono text-xs">http_map</td>
+              <td class="text-gray-400">Creates variables whose values depend on other variable values</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Split Clients</td>
+              <td class="text-gray-400 font-mono text-xs">http_split_clients</td>
+              <td class="text-gray-400">Creates variables for use with split (A/B) testing</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Referer</td>
+              <td class="text-gray-400 font-mono text-xs">http_referer</td>
+              <td class="text-gray-400">Blocks access depending on the value of the HTTP Referer Header</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Rewrite</td>
+              <td class="text-gray-400 font-mono text-xs">http_rewrite</td>
+              <td class="text-gray-400">Changes the request URI using regular expressions</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Proxy</td>
+              <td class="text-gray-400 font-mono text-xs">http_proxy</td>
+              <td class="text-gray-400">Allows passing requests to another HTTP server</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Fastcgi</td>
+              <td class="text-gray-400 font-mono text-xs">http_fastcgi</td>
+              <td class="text-gray-400">Allows passing requests to a FastCGI server</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">uWSGI</td>
+              <td class="text-gray-400 font-mono text-xs">http_uwsgi</td>
+              <td class="text-gray-400">Allows passing requests to a uWSGI server</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">SCGI</td>
+              <td class="text-gray-400 font-mono text-xs">http_scgi</td>
+              <td class="text-gray-400">Allows passing requests to a SCGI server</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Memcached</td>
+              <td class="text-gray-400 font-mono text-xs">http_memcached</td>
+              <td class="text-gray-400">Used to obtain values from a Memcached server</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Limit Conn</td>
+              <td class="text-gray-400 font-mono text-xs">http_limit_conn</td>
+              <td class="text-gray-400">Limit the number of connections per IP address</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Limit Req</td>
+              <td class="text-gray-400 font-mono text-xs">http_limit_req</td>
+              <td class="text-gray-400">Limit the request processing rate per IP address</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Empty GIF</td>
+              <td class="text-gray-400 font-mono text-xs">http_empty_gif</td>
+              <td class="text-gray-400">Emits a single-pixel transparent GIF image</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Browser</td>
+              <td class="text-gray-400 font-mono text-xs">http_browser</td>
+              <td class="text-gray-400">Allows browser detection based on the User-Agent HTTP Header</td>
+              <td><span class="badge-good">Yes</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Perl</td>
+              <td class="text-gray-400 font-mono text-xs">http_perl</td>
+              <td class="text-gray-400">Implement location and variable handlers in Perl</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">SSL</td>
+              <td class="text-gray-400 font-mono text-xs">http_ssl</td>
+              <td class="text-gray-400">Handle SSL traffic within nginx</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">SPDY</td>
+              <td class="text-gray-400 font-mono text-xs">http_spdy</td>
+              <td class="text-gray-400">Provides experimental support for SPDY</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">RealIP</td>
+              <td class="text-gray-400 font-mono text-xs">http_realip</td>
+              <td class="text-gray-400">Change the Client IP Address of the Request</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Addition</td>
+              <td class="text-gray-400 font-mono text-xs">http_addition</td>
+              <td class="text-gray-400">Adds text before and after the HTTP response</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">XSLT</td>
+              <td class="text-gray-400 font-mono text-xs">http_xslt</td>
+              <td class="text-gray-400">Post-process pages with XSLT</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Image Filter</td>
+              <td class="text-gray-400 font-mono text-xs">http_image_filter</td>
+              <td class="text-gray-400">Transform images with libgd</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">GeoIP</td>
+              <td class="text-gray-400 font-mono text-xs">http_geoip</td>
+              <td class="text-gray-400">Create variables with geo information based on the IP Address</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Substitution</td>
+              <td class="text-gray-400 font-mono text-xs">http_sub</td>
+              <td class="text-gray-400">Replace text in Pages</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">WebDAV</td>
+              <td class="text-gray-400 font-mono text-xs">http_dav</td>
+              <td class="text-gray-400">WebDAV pass-through support</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">FLV</td>
+              <td class="text-gray-400 font-mono text-xs">http_flv</td>
+              <td class="text-gray-400">Flash Streaming Video</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">MP4</td>
+              <td class="text-gray-400 font-mono text-xs">http_mp4</td>
+              <td class="text-gray-400">Enables mp4 streaming with seeking ability</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Gunzip</td>
+              <td class="text-gray-400 font-mono text-xs">http_gunzip</td>
+              <td class="text-gray-400">On-the-fly decompression of gzipped responses</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Gzip Precompression</td>
+              <td class="text-gray-400 font-mono text-xs">http_gzip_static</td>
+              <td class="text-gray-400">Serves already pre-compressed static files</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Auth Request</td>
+              <td class="text-gray-400 font-mono text-xs">http_auth_request</td>
+              <td class="text-gray-400">Implements client authorization based on the result of a subrequest</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Random Index</td>
+              <td class="text-gray-400 font-mono text-xs">http_random_index</td>
+              <td class="text-gray-400">Randomize directory index</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Secure Link</td>
+              <td class="text-gray-400 font-mono text-xs">http_secure_link</td>
+              <td class="text-gray-400">Protect pages with a secret key</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Degradation</td>
+              <td class="text-gray-400 font-mono text-xs">http_degradation</td>
+              <td class="text-gray-400">Allow to return 204 or 444 code for some locations on low memory condition</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Stub Status</td>
+              <td class="text-gray-400 font-mono text-xs">http_stub_status</td>
+              <td class="text-gray-400">View server statistics</td>
+              <td><span class="badge-bad">No</span></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-toggle-on text-emerald-400 mr-2"></i>Enabling Modules</h3>
+      <p class="text-gray-300 mb-3">Enable modules by passing <span class="tag">--with-http_<em>module</em></span> flags to the configure script. For example, to enable SSL:</p>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> ./configure --with-http_ssl_module
+      </div>
+      <p class="text-gray-300 mb-3">A recommended build with SSL, SPDY, RealIP, and Stub Status:</p>
+      <div class="code-block">
+        <span class="kw">$</span> ./configure --with-http_ssl_module \<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--with-http_spdy_module \<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--with-http_realip_module \<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;--with-http_stub_status_module<br>
+        <span class="kw">$</span> make<br>
+        <span class="kw">$</span> sudo make install
+      </div>
+    </div>
+
+    <div id="third-party" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-plug text-2xl text-cyan-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Third Party Modules</h2>
+      </div>
+      <p class="text-gray-300 mb-3">In addition to the many built-in modules, nginx has a massive library of <strong class="text-cyan-300">third party modules</strong> that aren't packaged with the main distribution.</p>
+      <p class="text-gray-300 mb-3">You can find the modules on <span class="tag">wiki.nginx.org</span>. There are over <strong class="text-cyan-300">100 third party modules</strong>, including everything from embedded Lua scripting to upload progress bars.</p>
+    </div>
+
+    <div id="package-install" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-archive text-2xl text-amber-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Installing from a Package</h2>
+      </div>
+      <p class="text-gray-300 mb-4">Installing nginx from your distribution's package manager is easier and faster compared to building from source. The tradeoff is that distribution packages are often outdated and you won't be able to install third party modules.</p>
+      <p class="text-gray-300 mb-4">That being said, nginx provides its own <strong class="text-amber-300">up-to-date pre-built packages</strong> for many popular Linux distributions, including RedHat, CentOS, Debian, Ubuntu, and SLES.</p>
+      <p class="text-gray-300 mb-4">Another advantage of packages is that they come with the necessary init or upstart scripts to easily run nginx as a daemon or automatically start after a reboot.</p>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-server text-red-400 mr-2"></i>RedHat / CentOS Package</h3>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> sudo yum install nginx
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fab fa-ubuntu text-orange-400 mr-2"></i>Ubuntu / Debian Package</h3>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> sudo apt-get install nginx
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-key text-blue-400 mr-2"></i>Installing nginx.org Package (Ubuntu/Debian)</h3>
+      <p class="text-gray-300 mb-3">First, grab the nginx signing key so the package manager can validate authenticity:</p>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> wget http://nginx.org/keys/nginx_signing.key<br>
+        <span class="kw">$</span> sudo apt-key add nginx_signing.key
+      </div>
+
+      <p class="text-gray-300 mb-3">Find your Ubuntu/Debian codename:</p>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> lsb_release -a<br>
+        No LSB modules are available.<br>
+        Distributor ID: Ubuntu<br>
+        Description: Ubuntu 14.04.1 LTS<br>
+        Release: 14.04<br>
+        <span class="prop">Codename:</span> trusty
+      </div>
+
+      <p class="text-gray-300 mb-3">For Ubuntu, add to <span class="tag">/etc/apt/sources.list</span>:</p>
+      <div class="code-block mb-4">
+        deb http://nginx.org/packages/ubuntu/ codename nginx<br>
+        deb-src http://nginx.org/packages/ubuntu/ codename nginx
+      </div>
+
+      <p class="text-gray-300 mb-3">For Debian, add to <span class="tag">/etc/apt/sources.list</span>:</p>
+      <div class="code-block mb-4">
+        deb http://nginx.org/packages/debian/ codename nginx<br>
+        deb-src http://nginx.org/packages/debian/ codename nginx
+      </div>
+
+      <p class="text-gray-300 mb-3">Update apt and install:</p>
+      <div class="code-block mb-4">
+        <span class="kw">$</span> apt-get update<br>
+        <span class="kw">$</span> apt-get install nginx
+      </div>
+
+      <p class="text-gray-300 mb-3">Verify the installation:</p>
+      <div class="code-block">
+        <span class="kw">$</span> nginx -V<br>
+        nginx version: nginx/1.9.2 (Ubuntu)<br>
+        built by gcc 4.8.2 (Ubuntu 4.8.2-19ubuntu1)<br>
+        TLS SNI support enabled<br>
+        configure arguments:
+      </div>
+    </div>
+
+    <div id="exercises" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-pencil-alt text-2xl text-pink-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Exercises</h2>
+      </div>
+      <p class="text-gray-300 mb-4">Test your understanding of NGINX installation and modules:</p>
+
+      <div class="space-y-4">
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">1</span>
+            <div>
+              <p class="text-gray-200 font-medium">What does NGINX stand for and what is it?</p>
+              <p class="text-gray-400 text-sm mt-1">Explain what nginx is, what it can do, and what percentage of the top 1 million busiest websites use it.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                nginx (pronounced "engine x") is a web server used by highly visited websites. It can serve HTTP/HTTPS, proxy to Rails/PHP/Node, act as a load balancer, HTTP cache, SSL offloader, and mail server. As of March 2015, it was used by 21% of the top 1 million busiest websites.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">2</span>
+            <div>
+              <p class="text-gray-200 font-medium">Stable vs Mainline</p>
+              <p class="text-gray-400 text-sm mt-1">What is the difference between the stable and mainline versions of nginx?</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                Stable (even-numbered, e.g. 1.6) is the recommended production version with critical bug fixes backported. Mainline (odd-numbered, e.g. 1.9) is active development — still stable but receives new features and faster bug fixes.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">3</span>
+            <div>
+              <p class="text-gray-200 font-medium">Build from Source Steps</p>
+              <p class="text-gray-400 text-sm mt-1">List the four commands to build and install nginx from source.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                (1) ./configure, (2) make, (3) sudo make install. Plus before that: tar -zxvf nginx-*.tar.gz and cd into the folder.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">4</span>
+            <div>
+              <p class="text-gray-200 font-medium">Build Dependencies</p>
+              <p class="text-gray-400 text-sm mt-1">Name the three libraries that nginx depends on for its default build configuration.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                PCRE (HTTP Rewrite module), Zlib (HTTP Gzip module), and OpenSSL (HTTPS protocol support).
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">5</span>
+            <div>
+              <p class="text-gray-200 font-medium">Check nginx Version</p>
+              <p class="text-gray-400 text-sm mt-1">What command do you use to check the nginx version and compile-time build options?</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                nginx -V (capital V). It prints the version number, compiler info, and configure arguments.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">6</span>
+            <div>
+              <p class="text-gray-200 font-medium">Module Enablement</p>
+              <p class="text-gray-400 text-sm mt-1">What configure flag would you use to enable the SSL module in nginx?</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                --with-http_ssl_module. Modules are enabled at build time by passing extra flags to ./configure.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">7</span>
+            <div>
+              <p class="text-gray-200 font-medium">Package vs Source Tradeoffs</p>
+              <p class="text-gray-400 text-sm mt-1">What are the tradeoffs between installing nginx from a package manager vs building from source?</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                Package manager is easier and includes init scripts, but versions are often outdated and you cannot install third-party modules. Building from source gives full control over modules and latest version, but requires build tools and manual management.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">8</span>
+            <div>
+              <p class="text-gray-200 font-medium">Adding nginx.org Repository</p>
+              <p class="text-gray-400 text-sm mt-1">Describe the steps to add the nginx.org package repository on Ubuntu.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                (1) wget the nginx signing key, (2) sudo apt-key add the key, (3) add "deb http://nginx.org/packages/ubuntu/ codename nginx" and "deb-src ..." to /etc/apt/sources.list, (4) apt-get update, (5) apt-get install nginx.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">9</span>
+            <div>
+              <p class="text-gray-200 font-medium">Custom Install Path</p>
+              <p class="text-gray-400 text-sm mt-1">How would you configure a build of nginx to install the binary in /usr/sbin and the configuration files in /etc/nginx?</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                Run ./configure with --prefix=/usr and --conf-path=/etc/nginx. The --prefix flag changes the base installation directory and --conf-path specifies the config file location.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">10</span>
+            <div>
+              <p class="text-gray-200 font-medium">Modules Architecture</p>
+              <p class="text-gray-400 text-sm mt-1">Why is nginx considered "extremely modular"? Give two examples of features that are actually built as modules.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                Even "built-in" features like gzip and SSL are implemented as modules that can be enabled/disabled at build time. This lets you build a minimal nginx with only the modules you need.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-800">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+      <a href="ch02_basic_configuration.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all">Next: Basic Configuration <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">
+      <i class="fas fa-book-open mr-1"></i> Based on "NGINX" — Chapter 1: Getting Started
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    });
+
+    function toggleAnswer(btn) {
+      const answer = btn.nextElementSibling;
+      const icon = btn.querySelector('i');
+      if (answer.classList.contains('hidden')) {
+        answer.classList.remove('hidden');
+        icon.className = 'fas fa-chevron-up mr-1';
+      } else {
+        answer.classList.add('hidden');
+        icon.className = 'fas fa-chevron-down mr-1';
+      }
+    }
+  </script>
+</body>
+</html>

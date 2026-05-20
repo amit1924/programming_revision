@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker Registry — Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; border-radius: 0.75rem; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.85rem; overflow-x: auto; }
+    .code-block .prompt { color: #10b981; }
+    .code-block .cmd { color: #e2e8f0; }
+    .code-block .output { color: #94a3b8; }
+    .code-block .comment { color: #6b7280; font-style: italic; }
+    .code-block .highlight { color: #fbbf24; }
+    .code-block .keyword { color: #60a5fa; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+    .section-link.active { background: rgba(99,102,241,0.2); border-color: #6366f1; color: #a5b4fc; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+
+  <div class="max-w-5xl mx-auto px-4 py-6">
+
+    <!-- Back Navigation -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 animate-fade-in">
+      <i class="fas fa-arrow-left"></i> Back to Cheatsheet Home
+    </a>
+
+    <!-- Chapter Header -->
+    <div class="text-center mb-8 animate-fade-in">
+      <i class="fas fa-registered text-5xl docker-icon mb-3"></i>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text">Docker Registry</h1>
+      <p class="text-gray-400 mt-2 text-base md:text-lg">Chapter 9 — Storing and Sharing Docker Images</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-8 animate-fade-in">
+      <a href="#docker-hub" class="section-link px-3 py-1.5 text-xs rounded-full border border-slate-600 text-gray-300 hover:border-indigo-500 hover:text-white transition-all">Docker Hub</a>
+      <a href="#third-party" class="section-link px-3 py-1.5 text-xs rounded-full border border-slate-600 text-gray-300 hover:border-indigo-500 hover:text-white transition-all">Third-Party</a>
+      <a href="#private" class="section-link px-3 py-1.5 text-xs rounded-full border border-slate-600 text-gray-300 hover:border-indigo-500 hover:text-white transition-all">Private Registry</a>
+      <a href="#deploy" class="section-link px-3 py-1.5 text-xs rounded-full border border-slate-600 text-gray-300 hover:border-indigo-500 hover:text-white transition-all">Deploy Your Own</a>
+    </div>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 1: Docker Hub -->
+    <!-- ======================================================================= -->
+    <section id="docker-hub" class="glow-card p-5 md:p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fab fa-docker text-3xl text-cyan-400"></i>
+        <h2 class="text-xl md:text-2xl font-bold text-white">1. Docker Hub (docker.io)</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <i class="fas fa-lightbulb text-amber-400 mr-2"></i>
+        <strong>Think of Docker Hub as the "App Store" for Docker images.</strong> It is the default public registry that Docker uses when you don't specify a registry URL. When you run <code class="text-cyan-300">docker run nginx</code>, Docker automatically pulls from Docker Hub.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+          <h3 class="font-semibold text-cyan-300 mb-2"><i class="fas fa-download mr-1"></i> Pulling from Docker Hub</h3>
+          <div class="code-block">
+            <span class="comment"># Pull the official nginx image (latest tag by default)</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker pull nginx</span><br>
+            <span class="output">Using default tag: latest</span><br>
+            <span class="output">latest: Pulling from library/nginx</span><br>
+            <span class="output">... digest: sha256:abc... status: downloaded</span><br><br>
+            <span class="comment"># Run a container from the image</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker run -d -p 8080:80 --name my-nginx nginx</span><br>
+            <span class="output">a1b2c3d4e5f6...</span><br><br>
+            <span class="prompt">$</span> <span class="cmd">curl localhost:8080</span><br>
+            <span class="output">&lt;!DOCTYPE html&gt;</span><br>
+            <span class="output">&lt;title&gt;Welcome to nginx!&lt;/title&gt;</span>
+          </div>
+        </div>
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+          <h3 class="font-semibold text-cyan-300 mb-2"><i class="fas fa-tag mr-1"></i> Image Naming</h3>
+          <div class="code-block">
+            <span class="comment"># Full image name breakdown:</span><br>
+            <span class="keyword">registry</span>/<span class="highlight">user</span>/<span class="cmd">image</span>:<span class="output">tag</span><br><br>
+            <span class="comment"># For Docker Hub, "library" is the default user</span><br>
+            <span class="comment"># for official images:</span><br>
+            <span class="keyword">docker.io</span>/<span class="highlight">library</span>/<span class="cmd">nginx</span>:<span class="output">latest</span><br><br>
+            <span class="comment"># Official images maintained by Docker &amp; vendors</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker run python:3.12-slim</span>  <span class="comment"># Python official</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker run ubuntu:22.04</span>       <span class="comment"># Ubuntu official</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker run node:20-alpine</span>    <span class="comment"># Node.js official</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-indigo-900/20 border border-indigo-800/30 rounded-lg p-4">
+        <p class="text-sm text-gray-300">
+          <i class="fas fa-info-circle text-indigo-400 mr-1"></i>
+          <strong>Key points:</strong> Docker Hub hosts over 100,000 container images. Official images are verified, regularly updated, and follow best practices. You can also push your own images to Docker Hub for free (one private repo, unlimited public).
+        </p>
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 2: Third-Party Registries -->
+    <!-- ======================================================================= -->
+    <section id="third-party" class="glow-card p-5 md:p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-cloud text-3xl text-blue-400"></i>
+        <h2 class="text-xl md:text-2xl font-bold text-white">2. Third-Party Registries</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <i class="fas fa-lightbulb text-amber-400 mr-2"></i>
+        <strong>Other registries work just like Docker Hub</strong> — they store images at a different URL. You specify the registry hostname as part of the image name.
+      </p>
+
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-sm text-left border-collapse">
+          <thead>
+            <tr class="border-b border-slate-700">
+              <th class="py-2 px-3 text-cyan-300 font-semibold">Registry</th>
+              <th class="py-2 px-3 text-cyan-300 font-semibold">URL</th>
+              <th class="py-2 px-3 text-cyan-300 font-semibold">Used by</th>
+            </tr>
+          </thead>
+          <tbody class="text-gray-300">
+            <tr class="border-b border-slate-700/50">
+              <td class="py-2 px-3"><i class="fab fa-google text-blue-400 mr-1"></i> Google Container Registry</td>
+              <td class="py-2 px-3 font-mono text-xs">gcr.io</td>
+              <td class="py-2 px-3">Google Cloud Platform</td>
+            </tr>
+            <tr class="border-b border-slate-700/50">
+              <td class="py-2 px-3"><i class="fab fa-aws text-orange-400 mr-1"></i> Amazon ECR</td>
+              <td class="py-2 px-3 font-mono text-xs">123456789.dkr.ecr.us-east-1.amazonaws.com</td>
+              <td class="py-2 px-3">AWS</td>
+            </tr>
+            <tr class="border-b border-slate-700/50">
+              <td class="py-2 px-3"><i class="fab fa-microsoft text-blue-300 mr-1"></i> Azure Container Registry</td>
+              <td class="py-2 px-3 font-mono text-xs">myregistry.azurecr.io</td>
+              <td class="py-2 px-3">Microsoft Azure</td>
+            </tr>
+            <tr>
+              <td class="py-2 px-3"><i class="fab fa-redhat text-red-400 mr-1"></i> Red Hat / Quay.io</td>
+              <td class="py-2 px-3 font-mono text-xs">quay.io</td>
+              <td class="py-2 px-3">Red Hat / community</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+        <h3 class="font-semibold text-blue-300 mb-2"><i class="fas fa-search mr-1"></i> Example: Pulling from gcr.io</h3>
+        <div class="code-block">
+          <span class="comment"># Format: registry_url/user_or_project/image_name</span><br>
+          <span class="comment"># Pull a Kubernetes e2e test image from Google's registry:</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker pull gcr.io/kubernetes-e2e-test-images/dnsutils:1.3</span><br>
+          <span class="output">1.3: Pulling from kubernetes-e2e-test-images/dnsutils</span><br>
+          <span class="output">... digest: sha256:def... status: downloaded</span><br><br>
+          <span class="comment"># Run it:</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run --rm gcr.io/kubernetes-e2e-test-images/dnsutils:1.3 nslookup google.com</span>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 3: Private Registry -->
+    <!-- ======================================================================= -->
+    <section id="private" class="glow-card p-5 md:p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-lock text-3xl text-rose-400"></i>
+        <h2 class="text-xl md:text-2xl font-bold text-white">3. Private Registry</h2>
+      </div>
+
+      <p class="text-gray-300 mb-3">
+        <i class="fas fa-lightbulb text-amber-400 mr-2"></i>
+        <strong>Companies host private registries</strong> to store internal images that shouldn't be public. You authenticate with <code class="text-cyan-300">docker login</code>, then push/pull just like Docker Hub.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+          <h3 class="font-semibold text-rose-300 mb-2"><i class="fas fa-sign-in-alt mr-1"></i> Login to Private Registry</h3>
+          <div class="code-block">
+            <span class="prompt">$</span> <span class="cmd">docker login private-registry.io</span><br>
+            <span class="output">Username: mycompany</span><br>
+            <span class="output">Password: ********</span><br>
+            <span class="output" class="text-green-400">Login Succeeded</span><br><br>
+            <span class="comment"># Credentials stored here (unencrypted!):</span><br>
+            <span class="prompt">$</span> <span class="cmd">cat ~/.docker/config.json</span><br>
+            <span class="output">{</span><br>
+            <span class="output">  "auths": {</span><br>
+            <span class="output">    "private-registry.io": {</span><br>
+            <span class="output">      "auth": "bXl1c2VyOm15cGFzcw=="</span><br>
+            <span class="output">    }</span><br>
+            <span class="output">  }</span><br>
+            <span class="output">}</span>
+          </div>
+          <div class="bg-red-900/20 border border-red-800/30 rounded-lg p-3 mt-3">
+            <p class="text-xs text-red-300">
+              <i class="fas fa-exclamation-triangle mr-1"></i>
+              <strong>Warning:</strong> Your password is stored as base64-encoded (not encrypted!) in <code class="text-red-200">~/.docker/config.json</code>. Anyone with access to your machine can decode it.
+            </p>
+          </div>
+        </div>
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+          <h3 class="font-semibold text-rose-300 mb-2"><i class="fas fa-play mr-1"></i> Run from Private Registry</h3>
+          <div class="code-block">
+            <span class="comment"># Format: registry_hostname/path:tag</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker run private-registry.io/apps/internal-app:2.1</span><br>
+            <span class="output">Unable to find image 'private-registry.io/apps/internal-app:2.1' locally</span><br>
+            <span class="output">2.1: Pulling from apps/internal-app</span><br>
+            <span class="output">... status: downloaded</span><br><br>
+            <span class="comment"># Push your own image to private registry:</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker tag my-app:latest private-registry.io/apps/my-app:latest</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker push private-registry.io/apps/my-app:latest</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-indigo-900/20 border border-indigo-800/30 rounded-lg p-4">
+        <p class="text-sm text-gray-300">
+          <i class="fas fa-info-circle text-indigo-400 mr-1"></i>
+          <strong>Why private registries?</strong> Security (keep proprietary code internal), speed (host registry on your network), and control (manage access, retention, scanning).
+        </p>
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- SECTION 4: Deploy Your Own Registry -->
+    <!-- ======================================================================= -->
+    <section id="deploy" class="glow-card p-5 md:p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-server text-3xl text-emerald-400"></i>
+        <h2 class="text-xl md:text-2xl font-bold text-white">4. Deploy Your Own Registry</h2>
+      </div>
+
+      <p class="text-gray-300 mb-4">
+        <i class="fas fa-lightbulb text-amber-400 mr-2"></i>
+        <strong>Run a private registry in seconds</strong> using the official <code class="text-cyan-300">registry:2</code> image. Perfect for local development, CI/CD pipelines, or air-gapped environments.
+      </p>
+
+      <div class="bg-black/30 rounded-lg p-4 border border-slate-700 mb-4">
+        <h3 class="font-semibold text-emerald-300 mb-2"><i class="fas fa-rocket mr-1"></i> Full Workflow</h3>
+        <div class="code-block">
+          <span class="comment"># Step 1: Deploy the registry container</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker run -d -p 5000:5000 --name registry registry:2</span><br>
+          <span class="output">a1b2c3d4e5f6...</span><br>
+          <span class="output" class="text-green-400">Unable to find image 'registry:2' locally</span><br>
+          <span class="output">2: Pulling from library/registry... status: downloaded</span><br><br>
+          <span class="comment"># Step 2: Verify it's running</span><br>
+          <span class="prompt">$</span> <span class="cmd">docker ps --filter name=registry</span><br>
+          <span class="output">CONTAINER ID   IMAGE        COMMAND                  STATUS         PORTS</span><br>
+          <span class="output">a1b2c3d4e5f6   registry:2   "/entrypoint.sh /etc…"   Up 2 minutes   0.0.0.0:5000-&gt;5000/tcp</span><br><br>
+          <span class="comment"># Check the registry API (should return {})</span><br>
+          <span class="prompt">$</span> <span class="cmd">curl http://localhost:5000/v2/</span><br>
+          <span class="output">{}</span>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+          <h3 class="font-semibold text-emerald-300 mb-2"><i class="fas fa-tag mr-1"></i> Tag &amp; Push</h3>
+          <div class="code-block">
+            <span class="comment"># Tag an existing image for the local registry</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker image tag nginx localhost:5000/my-nginx</span><br><br>
+            <span class="comment"># Push it to the local registry</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker push localhost:5000/my-nginx</span><br>
+            <span class="output">The push refers to repository [localhost:5000/my-nginx]</span><br>
+            <span class="output">... layer(s) pushed</span><br><br>
+            <span class="comment"># Verify with the API</span><br>
+            <span class="prompt">$</span> <span class="cmd">curl http://localhost:5000/v2/_catalog</span><br>
+            <span class="output">{"repositories":["my-nginx"]}</span>
+          </div>
+        </div>
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+          <h3 class="font-semibold text-emerald-300 mb-2"><i class="fas fa-download mr-1"></i> Pull &amp; Remote Access</h3>
+          <div class="code-block">
+            <span class="comment"># Pull from local registry (no docker login needed)</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker pull localhost:5000/my-nginx</span><br>
+            <span class="output">Using default tag: latest</span><br>
+            <span class="output">latest: Pulling from my-nginx</span><br>
+            <span class="output">... status: downloaded</span><br><br>
+            <span class="comment"># From another machine on the network:</span><br>
+            <span class="prompt">$</span> <span class="cmd">docker pull 192.168.56.100:5000/my-nginx</span><br>
+            <span class="output">... Pulling from my-nginx ...</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-yellow-900/20 border border-yellow-800/30 rounded-lg p-4 mb-4">
+        <p class="text-sm text-yellow-300">
+          <i class="fas fa-shield-alt mr-1"></i>
+          <strong>Note on security:</strong> The default registry runs without TLS (HTTP). For production, add TLS certificates or use a reverse proxy (like Nginx) with HTTPS. Docker requires HTTPS for external (non-localhost) registries unless you configure <code class="text-yellow-200">insecure-registries</code> in <code class="text-yellow-200">/etc/docker/daemon.json</code>.
+        </p>
+      </div>
+
+      <div class="bg-black/30 rounded-lg p-4 border border-slate-700">
+        <h3 class="font-semibold text-emerald-300 mb-2"><i class="fas fa-list mr-1"></i> Commands Summary</h3>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm">
+          <div class="flex items-start gap-2">
+            <i class="fas fa-play text-green-400 mt-1 text-xs"></i>
+            <div><code class="text-cyan-300 text-xs">docker run -d -p 5000:5000 --name registry registry:2</code><br><span class="text-gray-400 text-xs">Start the registry</span></div>
+          </div>
+          <div class="flex items-start gap-2">
+            <i class="fas fa-tag text-green-400 mt-1 text-xs"></i>
+            <div><code class="text-cyan-300 text-xs">docker tag IMAGE localhost:5000/NAME</code><br><span class="text-gray-400 text-xs">Tag for local registry</span></div>
+          </div>
+          <div class="flex items-start gap-2">
+            <i class="fas fa-upload text-green-400 mt-1 text-xs"></i>
+            <div><code class="text-cyan-300 text-xs">docker push localhost:5000/NAME</code><br><span class="text-gray-400 text-xs">Push image</span></div>
+          </div>
+          <div class="flex items-start gap-2">
+            <i class="fas fa-download text-green-400 mt-1 text-xs"></i>
+            <div><code class="text-cyan-300 text-xs">docker pull localhost:5000/NAME</code><br><span class="text-gray-400 text-xs">Pull image</span></div>
+          </div>
+          <div class="flex items-start gap-2">
+            <i class="fas fa-search text-green-400 mt-1 text-xs"></i>
+            <div><code class="text-cyan-300 text-xs">curl localhost:5000/v2/_catalog</code><br><span class="text-gray-400 text-xs">List images in registry</span></div>
+          </div>
+          <div class="flex items-start gap-2">
+            <i class="fas fa-stop text-green-400 mt-1 text-xs"></i>
+            <div><code class="text-cyan-300 text-xs">docker stop registry && docker rm registry</code><br><span class="text-gray-400 text-xs">Stop &amp; clean up</span></div>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- ======================================================================= -->
+    <!-- Key Takeaways -->
+    <!-- ======================================================================= -->
+    <div class="glow-card p-5 md:p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-fade-in">
+      <h2 class="text-lg md:text-xl font-bold text-white mb-3"><i class="fas fa-clipboard-list text-indigo-400 mr-2"></i> Key Takeaways</h2>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 text-sm text-gray-300">
+        <div class="flex items-start gap-2">
+          <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+          <span><strong>Docker Hub</strong> is the default public registry. <code class="text-cyan-300 text-xs">docker run nginx</code> pulls from <code class="text-cyan-300 text-xs">docker.io/library/nginx</code>.</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+          <span><strong>Third-party registries</strong> (gcr.io, ECR, ACR) work identically but use their own URL prefix.</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+          <span><strong>Private registries</strong> require <code class="text-cyan-300 text-xs">docker login</code> — credentials are stored in <code class="text-cyan-300 text-xs">~/.docker/config.json</code>.</span>
+        </div>
+        <div class="flex items-start gap-2">
+          <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+          <span><strong>Local registry</strong> is a single <code class="text-cyan-300 text-xs">docker run registry:2</code> away. Tag → push → pull.</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Back Navigation Bottom -->
+    <div class="text-center animate-fade-in">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-arrow-left"></i> Back to Cheatsheet Home
+      </a>
+    </div>
+
+  </div>
+
+  <!-- Active section highlight on scroll -->
+  <script>
+    (function() {
+      const sections = document.querySelectorAll('section[id]');
+      const links = document.querySelectorAll('.section-link');
+      function updateActive() {
+        let current = '';
+        sections.forEach(s => {
+          const top = s.getBoundingClientRect().top;
+          if (top < 300) current = s.id;
+        });
+        links.forEach(l => {
+          l.classList.toggle('active', l.getAttribute('href') === '#' + current);
+        });
+      }
+      window.addEventListener('scroll', updateActive);
+      updateActive();
+    })();
+  </script>
+
+</body>
+</html>

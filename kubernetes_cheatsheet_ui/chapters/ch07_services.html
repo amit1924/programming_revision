@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 7: Services — Kubernetes Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    pre { background: #0a0a14; border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1.25rem; overflow-x: auto; font-size: 0.85rem; }
+    code { font-family: 'Fira Code', 'Cascadia Code', monospace; }
+    .cmd { color: #22d3ee; }
+    .kw { color: #c084fc; }
+    .str { color: #86efac; }
+    .cm { color: #64748b; font-style: italic; }
+    .num { color: #fbbf24; }
+    .output { color: #94a3b8; }
+    .highlight { background: rgba(99,102,241,0.1); border-left: 3px solid #6366f1; padding: 0.75rem 1rem; border-radius: 0.5rem; margin: 1rem 0; }
+    .keyword-badge { background: rgba(99,102,241,0.15); color: #818cf8; padding: 0.15rem 0.5rem; border-radius: 0.25rem; font-size: 0.75rem; font-weight: 600; }
+    .diagram-box { background: rgba(15,15,26,0.8); border: 1px solid #1e293b; border-radius: 0.75rem; padding: 1.5rem; font-family: 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.6; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <a href="../index.html" class="inline-flex items-center text-sm text-gray-400 hover:text-white transition-colors mb-6 group">
+      <i class="fas fa-arrow-left mr-2 group-hover:-translate-x-1 transition-transform"></i> Back to Cheatsheet
+    </a>
+
+    <!-- Title -->
+    <div class="text-center mb-10 animate-fade-in">
+      <i class="fas fa-network-wired text-5xl text-violet-400 mb-3"></i>
+      <h1 class="text-4xl md:text-5xl font-bold gradient-text">Chapter 7: Services</h1>
+      <p class="text-gray-400 mt-2">NodePort · ClusterIP · LoadBalancer — Connecting PODs to the Outside World</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap gap-2 mb-10 justify-center text-sm">
+      <a href="#introduction" class="px-3 py-1.5 rounded-full bg-slate-800 text-gray-300 hover:bg-indigo-600 hover:text-white transition-all"><i class="fas fa-question-circle mr-1"></i>What</a>
+      <a href="#external-access" class="px-3 py-1.5 rounded-full bg-slate-800 text-gray-300 hover:bg-indigo-600 hover:text-white transition-all"><i class="fas fa-external-link-alt mr-1"></i>Problem</a>
+      <a href="#nodeport" class="px-3 py-1.5 rounded-full bg-slate-800 text-gray-300 hover:bg-indigo-600 hover:text-white transition-all"><i class="fas fa-ethernet mr-1"></i>NodePort</a>
+      <a href="#nodeport-multi-pod" class="px-3 py-1.5 rounded-full bg-slate-800 text-gray-300 hover:bg-indigo-600 hover:text-white transition-all"><i class="fas fa-layer-group mr-1"></i>Multi-POD</a>
+      <a href="#nodeport-multi-node" class="px-3 py-1.5 rounded-full bg-slate-800 text-gray-300 hover:bg-indigo-600 hover:text-white transition-all"><i class="fas fa-server mr-1"></i>Multi-Node</a>
+      <a href="#clusterip" class="px-3 py-1.5 rounded-full bg-slate-800 text-gray-300 hover:bg-indigo-600 hover:text-white transition-all"><i class="fas fa-arrows-alt-h mr-1"></i>ClusterIP</a>
+      <a href="#loadbalancer" class="px-3 py-1.5 rounded-full bg-slate-800 text-gray-300 hover:bg-indigo-600 hover:text-white transition-all"><i class="fas fa-balance-scale mr-1"></i>LoadBalancer</a>
+      <a href="#commands" class="px-3 py-1.5 rounded-full bg-slate-800 text-gray-300 hover:bg-indigo-600 hover:text-white transition-all"><i class="fas fa-terminal mr-1"></i>Commands</a>
+    </div>
+
+    <!-- ======================== 1. INTRODUCTION ======================== -->
+    <div id="introduction" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6">
+      <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-question-circle text-violet-400 mr-2"></i>1. What are Services?</h2>
+      <p class="text-gray-300 leading-relaxed mb-4">
+        In Kubernetes, <strong class="text-white">Services</strong> are an abstraction that enables communication between various components inside and outside of your application. They connect groups of PODs together, and they connect users to PODs.
+      </p>
+      <ul class="space-y-2 text-gray-300">
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i><strong class="text-white">Connect PODs to users</strong> — e.g., a user on a laptop talks to a web app running inside a POD.</li>
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i><strong class="text-white">Connect microservices</strong> — e.g., a front-end POD talks to a back-end POD. Services enable loose coupling.</li>
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i><strong class="text-white">Provide a stable endpoint</strong> — Even if PODs die and get recreated (new IPs), the Service IP stays the same.</li>
+      </ul>
+
+      <div class="highlight mt-4">
+        <i class="fas fa-info-circle text-indigo-400 mr-2"></i>
+        <strong>Key Insight:</strong> PODs are ephemeral — they come and go. A Service gives you a <strong class="text-white">stable, permanent IP and DNS name</strong> to reach your PODs, regardless of how many there are or which node they run on.
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700 text-center">
+          <i class="fas fa-ethernet text-2xl text-cyan-400 mb-2"></i>
+          <div class="font-semibold text-white">NodePort</div>
+          <div class="text-gray-400 text-xs mt-1">External access via node IP + port</div>
+        </div>
+        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700 text-center">
+          <i class="fas fa-arrows-alt-h text-2xl text-indigo-400 mb-2"></i>
+          <div class="font-semibold text-white">ClusterIP</div>
+          <div class="text-gray-400 text-xs mt-1">Internal communication (default)</div>
+        </div>
+        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700 text-center">
+          <i class="fas fa-balance-scale text-2xl text-emerald-400 mb-2"></i>
+          <div class="font-semibold text-white">LoadBalancer</div>
+          <div class="text-gray-400 text-xs mt-1">Cloud load balancer (GCP, AWS, Azure)</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== 2. EXTERNAL ACCESS PROBLEM ======================== -->
+    <div id="external-access" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6">
+      <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-external-link-alt text-violet-400 mr-2"></i>2. The External Access Problem</h2>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        Imagine your Kubernetes cluster has a Node with IP <code class="text-cyan-400">192.168.1.2</code>. Inside that node, a POD is running your application. The POD has its own internal IP — something like <code class="text-cyan-400">10.244.0.2</code>.
+      </p>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        You are on your laptop with IP <code class="text-cyan-400">192.168.1.10</code>. Can you curl <code class="text-cyan-400">10.244.0.2</code> from your laptop?
+      </p>
+
+      <div class="diagram-box mb-4">
+        <div class="text-center text-gray-400 mb-3 font-semibold"><i class="fas fa-network-wired mr-1"></i> Network Boundaries</div>
+        <div class="grid grid-cols-3 gap-4 text-center">
+          <div>
+            <div class="text-cyan-400">Your Laptop</div>
+            <div class="text-gray-500 text-xs">192.168.1.10</div>
+            <div class="text-gray-500 text-xs mt-1">❌ Cannot reach POD</div>
+          </div>
+          <div>
+            <i class="fas fa-arrow-right text-gray-600 text-xl"></i>
+          </div>
+          <div>
+            <div class="text-indigo-400">K8s Node</div>
+            <div class="text-gray-500 text-xs">192.168.1.2</div>
+            <div class="text-gray-500 text-xs mt-1">📦 POD IP: 10.244.0.2</div>
+          </div>
+        </div>
+        <div class="text-center text-gray-500 text-xs mt-3 border-t border-slate-700 pt-3">
+          <i class="fas fa-exclamation-triangle text-yellow-400 mr-1"></i>
+          Laptop and POD are on <strong class="text-white">different networks</strong>. PODs live on an internal cluster network (10.x.x.x). You cannot curl 10.244.0.2 from your laptop.
+        </div>
+      </div>
+
+      <p class="text-gray-300 leading-relaxed mb-3">
+        What about SSH into the node? Yes, you could SSH into <code class="text-cyan-400">192.168.1.2</code> and then curl from inside the node — but that's not what users want. Users need a URL or IP they can hit from their browser.
+      </p>
+
+      <div class="highlight">
+        <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+        <strong>The Solution:</strong> A <strong class="text-white">Service</strong> maps a port on the Node (accessible from outside) to a port on the POD. Now you can hit <code class="text-cyan-400">curl http://192.168.1.2:30008</code> and reach your app.
+      </div>
+    </div>
+
+    <!-- ======================== 3. NODEPORT SERVICE ======================== -->
+    <div id="nodeport" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6">
+      <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-ethernet text-violet-400 mr-2"></i>3. NodePort Service</h2>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        A <strong class="text-white">NodePort</strong> Service listens on a port on the Node and forwards traffic to a port on the POD. Three ports are involved:
+      </p>
+
+      <!-- Three ports explanation -->
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="keyword-badge">TargetPort</span>
+            <i class="fas fa-arrow-right text-xs text-gray-500"></i>
+          </div>
+          <div class="text-2xl font-bold text-emerald-400">80</div>
+          <div class="text-xs text-gray-400 mt-1">Port on the POD where the app is running (e.g., nginx listens on 80).</div>
+        </div>
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="keyword-badge">Port</span>
+            <i class="fas fa-arrow-right text-xs text-gray-500"></i>
+          </div>
+          <div class="text-2xl font-bold text-indigo-400">80</div>
+          <div class="text-xs text-gray-400 mt-1">Port on the Service itself (the virtual IP inside the cluster).</div>
+        </div>
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="keyword-badge">NodePort</span>
+            <i class="fas fa-arrow-right text-xs text-gray-500"></i>
+          </div>
+          <div class="text-2xl font-bold text-cyan-400">30008</div>
+          <div class="text-xs text-gray-400 mt-1">Port on the Node itself. Range: 30000–32767. This is how external users connect.</div>
+        </div>
+      </div>
+
+      <!-- Flow diagram -->
+      <div class="diagram-box mb-4">
+        <div class="text-center text-gray-400 mb-3 font-semibold"><i class="fas fa-exchange-alt mr-1"></i> Traffic Flow: NodePort Service</div>
+        <pre class="text-xs leading-relaxed bg-transparent border-0 p-0">User <span class="text-cyan-400">(curl 192.168.1.2:30008)</span>
+
+      |  <span class="text-gray-600">// step 1 — hits Node on port 30008</span>
+      ▼
+┌─────────────────────────────────┐
+│  <span class="text-cyan-400">Node</span>  <span class="text-gray-500">(192.168.1.2)</span>          │
+│  ┌───────────────────────────┐  │
+│  │  <span class="text-indigo-400">NodePort: 30008</span>           │  │
+│  └──────────┬────────────────┘  │
+│             │                   │
+│             ▼                   │
+│  ┌───────────────────────────┐  │
+│  │  <span class="text-emerald-400">Service Port: 80</span>          │  │  <span class="text-gray-600">// step 2 — Service forwards</span>
+│  └──────────┬────────────────┘  │
+│             │                   │
+│             ▼                   │
+│  ┌───────────────────────────┐  │
+│  │  <span class="text-amber-400">TargetPort: 80</span> (on POD)    │  │  <span class="text-gray-600">// step 3 — reaches POD</span>
+│  │  <span class="text-gray-500">POD IP: 10.244.0.2</span>        │  │
+│  └───────────────────────────┘  │
+└─────────────────────────────────┘</pre>
+      </div>
+
+      <!-- NodePort YAML -->
+      <h3 class="text-lg font-semibold text-white mt-6 mb-3"><i class="fas fa-file-code text-indigo-400 mr-2"></i>NodePort Service YAML</h3>
+
+      <pre><span class="cm"># service-definition.yml</span>
+<span class="kw">apiVersion:</span> <span class="str">v1</span>
+<span class="kw">kind:</span> <span class="str">Service</span>
+<span class="kw">metadata:</span>
+  <span class="kw">name:</span> <span class="str">myapp-service</span>
+<span class="kw">spec:</span>
+  <span class="kw">type:</span> <span class="str">NodePort</span>
+  <span class="kw">ports:</span>
+  - <span class="kw">targetPort:</span> <span class="num">80</span>
+    <span class="kw">port:</span> <span class="num">80</span>
+    <span class="kw">nodePort:</span> <span class="num">30008</span>
+  <span class="kw">selector:</span>
+    <span class="kw">app:</span> <span class="str">myapp</span>
+    <span class="kw">type:</span> <span class="str">front-end</span></pre>
+
+      <div class="mt-4 space-y-2 text-sm text-gray-300">
+        <p><i class="fas fa-circle text-[6px] text-emerald-400 mr-2 align-middle"></i><strong class="text-white">Mandatory:</strong> Only <code class="text-cyan-400">port</code> (service port) is required.</p>
+        <p><i class="fas fa-circle text-[6px] text-emerald-400 mr-2 align-middle"></i><strong class="text-white">Defaults:</strong> <code class="text-cyan-400">targetPort</code> defaults to the value of <code class="text-cyan-400">port</code>. <code class="text-cyan-400">nodePort</code> is auto-assigned from the 30000–32767 range if omitted.</p>
+        <p><i class="fas fa-circle text-[6px] text-emerald-400 mr-2 align-middle"></i><strong class="text-white">Selector:</strong> Links the Service to PODs. Any POD with matching labels (<code class="text-cyan-400">app: myapp</code> AND <code class="text-cyan-400">type: front-end</code>) gets traffic.</p>
+      </div>
+
+      <!-- Commands -->
+      <h3 class="text-lg font-semibold text-white mt-6 mb-3"><i class="fas fa-terminal text-emerald-400 mr-2"></i>Commands</h3>
+
+      <pre><span class="cmd">$ kubectl create -f service-definition.yml</span>
+<span class="output">service/myapp-service created</span>
+
+<span class="cmd">$ kubectl get services</span>
+<span class="output">NAME            TYPE        CLUSTER-IP       PORT(S)        AGE
+myapp-service   NodePort    10.103.123.4     80:30008/TCP   10s</span>
+
+<span class="cm"># Describe for details</span>
+<span class="cmd">$ kubectl describe service myapp-service</span>
+<span class="output">Name:                     myapp-service
+Namespace:                default
+Selector:                 app=myapp,type=front-end
+Type:                     NodePort
+IP Family Policy:         SingleStack
+IP Families:              IPv4
+IP:                       10.103.123.4
+IPs:                      10.103.123.4
+Port:                     <unset>  80/TCP
+TargetPort:               80/TCP
+NodePort:                 <unset>  30008/TCP
+Endpoints:                10.244.0.2:80
+Session Affinity:         None
+External Traffic Policy:  Cluster
+Events:                   &lt;none&gt;</span>
+
+<span class="cm"># Test from outside the cluster</span>
+<span class="cmd">$ curl http://192.168.1.2:30008</span>
+<span class="output">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+&lt;head&gt;
+&lt;title&gt;Welcome to nginx!&lt;/title&gt;
+...</span></pre>
+    </div>
+
+    <!-- ======================== 4. NODEPORT WITH MULTIPLE PODS ======================== -->
+    <div id="nodeport-multi-pod" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6">
+      <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-layer-group text-violet-400 mr-2"></i>4. NodePort with Multiple PODs</h2>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        What happens when you have <strong class="text-white">multiple PODs</strong> running your application — for example, three replicas of your web server?
+      </p>
+
+      <div class="diagram-box mb-4">
+        <div class="text-center text-gray-400 mb-3 font-semibold"><i class="fas fa-random mr-1"></i> Service as a Built-In Load Balancer</div>
+        <pre class="text-xs leading-relaxed bg-transparent border-0 p-0">          <span class="text-cyan-400">External User</span>
+                │
+                ▼
+        ┌───────────────┐
+        │  <span class="text-indigo-400">NodePort: 30008</span>  │
+        └───────┬───────┘
+                │
+        ┌───────▼───────┐
+        │  <span class="text-white">Service</span>         │  <span class="text-gray-500">// random algorithm</span>
+        │  (<span class="text-emerald-400">load balancer</span>)  │
+        └──┬─────┬─────┬┘
+           │     │     │
+           ▼     ▼     ▼
+        ┌────┐ ┌────┐ ┌────┐
+        │POD1│ │POD2│ │POD3│  <span class="text-gray-500">// all match selector labels</span>
+        │app  │ │app  │ │app  │
+        └────┘ └────┘ └────┘</pre>
+      </div>
+
+      <ul class="space-y-3 text-gray-300">
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i>The Service <strong class="text-white">automatically discovers</strong> all PODs whose labels match the <code class="text-cyan-400">selector</code> in the YAML.</li>
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i>The Service acts as a <strong class="text-white">built-in load balancer</strong>, distributing incoming traffic across all matching PODs.</li>
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i>The algorithm is <strong class="text-white">random</strong> (not round-robin). No additional configuration is needed.</li>
+      </ul>
+
+      <div class="highlight mt-4">
+        <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+        <strong>Simple:</strong> A single Service definition distributes traffic to <strong class="text-white">all</strong> PODs that match the selector. If you scale your ReplicaSet from 1 to 5 PODs, the Service automatically includes all 5.
+      </div>
+
+      <pre class="mt-4"><span class="cm"># Check the endpoints that the Service is forwarding to</span>
+<span class="cmd">$ kubectl describe service myapp-service | grep -i endpoints</span>
+<span class="output">Endpoints:                10.244.0.2:80, 10.244.0.3:80, 10.244.0.4:80</span>
+<span class="cm"># Three PODs, all receiving traffic from one Service</span></pre>
+    </div>
+
+    <!-- ======================== 5. NODEPORT ACROSS MULTIPLE NODES ======================== -->
+    <div id="nodeport-multi-node" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6">
+      <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-server text-violet-400 mr-2"></i>5. NodePort Across Multiple Nodes</h2>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        In a real cluster, you have <strong class="text-white">multiple Nodes</strong>. A Service spans <strong class="text-white">all Nodes</strong> in the cluster automatically. The same NodePort is opened on every single node.
+      </p>
+
+      <div class="diagram-box mb-4">
+        <div class="text-center text-gray-400 mb-3 font-semibold"><i class="fas fa-globe mr-1"></i> Service Across a 3-Node Cluster</div>
+        <pre class="text-xs leading-relaxed bg-transparent border-0 p-0">         <span class="text-cyan-400">User</span>
+           │
+    ┌──────┼──────────────┐
+    │      │              │
+    ▼      ▼              ▼
+┌────────┐ ┌────────┐ ┌────────┐
+│<span class="text-indigo-400">Node 1</span> │ │<span class="text-indigo-400">Node 2</span> │ │<span class="text-indigo-400">Node 3</span> │
+│10.0.0.1│ │10.0.0.2│ │10.0.0.3│
+└───┬────┘ └───┬────┘ └───┬────┘
+    │         │          │
+    ▼         ▼          ▼
+30008        30008       30008     <span class="text-gray-500">// same port on ALL nodes</span>
+    │         │          │
+    ▼         ▼          ▼
+┌────────┐ ┌────────┐ ┌────────┐
+│<span class="text-emerald-400">POD A</span>  │ │<span class="text-emerald-400">POD B</span>  │ │<span class="text-emerald-400">POD C</span>  │
+└────────┘ └────────┘ └────────┘
+
+  <span class="text-gray-500">// Hitting any node IP + 30008 reaches one of the PODs</span></pre>
+      </div>
+
+      <ul class="space-y-3 text-gray-300">
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i><strong class="text-white">Same port on every node:</strong> If you set <code class="text-cyan-400">nodePort: 30008</code>, port 30008 is opened on <em>every</em> node in the cluster.</li>
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i><strong class="text-white">Any node works:</strong> You can access your app using the IP of <em>any</em> node, and the Service will forward to a POD (even one running on a different node).</li>
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i><strong class="text-white">No extra config:</strong> Kubernetes handles multi-node routing automatically. One YAML file is all you need.</li>
+      </ul>
+
+      <div class="highlight">
+        <i class="fas fa-lightbulb text-yellow-400 mr-2"></i>
+        <strong>Simple:</strong> One Service works across the <strong class="text-white">entire cluster</strong>. Submit one YAML file and every node — regardless of which node the PODs are running on — can receive traffic for those PODs.
+      </div>
+
+      <pre class="mt-4"><span class="cmd">$ kubectl get nodes -o wide</span>
+<span class="output">NAME       STATUS   ROLES    INTERNAL-IP
+node-01    Ready    &lt;none&gt;   192.168.1.2
+node-02    Ready    &lt;none&gt;   192.168.1.3
+node-03    Ready    &lt;none&gt;   192.168.1.4</span>
+
+<span class="cm"># Any of these work — all reach the same Service</span>
+<span class="cmd">$ curl http://192.168.1.2:30008</span>
+<span class="cmd">$ curl http://192.168.1.3:30008</span>
+<span class="cmd">$ curl http://192.168.1.4:30008</span></pre>
+    </div>
+
+    <!-- ======================== 6. CLUSTERIP SERVICE ======================== -->
+    <div id="clusterip" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6">
+      <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-arrows-alt-h text-violet-400 mr-2"></i>6. ClusterIP Service (Internal Communication)</h2>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        A <strong class="text-white">ClusterIP</strong> Service creates a virtual IP inside the cluster that other services and PODs can use to communicate. This is the <strong class="text-white">default</strong> type of Service.
+      </p>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        Think of a microservices application: you have a <strong class="text-white">front-end</strong> POD that needs to talk to a <strong class="text-white">back-end</strong> POD. The back-end PODs might be scaled up or down, and their IPs change. A ClusterIP Service gives the front-end a stable endpoint to reach the back-end.
+      </p>
+
+      <div class="diagram-box mb-4">
+        <div class="text-center text-gray-400 mb-3 font-semibold"><i class="fas fa-project-diagram mr-1"></i> ClusterIP: Front-End to Back-End</div>
+        <pre class="text-xs leading-relaxed bg-transparent border-0 p-0">┌─────────────────────────────────────────────────┐
+│  <span class="text-white">Kubernetes Cluster</span>                            │
+│                                                   │
+│  ┌────────────┐        ┌──────────────────┐       │
+│  │ <span class="text-cyan-400">Front-End</span>   │ ─────► │ <span class="text-indigo-400">ClusterIP Service</span>  │       │
+│  │ <span class="text-gray-500">POD</span>          │        │ <span class="text-gray-500">10.103.123.5 / "back-end"</span> │       │
+│  └────────────┘        └────────┬─────────┘       │
+│                                  │                  │
+│                  ┌───────────────┼───────────────┐  │
+│                  │               │               │  │
+│                  ▼               ▼               ▼  │
+│             ┌────────┐    ┌────────┐    ┌────────┐ │
+│             │<span class="text-emerald-400">Backend</span> │    │<span class="text-emerald-400">Backend</span> │    │<span class="text-emerald-400">Backend</span> │ │
+│             │<span class="text-gray-500">POD 1</span>   │    │<span class="text-gray-500">POD 2</span>   │    │<span class="text-gray-500">POD 3</span>   │ │
+│             └────────┘    └────────┘    └────────┘ │
+└─────────────────────────────────────────────────┘</pre>
+      </div>
+
+      <!-- ClusterIP YAML -->
+      <h3 class="text-lg font-semibold text-white mt-6 mb-3"><i class="fas fa-file-code text-indigo-400 mr-2"></i>ClusterIP YAML</h3>
+
+      <pre><span class="cm"># back-end-service.yml</span>
+<span class="kw">apiVersion:</span> <span class="str">v1</span>
+<span class="kw">kind:</span> <span class="str">Service</span>
+<span class="kw">metadata:</span>
+  <span class="kw">name:</span> <span class="str">back-end</span>
+<span class="kw">spec:</span>
+  <span class="kw">type:</span> <span class="str">ClusterIP</span>
+  <span class="kw">ports:</span>
+  - <span class="kw">targetPort:</span> <span class="num">80</span>
+    <span class="kw">port:</span> <span class="num">80</span>
+  <span class="kw">selector:</span>
+    <span class="kw">app:</span> <span class="str">myapp</span>
+    <span class="kw">type:</span> <span class="str">back-end</span></pre>
+
+      <div class="mt-4 space-y-2 text-sm text-gray-300">
+        <p><i class="fas fa-circle text-[6px] text-emerald-400 mr-2 align-middle"></i>Since <code class="text-cyan-400">ClusterIP</code> is the <strong class="text-white">default</strong> type, you could even omit the <code class="text-cyan-400">type</code> field entirely.</p>
+        <p><i class="fas fa-circle text-[6px] text-emerald-400 mr-2 align-middle"></i>Other PODs access this Service using the <strong class="text-white">cluster IP</strong> or the <strong class="text-white">service name</strong> (Kubernetes DNS resolves the service name to the cluster IP).</p>
+      </div>
+
+      <pre><span class="cm"># Create the Service</span>
+<span class="cmd">$ kubectl create -f back-end-service.yml</span>
+<span class="output">service/back-end created</span>
+
+<span class="cm"># View the Service</span>
+<span class="cmd">$ kubectl get service back-end</span>
+<span class="output">NAME       TYPE        CLUSTER-IP      PORT(S)   AGE
+back-end   ClusterIP   10.103.123.5    80/TCP    5s</span>
+
+<span class="cm"># From another POD, access the back-end using service name</span>
+<span class="cmd">$ kubectl exec front-end-pod -- curl http://back-end:80</span>
+<span class="cm"># or using cluster IP</span>
+<span class="cmd">$ kubectl exec front-end-pod -- curl http://10.103.123.5:80</span>
+<span class="output">&lt;!DOCTYPE html&gt;
+&lt;html&gt;
+...</span></pre>
+
+      <div class="highlight mt-4">
+        <i class="fas fa-info-circle text-indigo-400 mr-2"></i>
+        <strong>Kubernetes DNS:</strong> When you create a Service, Kubernetes automatically creates a DNS record. Any other POD in the same namespace can reach it via <code class="text-cyan-400">http://back-end:80</code> — no need to hardcode IPs.
+      </div>
+    </div>
+
+    <!-- ======================== 7. LOADBALANCER SERVICE ======================== -->
+    <div id="loadbalancer" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6">
+      <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-balance-scale text-violet-400 mr-2"></i>7. LoadBalancer Service</h2>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        A <strong class="text-white">LoadBalancer</strong> Service provisions a native cloud load balancer (e.g., GCP HTTP(S) Load Balancer, AWS ELB, Azure Load Balancer). This gives you a <strong class="text-white">single, public IP or DNS name</strong> that end users can hit.
+      </p>
+
+      <div class="diagram-box mb-4">
+        <div class="text-center text-gray-400 mb-3 font-semibold"><i class="fas fa-cloud mr-1"></i> LoadBalancer on a Cloud Platform</div>
+        <pre class="text-xs leading-relaxed bg-transparent border-0 p-0">              <span class="text-cyan-400">End Users</span>
+                   │
+                   ▼
+          ┌─────────────────┐
+          │  <span class="text-emerald-400">Cloud Load Balancer</span>  │  <span class="text-gray-500">// GCP / AWS / Azure</span>
+          │  <span class="text-gray-500">Public IP: 35.xxx.xxx.xxx</span> │
+          └────────┬────────┘
+                   │
+          ┌────────▼────────┐
+          │  <span class="text-indigo-400">Service (port 80)</span>   │
+          └──┬─────┬─────┬──┘
+             │     │     │
+             ▼     ▼     ▼
+          ┌────┐ ┌────┐ ┌────┐
+          │POD1│ │POD2│ │POD3│
+          └────┘ └────┘ └────┘</pre>
+      </div>
+
+      <!-- LoadBalancer YAML -->
+      <h3 class="text-lg font-semibold text-white mt-6 mb-3"><i class="fas fa-file-code text-indigo-400 mr-2"></i>LoadBalancer YAML</h3>
+
+      <pre><span class="cm"># front-end-service.yml</span>
+<span class="kw">apiVersion:</span> <span class="str">v1</span>
+<span class="kw">kind:</span> <span class="str">Service</span>
+<span class="kw">metadata:</span>
+  <span class="kw">name:</span> <span class="str">front-end</span>
+<span class="kw">spec:</span>
+  <span class="kw">type:</span> <span class="str">LoadBalancer</span>
+  <span class="kw">ports:</span>
+  - <span class="kw">targetPort:</span> <span class="num">80</span>
+    <span class="kw">port:</span> <span class="num">80</span>
+  <span class="kw">selector:</span>
+    <span class="kw">app:</span> <span class="str">myapp</span>
+    <span class="kw">type:</span> <span class="str">front-end</span></pre>
+
+      <pre><span class="cmd">$ kubectl create -f front-end-service.yml</span>
+<span class="output">service/front-end created</span>
+
+<span class="cmd">$ kubectl get service front-end</span>
+<span class="output">NAME        TYPE           CLUSTER-IP      EXTERNAL-IP   PORT(S)        AGE
+front-end   LoadBalancer   10.103.123.6    &lt;pending&gt;     80:30009/TCP   10s</span>
+
+<span class="cm"># After cloud LB provisions (may take a minute or two):</span>
+<span class="cmd">$ kubectl get service front-end</span>
+<span class="output">NAME        TYPE           CLUSTER-IP      EXTERNAL-IP     PORT(S)        AGE
+front-end   LoadBalancer   10.103.123.6    35.202.45.178   80:30009/TCP   90s</span>
+
+<span class="cm"># Now hit the public IP!</span>
+<span class="cmd">$ curl http://35.202.45.178:80</span>
+<span class="output">&lt;!DOCTYPE html&gt;
+...</span></pre>
+
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700">
+          <h4 class="font-semibold text-white mb-2"><i class="fas fa-check-circle text-emerald-400 mr-1"></i> On Cloud Platforms</h4>
+          <p class="text-sm text-gray-300">GCP, AWS, Azure provision a real load balancer. The <code class="text-cyan-400">EXTERNAL-IP</code> field changes from <code class="text-yellow-400">&lt;pending&gt;</code> to a real IP.</p>
+        </div>
+        <div class="bg-slate-800/60 p-4 rounded-lg border border-slate-700">
+          <h4 class="font-semibold text-white mb-2"><i class="fas fa-exclamation-triangle text-yellow-400 mr-1"></i> On Unsupported Platforms</h4>
+          <p class="text-sm text-gray-300">Minikube, VirtualBox, bare metal: LoadBalancer type behaves the same as <strong class="text-white">NodePort</strong>. The <code class="text-cyan-400">EXTERNAL-IP</code> stays <code class="text-yellow-400">&lt;pending&gt;</code>.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- ======================== 8. ALL COMMANDS SUMMARY ======================== -->
+    <div id="commands" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6">
+      <h2 class="text-2xl font-bold text-white mb-4"><i class="fas fa-terminal text-violet-400 mr-2"></i>8. Quick Command Reference</h2>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+          <p class="font-semibold text-white text-sm mb-2"><i class="fas fa-plus-circle text-emerald-400 mr-1"></i> Create a Service</p>
+          <p class="text-xs"><code class="text-cyan-400">kubectl create -f service.yml</code></p>
+        </div>
+        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+          <p class="font-semibold text-white text-sm mb-2"><i class="fas fa-list text-blue-400 mr-1"></i> List all Services</p>
+          <p class="text-xs"><code class="text-cyan-400">kubectl get services</code></p>
+        </div>
+        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+          <p class="font-semibold text-white text-sm mb-2"><i class="fas fa-info-circle text-indigo-400 mr-1"></i> Describe a Service</p>
+          <p class="text-xs"><code class="text-cyan-400">kubectl describe service &lt;name&gt;</code></p>
+        </div>
+        <div class="bg-slate-800/50 p-4 rounded-lg border border-slate-700">
+          <p class="font-semibold text-white text-sm mb-2"><i class="fas fa-trash-alt text-red-400 mr-1"></i> Delete a Service</p>
+          <p class="text-xs"><code class="text-cyan-400">kubectl delete service &lt;name&gt;</code></p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Bottom Navigation -->
+    <div class="flex justify-between items-center mt-10 pt-6 border-t border-slate-700 text-sm">
+      <a href="ch06_networking.html" class="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+        <i class="fas fa-arrow-left"></i> Chapter 6: Networking
+      </a>
+      <a href="../index.html" class="text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-th-large mr-1"></i> All Chapters
+      </a>
+      <a href="ch08_microservices.html" class="text-gray-400 hover:text-white transition-colors flex items-center gap-2">
+        Chapter 8: Microservices App <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="mt-8 text-center text-gray-500 text-xs">
+      <i class="fas fa-book-open mr-1"></i> Based on "Kubernetes for Absolute Beginners" by Mumshad Mannambeth
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</body>
+</html>

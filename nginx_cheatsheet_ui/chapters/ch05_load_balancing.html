@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Load Balancing — NGINX Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glow-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; padding: 1.25rem; transition: all 0.3s; }
+    .code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 1rem; font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85rem; overflow-x: auto; }
+    .code-block .kw { color: #ff79c6; }
+    .code-block .fn { color: #50fa7b; }
+    .code-block .str { color: #f1fa8c; }
+    .code-block .cm { color: #6272a4; font-style: italic; }
+    .code-block .num { color: #bd93f9; }
+    .code-block .op { color: #ff79c6; }
+    .code-block .prop { color: #8be9fd; }
+    .tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.75rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .slide-in-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-left.visible { opacity: 1; transform: translateX(0); }
+    .slide-in-right { opacity: 0; transform: translateX(30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-right.visible { opacity: 1; transform: translateX(0); }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out; }
+    .accordion-content.open { max-height: 800px; }
+    .pulse-icon { transition: transform 0.3s; }
+    .pulse-icon:hover { transform: scale(1.2); }
+    .comparison-table th { background: #1e293b; padding: 0.6rem 1rem; font-size: 0.85rem; }
+    .comparison-table td { padding: 0.6rem 1rem; font-size: 0.85rem; border-top: 1px solid #1e293b; }
+    .comparison-table tr:hover td { background: rgba(99,102,241,0.08); }
+    .badge-good { background: rgba(16,185,129,0.15); color: #6ee7b7; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-bad { background: rgba(239,68,68,0.15); color: #fca5a5; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .nav-link { padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.8rem; background: rgba(30,41,59,0.6); border: 1px solid #334155; transition: all 0.2s; color: #94a3b8; white-space: nowrap; }
+    .nav-link:hover { background: #334155; color: #e2e8f0; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer { background: linear-gradient(90deg, transparent, rgba(99,102,241,0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+
+    <div class="animate-fade-in mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-balance-scale text-4xl text-rose-400 pulse-icon"></i>
+        <h1 class="text-3xl md:text-4xl font-bold gradient-text">Load Balancing</h1>
+      </div>
+      <p class="text-gray-400 text-lg">Chapter 5 — Upstream configuration, health checks, load balancing methods, and C10K tuning</p>
+    </div>
+
+    <div class="overflow-x-auto pb-2 mb-8">
+      <div class="flex gap-2 min-w-max">
+        <a href="#first-lb" class="nav-link"><i class="fas fa-play mr-1"></i>First LB</a>
+        <a href="#lb-vs-rp" class="nav-link"><i class="fas fa-exchange-alt mr-1"></i>LB vs RP</a>
+        <a href="#handling-failure" class="nav-link"><i class="fas fa-exclamation-triangle mr-1"></i>Failure</a>
+        <a href="#upstream-directive" class="nav-link"><i class="fas fa-cogs mr-1"></i>Upstream</a>
+        <a href="#weighted-servers" class="nav-link"><i class="fas fa-weight mr-1"></i>Weighted</a>
+        <a href="#health-checks" class="nav-link"><i class="fas fa-heartbeat mr-1"></i>Health</a>
+        <a href="#removing-server" class="nav-link"><i class="fas fa-minus-circle mr-1"></i>Remove</a>
+        <a href="#backup-servers" class="nav-link"><i class="fas fa-server mr-1"></i>Backup</a>
+        <a href="#slow-start" class="nav-link"><i class="fas fa-tachometer-alt mr-1"></i>Slow Start</a>
+        <a href="#dns-resolution" class="nav-link"><i class="fas fa-globe mr-1"></i>DNS</a>
+        <a href="#lb-methods" class="nav-link"><i class="fas fa-random mr-1"></i>Methods</a>
+        <a href="#c10k" class="nav-link"><i class="fas fa-chart-line mr-1"></i>C10K</a>
+        <a href="#tuning-linux" class="nav-link"><i class="fas fa-tachometer-alt mr-1"></i>Tuning</a>
+        <a href="#nginx-vs-elb" class="nav-link"><i class="fas fa-balance-scale mr-1"></i>nginx vs ELB</a>
+        <a href="#http-tcp-lb" class="nav-link"><i class="fas fa-network-wired mr-1"></i>HTTP/TCP</a>
+      </div>
+    </div>
+
+    <div id="first-lb" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-play text-2xl text-rose-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Your First Load Balancer</h2>
+      </div>
+      <p class="text-gray-300 mb-3">You've deployed a Rails app to a single server. Mom submits it to Reddit. It hits the front page. Thousands of visitors arrive. One server can't handle the load — you need to scale out with a load balancer.</p>
+      <p class="text-gray-300 mb-3">The load balancer receives all incoming traffic and distributes it across a pool of application servers. nginx runs as a software load balancer using the <code class="text-cyan-300">http_proxy</code> module.</p>
+      <p class="text-gray-300 mb-3">Most basic config:</p>
+      <div class="code-block mb-3">
+        http {<br>
+        &nbsp;&nbsp;upstream backend {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server 192.0.2.10;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server 192.0.2.11;<br>
+        &nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;listen 80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;location / { proxy_pass http://backend; }<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+      <p class="text-gray-300">The default load balancing method is <strong class="text-amber-300">round-robin</strong> — first request to 192.0.2.10, second to 192.0.2.11, third to 192.0.2.10, and so on. The <code class="text-cyan-300">proxy_pass</code> + <code class="text-cyan-300">upstream</code> directives make this work.</p>
+    </div>
+
+    <div id="lb-vs-rp" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-exchange-alt text-2xl text-cyan-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Load Balancing vs Reverse Proxy</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Load balancing is a form of reverse proxying with three fundamental differences:</p>
+      <div class="space-y-3 mb-3">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <span class="text-gray-200 font-medium"><i class="fas fa-arrow-right text-emerald-400 mr-2"></i>1. Backends</span>
+          <p class="text-gray-400 text-sm mt-1">Load balancers typically reverse proxy across <strong class="text-amber-300">many</strong> backends, while a traditional reverse proxy serves a single backend.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <span class="text-gray-200 font-medium"><i class="fas fa-arrow-right text-emerald-400 mr-2"></i>2. Layer</span>
+          <p class="text-gray-400 text-sm mt-1">Load balancers operate at Layer 7 (HTTP) <strong class="text-amber-300">or</strong> Layer 4 (TCP). Reverse proxies typically operate at Layer 7 only.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <span class="text-gray-200 font-medium"><i class="fas fa-arrow-right text-emerald-400 mr-2"></i>3. Scale</span>
+          <p class="text-gray-400 text-sm mt-1">Load balancers see <strong class="text-amber-300">10,000+ req/s</strong>, while an app server handles 100&ndash;200 req/s. That's 20x the traffic.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="handling-failure" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-exclamation-triangle text-2xl text-amber-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Handling Failure</h2>
+      </div>
+      <p class="text-gray-300 mb-3">When a server crashes, trips over a power cord, or just goes away — by default, a failed server is removed from the pool for <strong class="text-amber-300">10 seconds</strong>.</p>
+      <p class="text-gray-300 mb-3">Load balancers solve two fundamental problems:</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-arrows-alt-h text-emerald-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Horizontal Scaling</span>
+          <p class="text-gray-400 text-sm mt-1">Spread load across 5 cheap medium-powered servers instead of one single very-powerful expensive server.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-shield-alt text-emerald-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">High Availability</span>
+          <p class="text-gray-400 text-sm mt-1">Servers are ephemeral. Load balancers provide redundancy — when one dies, traffic goes to the others.</p>
+        </div>
+      </div>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300 font-medium"><i class="fas fa-question-circle text-amber-400 mr-2"></i>Who load balances to load balancers?</p>
+        <p class="text-gray-400 text-sm mt-2">With a single load balancer, you're back to a single point of failure. The answer is <strong class="text-amber-300">DNS</strong>. Use DNS load balancing to present multiple IPs for a single A Record.</p>
+      </div>
+      <div class="code-block mb-3">
+        <span class="cm"># dig A example.com shows multiple A records</span><br>
+        example.com. &nbsp;&nbsp;287 IN &nbsp;&nbsp;A &nbsp;&nbsp;208.0.113.36<br>
+        example.com. &nbsp;&nbsp;287 IN &nbsp;&nbsp;A &nbsp;&nbsp;208.0.113.34<br>
+        example.com. &nbsp;&nbsp;287 IN &nbsp;&nbsp;A &nbsp;&nbsp;208.0.113.38
+      </div>
+      <div class="space-y-2 text-gray-300 mb-3">
+        <p><i class="fas fa-times-circle text-rose-400 mr-2"></i><strong class="text-rose-300">DNS drawbacks:</strong> poor clients use first IP, DNS caching, no failure indication.</p>
+        <p><i class="fas fa-check-circle text-emerald-400 mr-2"></i><strong class="text-emerald-300">Solution:</strong> DNS + <strong class="text-amber-300">keepalived</strong> (heartbeat + IP takeover via ARP broadcast).</p>
+        <p><i class="fas fa-check-circle text-emerald-400 mr-2"></i><strong class="text-emerald-300">AWS note:</strong> keepalived 1.2.8+ supports unicast and works on AWS where broadcast is filtered.</p>
+      </div>
+    </div>
+
+    <div id="upstream-directive" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-cogs text-2xl text-blue-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Configuring the Upstream Directive</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">upstream</code> block represents a group of servers. Servers can be IP addresses, hostnames, unix sockets, or a mix:</p>
+      <div class="code-block">
+        upstream backend {<br>
+        <br>
+        &nbsp;&nbsp;<span class="cm"># IP Address with Port</span><br>
+        &nbsp;&nbsp;server 192.0.2.10:443;<br>
+        <br>
+        &nbsp;&nbsp;<span class="cm"># Hostname</span><br>
+        &nbsp;&nbsp;server app1.example.com;<br>
+        <br>
+        &nbsp;&nbsp;<span class="cm"># Unix Socket</span><br>
+        &nbsp;&nbsp;server unix:/u/apps/my_app/current/tmp/unicorn.sock;<br>
+        }
+      </div>
+    </div>
+
+    <div id="weighted-servers" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-weight text-2xl text-orange-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Weighted Servers</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Weights alter the proportion of traffic to each server. Useful for faster hardware or testing changes with less traffic.</p>
+      <div class="code-block mb-3">
+        upstream backend {<br>
+        &nbsp;&nbsp;server app1.example.com weight=3;<br>
+        &nbsp;&nbsp;server app2.example.com;<br>
+        &nbsp;&nbsp;server app3.example.com;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">app1 gets <strong class="text-amber-300">3x</strong> more traffic (weight 3 vs default 1).</p>
+      <p class="text-gray-300">You can also lower weight to test changes — a server with weight 1 in a pool of weight 2+2+1 receives only 20% of traffic.</p>
+    </div>
+
+    <div id="health-checks" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-heartbeat text-2xl text-green-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Health Checks</h2>
+      </div>
+
+      <div class="bg-rose-900/20 border border-rose-800/40 rounded-lg p-4 mb-4">
+        <h3 class="text-rose-300 font-semibold mb-2"><i class="fas fa-exclamation-circle mr-2"></i>Open Source Limitations</h3>
+        <p class="text-gray-300 mb-2">Open source nginx only has <strong class="text-rose-300">passive health checks</strong> — checks that occur during the request lifecycle. No active health checking.</p>
+        <ul class="space-y-1 text-gray-300 text-sm">
+          <li><i class="fas fa-times-circle text-rose-400 mr-2"></i>Passive only — does not actively check health outside of requests</li>
+          <li><i class="fas fa-times-circle text-rose-400 mr-2"></i>Does not validate response content — 500 errors are considered "healthy" as long as HTTP responds</li>
+        </ul>
+      </div>
+
+      <p class="text-gray-300 mb-3">Default: 1 error = server removed from pool for <strong class="text-amber-300">10s</strong>. Three directives control behavior:</p>
+
+      <div class="space-y-4 mb-4">
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-times-circle text-rose-400 mr-2"></i>max_fails</h3>
+          <p class="text-gray-300 mb-2">Number of failures before server is removed from the pool. Default: <strong class="text-amber-300">1</strong>.</p>
+          <div class="code-block">
+            upstream backend {<br>
+            &nbsp;&nbsp;server app1.example.com max_fails=2;<br>
+            &nbsp;&nbsp;server app2.example.com max_fails=100;<br>
+            }
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-clock text-cyan-400 mr-2"></i>fail_timeout</h3>
+          <p class="text-gray-300 mb-2">Controls two things: (1) how long to remove the server from the pool, (2) the time window in which max_fails is counted. Default: <strong class="text-amber-300">10s</strong>.</p>
+          <div class="code-block">
+            upstream backend {<br>
+            &nbsp;&nbsp;server app1.example.com max_fails=2 fail_timeout=5;<br>
+            &nbsp;&nbsp;server app2.example.com max_fails=100 fail_timeout=50;<br>
+            }
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-forward text-purple-400 mr-2"></i>proxy_next_upstream</h3>
+          <p class="text-gray-300 mb-2">Controls what conditions count as a failed request (incrementing max_fails). Default: error, timeout, invalid_header.</p>
+          <div class="overflow-x-auto mb-3">
+            <table class="comparison-table w-full text-left border-collapse">
+              <thead>
+                <tr>
+                  <th class="text-gray-200 rounded-tl-lg">Name</th>
+                  <th class="text-gray-200">Meaning</th>
+                  <th class="text-gray-200 rounded-tr-lg">Default</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td class="text-gray-300 font-mono">error</td>
+                  <td class="text-gray-400">Error communicating with upstream</td>
+                  <td class="text-gray-400"><span class="badge-good">Yes</span></td>
+                </tr>
+                <tr>
+                  <td class="text-gray-300 font-mono">timeout</td>
+                  <td class="text-gray-400">Timeout during communication</td>
+                  <td class="text-gray-400"><span class="badge-good">Yes</span></td>
+                </tr>
+                <tr>
+                  <td class="text-gray-300 font-mono">invalid_header</td>
+                  <td class="text-gray-400">Empty or invalid response</td>
+                  <td class="text-gray-400"><span class="badge-good">Yes</span></td>
+                </tr>
+                <tr>
+                  <td class="text-gray-300 font-mono">http_500</td>
+                  <td class="text-gray-400">Server returned 500 status</td>
+                  <td class="text-gray-400"><span class="badge-bad">No</span></td>
+                </tr>
+                <tr>
+                  <td class="text-gray-300 font-mono">http_502</td>
+                  <td class="text-gray-400">Server returned 502 status</td>
+                  <td class="text-gray-400"><span class="badge-bad">No</span></td>
+                </tr>
+                <tr>
+                  <td class="text-gray-300 font-mono">http_503</td>
+                  <td class="text-gray-400">Server returned 503 status</td>
+                  <td class="text-gray-400"><span class="badge-bad">No</span></td>
+                </tr>
+                <tr>
+                  <td class="text-gray-300 font-mono">http_504</td>
+                  <td class="text-gray-400">Server returned 504 status</td>
+                  <td class="text-gray-400"><span class="badge-bad">No</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-gray-300 mb-2">Note: <code class="text-cyan-300">error</code>, <code class="text-cyan-300">timeout</code>, and <code class="text-cyan-300">invalid_header</code> are always enabled even if not explicitly set.</p>
+          <p class="text-gray-300 mb-2">Recommendation: turn on <strong class="text-amber-300">http_502</strong>, <strong class="text-amber-300">http_503</strong>, <strong class="text-amber-300">http_504</strong> — they indicate an unhealthy server (unresponsive or out of workers). Leave <strong class="text-amber-300">http_500</strong> off — it can be triggered by broken code, not a sick server.</p>
+          <div class="code-block">
+            location / {<br>
+            &nbsp;&nbsp;proxy_next_upstream http_502 http_503 http_504;<br>
+            &nbsp;&nbsp;proxy_pass http://backend;<br>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="removing-server" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-minus-circle text-2xl text-red-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Removing a Server from the Pool</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Use <code class="text-cyan-300">down</code> to mark a server as permanently unavailable instead of commenting it out:</p>
+      <div class="code-block mb-3">
+        upstream backend {<br>
+        &nbsp;&nbsp;server app1.example.com;<br>
+        &nbsp;&nbsp;server app2.example.com down;<br>
+        &nbsp;&nbsp;server app3.example.com;<br>
+        }
+      </div>
+      <p class="text-gray-300">Using <code class="text-cyan-300">down</code> preserves hashes when using <code class="text-cyan-300">ip_hash</code> — removing the line entirely would remap all sticky sessions.</p>
+    </div>
+
+    <div id="backup-servers" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-server text-2xl text-indigo-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Backup Servers</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Backup servers only receive traffic if all other servers in the pool are unavailable:</p>
+      <div class="code-block">
+        upstream backend {<br>
+        &nbsp;&nbsp;server app1.example.com;<br>
+        &nbsp;&nbsp;server app2.example.com;<br>
+        &nbsp;&nbsp;server app3.example.com;<br>
+        &nbsp;&nbsp;server app4.example.com backup;<br>
+        }
+      </div>
+    </div>
+
+    <div id="slow-start" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-tachometer-alt text-2xl text-yellow-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Slow Start</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Dynamically adjusts the weight over time, allowing a server to ramp up gradually. Essential for JIT languages (JVM) that need minutes to warm up:</p>
+      <div class="code-block">
+        upstream backend {<br>
+        &nbsp;&nbsp;server app1.example.com slow_start=60s;<br>
+        &nbsp;&nbsp;server app2.example.com;<br>
+        }
+      </div>
+    </div>
+
+    <div id="dns-resolution" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-globe text-2xl text-sky-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">DNS Resolution in Upstream</h2>
+      </div>
+      <div class="bg-rose-900/20 border border-rose-800/40 rounded-lg p-4 mb-4">
+        <h3 class="text-rose-300 font-semibold mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>CRITICAL GOTCHA</h3>
+        <p class="text-gray-300">nginx resolves hostnames <strong class="text-amber-300">ONCE at startup</strong> and caches the IP address <strong class="text-amber-300">FOREVER</strong>. If the IP of an upstream hostname changes (e.g., Amazon ELB), nginx will still use the old IP — proxying to the wrong website!</p>
+      </div>
+      <p class="text-gray-300 mb-3">Fix: use the <code class="text-cyan-300">resolve</code> parameter on the server directive plus the <code class="text-cyan-300">resolver</code> directive:</p>
+      <div class="code-block mb-3">
+        http {<br>
+        &nbsp;&nbsp;resolver 8.8.8.8;<br>
+        <br>
+        &nbsp;&nbsp;upstream backend {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server loadbalancer.east.elb.amazonaws.com resolve;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+      <p class="text-gray-300">Prefer a local DNS cache like <strong class="text-amber-300">dnsmasq</strong> over Google's public resolver.</p>
+    </div>
+
+    <div id="lb-methods" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-random text-2xl text-purple-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Load Balancing Methods</h2>
+      </div>
+      <p class="text-gray-300 mb-4">Open source nginx ships with four load balancing algorithms:</p>
+
+      <div class="space-y-4 mb-4">
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-sync-alt text-blue-400 mr-2"></i>Weighted Round Robin (Default)</h3>
+          <p class="text-gray-300">Chooses servers in sequential order, respects weights. First request to server 1, second to server 2, etc. Resets to top after last server.</p>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-link text-green-400 mr-2"></i>Least Connections</h3>
+          <p class="text-gray-300 mb-2">Picks the server with the fewest active connections. Enabled with <code class="text-cyan-300">least_conn</code>.</p>
+          <div class="code-block mb-2">
+            upstream {<br>
+            &nbsp;&nbsp;least_conn;<br>
+            &nbsp;&nbsp;server app1.example.com;<br>
+            &nbsp;&nbsp;server app2.example.com;<br>
+            }
+          </div>
+          <p class="text-gray-400 text-sm"><i class="fas fa-exclamation-triangle text-amber-400 mr-2"></i>Pitfall: can cause traffic spikes on recovered servers (they come back with 0 active connections). Active connection count is not a reliable indicator of server load.</p>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-fingerprint text-amber-400 mr-2"></i>IP Hash</h3>
+          <p class="text-gray-300 mb-2">Sticky sessions based on client IP. Same user always hits the same server. Enabled with <code class="text-cyan-300">ip_hash</code>.</p>
+          <div class="code-block mb-2">
+            upstream {<br>
+            &nbsp;&nbsp;ip_hash;<br>
+            &nbsp;&nbsp;server app1.example.com;<br>
+            &nbsp;&nbsp;server app2.example.com;<br>
+            }
+          </div>
+          <p class="text-gray-400 text-sm"><i class="fas fa-exclamation-triangle text-amber-400 mr-2"></i>Use <code class="text-cyan-300">down</code> not removal to preserve hashes. Not recommended — sticky sessions are often a symptom of an unscalable application.</p>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-hashtag text-cyan-400 mr-2"></i>Hash</h3>
+          <p class="text-gray-300 mb-2">Hash on any arbitrary variable (URI, host, etc.). The <code class="text-cyan-300">consistent</code> parameter uses the <strong class="text-amber-300">ketama</strong> algorithm to prevent full remap when servers are added/removed.</p>
+          <div class="code-block mb-2">
+            <span class="cm"># Hash based on URI</span><br>
+            upstream {<br>
+            &nbsp;&nbsp;hash $uri consistent;<br>
+            &nbsp;&nbsp;server app1.example.com;<br>
+            &nbsp;&nbsp;server app2.example.com;<br>
+            }
+          </div>
+          <div class="code-block">
+            <span class="cm"># Implement ip_hash using hash</span><br>
+            upstream {<br>
+            &nbsp;&nbsp;hash $remote_addr consistent;<br>
+            &nbsp;&nbsp;server app1.example.com;<br>
+            &nbsp;&nbsp;server app2.example.com;<br>
+            }
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-cookie-bite text-pink-400 mr-2"></i>Sticky Sessions (Cookie)</h3>
+          <p class="text-gray-300">Cookie-based sticky sessions are available in <strong class="text-amber-300">nginx plus</strong> (commercial) only.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="c10k" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-chart-line text-2xl text-emerald-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">C10K with nginx</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The "C10K Problem" is the challenge of serving 10,000 simultaneous concurrent connections. With tuning, nginx handles this easily — and can scale to <strong class="text-amber-300">100,000+ connections</strong>.</p>
+      <p class="text-gray-300 mb-3">Scalable load balancer configuration:</p>
+      <div class="code-block">
+        worker_processes auto;<br>
+        <br>
+        events {<br>
+        &nbsp;&nbsp;worker_connections 16384;<br>
+        }<br>
+        <br>
+        http {<br>
+        &nbsp;&nbsp;sendfile on;<br>
+        &nbsp;&nbsp;tcp_nopush on;<br>
+        &nbsp;&nbsp;keepalive_timeout 90;<br>
+        <br>
+        &nbsp;&nbsp;server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;listen *:80 backlog=2048 reuseport;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;listen *:443 ssl backlog=2048 reuseport;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ssl_session_cache shared:SSL:20m;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ssl_session_timeout 10m;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ssl_session_tickets on;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ssl_stapling on;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ssl_stapling_verify on;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;ssl_trusted_certificate /etc/nginx/cert/trustchain.crt;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;resolver 8.8.8.8 8.8.4.4 valid=300s;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+    </div>
+
+    <div id="tuning-linux" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-tachometer-alt text-2xl text-blue-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Tuning Linux for Network Heavy Load</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Without tuning the Linux kernel, even the most optimized nginx config won't reach peak performance.</p>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <h3 class="text-white font-semibold mb-2"><i class="fas fa-list text-green-400 mr-2"></i>net.core.somaxconn</h3>
+        <p class="text-gray-300 mb-2">Defines the kernel queue size for accepting new TCP connections. Default is a ridiculously low <strong class="text-rose-300">128</strong>.</p>
+        <p class="text-gray-300 mb-2">If you see <code class="text-cyan-300">"possible SYN flooding"</code> in your syslog, you need to increase it:</p>
+        <div class="code-block mb-2">
+          <span class="cm"># Set immediately</span><br>
+          sysctl -w net.core.somaxconn=10000<br>
+          <br>
+          <span class="cm"># Persist across reboot — add to /etc/sysctl.conf</span><br>
+          net.core.somaxconn=10000
+        </div>
+        <p class="text-gray-400 text-sm"><i class="fas fa-lightbulb text-amber-400 mr-2"></i>Set it high enough for your burst traffic. If you can handle 10,000 req/s, set it to 10,000.</p>
+      </div>
+    </div>
+
+    <div id="nginx-vs-elb" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-balance-scale text-2xl text-pink-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">nginx vs ELB vs HAProxy</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-gray-200 font-semibold mb-2"><i class="fab fa-aws text-amber-400 mr-2"></i>nginx vs ELB</h3>
+          <p class="text-gray-300 text-sm">ELB lacks URI routing, HTTP caching, and VirtualHost support. For anything serious on AWS, use nginx as your HTTP routing layer.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-gray-200 font-semibold mb-2"><i class="fas fa-chart-bar text-cyan-400 mr-2"></i>nginx vs HAProxy</h3>
+          <p class="text-gray-300 text-sm">HAProxy may be 5&ndash;10% faster on paper, but nginx simplifies your stack — you only need to become an expert in one piece of software. That trade-off beats a marginal speed gain.</p>
+        </div>
+      </div>
+      <p class="text-gray-300"><strong class="text-amber-300">Recommendation:</strong> nginx for everything.</p>
+    </div>
+
+    <div id="http-tcp-lb" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-network-wired text-2xl text-violet-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">HTTP and TCP Load Balancing</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-blue-300 font-semibold mb-2"><i class="fas fa-layer-group mr-2"></i>Layer 7 (HTTP)</h3>
+          <ul class="space-y-1 text-gray-300 text-sm">
+            <li><i class="fas fa-check text-emerald-400 mr-2"></i>Parses request, modifies headers</li>
+            <li><i class="fas fa-check text-emerald-400 mr-2"></i>Routes by hostname</li>
+            <li><i class="fas fa-times text-rose-400 mr-2"></i>Slower — overhead of parsing HTTP</li>
+            <li><i class="fas fa-times text-rose-400 mr-2"></i>SSL terminates at LB</li>
+          </ul>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-emerald-300 font-semibold mb-2"><i class="fas fa-layer-group mr-2"></i>Layer 4 (TCP)</h3>
+          <ul class="space-y-1 text-gray-300 text-sm">
+            <li><i class="fas fa-times text-rose-400 mr-2"></i>Forwards raw packets, no parsing</li>
+            <li><i class="fas fa-check text-emerald-400 mr-2"></i>Faster — no HTTP overhead</li>
+            <li><i class="fas fa-check text-emerald-400 mr-2"></i>SSL pass-thru to backend</li>
+            <li><i class="fas fa-check text-emerald-400 mr-2"></i>Available since nginx 1.9.0 (open source)</li>
+          </ul>
+        </div>
+      </div>
+
+      <p class="text-gray-300 mb-3">TCP load balancing uses the <code class="text-cyan-300">stream</code> block instead of <code class="text-cyan-300">http</code>. No <code class="text-cyan-300">location</code> blocks:</p>
+      <div class="code-block mb-4">
+        stream {<br>
+        &nbsp;&nbsp;server {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;listen *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;proxy_pass backend;<br>
+        &nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;upstream backend {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server app01;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server app02;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;server app03;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <h3 class="text-white font-semibold mb-3"><i class="fas fa-shield-alt text-amber-400 mr-2"></i>TCP Proxy Protocol</h3>
+        <p class="text-gray-300 mb-3">TCP load balancing loses the client IP — packets appear to come from the load balancer. The <strong class="text-amber-300">Proxy Protocol</strong> solves this by injecting the originating source address into the TCP connection.</p>
+        <p class="text-gray-400 text-sm mb-2">On the load balancer:</p>
+        <div class="code-block mb-3">
+          stream {<br>
+          &nbsp;&nbsp;server {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;listen *:80;<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;proxy_pass backend;<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;proxy_protocol on;<br>
+          &nbsp;&nbsp;}<br>
+          }
+        </div>
+        <p class="text-gray-400 text-sm mb-2">On the backend server:</p>
+        <div class="code-block">
+          server {<br>
+          &nbsp;&nbsp;listen *:80 proxy_protocol;<br>
+          &nbsp;&nbsp;proxy_set_header X-Real-IP $proxy_protocol_addr;<br>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-800">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">
+      <i class="fas fa-book-open mr-1"></i> Based on "nginx: A Practical Guide to High Performance" by Stephen Corona — Chapter 5: Load Balancing
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    });
+
+    function toggleAnswer(btn) {
+      const answer = btn.nextElementSibling;
+      const icon = btn.querySelector('i');
+      if (answer.classList.contains('hidden')) {
+        answer.classList.remove('hidden');
+        icon.className = 'fas fa-chevron-up mr-1';
+      } else {
+        answer.classList.add('hidden');
+        icon.className = 'fas fa-chevron-down mr-1';
+      }
+    }
+  </script>
+</body>
+</html>

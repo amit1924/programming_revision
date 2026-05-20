@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 4 — Environment Variables | Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back to Home -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 group">
+      <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i> Back to Cheatsheet
+    </a>
+
+    <!-- Chapter Header -->
+    <div class="text-center mb-10 animate-fade-in">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-pink-500/20 to-purple-500/20 border border-pink-500/30 mb-4">
+        <i class="fas fa-tag text-3xl text-pink-400"></i>
+      </div>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text">Chapter 4: Environment Variables</h1>
+      <p class="text-gray-400 mt-3 text-lg">Making your containers configurable without changing code</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-10 animate-fade-in">
+      <a href="#what-are-env" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-question-circle mr-1 text-pink-400"></i>What are ENVs?</a>
+      <a href="#app-without-env" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-code mr-1 text-pink-400"></i>Hardcoded App</a>
+      <a href="#app-with-env" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-cog mr-1 text-pink-400"></i>App with ENV</a>
+      <a href="#docker-env" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fab fa-docker mr-1 text-pink-400"></i>Docker -e Flag</a>
+      <a href="#inspect-env" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-search mr-1 text-pink-400"></i>Inspect ENV</a>
+    </div>
+
+    <!-- 1. What are Environment Variables? -->
+    <section id="what-are-env" class="mb-8 animate-slide-left">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-question-circle text-2xl text-pink-400"></i>
+          <h2 class="text-2xl font-bold text-white">What are Environment Variables?</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Environment variables are <strong class="text-white">configuration values</strong> passed to your application at runtime. Think of them as settings you can tweak without ever touching the source code.</p>
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 flex items-start gap-4">
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <div>
+              <p class="text-sm font-semibold text-yellow-300 mb-1">Simple Analogy</p>
+              <p class="text-sm text-gray-300">Imagine you're going out. You can <strong class="text-white">choose your shirt color</strong> before leaving — red, blue, or green. You don't need to buy a new shirt; you just pick the option available to you. That's what environment variables are — a choice you make at startup, not at manufacturing time.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. App without ENV (hardcoded) -->
+    <section id="app-without-env" class="mb-8 animate-slide-right">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-code text-2xl text-pink-400"></i>
+          <h2 class="text-2xl font-bold text-white">App without ENV (Hardcoded)</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Without environment variables, your application's behavior is <strong class="text-white">baked into the code</strong>. To change anything, you must edit the source and rebuild.</p>
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+              <i class="fab fa-python text-blue-400"></i> <span>app.py</span>
+            </div>
+            <pre class="text-sm font-mono text-green-300"><span class="text-gray-500"># Hardcoded — always red, forever</span>
+<span class="text-purple-400">from</span> flask <span class="text-purple-400">import</span> Flask
+app <span class="text-gray-400">=</span> Flask(__name__)
+
+<span class="text-yellow-400">color</span> <span class="text-gray-400">=</span> <span class="text-amber-300">"red"</span>
+
+<span class="text-gray-500"># The app will always display red</span>
+<span class="text-gray-500"># If you want blue, you edit this file</span>
+<span class="text-gray-500"># Then you redeploy the whole app</span></pre>
+          </div>
+          <div class="p-4 rounded-lg bg-red-900/20 border border-red-800/40">
+            <p class="text-sm text-red-300"><i class="fas fa-exclamation-triangle mr-1"></i> <strong class="text-white">Problem:</strong> To change the color from red to blue, you must edit <code class="text-red-200 bg-red-900/40 px-1 rounded">app.py</code> and redeploy the entire application. That's rigid, error-prone, and slow.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. App with ENV variable -->
+    <section id="app-with-env" class="mb-8 animate-slide-left">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-cog text-2xl text-pink-400"></i>
+          <h2 class="text-2xl font-bold text-white">App with ENV Variable</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>With environment variables, the same code behaves differently based on what you pass in at runtime.</p>
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+              <i class="fab fa-python text-blue-400"></i> <span>app.py (with ENV)</span>
+            </div>
+            <pre class="text-sm font-mono text-green-300"><span class="text-purple-400">import</span> os
+<span class="text-purple-400">from</span> flask <span class="text-purple-400">import</span> Flask
+app <span class="text-gray-400">=</span> Flask(__name__)
+
+<span class="text-gray-500"># Read color from environment, default to "red"</span>
+<span class="text-yellow-400">color</span> <span class="text-gray-400">=</span> os.environ.get(<span class="text-amber-300">'APP_COLOR'</span>, <span class="text-amber-300">"red"</span>)
+
+<span class="text-gray-500"># Same code, any color you want!</span>
+<span class="text-gray-500"># export APP_COLOR=blue  → app is blue</span>
+<span class="text-gray-500"># export APP_COLOR=green → app is green</span>
+<span class="text-gray-500"># no export               → app is red (default)</span></pre>
+          </div>
+          <p>You set the variable before running your script:</p>
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">export APP_COLOR=blue</span>
+<span class="text-gray-400">$</span> <span class="text-white">python app.py</span>      <span class="text-gray-500"># app runs with BLUE background</span></pre>
+          </div>
+          <div class="p-4 rounded-lg bg-green-900/20 border border-green-800/40">
+            <p class="text-sm text-green-300"><i class="fas fa-check-circle mr-1"></i> <strong class="text-white">Same code, different behavior.</strong> No edits, no rebuilds — just pass a different value at runtime.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. ENV Variables in Docker -->
+    <section id="docker-env" class="mb-8 animate-slide-right">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fab fa-docker text-2xl text-pink-400"></i>
+          <h2 class="text-2xl font-bold text-white">ENV Variables in Docker</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Docker makes this incredibly easy. Use the <strong class="text-white">-e</strong> flag with <code class="text-gray-200 bg-gray-700 px-1 rounded">docker run</code> to set environment variables:</p>
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">docker run -e APP_COLOR=blue simple-webapp-color</span></pre>
+          </div>
+          <p>Want a different color? Just change the value — same image, different behavior:</p>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 mt-4">
+            <div class="p-4 rounded-lg bg-blue-900/20 border border-blue-800/40 text-center">
+              <i class="fas fa-palette text-blue-400 text-xl mb-1"></i>
+              <p class="text-sm font-semibold text-blue-300">Blue App</p>
+              <code class="text-xs text-gray-400">APP_COLOR=blue</code>
+            </div>
+            <div class="p-4 rounded-lg bg-green-900/20 border border-green-800/40 text-center">
+              <i class="fas fa-palette text-green-400 text-xl mb-1"></i>
+              <p class="text-sm font-semibold text-green-300">Green App</p>
+              <code class="text-xs text-gray-400">APP_COLOR=green</code>
+            </div>
+            <div class="p-4 rounded-lg bg-pink-900/20 border border-pink-800/40 text-center">
+              <i class="fas fa-palette text-pink-400 text-xl mb-1"></i>
+              <p class="text-sm font-semibold text-pink-300">Pink App</p>
+              <code class="text-xs text-gray-400">APP_COLOR=pink</code>
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 flex items-start gap-4 mt-4">
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <div>
+              <p class="text-sm font-semibold text-yellow-300 mb-1">Simple Analogy</p>
+              <p class="text-sm text-gray-300">It's the <strong class="text-white">same microwave</strong>, but you can set the time to 30 seconds for reheating coffee or 5 minutes for popcorn. The microwave doesn't change — your <strong class="text-white">settings</strong> (environment variables) do.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Inspect Environment Variables -->
+    <section id="inspect-env" class="mb-8 animate-slide-left">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-search text-2xl text-pink-400"></i>
+          <h2 class="text-2xl font-bold text-white">Inspect Environment Variables</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Use <code class="text-gray-200 bg-gray-700 px-1 rounded">docker inspect</code> to see all environment variables a running container was launched with:</p>
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">docker inspect container_name</span></pre>
+          </div>
+          <p>The output is a large JSON object. Look under <strong class="text-white">Config → Env</strong> for the array of environment variables:</p>
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <pre class="text-sm font-mono text-green-300">"Config": {
+  "Env": [
+    <span class="text-amber-300">"APP_COLOR=blue"</span>,        <span class="text-gray-500"># ← Your custom variable</span>
+    <span class="text-amber-300">"PATH=/usr/local/bin:..."</span>,  <span class="text-gray-500"># ← Docker defaults</span>
+    <span class="text-amber-300">"PYTHON_VERSION=3.9.5"</span>,    <span class="text-gray-500"># ← From base image</span>
+    <span class="text-amber-300">"HOME=/root"</span>
+  ]
+}</pre>
+          </div>
+          <p>Docker automatically adds some defaults (like <code class="text-gray-200 bg-gray-700 px-1 rounded">PATH</code>, <code class="text-gray-200 bg-gray-700 px-1 rounded">HOME</code>) based on the base image. Your custom variable (<code class="text-gray-200 bg-gray-700 px-1 rounded">APP_COLOR</code>) appears right alongside them.</p>
+          <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40">
+            <p class="text-sm"><i class="fas fa-info-circle mr-1 text-blue-400"></i> <strong class="text-white">Tip:</strong> Pipe to <code class="text-gray-200 bg-gray-700 px-1 rounded">grep</code> to quickly find your variable: <code class="text-gray-200 bg-gray-700 px-1 rounded">docker inspect container_name | grep APP_COLOR</code></p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary Card -->
+    <section class="mb-8 animate-fade-in">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-check-circle text-2xl text-emerald-400"></i>
+          <h2 class="text-2xl font-bold text-white">Key Takeaways</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-tag text-pink-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Environment variables let you <strong class="text-white">configure apps without changing code</strong></p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-code text-pink-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Read them in Python with <code class="text-gray-200 bg-gray-700 px-1 rounded">os.environ.get('KEY')</code></p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fab fa-docker text-pink-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Set them in Docker with <code class="text-gray-200 bg-gray-700 px-1 rounded">docker run -e KEY=val ...</code></p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-search text-pink-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Inspect with <code class="text-gray-200 bg-gray-700 px-1 rounded">docker inspect</code> under Config → Env</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Navigation -->
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-slate-700/50">
+      <a href="ch03_run_advanced.html" class="glow-card flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">
+        <i class="fas fa-arrow-left text-gray-400"></i>
+        <div class="text-left">
+          <p class="text-xs text-gray-500">Previous</p>
+          <p class="text-white font-medium">Chapter 3: Run Advanced</p>
+        </div>
+      </a>
+      <a href="ch05_images.html" class="glow-card flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">
+        <div class="text-right">
+          <p class="text-xs text-gray-500">Next</p>
+          <p class="text-white font-medium">Chapter 5: Docker Images</p>
+        </div>
+        <i class="fas fa-arrow-right text-gray-400"></i>
+      </a>
+    </div>
+
+    <div class="mt-8 text-center text-gray-500 text-sm">
+      <i class="fas fa-book-open mr-1"></i> Based on "Docker for Beginners" by Mumshad Mannambeth
+    </div>
+  </div>
+</body>
+</html>

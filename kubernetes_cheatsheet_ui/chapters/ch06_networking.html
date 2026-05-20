@@ -1,0 +1,380 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 6: Networking — K8s Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+
+  <!-- Navigation Bar -->
+  <div class="max-w-5xl mx-auto px-4 py-4 flex items-center justify-between border-b border-slate-700/50">
+    <a href="../index.html" class="text-sm text-gray-400 hover:text-white transition-colors"><i class="fas fa-arrow-left mr-2"></i>Back to Index</a>
+    <div class="flex gap-3 text-xs">
+      <a href="#" class="text-cyan-400 border-b border-cyan-400 pb-0.5">6. Networking</a>
+      <a href="#" class="text-gray-500 hover:text-white transition-colors cursor-default">Prev</a>
+      <a href="ch07_services.html" class="text-gray-400 hover:text-white transition-colors">Next</a>
+    </div>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Header -->
+    <div class="text-center mb-12 animate-fade-in">
+      <i class="fas fa-network-wired text-6xl text-cyan-400 mb-4"></i>
+      <h1 class="text-4xl md:text-5xl font-bold gradient-text">Chapter 6: Networking</h1>
+      <p class="text-gray-400 mt-3 text-lg">POD networking, cluster networking, Calico &amp; Flannel</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap gap-2 mb-10 justify-center text-xs">
+      <a href="#pod-basics" class="bg-slate-800 text-cyan-300 px-3 py-1.5 rounded-full hover:bg-slate-700 transition-colors"><i class="fas fa-circle-nodes mr-1"></i>POD Basics</a>
+      <a href="#single-node" class="bg-slate-800 text-cyan-300 px-3 py-1.5 rounded-full hover:bg-slate-700 transition-colors"><i class="fas fa-laptop-house mr-1"></i>Single Node</a>
+      <a href="#cluster-reqs" class="bg-slate-800 text-cyan-300 px-3 py-1.5 rounded-full hover:bg-slate-700 transition-colors"><i class="fas fa-clipboard-list mr-1"></i>Requirements</a>
+      <a href="#solutions" class="bg-slate-800 text-cyan-300 px-3 py-1.5 rounded-full hover:bg-slate-700 transition-colors"><i class="fas fa-toolbox mr-1"></i>Solutions</a>
+      <a href="#multi-node" class="bg-slate-800 text-cyan-300 px-3 py-1.5 rounded-full hover:bg-slate-700 transition-colors"><i class="fas fa-server mr-1"></i>Multi-Node</a>
+      <a href="#calico" class="bg-slate-800 text-cyan-300 px-3 py-1.5 rounded-full hover:bg-slate-700 transition-colors"><i class="fas fa-shield-halved mr-1"></i>Calico</a>
+    </div>
+
+    <!-- ============================== -->
+    <!-- 1. POD Networking Basics        -->
+    <!-- ============================== -->
+    <section id="pod-basics" class="glow-card rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-circle-nodes text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">1. POD Networking Basics</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-gray-300 text-sm leading-relaxed mb-3">
+            In Kubernetes, <span class="text-cyan-300 font-semibold">networking starts at the POD level</span>. Here's how it works:
+          </p>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li><i class="fas fa-laptop text-cyan-400 w-5"></i> <strong class="text-white">Node IP:</strong> The host machine (e.g., <code class="text-cyan-300 bg-slate-700/50 px-1 rounded">192.168.1.2</code>)</li>
+            <li><i class="fas fa-cube text-cyan-400 w-5"></i> <strong class="text-white">POD IP:</strong> Each POD gets its own IP (e.g., <code class="text-cyan-300 bg-slate-700/50 px-1 rounded">10.244.0.2</code>)</li>
+            <li><i class="fas fa-people-arrows text-cyan-400 w-5"></i> PODs communicate with each other via these internal IPs</li>
+            <li><i class="fas fa-code-branch text-cyan-400 w-5"></i> Internal private network = <code class="text-cyan-300 bg-slate-700/50 px-1 rounded">10.244.0.0</code></li>
+          </ul>
+          <div class="mt-4 bg-slate-700/30 border border-slate-600/50 rounded-lg p-3">
+            <p class="text-xs text-gray-400"><i class="fas fa-lightbulb text-amber-400 mr-1"></i> Unlike Docker (IP assigned to container), K8s assigns the IP to the <strong class="text-white">POD</strong>. Containers inside the pod share that IP.</p>
+          </div>
+        </div>
+        <div>
+          <div class="bg-slate-900/80 border border-slate-700 rounded-lg p-4 font-mono text-xs">
+            <div class="text-gray-500 mb-2">// POD Network Topology</div>
+            <div class="text-green-400">Node (192.168.1.2)</div>
+            <div class="text-gray-600 pl-4">├──</div>
+            <div class="text-green-400 pl-4">POD-A</div>
+            <div class="text-cyan-300 pl-8">└─ 10.244.0.2</div>
+            <div class="text-gray-600 pl-4">├──</div>
+            <div class="text-green-400 pl-4">POD-B</div>
+            <div class="text-cyan-300 pl-8">└─ 10.244.0.3</div>
+            <div class="text-gray-600 pl-4">└──</div>
+            <div class="text-green-400 pl-4">POD-C</div>
+            <div class="text-cyan-300 pl-8">└─ 10.244.0.4</div>
+            <div class="text-gray-500 mt-3">// Think of it like:</div>
+            <div class="text-amber-400">Each POD = its own phone number</div>
+            <div class="text-amber-400">PODs call each other by IP</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 2. Single Node Networking       -->
+    <!-- ============================== -->
+    <section id="single-node" class="glow-card rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-laptop-house text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">2. Single Node Networking</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-gray-300 text-sm leading-relaxed mb-3">
+            When using <span class="text-cyan-300 font-semibold">Minikube</span> (single-node cluster), you have <strong class="text-white">three distinct IP realms</strong>:
+          </p>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li><i class="fas fa-desktop text-blue-400 w-5"></i> <strong class="text-white">Your Laptop:</strong> <code class="text-blue-300 bg-slate-700/50 px-1 rounded">192.168.1.5</code> (host network)</li>
+            <li><i class="fas fa-server text-purple-400 w-5"></i> <strong class="text-white">Minikube VM:</strong> <code class="text-purple-300 bg-slate-700/50 px-1 rounded">192.168.99.100</code> (virtual machine IP)</li>
+            <li><i class="fas fa-cube text-cyan-400 w-5"></i> <strong class="text-white">POD inside VM:</strong> <code class="text-cyan-300 bg-slate-700/50 px-1 rounded">10.244.0.2</code> (internal K8s network)</li>
+          </ul>
+          <div class="mt-4 bg-red-900/20 border border-red-800/40 rounded-lg p-3">
+            <p class="text-xs text-red-300"><i class="fas fa-exclamation-triangle mr-1"></i> You <strong class="text-white">cannot</strong> access the POD IP (<code>10.244.0.2</code>) directly from your laptop — they are on completely different networks.</p>
+          </div>
+          <div class="mt-3 bg-blue-900/20 border border-blue-800/40 rounded-lg p-3">
+            <p class="text-xs text-blue-300"><i class="fas fa-wrench mr-1"></i> <strong class="text-white">Solution:</strong> Use a <span class="text-cyan-300">Service</span> (NodePort / LoadBalancer) to expose the POD.</p>
+          </div>
+        </div>
+        <div>
+          <div class="bg-slate-900/80 border border-slate-700 rounded-lg p-4 font-mono text-xs">
+            <div class="text-gray-500 mb-2">// Single-Node Network Layers</div>
+            <div class="text-blue-400">Laptop ── 192.168.1.5</div>
+            <div class="text-gray-600 pl-4">└──</div>
+            <div class="text-purple-400 pl-4">Minikube VM ── 192.168.99.100</div>
+            <div class="text-gray-600 pl-8">└──</div>
+            <div class="text-cyan-300 pl-8">POD ── 10.244.0.2</div>
+            <div class="text-gray-500 mt-3">// Access from laptop:</div>
+            <div class="text-red-400">❌ curl 10.244.0.2</div>
+            <div class="text-green-400">✅ kubectl port-forward ...</div>
+            <div class="text-green-400">✅ kubectl expose ... (Service)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 3. Cluster Networking Reqs      -->
+    <!-- ============================== -->
+    <section id="cluster-reqs" class="glow-card rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-clipboard-list text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">3. Cluster Networking Requirements</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-gray-300 text-sm leading-relaxed mb-3">
+            Kubernetes <span class="text-cyan-300 font-semibold">does NOT set up networking automatically</span>. It expects <strong class="text-white">YOU</strong> to provide a network that meets these rules:
+          </p>
+          <div class="space-y-3 text-sm">
+            <div class="bg-slate-700/30 border-l-4 border-green-500 rounded-r-lg p-3">
+              <p class="text-gray-300"><strong class="text-green-400">Rule 1</strong> — <span class="text-white">All containers/PODs</span> can communicate with each other <strong class="text-white">without NAT</strong></p>
+              <p class="text-xs text-gray-500 mt-1">No address translation needed between any PODs</p>
+            </div>
+            <div class="bg-slate-700/30 border-l-4 border-blue-500 rounded-r-lg p-3">
+              <p class="text-gray-300"><strong class="text-blue-400">Rule 2</strong> — <span class="text-white">All nodes</span> can communicate with all containers (and vice versa) <strong class="text-white">without NAT</strong></p>
+              <p class="text-xs text-gray-500 mt-1">Nodes and PODs are directly reachable</p>
+            </div>
+          </div>
+          <div class="mt-4 bg-amber-900/20 border border-amber-800/40 rounded-lg p-3">
+            <p class="text-xs text-amber-300"><i class="fas fa-exclamation-circle mr-1"></i> <strong class="text-white">Important:</strong> K8s does NOT implement this network itself. It just says: <em>"Hey admin, make this work!"</em></p>
+          </div>
+        </div>
+        <div>
+          <div class="bg-slate-900/80 border border-slate-700 rounded-lg p-4 font-mono text-xs">
+            <div class="text-gray-500 mb-2">// K8s Expectation Diagram</div>
+            <div class="text-blue-400">Node-1 (192.168.1.10)</div>
+            <div class="text-cyan-300 pl-4">├── POD-A (10.244.0.2)</div>
+            <div class="text-cyan-300 pl-4">└── POD-B (10.244.0.3)</div>
+            <div class="text-green-400 mt-1">Node-2 (192.168.1.11)</div>
+            <div class="text-cyan-300 pl-4">├── POD-C (10.244.1.2)</div>
+            <div class="text-cyan-300 pl-4">└── POD-D (10.244.1.3)</div>
+            <div class="text-gray-500 mt-2">// All must reach all without NAT:</div>
+            <div class="text-green-400">POD-A → POD-D ✅ (direct)</div>
+            <div class="text-green-400">Node-1 → POD-C ✅ (direct)</div>
+            <div class="text-green-400">POD-B → Node-2 ✅ (direct)</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 4. Networking Solutions         -->
+    <!-- ============================== -->
+    <section id="solutions" class="glow-card rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-toolbox text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">4. Networking Solutions</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-gray-300 text-sm leading-relaxed mb-3">
+            Many <span class="text-cyan-300 font-semibold">pre-built solutions</span> implement the K8s networking model. Choose based on your environment:
+          </p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2 text-sm">
+            <div class="bg-slate-700/40 rounded-lg p-2 flex items-center gap-2">
+              <i class="fas fa-microchip text-blue-400"></i>
+              <span class="text-gray-300">Cisco ACI</span>
+            </div>
+            <div class="bg-slate-700/40 rounded-lg p-2 flex items-center gap-2">
+              <i class="fas fa-shield-halved text-purple-400"></i>
+              <span class="text-gray-300">Cilium</span>
+            </div>
+            <div class="bg-slate-700/40 rounded-lg p-2 flex items-center gap-2">
+              <i class="fas fa-cloud text-cyan-400"></i>
+              <span class="text-gray-300">Big Cloud Fabric</span>
+            </div>
+            <div class="bg-slate-700/40 rounded-lg p-2 flex items-center gap-2">
+              <i class="fas fa-layer-group text-green-400"></i>
+              <span class="text-gray-300">Flannel</span>
+            </div>
+            <div class="bg-slate-700/40 rounded-lg p-2 flex items-center gap-2">
+              <i class="fas fa-vm text-indigo-400"></i>
+              <span class="text-gray-300">VMware NSX-T</span>
+            </div>
+            <div class="bg-slate-700/40 rounded-lg p-2 flex items-center gap-2">
+              <i class="fas fa-shield text-amber-400"></i>
+              <span class="text-gray-300">Calico</span>
+            </div>
+            <div class="bg-slate-700/40 rounded-lg p-2 flex items-center gap-2">
+              <i class="fas fa-wifi text-rose-400"></i>
+              <span class="text-gray-300">Weave Net</span>
+            </div>
+            <div class="bg-slate-700/40 rounded-lg p-2 flex items-center gap-2">
+              <i class="fas fa-ellipsis text-gray-500"></i>
+              <span class="text-gray-300">and more...</span>
+            </div>
+          </div>
+        </div>
+        <div>
+          <div class="bg-slate-900/80 border border-slate-700 rounded-lg p-4 font-mono text-xs">
+            <div class="text-gray-500 mb-2">// Install a network plugin (example: Calico)</div>
+            <div class="text-gray-400"><span class="text-gray-600"># On a fresh cluster, no networking yet:</span></div>
+            <div class="text-white">kubectl apply -f <span class="text-cyan-300">https://raw.githubusercontent.com/projectcalico/calico/v3.26/manifests/calico.yaml</span></div>
+            <div class="text-gray-500 mt-2">// Verify</div>
+            <div class="text-white">kubectl get pods -n kube-system | grep calico</div>
+            <div class="text-green-400">calico-node-xxxxx    1/1  Running</div>
+            <div class="text-green-400">calico-kube-controllers  1/1  Running</div>
+          </div>
+          <div class="mt-3 bg-slate-700/30 border border-slate-600/50 rounded-lg p-3">
+            <p class="text-xs text-gray-400"><i class="fas fa-info-circle text-cyan-400 mr-1"></i> Course demos use <strong class="text-white">Calico</strong>. It's a popular choice — lightweight, secure, and works on-prem and in cloud.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 5. Multi-Node Cluster Networking -->
+    <!-- ============================== -->
+    <section id="multi-node" class="glow-card rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-server text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">5. Multi-Node Cluster Networking</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-gray-300 text-sm leading-relaxed mb-3">
+            The <span class="text-cyan-300 font-semibold">problem</span> without a networking solution:
+          </p>
+          <div class="bg-red-900/20 border border-red-800/40 rounded-lg p-3 mb-4">
+            <p class="text-sm text-red-300"><i class="fas fa-exclamation-triangle mr-1"></i> Different nodes may use the same internal network (<code>10.244.0.0</code>) → <strong class="text-white">IP conflicts!</strong></p>
+          </div>
+          <p class="text-gray-300 text-sm leading-relaxed mb-3">
+            The <span class="text-green-400 font-semibold">solution</span> with Calico:
+          </p>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li><i class="fas fa-check-circle text-green-400 w-5"></i> Calico assigns a <strong class="text-white">different network range</strong> per node</li>
+            <li><i class="fas fa-check-circle text-green-400 w-5"></i> <strong class="text-white">Node 1:</strong> <code class="text-cyan-300 bg-slate-700/50 px-1 rounded">10.244.1.0/24</code></li>
+            <li><i class="fas fa-check-circle text-green-400 w-5"></i> <strong class="text-white">Node 2:</strong> <code class="text-cyan-300 bg-slate-700/50 px-1 rounded">10.244.2.0/24</code></li>
+            <li><i class="fas fa-check-circle text-green-400 w-5"></i> Uses <span class="text-white">routing</span> to enable cross-node POD communication</li>
+          </ul>
+        </div>
+        <div>
+          <div class="bg-slate-900/80 border border-slate-700 rounded-lg p-4 font-mono text-xs">
+            <div class="text-gray-500 mb-2">// Without Calico — IP Conflict!</div>
+            <div class="text-red-400">Node-1: 10.244.0.0 network</div>
+            <div class="text-red-400">Node-2: 10.244.0.0 network</div>
+            <div class="text-red-400">PODs collide! ❌</div>
+            <div class="text-gray-500 mt-3">// With Calico — Unique Per Node</div>
+            <div class="text-blue-400">Node-1 (192.168.1.10)</div>
+            <div class="text-cyan-300 pl-4">└── 10.244.1.0/24 (PODs: 10.244.1.2, 10.244.1.3)</div>
+            <div class="text-green-400 mt-1">Node-2 (192.168.1.11)</div>
+            <div class="text-cyan-300 pl-4">└── 10.244.2.0/24 (PODs: 10.244.2.2, 10.244.2.3)</div>
+            <div class="text-gray-500 mt-3">// Cross-node POD-to-POD</div>
+            <div class="text-amber-400">10.244.1.2 → routes → 10.244.2.2 ✅</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 6. How Calico Works             -->
+    <!-- ============================== -->
+    <section id="calico" class="glow-card rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-shield-halved text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">6. How Calico Works</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-6">
+        <div>
+          <p class="text-gray-300 text-sm leading-relaxed mb-3">
+            Calico is a <span class="text-cyan-300 font-semibold">networking and network policy</span> solution. Here's what it does:
+          </p>
+          <ul class="space-y-2 text-sm text-gray-400">
+            <li><i class="fas fa-check-circle text-green-400 w-5"></i> <strong class="text-white">Manages networks &amp; IPs</strong> — assigns unique IPs across the entire cluster</li>
+            <li><i class="fas fa-check-circle text-green-400 w-5"></i> <strong class="text-white">Creates a virtual network</strong> — all PODs and nodes belong to one flat virtual network</li>
+            <li><i class="fas fa-check-circle text-green-400 w-5"></i> <strong class="text-white">Simple routing</strong> — enables POD-to-POD communication across different nodes</li>
+            <li><i class="fas fa-check-circle text-green-400 w-5"></i> <strong class="text-white">Result:</strong> All PODs can reach each other, no matter which node they're on</li>
+          </ul>
+          <div class="mt-4 bg-slate-700/30 border border-slate-600/50 rounded-lg p-3">
+            <p class="text-xs text-gray-400"><i class="fas fa-lightbulb text-amber-400 mr-1"></i> Think of Calico as the <strong class="text-white">air traffic control</strong> for your cluster — it makes sure every POD knows exactly how to reach every other POD.</p>
+          </div>
+        </div>
+        <div>
+          <div class="bg-slate-900/80 border border-slate-700 rounded-lg p-4 font-mono text-xs">
+            <div class="text-gray-500 mb-2">// Calico Virtual Network</div>
+            <div class="text-blue-400">Node-1 (192.168.1.10)</div>
+            <div class="text-cyan-300 pl-4">├── POD-A (10.244.1.2)</div>
+            <div class="text-cyan-300 pl-4">└── POD-B (10.244.1.3)</div>
+            <div class="text-green-400">Node-2 (192.168.1.11)</div>
+            <div class="text-cyan-300 pl-4">├── POD-C (10.244.2.2)</div>
+            <div class="text-cyan-300 pl-4">└── POD-D (10.244.2.3)</div>
+            <div class="text-purple-400 mt-2">All PODs ↔ All PODs ✅</div>
+            <div class="text-gray-500 mt-2">// Calico also supports NetworkPolicies:</div>
+            <div class="text-amber-400">kubectl create -f policy.yaml</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Summary Card -->
+    <section class="glow-card rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 p-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-list-check text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">Quick Recap</h2>
+      </div>
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3 text-sm">
+        <div class="bg-slate-700/30 rounded-lg p-3">
+          <i class="fas fa-circle-nodes text-cyan-400 mr-1"></i>
+          <strong class="text-white">POD IPs</strong>
+          <p class="text-gray-400 text-xs mt-1">Each POD gets its own internal IP (10.244.x.x). PODs talk via IP.</p>
+        </div>
+        <div class="bg-slate-700/30 rounded-lg p-3">
+          <i class="fas fa-laptop-house text-cyan-400 mr-1"></i>
+          <strong class="text-white">3 Network Layers</strong>
+          <p class="text-gray-400 text-xs mt-1">Laptop → VM/Node → POD. Not directly routable without Services.</p>
+        </div>
+        <div class="bg-slate-700/30 rounded-lg p-3">
+          <i class="fas fa-clipboard-list text-cyan-400 mr-1"></i>
+          <strong class="text-white">K8s Expects</strong>
+          <p class="text-gray-400 text-xs mt-1">All PODs ↔ all PODs &amp; all Nodes ↔ all PODs without NAT.</p>
+        </div>
+        <div class="bg-slate-700/30 rounded-lg p-3">
+          <i class="fas fa-toolbox text-cyan-400 mr-1"></i>
+          <strong class="text-white">Plugins</strong>
+          <p class="text-gray-400 text-xs mt-1">Calico, Flannel, Cilium, Weave — pick one, install on cluster.</p>
+        </div>
+        <div class="bg-slate-700/30 rounded-lg p-3">
+          <i class="fas fa-shield-halved text-cyan-400 mr-1"></i>
+          <strong class="text-white">Calico</strong>
+          <p class="text-gray-400 text-xs mt-1">Assigns unique IP ranges per node. Routes cross-node traffic.</p>
+        </div>
+        <div class="bg-slate-700/30 rounded-lg p-3">
+          <i class="fas fa-network-wired text-cyan-400 mr-1"></i>
+          <strong class="text-white">Flat Network</strong>
+          <p class="text-gray-400 text-xs mt-1">All PODs across all nodes see one single, flat, routable network.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-gray-500 text-sm">
+      <i class="fas fa-book-open mr-1"></i> Based on "Kubernetes for Absolute Beginners" by Mumshad Mannambeth — Chapter 6: Networking
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</body>
+</html>

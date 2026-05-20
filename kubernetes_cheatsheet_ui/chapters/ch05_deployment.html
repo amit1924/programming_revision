@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ch 5 — Deployments | K8s Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .section-nav a:hover { color: #a78bfa; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- ========== TOP NAV ========== -->
+    <div class="flex items-center gap-4 mb-8 text-sm">
+      <a href="../index.html" class="text-gray-400 hover:text-white transition"><i class="fas fa-arrow-left mr-1"></i>Back</a>
+      <span class="text-gray-600">/</span>
+      <span class="text-rose-300 font-medium"><i class="fas fa-rocket mr-1"></i>Chapter 5 — Deployments</span>
+    </div>
+
+    <!-- ========== HEADER ========== -->
+    <div class="text-center mb-12 animate-fade-in">
+      <i class="fas fa-rocket text-6xl text-rose-400 mb-4"></i>
+      <h1 class="text-4xl md:text-5xl font-bold gradient-text">Deployments</h1>
+      <p class="text-gray-400 mt-3 text-lg">Rolling updates, rollback, pause/resume — production-grade POD management</p>
+      <div class="flex flex-wrap justify-center gap-3 mt-5 text-xs">
+        <span class="bg-rose-900/30 text-rose-300 px-3 py-1 rounded-full"><i class="fas fa-sync mr-1"></i>RollingUpdate</span>
+        <span class="bg-amber-900/30 text-amber-300 px-3 py-1 rounded-full"><i class="fas fa-undo mr-1"></i>Rollback</span>
+        <span class="bg-indigo-900/30 text-indigo-300 px-3 py-1 rounded-full"><i class="fas fa-pause mr-1"></i>Pause / Resume</span>
+        <span class="bg-emerald-900/30 text-emerald-300 px-3 py-1 rounded-full"><i class="fas fa-history mr-1"></i>Versioning</span>
+      </div>
+    </div>
+
+    <!-- ========== SECTION NAV ========== -->
+    <div class="section-nav flex flex-wrap justify-center gap-3 mb-10 text-sm bg-slate-900/50 p-3 rounded-xl border border-slate-700">
+      <a href="#what-is" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-question-circle mr-1"></i>What</a>
+      <a href="#why" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-lightbulb mr-1"></i>Why</a>
+      <a href="#yaml" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-file-code mr-1"></i>YAML</a>
+      <a href="#commands" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-terminal mr-1"></i>Commands</a>
+      <a href="#rollout" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-history mr-1"></i>Rollout</a>
+      <a href="#strategies" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-code-branch mr-1"></i>Strategies</a>
+      <a href="#update" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-pen mr-1"></i>Update</a>
+      <a href="#upgrade" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-arrow-up mr-1"></i>Upgrade</a>
+      <a href="#rollback" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-undo mr-1"></i>Rollback</a>
+      <a href="#kubectl-run" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-terminal mr-1"></i>kubectl run</a>
+      <a href="#summary" class="text-gray-300 hover:text-indigo-300 transition px-3 py-1"><i class="fas fa-list mr-1"></i>Summary</a>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 1. WHAT IS A DEPLOYMENT -->
+    <!-- ====================================================================== -->
+    <div id="what-is" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-question-circle text-3xl text-rose-400"></i>
+        <h2 class="text-2xl font-bold text-white">What is a Deployment?</h2>
+      </div>
+      <p class="text-gray-300 leading-relaxed">
+        A <strong class="text-rose-300">Deployment</strong> is a <em>higher-level</em> Kubernetes object that sits above <strong class="text-emerald-300">PODs</strong> and <strong class="text-amber-300">ReplicaSets</strong>. Think of it as the "manager's manager" — it manages ReplicaSets, which in turn manage PODs. You almost never work with bare PODs in production; you use Deployments.
+      </p>
+
+      <div class="mt-5 p-4 bg-slate-900/70 rounded-lg border border-slate-600">
+        <p class="text-sm font-semibold text-indigo-300 mb-2"><i class="fas fa-layer-group mr-1"></i> The Hierarchy</p>
+        <div class="flex flex-col items-center text-sm space-y-2">
+          <span class="bg-rose-900/50 text-rose-200 px-4 py-1.5 rounded-md border border-rose-700"><i class="fas fa-rocket mr-1"></i> <strong>Deployment</strong></span>
+          <i class="fas fa-arrow-down text-gray-500 text-xs"></i>
+          <span class="bg-amber-900/50 text-amber-200 px-4 py-1.5 rounded-md border border-amber-700"><i class="fas fa-copy mr-1"></i> <strong>ReplicaSet</strong></span>
+          <i class="fas fa-arrow-down text-gray-500 text-xs"></i>
+          <span class="bg-emerald-900/50 text-emerald-200 px-4 py-1.5 rounded-md border border-emerald-700"><i class="fas fa-cube mr-1"></i> <strong>PODs</strong></span>
+          <i class="fas fa-arrow-down text-gray-500 text-xs"></i>
+          <span class="bg-cyan-900/50 text-cyan-200 px-4 py-1.5 rounded-md border border-cyan-700"><i class="fas fa-box mr-1"></i> <strong>Containers</strong></span>
+        </div>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-3 gap-3">
+        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700 text-center">
+          <i class="fas fa-sync text-lg text-blue-400 mb-1"></i>
+          <p class="text-xs text-gray-400">Rolling Updates</p>
+        </div>
+        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700 text-center">
+          <i class="fas fa-undo text-lg text-amber-400 mb-1"></i>
+          <p class="text-xs text-gray-400">Rollback</p>
+        </div>
+        <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700 text-center">
+          <i class="fas fa-pause text-lg text-indigo-400 mb-1"></i>
+          <p class="text-xs text-gray-400">Pause / Resume</p>
+        </div>
+      </div>
+
+      <p class="mt-4 text-sm text-gray-400">
+        <i class="fas fa-info-circle mr-1 text-indigo-400"></i>
+        <strong>Analogy:</strong> A Deployment is like a <em>fleet manager</em>. You tell the manager "I want 5 cars with engine v2.0". The manager replaces old cars one by one so you never have zero cars on the road.
+      </p>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 2. WHY DEPLOYMENTS -->
+    <!-- ====================================================================== -->
+    <div id="why" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-lightbulb text-3xl text-amber-400"></i>
+        <h2 class="text-2xl font-bold text-white">Why Deployments?</h2>
+      </div>
+      <p class="text-gray-300 leading-relaxed">
+        A bare POD or even a ReplicaSet is not enough for production. Real-world apps need:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+            <div>
+              <p class="font-semibold text-white text-sm">Multiple Instances (HA)</p>
+              <p class="text-xs text-gray-400 mt-1">Run many POD replicas so your app stays up even if a node fails.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+            <div>
+              <p class="font-semibold text-white text-sm">Seamless Upgrades</p>
+              <p class="text-xs text-gray-400 mt-1">Rolling updates — upgrade instances one-by-one without downtime.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+            <div>
+              <p class="font-semibold text-white text-sm">Instant Rollback</p>
+              <p class="text-xs text-gray-400 mt-1">Bad deploy? Rollback to the previous revision with one command.</p>
+            </div>
+          </div>
+        </div>
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+            <div>
+              <p class="font-semibold text-white text-sm">Pause / Resume</p>
+              <p class="text-xs text-gray-400 mt-1">Apply multiple changes at once — pause the rollout, batch changes, then resume.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="mt-4 text-sm text-gray-400">
+        <i class="fas fa-info-circle mr-1 text-amber-400"></i>
+        <strong>A Deployment provides ALL of these out of the box.</strong> A ReplicaSet alone cannot do rolling updates or rollbacks.
+      </p>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 3 & 4. DEPLOYMENT YAML -->
+    <!-- ====================================================================== -->
+    <div id="yaml" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-file-code text-3xl text-indigo-400"></i>
+        <h2 class="text-2xl font-bold text-white">Deployment YAML</h2>
+      </div>
+      <p class="text-gray-300 leading-relaxed">
+        A Deployment YAML is <strong>identical to a ReplicaSet YAML</strong> with one key difference: the <code class="text-rose-300 bg-slate-900 px-1 rounded">kind</code> is <code class="text-rose-300 bg-slate-900 px-1 rounded">Deployment</code> instead of <code class="text-amber-300 bg-slate-900 px-1 rounded">ReplicaSet</code>.
+      </p>
+
+      <div class="mt-4 p-2 bg-slate-900/80 rounded-lg overflow-x-auto">
+        <pre class="text-sm text-gray-200 leading-relaxed"><code><span class="text-blue-400">apiVersion</span>: <span class="text-green-300">apps/v1</span>
+<span class="text-blue-400">kind</span>: <span class="text-rose-300 font-bold">Deployment</span>
+<span class="text-blue-400">metadata</span>:
+  <span class="text-blue-300">name</span>: <span class="text-green-300">myapp-deployment</span>
+  <span class="text-blue-300">labels</span>:
+    <span class="text-yellow-300">app</span>: <span class="text-green-300">myapp</span>
+    <span class="text-yellow-300">type</span>: <span class="text-green-300">front-end</span>
+<span class="text-blue-400">spec</span>:
+  <span class="text-blue-300">template</span>:
+    <span class="text-indigo-300">metadata</span>:
+      <span class="text-yellow-300">name</span>: <span class="text-green-300">myapp-pod</span>
+      <span class="text-yellow-300">labels</span>:
+        <span class="text-yellow-300">app</span>: <span class="text-green-300">myapp</span>
+        <span class="text-yellow-300">type</span>: <span class="text-green-300">front-end</span>
+    <span class="text-indigo-300">spec</span>:
+      <span class="text-yellow-300">containers</span>:
+      - <span class="text-yellow-300">name</span>: <span class="text-green-300">nginx-container</span>
+        <span class="text-yellow-300">image</span>: <span class="text-green-300">nginx</span>
+  <span class="text-blue-300">replicas</span>: <span class="text-amber-300">3</span>
+  <span class="text-blue-300">selector</span>:
+    <span class="text-yellow-300">matchLabels</span>:
+      <span class="text-yellow-300">type</span>: <span class="text-green-300">front-end</span></code></pre>
+      </div>
+
+      <div class="mt-4 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="bg-blue-900/20 p-3 rounded-lg border border-blue-800">
+          <p class="text-xs text-gray-400"><span class="text-blue-300 font-semibold">apiVersion:</span> <code class="text-green-300 bg-slate-900 px-1 rounded">apps/v1</code></p>
+          <p class="text-xs text-gray-400"><span class="text-blue-300 font-semibold">kind:</span> <code class="text-rose-300 bg-slate-900 px-1 rounded">Deployment</code></p>
+          <p class="text-xs text-gray-400"><span class="text-blue-300 font-semibold">metadata:</span> name + labels</p>
+        </div>
+        <div class="bg-emerald-900/20 p-3 rounded-lg border border-emerald-800">
+          <p class="text-xs text-gray-400"><span class="text-emerald-300 font-semibold">spec.template:</span> POD definition</p>
+          <p class="text-xs text-gray-400"><span class="text-emerald-300 font-semibold">spec.replicas:</span> how many PODs</p>
+          <p class="text-xs text-gray-400"><span class="text-emerald-300 font-semibold">spec.selector:</span> labels to match</p>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+        <p class="text-sm font-semibold text-cyan-300 mb-2"><i class="fas fa-terminal mr-1"></i> Run it</p>
+        <code class="text-sm text-gray-200 bg-slate-800 px-2 py-1 rounded">kubectl create -f deployment-definition.yml</code>
+      </div>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 5. COMMANDS — kubectl get all -->
+    <!-- ====================================================================== -->
+    <div id="commands" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-terminal text-3xl text-emerald-400"></i>
+        <h2 class="text-2xl font-bold text-white">Commands — View Deployments</h2>
+      </div>
+
+      <div class="space-y-4">
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <p class="text-sm font-semibold text-emerald-300"><i class="fas fa-list mr-1"></i> List Deployments</p>
+          <div class="bg-black/40 p-3 rounded mt-2 text-sm font-mono">
+            <span class="text-gray-400">$</span> <span class="text-green-300">kubectl get deployments</span>
+          </div>
+          <div class="bg-black/40 p-3 rounded mt-2 overflow-x-auto">
+            <pre class="text-xs text-gray-300 font-mono">NAME               DESIRED   CURRENT   UP-TO-DATE   AVAILABLE   AGE
+myapp-deployment   3         3         3            3           2m</pre>
+          </div>
+          <div class="text-xs text-gray-400 mt-2 grid grid-cols-2 sm:grid-cols-3 gap-1">
+            <span><strong class="text-cyan-300">DESIRED</strong> — target replicas</span>
+            <span><strong class="text-cyan-300">CURRENT</strong> — running replicas</span>
+            <span><strong class="text-cyan-300">UP-TO-DATE</strong> — latest version</span>
+            <span><strong class="text-cyan-300">AVAILABLE</strong> — ready for users</span>
+            <span><strong class="text-cyan-300">AGE</strong> — time since create</span>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+            <p class="text-xs font-semibold text-amber-300"><i class="fas fa-copy mr-1"></i> ReplicaSets</p>
+            <div class="bg-black/40 p-2 rounded mt-1 text-xs font-mono">
+              <span class="text-green-300">kubectl get replicasets</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Auto-created by Deployment</p>
+          </div>
+          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+            <p class="text-xs font-semibold text-emerald-300"><i class="fas fa-cube mr-1"></i> PODs</p>
+            <div class="bg-black/40 p-2 rounded mt-1 text-xs font-mono">
+              <span class="text-green-300">kubectl get pods</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">Created by ReplicaSet</p>
+          </div>
+          <div class="bg-slate-900/60 p-3 rounded-lg border border-slate-700">
+            <p class="text-xs font-semibold text-indigo-300"><i class="fas fa-cubes mr-1"></i> All at Once</p>
+            <div class="bg-black/40 p-2 rounded mt-1 text-xs font-mono">
+              <span class="text-green-300">kubectl get all</span>
+            </div>
+            <p class="text-xs text-gray-500 mt-1">deploy/rs/po together</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 6. ROLLOUT AND VERSIONING -->
+    <!-- ====================================================================== -->
+    <div id="rollout" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-history text-3xl text-indigo-400"></i>
+        <h2 class="text-2xl font-bold text-white">Rollout & Versioning</h2>
+      </div>
+      <p class="text-gray-300 leading-relaxed">
+        When you <strong class="text-emerald-300">create</strong> a Deployment for the first time, it triggers a <strong class="text-indigo-300">Rollout</strong> — that's <strong class="text-amber-300">Revision 1</strong>. When you later <strong class="text-rose-300">update</strong> the image (e.g. nginx → nginx:1.9.1), a new Rollout starts — <strong class="text-amber-300">Revision 2</strong>.
+      </p>
+
+      <div class="mt-4 p-4 bg-black/30 rounded-lg border border-slate-600">
+        <p class="text-sm font-semibold text-cyan-300 mb-2"><i class="fas fa-play mr-1"></i> Watch Rollout Progress</p>
+        <div class="bg-black/40 p-3 rounded text-sm font-mono">
+          <span class="text-gray-400">$</span> <span class="text-green-300">kubectl rollout status deployment/myapp-deployment</span>
+        </div>
+        <div class="bg-black/40 p-3 rounded mt-2 text-xs text-gray-300 font-mono">
+          Waiting for deployment "myapp-deployment" rollout to finish: 0 of 3 updated replicas...<br>
+          Waiting for deployment "myapp-deployment" rollout to finish: 1 of 3 updated replicas...<br>
+          deployment "myapp-deployment" successfully rolled out
+        </div>
+      </div>
+
+      <div class="mt-4 p-4 bg-black/30 rounded-lg border border-slate-600">
+        <p class="text-sm font-semibold text-amber-300 mb-2"><i class="fas fa-list-ol mr-1"></i> See Revision History</p>
+        <div class="bg-black/40 p-3 rounded text-sm font-mono">
+          <span class="text-gray-400">$</span> <span class="text-green-300">kubectl rollout history deployment/myapp-deployment</span>
+        </div>
+        <div class="bg-black/40 p-3 rounded mt-2 overflow-x-auto">
+          <pre class="text-xs text-gray-300 font-mono">deployment.apps/myapp-deployment
+REVISION  CHANGE-CAUSE
+1         &lt;none&gt;
+2         &lt;none&gt;</pre>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">
+          <i class="fas fa-info-circle mr-1 text-indigo-400"></i>
+          Each revision stores the old ReplicaSet config — enabling rollback.
+        </p>
+      </div>
+
+      <p class="mt-3 text-sm text-gray-400">
+        <i class="fas fa-info-circle mr-1 text-indigo-400"></i>
+        <strong>Analogy:</strong> Think of revisions like "save points" in a video game. Revision 1 is your first save. After an upgrade, Revision 2 is a new save. If you die (bug), reload Revision 1.
+      </p>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 7. DEPLOYMENT STRATEGIES -->
+    <!-- ====================================================================== -->
+    <div id="strategies" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-code-branch text-3xl text-amber-400"></i>
+        <h2 class="text-2xl font-bold text-white">Deployment Strategies</h2>
+      </div>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        Two strategies control <em>how</em> old PODs are replaced with new ones during an update.
+      </p>
+
+      <!-- Comparison Table -->
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="bg-slate-900/80 border-b border-slate-600">
+              <th class="text-left p-3 text-gray-300 font-semibold">Feature</th>
+              <th class="text-left p-3 text-rose-300 font-semibold">Recreate</th>
+              <th class="text-left p-3 text-emerald-300 font-semibold">RollingUpdate (Default)</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700">
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-400">What happens?</td>
+              <td class="p-3 text-gray-200">Destroy ALL old PODs, then create ALL new PODs</td>
+              <td class="p-3 text-gray-200">Destroy old one-by-one, create new one-by-one</td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-400">Downtime?</td>
+              <td class="p-3 text-rose-300 font-semibold">YES — app goes DOWN</td>
+              <td class="p-3 text-emerald-300 font-semibold">NO — app stays UP</td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-400">Speed</td>
+              <td class="p-3 text-gray-200">Fast (all at once)</td>
+              <td class="p-3 text-gray-200">Slow (gradual)</td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-400">Use case</td>
+              <td class="p-3 text-gray-200">Dev / non-critical</td>
+              <td class="p-3 text-gray-200">Production (zero-downtime)</td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-400">Default?</td>
+              <td class="p-3 text-gray-200"><i class="fas fa-times text-rose-400"></i></td>
+              <td class="p-3 text-gray-200"><i class="fas fa-check text-emerald-400"></i> YES</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-5 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-red-900/20 p-4 rounded-lg border border-red-800">
+          <p class="text-sm font-semibold text-rose-300"><i class="fas fa-times-circle mr-1"></i> Recreate Strategy</p>
+          <div class="flex items-center justify-around mt-3 text-xs text-gray-400">
+            <span class="bg-slate-800 px-2 py-1 rounded border border-slate-600 line-through">Old v1</span>
+            <i class="fas fa-arrow-right text-gray-600"></i>
+            <span class="bg-rose-900/50 px-2 py-1 rounded border border-rose-700">DOWN</span>
+            <i class="fas fa-arrow-right text-gray-600"></i>
+            <span class="bg-emerald-900/50 px-2 py-1 rounded border border-emerald-700">New v2</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">All old pods die &rarr; downtime &rarr; new pods created</p>
+        </div>
+        <div class="bg-emerald-900/20 p-4 rounded-lg border border-emerald-800">
+          <p class="text-sm font-semibold text-emerald-300"><i class="fas fa-check-circle mr-1"></i> RollingUpdate (Default)</p>
+          <div class="flex items-center justify-around mt-3 text-xs text-gray-400">
+            <span class="bg-slate-800 px-2 py-1 rounded border border-slate-600">v1</span>
+            <i class="fas fa-arrow-right text-gray-600"></i>
+            <span style="background:linear-gradient(90deg,#1e293b,#064e3b)" class="px-2 py-1 rounded border border-emerald-700">v1→v2</span>
+            <i class="fas fa-arrow-right text-gray-600"></i>
+            <span class="bg-emerald-900/50 px-2 py-1 rounded border border-emerald-700">v2</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">Old pods replaced one at a time — app stays live</p>
+        </div>
+      </div>
+
+      <p class="mt-3 text-sm text-gray-400">
+        <i class="fas fa-info-circle mr-1 text-amber-400"></i>
+        <strong>Analogy:</strong> Recreate = replace all tires at once (car on jacks, can't drive).<br>
+        RollingUpdate = replace tires one at a time (car stays drivable).
+      </p>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 8. UPDATING DEPLOYMENTS -->
+    <!-- ====================================================================== -->
+    <div id="update" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-pen text-3xl text-blue-400"></i>
+        <h2 class="text-2xl font-bold text-white">Updating Deployments</h2>
+      </div>
+
+      <p class="text-gray-300 leading-relaxed mb-4">
+        Two ways to update a Deployment's container image:
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <p class="text-sm font-semibold text-blue-300"><i class="fas fa-file-code mr-1"></i> Method 1 — Edit YAML & Apply</p>
+          <div class="bg-black/40 p-3 rounded mt-2 text-sm font-mono">
+            <span class="text-gray-400">$</span> <span class="text-green-300">kubectl apply -f deployment-definition.yml</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">
+            <i class="fas fa-check text-green-400 mr-1"></i> Best practice — YAML matches cluster state.<br>
+            <i class="fas fa-check text-green-400 mr-1"></i> Version-control friendly.
+          </p>
+        </div>
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <p class="text-sm font-semibold text-indigo-300"><i class="fas fa-cog mr-1"></i> Method 2 — Imperative Command</p>
+          <div class="bg-black/40 p-3 rounded mt-2 text-sm font-mono">
+            <span class="text-gray-400">$</span> <span class="text-green-300">kubectl set image deployment/myapp-deployment \<br>&nbsp;&nbsp;nginx=nginx:1.9.1</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">
+            <i class="fas fa-exclamation-triangle text-amber-400 mr-1"></i> YAML file <strong>will NOT match</strong> the live state.<br>
+            <i class="fas fa-exclamation-triangle text-amber-400 mr-1"></i> Use only for quick tests.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-amber-900/20 p-4 rounded-lg border border-amber-800">
+        <p class="text-xs text-amber-300"><i class="fas fa-lightbulb mr-1"></i> <strong>Tip:</strong> Always prefer <code class="bg-slate-800 px-1 rounded text-green-300">kubectl apply</code> with a YAML file stored in git. The imperative <code class="bg-slate-800 px-1 rounded text-indigo-300">set image</code> command can lead to "drift" between your YAML and live cluster.</p>
+      </div>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 9. HOW UPGRADES WORK -->
+    <!-- ====================================================================== -->
+    <div id="upgrade" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-arrow-up text-3xl text-cyan-400"></i>
+        <h2 class="text-2xl font-bold text-white">How Upgrades Work (Behind the Scenes)</h2>
+      </div>
+
+      <p class="text-gray-300 leading-relaxed">
+        When you update a Deployment's image, Kubernetes does <strong>not</strong> modify the existing ReplicaSet. Instead, it <strong class="text-rose-300">creates a brand-new ReplicaSet</strong> with the new image, then gradually scales the old RS <em>down</em> while scaling the new RS <em>up</em>.
+      </p>
+
+      <div class="mt-5 grid grid-cols-1 sm:grid-cols-3 gap-3 text-center">
+        <div class="bg-slate-900/70 p-4 rounded-lg border border-slate-600">
+          <p class="text-xs text-gray-400 font-semibold mb-1">Before Update</p>
+          <span class="bg-amber-900/50 text-amber-200 px-3 py-1 rounded text-xs block">RS: myapp-5d5b (v1) — 5 replicas</span>
+          <span class="bg-slate-800 text-gray-500 px-3 py-1 rounded text-xs block mt-1">RS: (none)</span>
+        </div>
+        <div class="bg-slate-900/70 p-4 rounded-lg border border-slate-600">
+          <p class="text-xs text-gray-400 font-semibold mb-1">During Update</p>
+          <span class="bg-amber-900/50 text-amber-200 px-3 py-1 rounded text-xs block">RS: myapp-5d5b (v1) — 3→0</span>
+          <span class="bg-emerald-900/50 text-emerald-200 px-3 py-1 rounded text-xs block mt-1">RS: myapp-8c7d (v2) — 0→3</span>
+          <i class="fas fa-exchange-alt text-gray-500 text-sm mt-1"></i>
+        </div>
+        <div class="bg-slate-900/70 p-4 rounded-lg border border-slate-600">
+          <p class="text-xs text-gray-400 font-semibold mb-1">After Update</p>
+          <span class="bg-slate-800 text-gray-500 px-3 py-1 rounded text-xs block">RS: myapp-5d5b (v1) — 0</span>
+          <span class="bg-emerald-900/50 text-emerald-200 px-3 py-1 rounded text-xs block mt-1">RS: myapp-8c7d (v2) — 5</span>
+        </div>
+      </div>
+
+      <div class="mt-4 p-4 bg-black/30 rounded-lg border border-slate-600">
+        <p class="text-sm font-semibold text-cyan-300 mb-2"><i class="fas fa-copy mr-1"></i> Check ReplicaSets after update</p>
+        <div class="bg-black/40 p-3 rounded text-sm font-mono">
+          <span class="text-gray-400">$</span> <span class="text-green-300">kubectl get replicasets</span>
+        </div>
+        <div class="bg-black/40 p-3 rounded mt-2 overflow-x-auto">
+          <pre class="text-xs text-gray-300 font-mono">NAME                         DESIRED   CURRENT   READY   AGE
+myapp-deployment-5d5b...     0         0         0       10m     <span class="text-gray-500">← old RS (scaled to 0)</span>
+myapp-deployment-8c7d...     5         5         5       2m      <span class="text-gray-500">← new RS (running)</span></pre>
+        </div>
+        <p class="text-xs text-gray-400 mt-2">Old version PODs slowly replaced by new version — <strong class="text-emerald-300">zero downtime</strong>.</p>
+      </div>
+
+      <p class="mt-3 text-sm text-gray-400">
+        <i class="fas fa-info-circle mr-1 text-cyan-400"></i>
+        <strong>Simple:</strong> Old version slowwwly replaced by new version. The old RS sticks around at 0 replicas so you can rollback instantly.
+      </p>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 10. ROLLBACK -->
+    <!-- ====================================================================== -->
+    <div id="rollback" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-undo text-3xl text-amber-400"></i>
+        <h2 class="text-2xl font-bold text-white">Rollback</h2>
+      </div>
+
+      <p class="text-gray-300 leading-relaxed">
+        Something wrong with v2? Just <strong class="text-amber-300">undo</strong> — Kubernetes destroys the new PODs and brings the old ones back up. It's the "Undo" button for deployments.
+      </p>
+
+      <div class="mt-4 p-4 bg-black/30 rounded-lg border border-slate-600">
+        <div class="bg-black/40 p-3 rounded text-sm font-mono">
+          <span class="text-gray-400">$</span> <span class="text-green-300">kubectl rollout undo deployment/myapp-deployment</span>
+        </div>
+        <div class="bg-black/40 p-3 rounded mt-2 text-xs text-gray-300 font-mono">
+          deployment.apps/myapp-deployment rolled back
+        </div>
+      </div>
+
+      <div class="mt-5 grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <p class="text-sm font-semibold text-rose-300"><i class="fas fa-times mr-1"></i> Before Rollback</p>
+          <div class="text-xs text-gray-400 mt-2">
+            <span class="block">RS-v1 (old): <span class="text-rose-300">0</span> desired</span>
+            <span class="block">RS-v2 (new): <span class="text-emerald-300">5</span> desired ✅</span>
+          </div>
+        </div>
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <p class="text-sm font-semibold text-emerald-300"><i class="fas fa-check mr-1"></i> After Rollback</p>
+          <div class="text-xs text-gray-400 mt-2">
+            <span class="block">RS-v1 (old): <span class="text-emerald-300">5</span> desired ✅</span>
+            <span class="block">RS-v2 (new): <span class="text-rose-300">0</span> desired</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-amber-900/20 p-4 rounded-lg border border-amber-800">
+        <p class="text-xs text-amber-300">
+          <i class="fas fa-info-circle mr-1"></i>
+          <strong>How it works:</strong> <code class="bg-slate-800 px-1 rounded">rollout undo</code> flips the desired replica counts — scales up the old RS and scales down the new RS. The old ReplicaSet was always there (with 0 replicas), so the rollback is instant.
+        </p>
+      </div>
+
+      <p class="mt-3 text-sm text-gray-400">
+        <i class="fas fa-info-circle mr-1 text-amber-400"></i>
+        <strong>Analogy:</strong> Imagine two elevators — you pressed the wrong floor button. Instead of reprogramming, you just press "undo" and go back to where you were.
+      </p>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 11. KUBECTL RUN CREATES DEPLOYMENT -->
+    <!-- ====================================================================== -->
+    <div id="kubectl-run" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-terminal text-3xl text-purple-400"></i>
+        <h2 class="text-2xl font-bold text-white">kubectl run — Creates a Deployment (Not a POD!)</h2>
+      </div>
+
+      <p class="text-gray-300 leading-relaxed">
+        A common surprise: <code class="text-green-300 bg-slate-900 px-1 rounded">kubectl run nginx --image=nginx</code> does <strong>not</strong> create a bare POD — it creates a <strong class="text-rose-300">Deployment</strong> (and thus a ReplicaSet + PODs).
+      </p>
+
+      <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-slate-900/60 p-4 rounded-lg border border-slate-700">
+          <div class="bg-black/40 p-3 rounded text-sm font-mono">
+            <span class="text-gray-400">$</span> <span class="text-green-300">kubectl run nginx --image=nginx</span>
+          </div>
+          <div class="bg-black/40 p-3 rounded mt-2 text-xs text-gray-300 font-mono">
+            <span class="text-green-300">deployment.apps/nginx created</span>
+          </div>
+          <p class="text-xs text-gray-400 mt-2">
+            <i class="fas fa-check text-green-400 mr-1"></i> Quick and easy for testing
+          </p>
+        </div>
+        <div class="bg-indigo-900/20 p-4 rounded-lg border border-indigo-800">
+          <p class="text-sm font-semibold text-indigo-300"><i class="fas fa-file-code mr-1"></i> But for production…</p>
+          <p class="text-xs text-gray-400 mt-1">
+            Use <strong>definition files</strong> (YAML) instead. They go into version control, are reproducible, and you can review changes before applying.
+          </p>
+        </div>
+      </div>
+
+      <div class="mt-4 bg-indigo-900/20 p-4 rounded-lg border border-indigo-800">
+        <p class="text-xs text-indigo-300">
+          <i class="fas fa-lightbulb mr-1"></i>
+          <strong>Remember:</strong> <code class="bg-slate-800 px-1 rounded text-green-300">kubectl run</code> = Deployment. If you want a bare POD, use <code class="bg-slate-800 px-1 rounded text-green-300">kubectl run --restart=Never</code> or write a YAML with <code class="bg-slate-800 px-1 rounded text-rose-300">kind: Pod</code>.
+        </p>
+      </div>
+    </div>
+
+    <!-- ====================================================================== -->
+    <!-- 12. COMMANDS SUMMARY -->
+    <!-- ====================================================================== -->
+    <div id="summary" class="glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 mb-6 transition-all duration-300">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-list text-3xl text-emerald-400"></i>
+        <h2 class="text-2xl font-bold text-white">Commands Summary</h2>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm border-collapse">
+          <thead>
+            <tr class="bg-slate-900/80 border-b border-slate-600">
+              <th class="text-left p-3 text-gray-300 font-semibold">Action</th>
+              <th class="text-left p-3 text-gray-300 font-semibold">Command</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-slate-700">
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-300"><i class="fas fa-plus-circle text-green-400 mr-2"></i>Create</td>
+              <td class="p-3"><code class="text-xs text-green-300 bg-slate-800 px-2 py-0.5 rounded">kubectl create -f deployment-definition.yml</code></td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-300"><i class="fas fa-list text-blue-400 mr-2"></i>Get all deployments</td>
+              <td class="p-3"><code class="text-xs text-green-300 bg-slate-800 px-2 py-0.5 rounded">kubectl get deployments</code></td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-300"><i class="fas fa-pen text-amber-400 mr-2"></i>Update (YAML)</td>
+              <td class="p-3"><code class="text-xs text-green-300 bg-slate-800 px-2 py-0.5 rounded">kubectl apply -f deployment-definition.yml</code></td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-300"><i class="fas fa-cog text-indigo-400 mr-2"></i>Update (imperative)</td>
+              <td class="p-3"><code class="text-xs text-green-300 bg-slate-800 px-2 py-0.5 rounded">kubectl set image deployment/myapp-deployment nginx=nginx:1.9.1</code></td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-300"><i class="fas fa-play text-cyan-400 mr-2"></i>Rollout status</td>
+              <td class="p-3"><code class="text-xs text-green-300 bg-slate-800 px-2 py-0.5 rounded">kubectl rollout status deployment/myapp-deployment</code></td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-300"><i class="fas fa-history text-purple-400 mr-2"></i>Rollout history</td>
+              <td class="p-3"><code class="text-xs text-green-300 bg-slate-800 px-2 py-0.5 rounded">kubectl rollout history deployment/myapp-deployment</code></td>
+            </tr>
+            <tr class="bg-slate-900/40">
+              <td class="p-3 text-gray-300"><i class="fas fa-undo text-rose-400 mr-2"></i>Rollback</td>
+              <td class="p-3"><code class="text-xs text-green-300 bg-slate-800 px-2 py-0.5 rounded">kubectl rollout undo deployment/myapp-deployment</code></td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="mt-5 p-4 bg-gradient-to-r from-slate-900 to-slate-800 rounded-lg border border-slate-600">
+        <p class="text-sm font-semibold text-white"><i class="fas fa-star text-amber-400 mr-1"></i> The Golden Rule</p>
+        <p class="text-xs text-gray-300 mt-1">
+          <strong class="text-emerald-300">Use definition files</strong> for everything you care about. <code class="bg-slate-800 px-1 rounded">kubectl apply -f</code> ensures your YAML matches the cluster. The imperative commands (<code class="bg-slate-800 px-1 rounded">set image</code>, <code class="bg-slate-800 px-1 rounded">kubectl run</code>) are fine for quick experiments but cause configuration drift.
+        </p>
+      </div>
+    </div>
+
+    <!-- ========== FOOTER NAV ========== -->
+    <div class="flex justify-between items-center mt-8 pt-6 border-t border-slate-700 text-sm">
+      <a href="ch04_replication.html" class="text-gray-400 hover:text-white transition"><i class="fas fa-arrow-left mr-1"></i> Chapter 4 — Replication</a>
+      <a href="../index.html" class="text-gray-400 hover:text-white transition"><i class="fas fa-home mr-1"></i> Home</a>
+      <a href="ch06_networking.html" class="text-gray-400 hover:text-white transition">Chapter 6 — Networking <i class="fas fa-arrow-right ml-1"></i></a>
+    </div>
+
+    <div class="mt-6 text-center text-gray-600 text-xs">
+      <i class="fas fa-book-open mr-1"></i> Based on "Kubernetes for Absolute Beginners" by Mumshad Mannambeth — 116 slides
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</body>
+</html>

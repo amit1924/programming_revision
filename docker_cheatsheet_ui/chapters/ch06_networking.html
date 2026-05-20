@@ -1,0 +1,634 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 6: Networking | Docker Cheatsheet</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f1a; font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; }
+    .glow-card { transition: box-shadow 0.3s ease, transform 0.3s ease; }
+    .glow-card:hover { box-shadow: 0 0 20px rgba(99, 102, 241, 0.25); transform: translateY(-2px); }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(24px); } to { opacity: 1; transform: translateY(0); } }
+    .fade-in { animation: fadeIn 0.6s ease both; }
+    .slide-up { animation: slideUp 0.5s ease both; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+    .delay-6 { animation-delay: 0.6s; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; border-radius: 0.5rem; padding: 1rem; overflow-x: auto; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.875rem; line-height: 1.6; }
+    .code-block .comment { color: #6b7280; font-style: italic; }
+    .code-block .keyword { color: #818cf8; }
+    .code-block .string { color: #34d399; }
+    .code-block .tag { color: #fbbf24; }
+    .code-block .dim { color: #6b7280; }
+    .code-block .highlight { background: rgba(99, 102, 241, 0.15); border-left: 3px solid #818cf8; padding-left: 0.75rem; }
+    .topology-box { background: #1a1a2e; border: 1px solid #2d2d4a; border-radius: 0.75rem; padding: 1.25rem; font-family: 'JetBrains Mono', 'Fira Code', monospace; font-size: 0.8rem; line-height: 1.5; }
+    .analogy-box { border-left: 3px solid #fbbf24; }
+    .tip-box { border-left: 3px solid #34d399; }
+    .warn-box { border-left: 3px solid #f87171; }
+    nav a { color: #94a3b8; text-decoration: none; transition: color 0.2s; }
+    nav a:hover { color: #818cf8; }
+    pre { white-space: pre; }
+    code { font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    .inline-code { background: #1a1a2e; padding: 0.1em 0.4em; border-radius: 0.25rem; font-size: 0.85em; border: 1px solid #2d2d4a; }
+    section { scroll-margin-top: 5rem; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="text-gray-200 min-h-screen">
+
+  <!-- Back Navigation -->
+  <div class="fixed top-0 left-0 right-0 z-50 bg-[#0f0f1a]/90 backdrop-blur-md border-b border-slate-800">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between flex-wrap gap-2">
+      <a href="../index.html" class="flex items-center gap-2 text-gray-400 hover:text-indigo-400 transition-colors">
+        <i class="fas fa-arrow-left text-sm"></i>
+        <span class="text-sm font-medium">Back to Cheatsheet</span>
+      </a>
+      <div class="flex items-center gap-1 text-xs text-gray-500">
+        <i class="fas fa-book-open mr-1"></i>
+        <span>Chapter 6:</span>
+        <span class="text-indigo-400 font-medium ml-1">Networking</span>
+      </div>
+    </div>
+    <!-- Section Nav -->
+    <div class="max-w-6xl mx-auto px-4 pb-2 flex flex-wrap gap-x-5 gap-y-1 text-xs text-gray-500 border-t border-slate-800/50 pt-2">
+      <a href="#default-networks" class="hover:text-indigo-400 transition-colors"><i class="fas fa-network-wired mr-1"></i>Default Networks</a>
+      <a href="#bridge-details" class="hover:text-indigo-400 transition-colors"><i class="fas fa-diagram-project mr-1"></i>Bridge Details</a>
+      <a href="#user-defined" class="hover:text-indigo-400 transition-colors"><i class="fas fa-plus-circle mr-1"></i>User-Defined</a>
+      <a href="#inspect" class="hover:text-indigo-400 transition-colors"><i class="fas fa-search mr-1"></i>Inspect</a>
+      <a href="#embedded-dns" class="hover:text-indigo-400 transition-colors"><i class="fas fa-server mr-1"></i>Embedded DNS</a>
+    </div>
+  </div>
+
+  <main class="max-w-6xl mx-auto px-4 pt-24 pb-16">
+
+    <!-- Header -->
+    <header class="text-center mb-12 fade-in">
+      <div class="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-xs font-medium mb-4">
+        <i class="fas fa-network-wired"></i>
+        <span>Chapter 6</span>
+      </div>
+      <h1 class="text-3xl md:text-4xl font-bold text-white mb-3">
+        <i class="fas fa-plug text-indigo-400 mr-3"></i>Networking
+      </h1>
+      <p class="text-gray-400 max-w-2xl mx-auto text-sm md:text-base">
+        How containers talk to each other and the outside world — bridges, DNS, and network topologies.
+      </p>
+    </header>
+
+    <!-- ============================== -->
+    <!-- 1. DEFAULT NETWORKS            -->
+    <!-- ============================== -->
+    <section id="default-networks" class="mb-12 slide-up delay-1">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <i class="fas fa-network-wired text-sm"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Default Networks</h2>
+      </div>
+
+      <!-- Intro Card -->
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 mb-6 glow-card">
+        <p class="text-gray-300 text-sm md:text-base leading-relaxed">
+          Docker automatically creates three built-in networks when the daemon starts.
+          Every container you run connects to one of them — <span class="inline-code text-indigo-300">bridge</span> is the default.
+        </p>
+      </div>
+
+      <!-- Analogy -->
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 mb-6 glow-card analogy-box">
+        <div class="flex items-start gap-3">
+          <div class="mt-0.5 text-yellow-400"><i class="fas fa-lightbulb"></i></div>
+          <div>
+            <h3 class="text-sm font-semibold text-yellow-300 mb-1">Simple Analogy</h3>
+            <ul class="text-gray-300 text-sm space-y-1.5">
+              <li><span class="text-indigo-400 font-medium">Bridge</span> = Gated community — each house has its own address, shares the gate (docker0) to reach the outside.</li>
+              <li><span class="text-orange-400 font-medium">Host</span> = Living in the main house — you use the same front door as everyone else, no privacy.</li>
+              <li><span class="text-gray-500 font-medium">None</span> = Isolated cabin in the woods — you have no road, no mail, no connection to anything.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Three Networks Grid -->
+      <div class="grid md:grid-cols-3 gap-4 mb-6">
+        <!-- Bridge -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 glow-card">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-7 h-7 rounded-full bg-indigo-500/20 flex items-center justify-center text-indigo-400 text-xs"><i class="fas fa-warehouse"></i></div>
+            <h3 class="font-bold text-white">bridge <span class="text-indigo-400 text-xs font-normal">(default)</span></h3>
+          </div>
+          <p class="text-gray-400 text-sm mb-3">All containers get a private IP in the <code class="inline-code">172.17.0.0/16</code> range and communicate through the virtual <code class="inline-code">docker0</code> switch.</p>
+          <div class="code-block text-xs">
+            <span class="dim">$</span> docker run nginx
+            <span class="dim"># uses bridge by default</span>
+          </div>
+        </div>
+
+        <!-- Host -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 glow-card">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-7 h-7 rounded-full bg-orange-500/20 flex items-center justify-center text-orange-400 text-xs"><i class="fas fa-home"></i></div>
+            <h3 class="font-bold text-white">host</h3>
+          </div>
+          <p class="text-gray-400 text-sm mb-3">Container shares the host's network stack. No isolation, same IP and ports as the host. No port mapping needed.</p>
+          <div class="code-block text-xs">
+            <span class="dim">$</span> docker run --network<span class="keyword">=</span><span class="string">host</span> nginx
+          </div>
+        </div>
+
+        <!-- None -->
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 glow-card">
+          <div class="flex items-center gap-2 mb-3">
+            <div class="w-7 h-7 rounded-full bg-gray-500/20 flex items-center justify-center text-gray-400 text-xs"><i class="fas fa-circle"></i></div>
+            <h3 class="font-bold text-white">none</h3>
+          </div>
+          <p class="text-gray-400 text-sm mb-3">Completely isolated — no network interfaces except <code class="inline-code">lo</code> (loopback). Perfect for offline/security-sensitive workloads.</p>
+          <div class="code-block text-xs">
+            <span class="dim">$</span> docker run --network<span class="keyword">=</span><span class="string">none</span> alpine sleep 3600
+          </div>
+        </div>
+      </div>
+
+      <!-- Topology Diagram -->
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 glow-card">
+        <h3 class="text-sm font-semibold text-gray-300 mb-3"><i class="fas fa-sitemap text-indigo-400 mr-2"></i>Default Network Topology</h3>
+        <div class="topology-box text-xs leading-relaxed overflow-x-auto">
+          <span class="text-indigo-400">┌─────────────────────────────────────────────────────┐</span>
+          <span class="text-indigo-400">│</span>  <span class="text-yellow-300">Host Machine</span>                                          <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  ┌───────────────────────────────────────────────┐  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  <span class="text-gray-400">docker0 bridge</span>  <span class="text-gray-500">(172.17.0.1)</span>                   │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  ┌──────────┐  ┌──────────┐                    │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  │ <span class="text-green-400">Container</span> │  │ <span class="text-green-400">Container</span> │                    │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  │  <span class="text-gray-500">web</span>       │  │  <span class="text-gray-500">db</span>        │                    │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  │ <span class="text-gray-500">172.17.0.2</span> │  │ <span class="text-gray-500">172.17.0.3</span> │                    │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  └────┬─────┘  └────┬─────┘                    │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │       └──────┬──────┘                          │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │          <span class="text-gray-500">docker0</span>                               │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  └──────────────┼────────────────────────────────┘  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>                 │ <span class="text-gray-500">eth0 (192.168.1.10)</span>                     <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>           ┌─────┴──────┐                              <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>           │  <span class="text-blue-300">Internet</span>   │                              <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>           └────────────┘                              <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">└─────────────────────────────────────────────────────┘</span>
+        </div>
+        <p class="text-gray-500 text-xs mt-3">
+          <i class="fas fa-info-circle mr-1"></i>
+          Containers on the default bridge can reach each other <strong class="text-gray-300">by IP</strong> but not by name.
+          External traffic requires <code class="inline-code">-p</code> port mapping.
+        </p>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 2. BRIDGE NETWORK DETAILS      -->
+    <!-- ============================== -->
+    <section id="bridge-details" class="mb-12 slide-up delay-2">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <i class="fas fa-diagram-project text-sm"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Bridge Network Details</h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 mb-6 glow-card">
+        <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-4">
+          Every container on the default <span class="inline-code text-indigo-300">bridge</span> network gets a private IP assigned from the
+          <code class="inline-code">172.17.0.0/16</code> subnet. The host itself acts as gateway at <code class="inline-code">172.17.0.1</code>.
+        </p>
+        <div class="code-block text-sm mb-4">
+          <span class="dim"># Run two containers and check their IPs</span>
+          $ docker run -d --name c1 nginx
+          $ docker run -d --name c2 nginx
+
+          <span class="dim"># Inspect container IP</span>
+          $ docker inspect c1 --format {<span class="keyword">{</span>.NetworkSettings.IPAddress<span class="keyword">}</span>}
+          <span class="string">172.17.0.2</span>
+
+          $ docker inspect c2 --format {<span class="keyword">{</span>.NetworkSettings.IPAddress<span class="keyword">}</span>}
+          <span class="string">172.17.0.3</span>
+
+          <span class="dim"># Ping from one container to another (by IP)</span>
+          $ docker exec c1 ping -c 2 172.17.0.3
+          <span class="dim">PING 172.17.0.3 (172.17.0.3) 56(84) bytes of data.
+          64 bytes from 172.17.0.3: icmp_seq=1 ttl=64 time=0.123 ms</span>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700/50">
+            <h4 class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2"><i class="fas fa-check-circle mr-1"></i>Communication</h4>
+            <ul class="text-gray-400 text-xs space-y-1.5">
+              <li>✓ Containers talk to each other <span class="text-gray-300">via IP</span></li>
+              <li>✓ Traffic goes through <code class="inline-code">docker0</code> bridge</li>
+              <li>✓ Outbound internet works (NAT via iptables)</li>
+              <li>✗ <span class="text-gray-500">No DNS by name</span> (on default bridge)</li>
+            </ul>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700/50">
+            <h4 class="text-xs font-semibold text-orange-400 uppercase tracking-wider mb-2"><i class="fas fa-plug mr-1"></i>External Access</h4>
+            <ul class="text-gray-400 text-xs space-y-1.5">
+              <li>Use <code class="inline-code">-p hostPort:containerPort</code> to expose</li>
+              <li>Example: <code class="inline-code">-p 8080:80</code> maps host 8080 → container 80</li>
+              <li>Docker adds iptables DNAT rules automatically</li>
+              <li>Without <code class="inline-code">-p</code>, no external access</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 glow-card tip-box">
+        <div class="flex items-start gap-3">
+          <div class="mt-0.5 text-green-400"><i class="fas fa-info-circle"></i></div>
+          <div>
+            <h3 class="text-sm font-semibold text-green-300 mb-1">Port Mapping Example</h3>
+            <div class="code-block text-sm">
+              <span class="dim"># Host port 8080 → container port 80</span>
+              $ docker run -d -p 8080:80 --name web nginx
+
+              <span class="dim"># Now visit http://localhost:8080</span>
+              $ curl -sI http://localhost:8080 | head -1
+              <span class="string">HTTP/1.1 200 OK</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 3. USER-DEFINED NETWORKS       -->
+    <!-- ============================== -->
+    <section id="user-defined" class="mb-12 slide-up delay-3">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <i class="fas fa-plus-circle text-sm"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-bold text-white">User-Defined Networks</h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 mb-6 glow-card">
+        <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-4">
+          User-defined networks give you better isolation and — most importantly — <strong class="text-white">DNS resolution by container name</strong>.
+          You create them with <span class="inline-code text-indigo-300">docker network create</span>.
+        </p>
+
+        <div class="code-block text-sm mb-4">
+          <span class="dim"># Create a custom bridge network with a specific subnet</span>
+          $ docker network create --driver bridge --subnet <span class="string">182.18.0.0/16</span> custom-isolated-network
+
+          <span class="dim"># List all networks</span>
+          $ docker network ls
+          <span class="dim">NETWORK ID     NAME                      DRIVER    SCOPE
+          a2b3c4d5e6f7   bridge                    bridge    local
+          9f8e7d6c5b4a   host                      host      local
+          1a2b3c4d5e6f   none                      null      local
+          e7f8a9b0c1d2   custom-isolated-network   bridge    local</span>
+
+          <span class="dim"># Run containers attached to the custom network</span>
+          $ docker run -d --network custom-isolated-network --name web nginx
+          $ docker run -d --network custom-isolated-network --name db mysql
+
+          <span class="dim"># Verify IP assignment on our custom subnet</span>
+          $ docker inspect web --format {<span class="keyword">{</span>.NetworkSettings.Networks.custom-isolated-network.IPAddress<span class="keyword">}</span>}
+          <span class="string">182.18.0.2</span>
+
+          $ docker inspect db --format {<span class="keyword">{</span>.NetworkSettings.Networks.custom-isolated-network.IPAddress<span class="keyword">}</span>}
+          <span class="string">182.18.0.3</span>
+        </div>
+
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700/50">
+          <h4 class="text-xs font-semibold text-indigo-400 uppercase tracking-wider mb-2"><i class="fas fa-star mr-1"></i>Key Benefits Over Default Bridge</h4>
+          <ul class="text-gray-400 text-xs space-y-1.5">
+            <li>✓ <span class="text-gray-300">DNS resolution by container name</span> (huge!)</li>
+            <li>✓ Better isolation — containers not on the network cannot reach each other</li>
+            <li>✓ Can connect/disconnect containers on the fly</li>
+            <li>✓ Custom subnets, gateways, and IP ranges</li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Multi-Network Topology -->
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 glow-card">
+        <h3 class="text-sm font-semibold text-gray-300 mb-3"><i class="fas fa-sitemap text-indigo-400 mr-2"></i>Example: Frontend &amp; Backend Networks</h3>
+        <div class="topology-box text-xs leading-relaxed overflow-x-auto mb-4">
+          <span class="text-indigo-400">┌──────────────────────────────────────────────────────────┐</span>
+          <span class="text-indigo-400">│</span>  <span class="text-yellow-300">Host</span>                                                      <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>                                                              <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  <span class="text-blue-300">frontend-net (182.18.0.0/16)</span>    <span class="text-green-500">backend-net (182.19.0.0/16)</span>  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  ┌──────────────────────┐      ┌──────────────────────┐  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  ┌────────────────┐  │      │  ┌────────────────┐  │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  │  <span class="text-green-400">web</span>            │  │      │  │  <span class="text-green-400">api</span>            │  │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  │  <span class="text-gray-500">182.18.0.2</span>    │  │      │  │  <span class="text-gray-500">182.19.0.2</span>    │  │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  │  └────────────────┘  │      │  └────────────────┘  │  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>  └──────────────────────┘      └──────────────────────┘  <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>                                                              <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>           <span class="text-orange-400">db</span> (attached to both networks)                    <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>           ┌────────────────────────────┐                    <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>           │  <span class="text-gray-500">frontend-net: 182.18.0.3</span>  │                    <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>           │  <span class="text-gray-500">backend-net:  182.19.0.3</span>  │                    <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">│</span>           └────────────────────────────┘                    <span class="text-indigo-400">│</span>
+          <span class="text-indigo-400">└──────────────────────────────────────────────────────────┘</span>
+        </div>
+        <div class="code-block text-sm">
+          <span class="dim"># Create two networks</span>
+          $ docker network create frontend-net --subnet <span class="string">182.18.0.0/16</span>
+          $ docker network create backend-net  --subnet <span class="string">182.19.0.0/16</span>
+
+          <span class="dim"># web is only on frontend-net</span>
+          $ docker run -d --network frontend-net --name web nginx
+
+          <span class="dim"># api is only on backend-net</span>
+          $ docker run -d --network backend-net --name api nginx
+
+          <span class="dim"># db connects to BOTH (acts as bridge)</span>
+          $ docker run -d --name db mysql
+          $ docker network connect frontend-net db
+          $ docker network connect backend-net db
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 4. INSPECT NETWORK             -->
+    <!-- ============================== -->
+    <section id="inspect" class="mb-12 slide-up delay-4">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <i class="fas fa-search text-sm"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Inspect Network</h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 mb-6 glow-card">
+        <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-4">
+          Use <span class="inline-code text-indigo-300">docker inspect</span> to view all network configuration details for a container.
+          The <code class="inline-code">NetworkSettings</code> section shows IP, gateway, MAC, and per-network info.
+        </p>
+
+        <div class="code-block text-sm mb-4">
+          <span class="dim"># Full inspect output (abbreviated)</span>
+          $ docker inspect web
+          <span class="dim">{</span>
+            <span class="dim">  "NetworkSettings": {</span>
+            <span class="dim">    "Bridge": "docker0",</span>
+            <span class="dim">    "Gateway": "172.17.0.1",</span>
+            <span class="dim">    "IPAddress": "172.17.0.2",</span>
+            <span class="dim">    "IPPrefixLen": 16,</span>
+            <span class="dim">    "MacAddress": "02:42:ac:11:00:02",</span>
+            <span class="dim">    "Networks": {</span>
+            <span class="dim">      "bridge": {</span>
+            <span class="dim">        "Gateway": "172.17.0.1",</span>
+            <span class="dim">        "IPAddress": "172.17.0.2",</span>
+            <span class="text-green-300">        "MacAddress": "02:42:ac:11:00:02"</span>
+            <span class="dim">      }</span>
+            <span class="dim">    }</span>
+            <span class="dim">  }</span>
+          <span class="dim">}</span>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4 mt-4">
+          <div class="code-block text-sm">
+            <span class="dim"># Quick IP lookup</span>
+            $ docker inspect web --format
+            <span class="dim">  '</span>{<span class="keyword">{ </span>.NetworkSettings.IPAddress<span class="keyword"> }}</span><span class="dim">'</span>
+            <span class="string">172.17.0.2</span>
+          </div>
+          <div class="code-block text-sm">
+            <span class="dim"># Per-network IP</span>
+            $ docker inspect web --format
+            <span class="dim">  '</span>{<span class="keyword">{ </span>.NetworkSettings.Networks
+            <span class="dim">    </span>.custom-net.IPAddress<span class="keyword"> }}</span><span class="dim">'</span>
+            <span class="string">182.18.0.2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 glow-card">
+        <h3 class="text-sm font-semibold text-gray-300 mb-3"><i class="fas fa-list text-indigo-400 mr-2"></i>Useful Inspect Fields</h3>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-gray-500 border-b border-slate-700">
+                <th class="text-left py-2 pr-4">Field Path</th>
+                <th class="text-left py-2 pr-4">Value</th>
+                <th class="text-left py-2">Description</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-400">
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4 text-indigo-300 whitespace-nowrap">.NetworkSettings.IPAddress</td>
+                <td class="py-2 pr-4"><code class="inline-code">172.17.0.2</code></td>
+                <td class="py-2">Primary IP on the default bridge</td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4 text-indigo-300 whitespace-nowrap">.NetworkSettings.Gateway</td>
+                <td class="py-2 pr-4"><code class="inline-code">172.17.0.1</code></td>
+                <td class="py-2">Default gateway (the host)</td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4 text-indigo-300 whitespace-nowrap">.NetworkSettings.MacAddress</td>
+                <td class="py-2 pr-4"><code class="inline-code">02:42:ac:11:00:02</code></td>
+                <td class="py-2">MAC address of the container's veth</td>
+              </tr>
+              <tr>
+                <td class="py-2 pr-4 text-indigo-300 whitespace-nowrap">.NetworkSettings.Networks</td>
+                <td class="py-2 pr-4"><code class="inline-code">{...}</code></td>
+                <td class="py-2">Map of all networks the container is on</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 5. EMBEDDED DNS                -->
+    <!-- ============================== -->
+    <section id="embedded-dns" class="mb-12 slide-up delay-5">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <i class="fas fa-server text-sm"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Embedded DNS</h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 mb-6 glow-card">
+        <p class="text-gray-300 text-sm md:text-base leading-relaxed mb-4">
+          Docker runs a built-in DNS server at <code class="inline-code">127.0.0.11</code> inside every container.
+          It resolves <strong class="text-white">container names to IPs</strong> automatically — but <span class="text-yellow-300">only on user-defined networks</span>.
+        </p>
+
+        <!-- Analogy -->
+        <div class="bg-black/30 rounded-lg p-4 border border-slate-700/50 mb-4 analogy-box">
+          <div class="flex items-start gap-2">
+            <div class="text-yellow-400 mt-0.5 text-xs"><i class="fas fa-lightbulb"></i></div>
+            <div>
+              <p class="text-gray-300 text-xs">
+                <span class="font-semibold text-yellow-300">Think of it like phone contacts:</span>
+                On the default bridge you must dial IPs (phone numbers). On a user-defined network,
+                Docker's DNS acts like your contact list — call <span class="inline-code">mysql</span> instead of remembering <span class="inline-code">172.17.0.3</span>.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div class="code-block text-sm mb-4">
+          <span class="dim"># Create a user-defined network</span>
+          $ docker network create app-net
+
+          <span class="dim"># Run a database container</span>
+          $ docker run -d --network app-net --name mysql -e MYSQL_ROOT_PASSWORD=secret mysql:8
+
+          <span class="dim"># Run a web container — it can reach "mysql" by name!</span>
+          $ docker run -it --network app-net --name web nginx
+
+          <span class="dim"># From inside the web container:</span>
+          $ docker exec web ping mysql -c 2
+          <span class="dim">PING mysql (182.18.0.2) 56(84) bytes of data.
+          64 bytes from mysql.app-net (182.18.0.2): icmp_seq=1 ttl=64 time=0.089 ms
+          64 bytes from mysql.app-net (182.18.0.2): icmp_seq=2 ttl=64 time=0.102 ms</span>
+
+          <span class="dim"># Verify DNS server inside container</span>
+          $ docker exec web cat /etc/resolv.conf
+          <span class="dim">nameserver 127.0.0.11
+          options ndots:0</span>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700/50">
+            <h4 class="text-xs font-semibold text-green-400 uppercase tracking-wider mb-2"><i class="fas fa-check-circle mr-1"></i>Works On</h4>
+            <ul class="text-gray-400 text-xs space-y-1">
+              <li>✓ User-defined <code class="inline-code">bridge</code> networks</li>
+              <li>✓ User-defined <code class="inline-code">overlay</code> networks (Swarm)</li>
+              <li>✓ <code class="inline-code">docker-compose</code> networks</li>
+            </ul>
+          </div>
+          <div class="bg-black/30 rounded-lg p-4 border border-slate-700/50">
+            <h4 class="text-xs font-semibold text-red-400 uppercase tracking-wider mb-2"><i class="fas fa-times-circle mr-1"></i>Does NOT Work On</h4>
+            <ul class="text-gray-400 text-xs space-y-1">
+              <li>✗ Default <code class="inline-code">bridge</code> network</li>
+              <li>✗ <code class="inline-code">host</code> network mode</li>
+              <li>✗ <code class="inline-code">none</code> network mode</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 glow-card tip-box">
+        <div class="flex items-start gap-3">
+          <div class="mt-0.5 text-green-400"><i class="fas fa-flask"></i></div>
+          <div>
+            <h3 class="text-sm font-semibold text-green-300 mb-1">Full Example: Web + MySQL by Name</h3>
+            <div class="code-block text-sm">
+              <span class="dim"># 1. Create a custom network</span>
+              $ docker network create app-net
+
+              <span class="dim"># 2. Start MySQL (no port needed — internal only)</span>
+              $ docker run -d --network app-net --name mysql \
+                -e MYSQL_ROOT_PASSWORD=secret mysql:8
+
+              <span class="dim"># 3. Start web app that connects via DNS name "mysql"</span>
+              $ docker run -d --network app-net --name web \
+                -p 8080:80 my-web-app
+
+              <span class="dim"># 4. The web app can now connect to the database using
+              #    the hostname "mysql" — Docker DNS resolves it.
+              #    No hardcoded IPs needed!</span>
+
+              <span class="dim"># Verify resolution from within web container:</span>
+              $ docker exec web getent hosts mysql
+              <span class="string">182.18.0.2    mysql</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- QUICK REFERENCE                -->
+    <!-- ============================== -->
+    <section class="slide-up delay-6">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-8 h-8 rounded-lg bg-indigo-500/20 flex items-center justify-center text-indigo-400">
+          <i class="fas fa-list-check text-sm"></i>
+        </div>
+        <h2 class="text-xl md:text-2xl font-bold text-white">Quick Reference</h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-5 md:p-6 glow-card">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="text-gray-500 border-b border-slate-700">
+                <th class="text-left py-2 pr-4">Command</th>
+                <th class="text-left py-2 pr-4">Description</th>
+                <th class="text-left py-2">Example</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-400">
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4"><code class="inline-code">docker network ls</code></td>
+                <td class="py-2 pr-4">List all networks</td>
+                <td class="py-2"><code class="inline-code">docker network ls</code></td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4"><code class="inline-code">docker network create</code></td>
+                <td class="py-2 pr-4">Create a new network</td>
+                <td class="py-2"><code class="inline-code">docker network create --driver bridge my-net</code></td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4"><code class="inline-code">docker network rm</code></td>
+                <td class="py-2 pr-4">Remove a network</td>
+                <td class="py-2"><code class="inline-code">docker network rm my-net</code></td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4"><code class="inline-code">docker network connect</code></td>
+                <td class="py-2 pr-4">Attach container to network</td>
+                <td class="py-2"><code class="inline-code">docker network connect my-net my-container</code></td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4"><code class="inline-code">docker network disconnect</code></td>
+                <td class="py-2 pr-4">Detach container from network</td>
+                <td class="py-2"><code class="inline-code">docker network disconnect my-net my-container</code></td>
+              </tr>
+              <tr class="border-b border-slate-800/50">
+                <td class="py-2 pr-4"><code class="inline-code">docker network inspect</code></td>
+                <td class="py-2 pr-4">Show network details</td>
+                <td class="py-2"><code class="inline-code">docker network inspect my-net</code></td>
+              </tr>
+              <tr>
+                <td class="py-2 pr-4"><code class="inline-code">docker run --network</code></td>
+                <td class="py-2 pr-4">Run container on a network</td>
+                <td class="py-2"><code class="inline-code">docker run --network=host nginx</code></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="mt-16 pt-8 border-t border-slate-800 text-center">
+      <div class="flex flex-col md:flex-row items-center justify-between gap-4">
+        <a href="../index.html" class="text-sm text-gray-500 hover:text-indigo-400 transition-colors">
+          <i class="fas fa-arrow-left mr-1"></i> Back to Cheatsheet
+        </a>
+        <p class="text-xs text-gray-600">
+          <i class="fas fa-network-wired mr-1"></i> Chapter 6 — Docker Networking
+        </p>
+        <div class="text-xs text-gray-600">
+          <i class="fas fa-plug mr-1"></i>
+          <a href="#default-networks" class="hover:text-indigo-400 transition-colors">Top</a>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+</body>
+</html>

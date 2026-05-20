@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 11 — Docker on Windows & Mac | Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back to Home -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6 group">
+      <i class="fas fa-arrow-left group-hover:-translate-x-1 transition-transform"></i> Back to Cheatsheet
+    </a>
+
+    <!-- Chapter Header -->
+    <div class="text-center mb-10 animate-fade-in">
+      <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-cyan-500/20 to-blue-500/20 border border-cyan-500/30 mb-4">
+        <i class="fas fa-laptop text-3xl text-cyan-400"></i>
+      </div>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text">Chapter 11: Docker on Windows & Mac</h1>
+      <p class="text-gray-400 mt-3 text-lg">Running Docker on your desktop, whatever OS you use</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-10 animate-fade-in">
+      <a href="#windows-options" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fab fa-windows mr-1 text-cyan-400"></i>Windows Options</a>
+      <a href="#docker-desktop-win" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-desktop mr-1 text-cyan-400"></i>Docker Desktop Win</a>
+      <a href="#win-containers" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-cubes mr-1 text-cyan-400"></i>Windows Containers</a>
+      <a href="#mac-options" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fab fa-apple mr-1 text-cyan-400"></i>Mac Options</a>
+      <a href="#docker-desktop-mac" class="px-4 py-2 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 transition-colors"><i class="fas fa-desktop mr-1 text-cyan-400"></i>Docker Desktop Mac</a>
+    </div>
+
+    <!-- 1. Docker on Windows — Two Options -->
+    <section id="windows-options" class="mb-8 animate-slide-left">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fab fa-windows text-2xl text-cyan-400"></i>
+          <h2 class="text-2xl font-bold text-white">Docker on Windows — Two Options</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Docker gives you two paths on Windows. Choose based on your operating system version and requirements:</p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-slate-600">
+                  <th class="text-left py-3 px-4 font-semibold text-white">Feature</th>
+                  <th class="text-left py-3 px-4 font-semibold text-cyan-300">Docker Toolbox (Legacy)</th>
+                  <th class="text-left py-3 px-4 font-semibold text-blue-300">Docker Desktop for Windows</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-700/50">
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Virtualization</td>
+                  <td class="py-3 px-4"><span class="text-cyan-300">Oracle VirtualBox</span></td>
+                  <td class="py-3 px-4"><span class="text-blue-300">Hyper-V</span></td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Min. Windows</td>
+                  <td class="py-3 px-4">Windows 7+ (64-bit)</td>
+                  <td class="py-3 px-4">Windows 10 Pro/Enterprise</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Performance</td>
+                  <td class="py-3 px-4">Slower (VM overhead)</td>
+                  <td class="py-3 px-4">Faster (native Hyper-V)</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Status</td>
+                  <td class="py-3 px-4"><span class="text-yellow-400">Deprecated</span></td>
+                  <td class="py-3 px-4"><span class="text-green-400">Recommended</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40">
+            <p class="text-sm"><i class="fas fa-info-circle mr-1 text-cyan-400"></i> <strong class="text-white">Docker Toolbox</strong> includes: VirtualBox, Docker Engine, Docker Machine, Docker Compose, and Kitematic GUI — everything you need in one package.</p>
+          </div>
+
+          <div class="p-4 rounded-lg bg-red-900/20 border border-red-800/40">
+            <p class="text-sm text-red-300"><i class="fas fa-exclamation-triangle mr-1"></i> <strong class="text-white">Note:</strong> Docker Toolbox is <strong>legacy software</strong>. It is no longer actively maintained. Always prefer Docker Desktop for Windows if your system supports it.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Docker Desktop for Windows -->
+    <section id="docker-desktop-win" class="mb-8 animate-slide-right">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-desktop text-2xl text-cyan-400"></i>
+          <h2 class="text-2xl font-bold text-white">Docker Desktop for Windows</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Docker Desktop is the <strong class="text-white">modern, recommended way</strong> to run Docker on Windows. It provides seamless integration with your OS and excellent performance.</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fab fa-windows text-lg text-cyan-400"></i>
+                <h3 class="font-semibold text-white">Supported Versions</h3>
+              </div>
+              <ul class="space-y-1 text-sm text-gray-400">
+                <li><i class="fas fa-check text-green-400 mr-2"></i>Windows 10 Enterprise</li>
+                <li><i class="fas fa-check text-green-400 mr-2"></i>Windows 10 Professional</li>
+                <li><i class="fas fa-check text-green-400 mr-2"></i>Windows Server 2016+</li>
+                <li><i class="fas fa-times text-red-400 mr-2"></i>Windows 10 Home (no Hyper-V)</li>
+              </ul>
+            </div>
+            <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-cube text-lg text-cyan-400"></i>
+                <h3 class="font-semibold text-white">Container Types</h3>
+              </div>
+              <ul class="space-y-1 text-sm text-gray-400">
+                <li><i class="fas fa-check text-green-400 mr-2"></i>Linux Containers (default)</li>
+                <li><i class="fas fa-check text-green-400 mr-2"></i>Windows Containers</li>
+              </ul>
+            </div>
+          </div>
+
+          <p>Docker Desktop uses <strong class="text-white">Hyper-V</strong> for virtualization. Hyper-V is Microsoft's native hypervisor — it runs a lightweight VM that hosts the Docker Engine, giving you near-native Linux container performance on Windows.</p>
+
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 flex items-start gap-4">
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <div>
+              <p class="text-sm font-semibold text-yellow-300 mb-1">Seamless Integration</p>
+              <p class="text-sm text-gray-300">Docker Desktop integrates with Windows natively — you can run Docker commands from <strong class="text-white">PowerShell</strong>, <strong class="text-white">CMD</strong>, or <strong class="text-white">WSL2</strong> (Windows Subsystem for Linux). It also adds a system tray icon for quick management.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. Windows Containers -->
+    <section id="win-containers" class="mb-8 animate-slide-left">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-cubes text-2xl text-cyan-400"></i>
+          <h2 class="text-2xl font-bold text-white">Windows Containers</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Docker on Windows supports <strong class="text-white">two isolation modes</strong> for Windows containers. Each offers a different balance between resource efficiency and security.</p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-slate-600">
+                  <th class="text-left py-3 px-4 font-semibold text-white">Feature</th>
+                  <th class="text-left py-3 px-4 font-semibold text-cyan-300">Windows Server Container</th>
+                  <th class="text-left py-3 px-4 font-semibold text-blue-300">Hyper-V Isolation</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-700/50">
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Kernel</td>
+                  <td class="py-3 px-4">Shared with host</td>
+                  <td class="py-3 px-4"><strong class="text-white">Own kernel</strong> per container</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Isolation Level</td>
+                  <td class="py-3 px-4">Process-level</td>
+                  <td class="py-3 px-4">Hypervisor-level (stronger)</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Performance</td>
+                  <td class="py-3 px-4"><span class="text-green-400">Faster</span></td>
+                  <td class="py-3 px-4">Slightly more overhead</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Security</td>
+                  <td class="py-3 px-4">Standard</td>
+                  <td class="py-3 px-4"><span class="text-green-400">Higher</span> (trusted multi-tenant)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <h3 class="text-lg font-semibold text-white mt-4">Available Base Images</h3>
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div class="p-4 rounded-lg bg-blue-900/20 border border-blue-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fab fa-microsoft text-xl text-blue-400"></i>
+                <h4 class="font-semibold text-blue-300">Windows Server Core</h4>
+              </div>
+              <p class="text-sm text-gray-400">Full Windows Server experience. Larger image (~4 GB) but supports .NET Framework, IIS, and legacy Windows apps.</p>
+            </div>
+            <div class="p-4 rounded-lg bg-emerald-900/20 border border-emerald-800/40">
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-microchip text-xl text-emerald-400"></i>
+                <h4 class="font-semibold text-emerald-300">Nano Server</h4>
+              </div>
+              <p class="text-sm text-gray-400">Minimal footprint (~1 GB). Optimized for cloud-native apps built with .NET Core, Python, Node.js, etc.</p>
+            </div>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40">
+            <p class="text-sm"><i class="fas fa-info-circle mr-1 text-cyan-400"></i> <strong class="text-white">Use Cases:</strong> Windows Containers are ideal for lifting and shifting legacy .NET Framework apps, running Windows-specific tools, or hybrid environments where you need both Linux and Windows containers side by side.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Docker on Mac — Two Options -->
+    <section id="mac-options" class="mb-8 animate-slide-right">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fab fa-apple text-2xl text-cyan-400"></i>
+          <h2 class="text-2xl font-bold text-white">Docker on Mac — Two Options</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Just like Windows, Docker on macOS has two paths — a legacy option and a modern native option.</p>
+
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm border-collapse">
+              <thead>
+                <tr class="border-b border-slate-600">
+                  <th class="text-left py-3 px-4 font-semibold text-white">Feature</th>
+                  <th class="text-left py-3 px-4 font-semibold text-cyan-300">Docker Toolbox (Legacy)</th>
+                  <th class="text-left py-3 px-4 font-semibold text-blue-300">Docker Desktop for Mac</th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-slate-700/50">
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Virtualization</td>
+                  <td class="py-3 px-4"><span class="text-cyan-300">Oracle VirtualBox</span></td>
+                  <td class="py-3 px-4"><span class="text-blue-300">HyperKit</span> (macOS Hypervisor)</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Min. macOS</td>
+                  <td class="py-3 px-4">macOS 10.8+ (Mountain Lion)</td>
+                  <td class="py-3 px-4">macOS Sierra 10.12+ (2010 Mac+)</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Performance</td>
+                  <td class="py-3 px-4">Slower (VM overhead)</td>
+                  <td class="py-3 px-4">Faster (native Hypervisor)</td>
+                </tr>
+                <tr>
+                  <td class="py-3 px-4 text-gray-400">Status</td>
+                  <td class="py-3 px-4"><span class="text-yellow-400">Deprecated</span></td>
+                  <td class="py-3 px-4"><span class="text-green-400">Recommended</span></td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+
+          <p>Docker Toolbox for Mac includes the same components as the Windows version: <strong class="text-white">VirtualBox, Docker Engine, Docker Machine, Docker Compose, and Kitematic GUI</strong>.</p>
+
+          <div class="p-4 rounded-lg bg-red-900/20 border border-red-800/40">
+            <p class="text-sm text-red-300"><i class="fas fa-exclamation-triangle mr-1"></i> <strong class="text-white">Note:</strong> Toolbox is considered legacy on Mac too. It uses VirtualBox which adds extra overhead. Always use Docker Desktop for Mac if your hardware supports it (Macs from 2010 or later).</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Docker Desktop for Mac -->
+    <section id="docker-desktop-mac" class="mb-8 animate-slide-left">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-desktop text-2xl text-cyan-400"></i>
+          <h2 class="text-2xl font-bold text-white">Docker Desktop for Mac</h2>
+        </div>
+        <div class="space-y-4 text-gray-300 leading-relaxed">
+          <p>Docker Desktop for Mac gives you a <strong class="text-white">native macOS experience</strong>. Instead of VirtualBox, it uses Apple's built-in <strong class="text-white">Hypervisor framework</strong> and a lightweight VM called <strong class="text-white">HyperKit</strong>.</p>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40 text-center">
+              <i class="fas fa-bolt text-2xl text-yellow-400 mb-2"></i>
+              <h3 class="font-semibold text-white text-sm">Better Performance</h3>
+              <p class="text-xs text-gray-400 mt-1">Near-native speed with HyperKit instead of VirtualBox</p>
+            </div>
+            <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40 text-center">
+              <i class="fab fa-linux text-2xl text-blue-400 mb-2"></i>
+              <h3 class="font-semibold text-white text-sm">Linux Containers Only</h3>
+              <p class="text-xs text-gray-400 mt-1">Unlike Windows, Mac runs only Linux containers</p>
+            </div>
+            <div class="p-4 rounded-lg bg-slate-700/30 border border-slate-600/40 text-center">
+              <i class="fas fa-palette text-2xl text-purple-400 mb-2"></i>
+              <h3 class="font-semibold text-white text-sm">macOS Native UI</h3>
+              <p class="text-xs text-gray-400 mt-1">Menu bar icon, preferences panel, seamless integration</p>
+            </div>
+          </div>
+
+          <div class="code-block rounded-lg p-4 overflow-x-auto">
+            <div class="flex items-center gap-2 text-xs text-gray-500 mb-3">
+              <i class="fas fa-terminal text-cyan-400"></i> <span>Verify Docker Desktop for Mac is running</span>
+            </div>
+            <pre class="text-sm font-mono"><span class="text-gray-400">$</span> <span class="text-white">docker version</span>
+<span class="text-green-300">Client: Docker Engine - Community
+ Version:           24.0.6
+ OS/Arch:           darwin/amd64     <span class="text-gray-500">← macOS 64-bit</span>
+
+Server: Docker Engine - Community
+ Engine:
+  Version:          24.0.6
+  OS/Arch:          linux/amd64      <span class="text-gray-500">← Linux VM under the hood</span></span></pre>
+          </div>
+
+          <div class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 flex items-start gap-4">
+            <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+            <div>
+              <p class="text-sm font-semibold text-yellow-300 mb-1">Why Desktop is Better than Toolbox</p>
+              <p class="text-sm text-gray-300">Docker Desktop uses macOS's native hypervisor instead of VirtualBox. This means <strong class="text-white">faster file sharing</strong>, <strong class="text-white">lower resource usage</strong>, automatic updates, and a polished UI in your menu bar. It also supports Kubernetes out of the box.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Summary Section -->
+    <section id="summary" class="mb-8 animate-fade-in">
+      <div class="p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-check-circle text-2xl text-emerald-400"></i>
+          <h2 class="text-2xl font-bold text-white">Key Takeaways</h2>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fab fa-windows text-cyan-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Windows users choose between <strong class="text-white">Toolbox</strong> (legacy, VirtualBox) and <strong class="text-white">Desktop</strong> (modern, Hyper-V)</p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fab fa-apple text-cyan-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Mac users choose between <strong class="text-white">Toolbox</strong> (legacy, VirtualBox) and <strong class="text-white">Desktop</strong> (modern, HyperKit)</p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-cubes text-cyan-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Windows Containers offer <strong class="text-white">Server Containers</strong> (shared kernel) and <strong class="text-white">Hyper-V Isolation</strong> (own kernel)</p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-thumbs-up text-cyan-400 mt-1"></i>
+            <p class="text-sm text-gray-300"><strong class="text-white">Docker Desktop</strong> is the recommended approach on both platforms</p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-image text-cyan-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Windows base images: <strong class="text-white">Server Core</strong> (full) and <strong class="text-white">Nano Server</strong> (minimal)</p>
+          </div>
+          <div class="flex items-start gap-3 p-3 rounded-lg bg-slate-700/30">
+            <i class="fas fa-link text-cyan-400 mt-1"></i>
+            <p class="text-sm text-gray-300">Docker Desktop for Mac runs <strong class="text-white">Linux containers only</strong> via HyperKit</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer Navigation -->
+    <div class="flex flex-col sm:flex-row justify-between items-center gap-4 pt-6 border-t border-slate-700/50">
+      <a href="ch10_storage.html" class="glow-card flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">
+        <i class="fas fa-arrow-left text-gray-400"></i>
+        <div class="text-left">
+          <p class="text-xs text-gray-500">Previous</p>
+          <p class="text-white font-medium">Chapter 10: Storage</p>
+        </div>
+      </a>
+      <a href="ch12_networking.html" class="glow-card flex items-center gap-3 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">
+        <div class="text-right">
+          <p class="text-xs text-gray-500">Next</p>
+          <p class="text-white font-medium">Chapter 12: Networking</p>
+        </div>
+        <i class="fas fa-arrow-right text-gray-400"></i>
+      </a>
+    </div>
+
+    <div class="mt-8 text-center text-gray-500 text-sm">
+      <i class="fas fa-book-open mr-1"></i> Based on "Docker for Beginners" by Mumshad Mannambeth
+    </div>
+  </div>
+</body>
+</html>

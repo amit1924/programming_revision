@@ -1,0 +1,621 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Branching & Merging — Git Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .glow-card-terminal:hover { box-shadow: 0 0 20px rgba(16,185,129,0.25); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .gradient-text-green { background: linear-gradient(135deg, #34d399, #10b981); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .fade-in { animation: fadeIn 0.6s ease-out both; }
+    .slide-up { animation: slideUp 0.5s ease-out both; }
+    .slide-right { animation: slideRight 0.5s ease-out both; }
+    .pulse-icon:hover { animation: pulse 0.6s ease-in-out infinite; }
+    @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    @keyframes slideUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes slideRight { from { opacity: 0; transform: translateX(-20px); } to { opacity: 1; transform: translateX(0); } }
+    @keyframes pulse { 0%, 100% { transform: scale(1); } 50% { transform: scale(1.15); } }
+    .terminal-bg { background: #1a1b2e; border: 1px solid #2d2d44; border-radius: 0.75rem; }
+    .terminal-header { background: #252540; border-radius: 0.75rem 0.75rem 0 0; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 0.5rem; }
+    .terminal-dot { width: 10px; height: 10px; border-radius: 50%; }
+    .terminal-body { padding: 1rem; font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', monospace; font-size: 0.85rem; line-height: 1.6; overflow-x: auto; }
+    .conflict-marker-add { background: rgba(52,211,153,0.15); border-left: 3px solid #34d399; }
+    .conflict-marker-remove { background: rgba(251,113,133,0.15); border-left: 3px solid #fb7185; }
+    .dag-node { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; border-radius: 8px; font-size: 0.7rem; font-weight: 700; }
+    .dag-arrow { width: 24px; height: 2px; background: #475569; position: relative; }
+    .dag-arrow::after { content: ''; position: absolute; right: -4px; top: -3px; width: 0; height: 0; border-top: 4px solid transparent; border-bottom: 4px solid transparent; border-left: 6px solid #475569; }
+    .branch-label { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; }
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
+    .stagger-6 { animation-delay: 0.6s; }
+    .stagger-7 { animation-delay: 0.7s; }
+    .stagger-8 { animation-delay: 0.8s; }
+    .stagger-9 { animation-delay: 0.9s; }
+    .stagger-10 { animation-delay: 1.0s; }
+    .section-link { transition: color 0.2s; }
+    .section-link:hover { color: #93c5fd; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1e1e32; }
+    ::-webkit-scrollbar-thumb { background: #3b3b5c; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #52527a; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- ===== BACK NAV ===== -->
+    <div class="mb-8 fade-in">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-gray-400 hover:text-blue-400 transition-colors duration-200">
+        <i class="fas fa-arrow-left"></i>
+        <span>Back to Index</span>
+      </a>
+    </div>
+
+    <!-- ===== HEADER ===== -->
+    <div class="text-center mb-10 fade-in">
+      <i class="fas fa-code-branch text-6xl text-indigo-400 mb-4"></i>
+      <h1 class="text-4xl md:text-6xl font-bold gradient-text">Branching &amp; Merging</h1>
+      <p class="text-gray-400 mt-3 text-lg">Part 4 — How Git models history, branches, and merges</p>
+    </div>
+
+    <!-- ===== SECTION NAV ===== -->
+    <div class="terminal-bg p-4 mb-10 slide-up">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-list text-sm text-gray-400"></i>
+        <span class="text-sm font-semibold text-gray-300">Sections</span>
+      </div>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-x-4 gap-y-1 text-sm">
+        <a href="#dag" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-project-diagram text-xs mr-1 text-indigo-400"></i> 1. DAG</a>
+        <a href="#pointer" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-map-pin text-xs mr-1 text-cyan-400"></i> 2. Branch as Pointer</a>
+        <a href="#create" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-plus-circle text-xs mr-1 text-emerald-400"></i> 3. Create Branch</a>
+        <a href="#switch" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-exchange-alt text-xs mr-1 text-yellow-400"></i> 4. Switch Branches</a>
+        <a href="#merge" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-code-merge text-xs mr-1 text-purple-400"></i> 5. Merging</a>
+        <a href="#how-merge" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-file-code text-xs mr-1 text-pink-400"></i> 6. How Git Merges</a>
+        <a href="#conflicts" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-exclamation-triangle text-xs mr-1 text-orange-400"></i> 7. Conflicts</a>
+        <a href="#resolve" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-check-double text-xs mr-1 text-green-400"></i> 8. Resolving</a>
+        <a href="#delete" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-trash-alt text-xs mr-1 text-rose-400"></i> 9. Delete Branches</a>
+        <a href="#exercises" class="section-link text-gray-400 hover:text-blue-400"><i class="fas fa-dumbbell text-xs mr-1 text-teal-400"></i> 10. Exercises</a>
+      </div>
+    </div>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 1: DAG                                                      -->
+    <!-- ================================================================== -->
+    <section id="dag" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-1">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-project-diagram text-2xl text-indigo-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">How Git Handles History (DAG)</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p>Git models history as a <strong class="text-white">Directed Acyclic Graph</strong> (DAG). Each commit stores references to its parent commit(s):</p>
+        <ul class="list-none space-y-2 pl-2">
+          <li class="flex items-start gap-3">
+            <span class="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-blue-500/20 border border-blue-500/40 flex items-center justify-center text-xs text-blue-400 font-bold">0</span>
+            <span><strong class="text-blue-300">0 parents</strong> &mdash; initial commit (root of the graph)</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-emerald-500/20 border border-emerald-500/40 flex items-center justify-center text-xs text-emerald-400 font-bold">1</span>
+            <span><strong class="text-emerald-300">1 parent</strong> &mdash; ordinary commit (linear history)</span>
+          </li>
+          <li class="flex items-start gap-3">
+            <span class="mt-1 flex-shrink-0 w-5 h-5 rounded-full bg-purple-500/20 border border-purple-500/40 flex items-center justify-center text-xs text-purple-400 font-bold">2+</span>
+            <span><strong class="text-purple-300">2+ parents</strong> &mdash; merge commit (joins histories)</span>
+          </li>
+        </ul>
+        <p>Each commit + its parent chain forms the DAG — there is <strong class="text-white">never a cycle</strong>, hence "acyclic".</p>
+      </div>
+
+      <!-- DAG Visual Diagram -->
+      <div class="terminal-bg mt-5 p-4">
+        <div class="text-xs text-gray-500 mb-3"><i class="fas fa-sitemap mr-1"></i> Visual DAG</div>
+        <div class="flex flex-wrap items-center gap-1 text-xs">
+          <!-- Commit A (root) -->
+          <div class="dag-node bg-blue-500/20 border border-blue-500/40 text-blue-300">A</div>
+          <div class="dag-arrow"></div>
+          <!-- Commit B -->
+          <div class="dag-node bg-emerald-500/20 border border-emerald-500/40 text-emerald-300">B</div>
+          <div class="dag-arrow"></div>
+          <!-- Commit C -->
+          <div class="dag-node bg-amber-500/20 border border-amber-500/40 text-amber-300">C</div>
+          <!-- branch label on C -->
+          <span class="branch-label bg-blue-500/20 text-blue-300 ml-2 border border-blue-500/30"><i class="fas fa-code-branch text-[10px] mr-1"></i>main</span>
+
+          <!-- fork line -->
+          <div class="w-full h-4"></div>
+          <div class="ml-[104px] flex items-center gap-1">
+            <div class="dag-node bg-rose-500/20 border border-rose-500/40 text-rose-300">D</div>
+            <div class="dag-arrow"></div>
+            <div class="dag-node bg-violet-500/20 border border-violet-500/40 text-violet-300">E</div>
+            <span class="branch-label bg-violet-500/20 text-violet-300 ml-2 border border-violet-500/30"><i class="fas fa-code-branch text-[10px] mr-1"></i>feature</span>
+          </div>
+
+          <!-- merge line -->
+          <div class="w-full h-4"></div>
+          <div class="ml-[52px] flex items-center gap-1">
+            <div class="dag-node bg-purple-500/20 border border-purple-500/40 text-purple-300 ring-2 ring-purple-400/30">F</div>
+            <span class="text-[10px] text-purple-300 ml-2"><i class="fas fa-code-merge"></i> merge commit</span>
+          </div>
+        </div>
+        <div class="mt-3 text-[11px] text-gray-500 leading-relaxed">
+          Commit F has two parents (C and E).<br>
+          <span class="text-gray-600">The DAG guarantees that from any commit you can trace back to the root.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 2: Branch = Pointer                                         -->
+    <!-- ================================================================== -->
+    <section id="pointer" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-2">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-map-pin text-2xl text-cyan-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">Branch = Pointer</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p>Git has <strong class="text-white">no formal "branch history"</strong>. A branch is simply a movable pointer to a commit.</p>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-300">
+          <li>Internally, <strong class="text-cyan-300">branches and tags</strong> are handled identically — both are refs to commits.</li>
+          <li>Every commit is identified by its <strong class="text-cyan-300">SHA-1 hash</strong> (160 bits, displayed as 40 hex chars).</li>
+          <li>The hash is computed from: <span class="text-gray-400">committed files + metadata (author, date, message) + parent hashes</span>.</li>
+          <li>A commit hash securely identifies <strong class="text-cyan-300">both content AND full history</strong> — tamper-proof.</li>
+        </ul>
+      </div>
+
+      <!-- Pointer visual -->
+      <div class="terminal-bg mt-5 p-4">
+        <div class="text-xs text-gray-500 mb-3"><i class="fas fa-arrow-right mr-1"></i> Branch pointer moving forward</div>
+        <div class="flex flex-wrap items-center gap-1 text-xs">
+          <div class="dag-node bg-gray-600/30 border border-gray-500/40 text-gray-400">a1</div>
+          <div class="dag-arrow"></div>
+          <div class="dag-node bg-gray-600/30 border border-gray-500/40 text-gray-400">a2</div>
+          <div class="dag-arrow"></div>
+          <div class="dag-node bg-emerald-500/20 border border-emerald-500/40 text-emerald-300 ring-2 ring-emerald-400/30">a3</div>
+          <span class="branch-label bg-emerald-500/20 text-emerald-300 ml-2 border border-emerald-500/30"><i class="fas fa-code-branch text-[10px] mr-1"></i>main</span>
+        </div>
+        <div class="flex items-center gap-1 text-xs mt-3 text-gray-500">
+          <i class="fas fa-arrow-up text-emerald-400"></i>
+          <span><code class="text-emerald-300">main</code> points to commit <code class="text-emerald-300">a3</code>. If you create a new commit, the pointer moves to that new commit.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 3: Creating a New Branch                                    -->
+    <!-- ================================================================== -->
+    <section id="create" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-3">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-plus-circle text-2xl text-emerald-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">Creating a New Branch</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p class="text-gray-400">Syntax:</p>
+        <div class="terminal-bg">
+          <div class="terminal-header">
+            <span class="terminal-dot bg-red-500"></span>
+            <span class="terminal-dot bg-yellow-500"></span>
+            <span class="terminal-dot bg-green-500"></span>
+            <span class="text-xs text-gray-400 ml-2">Terminal</span>
+          </div>
+          <div class="terminal-body text-emerald-300">
+            git checkout -b &lt;new_branch&gt; [&lt;starting_point&gt;]
+          </div>
+        </div>
+        <p><strong class="text-white">Starting point</strong> can be: a commit id, a tag, another branch, or omitted (defaults to current HEAD).</p>
+      </div>
+
+      <div class="terminal-bg mt-4">
+        <div class="terminal-header">
+          <span class="terminal-dot bg-red-500"></span>
+          <span class="terminal-dot bg-yellow-500"></span>
+          <span class="terminal-dot bg-green-500"></span>
+          <span class="text-xs text-gray-400 ml-2">Example</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="text-green-400">$</span> git status</div>
+          <div class="text-gray-400"># On branch master</div>
+          <div><span class="text-green-400">$</span> git checkout -b develop</div>
+          <div class="text-gray-400">Switched to a new branch 'develop'</div>
+          <div><br></div>
+          <div><span class="text-green-400">$</span> git branch</div>
+          <div class="text-emerald-300">* develop</div>
+          <div class="text-gray-400">  master</div>
+        </div>
+      </div>
+
+      <div class="mt-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 text-sm text-gray-400 flex items-start gap-3">
+        <i class="fas fa-info-circle text-blue-400 mt-0.5"></i>
+        <span>The new branch starts at the same commit you are currently on. Both branches then diverge as you make commits.</span>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 4: Switching Between Branches                               -->
+    <!-- ================================================================== -->
+    <section id="switch" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-4">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-exchange-alt text-2xl text-yellow-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">Switching Between Branches</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p class="text-gray-400">Syntax:</p>
+        <div class="terminal-bg">
+          <div class="terminal-header">
+            <span class="terminal-dot bg-red-500"></span>
+            <span class="terminal-dot bg-yellow-500"></span>
+            <span class="terminal-dot bg-green-500"></span>
+            <span class="text-xs text-gray-400 ml-2">Terminal</span>
+          </div>
+          <div class="terminal-body text-yellow-300">
+            git checkout [-m] &lt;branch_name&gt;
+          </div>
+        </div>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-300">
+          <li>Fails when the <strong class="text-yellow-300">working copy is not clean</strong> (uncommitted changes would be lost).</li>
+          <li>The <code class="text-yellow-300">-m</code> flag <strong class="text-yellow-300">merges local changes</strong> into the destination branch.</li>
+          <li>Since v2.23: <code class="text-cyan-300">git switch</code> is available as an experimental alternative.</li>
+        </ul>
+      </div>
+
+      <div class="terminal-bg mt-4">
+        <div class="terminal-header">
+          <span class="terminal-dot bg-red-500"></span>
+          <span class="terminal-dot bg-yellow-500"></span>
+          <span class="terminal-dot bg-green-500"></span>
+          <span class="text-xs text-gray-400 ml-2">Error &amp; Recovery</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="text-green-400">$</span> git checkout develop</div>
+          <div class="text-red-400">error: Your local changes to the following files would be overwritten by checkout:</div>
+          <div class="text-red-400">        index.html</div>
+          <div class="text-red-400/80">Please commit your changes or stash them before you switch branches.</div>
+          <div><span class="text-green-400">$</span> git stash</div>
+          <div class="text-gray-400">Saved working directory and index state WIP on main: a3c2f1d ...</div>
+          <div><span class="text-green-400">$</span> git checkout develop</div>
+          <div class="text-gray-400">Switched to branch 'develop'</div>
+          <div><span class="text-green-400">$</span> git stash pop   <span class="text-gray-600"># restore changes later</span></div>
+        </div>
+      </div>
+
+      <div class="mt-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/20 text-sm text-gray-400 flex items-start gap-3">
+        <i class="fas fa-lightbulb text-yellow-400 mt-0.5"></i>
+        <span>Use <code class="text-yellow-300">git stash</code> to temporarily save uncommitted work, then pop it after switching.</span>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 5: Merging a Branch                                         -->
+    <!-- ================================================================== -->
+    <section id="merge" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-5">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-code-merge text-2xl text-purple-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">Merging a Branch</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p class="text-gray-400">Syntax:</p>
+        <div class="terminal-bg">
+          <div class="terminal-header">
+            <span class="terminal-dot bg-red-500"></span>
+            <span class="terminal-dot bg-yellow-500"></span>
+            <span class="terminal-dot bg-green-500"></span>
+            <span class="text-xs text-gray-400 ml-2">Terminal</span>
+          </div>
+          <div class="terminal-body text-purple-300">
+            git merge &lt;other_branch&gt;
+          </div>
+        </div>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-300">
+          <li>Merges changes from <code class="text-purple-300">other_branch</code> into the <strong class="text-white">current branch</strong>.</li>
+          <li>The result is <strong class="text-purple-300">immediately committed</strong> (unless there is a conflict).</li>
+          <li>The new commit has <strong class="text-purple-300">two parents</strong> — merge history is recorded in the DAG.</li>
+          <li>Only applies changes <strong class="text-purple-300">since the last common ancestor</strong> (merge base).</li>
+        </ul>
+      </div>
+
+      <div class="terminal-bg mt-4">
+        <div class="terminal-header">
+          <span class="terminal-dot bg-red-500"></span>
+          <span class="terminal-dot bg-yellow-500"></span>
+          <span class="terminal-dot bg-green-500"></span>
+          <span class="text-xs text-gray-400 ml-2">Example</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="text-green-400">$</span> git branch</div>
+          <div class="text-gray-400">  develop</div>
+          <div class="text-emerald-300">* master</div>
+          <div><span class="text-green-400">$</span> git merge develop</div>
+          <div class="text-gray-400">Merge made by the 'recursive' strategy.</div>
+          <div><span class="text-green-400">$</span> git log --oneline -3</div>
+          <div class="text-gray-400">f7d3e2a (HEAD -> master) Merge branch 'develop'</div>
+          <div class="text-gray-400">b8a2c1d Update footer in develop</div>
+          <div class="text-gray-400">a3c2f1d Initial commit</div>
+        </div>
+      </div>
+
+      <div class="mt-3 grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div class="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-sm text-gray-400 flex items-start gap-3">
+          <i class="fas fa-code-branch text-purple-400 mt-0.5"></i>
+          <span>Before merge: <code class="text-white">master</code> and <code class="text-white">develop</code> have diverged from a common ancestor.</span>
+        </div>
+        <div class="p-3 rounded-lg bg-purple-500/10 border border-purple-500/20 text-sm text-gray-400 flex items-start gap-3">
+          <i class="fas fa-check-circle text-purple-400 mt-0.5"></i>
+          <span>After merge: a new merge commit connects both branch histories.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 6: How Git Merges Files                                     -->
+    <!-- ================================================================== -->
+    <section id="how-merge" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-6">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-file-code text-2xl text-pink-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">How Git Merges Files</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <ul class="list-disc list-inside space-y-1.5">
+          <li><strong class="text-pink-300">Text files:</strong> merged per-line.</li>
+          <li>Lines changed in <strong class="text-emerald-300">only one</strong> branch &rarr; auto-merged.</li>
+          <li>Lines changed in <strong class="text-rose-300">both</strong> branches &rarr; conflict reported.</li>
+          <li>Conflict markers inserted: <code class="text-red-400"><<<<<<<</code>, <code class="text-gray-400">=======</code>, <code class="text-blue-400">>>>>>>></code></li>
+          <li><strong class="text-pink-300">Binary files:</strong> always conflict (no line-based merge possible).</li>
+        </ul>
+      </div>
+
+      <div class="terminal-bg mt-4">
+        <div class="terminal-header">
+          <span class="terminal-dot bg-red-500"></span>
+          <span class="terminal-dot bg-yellow-500"></span>
+          <span class="terminal-dot bg-green-500"></span>
+          <span class="text-xs text-gray-400 ml-2">Conflict Block Example</span>
+        </div>
+        <div class="terminal-body text-sm leading-relaxed">
+          <div class="text-gray-500"><<<<<<< HEAD (current change)</div>
+          <div class="conflict-marker-add pl-3 text-emerald-300">console.log("Hello from main");</div>
+          <div class="text-gray-500">=======</div>
+          <div class="conflict-marker-remove pl-3 text-rose-300">console.log("Hello from develop");</div>
+          <div class="text-gray-500">>>>>>>> develop</div>
+          <div class="text-gray-600 mt-2 italic">// Lines above === are your current branch's version.</div>
+          <div class="text-gray-600 italic">// Lines below === and above >>>>> are the incoming branch's version.</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 7: Merge Conflicts                                          -->
+    <!-- ================================================================== -->
+    <section id="conflicts" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-7">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-exclamation-triangle text-2xl text-orange-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">Merge Conflicts</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p>When a merge results in conflicts:</p>
+        <ul class="list-disc list-inside space-y-1.5">
+          <li>Unmerged files are left in the <strong class="text-orange-300">working tree</strong>, marked as "unmerged".</li>
+          <li>Conflict-free files and metadata are <strong class="text-orange-300">automatically added to the index</strong> (staged).</li>
+          <li>Git <strong class="text-red-400">refuses to commit</strong> until all conflicts are resolved.</li>
+        </ul>
+      </div>
+
+      <div class="terminal-bg mt-4">
+        <div class="terminal-header">
+          <span class="terminal-dot bg-red-500"></span>
+          <span class="terminal-dot bg-yellow-500"></span>
+          <span class="terminal-dot bg-green-500"></span>
+          <span class="text-xs text-gray-400 ml-2">Conflict Scenario Walkthrough</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="text-green-400">$</span> git merge feature</div>
+          <div class="text-red-400">Auto-merging index.html</div>
+          <div class="text-red-400">CONFLICT (content): Merge conflict in index.html</div>
+          <div class="text-red-400">Automatic merge failed; fix conflicts and then commit the result.</div>
+          <div><br></div>
+          <div><span class="text-green-400">$</span> git status</div>
+          <div class="text-gray-400">On branch master</div>
+          <div class="text-gray-400">You have unmerged paths.</div>
+          <div class="text-red-400">  (fix conflicts and run "git commit")</div>
+          <div class="text-yellow-300">  Unmerged paths:</div>
+          <div class="text-yellow-300">    both modified:   index.html</div>
+          <div><br></div>
+          <div><span class="text-green-400">$</span> git diff --name-only --diff-filter=U</div>
+          <div class="text-gray-400">index.html</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 8: Resolving Conflicts                                      -->
+    <!-- ================================================================== -->
+    <section id="resolve" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-8">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-check-double text-2xl text-green-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">Resolving Conflicts</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p>Two approaches:</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-2">
+          <div class="p-4 rounded-lg bg-blue-500/10 border border-blue-500/20">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-edit text-blue-400"></i>
+              <span class="font-semibold text-white">Manual</span>
+            </div>
+            <ol class="list-decimal list-inside text-sm text-gray-400 space-y-1">
+              <li>Edit file to resolve conflict</li>
+              <li><code class="text-blue-300">git add &lt;file&gt;</code></li>
+              <li>Or <code class="text-blue-300">git rm &lt;file&gt;</code> to delete</li>
+            </ol>
+          </div>
+          <div class="p-4 rounded-lg bg-purple-500/10 border border-purple-500/20">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-tools text-purple-400"></i>
+              <span class="font-semibold text-white">Tool</span>
+            </div>
+            <ol class="list-decimal list-inside text-sm text-gray-400 space-y-1">
+              <li><code class="text-purple-300">git mergetool [file]</code></li>
+              <li>Supported: xxdiff, kdiff3, emerge, vimdiff, etc.</li>
+              <li>Once done: <code class="text-purple-300">git commit</code></li>
+            </ol>
+          </div>
+        </div>
+      </div>
+
+      <div class="terminal-bg mt-4">
+        <div class="terminal-header">
+          <span class="terminal-dot bg-red-500"></span>
+          <span class="terminal-dot bg-yellow-500"></span>
+          <span class="terminal-dot bg-green-500"></span>
+          <span class="text-xs text-gray-400 ml-2">Resolution Process</span>
+        </div>
+        <div class="terminal-body">
+          <div class="text-gray-500"># 1. Edit index.html to remove conflict markers and keep desired code</div>
+          <div><span class="text-green-400">$</span> nano index.html</div>
+          <div><br></div>
+          <div class="text-gray-500"># 2. Mark as resolved</div>
+          <div><span class="text-green-400">$</span> git add index.html</div>
+          <div><br></div>
+          <div class="text-gray-500"># 3. Verify status</div>
+          <div><span class="text-green-400">$</span> git status</div>
+          <div class="text-gray-400">On branch master</div>
+          <div class="text-emerald-300">All conflicts fixed but you are still merging.</div>
+          <div class="text-gray-400">  (use "git commit" to conclude merge)</div>
+          <div><br></div>
+          <div class="text-gray-500"># 4. Commit the merge</div>
+          <div><span class="text-green-400">$</span> git commit</div>
+          <div class="text-gray-400">[master f7d3e2a] Merge branch 'develop'</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 9: Deleting Branches                                        -->
+    <!-- ================================================================== -->
+    <section id="delete" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-9">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-trash-alt text-2xl text-rose-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold text-white">Deleting Branches</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p class="text-gray-400">Syntax:</p>
+        <div class="terminal-bg">
+          <div class="terminal-header">
+            <span class="terminal-dot bg-red-500"></span>
+            <span class="terminal-dot bg-yellow-500"></span>
+            <span class="terminal-dot bg-green-500"></span>
+            <span class="text-xs text-gray-400 ml-2">Terminal</span>
+          </div>
+          <div class="terminal-body">
+            <div><span class="text-rose-300">git branch -d &lt;branch_name&gt;</span>   <span class="text-gray-600"># safe delete</span></div>
+            <div><span class="text-red-400">git branch -D &lt;branch_name&gt;</span>   <span class="text-gray-600"># force delete</span></div>
+          </div>
+        </div>
+        <ul class="list-disc list-inside space-y-1.5 text-gray-300">
+          <li><code class="text-rose-300">-d</code> (safe) refuses if the branch is <strong class="text-rose-300">not fully merged</strong> or is <strong class="text-rose-300">currently checked out</strong>.</li>
+          <li><code class="text-red-400">-D</code> (force) deletes unconditionally — use with care.</li>
+        </ul>
+      </div>
+
+      <div class="terminal-bg mt-4">
+        <div class="terminal-header">
+          <span class="terminal-dot bg-red-500"></span>
+          <span class="terminal-dot bg-yellow-500"></span>
+          <span class="terminal-dot bg-green-500"></span>
+          <span class="text-xs text-gray-400 ml-2">Example &amp; Error</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="text-green-400">$</span> git branch -d old-feature</div>
+          <div class="text-red-400">error: The branch 'old-feature' is not fully merged.</div>
+          <div class="text-red-400/80">If you are sure you want to delete it, run 'git branch -D old-feature'.</div>
+          <div><br></div>
+          <div><span class="text-green-400">$</span> git branch -D old-feature</div>
+          <div class="text-gray-400">Deleted branch old-feature (was a3c2f1d).</div>
+          <div><br></div>
+          <div><span class="text-green-400">$</span> git branch</div>
+          <div class="text-emerald-300">* master</div>
+          <div class="text-gray-400">  develop</div>
+        </div>
+      </div>
+
+      <div class="mt-3 p-3 rounded-lg bg-rose-500/10 border border-rose-500/20 text-sm text-gray-400 flex items-start gap-3">
+        <i class="fas fa-exclamation-circle text-rose-400 mt-0.5"></i>
+        <span>You <strong class="text-rose-300">cannot</strong> delete the branch you are currently on (HEAD). Switch to another branch first.</span>
+      </div>
+    </section>
+
+    <!-- ================================================================== -->
+    <!-- SECTION 10: Exercises                                               -->
+    <!-- ================================================================== -->
+    <section id="exercises" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 slide-up stagger-10">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-dumbbell text-2xl text-teal-400 pulse-icon"></i>
+        <h2 class="text-2xl font-bold gradient-text-green">Exercises</h2>
+      </div>
+      <div class="text-gray-300 leading-relaxed space-y-3">
+        <p>Practice these exercises to master branching and merging:</p>
+        <ol class="list-decimal list-inside space-y-3">
+          <li class="p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
+            <strong class="text-teal-300">Visualize the DAG:</strong> Run <code class="text-teal-300">gitk --all</code> or <code class="text-teal-300">git log --graph --oneline --all</code> to display all branches and their commit graph.
+          </li>
+          <li class="p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
+            <strong class="text-teal-300">Create &amp; diverge:</strong> Create a "develop" branch, switch to it, and make 2–3 commits. Then switch back to master and make 1–2 different commits.
+          </li>
+          <li class="p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
+            <strong class="text-teal-300">Fast-forward merge:</strong> Switch to master and merge develop before making any commits on master. Observe the fast-forward output.
+          </li>
+          <li class="p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
+            <strong class="text-teal-300">Recursive merge:</strong> Make commits on both branches (so they diverge), then merge develop into master. Observe the "recursive" strategy message.
+          </li>
+          <li class="p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
+            <strong class="text-teal-300">Create &amp; resolve a conflict:</strong> Edit the same line of the same file on both branches. Merge &rarr; observe conflict markers. Fix manually, <code class="text-teal-300">git add</code>, <code class="text-teal-300">git commit</code>.
+          </li>
+          <li class="p-3 rounded-lg bg-teal-500/10 border border-teal-500/20">
+            <strong class="text-teal-300">Merge master into develop:</strong> After resolving, switch to develop and merge master into it to keep both branches in sync.
+          </li>
+        </ol>
+      </div>
+
+      <div class="terminal-bg mt-4">
+        <div class="terminal-header">
+          <span class="terminal-dot bg-red-500"></span>
+          <span class="terminal-dot bg-yellow-500"></span>
+          <span class="terminal-dot bg-green-500"></span>
+          <span class="text-xs text-gray-400 ml-2">Quick visual log command</span>
+        </div>
+        <div class="terminal-body">
+          <div><span class="text-green-400">$</span> git log --graph --oneline --all --decorate</div>
+          <div class="text-gray-400">*   f7d3e2a (HEAD -> master) Merge branch 'develop'</div>
+          <div class="text-gray-400">|\</div>
+          <div class="text-gray-400">| * b8a2c1d (develop) Update footer</div>
+          <div class="text-gray-400">* | c9b4a3e Fix header styling</div>
+          <div class="text-gray-400">|/</div>
+          <div class="text-gray-400">* a3c2f1d Initial commit</div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===== BACK TO TOP ===== -->
+    <div class="text-center mt-10 fade-in">
+      <a href="#" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 transition-all duration-300">
+        <i class="fas fa-arrow-up"></i>
+        <span>Back to Top</span>
+      </a>
+      <a href="../index.html" class="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-gray-400 hover:text-blue-400 hover:border-blue-500/50 transition-all duration-300 ml-3">
+        <i class="fas fa-home"></i>
+        <span>Back to Index</span>
+      </a>
+    </div>
+
+    <div class="mt-8 text-center text-gray-500 text-sm">
+      <p>Git Cheatsheet — Part 4: Branching &amp; Merging</p>
+    </div>
+  </div>
+</body>
+</html>

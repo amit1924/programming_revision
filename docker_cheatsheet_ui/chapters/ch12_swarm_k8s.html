@@ -1,0 +1,509 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 12 — Orchestration, Swarm & Kubernetes | Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes scaleIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+    .animate-scale-in { animation: scaleIn 0.5s ease-out; }
+    .terminal-block {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 0.5rem;
+      font-family: ui-monospace, SFMono-Regular, 'SF Mono', Menlo, Consolas, monospace;
+      overflow-x: auto;
+    }
+    .terminal-block .line { padding: 0.25rem 1rem;  }
+    .terminal-block .prompt { color: #8b949e; }
+    .terminal-block .cmd { color: #e6edf3; }
+    .terminal-block .output { color: #7ee787; }
+    .terminal-block .output-warn { color: #d29922; }
+    .terminal-block .highlight { background: rgba(56,139,253,0.15); border-left: 3px solid #388bfd; }
+    .section-link { transition: all 0.2s; }
+    .section-link:hover { color: #60a5fa; }
+    .comparison-table th { background: #1e293b; }
+    .comparison-table td, .comparison-table th { padding: 0.75rem 1rem; border: 1px solid #334155; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+    <!-- Header -->
+    <div class="mb-8 animate-fade-in">
+      <a href="../index.html" class="text-gray-400 hover:text-white transition inline-flex items-center gap-2 mb-4">
+        <i class="fas fa-arrow-left"></i> Back to Cheatsheet
+      </a>
+      <div class="flex items-center gap-4 mb-2">
+        <i class="fas fa-sitemap text-4xl text-indigo-400"></i>
+        <h1 class="text-3xl md:text-5xl font-bold gradient-text">Orchestration, Swarm & Kubernetes</h1>
+      </div>
+      <p class="text-gray-400 text-lg">Scaling from 1 container to thousands with Docker Swarm and Kubernetes</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap gap-2 mb-8 animate-fade-in">
+      <a href="#why-orchestrate" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-question-circle mr-1 text-indigo-400"></i>Why Orchestrate?</a>
+      <a href="#orchestration" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-music mr-1 text-emerald-400"></i>Orchestration</a>
+      <a href="#swarm" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fab fa-docker mr-1 text-cyan-400"></i>Docker Swarm</a>
+      <a href="#setup-swarm" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-plug mr-1 text-amber-400"></i>Setup Swarm</a>
+      <a href="#service" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-cubes mr-1 text-blue-400"></i>Docker Service</a>
+      <a href="#k8s-overview" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-cloud mr-1 text-sky-400"></i>K8s Overview</a>
+      <a href="#k8s-components" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-cogs mr-1 text-violet-400"></i>K8s Components</a>
+      <a href="#kubectl" class="section-link px-3 py-1.5 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:text-white"><i class="fas fa-terminal mr-1 text-pink-400"></i>kubectl</a>
+    </div>
+
+    <!-- 1. Why Orchestrate? -->
+    <section id="why-orchestrate" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-question-circle text-2xl text-indigo-400"></i>
+        <h2 class="text-xl font-bold text-white">1. Why Orchestrate?</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        Running <strong class="text-white">one container</strong> on your laptop is easy. But what happens when you need to run <strong class="text-white">100s of containers</strong> across <strong class="text-white">many servers</strong>? That's where orchestration comes in.
+      </p>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-center mb-2">
+            <i class="fas fa-laptop text-3xl text-gray-500"></i>
+          </div>
+          <p class="text-center font-semibold text-gray-400 mb-1">One container</p>
+          <p class="text-xs text-gray-500 text-center"><code class="text-cyan-300">docker run my-app</code> — easy, one machine, done.</p>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4 border border-indigo-800">
+          <div class="text-center mb-2">
+            <i class="fas fa-server text-3xl text-indigo-400"></i>
+          </div>
+          <p class="text-center font-semibold text-white mb-1">100s of containers</p>
+          <p class="text-xs text-gray-400 text-center">Needs: load balancing, health checks, scaling, failover, networking across hosts.</p>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <p class="text-gray-300 text-sm">
+          <i class="fas fa-lightbulb mr-1 text-yellow-400"></i> <strong>Analogy:</strong> Running one container is like cooking a meal for yourself. Orchestration is like running a restaurant kitchen with 20 chefs — you need coordination, timing, and a system to handle the complexity.
+        </p>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <p class="text-gray-300 text-sm">
+          <i class="fas fa-docker mr-1 text-cyan-400"></i> <strong>Docker Hub</strong> supplies the images (the "what"). <strong>Orchestration</strong> manages them (the "how"). Together they let you go from <code class="text-cyan-300">docker run</code> to running a global app in minutes.
+        </p>
+      </div>
+    </section>
+
+    <!-- 2. Container Orchestration -->
+    <section id="orchestration" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-music text-2xl text-emerald-400"></i>
+        <h2 class="text-xl font-bold text-white">2. Container Orchestration</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        Orchestration is the <strong class="text-white">automated coordination</strong> of containers across multiple servers. Instead of SSH'ing into 100 machines and running <code class="text-cyan-300">docker run</code> manually, you tell the orchestrator what you want — and it makes it happen.
+      </p>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">Scale to 100 containers — one command</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">docker service create --replicas=100 nodejs</span></div>
+          <div class="line"><span class="output"># In seconds, 100 containers of your Node.js app are running</span></div>
+          <div class="line"><span class="output"># Spread across all available servers in the cluster</span></div>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <p class="text-sm font-semibold text-emerald-300 mb-2"><i class="fas fa-check-circle mr-1"></i>Orchestrator handles:</p>
+          <ul class="text-xs text-gray-400 space-y-1">
+            <li>• <strong class="text-gray-200">Placement</strong> — which server runs which container</li>
+            <li>• <strong class="text-gray-200">Scaling</strong> — add or remove replicas on demand</li>
+            <li>• <strong class="text-gray-200">Health checks</strong> — restart failed containers</li>
+            <li>• <strong class="text-gray-200">Networking</strong> — containers talk to each other across hosts</li>
+          </ul>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <p class="text-sm font-semibold text-yellow-300 mb-2"><i class="fas fa-lightbulb mr-1"></i>Analogy: Conductor & Orchestra</p>
+          <p class="text-xs text-gray-400">
+            An orchestra has 100 musicians (containers). Each plays their own instrument. The <strong class="text-gray-200">conductor</strong> (orchestrator) tells them when to start, stop, play louder, or rest — coordinating everything so the music sounds beautiful.
+          </p>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <p class="text-sm text-gray-300"><i class="fas fa-arrow-right mr-1 text-emerald-400"></i> Without orchestration: you manage each server individually. With orchestration: you declare the desired state and the system achieves it.</p>
+      </div>
+    </section>
+
+    <!-- 3. Docker Swarm -->
+    <section id="swarm" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fab fa-docker text-2xl text-cyan-400"></i>
+        <h2 class="text-xl font-bold text-white">3. Docker Swarm</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        <strong class="text-white">Docker Swarm</strong> is Docker's built-in orchestration solution. It turns multiple Docker hosts into one big virtual cluster — you interact with the cluster, not individual machines.
+      </p>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">Architecture: Swarm Manager + Worker Nodes</div>
+        <div class="terminal-block text-sm">
+          <div class="line highlight"><span class="output">┌──────────────┐     ┌──────────────┐     ┌──────────────┐     ┌──────────────┐</span></div>
+          <div class="line highlight"><span class="output">│   Manager    │     │   Worker 1   │     │   Worker 2   │     │   Worker 3   │</span></div>
+          <div class="line highlight"><span class="output">│  (controls)  │────▶│  (runs apps) │     │  (runs apps) │     │  (runs apps) │</span></div>
+          <div class="line highlight"><span class="output">└──────────────┘     └──────────────┘     └──────────────┘     └──────────────┘</span></div>
+          <div class="line"><span class="output">                     ◀─── all part of the same Swarm cluster ───▶</span></div>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-1"><i class="fas fa-crown mr-1 text-yellow-400"></i>Manager Node</div>
+          <ul class="text-xs text-gray-400 space-y-1">
+            <li>• Makes orchestration decisions</li>
+            <li>• Schedules containers to workers</li>
+            <li>• Maintains cluster state</li>
+            <li>• Exposes API for <code class="text-cyan-300">docker</code> commands</li>
+          </ul>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-1"><i class="fas fa-hard-hat mr-1 text-blue-400"></i>Worker Node</div>
+          <ul class="text-xs text-gray-400 space-y-1">
+            <li>• Runs the actual containers</li>
+            <li>• Reports status to manager</li>
+            <li>• No orchestration decisions</li>
+            <li>• Can be added/removed dynamically</li>
+          </ul>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <p class="text-gray-300 text-sm">
+          <i class="fas fa-lightbulb mr-1 text-yellow-400"></i> <strong>Example:</strong> You have 4 physical servers (hosts). You install Docker on each, then run <code class="text-cyan-300">docker swarm init</code> on one and <code class="text-cyan-300">docker swarm join</code> on the other three. Now you have a 4-host Swarm cluster — a single powerful machine from Docker's perspective.
+        </p>
+      </div>
+    </section>
+
+    <!-- 4. Setup Swarm -->
+    <section id="setup-swarm" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-plug text-2xl text-amber-400"></i>
+        <h2 class="text-xl font-bold text-white">4. Setup Swarm</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        Setting up a swarm is surprisingly simple. Two commands turn a group of Docker hosts into a cluster.
+      </p>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">Step 1: Initialize on the Manager node</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">manager $</span> <span class="cmd">docker swarm init</span></div>
+            <div class="line"><span class="output">Swarm initialized: current node (abc123) is now a manager.</span></div>
+            <div class="line"><span class="output-warn">To add a worker to this swarm, run the following:</span></div>
+            <div class="line"><span class="cmd">  docker swarm join --token SWMTKN-1-...</span></div>
+            <div class="line"><span class="cmd">    192.168.1.10:2377</span></div>
+          </div>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">Step 2: Join on each Worker node</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">worker1 $</span> <span class="cmd">docker swarm join \</span></div>
+            <div class="line"><span class="cmd">  --token SWMTKN-1-... \</span></div>
+            <div class="line"><span class="cmd">  192.168.1.10:2377</span></div>
+            <div class="line"><span class="output">This node joined a swarm as a worker.</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">Verify nodes in the cluster</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">manager $</span> <span class="cmd">docker node ls</span></div>
+          <div class="line"><span class="output">ID           HOSTNAME   STATUS   AVAILABILITY   MANAGER STATUS</span></div>
+          <div class="line"><span class="output">abc123   *   manager    Ready    Active         Leader</span></div>
+          <div class="line"><span class="output">def456       worker1    Ready    Active</span></div>
+          <div class="line"><span class="output">ghi789       worker2    Ready    Active</span></div>
+          <div class="line"><span class="output">jkl012       worker3    Ready    Active</span></div>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <p class="text-gray-300 text-sm">
+          <i class="fas fa-check-circle mr-1 text-emerald-400"></i> That's it! You now have a 4-node Swarm cluster. Any service you deploy from the manager gets automatically scheduled across worker nodes.
+        </p>
+      </div>
+    </section>
+
+    <!-- 5. Docker Service -->
+    <section id="service" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-cubes text-2xl text-blue-400"></i>
+        <h2 class="text-xl font-bold text-white">5. Docker Service</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        <code class="text-cyan-300">docker service create</code> is like <code class="text-cyan-300">docker run</code> — but for the entire swarm. Instead of running a container on one machine, you deploy a <strong class="text-white">service</strong> that runs across the cluster.
+      </p>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">Create a service with 3 replicas</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">docker service create --replicas=3 -p 8080:80 my-web-server</span></div>
+          <div class="line"><span class="output">service: abc123def456</span></div>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-3 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-1"><code class="text-cyan-300">--replicas=3</code></div>
+          <p class="text-xs text-gray-500">Three copies of your container run simultaneously across different worker nodes.</p>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-1"><code class="text-cyan-300">-p 8080:80</code></div>
+          <p class="text-xs text-gray-500">Port 8080 on any swarm node forwards to port 80 inside the container — load-balanced across replicas.</p>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-1"><i class="fas fa-heartbeat text-green-400 mr-1"></i>Self-healing</div>
+          <p class="text-xs text-gray-500">If a container crashes, Swarm automatically starts a replacement on another node — always maintaining 3 replicas.</p>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <div class="text-xs text-gray-400 mb-2">List running services</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">docker service ls</span></div>
+          <div class="line"><span class="output">ID             NAME           MODE         REPLICAS   IMAGE</span></div>
+          <div class="line"><span class="output">abc123def456   my-web-server  replicated   3/3        my-web-server:latest</span></div>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <div class="text-xs text-gray-400 mb-2">Scale to 10 replicas on the fly</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">docker service scale my-web-server=10</span></div>
+          <div class="line"><span class="output">my-web-server scaled to 10 replicas</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Kubernetes Overview -->
+    <section id="k8s-overview" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-cloud text-2xl text-sky-400"></i>
+        <h2 class="text-xl font-bold text-white">6. Kubernetes Overview</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        <strong class="text-white">Kubernetes (K8s)</strong> is a container orchestration platform originally built by Google. It's more feature-rich than Docker Swarm — but also more complex. K8s has become the industry standard for container orchestration.
+      </p>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <p class="text-sm text-gray-300 font-semibold mb-2">Key Concepts</p>
+        <div class="grid md:grid-cols-2 gap-3">
+          <div class="bg-slate-800/60 rounded-lg p-3">
+            <p class="text-xs font-semibold text-sky-300"><i class="fas fa-layer-group mr-1"></i>Cluster</p>
+            <p class="text-xs text-gray-400">A group of servers (nodes) that Kubernetes manages as a single unit.</p>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-3">
+            <p class="text-xs font-semibold text-sky-300"><i class="fas fa-server mr-1"></i>Node / Minion</p>
+            <p class="text-xs text-gray-400">A single server (physical or virtual) in the cluster.</p>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-3">
+            <p class="text-xs font-semibold text-sky-300"><i class="fas fa-crown mr-1"></i>Master</p>
+            <p class="text-xs text-gray-400">The control plane — manages the cluster: API Server, Controller, Scheduler, etcd.</p>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-3">
+            <p class="text-xs font-semibold text-sky-300"><i class="fas fa-hard-hat mr-1"></i>Worker Node</p>
+            <p class="text-xs text-gray-400">Runs the actual containers. Has kubelet and container runtime installed.</p>
+          </div>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <p class="text-sm font-semibold text-gray-200 mb-2">Kubernetes vs Docker Swarm</p>
+        <div class="overflow-x-auto">
+          <table class="comparison-table w-full text-sm">
+            <thead>
+              <tr>
+                <th class="text-left text-gray-300">Feature</th>
+                <th class="text-left text-cyan-300">Docker Swarm</th>
+                <th class="text-left text-sky-300">Kubernetes</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-400">
+              <tr>
+                <td class="text-gray-200 font-medium">Setup</td>
+                <td class="text-cyan-200">Very simple — 2 commands</td>
+                <td>Complex — many components to configure</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">Learning curve</td>
+                <td class="text-cyan-200">Low — feels like Docker</td>
+                <td>Steep — new concepts (Pods, Deployments, etc.)</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">Features</td>
+                <td>Basic orchestration</td>
+                <td class="text-sky-200">Rich — auto-scaling, rollbacks, secrets, service mesh</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">Community</td>
+                <td>Smaller</td>
+                <td class="text-sky-200">Huge — industry standard, CNCF project</td>
+              </tr>
+              <tr>
+                <td class="text-gray-200 font-medium">Best for</td>
+                <td class="text-cyan-200">Simple deployments, small teams</td>
+                <td class="text-sky-200">Complex, large-scale, enterprise</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <p class="text-gray-300 text-sm">
+          <i class="fas fa-lightbulb mr-1 text-yellow-400"></i> <strong>Analogy:</strong> Docker Swarm is like a <strong class="text-white">team of 5 people with walkie-talkies</strong> — easy to set up, gets the job done. Kubernetes is like a <strong class="text-white">full military command center</strong> — powerful, automated, but requires training to operate.
+        </p>
+      </div>
+    </section>
+
+    <!-- 7. Kubernetes Components -->
+    <section id="k8s-components" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-left">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-cogs text-2xl text-violet-400"></i>
+        <h2 class="text-xl font-bold text-white">7. Kubernetes Components</h2>
+      </div>
+      <p class="text-gray-300 mb-4">
+        Kubernetes has several components that work together. Here's what each does:
+      </p>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <p class="text-sm font-semibold text-amber-300 mb-1"><i class="fas fa-server mr-1"></i>Master Components</p>
+          <ul class="text-xs text-gray-400 space-y-2">
+            <li><strong class="text-gray-200">API Server</strong> — the front-end. All requests (kubectl, UI, scripts) go through the API Server.</li>
+            <li><strong class="text-gray-200">etcd</strong> — a distributed key-value store. Stores all cluster data (state, config, secrets).</li>
+            <li><strong class="text-gray-200">Controller</strong> — monitors the cluster and maintains the desired state (e.g., "always 5 replicas running").</li>
+            <li><strong class="text-gray-200">Scheduler</strong> — assigns pods to nodes based on resource availability, constraints, and policies.</li>
+          </ul>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <p class="text-sm font-semibold text-blue-300 mb-1"><i class="fas fa-hard-hat mr-1"></i>Worker Components</p>
+          <ul class="text-xs text-gray-400 space-y-2">
+            <li><strong class="text-gray-200">kubelet</strong> — the agent on each worker. Communicates with the master, starts/stops containers as instructed.</li>
+            <li><strong class="text-gray-200">Container Runtime</strong> — the software that actually runs containers (CRI-O, containerd, or Docker).</li>
+          </ul>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4 mb-4">
+        <p class="text-sm font-semibold text-gray-200 mb-2">Master-Worker Architecture</p>
+        <div class="terminal-block text-sm">
+          <div class="line highlight"><span class="output">┌─────────────────────────────────────────────────────────────────┐</span></div>
+          <div class="line highlight"><span class="output">│                         MASTER NODE                            │</span></div>
+          <div class="line highlight"><span class="output">│  ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────┐   │</span></div>
+          <div class="line highlight"><span class="output">│  │   API    │  │          │  │          │  │              │   │</span></div>
+          <div class="line highlight"><span class="output">│  │  Server  │  │   etcd   │  │Controller│  │  Scheduler   │   │</span></div>
+          <div class="line highlight"><span class="output">│  └────┬─────┘  └──────────┘  └──────────┘  └──────────────┘   │</span></div>
+          <div class="line highlight"><span class="output">└───────┼─────────────────────────────────────────────────────────┘</span></div>
+          <div class="line highlight"><span class="output">        │</span></div>
+          <div class="line highlight"><span class="output">   ┌────┼────┬────────────────────────────────────────────────────┐</span></div>
+          <div class="line highlight"><span class="output">   │    │    │                                                    │</span></div>
+          <div class="line"><span class="output">┌──┴──┐ ┌┴───┐ ┌┴───┐  ┌───────────────┐  ┌────────────────────┐ │</span></div>
+          <div class="line"><span class="output">│Wk 1 │ │Wk 2│ │Wk 3│  │   WORKER 1    │  │    WORKER 2       │ │</span></div>
+          <div class="line"><span class="output">│kube │ │kube│ │kube│  │ ┌──────────┐  │  │ ┌──────────┐      │ │</span></div>
+          <div class="line"><span class="output">│let  │ │let │ │let │  │ │ kubelet   │  │  │ │ kubelet   │      │ │</span></div>
+          <div class="line"><span class="output">└─────┘ └────┘ └────┘  │ │ containerd│  │  │ │ containerd│      │ │</span></div>
+          <div class="line"><span class="output">                       │ └──────────┘  │  │ └──────────┘      │ │</span></div>
+          <div class="line"><span class="output">                       └───────────────┘  └────────────────────┘ │</span></div>
+          <div class="line highlight"><span class="output">└─────────────────────────────────────────────────────────────────┘</span></div>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <p class="text-gray-300 text-sm">
+          <i class="fas fa-arrow-right mr-1 text-violet-400"></i> <strong>How it flows:</strong> You run <code class="text-cyan-300">kubectl run my-app</code> → API Server receives the request → stores desired state in etcd → Controller notices the change → Scheduler assigns a node → kubelet on that node tells containerd to run the container.
+        </p>
+      </div>
+    </section>
+
+    <!-- 8. kubectl Commands -->
+    <section id="kubectl" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-right">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-terminal text-2xl text-pink-400"></i>
+        <h2 class="text-xl font-bold text-white">8. kubectl Commands</h2>
+      </div>
+      <p class="text-gray-300 mb-3">
+        <code class="text-cyan-300">kubectl</code> is the command-line tool for Kubernetes. Just as <code class="text-cyan-300">docker</code> is the CLI for Docker, <code class="text-cyan-300">kubectl</code> is the CLI for K8s.
+      </p>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">Run a simple deployment</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">kubectl run hello-minikube</span></div>
+            <div class="line"><span class="output">pod/hello-minikube created</span></div>
+          </div>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">Check cluster info</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">kubectl cluster-info</span></div>
+            <div class="line"><span class="output">Kubernetes control plane is running at</span></div>
+            <div class="line"><span class="output">  https://192.168.99.100:8443</span></div>
+            <div class="line"><span class="output">CoreDNS is running at ...</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">List nodes in cluster</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">kubectl get nodes</span></div>
+            <div class="line"><span class="output">NAME       STATUS   ROLES    AGE   VERSION</span></div>
+            <div class="line"><span class="output">master     Ready    master   10d   v1.28</span></div>
+            <div class="line"><span class="output">worker-1   Ready    &lt;none&gt;  10d   v1.28</span></div>
+            <div class="line"><span class="output">worker-2   Ready    &lt;none&gt;  9d    v1.28</span></div>
+          </div>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">Run app with 100 replicas</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">kubectl run my-web-app \</span></div>
+            <div class="line"><span class="cmd">  --image=my-web-app \</span></div>
+            <div class="line"><span class="cmd">  --replicas=100</span></div>
+            <div class="line"><span class="output">deployment.apps/my-web-app created</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">Scale to 2000 replicas</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">kubectl scale --replicas=2000 \</span></div>
+            <div class="line"><span class="cmd">  deployment/my-web-server</span></div>
+            <div class="line"><span class="output">deployment.apps/my-web-server scaled</span></div>
+          </div>
+          <p class="text-xs text-gray-500 mt-2"><i class="fas fa-rocket mr-1 text-pink-400"></i> 2000 containers — one command!</p>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-4">
+          <div class="text-xs text-gray-400 mb-2">Rolling update to new version</div>
+          <div class="terminal-block text-sm">
+            <div class="line"><span class="prompt">$</span> <span class="cmd">kubectl rolling-update \</span></div>
+            <div class="line"><span class="cmd">  my-web-server \</span></div>
+            <div class="line"><span class="cmd">  --image=web-server:2</span></div>
+            <div class="line"><span class="output">Rolling update started...</span></div>
+          </div>
+          <p class="text-xs text-gray-500 mt-2"><i class="fas fa-sync mr-1 text-green-400"></i> Zero-downtime update — pods replaced one by one</p>
+        </div>
+      </div>
+      <div class="bg-slate-700/40 rounded-lg p-4">
+        <div class="text-xs text-gray-400 mb-2">Check deployment status</div>
+        <div class="terminal-block text-sm">
+          <div class="line"><span class="prompt">$</span> <span class="cmd">kubectl get deployments</span></div>
+          <div class="line"><span class="output">NAME             READY   UP-TO-DATE   AVAILABLE   AGE</span></div>
+          <div class="line"><span class="output">my-web-server    2000    2000         2000        5m</span></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="text-center text-gray-500 text-sm mt-10 animate-fade-in">
+      <p><i class="fas fa-book-open mr-1"></i> Based on "Docker for Beginners" by Mumshad Mannambeth</p>
+      <p class="mt-1">
+        <a href="../index.html" class="text-blue-400 hover:text-blue-300 transition"><i class="fas fa-arrow-left mr-1"></i>Back to Cheatsheet</a>
+      </p>
+    </div>
+  </div>
+</body>
+</html>

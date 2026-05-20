@@ -1,0 +1,629 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Part 6 — Hosting Your Code (Forges)</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes pulseGlow { 0%,100% { box-shadow:0 0 8px rgba(99,102,241,0.2); } 50% { box-shadow:0 0 20px rgba(99,102,241,0.5); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out both; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out both; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out both; }
+    .animate-pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+    .stagger-1 { animation-delay: 0.1s; }
+    .stagger-2 { animation-delay: 0.2s; }
+    .stagger-3 { animation-delay: 0.3s; }
+    .stagger-4 { animation-delay: 0.4s; }
+    .stagger-5 { animation-delay: 0.5s; }
+    .stagger-6 { animation-delay: 0.6s; }
+    .stagger-7 { animation-delay: 0.7s; }
+    .stagger-8 { animation-delay: 0.8s; }
+    pre {
+      background: rgba(15,15,30,0.7);
+      border: 1px solid rgba(99,102,241,0.15);
+      border-radius: 0.75rem;
+      padding: 1rem;
+      overflow-x: auto;
+      font-size: 0.875rem;
+      color: #e2e8f0;
+    }
+    pre .kw { color: #c084fc; }
+    pre .s { color: #86efac; }
+    pre .c { color: #6b7280; font-style: italic; }
+    pre .n { color: #93c5fd; }
+    pre .o { color: #fca5a5; }
+    pre .cmt { color: #6b7280; font-style: italic; }
+    .code-inline {
+      background: rgba(99,102,241,0.12);
+      color: #a78bfa;
+      padding: 0.125rem 0.5rem;
+      border-radius: 0.375rem;
+      font-family: ui-monospace, monospace;
+      font-size: 0.875rem;
+    }
+    .badge-gh { background: rgba(30,45,70,0.8); color: #58a6ff; }
+    .badge-gl { background: rgba(45,70,50,0.8); color: #3ddc84; }
+    .badge-warn { background: rgba(250,200,50,0.15); color: #facc15; }
+    .badge-danger { background: rgba(250,80,80,0.15); color: #f87171; }
+    hr.divider { border-color: rgba(99,102,241,0.15); margin: 2rem 0; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200">
+
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <div class="mb-8 animate-fade-in">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors duration-200">
+        <i class="fas fa-arrow-left"></i> Back to Cheatsheet Index
+      </a>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-12 animate-fade-in">
+      <i class="fas fa-server text-6xl text-violet-400 mb-4"></i>
+      <h1 class="text-4xl md:text-6xl font-bold gradient-text">Part 6: Hosting Your Code</h1>
+      <p class="text-gray-400 mt-3 text-lg">Forge Features — Issues, PRs, CI/CD &amp; Security</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-10 animate-fade-in delay-100">
+      <a href="#forge-intro" class="text-xs bg-violet-900/20 text-violet-300 px-3 py-2 rounded-full border border-violet-800/30 hover:bg-violet-900/40 transition-all"><i class="fas fa-globe mr-1"></i>What is a Forge</a>
+      <a href="#forge-provides" class="text-xs bg-violet-900/20 text-violet-300 px-3 py-2 rounded-full border border-violet-800/30 hover:bg-violet-900/40 transition-all"><i class="fas fa-cubes mr-1"></i>What a Forge Provides</a>
+      <a href="#issues" class="text-xs bg-violet-900/20 text-violet-300 px-3 py-2 rounded-full border border-violet-800/30 hover:bg-violet-900/40 transition-all"><i class="fas fa-bug mr-1"></i>Bug Tracker — Issues</a>
+      <a href="#pull-requests" class="text-xs bg-violet-900/20 text-violet-300 px-3 py-2 rounded-full border border-violet-800/30 hover:bg-violet-900/40 transition-all"><i class="fas fa-code-branch mr-1"></i>Pull / Merge Requests</a>
+      <a href="#cicd" class="text-xs bg-violet-900/20 text-violet-300 px-3 py-2 rounded-full border border-violet-800/30 hover:bg-violet-900/40 transition-all"><i class="fas fa-rocket mr-1"></i>CI/CD</a>
+      <a href="#cicd-security" class="text-xs bg-violet-900/20 text-violet-300 px-3 py-2 rounded-full border border-violet-800/30 hover:bg-violet-900/40 transition-all"><i class="fas fa-shield-alt mr-1"></i>Security</a>
+    </div>
+
+    <!-- ====================== SECTION 1: What is a Forge ====================== -->
+    <section id="forge-intro" class="mb-12 animate-fade-in delay-100">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-globe text-3xl text-violet-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">What is a Forge?</h2>
+      </div>
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 md:p-8">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+          <div class="animate-slide-left">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-network-wired text-xl text-blue-400 mt-1"></i>
+              <div>
+                <h3 class="font-semibold text-white mb-2">Remote Repository Hosting</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                  A Git repository hosted on a remote server is just a bare repo &mdash; you can <span class="code-inline">push</span>, <span class="code-inline">pull</span>, and <span class="code-inline">fetch</span>. But a <strong class="text-white">forge</strong> wraps that repo in a full project-hosting platform with collaboration, automation, and management features.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="animate-slide-right">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-layer-group text-xl text-cyan-400 mt-1"></i>
+              <div>
+                <h3 class="font-semibold text-white mb-2">Forge = Repo + Features</h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                  A forge turns a bare repository into a complete project hub with an <strong class="text-white">issue tracker</strong>, <strong class="text-white">pull/merge requests</strong>, <strong class="text-white">CI/CD pipelines</strong>, <strong class="text-white">package registries</strong>, <strong class="text-white">wikis</strong>, and an <strong class="text-white">API</strong> for tooling integration.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          <div class="animate-slide-left delay-200">
+            <div class="flex items-start gap-3">
+              <i class="fab fa-github text-xl text-gray-300 mt-1"></i>
+              <div>
+                <h3 class="font-semibold text-white mb-2">GitHub <span class="text-xs text-gray-500">(SAAS)</span></h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                  The most popular forge. Fully hosted on <span class="code-inline">github.com</span>. Offers public <em>and</em> private repos, Actions (CI/CD), GitHub Pages, Packages, Discussions, and a vast marketplace. The reference for open-source.
+                </p>
+                <div class="mt-2 flex flex-wrap gap-1">
+                  <span class="text-xs px-2 py-0.5 rounded badge-gh"><i class="fab fa-github mr-1"></i>github.com</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-blue-900/30 text-blue-300"><i class="fas fa-cloud mr-1"></i>SAAS only</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="animate-slide-right delay-200">
+            <div class="flex items-start gap-3">
+              <i class="fab fa-gitlab text-xl text-green-400 mt-1"></i>
+              <div>
+                <h3 class="font-semibold text-white mb-2">GitLab <span class="text-xs text-gray-500">(SAAS + Self-Hosted)</span></h3>
+                <p class="text-gray-400 text-sm leading-relaxed">
+                  Available as SAAS at <span class="code-inline">gitlab.com</span> <em>or</em> as an open-source self-hosted instance. Offers similar features: CI/CD pipelines (<span class="code-inline">.gitlab-ci.yml</span>), container registry, built-in Docker/K8s integration, and fine-grained permissions.
+                </p>
+                <div class="mt-2 flex flex-wrap gap-1">
+                  <span class="text-xs px-2 py-0.5 rounded badge-gl"><i class="fab fa-gitlab mr-1"></i>gitlab.com</span>
+                  <span class="text-xs px-2 py-0.5 rounded bg-green-900/30 text-green-300"><i class="fas fa-server mr-1"></i>Self-host</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <!-- Feature Comparison Table -->
+        <div class="mt-8 p-5 rounded-xl border border-slate-700/50 bg-slate-900/50 animate-fade-in delay-300">
+          <h4 class="text-white font-semibold mb-3"><i class="fas fa-table mr-2 text-indigo-400"></i>Forge Comparison at a Glance</h4>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm text-left">
+              <thead>
+                <tr class="border-b border-slate-700 text-gray-400">
+                  <th class="py-2 pr-4">Feature</th>
+                  <th class="py-2 pr-4"><i class="fab fa-github mr-1"></i>GitHub</th>
+                  <th class="py-2 pr-4"><i class="fab fa-gitlab mr-1"></i>GitLab</th>
+                </tr>
+              </thead>
+              <tbody class="text-gray-300">
+                <tr class="border-b border-slate-700/50">
+                  <td class="py-2 pr-4 text-gray-400">Hosting model</td>
+                  <td class="py-2 pr-4">SAAS only</td>
+                  <td class="py-2 pr-4">SAAS + self-hosted (CE/EE)</td>
+                </tr>
+                <tr class="border-b border-slate-700/50">
+                  <td class="py-2 pr-4 text-gray-400">CI/CD name</td>
+                  <td class="py-2 pr-4">GitHub Actions</td>
+                  <td class="py-2 pr-4">GitLab CI/CD</td>
+                </tr>
+                <tr class="border-b border-slate-700/50">
+                  <td class="py-2 pr-4 text-gray-400">Config file</td>
+                  <td class="py-2 pr-4"><span class="code-inline">.github/workflows/*.yml</span></td>
+                  <td class="py-2 pr-4"><span class="code-inline">.gitlab-ci.yml</span></td>
+                </tr>
+                <tr class="border-b border-slate-700/50">
+                  <td class="py-2 pr-4 text-gray-400">Merge request terms</td>
+                  <td class="py-2 pr-4">Pull Request (PR)</td>
+                  <td class="py-2 pr-4">Merge Request (MR)</td>
+                </tr>
+                <tr>
+                  <td class="py-2 pr-4 text-gray-400">License</td>
+                  <td class="py-2 pr-4">Proprietary</td>
+                  <td class="py-2 pr-4">MIT (CE) / Proprietary (EE)</td>
+                </tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ====================== SECTION 2: What a Forge Provides ====================== -->
+    <section id="forge-provides" class="mb-12 animate-fade-in delay-200">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-cubes text-3xl text-emerald-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">What a Forge Provides</h2>
+      </div>
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 md:p-8">
+        <p class="text-gray-400 mb-6 text-sm">A forge combines version control with project-management tooling. Here are the core services most forges offer:</p>
+        <div class="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-left stagger-1">
+            <i class="fas fa-code-branch text-xl text-orange-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">Git Repository</h4>
+              <p class="text-gray-400 text-xs mt-1">Remote bare repo accepting push/pull/fetch with access control.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-right stagger-2">
+            <i class="fas fa-bug text-xl text-rose-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">Bug Tracker (Issues)</h4>
+              <p class="text-gray-400 text-xs mt-1">Track work items, bugs, features. Each gets a unique #id.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-left stagger-3">
+            <i class="fas fa-code-pull-request text-xl text-blue-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">Pull / Merge Requests</h4>
+              <p class="text-gray-400 text-xs mt-1">Propose changes via branches. Code review with inline comments.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-right stagger-4">
+            <i class="fas fa-rocket text-xl text-cyan-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">CI / CD</h4>
+              <p class="text-gray-400 text-xs mt-1">Automate builds, tests, and deployments on every push.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-left stagger-5">
+            <i class="fas fa-box text-xl text-yellow-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">Package Registries</h4>
+              <p class="text-gray-400 text-xs mt-1">Host Maven, npm, Docker images, PyPI packages, etc.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-right stagger-6">
+            <i class="fas fa-globe text-xl text-green-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">Wiki / Static Pages</h4>
+              <p class="text-gray-400 text-xs mt-1">Host documentation sites or project wikis directly.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-left stagger-7">
+            <i class="fas fa-code text-xl text-pink-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">Web Editor</h4>
+              <p class="text-gray-400 text-xs mt-1">Edit files directly in the browser without cloning.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-right stagger-8">
+            <i class="fas fa-plug text-xl text-violet-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">REST / GraphQL API</h4>
+              <p class="text-gray-400 text-xs mt-1">Integrate external tools, bots, and automation.</p>
+            </div>
+          </div>
+          <div class="flex items-start gap-3 p-4 rounded-lg bg-slate-900/40 border border-slate-700/40 hover:border-indigo-500/30 transition-all animate-slide-left delay-100">
+            <i class="fas fa-lock text-xl text-amber-400 mt-1"></i>
+            <div>
+              <h4 class="text-white font-semibold text-sm">Access Control</h4>
+              <p class="text-gray-400 text-xs mt-1">Fine-grained permissions: read, triage, write, maintain, admin.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ====================== SECTION 3: Bug Tracker — Issues ====================== -->
+    <section id="issues" class="mb-12 animate-fade-in delay-300">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-bug text-3xl text-rose-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">Bug Tracker <span class="text-lg text-gray-400">— Issues</span></h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="animate-slide-left">
+            <h3 class="text-white font-semibold mb-3"><i class="fas fa-tasks mr-2 text-rose-400"></i>What is an Issue?</h3>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex items-start gap-2"><i class="fas fa-hashtag text-rose-400 mt-1 text-xs"></i>Each work item is an <strong class="text-white">issue</strong> with a unique <span class="code-inline">#id</span>.</li>
+              <li class="flex items-start gap-2"><i class="fas fa-align-left text-rose-400 mt-1 text-xs"></i>Contains a text description + threaded discussion.</li>
+              <li class="flex items-start gap-2"><i class="fas fa-tags text-rose-400 mt-1 text-xs"></i>Grouped by <strong class="text-white">labels</strong> (tags) and/or <strong class="text-white">milestones</strong> (releases/sprints).</li>
+              <li class="flex items-start gap-2"><i class="fas fa-user text-rose-400 mt-1 text-xs"></i>Assigned to a developer or team for ownership.</li>
+              <li class="flex items-start gap-2"><i class="fas fa-sitemap text-rose-400 mt-1 text-xs"></i>Can be subdivided into smaller sub-issues or checklists.</li>
+              <li class="flex items-start gap-2"><i class="fas fa-robot text-rose-400 mt-1 text-xs"></i><strong class="text-white">Auto-close:</strong> mention <span class="code-inline">Fix #id</span> or <span class="code-inline">Close #id</span> in a commit or PR description &mdash; the issue closes automatically when merged.</li>
+            </ul>
+          </div>
+          <div class="animate-slide-right">
+            <h3 class="text-white font-semibold mb-3"><i class="fas fa-file-alt mr-2 text-cyan-400"></i>Example: Creating &amp; Managing an Issue</h3>
+            <pre><span class="c"># Typical issue lifecycle on GitHub / GitLab</span>
+
+<span class="n">1.</span> <span class="n">Create issue</span>              <span class="cmt"># Title + description + labels</span>
+<span class="n">2.</span> <span class="n">Assign to dev</span>             <span class="cmt"># @developer takes ownership</span>
+<span class="n">3.</span> <span class="n">Label as "bug" / "enhancement"</span>
+<span class="n">4.</span> <span class="n">Add to milestone "v2.0"</span>
+<span class="n">5.</span> <span class="n">Create branch from issue</span>  <span class="cmt"># GitHub: "Create a branch" button</span>
+<span class="n">6.</span> <span class="n">Work, commit, push</span>
+<span class="n">7.</span> <span class="n">Open PR referencing issue</span> <span class="cmt"># "Fixes #42" in PR description</span>
+<span class="n">8.</span> <span class="n">Merge PR</span>                  <span class="cmt"># Issue auto-closes 🎉</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Auto-close detail card -->
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 animate-pulse-glow">
+        <div class="flex items-start gap-4">
+          <i class="fas fa-magic text-2xl text-yellow-400 mt-1"></i>
+          <div>
+            <h3 class="text-white font-semibold mb-2">Auto-Close Magic</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              When your commit message or PR description contains a phrase like <span class="code-inline">Fixes #123</span> or <span class="code-inline">Closes #42</span>, the forge automatically closes the referenced issue once the branch is merged. This keeps your workflow clean without manual triage.
+            </p>
+            <div class="mt-3 flex flex-wrap gap-3 text-xs">
+              <span class="bg-green-900/20 text-green-300 px-3 py-1 rounded-full"><i class="fas fa-check-circle mr-1"></i>Fixes #123</span>
+              <span class="bg-green-900/20 text-green-300 px-3 py-1 rounded-full"><i class="fas fa-check-circle mr-1"></i>Closes #42</span>
+              <span class="bg-green-900/20 text-green-300 px-3 py-1 rounded-full"><i class="fas fa-check-circle mr-1"></i>Resolves #7</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ====================== SECTION 4: Pull / Merge Requests ====================== -->
+    <section id="pull-requests" class="mb-12 animate-fade-in delay-300">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-code-branch text-3xl text-blue-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">Pull / Merge Requests</h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 mb-6">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div class="animate-slide-left">
+            <h3 class="text-white font-semibold mb-3"><i class="fas fa-info-circle mr-2 text-blue-400"></i>Overview</h3>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex items-start gap-2"><i class="fab fa-github text-blue-400 mt-1"></i><strong class="text-white">GitHub:</strong> Pull Request (<span class="code-inline">#id</span>)</li>
+              <li class="flex items-start gap-2"><i class="fab fa-gitlab text-green-400 mt-1"></i><strong class="text-white">GitLab:</strong> Merge Request (<span class="code-inline">!id</span>)</li>
+              <li class="flex items-start gap-2"><i class="fas fa-code-branch text-blue-400 mt-1"></i>Refers to a source branch to merge into a target branch</li>
+              <li class="flex items-start gap-2"><i class="fas fa-align-left text-blue-400 mt-1"></i>Text description + threaded discussion</li>
+              <li class="flex items-start gap-2"><i class="fas fa-file-diff text-blue-400 mt-1"></i><strong class="text-white">Code review</strong> diff display: global, per-commit, and per-update</li>
+              <li class="flex items-start gap-2"><i class="fas fa-check-circle text-blue-400 mt-1"></i>Closed by <strong class="text-white">merging</strong> (accepted) or <strong class="text-white">without merging</strong> (rejected)</li>
+              <li class="flex items-start gap-2"><i class="fas fa-link text-blue-400 mt-1"></i>Can reference issues with auto-close keywords</li>
+            </ul>
+          </div>
+          <div class="animate-slide-right">
+            <h3 class="text-white font-semibold mb-3"><i class="fas fa-terminal mr-2 text-emerald-400"></i>Example: Creating a PR</h3>
+            <pre><span class="c"># 1. Create a feature branch locally</span>
+git checkout -b <span class="s">feature/user-auth</span>
+git add .
+git commit -m <span class="s">"Add user authentication module"</span>
+
+<span class="c"># 2. Push branch to remote forges</span>
+git push origin <span class="s">feature/user-auth</span>
+
+<span class="c"># 3. On GitHub, you will see a banner:</span>
+<span class="c">#   "feature/user-auth had recent pushes"</span>
+<span class="c">#   [Compare &amp; pull request]</span>
+
+<span class="c"># 4. Click the button, write description:</span>
+<span class="c">#   Title: "Add user authentication module"</span>
+<span class="c">#   Description: "Implements login/register via JWT. Closes #15"</span>
+
+<span class="c"># 5. Submit — now reviewers can comment on diff lines</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- Code Review Diff Card -->
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 animate-slide-left">
+        <div class="flex items-start gap-4">
+          <i class="fas fa-file-diff text-2xl text-indigo-400 mt-1"></i>
+          <div>
+            <h3 class="text-white font-semibold mb-2">Code Review Diff Display</h3>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              The forge shows a <strong class="text-white">unified diff</strong> of all changes in the PR/MR. Reviewers can:
+            </p>
+            <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mt-3">
+              <div class="bg-slate-900/50 rounded-lg p-3 border border-slate-700/40">
+                <i class="fas fa-globe text-blue-400 text-sm mb-1"></i>
+                <h4 class="text-white text-xs font-semibold">Global View</h4>
+                <p class="text-gray-400 text-xs">See the entire diff across all files at once</p>
+              </div>
+              <div class="bg-slate-900/50 rounded-lg p-3 border border-slate-700/40">
+                <i class="fas fa-list text-blue-400 text-sm mb-1"></i>
+                <h4 class="text-white text-xs font-semibold">Per-Commit</h4>
+                <p class="text-gray-400 text-xs">Review changes introduced by each commit</p>
+              </div>
+              <div class="bg-slate-900/50 rounded-lg p-3 border border-slate-700/40">
+                <i class="fas fa-sync-alt text-blue-400 text-sm mb-1"></i>
+                <h4 class="text-white text-xs font-semibold">Per-Update</h4>
+                <p class="text-gray-400 text-xs">See what changed after each force-push</p>
+              </div>
+            </div>
+            <p class="text-gray-400 text-xs mt-3">
+              <i class="fas fa-comment-dots mr-1 text-pink-400"></i> Reviewers can comment on individual lines or on the overall PR. Once approved, the PR is merged (merge commit, squash, or rebase).
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ====================== SECTION 5: CI/CD ====================== -->
+    <section id="cicd" class="mb-12 animate-fade-in delay-400">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-rocket text-3xl text-cyan-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">CI / CD</h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="animate-slide-left">
+            <h3 class="text-white font-semibold mb-3"><i class="fas fa-cogs mr-2 text-cyan-400"></i>How it Works</h3>
+            <p class="text-gray-400 text-sm leading-relaxed mb-3">
+              CI/CD is scripted in YAML configuration files committed to the repository:
+            </p>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex items-start gap-2"><i class="fab fa-github text-blue-400 mt-1"></i><strong class="text-white">GitHub:</strong> <span class="code-inline">.github/workflows/*.yml</span></li>
+              <li class="flex items-start gap-2"><i class="fab fa-gitlab text-green-400 mt-1"></i><strong class="text-white">GitLab:</strong> <span class="code-inline">.gitlab-ci.yml</span> in repo root</li>
+            </ul>
+            <div class="mt-4 space-y-2">
+              <div class="bg-slate-900/40 border border-slate-700/40 rounded-lg p-3">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-hammer text-amber-400"></i>
+                  <span class="text-white text-sm font-semibold">Continuous Integration</span>
+                </div>
+                <p class="text-gray-400 text-xs mt-1">Build the project and run tests on every push / PR.</p>
+              </div>
+              <div class="bg-slate-900/40 border border-slate-700/40 rounded-lg p-3">
+                <div class="flex items-center gap-2">
+                  <i class="fas fa-ship text-emerald-400"></i>
+                  <span class="text-white text-sm font-semibold">Continuous Deployment</span>
+                </div>
+                <p class="text-gray-400 text-xs mt-1">Publish artifacts (JARs, Docker images), deploy services, update websites.</p>
+              </div>
+            </div>
+          </div>
+          <div class="animate-slide-right">
+            <h3 class="text-white font-semibold mb-3"><i class="fas fa-tachometer-alt mr-2 text-cyan-400"></i>Runners</h3>
+            <p class="text-gray-400 text-sm leading-relaxed mb-3">
+              CI jobs run on <strong class="text-white">runners</strong> — machines that execute the pipeline:
+            </p>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex items-start gap-2"><i class="fas fa-server text-blue-400 mt-1"></i><strong class="text-white">Dedicated runners</strong> — private infrastructure you manage</li>
+              <li class="flex items-start gap-2"><i class="fas fa-cloud text-gray-400 mt-1"></i><strong class="text-white">Shared runners</strong> — provided by the forge (e.g., <span class="code-inline">ubuntu-latest</span>)</li>
+              <li class="flex items-start gap-2"><i class="fas fa-laptop text-cyan-400 mt-1"></i>Same job can run on <strong class="text-white">multiple platforms</strong> (Linux, macOS, Windows) via a matrix strategy</li>
+              <li class="flex items-start gap-2"><i class="fas fa-envelope text-amber-400 mt-1"></i><strong class="text-white">Failure notification</strong> — email alert when a pipeline fails</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Example YAML -->
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 animate-fade-in delay-200">
+        <h3 class="text-white font-semibold mb-4"><i class="fas fa-code mr-2 text-emerald-400"></i>Example: Simple CI Workflow (GitHub Actions)</h3>
+        <pre><span class="c"># .github/workflows/ci.yml</span>
+<span class="kw">name</span>: CI
+<span class="kw">on</span>: [push, pull_request]
+
+<span class="kw">jobs</span>:
+  <span class="n">build</span>:
+    <span class="kw">runs-on</span>: ubuntu-latest
+    <span class="kw">strategy</span>:
+      <span class="kw">matrix</span>:
+        <span class="kw">node</span>: [<span class="s">'18'</span>, <span class="s">'20'</span>, <span class="s">'22'</span>]
+
+    <span class="kw">steps</span>:
+      - <span class="kw">uses</span>: actions/checkout@v4
+      - <span class="kw">uses</span>: actions/setup-node@v4
+        <span class="kw">with</span>:
+          <span class="n">node-version</span>: ${{ matrix.node }}
+      - <span class="kw">run</span>: npm ci
+      - <span class="kw">run</span>: npm test
+      - <span class="kw">run</span>: npm run build</pre>
+        <div class="mt-4 flex flex-wrap gap-2 text-xs">
+          <span class="bg-emerald-900/20 text-emerald-300 px-3 py-1 rounded-full"><i class="fas fa-check-circle mr-1"></i>Runs on every push</span>
+          <span class="bg-emerald-900/20 text-emerald-300 px-3 py-1 rounded-full"><i class="fas fa-check-circle mr-1"></i>Tests on Node 18, 20, 22</span>
+          <span class="bg-emerald-900/20 text-emerald-300 px-3 py-1 rounded-full"><i class="fas fa-check-circle mr-1"></i>Fails fast on errors</span>
+        </div>
+      </div>
+
+      <!-- GitLab example -->
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 mt-6 animate-fade-in delay-300">
+        <h3 class="text-white font-semibold mb-4"><i class="fas fa-code mr-2 text-green-400"></i>Example: Simple CI (GitLab CI)</h3>
+        <pre><span class="c"># .gitlab-ci.yml</span>
+<span class="kw">stages</span>:
+  - build
+  - test
+  - deploy
+
+<span class="n">build-job</span>:
+  <span class="kw">stage</span>: build
+  <span class="kw">image</span>: node:20-alpine
+  <span class="kw">script</span>:
+    - npm ci
+    - npm run build
+
+<span class="n">test-job</span>:
+  <span class="kw">stage</span>: test
+  <span class="kw">image</span>: node:20-alpine
+  <span class="kw">script</span>:
+    - npm ci
+    - npm test
+
+<span class="n">deploy-job</span>:
+  <span class="kw">stage</span>: deploy
+  <span class="kw">image</span>: alpine:latest
+  <span class="kw">script</span>:
+    - apk add --no-cache rsync openssh
+    - rsync -avz ./dist/ user@server:/var/www/
+  <span class="kw">only</span>:
+    - main</pre>
+      </div>
+    </section>
+
+    <hr class="divider">
+
+    <!-- ====================== SECTION 6: CI/CD Security ====================== -->
+    <section id="cicd-security" class="mb-12 animate-fade-in delay-400">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-shield-alt text-3xl text-red-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">CI/CD — Security Considerations</h2>
+      </div>
+
+      <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 md:p-8 mb-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div class="animate-slide-left">
+            <h3 class="text-white font-semibold mb-3"><i class="fas fa-exclamation-triangle mr-2 text-amber-400"></i>Risks</h3>
+            <p class="text-gray-400 text-sm leading-relaxed mb-3">
+              Running CI/CD on repositories that accept external contributions can be dangerous:
+            </p>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex items-start gap-2"><i class="fas fa-skull text-red-400 mt-1"></i>A malicious PR could execute arbitrary code on your runner</li>
+              <li class="flex items-start gap-2"><i class="fas fa-database text-red-400 mt-1"></i>If the job has <strong class="text-white">CD credentials</strong> (deploy keys, cloud tokens), the attacker could compromise production</li>
+              <li class="flex items-start gap-2"><i class="fas fa-users text-red-400 mt-1"></i>Especially dangerous with <strong class="text-white">external contributors</strong> you don't know</li>
+            </ul>
+          </div>
+          <div class="animate-slide-right">
+            <h3 class="text-white font-semibold mb-3"><i class="fas fa-check-double mr-2 text-emerald-400"></i>Mitigations</h3>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex items-start gap-2"><i class="fas fa-lock text-emerald-400 mt-1"></i>Use <strong class="text-white">proper isolation</strong>: run external PRs in a sandboxed environment</li>
+              <li class="flex items-start gap-2"><i class="fas fa-project-diagram text-emerald-400 mt-1"></i><strong class="text-white">Separate project</strong>: keep CI/CD for forked PRs in a different project from CD</li>
+              <li class="flex items-start gap-2"><i class="fas fa-server text-emerald-400 mt-1"></i>Use a <strong class="text-white">separate runner</strong> for CD jobs — never share credentials with PR pipelines</li>
+              <li class="flex items-start gap-2"><i class="fas fa-user-check text-emerald-400 mt-1"></i>Require <strong class="text-white">approval</strong> before running pipelines on first-time contributors</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+
+      <!-- Horror story + Checklist -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 animate-slide-left">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-book-skull text-2xl text-red-400 mt-1"></i>
+            <div>
+              <h3 class="text-white font-semibold mb-2">Horror Story Reference</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                In 2021, an attacker submitted a seemingly innocent PR to a popular open-source project. The CI job ran on a shared runner that had access to production deployment keys. The PR's malicious code exfiltrated the keys and the attacker deployed a cryptominer to production infrastructure. The incident caused <strong class="text-red-300">$200K+ in cloud costs</strong> before detection.
+              </p>
+              <div class="mt-3 p-3 rounded-lg bg-red-900/20 border border-red-800/30">
+                <p class="text-xs text-red-300"><i class="fas fa-lightbulb mr-1"></i> <strong>Lesson:</strong> Never run untrusted code on runners with production access. Isolate, sandbox, and review.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 rounded-xl p-6 animate-slide-right">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-clipboard-list text-2xl text-cyan-400 mt-1"></i>
+            <div>
+              <h3 class="text-white font-semibold mb-2">CI/CD Security Checklist</h3>
+              <ul class="space-y-2 text-sm text-gray-400 mt-2">
+                <li class="flex items-center gap-2"><i class="fas fa-square-check text-emerald-400"></i>Use read-only tokens for PR pipelines</li>
+                <li class="flex items-center gap-2"><i class="fas fa-square-check text-emerald-400"></i>Separate CI runners from CD runners</li>
+                <li class="flex items-center gap-2"><i class="fas fa-square-check text-emerald-400"></i>Require approval for external contributors</li>
+                <li class="flex items-center gap-2"><i class="fas fa-square-check text-emerald-400"></i>Never store secrets in plaintext in YAML</li>
+                <li class="flex items-center gap-2"><i class="fas fa-square-check text-emerald-400"></i>Use forge secret vault (GitHub Secrets / GitLab CI Variables)</li>
+                <li class="flex items-center gap-2"><i class="fas fa-square-check text-emerald-400"></i>Pin runner versions (e.g., <span class="code-inline">ubuntu-22.04</span> not <span class="code-inline">ubuntu-latest</span>)</li>
+                <li class="flex items-center gap-2"><i class="fas fa-square-check text-emerald-400"></i>Enable pipeline audit logs</li>
+              </ul>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- ====================== BOTTOM NAVIGATION ====================== -->
+    <div class="mt-16 flex flex-col sm:flex-row justify-between items-center gap-4 animate-fade-in">
+      <a href="ch05_remote.html" class="glow-card inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm text-gray-300 hover:text-white">
+        <i class="fas fa-arrow-left text-blue-400"></i> Previous: Remote Repositories
+      </a>
+      <a href="../index.html" class="glow-card inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm text-gray-300 hover:text-white">
+        <i class="fas fa-th-large text-violet-400"></i> Index
+      </a>
+      <a href="ch07_contributors.html" class="glow-card inline-flex items-center gap-2 px-5 py-3 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm text-gray-300 hover:text-white">
+        Next: Third-party Contributors <i class="fas fa-arrow-right text-amber-400"></i>
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-10 text-center text-gray-500 text-sm animate-fade-in">
+      <i class="fas fa-book-open mr-1"></i> Part 6 of the Git &amp; GitHub Cheatsheet — Based on "GIT for Beginners" by Anthony Baire
+    </div>
+
+  </div>
+
+</body>
+</html>

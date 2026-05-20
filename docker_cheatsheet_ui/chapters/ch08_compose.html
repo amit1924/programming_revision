@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Docker Compose — Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    pre { background: #1e293b; border: 1px solid #334155; border-radius: 0.75rem; padding: 1rem; overflow-x: auto; font-size: 0.875rem; line-height: 1.6; }
+    code { color: #e2e8f0; }
+    .kw { color: #93c5fd; } .s { color: #a5f3fc; } .cm { color: #64748b; } .n { color: #e2e8f0; } .k { color: #c4b5fd; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-in { animation: slideIn 0.6s ease-out; }
+    @media (max-width:640px) { pre { font-size:0.75rem; padding:0.75rem; } }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back + Section Nav -->
+    <div class="flex flex-wrap gap-2 mb-8 animate-fade-in">
+      <a href="../index.html" class="glow-card inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm"><i class="fas fa-arrow-left"></i> Back</a>
+      <a href="#what" class="glow-card inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">What is Compose</a>
+      <a href="#basic" class="glow-card inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">Basic YAML</a>
+      <a href="#voting" class="glow-card inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">Voting App</a>
+      <a href="#links" class="glow-card inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">Links</a>
+      <a href="#build" class="glow-card inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">Build</a>
+      <a href="#versions" class="glow-card inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">Versions</a>
+      <a href="#networks" class="glow-card inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-sm">Networks</a>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-12 animate-fade-in">
+      <i class="fab fa-docker text-5xl docker-icon mb-3"></i>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text"><i class="fas fa-layer-group mr-2"></i>Chapter 8: Docker Compose</h1>
+      <p class="text-gray-400 mt-3 text-lg">Define and run multi-container apps with a single YAML file</p>
+    </div>
+
+    <!-- 1. What is Docker Compose? -->
+    <div id="what" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-question-circle text-2xl text-indigo-400"></i>
+        <h2 class="text-xl font-bold text-white">What is Docker Compose?</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Docker Compose is a tool that lets you define and run <strong>multi-container Docker applications</strong>. Instead of typing many <code class="text-cyan-300">docker run</code> commands one by one, you write a single YAML file that describes all your services, networks, and volumes — then launch everything with one command.</p>
+      <div class="flex items-start gap-2 bg-indigo-900/20 border border-indigo-800/40 rounded-lg p-4 mb-3">
+        <i class="fas fa-lightbulb text-yellow-400 mt-1"></i>
+        <div>
+          <p class="text-sm text-gray-300"><strong>Analogy:</strong> Making a full dinner. Without Compose, you'd cook rice (one <code>docker run</code>), then cook curry (another <code>docker run</code>), then set the table (another). With Compose, you write the whole recipe in one file and execute it — <em>everything happens together</em>.</p>
+        </div>
+      </div>
+      <p class="text-gray-300">One command to start everything:</p>
+      <pre><code><span class="n">docker-compose up</span></code></pre>
+      <p class="text-gray-300 mt-2">One command to stop everything:</p>
+      <pre><code><span class="n">docker-compose down</span></code></pre>
+      <p class="text-gray-400 text-sm mt-3"><i class="fas fa-info-circle mr-1"></i> All containers are created on the same network by default, so they can talk to each other using service names as hostnames.</p>
+    </div>
+
+    <!-- 2. Basic docker-compose.yml -->
+    <div id="basic" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-file-alt text-2xl text-emerald-400"></i>
+        <h2 class="text-xl font-bold text-white">Basic docker-compose.yml</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">docker-compose.yml</code> file is the heart of Compose. The <code class="text-cyan-300">services:</code> section defines each container. Here's a simple example with four services:</p>
+      <pre><code><span class="cm"># docker-compose.yml</span>
+<span class="k">services:</span>
+  <span class="n">web:</span>
+    <span class="kw">image:</span> <span class="s">"mmumshad/simple-webapp"</span>
+  <span class="n">database:</span>
+    <span class="kw">image:</span> <span class="s">"mongodb"</span>
+  <span class="n">messaging:</span>
+    <span class="kw">image:</span> <span class="s">"redis:alpine"</span>
+  <span class="n">orchestration:</span>
+    <span class="kw">image:</span> <span class="s">"ansible"</span></code></pre>
+      <p class="text-gray-300 mt-3">Each service name becomes a hostname. So the <code class="text-cyan-300">web</code> service can reach the database at <code class="text-cyan-300">database</code> (not <code class="text-cyan-300">localhost</code>). No more manually creating networks or linking containers — Compose handles it automatically.</p>
+      <div class="flex items-start gap-2 bg-slate-700/30 rounded-lg p-3 mt-3">
+        <i class="fas fa-terminal text-cyan-400 mt-1"></i>
+        <div>
+          <p class="text-sm text-gray-400">Run it:</p>
+          <pre><code class="text-sm"><span class="n">docker-compose up -d</span></code></pre>
+          <p class="text-sm text-gray-400 mt-1">The <code class="text-cyan-300">-d</code> flag runs containers in the background (detached mode).</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- 3. Sample Voting Application -->
+    <div id="voting" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-vote-yea text-2xl text-amber-400"></i>
+        <h2 class="text-xl font-bold text-white">Sample Voting Application</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The classic "voting app" example used throughout Docker's official docs. It has <strong>5 services</strong>, each written in a different language:</p>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+        <div class="bg-slate-700/40 rounded-lg p-3 border border-slate-600"><i class="fab fa-python text-blue-400 mr-2"></i><strong>voting-app</strong> (Python) — Web UI to cast votes</div>
+        <div class="bg-slate-700/40 rounded-lg p-3 border border-slate-600"><i class="fab fa-node-js text-green-400 mr-2"></i><strong>result-app</strong> (Node.js) — Real-time results display</div>
+        <div class="bg-slate-700/40 rounded-lg p-3 border border-slate-600"><i class="fas fa-database text-red-400 mr-2"></i><strong>redis</strong> (In-memory DB) — Buffers incoming votes</div>
+        <div class="bg-slate-700/40 rounded-lg p-3 border border-slate-600"><i class="fas fa-database text-indigo-400 mr-2"></i><strong>db</strong> (PostgreSQL) — Stores votes permanently</div>
+        <div class="bg-slate-700/40 rounded-lg p-3 border border-slate-600 sm:col-span-2"><i class="fab fa-microsoft text-purple-400 mr-2"></i><strong>worker</strong> (.NET) — Moves votes from redis to PostgreSQL</div>
+      </div>
+
+      <p class="text-gray-300 mb-2"><strong>Architecture flow:</strong></p>
+      <pre><code><span class="n">[Browser] ──> voting-app ──> redis ──> worker ──> db</span>
+<span class="n">[Browser] ──> result-app ──────────────────> db</span></code></pre>
+      <p class="text-gray-400 text-sm mt-2"><i class="fas fa-info-circle mr-1"></i> Each service runs in its own container with its own language runtime. Compose makes it trivial to wire them all together.</p>
+    </div>
+
+    <!-- 4. docker run --links (Legacy) -->
+    <div id="links" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-link text-2xl text-rose-400"></i>
+        <h2 class="text-xl font-bold text-white"><code class="text-rose-300">docker run --link</code> (Legacy)</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Before Compose and user-defined networks, you connected containers using the <code class="text-cyan-300">--link</code> flag. It's <span class="text-red-400">deprecated</span> (still works but not recommended), but you'll see it in old tutorials.</p>
+      <div class="flex items-start gap-2 bg-rose-900/20 border border-rose-800/40 rounded-lg p-4 mb-4">
+        <i class="fas fa-exclamation-triangle text-rose-400 mt-1"></i>
+        <div>
+          <p class="text-sm text-gray-300"><strong>Pain point:</strong> Running the voting app without Compose means <span class="text-rose-300">5 separate</span> <code class="text-cyan-300">docker run</code> commands with multiple <code class="text-cyan-300">--link</code> flags. One typo and your app breaks!</p>
+        </div>
+      </div>
+      <pre><code><span class="cm"># Start redis (db for votes)</span>
+<span class="n">docker run -d --name=redis redis:alpine</span>
+
+<span class="cm"># Start db (PostgreSQL)</span>
+<span class="n">docker run -d --name=db postgres:9.4</span>
+
+<span class="cm"># Start vote app, link to redis</span>
+<span class="n">docker run -d --name=vote -p 5000:80 --link redis:redis voting-app</span>
+
+<span class="cm"># Start result app, link to db</span>
+<span class="n">docker run -d --name=result -p 5001:80 --link db:db result-app</span>
+
+<span class="cm"># Start worker, link to redis + db</span>
+<span class="n">docker run -d --name=worker --link redis:redis --link db:db worker</span></code></pre>
+      <p class="text-gray-400 text-sm mt-3"><i class="fas fa-arrow-right mr-1 text-green-400"></i> Now compare this to the Compose version later — <strong>5 commands vs one file</strong>.</p>
+    </div>
+
+    <!-- 5. Docker Compose with Build -->
+    <div id="build" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-hammer text-2xl text-yellow-400"></i>
+        <h2 class="text-xl font-bold text-white">Docker Compose with Build</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Instead of pulling a pre-built image from a registry (<code class="text-cyan-300">image:</code>), you can tell Compose to <strong>build</strong> an image from a Dockerfile using the <code class="text-cyan-300">build:</code> directive.</p>
+      <pre><code><span class="k">services:</span>
+  <span class="n">vote:</span>
+    <span class="kw">build:</span> <span class="s">./vote</span>           <span class="cm"># Path to Dockerfile</span>
+    <span class="kw">ports:</span>
+      <span class="n">- "5000:80"</span>
+    <span class="kw">links:</span>
+      <span class="n">- redis</span>
+
+  <span class="n">result:</span>
+    <span class="kw">build:</span> <span class="s">./result</span>
+    <span class="kw">ports:</span>
+      <span class="n">- "5001:80"</span>
+    <span class="kw">links:</span>
+      <span class="n">- db</span>
+
+  <span class="n">redis:</span>
+    <span class="kw">image:</span> <span class="s">redis:alpine</span>   <span class="cm"># Pre-built image - no build needed</span>
+
+  <span class="n">db:</span>
+    <span class="kw">image:</span> <span class="s">postgres:9.4</span>
+
+  <span class="n">worker:</span>
+    <span class="kw">build:</span> <span class="s">./worker</span></code></pre>
+      <p class="text-gray-300 mt-3">When you run <code class="text-cyan-300">docker-compose up</code>, Compose will:</p>
+      <ol class="list-decimal list-inside text-gray-300 space-y-1">
+        <li>Build images for <code class="text-cyan-300">vote</code>, <code class="text-cyan-300">result</code>, and <code class="text-cyan-300">worker</code> from their Dockerfiles</li>
+        <li>Pull <code class="text-cyan-300">redis:alpine</code> and <code class="text-cyan-300">postgres:9.4</code> from Docker Hub</li>
+        <li>Start all 5 containers together on the same network</li>
+      </ol>
+    </div>
+
+    <!-- 6. Docker Compose Versions -->
+    <div id="versions" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-code-branch text-2xl text-purple-400"></i>
+        <h2 class="text-xl font-bold text-white">Docker Compose Versions</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Compose file format has evolved. Here's the same voting app in all 3 versions:</p>
+
+      <h3 class="text-lg font-semibold text-gray-200 mb-2"><i class="fas fa-vial text-red-400 mr-2"></i>Version 1 (Simple, no version key)</h3>
+      <p class="text-gray-400 text-sm mb-2">No networks, no <code class="text-cyan-300">depends_on</code>. Relies on <code class="text-cyan-300">links</code> like <code class="text-cyan-300">docker run --link</code>.</p>
+      <pre><code><span class="cm"># docker-compose.yml — Version 1</span>
+<span class="n">web:</span>
+  <span class="kw">build:</span> <span class="s">./vote</span>
+  <span class="kw">ports:</span>
+    <span class="n">- "5000:80"</span>
+  <span class="kw">links:</span>
+    <span class="n">- redis</span>
+
+<span class="n">result:</span>
+  <span class="kw">build:</span> <span class="s">./result</span>
+  <span class="kw">ports:</span>
+    <span class="n">- "5001:80"</span>
+  <span class="kw">links:</span>
+    <span class="n">- db</span>
+
+<span class="n">redis:</span>
+  <span class="kw">image:</span> <span class="s">redis:alpine</span>
+
+<span class="n">db:</span>
+  <span class="kw">image:</span> <span class="s">postgres:9.4</span>
+
+<span class="n">worker:</span>
+  <span class="kw">build:</span> <span class="s">./worker</span>
+  <span class="kw">links:</span>
+    <span class="n">- redis</span>
+    <span class="n">- db</span></code></pre>
+
+      <h3 class="text-lg font-semibold text-gray-200 mt-4 mb-2"><i class="fas fa-vial text-blue-400 mr-2"></i>Version 2 (Networking built-in)</h3>
+      <p class="text-gray-400 text-sm mb-2">Add <code class="text-cyan-300">version: '2'</code>. <code class="text-cyan-300">depends_on</code> replaces <code class="text-cyan-300">links</code>. Every service is automatically on the same network.</p>
+      <pre><code><span class="k">version:</span> <span class="s">'2'</span>
+<span class="k">services:</span>
+  <span class="n">vote:</span>
+    <span class="kw">build:</span> <span class="s">./vote</span>
+    <span class="kw">ports:</span>
+      <span class="n">- "5000:80"</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- redis</span>
+
+  <span class="n">result:</span>
+    <span class="kw">build:</span> <span class="s">./result</span>
+    <span class="kw">ports:</span>
+      <span class="n">- "5001:80"</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- db</span>
+
+  <span class="n">redis:</span>
+    <span class="kw">image:</span> <span class="s">redis:alpine</span>
+
+  <span class="n">db:</span>
+    <span class="kw">image:</span> <span class="s">postgres:9.4</span>
+
+  <span class="n">worker:</span>
+    <span class="kw">build:</span> <span class="s">./worker</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- redis</span>
+      <span class="n">- db</span></code></pre>
+
+      <h3 class="text-lg font-semibold text-gray-200 mt-4 mb-2"><i class="fas fa-vial text-green-400 mr-2"></i>Version 3 (Swarm-ready)</h3>
+      <p class="text-gray-400 text-sm mb-2">Add <code class="text-cyan-300">version: '3'</code>. Adds <code class="text-cyan-300">deploy</code> section for Docker Swarm (replicas, restart policy, resource limits).</p>
+      <pre><code><span class="k">version:</span> <span class="s">'3'</span>
+<span class="k">services:</span>
+  <span class="n">vote:</span>
+    <span class="kw">build:</span> <span class="s">./vote</span>
+    <span class="kw">ports:</span>
+      <span class="n">- "5000:80"</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- redis</span>
+    <span class="kw">deploy:</span>
+      <span class="kw">replicas:</span> <span class="n">3</span>
+
+  <span class="n">result:</span>
+    <span class="kw">build:</span> <span class="s">./result</span>
+    <span class="kw">ports:</span>
+      <span class="n">- "5001:80"</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- db</span>
+
+  <span class="n">redis:</span>
+    <span class="kw">image:</span> <span class="s">redis:alpine</span>
+
+  <span class="n">db:</span>
+    <span class="kw">image:</span> <span class="s">postgres:9.4</span>
+
+  <span class="n">worker:</span>
+    <span class="kw">build:</span> <span class="s">./worker</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- redis</span>
+      <span class="n">- db</span></code></pre>
+      <div class="flex items-start gap-2 bg-slate-700/30 rounded-lg p-3 mt-4">
+        <i class="fas fa-list text-indigo-400 mt-1"></i>
+        <div>
+          <p class="text-sm text-gray-300"><strong>Key differences:</strong></p>
+          <ul class="list-disc list-inside text-sm text-gray-400 space-y-1">
+            <li><strong>V1</strong> — No version key. Uses <code class="text-cyan-300">links</code>. Top-level keys are service names.</li>
+            <li><strong>V2</strong> — <code class="text-cyan-300">version: '2'</code>. <code class="text-cyan-300">services:</code> is explicit. <code class="text-cyan-300">depends_on</code> replaces <code class="text-cyan-300">links</code>. Auto-networking.</li>
+            <li><strong>V3</strong> — <code class="text-cyan-300">version: '3'</code>. Adds <code class="text-cyan-300">deploy</code>, <code class="text-cyan-300">healthcheck</code>, Swarm integration.</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- 7. Compose with Networks -->
+    <div id="networks" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-network-wired text-2xl text-teal-400"></i>
+        <h2 class="text-xl font-bold text-white">Compose with Networks</h2>
+      </div>
+      <p class="text-gray-300 mb-3">For better security, you can define <strong>custom networks</strong> and assign services to them. The voting app uses two networks: <code class="text-cyan-300">front-end</code> and <code class="text-cyan-300">back-end</code>.</p>
+      <pre><code><span class="k">version:</span> <span class="s">'3'</span>
+<span class="k">services:</span>
+
+  <span class="n">vote:</span>
+    <span class="kw">build:</span> <span class="s">./vote</span>
+    <span class="kw">ports:</span>
+      <span class="n">- "5000:80"</span>
+    <span class="kw">networks:</span>
+      <span class="n">- front-end</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- redis</span>
+
+  <span class="n">result:</span>
+    <span class="kw">build:</span> <span class="s">./result</span>
+    <span class="kw">ports:</span>
+      <span class="n">- "5001:80"</span>
+    <span class="kw">networks:</span>
+      <span class="n">- front-end</span>
+      <span class="n">- back-end</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- db</span>
+
+  <span class="n">redis:</span>
+    <span class="kw">image:</span> <span class="s">redis:alpine</span>
+    <span class="kw">networks:</span>
+      <span class="n">- back-end</span>
+
+  <span class="n">db:</span>
+    <span class="kw">image:</span> <span class="s">postgres:9.4</span>
+    <span class="kw">networks:</span>
+      <span class="n">- back-end</span>
+
+  <span class="n">worker:</span>
+    <span class="kw">build:</span> <span class="s">./worker</span>
+    <span class="kw">networks:</span>
+      <span class="n">- back-end</span>
+    <span class="kw">depends_on:</span>
+      <span class="n">- redis</span>
+      <span class="n">- db</span>
+
+<span class="k">networks:</span>
+  <span class="n">front-end:</span>
+  <span class="n">back-end:</span></code></pre>
+
+      <div class="flex items-start gap-2 bg-teal-900/20 border border-teal-800/40 rounded-lg p-4 mt-4">
+        <i class="fas fa-shield-alt text-teal-400 mt-1"></i>
+        <div>
+          <p class="text-sm text-gray-300"><strong>Security benefit:</strong> The database and worker are only on <code class="text-cyan-300">back-end</code> — they are <strong>never exposed</strong> to the browser-facing front-end network. The <code class="text-cyan-300">result</code> service sits on both networks, acting as a bridge between them.</p>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-4">
+        <div class="bg-slate-700/40 rounded-lg p-3 border border-slate-600">
+          <p class="text-sm font-semibold text-gray-200"><i class="fas fa-globe text-cyan-400 mr-2"></i>front-end network</p>
+          <p class="text-xs text-gray-400">vote, result</p>
+        </div>
+        <div class="bg-slate-700/40 rounded-lg p-3 border border-slate-600">
+          <p class="text-sm font-semibold text-gray-200"><i class="fas fa-database text-teal-400 mr-2"></i>back-end network</p>
+          <p class="text-xs text-gray-400">redis, db, worker, result</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-gray-500 text-sm">
+      <i class="fab fa-docker mr-1"></i> Docker Compose — Chapter 8 of Docker Cheatsheet
+    </div>
+  </div>
+</body>
+</html>

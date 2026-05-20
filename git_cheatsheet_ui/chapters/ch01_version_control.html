@@ -1,0 +1,785 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Version Control Tools — Git & GitHub Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glow-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; padding: 1.25rem; transition: all 0.3s; }
+    .code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 1rem; font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85rem; overflow-x: auto; }
+    .code-block .kw { color: #ff79c6; }
+    .code-block .fn { color: #50fa7b; }
+    .code-block .str { color: #f1fa8c; }
+    .code-block .cm { color: #6272a4; font-style: italic; }
+    .code-block .num { color: #bd93f9; }
+    .code-block .op { color: #ff79c6; }
+    .code-block .prop { color: #8be9fd; }
+    .tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.75rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .slide-in-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-left.visible { opacity: 1; transform: translateX(0); }
+    .slide-in-right { opacity: 0; transform: translateX(30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-right.visible { opacity: 1; transform: translateX(0); }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out; }
+    .accordion-content.open { max-height: 800px; }
+    .pulse-icon { transition: transform 0.3s; }
+    .pulse-icon:hover { transform: scale(1.2); }
+    .comparison-table th { background: #1e293b; padding: 0.6rem 1rem; font-size: 0.85rem; }
+    .comparison-table td { padding: 0.6rem 1rem; font-size: 0.85rem; border-top: 1px solid #1e293b; }
+    .comparison-table tr:hover td { background: rgba(99,102,241,0.08); }
+    .badge-good { background: rgba(16,185,129,0.15); color: #6ee7b7; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-bad { background: rgba(239,68,68,0.15); color: #fca5a5; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .nav-link { padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.8rem; background: rgba(30,41,59,0.6); border: 1px solid #334155; transition: all 0.2s; color: #94a3b8; white-space: nowrap; }
+    .nav-link:hover { background: #334155; color: #e2e8f0; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer { background: linear-gradient(90deg, transparent, rgba(99,102,241,0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+
+    <div class="animate-fade-in mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-history text-4xl text-rose-400 pulse-icon"></i>
+        <h1 class="text-3xl md:text-4xl font-bold gradient-text">About Version Control Tools</h1>
+      </div>
+      <p class="text-gray-400 text-lg">Part 1 — Understanding what version control is, why we need it, and how it evolved</p>
+    </div>
+
+    <div class="overflow-x-auto pb-2 mb-8">
+      <div class="flex gap-2 min-w-max">
+        <a href="#what-is-vcs" class="nav-link"><i class="fas fa-question-circle mr-1"></i>What is VCS</a>
+        <a href="#use-case-history" class="nav-link"><i class="fas fa-history mr-1"></i>Keeping History</a>
+        <a href="#use-case-team" class="nav-link"><i class="fas fa-users mr-1"></i>Working with Others</a>
+        <a href="#use-case-branching" class="nav-link"><i class="fas fa-code-branch mr-1"></i>Branching</a>
+        <a href="#use-case-contributors" class="nav-link"><i class="fas fa-handshake mr-1"></i>Contributors</a>
+        <a href="#use-case-scaling" class="nav-link"><i class="fas fa-chart-line mr-1"></i>Scaling</a>
+        <a href="#taxonomy" class="nav-link"><i class="fas fa-sitemap mr-1"></i>Taxonomy</a>
+        <a href="#technical" class="nav-link"><i class="fas fa-cogs mr-1"></i>Technical</a>
+        <a href="#what-to-store" class="nav-link"><i class="fas fa-database mr-1"></i>Store</a>
+        <a href="#committing" class="nav-link"><i class="fas fa-check-double mr-1"></i>Committing</a>
+        <a href="#history" class="nav-link"><i class="fas fa-timeline mr-1"></i>History of VCS</a>
+        <a href="#exercises" class="nav-link"><i class="fas fa-pencil-alt mr-1"></i>Exercises</a>
+      </div>
+    </div>
+
+    <div id="what-is-vcs" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-question-circle text-2xl text-blue-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">What is a Version Control System?</h2>
+      </div>
+      <p class="text-gray-300 mb-4">A <strong class="text-blue-300">Version Control System (VCS)</strong> is a tool that manages changes to documents, computer programs, websites, and other collections of information.</p>
+      <ul class="space-y-2 text-gray-300 mb-4">
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i>Each change is identified by a <strong class="text-amber-300">revision number</strong></li>
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i>Each revision has a <strong class="text-amber-300">timestamp</strong> and the <strong class="text-amber-300">person</strong> who made it</li>
+        <li><i class="fas fa-check-circle text-emerald-400 mr-2"></i>Revisions can be <strong class="text-amber-300">compared</strong>, <strong class="text-amber-300">restored</strong>, and <strong class="text-amber-300">merged</strong></li>
+      </ul>
+      <div class="code-block">
+        <span class="cm"># Example: two revisions of a simple "hello.py" file</span><br>
+        <br>
+        <span class="cm"># revision 1 — initial set</span><br>
+        <span class="kw">def</span> <span class="fn">greet</span>():<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">print</span>(<span class="str">"Hello"</span>)<br>
+        <br>
+        <span class="cm"># revision 2 — first change (added a parameter)</span><br>
+        <span class="kw">def</span> <span class="fn">greet</span>(name):<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="kw">print</span>(<span class="str">f"Hello, {name}"</span>)
+      </div>
+    </div>
+
+    <div id="use-case-history" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-history text-2xl text-amber-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Use Case 1: Keeping History</h2>
+      </div>
+      <p class="text-gray-300 mb-3">A VCS allows you to travel back in time through your project's development.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-undo-alt text-emerald-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Revert</span>
+          <p class="text-gray-400 text-sm mt-1">Not happy with your latest changes? Just revert to a previous revision!</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-search text-blue-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Browseable History</span>
+          <p class="text-gray-400 text-sm mt-1">Inspect any revision of your project at any point in time.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-clock text-cyan-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Track Changes</span>
+          <p class="text-gray-400 text-sm mt-1">When, who, what changed, why, and in what context.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-trash-restore text-rose-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">Deleted Content</span>
+          <p class="text-gray-400 text-sm mt-1">Deleted content remains accessible in the repository history forever.</p>
+        </div>
+      </div>
+      <div class="code-block">
+        <span class="cm"># Check what changed between two revisions</span><br>
+        <span class="kw">git</span> diff abc123..def456<br>
+        <br>
+        <span class="cm"># Go back to an earlier revision</span><br>
+        <span class="kw">git</span> checkout abc123<br>
+        <br>
+        <span class="cm"># View the full log</span><br>
+        <span class="kw">git</span> log --oneline --graph
+      </div>
+    </div>
+
+    <div id="use-case-team" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-users text-2xl text-emerald-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Use Case 2: Working with Others</h2>
+      </div>
+      <p class="text-gray-300 mb-3">A VCS enables seamless collaboration between multiple developers.</p>
+      <ul class="space-y-2 text-gray-300 mb-4">
+        <li><i class="fas fa-share-alt text-emerald-400 mr-2"></i>Share files with your entire team</li>
+        <li><i class="fas fa-code-merge text-emerald-400 mr-2"></i>Merge changes from other users without losing work</li>
+        <li><i class="fas fa-shield-alt text-emerald-400 mr-2"></i>Nothing is accidentally overwritten</li>
+        <li><i class="fas fa-gavel text-emerald-400 mr-2"></i>Know who to blame when something breaks</li>
+      </ul>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300 font-medium"><i class="fas fa-users-cog text-indigo-400 mr-2"></i>Scenario: Team of 5 working on the same codebase</p>
+        <p class="text-gray-400 text-sm mt-2">Each developer works on their own copy. Alice adds a login feature, Bob fixes a bug, Charlie refactors the database layer. The VCS keeps track of every change and enables the team to merge all contributions together safely.</p>
+      </div>
+      <div class="code-block">
+        <span class="cm"># Alice pushes her feature</span><br>
+        <span class="kw">git</span> push origin feature-login<br>
+        <br>
+        <span class="cm"># Bob pulls the latest changes before starting work</span><br>
+        <span class="kw">git</span> pull origin main<br>
+        <br>
+        <span class="cm"># Charlie merges all completed features into main</span><br>
+        <span class="kw">git</span> checkout main && <span class="kw">git</span> merge feature-login
+      </div>
+    </div>
+
+    <div id="use-case-branching" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-code-branch text-2xl text-cyan-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Use Case 3: Branching</h2>
+      </div>
+      <p class="text-gray-300 mb-3">A VCS supports multiple variants of the same software as separate <strong class="text-cyan-300">branches</strong>.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-code-branch text-green-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">main</span>
+          <p class="text-gray-400 text-sm mt-1">The stable, production-ready line.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-wrench text-yellow-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">maintenance</span>
+          <p class="text-gray-400 text-sm mt-1">Bug fixes for the currently released version (e.g. v1.0).</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-flask text-purple-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">development</span>
+          <p class="text-gray-400 text-sm mt-1">New features for the next major version (e.g. v2.0).</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+          <i class="fas fa-tag text-rose-400 mr-2"></i>
+          <span class="text-gray-200 font-medium">release</span>
+          <p class="text-gray-400 text-sm mt-1">Release candidates before going to production.</p>
+        </div>
+      </div>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300 font-medium"><i class="fas fa-code-branch text-cyan-400 mr-2"></i>Scenario: v1.0 maintenance vs v2.0 development</p>
+        <p class="text-gray-400 text-sm mt-2">The <strong>v1.0 maintenance branch</strong> receives critical bugfixes while the <strong>development branch</strong> continues building v2.0 features. Fixed bugs from v1.0 can be cherry-picked or merged into v2.0 so both versions benefit.</p>
+      </div>
+      <div class="code-block">
+        <span class="cm"># Create and switch to a maintenance branch for v1.0</span><br>
+        <span class="kw">git</span> checkout -b maintenance-v1.0<br>
+        <br>
+        <span class="cm"># Fix a critical bug on maintenance branch</span><br>
+        <span class="kw">git</span> commit -am <span class="str">"fix: security patch for v1.0"</span><br>
+        <br>
+        <span class="cm"># Merge the fix into the development branch too</span><br>
+        <span class="kw">git</span> checkout dev-v2.0 && <span class="kw">git</span> merge maintenance-v1.0
+      </div>
+    </div>
+
+    <div id="use-case-contributors" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-handshake text-2xl text-amber-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Use Case 4: External Contributors</h2>
+      </div>
+      <p class="text-gray-300 mb-3">A VCS enables collaboration with contributors outside your immediate team.</p>
+      <ul class="space-y-2 text-gray-300 mb-4">
+        <li><i class="fas fa-eye text-amber-400 mr-2"></i><strong class="text-amber-300">Visibility</strong> — anyone can see project activity</li>
+        <li><i class="fas fa-envelope-open-text text-amber-400 mr-2"></i><strong class="text-amber-300">Submit changes</strong> — contributors can send patches or open pull requests</li>
+        <li><i class="fas fa-code-branch text-amber-400 mr-2"></i><strong class="text-amber-300">Fork & merge</strong> — anyone can fork the repository, develop features, and merge back</li>
+      </ul>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300 font-medium"><i class="fas fa-code-pull-request text-amber-400 mr-2"></i>Scenario: Open source contributor submits a new feature</p>
+        <p class="text-gray-400 text-sm mt-2">Alice forks the project on GitHub, adds a dark-mode theme toggle, and opens a pull request. The maintainer reviews her changes, suggests improvements, and merges it. Alice is now a contributor to the project.</p>
+      </div>
+      <div class="code-block">
+        <span class="cm"># Contributor forks the repo and clones their copy</span><br>
+        <span class="kw">git</span> clone https://github.com/alice/project.git<br>
+        <br>
+        <span class="cm"># Make changes, commit, and push to their fork</span><br>
+        <span class="kw">git</span> add . && <span class="kw">git</span> commit -m <span class="str">"feat: add dark mode toggle"</span><br>
+        <span class="kw">git</span> push origin feature-dark-mode<br>
+        <br>
+        <span class="cm"># Maintainer pulls the contributor's branch</span><br>
+        <span class="kw">git</span> pull https://github.com/alice/project.git feature-dark-mode
+      </div>
+    </div>
+
+    <div id="use-case-scaling" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-chart-line text-2xl text-violet-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Use Case 5: Scaling</h2>
+      </div>
+      <p class="text-gray-300 mb-3">A VCS can handle extremely large projects with thousands of contributors.</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700 text-center">
+          <div class="text-3xl font-bold text-blue-400">~10,000</div>
+          <p class="text-gray-400 text-sm mt-1">changesets per Linux kernel version</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700 text-center">
+          <div class="text-3xl font-bold text-emerald-400">1,000+</div>
+          <p class="text-gray-400 text-sm mt-1">unique contributors per release cycle</p>
+        </div>
+      </div>
+      <p class="text-gray-300 mb-2">The <strong class="text-violet-300">Linux kernel</strong> is a prime example: every 2–3 months a new version is released with ~10,000 changesets from over 1,000 unique developers. Without a VCS, coordinating this would be impossible.</p>
+      <div class="code-block">
+        <span class="cm"># Linux kernel release cycle (example stats per version)</span><br>
+        <span class="cm"># ~10,000 commits from 1,000+ authors every 2-3 months</span><br>
+        <br>
+        <span class="kw">git</span> shortlog -sn v5.10..v5.11 | <span class="fn">head</span> -5<br>
+        <span class="cm"># Shows the top contributors in a release</span>
+      </div>
+    </div>
+
+    <div id="taxonomy" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-sitemap text-2xl text-yellow-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Taxonomy of Version Control Systems</h2>
+      </div>
+      <p class="text-gray-300 mb-4">VCS tools can be categorised along several axes:</p>
+
+      <div class="space-y-4 mb-4">
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-network-wired text-blue-400 mr-2"></i>Architecture</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="tag">Centralised (CVS, SVN, Perforce)</span>
+            <span class="tag">Decentralised (Git, Mercurial)</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-2">Centralised: single server holds all history. Decentralised: every clone is a full repository.</p>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-lock text-rose-400 mr-2"></i>Concurrency</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="tag">Lock-before-edit (SCCS, RCS)</span>
+            <span class="tag">Merge-after-edit (CVS, Git, SVN)</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-2">Lock-before-edit: one person locks a file, others cannot edit it. Merge-after-edit: multiple people edit, conflicts resolved at merge time.</p>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-project-diagram text-emerald-400 mr-2"></i>History Layout</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="tag">Tree / Linear (CVS, SVN)</span>
+            <span class="tag">DAG — Directed Acyclic Graph (Git, Mercurial)</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-2">Tree: merges not recorded, history is linear. DAG: merges are first-class citizens, branches fully represented.</p>
+        </div>
+
+        <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-white font-semibold mb-2"><i class="fas fa-atom text-cyan-400 mr-2"></i>Atomicity Scope</h3>
+          <div class="flex flex-wrap gap-2">
+            <span class="tag">File-level (CVS, RCS)</span>
+            <span class="tag">Repository-level / whole-tree (SVN, Git)</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-2">File-level: each file has its own revision number. Whole-tree: one revision applies to the entire repository atomically.</p>
+        </div>
+      </div>
+
+      <div class="overflow-x-auto">
+        <table class="comparison-table w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th class="text-gray-200 rounded-tl-lg">Feature</th>
+              <th class="text-gray-200">CVS</th>
+              <th class="text-gray-200">SVN</th>
+              <th class="text-gray-200 rounded-tr-lg">Git</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td class="text-gray-300 font-medium">Architecture</td>
+              <td class="text-gray-400">Centralised</td>
+              <td class="text-gray-400">Centralised</td>
+              <td class="text-gray-400">Decentralised</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Concurrency</td>
+              <td class="text-gray-400">Merge-after-edit</td>
+              <td class="text-gray-400">Merge-after-edit</td>
+              <td class="text-gray-400">Merge-after-edit</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">History</td>
+              <td class="text-gray-400">Tree (linear)</td>
+              <td class="text-gray-400">Tree (linear)</td>
+              <td class="text-gray-400">DAG</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Atomicity</td>
+              <td class="text-gray-400">File-level</td>
+              <td class="text-gray-400">Whole-tree</td>
+              <td class="text-gray-400">Whole-tree</td>
+            </tr>
+            <tr>
+              <td class="text-gray-300 font-medium">Offline work</td>
+              <td class="text-gray-400">No</td>
+              <td class="text-gray-400">No</td>
+              <td class="text-gray-400">Yes (full local repo)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <div id="technical" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-cogs text-2xl text-indigo-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Other Technical Aspects</h2>
+      </div>
+
+      <div class="mb-4">
+        <h3 class="text-white font-semibold mb-2"><i class="fas fa-compress-arrows-alt text-teal-400 mr-2"></i>Space Efficiency</h3>
+        <p class="text-gray-300 mb-2">Older VCS tools use <strong class="text-teal-300">delta compression</strong> — they store the initial version and then only the differences (deltas) for each subsequent revision.</p>
+        <p class="text-gray-300 mb-3">Git uses a different approach called <strong class="text-teal-300">object packing</strong>: it stores complete snapshots of changed files and periodically packs them into binary packfiles (with delta compression applied inside the packfile). This makes Git operations very fast.</p>
+        <div class="code-block">
+          <span class="cm"># Git packfile compression in action</span><br>
+          <span class="kw">git</span> gc  <span class="cm"># manually trigger garbage collection / packing</span><br>
+          <span class="kw">git</span> count-objects -v  <span class="cm"># see packfile statistics</span>
+        </div>
+      </div>
+
+      <div>
+        <h3 class="text-white font-semibold mb-2"><i class="fas fa-plug text-cyan-400 mr-2"></i>Access Methods</h3>
+        <p class="text-gray-300 mb-3">Git supports multiple protocols for accessing remote repositories:</p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+          <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-laptop text-blue-400"></i>
+              <span class="text-gray-200 font-mono text-sm">Local</span>
+            </div>
+            <div class="code-block text-xs p-2">file:///home/user/project.git</div>
+          </div>
+          <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-shield-alt text-green-400"></i>
+              <span class="text-gray-200 font-mono text-sm">SSH</span>
+            </div>
+            <div class="code-block text-xs p-2">ssh://user@host/path/to/repo.git</div>
+          </div>
+          <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fab fa-git-alt text-orange-400"></i>
+              <span class="text-gray-200 font-mono text-sm">Git Protocol</span>
+            </div>
+            <div class="code-block text-xs p-2">git://host.xz/path/to/repo.git</div>
+          </div>
+          <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-globe text-purple-400"></i>
+              <span class="text-gray-200 font-mono text-sm">HTTP(S)</span>
+            </div>
+            <div class="code-block text-xs p-2">https://host.xz/path/to/repo.git</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div id="what-to-store" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-database text-2xl text-emerald-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">What to Store in a Repository</h2>
+      </div>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-emerald-900/20 border border-emerald-800/40 rounded-lg p-4">
+          <h3 class="text-emerald-300 font-semibold mb-3"><i class="fas fa-check-circle mr-2"></i>DO Store</h3>
+          <ul class="space-y-1 text-gray-300 text-sm">
+            <li><i class="fas fa-file text-emerald-400 mr-2"></i>Source files (`.py`, `.js`, `.java`, `.c`, `.ts`, etc.)</li>
+            <li><i class="fas fa-hammer text-emerald-400 mr-2"></i>Build scripts (`Makefile`, `build.xml`, `Dockerfile`)</li>
+            <li><i class="fas fa-book text-emerald-400 mr-2"></i>Documentation (`README.md`, docs/)</li>
+            <li><i class="fas fa-image text-emerald-400 mr-2"></i>Resource files (templates, configs, icons)</li>
+            <li><i class="fas fa-code text-emerald-400 mr-2"></i>Test files and test fixtures</li>
+          </ul>
+        </div>
+        <div class="bg-rose-900/20 border border-rose-800/40 rounded-lg p-4">
+          <h3 class="text-rose-300 font-semibold mb-3"><i class="fas fa-times-circle mr-2"></i>DON'T Store</h3>
+          <ul class="space-y-1 text-gray-300 text-sm">
+            <li><i class="fas fa-file text-rose-400 mr-2"></i>Object files (`.o`, `.a`, `.so`)</li>
+            <li><i class="fas fa-file text-rose-400 mr-2"></i>Compiled libraries (`.dll`, `.class`, `.jar`)</li>
+            <li><i class="fas fa-file text-rose-400 mr-2"></i>Executables (`.exe`)</li>
+            <li><i class="fas fa-file-pdf text-rose-400 mr-2"></i>Generated PDFs or binaries</li>
+            <li><i class="fas fa-folder text-rose-400 mr-2"></i>Build output directories (`node_modules/`, `target/`, `build/`)</li>
+          </ul>
+        </div>
+      </div>
+      <div class="code-block">
+        <span class="cm"># Example .gitignore — exclude generated files</span><br>
+        <span class="cm"># Compiled output</span><br>
+        *.o<br>
+        *.a<br>
+        *.so<br>
+        *.dll<br>
+        *.class<br>
+        *.jar<br>
+        *.exe<br>
+        *.pdf<br>
+        <br>
+        <span class="cm"># Build directories</span><br>
+        /target/<br>
+        /build/<br>
+        node_modules/
+      </div>
+    </div>
+
+    <div id="committing" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-check-double text-2xl text-sky-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Guidelines for Committing</h2>
+      </div>
+      <ul class="space-y-3 text-gray-300 mb-4">
+        <li class="flex gap-3">
+          <span class="bg-blue-900/30 text-blue-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 text-sm font-bold">1</span>
+          <div>
+            <strong class="text-blue-300">Commit often.</strong> Small, frequent commits make history easier to navigate and bugs easier to track down.
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="bg-green-900/30 text-green-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 text-sm font-bold">2</span>
+          <div>
+            <strong class="text-green-300">Commit independent changes separately.</strong> A bugfix and a feature addition should be two different commits.
+          </div>
+        </li>
+        <li class="flex gap-3">
+          <span class="bg-amber-900/30 text-amber-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 mt-0.5 text-sm font-bold">3</span>
+          <div>
+            <strong class="text-amber-300">Describe the rationale.</strong> The commit message should explain <em>why</em> a change was made — often more important than the change itself.
+          </div>
+        </li>
+      </ul>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="bg-green-900/10 border border-green-800/30 rounded-lg p-4">
+          <h3 class="text-green-300 font-semibold mb-2"><i class="fas fa-thumbs-up mr-2"></i>Good Commit Message</h3>
+          <div class="code-block text-xs p-3">
+            <span class="fn">fix:</span> prevent null pointer crash when user profile is empty<br>
+            <br>
+            When a user signs up without completing their profile,<br>
+            the dashboard page was throwing a NullPointerException<br>
+            because it assumed profile.bio is always set.<br>
+            <br>
+            <span class="fn">Closes:</span> #142
+          </div>
+        </div>
+        <div class="bg-rose-900/10 border border-rose-800/30 rounded-lg p-4">
+          <h3 class="text-rose-300 font-semibold mb-2"><i class="fas fa-thumbs-down mr-2"></i>Bad Commit Message</h3>
+          <div class="code-block text-xs p-3">
+            <span class="fn">fixed bug</span>
+          </div>
+          <p class="text-gray-400 text-xs mt-2">Vague, no context, impossible to understand what was fixed or why.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="history" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-timeline text-2xl text-purple-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">History of Version Control Systems</h2>
+      </div>
+
+      <div class="relative pl-8 border-l-2 border-slate-700 space-y-6">
+        <div class="relative">
+          <div class="absolute -left-[2.35rem] top-0 w-5 h-5 rounded-full bg-blue-900 border-2 border-blue-400 flex items-center justify-center">
+            <div class="w-2 h-2 rounded-full bg-blue-400"></div>
+          </div>
+          <h3 class="text-blue-300 font-semibold">1st Generation — Single-file, Local-only (1972–1985)</h3>
+          <div class="flex flex-wrap gap-1 mt-1">
+            <span class="tag">SCCS (1972)</span>
+            <span class="tag">RCS (1982)</span>
+            <span class="tag">PVCS (1985)</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-1">Operated on a single file at a time. No networking — local machine only. Used the <strong class="text-blue-300">lock-before-edit</strong> model: you had to lock a file before editing it, preventing others from working on it simultaneously.</p>
+        </div>
+
+        <div class="relative">
+          <div class="absolute -left-[2.35rem] top-0 w-5 h-5 rounded-full bg-green-900 border-2 border-green-400 flex items-center justify-center">
+            <div class="w-2 h-2 rounded-full bg-green-400"></div>
+          </div>
+          <h3 class="text-green-300 font-semibold">2nd Generation — Client-Server (1986–1994)</h3>
+          <div class="flex flex-wrap gap-1 mt-1">
+            <span class="tag">CVS (1986)</span>
+            <span class="tag">ClearCase (1992)</span>
+            <span class="tag">SourceSafe (1994)</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-1">Introduced the <strong class="text-green-300">client-server architecture</strong>. Used <strong class="text-green-300">merge-before-commit</strong> — multiple developers could edit the same file and changes were merged when committing. However, atomicity was at the file level, not the whole repository.</p>
+        </div>
+
+        <div class="relative">
+          <div class="absolute -left-[2.35rem] top-0 w-5 h-5 rounded-full bg-amber-900 border-2 border-amber-400 flex items-center justify-center">
+            <div class="w-2 h-2 rounded-full bg-amber-400"></div>
+          </div>
+          <h3 class="text-amber-300 font-semibold">3rd Generation — Repository-Level Atomicity (1995–2000)</h3>
+          <div class="flex flex-wrap gap-1 mt-1">
+            <span class="tag">Perforce (1995)</span>
+            <span class="tag">Subversion / SVN (2000)</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-1">Still centralised but introduced <strong class="text-amber-300">repository-level atomic commits</strong> — either the entire commit succeeds or nothing changes. Subversion became hugely popular as a "better CVS".</p>
+        </div>
+
+        <div class="relative">
+          <div class="absolute -left-[2.35rem] top-0 w-5 h-5 rounded-full bg-rose-900 border-2 border-rose-400 flex items-center justify-center">
+            <div class="w-2 h-2 rounded-full bg-rose-400"></div>
+          </div>
+          <h3 class="text-rose-300 font-semibold">Decentralised Tools (2005–present)</h3>
+          <div class="flex flex-wrap gap-1 mt-1">
+            <span class="tag">Git (2005)</span>
+            <span class="tag">Mercurial (2005)</span>
+            <span class="tag">Bazaar (2005)</span>
+          </div>
+          <p class="text-gray-400 text-sm mt-1">Every clone is a full repository with complete history. Enables offline work, flexible branching, and distributed collaboration. Git, created by Linus Torvalds for Linux kernel development, has become the dominant VCS.</p>
+        </div>
+      </div>
+    </div>
+
+    <div id="exercises" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-pencil-alt text-2xl text-pink-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Exercises</h2>
+      </div>
+      <p class="text-gray-300 mb-4">Test your understanding of version control concepts:</p>
+
+      <div class="space-y-4">
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">1</span>
+            <div>
+              <p class="text-gray-200 font-medium">What is a Version Control System?</p>
+              <p class="text-gray-400 text-sm mt-1">Define VCS in your own words and list three things it tracks for each revision.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                A VCS manages changes to files over time. Each revision tracks: (1) a revision number, (2) a timestamp, (3) the person who made the change.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">2</span>
+            <div>
+              <p class="text-gray-200 font-medium">Why keep history?</p>
+              <p class="text-gray-400 text-sm mt-1">List three benefits of having a browseable project history.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                (1) Revert to any previous state, (2) inspect who changed what and when, (3) deleted content remains accessible.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">3</span>
+            <div>
+              <p class="text-gray-200 font-medium">Team collaboration scenario</p>
+              <p class="text-gray-400 text-sm mt-1">Describe how a team of 5 developers can work on the same codebase without overwriting each other's work.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                Each developer works on their own branch or copy. They pull the latest changes, make their edits, commit, push, and merge. The VCS detects conflicts and requires manual resolution before merging.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">4</span>
+            <div>
+              <p class="text-gray-200 font-medium">Branching use case</p>
+              <p class="text-gray-400 text-sm mt-1">Explain why you might need a maintenance branch alongside a development branch.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                The maintenance branch receives critical bugfixes for the released version (e.g. v1.0) while the development branch continues with new features for v2.0. Bugfixes can be merged forward.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">5</span>
+            <div>
+              <p class="text-gray-200 font-medium">External contributors workflow</p>
+              <p class="text-gray-400 text-sm mt-1">How does a VCS help with open-source contributions from people outside your organisation?</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                External contributors can fork the project, make changes in their own copy, and submit patches or pull requests. Maintainers review and merge accepted changes back into the main project.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">6</span>
+            <div>
+              <p class="text-gray-200 font-medium">Scaling with VCS</p>
+              <p class="text-gray-400 text-sm mt-1">Give approximate numbers for the Linux kernel development scale (changesets and contributors per release).</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                ~10,000 changesets per version (released every 2-3 months), with 1,000+ unique contributors.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">7</span>
+            <div>
+              <p class="text-gray-200 font-medium">Centralised vs Decentralised</p>
+              <p class="text-gray-400 text-sm mt-1">What is the key difference between a centralised and a decentralised VCS?</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                Centralised: a single server holds all history, clients only have a working copy. Decentralised: every clone is a full repository with complete history, enabling offline work.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">8</span>
+            <div>
+              <p class="text-gray-200 font-medium">What to store?</p>
+              <p class="text-gray-400 text-sm mt-1">List three things you should store in a version control repository and three you should not.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                <strong>Store:</strong> source files, build scripts, documentation. <strong>Don't store:</strong> object files (.o, .a, .so), executables (.exe), generated PDFs.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">9</span>
+            <div>
+              <p class="text-gray-200 font-medium">Good commit messages</p>
+              <p class="text-gray-400 text-sm mt-1">What makes a good commit message? Provide an example of a good one and a bad one.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                A good commit message explains why the change was made. <strong>Good:</strong> "fix: prevent null pointer crash when user profile is empty — Closes #142". <strong>Bad:</strong> "fixed bug" (too vague).
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bg-slate-800/40 border border-slate-700 rounded-lg p-4">
+          <div class="flex items-start gap-3">
+            <span class="bg-pink-900/30 text-pink-300 rounded-full w-7 h-7 flex items-center justify-center shrink-0 text-sm font-bold">10</span>
+            <div>
+              <p class="text-gray-200 font-medium">History of VCS timeline</p>
+              <p class="text-gray-400 text-sm mt-1">List the four generations of VCS with one example tool per generation.</p>
+              <button class="toggle-exercise text-blue-400 hover:text-blue-300 text-sm mt-2" onclick="toggleAnswer(this)">
+                <i class="fas fa-chevron-down mr-1"></i> Show answer
+              </button>
+              <div class="exercise-answer hidden mt-2 text-gray-400 text-sm border-t border-slate-700 pt-2">
+                (1) 1st gen — SCCS (1972), (2) 2nd gen — CVS (1986), (3) 3rd gen — SVN (2000), (4) Decentralised — Git (2005).
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-800">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+      <a href="ch02_git_intro.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all">Next: GIT Overview <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">
+      <i class="fas fa-book-open mr-1"></i> Based on "GIT for Beginners" by Anthony Baire — Part 1: About Version Control Tools
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    });
+
+    function toggleAnswer(btn) {
+      const answer = btn.nextElementSibling;
+      const icon = btn.querySelector('i');
+      if (answer.classList.contains('hidden')) {
+        answer.classList.remove('hidden');
+        icon.className = 'fas fa-chevron-up mr-1';
+      } else {
+        answer.classList.add('hidden');
+        icon.className = 'fas fa-chevron-down mr-1';
+      }
+    }
+  </script>
+</body>
+</html>

@@ -1,0 +1,804 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Remote Repositories — Git Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-20px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes pulseGlow { 0%,100% { box-shadow:0 0 5px rgba(99,102,241,0.2); } 50% { box-shadow:0 0 20px rgba(99,102,241,0.5); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-in { animation: slideIn 0.6s ease-out; }
+    .animate-pulse-glow { animation: pulseGlow 3s infinite; }
+    .delay-1 { animation-delay: 0.1s; animation-fill-mode: both; }
+    .delay-2 { animation-delay: 0.2s; animation-fill-mode: both; }
+    .delay-3 { animation-delay: 0.3s; animation-fill-mode: both; }
+    .delay-4 { animation-delay: 0.4s; animation-fill-mode: both; }
+    .delay-5 { animation-delay: 0.5s; animation-fill-mode: both; }
+    .delay-6 { animation-delay: 0.6s; animation-fill-mode: both; }
+    .delay-7 { animation-delay: 0.7s; animation-fill-mode: both; }
+    .delay-8 { animation-delay: 0.8s; animation-fill-mode: both; }
+    code { background: rgba(255,255,255,0.06); padding: 0.2em 0.4em; border-radius: 4px; font-size: 0.9em; color: #f472b6; }
+    pre { background: #1a1a2e; border: 1px solid #2d2d4e; border-radius: 0.75rem; padding: 1.25rem; overflow-x: auto; }
+    pre code { background: transparent; padding: 0; color: #e2e8f0; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200">
+
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <div class="mb-8 animate-fade-in">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-arrow-left"></i> Back to Index
+      </a>
+    </div>
+
+    <!-- Chapter Header -->
+    <div class="text-center mb-12 animate-fade-in">
+      <i class="fas fa-cloud-upload-alt text-6xl text-blue-500 mb-4"></i>
+      <h1 class="text-4xl md:text-5xl font-bold gradient-text">Interacting with a Remote Repository</h1>
+      <p class="text-gray-400 mt-3 text-lg">Sharing code, collaborating, and synchronising with remotes</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-2 mb-12 animate-fade-in delay-1">
+      <a href="#centralised" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-sitemap text-blue-400 block text-lg mb-1"></i>Centralised</a>
+      <a href="#team-workflow" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-users text-emerald-400 block text-lg mb-1"></i>Team Workflow</a>
+      <a href="#remote-handling" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-code-branch text-cyan-400 block text-lg mb-1"></i>Remotes</a>
+      <a href="#add-remote" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-plus-circle text-green-400 block text-lg mb-1"></i>Add Remote</a>
+      <a href="#push" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-upload text-orange-400 block text-lg mb-1"></i>Push</a>
+      <a href="#push-new" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-plus-square text-pink-400 block text-lg mb-1"></i>Push New</a>
+      <a href="#fetch" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-download text-purple-400 block text-lg mb-1"></i>Fetch</a>
+      <a href="#merge" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-code-branch text-amber-400 block text-lg mb-1"></i>Merge</a>
+      <a href="#import-branch" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-download text-teal-400 block text-lg mb-1"></i>Import Branch</a>
+      <a href="#clone" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-clone text-indigo-400 block text-lg mb-1"></i>Clone</a>
+      <a href="#workflow" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-sync-alt text-rose-400 block text-lg mb-1"></i>Workflow</a>
+      <a href="#exercises" class="glow-card text-center p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 text-xs hover:text-white transition-all"><i class="fas fa-tasks text-yellow-400 block text-lg mb-1"></i>Exercises</a>
+    </div>
+
+    <!-- 1. Simple Centralised Workflow -->
+    <section id="centralised" class="mb-12 animate-fade-in delay-2">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-sitemap text-3xl text-blue-400"></i>
+          <h2 class="text-2xl font-bold text-white">1. Simple Centralised Workflow</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <p>
+            In a centralised version control system, all developers connect to a single central server
+            that holds the canonical repository. Each user checks out a working copy, makes changes,
+            and commits back to the server.
+          </p>
+
+          <!-- Diagram -->
+          <div class="flex justify-center my-6">
+            <div class="inline-flex flex-col items-center p-6 rounded-xl bg-slate-900/60 border border-slate-700">
+              <!-- Central server -->
+              <div class="flex items-center gap-2 mb-2">
+                <i class="fas fa-server text-3xl text-blue-400"></i>
+                <span class="font-mono text-sm text-blue-300">Central Repository</span>
+              </div>
+              <div class="w-32 h-1 bg-blue-500/40 rounded-full mb-1"></div>
+              <div class="w-24 h-1 bg-blue-500/30 rounded-full mb-4"></div>
+              <!-- Connections -->
+              <div class="flex gap-8 mt-2">
+                <div class="flex flex-col items-center">
+                  <div class="w-1 h-6 bg-emerald-500/40"></div>
+                  <div class="flex items-center gap-1 mt-1">
+                    <i class="fas fa-user text-emerald-400 text-xl"></i>
+                    <span class="text-xs text-gray-400">Dev 1</span>
+                  </div>
+                </div>
+                <div class="flex flex-col items-center">
+                  <div class="w-1 h-6 bg-cyan-500/40"></div>
+                  <div class="flex items-center gap-1 mt-1">
+                    <i class="fas fa-user text-cyan-400 text-xl"></i>
+                    <span class="text-xs text-gray-400">Dev 2</span>
+                  </div>
+                </div>
+                <div class="flex flex-col items-center">
+                  <div class="w-1 h-6 bg-purple-500/40"></div>
+                  <div class="flex items-center gap-1 mt-1">
+                    <i class="fas fa-user text-purple-400 text-xl"></i>
+                    <span class="text-xs text-gray-400">Dev 3</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-3 text-sm">
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <i class="fas fa-check-circle text-emerald-400 mr-2"></i>All history on one server
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <i class="fas fa-check-circle text-emerald-400 mr-2"></i>Simple to understand
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <i class="fas fa-times-circle text-red-400 mr-2"></i>Single point of failure
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 2. Team Workflow -->
+    <section id="team-workflow" class="mb-12 animate-fade-in delay-3">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-users text-3xl text-emerald-400"></i>
+          <h2 class="text-2xl font-bold text-white">2. Team Workflow</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <p>
+            Multiple developers each clone the shared repository, work independently on their
+            own branches, and synchronise by <strong>pulling</strong> the latest changes and
+            <strong>pushing</strong> their own back to the shared remote.
+          </p>
+
+          <div class="flex flex-col items-center my-6">
+            <!-- Central remote -->
+            <div class="flex items-center gap-2 px-6 py-3 rounded-xl bg-slate-900/60 border border-slate-700 mb-4">
+              <i class="fab fa-github text-2xl text-gray-300"></i>
+              <span class="font-semibold text-gray-300">Shared Remote Repository</span>
+            </div>
+
+            <div class="flex flex-wrap justify-center gap-8">
+              <!-- Dev A -->
+              <div class="flex flex-col items-center w-40">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="fas fa-arrow-down text-emerald-400 text-sm"></i>
+                  <i class="fas fa-arrow-up text-blue-400 text-sm"></i>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-700 w-full text-center">
+                  <i class="fas fa-laptop-code text-emerald-400 text-2xl mb-1"></i>
+                  <div class="text-xs text-gray-400">Dev A</div>
+                  <div class="text-xs font-mono text-gray-500">pull → push</div>
+                </div>
+              </div>
+              <!-- Dev B -->
+              <div class="flex flex-col items-center w-40">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="fas fa-arrow-down text-emerald-400 text-sm"></i>
+                  <i class="fas fa-arrow-up text-blue-400 text-sm"></i>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-700 w-full text-center">
+                  <i class="fas fa-laptop-code text-cyan-400 text-2xl mb-1"></i>
+                  <div class="text-xs text-gray-400">Dev B</div>
+                  <div class="text-xs font-mono text-gray-500">pull → push</div>
+                </div>
+              </div>
+              <!-- Dev C -->
+              <div class="flex flex-col items-center w-40">
+                <div class="flex items-center gap-2 mb-2">
+                  <i class="fas fa-arrow-down text-emerald-400 text-sm"></i>
+                  <i class="fas fa-arrow-up text-blue-400 text-sm"></i>
+                </div>
+                <div class="p-3 rounded-xl bg-slate-900/60 border border-slate-700 w-full text-center">
+                  <i class="fas fa-laptop-code text-purple-400 text-2xl mb-1"></i>
+                  <div class="text-xs text-gray-400">Dev C</div>
+                  <div class="text-xs font-mono text-gray-500">pull → push</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <p class="text-sm text-gray-400">
+            <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+            Everyone starts their day with <code>git pull</code>, makes commits locally,
+            and ends with <code>git push</code>. If the push is rejected (someone else pushed first),
+            they pull again, resolve any conflicts, then push.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 3. How Git Handles Remote Repositories -->
+    <section id="remote-handling" class="mb-12 animate-fade-in delay-4">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-code-branch text-3xl text-cyan-400"></i>
+          <h2 class="text-2xl font-bold text-white">3. How Git Handles Remote Repositories</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <p>
+            Git supports working with <strong>multiple remote repositories</strong>. Each remote
+            is identified by a <strong>local alias</strong> (a short name you choose). The default
+            alias after cloning is <code>origin</code>.
+          </p>
+          <p>
+            Remote branches are mirrored locally under the namespace <code>remote/&lt;name&gt;/&lt;branch&gt;</code>.
+            This keeps your local branches separate from the remote tracking branches.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mt-4">
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+              <div class="text-sm font-semibold text-white mb-2"><i class="fas fa-laptop text-emerald-400 mr-2"></i>Local Branches</div>
+              <ul class="space-y-1 text-sm font-mono">
+                <li><i class="fas fa-code-branch text-emerald-400 text-xs mr-2"></i>master</li>
+                <li><i class="fas fa-code-branch text-emerald-400 text-xs mr-2"></i>feature-x</li>
+                <li><i class="fas fa-code-branch text-emerald-400 text-xs mr-2"></i>bugfix-42</li>
+              </ul>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+              <div class="text-sm font-semibold text-white mb-2"><i class="fas fa-cloud text-blue-400 mr-2"></i>Remote Tracking Branches</div>
+              <ul class="space-y-1 text-sm font-mono">
+                <li><i class="fas fa-code-branch text-blue-400 text-xs mr-2"></i>remote/origin/master</li>
+                <li><i class="fas fa-code-branch text-blue-400 text-xs mr-2"></i>remote/origin/feature-x</li>
+                <li><i class="fas fa-code-branch text-blue-400 text-xs mr-2"></i>remote/upstream/release</li>
+              </ul>
+            </div>
+          </div>
+
+          <pre><code>$ git branch --all
+* master
+  feature-x
+  remotes/origin/master
+  remotes/origin/feature-x
+  remotes/upstream/release</code></pre>
+
+          <p class="text-sm text-gray-400">
+            <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+            You can <strong>not</strong> directly check out a remote tracking branch and start editing.
+            You must create a local branch first. Git does this automatically when you run
+            <code>git checkout</code> on a branch name that matches a remote one.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. Adding a Remote Repository -->
+    <section id="add-remote" class="mb-12 animate-fade-in delay-5">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-plus-circle text-3xl text-green-400"></i>
+          <h2 class="text-2xl font-bold text-white">4. Adding a Remote Repository</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <div class="flex items-center gap-2 mb-3">
+            <code class="text-lg">git remote add &lt;name&gt; &lt;url&gt;</code>
+          </div>
+          <p>
+            This registers a remote alias so you don't have to type the full URL every time.
+            The name is arbitrary, but by convention the main remote is called <code>origin</code>.
+          </p>
+
+          <div class="space-y-3">
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+              <div class="text-sm font-semibold text-white mb-1"><i class="fas fa-folder-open text-amber-400 mr-2"></i>Using a Local Path</div>
+              <pre><code>$ git remote add origin /tmp/helloworld.git</code></pre>
+              <p class="text-xs text-gray-400 mt-1">Useful for testing with a bare repository on the same machine.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+              <div class="text-sm font-semibold text-white mb-1"><i class="fas fa-lock text-cyan-400 mr-2"></i>Using SSH</div>
+              <pre><code>$ git remote add origin ssh://username@scm.gforge.inria.fr/gitroot/helloworld.git</code></pre>
+              <p class="text-xs text-gray-400 mt-1">SSH provides authenticated, encrypted access to the remote.</p>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+              <div class="text-sm font-semibold text-white mb-1"><i class="fab fa-github text-gray-300 mr-2"></i>Using HTTPS (GitHub example)</div>
+              <pre><code>$ git remote add origin https://github.com/user/repo.git</code></pre>
+              <p class="text-xs text-gray-400 mt-1">HTTPS is the most common protocol for public repositories.</p>
+            </div>
+          </div>
+
+          <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700 text-sm">
+            <i class="fas fa-eye text-blue-400 mr-2"></i>
+            View your configured remotes: <code>git remote -v</code>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 5. Pushing Changes to Remote -->
+    <section id="push" class="mb-12 animate-fade-in delay-5">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-upload text-3xl text-orange-400"></i>
+          <h2 class="text-2xl font-bold text-white">5. Pushing Changes to Remote</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <div class="flex items-center gap-2 mb-2">
+            <code class="text-lg">git push</code>
+          </div>
+          <p>
+            When you run <code>git push</code> with no arguments, Git pushes the <strong>current branch</strong>
+            — but only if it has been configured to <strong>track</strong> an upstream branch on a remote.
+            If no tracking is set up, nothing is sent: local branches remain private by default.
+          </p>
+
+          <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+            <div class="text-sm font-semibold text-white mb-2"><i class="fas fa-times-circle text-red-400 mr-2"></i>Push fails with no upstream</div>
+            <pre><code>$ git push
+fatal: The current branch master has no upstream branch.
+To push the current branch and set the remote as upstream, use
+
+    git push --set-upstream origin master</code></pre>
+          </div>
+
+          <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+            <div class="text-sm font-semibold text-white mb-2"><i class="fas fa-exclamation-triangle text-yellow-400 mr-2"></i>Push fails on conflict</div>
+            <pre><code>$ git push
+To /tmp/helloworld.git/
+ ! [rejected]        master -> master (fetch first)
+error: failed to push some refs to '/tmp/helloworld.git/'
+hint: Updates were rejected because the remote contains work that you do not
+hint: have locally. This is usually caused by another repository pushing
+hint: to the same ref. You may want to first integrate the remote changes
+hint: (e.g., 'git pull ...') before pushing again.</code></pre>
+            <p class="text-sm text-gray-400 mt-2">
+              <i class="fas fa-lightbulb text-yellow-400 mr-1"></i>
+              Solution: <code>git pull</code> first to integrate remote changes, then push again.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 6. Pushing a New Branch -->
+    <section id="push-new" class="mb-12 animate-fade-in delay-6">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-plus-square text-3xl text-pink-400"></i>
+          <h2 class="text-2xl font-bold text-white">6. Pushing a New Branch</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <div class="flex items-center gap-2 mb-2">
+            <code class="text-lg">git push -u &lt;remote&gt; &lt;ref&gt; [&lt;ref&gt;...]</code>
+          </div>
+          <p>
+            Use the <code>-u</code> (or <code>--set-upstream</code>) flag to push a branch
+            <strong>and</strong> configure it to track the remote branch. After this, a plain
+            <code>git push</code> will know where to send your changes.
+          </p>
+
+          <pre><code>$ git push -u origin master
+To /tmp/helloworld.git/
+ * [new branch]      master -> master
+Branch master set up to track remote branch master from origin.</code></pre>
+
+          <p>
+            You can also push multiple refs at once:
+          </p>
+
+          <pre><code>$ git push -u origin master feature-x
+ * [new branch]      master -> master
+ * [new branch]      feature-x -> feature-x</code></pre>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 mt-4">
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <code>-u</code> / <code>--set-upstream</code>
+              <p class="text-xs text-gray-400 mt-1">Sets upstream tracking for the branch</p>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <code>git branch -vv</code>
+              <p class="text-xs text-gray-400 mt-1">View tracking relationships of all branches</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 7. Fetching Changes from Remote -->
+    <section id="fetch" class="mb-12 animate-fade-in delay-6">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-download text-3xl text-purple-400"></i>
+          <h2 class="text-2xl font-bold text-white">7. Fetching Changes from Remote</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <div class="flex items-center gap-2 mb-2">
+            <code class="text-lg">git fetch [&lt;remote&gt;]</code>
+          </div>
+          <p>
+            <code>git fetch</code> downloads new commits and updates your <strong>local mirror</strong>
+            of the remote — but it does <strong>not</strong> merge anything into your working branch.
+            Your local work remains untouched.
+          </p>
+
+          <div class="flex justify-center my-4">
+            <div class="inline-flex flex-col items-center p-5 rounded-xl bg-slate-900/60 border border-slate-700">
+              <div class="flex items-center gap-4">
+                <div class="text-center">
+                  <i class="fab fa-github text-3xl text-gray-400 mb-1"></i>
+                  <div class="text-xs text-gray-500">Remote</div>
+                </div>
+                <i class="fas fa-arrow-right text-emerald-400 text-xl"></i>
+                <div class="text-center">
+                  <i class="fas fa-cloud-download-alt text-3xl text-purple-400 mb-1"></i>
+                  <div class="text-xs text-gray-500">git fetch</div>
+                </div>
+                <i class="fas fa-arrow-right text-emerald-400 text-xl"></i>
+                <div class="text-center">
+                  <i class="fas fa-server text-3xl text-cyan-400 mb-1"></i>
+                  <div class="text-xs text-gray-500">remote/origin/*</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <pre><code>$ git fetch origin
+remote: Enumerating objects: 5, done.
+remote: Counting objects: 100% (5/5), done.
+remote: Compressing objects: 100% (3/3), done.
+remote: Total 3 (delta 2), reused 0 (delta 0), pack-reused 0
+Unpacking objects: 100% (3/3), 1.02 KiB | 1024 bytes each, done.
+From /tmp/helloworld.git
+   a1b2c3d..e4f5g6h  master     -> origin/master</code></pre>
+
+          <p class="text-sm text-gray-400">
+            <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+            After fetching, <code>origin/master</code> is updated but your local <code>master</code>
+            branch and working directory are unchanged. You still need to merge or rebase.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- 8. Merging Remote Changes Locally -->
+    <section id="merge" class="mb-12 animate-fade-in delay-7">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-code-branch text-3xl text-amber-400"></i>
+          <h2 class="text-2xl font-bold text-white">8. Merging Remote Changes Locally</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <p>After a <code>git fetch</code>, you integrate the remote changes into your local branch:</p>
+          <pre><code>$ git merge origin/master</code></pre>
+
+          <div class="flex justify-center my-4">
+            <div class="inline-flex items-center gap-3 p-4 rounded-xl bg-slate-900/60 border border-slate-700">
+              <span class="text-sm font-mono text-gray-300">origin/master</span>
+              <i class="fas fa-long-arrow-alt-down text-amber-400"></i>
+              <span class="text-sm font-mono text-gray-300">master <span class="text-gray-500">(local)</span></span>
+            </div>
+          </div>
+
+          <div class="relative my-6">
+            <div class="absolute inset-0 flex items-center">
+              <div class="w-full border-t border-slate-700"></div>
+            </div>
+            <div class="relative flex justify-center">
+              <span class="px-4 text-sm text-gray-500 bg-slate-900"><i class="fas fa-bolt text-yellow-400 mr-1"></i>Shortcut</span>
+            </div>
+          </div>
+
+          <div class="p-5 rounded-xl bg-indigo-900/20 border border-indigo-700/40">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-rocket text-indigo-400"></i>
+              <span class="font-semibold text-white"><code>git pull</code></span>
+            </div>
+            <p>
+              <code>git pull</code> is a shortcut for <code>git fetch</code> followed by
+              <code>git merge</code>. It downloads and integrates changes in one step.
+            </p>
+            <pre class="mt-2"><code># These two commands are equivalent to:
+$ git pull origin master
+
+# Running these steps manually:
+$ git fetch origin
+$ git merge origin/master</code></pre>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 9. Importing a New Remote Branch -->
+    <section id="import-branch" class="mb-12 animate-fade-in delay-7">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-download text-3xl text-teal-400"></i>
+          <h2 class="text-2xl font-bold text-white">9. Importing a New Remote Branch</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <p>
+            When a collaborator pushes a new branch, you can list all branches (including remote ones)
+            with <code>git branch --all</code> and then check it out. Git automatically creates a
+            local tracking branch.
+          </p>
+
+          <pre><code>$ git branch --all
+* master
+  remotes/origin/new-fancy-feature
+
+$ git checkout new-fancy-feature
+Branch new-fancy-feature set up to track remote branch new-fancy-feature from origin.
+Switched to a new branch 'new-fancy-feature'</code></pre>
+
+          <p>
+            After this, your local branch <code>new-fancy-feature</code> tracks
+            <code>origin/new-fancy-feature</code>, so a plain <code>git push</code> or
+            <code>git pull</code> will work without extra arguments.
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-3 text-sm">
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <code>git branch -a</code>
+              <p class="text-xs text-gray-400 mt-1">List all local and remote branches</p>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <code>git branch -r</code>
+              <p class="text-xs text-gray-400 mt-1">List only remote tracking branches</p>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <code>git checkout -b &lt;local&gt; &lt;remote&gt;/&lt;branch&gt;</code>
+              <p class="text-xs text-gray-400 mt-1">Explicitly create local branch from remote</p>
+            </div>
+            <div class="p-3 rounded-lg bg-slate-900/40 border border-slate-700">
+              <code>git branch -vv</code>
+              <p class="text-xs text-gray-400 mt-1">Show tracking relationships</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 10. Cloning a Repository -->
+    <section id="clone" class="mb-12 animate-fade-in delay-8">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-clone text-3xl text-indigo-400"></i>
+          <h2 class="text-2xl font-bold text-white">10. Cloning a Repository</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <div class="flex items-center gap-2 mb-2">
+            <code class="text-lg">git clone &lt;url&gt; [&lt;directory&gt;]</code>
+          </div>
+          <p>
+            <code>git clone</code> is the most common way to get a local copy of an existing repository.
+            It is a shorthand for four commands in one:
+          </p>
+
+          <div class="grid grid-cols-1 md:grid-cols-2 gap-4 my-4">
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+              <div class="text-sm font-semibold text-emerald-400 mb-2"><i class="fas fa-check mr-1"></i><code>git clone</code></div>
+              <ol class="space-y-2 text-sm list-decimal list-inside text-gray-400">
+                <li><code>git init</code></li>
+                <li><code>git remote add origin &lt;url&gt;</code></li>
+                <li><code>git fetch origin</code></li>
+                <li><code>git checkout master</code></li>
+              </ol>
+            </div>
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700">
+              <div class="text-sm font-semibold text-white mb-2"><i class="fas fa-lightbulb text-yellow-400 mr-1"></i>In Practice</div>
+              <p class="text-sm text-gray-400">
+                You almost never use <code>git init</code> + <code>git remote add</code> +
+                <code>git fetch</code> + <code>git checkout</code> manually.
+                Just use <code>git clone</code> and then <code>git pull</code> to stay up to date.
+              </p>
+            </div>
+          </div>
+
+          <pre><code>$ git clone https://github.com/user/helloworld.git
+Cloning into 'helloworld'...
+remote: Enumerating objects: 42, done.
+remote: Total 42 (delta 0), reused 0 (delta 0), pack-reused 42
+Receiving objects: 100% (42/42), done.
+Resolving deltas: 100% (14/14), done.</code></pre>
+
+          <pre><code># Clone into a custom directory name
+$ git clone https://github.com/user/helloworld.git my-project</code></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- 11. Typical Workflow Summary -->
+    <section id="workflow" class="mb-12 animate-fade-in delay-8">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-sync-alt text-3xl text-rose-400"></i>
+          <h2 class="text-2xl font-bold text-white">11. Typical Daily Workflow Summary</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <p>
+            The daily cycle for collaborating with a remote repository is straightforward:
+          </p>
+
+          <div class="flex flex-col md:flex-row items-stretch gap-3 my-6">
+            <div class="flex-1 p-4 rounded-xl bg-emerald-900/20 border border-emerald-700/40">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="flex items-center justify-center w-7 h-7 rounded-full bg-emerald-700 text-white text-sm font-bold">1</span>
+                <span class="font-semibold text-white">Pull latest</span>
+              </div>
+              <p class="text-sm text-gray-400"><code>git pull</code> — Get the latest changes from your teammates.</p>
+            </div>
+            <div class="flex items-center justify-center text-gray-600 text-2xl">
+              <i class="fas fa-arrow-right hidden md:inline"></i>
+              <i class="fas fa-arrow-down md:hidden"></i>
+            </div>
+            <div class="flex-1 p-4 rounded-xl bg-blue-900/20 border border-blue-700/40">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="flex items-center justify-center w-7 h-7 rounded-full bg-blue-700 text-white text-sm font-bold">2</span>
+                <span class="font-semibold text-white">Make commits</span>
+              </div>
+              <p class="text-sm text-gray-400"><code>git add</code> + <code>git commit</code> — Work locally, commit often.</p>
+            </div>
+            <div class="flex items-center justify-center text-gray-600 text-2xl">
+              <i class="fas fa-arrow-right hidden md:inline"></i>
+              <i class="fas fa-arrow-down md:hidden"></i>
+            </div>
+            <div class="flex-1 p-4 rounded-xl bg-orange-900/20 border border-orange-700/40">
+              <div class="flex items-center gap-2 mb-2">
+                <span class="flex items-center justify-center w-7 h-7 rounded-full bg-orange-700 text-white text-sm font-bold">3</span>
+                <span class="font-semibold text-white">Push changes</span>
+              </div>
+              <p class="text-sm text-gray-400"><code>git push</code> — Share your commits with the team.</p>
+            </div>
+          </div>
+
+          <pre><code># Start of day
+$ git pull
+
+# Work, work, work...
+$ git add file1.py file2.py
+$ git commit -m "Add feature X"
+
+# More work...
+$ git add .
+$ git commit -m "Finish feature X"
+
+# Share with team
+$ git push</code></pre>
+
+          <div class="p-4 rounded-xl bg-yellow-900/20 border border-yellow-700/40">
+            <div class="flex items-center gap-2 text-yellow-300 text-sm">
+              <i class="fas fa-exclamation-triangle"></i>
+              <span class="font-semibold">If push is rejected:</span>
+            </div>
+            <p class="text-sm text-gray-400 mt-1">
+              Someone else pushed before you. Run <code>git pull</code> again to merge their changes,
+              resolve any conflicts, then <code>git push</code>.
+            </p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 12. Exercises -->
+    <section id="exercises" class="mb-12 animate-fade-in delay-8">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fas fa-tasks text-3xl text-yellow-400"></i>
+          <h2 class="text-2xl font-bold text-white">12. Exercises</h2>
+        </div>
+        <div class="text-gray-300 space-y-4">
+          <p class="text-sm text-gray-400 mb-4">
+            <i class="fas fa-info-circle text-blue-400 mr-1"></i>
+            These exercises require at least two participants (or two terminals on the same machine
+            using a bare repository). Work through them in order.
+          </p>
+
+          <div class="space-y-4">
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700 hover:border-blue-500/40 transition-colors">
+              <div class="flex items-start gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-blue-700 text-white text-sm font-bold shrink-0">1</span>
+                <div>
+                  <h4 class="font-semibold text-white">Clone a Repository</h4>
+                  <p class="text-sm text-gray-400 mt-1">Clone the shared repository to your local machine.</p>
+                  <pre class="mt-2"><code>$ git clone /tmp/shared-repo.git my-clone
+$ cd my-clone</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700 hover:border-emerald-500/40 transition-colors">
+              <div class="flex items-start gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-emerald-700 text-white text-sm font-bold shrink-0">2</span>
+                <div>
+                  <h4 class="font-semibold text-white">Use <code>gitk --all</code></h4>
+                  <p class="text-sm text-gray-400 mt-1">Open the history visualisation tool to see all branches.</p>
+                  <pre class="mt-2"><code>$ gitk --all</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700 hover:border-cyan-500/40 transition-colors">
+              <div class="flex items-start gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-cyan-700 text-white text-sm font-bold shrink-0">3</span>
+                <div>
+                  <h4 class="font-semibold text-white">Make Commits and Sync</h4>
+                  <p class="text-sm text-gray-400 mt-1">Create a file, commit it, pull any remote changes, then push your commit.</p>
+                  <pre class="mt-2"><code>$ echo "hello" > greeting.txt
+$ git add greeting.txt && git commit -m "Add greeting"
+$ git pull
+$ git push</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700 hover:border-red-500/40 transition-colors">
+              <div class="flex items-start gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-red-700 text-white text-sm font-bold shrink-0">4</span>
+                <div>
+                  <h4 class="font-semibold text-white">Experience and Resolve a Conflict</h4>
+                  <p class="text-sm text-gray-400 mt-1">
+                    Let two participants edit the same line of the same file. The second person to push
+                    will get a rejection. Pull, resolve the conflict, commit the merge, and push again.
+                  </p>
+                  <pre class="mt-2"><code>$ git pull
+# Conflict markers appear in the file
+# Edit to resolve, then:
+$ git add resolved-file.txt
+$ git commit -m "Resolve merge conflict"
+$ git push</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700 hover:border-purple-500/40 transition-colors">
+              <div class="flex items-start gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-purple-700 text-white text-sm font-bold shrink-0">5</span>
+                <div>
+                  <h4 class="font-semibold text-white">Use <code>git fetch</code> to Review Before Merging</h4>
+                  <p class="text-sm text-gray-400 mt-1">
+                    Instead of pulling, fetch first, inspect the incoming changes with
+                    <code>git log</code> or <code>git diff</code>, then merge manually.
+                  </p>
+                  <pre class="mt-2"><code>$ git fetch origin
+$ git log origin/master --oneline
+$ git diff master origin/master
+$ git merge origin/master</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700 hover:border-pink-500/40 transition-colors">
+              <div class="flex items-start gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-pink-700 text-white text-sm font-bold shrink-0">6</span>
+                <div>
+                  <h4 class="font-semibold text-white">Create a Branch, Commit, and Publish</h4>
+                  <p class="text-sm text-gray-400 mt-1">
+                    Create a new local branch, make a commit, and push it to the remote with
+                    upstream tracking.
+                  </p>
+                  <pre class="mt-2"><code>$ git checkout -b my-feature
+$ echo "feature work" > feature.txt
+$ git add feature.txt && git commit -m "Work on feature"
+$ git push -u origin my-feature</code></pre>
+                </div>
+              </div>
+            </div>
+
+            <div class="p-4 rounded-xl bg-slate-900/40 border border-slate-700 hover:border-amber-500/40 transition-colors">
+              <div class="flex items-start gap-3">
+                <span class="flex items-center justify-center w-8 h-8 rounded-full bg-amber-700 text-white text-sm font-bold shrink-0">7</span>
+                <div>
+                  <h4 class="font-semibold text-white">Checkout a Branch Created by Another Participant</h4>
+                  <p class="text-sm text-gray-400 mt-1">
+                    List all branches, find your teammate's branch, fetch it, and check it out.
+                  </p>
+                  <pre class="mt-2"><code>$ git fetch origin
+$ git branch --all
+$ git checkout their-feature</code></pre>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Back to top -->
+    <div class="text-center mt-12 animate-fade-in">
+      <a href="#" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-arrow-up"></i> Back to Top
+      </a>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-12 text-center text-gray-500 text-sm border-t border-slate-800 pt-6">
+      <i class="fas fa-book-open mr-1"></i> Git & GitHub Cheatsheet — Part 5: Interacting with a Remote Repository
+    </div>
+  </div>
+
+</body>
+</html>

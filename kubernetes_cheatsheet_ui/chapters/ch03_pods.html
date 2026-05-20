@@ -1,0 +1,1102 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Chapter 3 — PODs | Kubernetes Cheatsheet</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css"
+    />
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = { darkMode: 'class' };
+    </script>
+    <style>
+      body {
+        background: #0f0f1a;
+      }
+      .glow-card:hover {
+        box-shadow: 0 0 25px rgba(99, 102, 241, 0.3);
+        transform: translateY(-4px);
+      }
+      .gradient-text {
+        background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+      }
+      .k8s-icon {
+        color: #326ce5;
+      }
+      .terminal-block {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 0.75rem;
+        overflow: hidden;
+      }
+      .terminal-block pre {
+        margin: 0;
+        padding: 1.25rem;
+        overflow-x: auto;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: #e6edf3;
+      }
+      .terminal-header {
+        background: #161b22;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #30363d;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: #8b949e;
+      }
+      .terminal-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        display: inline-block;
+      }
+      .yaml-block {
+        background: #0d1117;
+        border: 1px solid #30363d;
+        border-radius: 0.75rem;
+        overflow: hidden;
+      }
+      .yaml-block pre {
+        margin: 0;
+        padding: 1.25rem;
+        overflow-x: auto;
+        font-family: 'JetBrains Mono', 'Fira Code', monospace;
+        font-size: 0.875rem;
+        line-height: 1.5;
+        color: #e6edf3;
+      }
+      .yaml-header {
+        background: #161b22;
+        padding: 0.5rem 1rem;
+        border-bottom: 1px solid #30363d;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        font-size: 0.75rem;
+        color: #8b949e;
+      }
+      .tag {
+        display: inline-block;
+        padding: 0.15rem 0.6rem;
+        border-radius: 9999px;
+        font-size: 0.7rem;
+        font-weight: 600;
+        letter-spacing: 0.025em;
+      }
+      .anchor-link {
+        scroll-margin-top: 1.5rem;
+      }
+      .section-nav a {
+        transition: color 0.2s;
+      }
+      .section-nav a:hover {
+        color: #60a5fa;
+      }
+    @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+  </head>
+  <body class="min-h-screen text-gray-200">
+    <div class="max-w-5xl mx-auto px-4 py-8">
+      <!-- Back Navigation -->
+      <a
+        href="../index.html"
+        class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors mb-6 group"
+      >
+        <i class="fas fa-arrow-left text-xs group-hover:-translate-x-1 transition-transform"></i>
+        Back to Cheatsheet Home
+      </a>
+
+      <!-- Chapter Header -->
+      <div class="text-center mb-10 animate-fade-in">
+        <div
+          class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-emerald-500/20 to-emerald-700/20 border border-emerald-700/30 mb-4"
+        >
+          <i class="fas fa-cube text-3xl text-emerald-400"></i>
+        </div>
+        <h1 class="text-4xl md:text-5xl font-bold gradient-text">Chapter 3: PODs</h1>
+        <p class="text-gray-400 mt-3 text-lg">
+          The smallest building block of Kubernetes — wrapping containers into deployable units
+        </p>
+      </div>
+
+      <!-- Section Navigation -->
+      <div class="section-nav flex flex-wrap justify-center gap-2 mb-10 text-sm">
+        <a
+          href="#assumptions"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >Assumptions</a
+        >
+        <a
+          href="#what-is-pod"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >What is a POD?</a
+        >
+        <a
+          href="#pod-scaling"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >PODs &amp; Scaling</a
+        >
+        <a
+          href="#multi-container"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >Multi-Container PODs</a
+        >
+        <a
+          href="#pods-vs-docker"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >PODs vs Docker</a
+        >
+        <a
+          href="#kubectl-pods"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >kubectl for PODs</a
+        >
+        <a
+          href="#yaml-intro"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >YAML Intro</a
+        >
+        <a
+          href="#pod-yaml"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >Pod YAML Example</a
+        >
+        <a
+          href="#get-describe"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >get &amp; describe</a
+        >
+        <a
+          href="#tips-tricks"
+          class="px-3 py-1.5 rounded-full bg-slate-800/60 border border-slate-700 text-gray-300 hover:text-blue-400 transition-all"
+          >Tips &amp; Tricks</a
+        >
+      </div>
+
+      <!-- ============================== -->
+      <!-- 1. ASSUMPTIONS -->
+      <!-- ============================== -->
+      <section
+        id="assumptions"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-amber-500/20 text-amber-400 text-sm font-bold"
+            >1</span
+          >
+          <h2 class="text-2xl font-bold text-white">Assumptions</h2>
+        </div>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Before we jump into PODs, let's get on the same page. This chapter assumes two things are
+          <strong>already done</strong>:
+        </p>
+        <ul class="space-y-3 text-gray-300">
+          <li class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+            <span
+              ><strong class="text-white">Your app is built into a Docker image</strong> — and that
+              image is pushed to a registry like Docker Hub (e.g.
+              <code class="text-emerald-300 bg-emerald-900/30 px-1.5 py-0.5 rounded text-sm"
+                >amit/myapp:latest</code
+              >).</span
+            >
+          </li>
+          <li class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+            <span
+              ><strong class="text-white">A Kubernetes cluster is running</strong> — whether it's
+              Minikube on your laptop, a cloud cluster (EKS, GKE, AKS), or a local setup with
+              kind/kubeadm.</span
+            >
+          </li>
+        </ul>
+        <div
+          class="mt-4 p-4 rounded-lg bg-blue-900/20 border border-blue-800/40 text-sm text-blue-200"
+        >
+          <i class="fas fa-info-circle mr-2"></i>
+          Our focus here is purely on <strong>deploying</strong> an application into K8s. Building
+          the image and setting up the cluster are prerequisites we treat as done.
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 2. WHAT IS A POD? -->
+      <!-- ============================== -->
+      <section
+        id="what-is-pod"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >2</span
+          >
+          <h2 class="text-2xl font-bold text-white">What is a POD?</h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          A <strong>POD</strong> is the <strong>smallest and most fundamental unit</strong> you work
+          with in Kubernetes. Think of it as a wrapper — or a "logical host" — that runs your
+          container.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-lightbulb text-yellow-400 text-lg"></i>
+              <h3 class="font-semibold text-white">Simple Analogy</h3>
+            </div>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Imagine a shipping container at a port. The shipping container is the
+              <strong>POD</strong>. The actual cargo (your application) is the
+              <strong>container</strong> inside it. The port crane (Kubernetes) picks up and moves
+              entire shipping containers — not loose cargo.
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-key text-blue-400 text-lg"></i>
+              <h3 class="font-semibold text-white">Key Point</h3>
+            </div>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              <strong>Kubernetes does NOT deploy containers directly.</strong> A container is always
+              encapsulated inside a POD. The POD is what gets scheduled onto a Node. No POD = no
+              running container.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+          <h3 class="font-semibold text-white mb-2">
+            <i class="fas fa-cube text-emerald-400 mr-2"></i>In One Sentence
+          </h3>
+          <p class="text-gray-300 text-sm leading-relaxed">
+            A POD is a single instance of your application — a wrapper around one (or more)
+            containers that shares network, storage, and a lifecycle.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 3. PODs & SCALING -->
+      <!-- ============================== -->
+      <section
+        id="pod-scaling"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >3</span
+          >
+          <h2 class="text-2xl font-bold text-white">PODs &amp; Scaling</h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          There is usually a <strong>one-to-one relationship</strong> between a POD and the
+          container running inside it. When you need to scale your application, you don't stuff more
+          containers into an existing POD — you create <strong>new PODs</strong>.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-3">
+              <i class="fas fa-arrow-up text-green-400"></i>
+              <h3 class="font-semibold text-white">Scale Up</h3>
+            </div>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Traffic spikes → create more PODs. Each new POD runs its own instance of the
+              application.
+            </p>
+            <div class="mt-2 flex items-center gap-2 text-xs">
+              <span class="tag bg-green-900/40 text-green-300 border border-green-700/40"
+                >1 POD = 1 instance</span
+              >
+              <i class="fas fa-arrow-right text-gray-600"></i>
+              <span class="tag bg-green-900/40 text-green-300 border border-green-700/40"
+                >3 PODs = 3 instances</span
+              >
+            </div>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-3">
+              <i class="fas fa-arrow-down text-red-400"></i>
+              <h3 class="font-semibold text-white">Scale Down</h3>
+            </div>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Traffic drops → delete PODs. Kubernetes removes entire PODs, not individual containers
+              inside them.
+            </p>
+            <div class="mt-2 flex items-center gap-2 text-xs">
+              <span class="tag bg-red-900/40 text-red-300 border border-red-700/40"
+                >5 PODs → 2 PODs</span
+              >
+              <i class="fas fa-arrow-right text-gray-600"></i>
+              <span class="tag bg-green-900/40 text-green-300 border border-green-700/40"
+                >2 instances remain</span
+              >
+            </div>
+          </div>
+        </div>
+
+        <div
+          class="p-4 rounded-lg bg-indigo-900/20 border border-indigo-800/40 text-sm text-indigo-200"
+        >
+          <i class="fas fa-graduation-cap mr-2"></i>
+          <strong>Remember:</strong> In Kubernetes, you scale by adding or removing
+          <strong>PODs</strong>, not containers. More PODs = more replicas = higher availability.
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 4. MULTI-CONTAINER PODs -->
+      <!-- ============================== -->
+      <section
+        id="multi-container"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >4</span
+          >
+          <h2 class="text-2xl font-bold text-white">Multi-Container PODs</h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          While rare, a single POD <strong>can</strong> host multiple containers. These are usually
+          <strong>helper or sidecar containers</strong> that work alongside your main application
+          container.
+        </p>
+
+        <div class="grid md:grid-cols-3 gap-3 mb-4">
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700 text-center">
+            <i class="fas fa-globe text-2xl text-blue-400 mb-2"></i>
+            <h3 class="font-semibold text-white text-sm">Same Network</h3>
+            <p class="text-gray-400 text-xs mt-1">
+              Containers share the same IP and port space — they talk via
+              <code class="text-blue-300">localhost</code>.
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700 text-center">
+            <i class="fas fa-database text-2xl text-purple-400 mb-2"></i>
+            <h3 class="font-semibold text-white text-sm">Same Storage</h3>
+            <p class="text-gray-400 text-xs mt-1">They can mount and share the same volumes.</p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700 text-center">
+            <i class="fas fa-clock text-2xl text-amber-400 mb-2"></i>
+            <h3 class="font-semibold text-white text-sm">Same Fate</h3>
+            <p class="text-gray-400 text-xs mt-1">
+              Created together, destroyed together — they share a lifecycle.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700 mb-4">
+          <h3 class="font-semibold text-white mb-2">
+            <i class="fas fa-cube text-emerald-400 mr-2"></i>Real-World Example
+          </h3>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            A web application container + a helper "log rotator" container that processes logs. They
+            live in the same POD so they share the filesystem and network — the helper simply
+            watches log files and rotates them. No need for complex external links.
+          </p>
+        </div>
+
+        <div
+          class="p-4 rounded-lg bg-amber-900/20 border border-amber-800/40 text-sm text-amber-200"
+        >
+          <i class="fas fa-exclamation-triangle mr-2"></i>
+          <strong>Note:</strong> Multi-container PODs are the exception, not the rule. Start with
+          one container per POD and only add sidecars when you have a clear need.
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 5. PODs vs DOCKER -->
+      <!-- ============================== -->
+      <section
+        id="pods-vs-docker"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >5</span
+          >
+          <h2 class="text-2xl font-bold text-white">PODs vs Docker — Understanding the Shift</h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Without Kubernetes, you deploy with
+          <code class="text-emerald-300 bg-emerald-900/30 px-1.5 py-0.5 rounded text-sm"
+            >docker run</code
+          >. Life is simple — until your app grows and needs helper containers.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-3">
+              <i class="fab fa-docker text-2xl text-blue-400"></i>
+              <h3 class="font-semibold text-white">Without K8s (Docker)</h3>
+            </div>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex items-start gap-2">
+                <i class="fas fa-times text-red-400 mt-1 text-xs"></i
+                ><span
+                  >Run containers manually with <code class="text-gray-300">docker run</code></span
+                >
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-times text-red-400 mt-1 text-xs"></i
+                ><span
+                  >Helper containers need explicit
+                  <code class="text-gray-300">--link</code> flags</span
+                >
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-times text-red-400 mt-1 text-xs"></i
+                ><span>Networks, volumes, monitoring — all manually configured</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-times text-red-400 mt-1 text-xs"></i
+                ><span>No built-in auto-healing or co-scheduling</span>
+              </li>
+            </ul>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-3">
+              <i class="fas fa-cubes text-2xl text-emerald-400"></i>
+              <h3 class="font-semibold text-white">With K8s (PODs)</h3>
+            </div>
+            <ul class="space-y-2 text-sm text-gray-400">
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-emerald-400 mt-1 text-xs"></i
+                ><span>Define everything declaratively in YAML</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-emerald-400 mt-1 text-xs"></i
+                ><span>Containers in a POD share network — no links needed</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-emerald-400 mt-1 text-xs"></i
+                ><span>Shared volumes, automatic lifecycle management</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-emerald-400 mt-1 text-xs"></i
+                ><span>K8s keeps PODs running (self-healing)</span>
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-quote-left text-gray-500"></i>
+            <h3 class="font-semibold text-white text-sm">The Big Idea</h3>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            In the Docker world, you wire everything by hand. In Kubernetes, you define a
+            <strong>POD</strong> with its containers, and K8s takes care of the rest — same network,
+            same storage, same fate. Create together, die together, scale together.
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 6. kubectl for PODs -->
+      <!-- ============================== -->
+      <section
+        id="kubectl-pods"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >6</span
+          >
+          <h2 class="text-2xl font-bold text-white">kubectl for PODs</h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          The
+          <code class="text-emerald-300 bg-emerald-900/30 px-1.5 py-0.5 rounded text-sm"
+            >kubectl</code
+          >
+          CLI is your primary tool for interacting with Kubernetes. Here are the essential commands
+          for working with PODs:
+        </p>
+
+        <div class="space-y-4 mb-4">
+          <!-- Command 1 -->
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="ml-2"
+                >Create a POD —
+                <code class="text-gray-400">kubectl run nginx --image nginx</code></span
+              >
+            </div>
+            <pre><span class="text-green-400">$</span> <span class="text-blue-300">kubectl run nginx --image nginx</span>
+<span class="text-gray-400">pod/nginx created</span></pre>
+          </div>
+
+          <!-- Explanation -->
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-400">
+            <i class="fas fa-info-circle text-blue-400 mr-2"></i>
+            This command launches a POD named <code class="text-gray-300">nginx</code> from the
+            <code class="text-gray-300">nginx</code> image on Docker Hub. K8s pulls the image,
+            creates the container inside a POD, and schedules it onto a Node.
+            <span class="block mt-1 text-xs text-amber-400"
+              ><i class="fas fa-exclamation-triangle mr-1"></i>Note:
+              <code class="text-gray-300">kubectl run</code> actually creates a
+              <strong>Deployment</strong> (not just a Pod) in modern K8s versions. For a bare Pod,
+              use a YAML file instead.</span
+            >
+          </div>
+
+          <!-- Command 2 -->
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="ml-2"
+                >List PODs — <code class="text-gray-400">kubectl get pods</code></span
+              >
+            </div>
+            <pre><span class="text-green-400">$</span> <span class="text-blue-300">kubectl get pods</span>
+<span class="text-gray-400">NAME                     READY   STATUS              RESTARTS   AGE
+nginx-xxx-yyy            0/1     ContainerCreating   0          5s
+nginx-xxx-yyy            1/1     Running             0          12s</span></pre>
+          </div>
+
+          <!-- Fields explanation -->
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-400">
+            <i class="fas fa-table text-blue-400 mr-2"></i>
+            <strong>Columns:</strong>
+            <code class="text-gray-300 ml-1">NAME</code> (POD name with unique hash),
+            <code class="text-gray-300">READY</code> (containers ready / total),
+            <code class="text-gray-300">STATUS</code> (ContainerCreating → Running),
+            <code class="text-gray-300">RESTARTS</code> (how many times restarted),
+            <code class="text-gray-300">AGE</code> (time since creation).
+          </div>
+
+          <!-- Image pull note -->
+          <div
+            class="p-3 rounded-lg bg-indigo-900/20 border border-indigo-800/40 text-sm text-indigo-200"
+          >
+            <i class="fas fa-download mr-2"></i>
+            <strong>Image Pull:</strong> When you create a POD, Kubernetes automatically pulls the
+            specified image from <strong>Docker Hub</strong> (the default registry) if it's not
+            already cached on the Node.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 7. PODs with YAML -->
+      <!-- ============================== -->
+      <section
+        id="yaml-intro"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >7</span
+          >
+          <h2 class="text-2xl font-bold text-white">PODs with YAML — Definition Files</h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Kubernetes uses <strong>YAML</strong> (or JSON) to define objects declaratively. Every
+          Kubernetes YAML file — for any object — has <strong>4 required top-level fields</strong>:
+        </p>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-mono text-blue-300 bg-blue-900/30 px-2 py-0.5 rounded"
+                >apiVersion</span
+              >
+            </div>
+            <p class="text-xs text-gray-400">
+              The K8s API version to use. For Pods: <code class="text-gray-300">v1</code>. For
+              Deployments, ReplicaSets: <code class="text-gray-300">apps/v1</code>.
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-mono text-blue-300 bg-blue-900/30 px-2 py-0.5 rounded"
+                >kind</span
+              >
+            </div>
+            <p class="text-xs text-gray-400">
+              The type of object: <code class="text-gray-300">Pod</code>,
+              <code class="text-gray-300">Service</code>,
+              <code class="text-gray-300">ReplicaSet</code>,
+              <code class="text-gray-300">Deployment</code>, etc.
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-mono text-blue-300 bg-blue-900/30 px-2 py-0.5 rounded"
+                >metadata</span
+              >
+            </div>
+            <p class="text-xs text-gray-400">
+              Data about the object: <code class="text-gray-300">name</code> (string) and
+              <code class="text-gray-300">labels</code> (dictionary of key:value pairs).
+            </p>
+          </div>
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <span class="text-xs font-mono text-blue-300 bg-blue-900/30 px-2 py-0.5 rounded"
+                >spec</span
+              >
+            </div>
+            <p class="text-xs text-gray-400">
+              The desired state. For Pods:
+              <code class="text-gray-300">containers</code> (list/array), each with
+              <code class="text-gray-300">name</code> and <code class="text-gray-300">image</code>.
+            </p>
+          </div>
+        </div>
+
+        <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-layer-group text-purple-400"></i>
+            <h3 class="font-semibold text-white text-sm">Quick Memory Trick</h3>
+          </div>
+          <p class="text-gray-400 text-sm font-mono tracking-wide">
+            <span class="text-blue-300">apiVersion</span> +
+            <span class="text-green-300">kind</span> +
+            <span class="text-yellow-300">metadata</span> +
+            <span class="text-purple-300">spec</span> =
+            <span class="text-white">every K8s YAML file</span>
+          </p>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 8. Pod YAML Example -->
+      <!-- ============================== -->
+      <section
+        id="pod-yaml"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >8</span
+          >
+          <h2 class="text-2xl font-bold text-white">Pod YAML Example — Putting It All Together</h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Here is a complete YAML file that defines a Pod with a single Nginx container:
+        </p>
+
+        <!-- YAML Block -->
+        <div class="yaml-block mb-4">
+          <div class="yaml-header">
+            <i class="fas fa-file-code text-blue-400"></i>
+            <span>pod-definition.yml</span>
+          </div>
+          <pre><span class="text-blue-300">apiVersion</span>: v1
+<span class="text-blue-300">kind</span>: Pod
+<span class="text-blue-300">metadata</span>:
+  <span class="text-purple-300">name</span>: myapp-pod
+  <span class="text-purple-300">labels</span>:
+    <span class="text-green-300">app</span>: myapp
+    <span class="text-green-300">type</span>: front-end
+<span class="text-blue-300">spec</span>:
+  <span class="text-purple-300">containers</span>:
+  - <span class="text-green-300">name</span>: nginx-container
+    <span class="text-green-300">image</span>: nginx</pre>
+        </div>
+
+        <!-- Explanation -->
+        <div class="grid md:grid-cols-2 gap-3 mb-4">
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-tag text-blue-400 text-xs"></i>
+              <span class="font-semibold text-white">apiVersion: v1</span>
+            </div>
+            <p class="text-gray-400 text-xs">
+              Pods use the core <code class="text-gray-300">v1</code> API.
+            </p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-tag text-blue-400 text-xs"></i>
+              <span class="font-semibold text-white">kind: Pod</span>
+            </div>
+            <p class="text-gray-400 text-xs">Tells K8s we're creating a Pod object.</p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-tag text-blue-400 text-xs"></i>
+              <span class="font-semibold text-white">metadata.name: myapp-pod</span>
+            </div>
+            <p class="text-gray-400 text-xs">
+              The name of our Pod — must be unique within the Namespace.
+            </p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-tag text-blue-400 text-xs"></i>
+              <span class="font-semibold text-white">metadata.labels</span>
+            </div>
+            <p class="text-gray-400 text-xs">
+              Key-value pairs to organize, filter, and select this Pod (e.g.
+              <code class="text-gray-300">app: myapp</code>).
+            </p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-tag text-blue-400 text-xs"></i>
+              <span class="font-semibold text-white">spec.containers</span>
+            </div>
+            <p class="text-gray-400 text-xs">
+              A <strong>list/array</strong> of container definitions. Each item has
+              <code class="text-gray-300">name</code> and <code class="text-gray-300">image</code>.
+            </p>
+          </div>
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-tag text-blue-400 text-xs"></i>
+              <span class="font-semibold text-white">image: nginx</span>
+            </div>
+            <p class="text-gray-400 text-xs">
+              The Docker image to pull (from Docker Hub by default). Can be
+              <code class="text-gray-300">nginx:1.25</code> or
+              <code class="text-gray-300">myrepo/myapp:v2</code>.
+            </p>
+          </div>
+        </div>
+
+        <!-- Run command -->
+        <div class="terminal-block">
+          <div class="terminal-header">
+            <span class="terminal-dot bg-red-500"></span>
+            <span class="terminal-dot bg-yellow-500"></span>
+            <span class="terminal-dot bg-green-500"></span>
+            <span class="ml-2">Create the Pod from the YAML file</span>
+          </div>
+          <pre><span class="text-green-400">$</span> <span class="text-blue-300">kubectl create -f pod-definition.yml</span>
+<span class="text-gray-400">pod/myapp-pod created</span></pre>
+        </div>
+
+        <div
+          class="mt-3 p-3 rounded-lg bg-indigo-900/20 border border-indigo-800/40 text-sm text-indigo-200"
+        >
+          <i class="fas fa-info-circle mr-2"></i>
+          The <code class="text-gray-300">-f</code> flag tells
+          <code class="text-gray-300">kubectl create</code> to read the YAML (or JSON) file. You can
+          also use
+          <code class="text-gray-300">kubectl apply -f pod-definition.yml</code> (declarative,
+          preferred for updates).
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 9. kubectl get & describe -->
+      <!-- ============================== -->
+      <section
+        id="get-describe"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >9</span
+          >
+          <h2 class="text-2xl font-bold text-white">
+            kubectl get &amp; describe — Inspecting PODs
+          </h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Once your POD is running, you'll want to inspect its status and troubleshoot issues. Two
+          commands are your best friends:
+        </p>
+
+        <div class="space-y-4">
+          <!-- kubectl get pods -->
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="ml-2">List all PODs in the default namespace</span>
+            </div>
+            <pre><span class="text-green-400">$</span> <span class="text-blue-300">kubectl get pods</span>
+<span class="text-gray-400">NAME          READY   STATUS    RESTARTS   AGE
+myapp-pod     1/1     Running   0          2m</span></pre>
+          </div>
+
+          <div class="p-3 rounded-lg bg-slate-800/60 border border-slate-700 text-sm text-gray-400">
+            <i class="fas fa-eye text-blue-400 mr-2"></i>
+            <code class="text-gray-300">STATUS</code> tells you the current phase:
+            <code class="text-green-300">Running</code> (healthy),
+            <code class="text-yellow-300">Pending</code> (waiting to start),
+            <code class="text-red-300">CrashLoopBackOff</code> (crashing repeatedly),
+            <code class="text-gray-300">ContainerCreating</code> (image still pulling).
+          </div>
+
+          <!-- kubectl describe pod -->
+          <div class="terminal-block">
+            <div class="terminal-header">
+              <span class="terminal-dot bg-red-500"></span>
+              <span class="terminal-dot bg-yellow-500"></span>
+              <span class="terminal-dot bg-green-500"></span>
+              <span class="ml-2">Get detailed info about a specific POD</span>
+            </div>
+            <pre><span class="text-green-400">$</span> <span class="text-blue-300">kubectl describe pod myapp-pod</span>
+<span class="text-gray-400">Name:             myapp-pod
+Namespace:        default
+Node:             minikube/192.168.49.2
+Labels:           app=myapp
+                  type=front-end
+Annotations:      &lt;none&gt;
+Status:           Running
+IP:               10.244.0.5
+Containers:
+  nginx-container:
+    Container ID:   docker://abc123...
+    Image:          nginx
+    State:          Running (started ...)
+Events:
+  Type    Reason     Age   From               Message
+  ----    ------     ----  ----               -------
+  Normal  Scheduled  2m    default-scheduler  Successfully assigned...
+  Normal  Pulled     2m    kubelet            Container image "nginx" already present
+  Normal  Created    2m    kubelet            Created container nginx-container
+  Normal  Started    2m    kubelet            Started container nginx-container</span></pre>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-2">
+              <i class="fas fa-list-ul text-cyan-400"></i>
+              <h3 class="font-semibold text-white text-sm">
+                What <code class="text-gray-300">describe</code> shows you
+              </h3>
+            </div>
+            <div class="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs text-gray-400">
+              <span><i class="fas fa-id-card text-blue-300 mr-1"></i> Name &amp; Namespace</span>
+              <span><i class="fas fa-server text-blue-300 mr-1"></i> Node assigned to</span>
+              <span><i class="fas fa-tags text-blue-300 mr-1"></i> Labels &amp; Annotations</span>
+              <span
+                ><i class="fas fa-circle text-green-300 mr-1"></i> Status
+                (Running/Pending/etc)</span
+              >
+              <span><i class="fas fa-network-wired text-blue-300 mr-1"></i> IP address</span>
+              <span><i class="fas fa-box text-blue-300 mr-1"></i> Container details</span>
+              <span class="col-span-2"
+                ><i class="fas fa-history text-amber-300 mr-1"></i> Events timeline (Scheduled →
+                Pulled → Created → Started)</span
+              >
+            </div>
+          </div>
+
+          <div
+            class="p-3 rounded-lg bg-indigo-900/20 border border-indigo-800/40 text-sm text-indigo-200"
+          >
+            <i class="fas fa-bug mr-2"></i>
+            <strong>Troubleshooting tip:</strong> The <strong>Events</strong> section at the bottom
+            of <code class="text-gray-300">kubectl describe</code> is the most valuable part when
+            something goes wrong — it shows a chronological log of what K8s did and any errors
+            encountered.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- 10. Tips & Tricks for YAML -->
+      <!-- ============================== -->
+      <section
+        id="tips-tricks"
+        class="anchor-link glow-card p-6 md:p-8 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6"
+      >
+        <div class="flex items-center gap-3 mb-4">
+          <span
+            class="flex items-center justify-center w-8 h-8 rounded-lg bg-emerald-500/20 text-emerald-400 text-sm font-bold"
+            >10</span
+          >
+          <h2 class="text-2xl font-bold text-white">Tips &amp; Tricks for YAML</h2>
+        </div>
+
+        <p class="text-gray-300 leading-relaxed mb-4">
+          A few mental models and best practices to keep your YAML clean and your Kubernetes life
+          easier:
+        </p>
+
+        <div class="space-y-3">
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-brain text-purple-400"></i>
+              <h3 class="font-semibold text-white">1. The Quad Structure</h3>
+            </div>
+            <p class="text-gray-400 text-sm">
+              Every YAML file follows the same skeleton. Memorize it:
+            </p>
+            <pre
+              class="mt-2 text-xs text-gray-400 font-mono bg-slate-900/60 p-3 rounded-lg break-all whitespace-pre-wrap"
+            >apiVersion: <span class="text-blue-300">&lt;string&gt;</span>     <span class="text-gray-600"># which K8s API to use</span>
+kind: <span class="text-blue-300">&lt;string&gt;</span>           <span class="text-gray-600"># Pod, Service, Deployment, ...</span>
+metadata:                   <span class="text-gray-600"># name + labels</span>
+  name: <span class="text-blue-300">&lt;string&gt;</span>
+  labels: <span class="text-blue-300">&lt;dict&gt;</span>
+spec:                       <span class="text-gray-600"># desired state</span>
+  containers: <span class="text-blue-300">&lt;list&gt;</span>   <span class="text-gray-600"># each has name + image</span></pre>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-tags text-amber-400"></i>
+              <h3 class="font-semibold text-white">2. Labels Organize Everything</h3>
+            </div>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Labels are key-value pairs you attach to any K8s object. They let you filter, group,
+              and select PODs:
+            </p>
+            <pre
+              class="mt-2 text-xs text-gray-400 font-mono bg-slate-900/60 p-3 rounded-lg break-all whitespace-pre-wrap"
+            >labels:
+  app: myapp
+  type: front-end      <span class="text-gray-600"># filter: kubectl get pods -l type=front-end</span>
+  env: production       <span class="text-gray-600"># filter: kubectl get pods -l env=production</span></pre>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-link text-cyan-400"></i>
+              <h3 class="font-semibold text-white">3. Selectors Link Objects</h3>
+            </div>
+            <p class="text-gray-400 text-sm leading-relaxed">
+              Labels plus <strong>selectors</strong> are how one K8s object finds another. For
+              example, a Service uses a selector to know which PODs to forward traffic to:
+            </p>
+            <pre
+              class="mt-2 text-xs text-gray-400 font-mono bg-slate-900/60 p-3 rounded-lg break-all whitespace-pre-wrap"
+            ><span class="text-gray-600"># Service YAML — routes traffic to PODs with label "app: myapp"</span>
+selector:
+  app: myapp             <span class="text-gray-600"># matches PODs that have this label</span></pre>
+          </div>
+
+          <div class="p-4 rounded-lg bg-slate-800/60 border border-slate-700">
+            <div class="flex items-center gap-2 mb-1">
+              <i class="fas fa-wrench text-green-400"></i>
+              <h3 class="font-semibold text-white">4. Quick YAML Hygiene</h3>
+            </div>
+            <ul class="space-y-1 text-sm text-gray-400">
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-emerald-400 mt-0.5 text-xs"></i
+                ><span>Use <strong>2 spaces</strong> for indentation — tabs break YAML.</span>
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-emerald-400 mt-0.5 text-xs"></i
+                ><span
+                  >Always quote values that look like numbers or booleans (<code
+                    class="text-gray-300"
+                    >"true"</code
+                  >, <code class="text-gray-300">"123"</code>) in labels/annotations.</span
+                >
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-emerald-400 mt-0.5 text-xs"></i
+                ><span
+                  >Validate YAML with
+                  <code class="text-gray-300">kubectl create --dry-run=client -f file.yml</code>
+                  before applying.</span
+                >
+              </li>
+              <li class="flex items-start gap-2">
+                <i class="fas fa-check text-emerald-400 mt-0.5 text-xs"></i
+                ><span
+                  >Keep related labels consistent (e.g. always include
+                  <code class="text-gray-300">app</code>, <code class="text-gray-300">tier</code>,
+                  <code class="text-gray-300">env</code>).</span
+                >
+              </li>
+            </ul>
+          </div>
+        </div>
+
+        <div
+          class="mt-4 p-4 rounded-lg bg-emerald-900/20 border border-emerald-800/40 text-sm text-emerald-200"
+        >
+          <i class="fas fa-star mr-2"></i>
+          <strong>Golden Rule:</strong> When in doubt, run
+          <code class="text-gray-300">kubectl explain pod</code> — it shows you the exact YAML
+          schema for any K8s object directly in your terminal. No need to Google!
+        </div>
+      </section>
+
+      <!-- ============================== -->
+      <!-- Chapter Navigation Footer -->
+      <!-- ============================== -->
+      <div
+        class="flex flex-wrap items-center justify-between gap-4 mt-10 pt-6 border-t border-slate-800"
+      >
+        <a
+          href="ch02_architecture.html"
+          class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors"
+        >
+          <i class="fas fa-arrow-left"></i>
+          Prev: Architecture &amp; Setup
+        </a>
+        <a
+          href="../index.html"
+          class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors"
+        >
+          <i class="fas fa-home"></i>
+          Home
+        </a>
+        <a
+          href="ch04_replication.html"
+          class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-blue-400 transition-colors"
+        >
+          Next: Replication &amp; ReplicaSets
+          <i class="fas fa-arrow-right"></i>
+        </a>
+      </div>
+
+      <div class="mt-8 text-center text-gray-500 text-sm">
+        <i class="fas fa-book-open mr-1"></i> Based on "Kubernetes for Absolute Beginners" by
+        Mumshad Mannambeth
+      </div>
+    </div>
+
+    <style>
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(20px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .animate-fade-in {
+        animation: fadeIn 0.8s ease-out;
+      }
+    @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+  </body>
+</html>

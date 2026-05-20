@@ -1,0 +1,658 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Extras & Best Practices — Git Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .glow-card { transition: all 0.3s ease; }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes pulseGlow { 0%,100% { box-shadow:0 0 10px rgba(99,102,241,0.2); } 50% { box-shadow:0 0 25px rgba(99,102,241,0.5); } }
+    @keyframes float { 0%,100% { transform:translateY(0); } 50% { transform:translateY(-6px); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.6s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.6s ease-out; }
+    .animate-pulse-glow { animation: pulseGlow 2s infinite; }
+    .animate-float { animation: float 3s ease-in-out infinite; }
+    .delay-100 { animation-delay: 0.1s; }
+    .delay-200 { animation-delay: 0.2s; }
+    .delay-300 { animation-delay: 0.3s; }
+    .delay-400 { animation-delay: 0.4s; }
+    .delay-500 { animation-delay: 0.5s; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; border-radius: 0.5rem; padding: 1rem; font-family: 'Courier New', monospace; font-size: 0.875rem; overflow-x: auto; }
+    .code-block .cmd { color: #f472b6; }
+    .code-block .out { color: #94a3b8; }
+    .code-block .cmt { color: #6b7280; font-style: italic; }
+    .code-block .hl { color: #34d399; }
+    .code-block .err { color: #f87171; }
+    .badge { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .tip-box { border-left: 4px solid; border-radius: 0.5rem; padding: 1rem; }
+    .strikethrough { text-decoration: line-through; opacity: 0.6; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <div class="mb-6 animate-fade-in">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-arrow-left"></i> Back to Index
+      </a>
+    </div>
+
+    <!-- Header -->
+    <div class="text-center mb-12 animate-fade-in">
+      <i class="fas fa-lightbulb text-6xl text-yellow-400 mb-4 animate-float"></i>
+      <h1 class="text-4xl md:text-5xl font-bold gradient-text">Extras &amp; Best Practices</h1>
+      <p class="text-gray-400 mt-3 text-lg">Advice, traps, detached HEAD, utilities &amp; further reading</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-10 animate-fade-in delay-100">
+      <a href="#advice1" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-xs text-gray-300 hover:border-indigo-500 transition-all">Advice (1)</a>
+      <a href="#advice2" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-xs text-gray-300 hover:border-indigo-500 transition-all">Advice (2)</a>
+      <a href="#traps1" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-xs text-gray-300 hover:border-indigo-500 transition-all">Traps (1)</a>
+      <a href="#traps2" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-xs text-gray-300 hover:border-indigo-500 transition-all">Traps (2)</a>
+      <a href="#detached" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-xs text-gray-300 hover:border-indigo-500 transition-all">Detached HEAD</a>
+      <a href="#utilities" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-xs text-gray-300 hover:border-indigo-500 transition-all">Utilities</a>
+      <a href="#docs" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-xs text-gray-300 hover:border-indigo-500 transition-all">Further Docs</a>
+    </div>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 1: Some Advice (Part 1) -->
+    <!-- ============================================================ -->
+    <section id="advice1" class="mb-12 animate-slide-left">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-lightbulb text-3xl text-yellow-400"></i>
+        <h2 class="text-2xl font-bold text-white">Some Advice <span class="text-gray-400 text-lg font-normal">(Part 1)</span></h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-check-circle text-emerald-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Commit Often</h3>
+              <p class="text-sm text-gray-400 mt-1">Keep independent changes in separate commits. Commit as frequently as makes sense — small, logical commits are easier to review and revert.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-eye text-cyan-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Run <code class="text-pink-300">git diff</code> Before Commit</h3>
+              <p class="text-sm text-gray-400 mt-1">Always review staged changes with <code class="text-pink-300">git diff --cached</code> before committing. Catch mistakes before they become history.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-pen-fancy text-purple-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Describe the Rationale</h3>
+              <p class="text-sm text-gray-400 mt-1">The "why" matters more than the "what". Explain <em>why</em> a change was made — the diff already shows <em>what</em> changed.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-cloud-upload-alt text-blue-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Don't Forget <code class="text-pink-300">git push</code></h3>
+              <p class="text-sm text-gray-400 mt-1">Commits are local until pushed. Make sure to <code class="text-pink-300">git push</code> regularly so your work is backed up and visible to collaborators.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-file-alt text-amber-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Use <code class="text-pink-300">.gitignore</code></h3>
+              <p class="text-sm text-gray-400 mt-1">Ignore generated files (<code>*.o</code>, <code>*.a</code>, <code>*.class</code>, <code>node_modules/</code>, <code>.env</code>). Keeps your repo clean and prevents accidental commits of binaries.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-code text-indigo-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Meaningful Commit Messages</h3>
+              <p class="text-sm text-gray-400 mt-1">Separate subject from body with a blank line. Keep the subject under 50 chars, wrap body at 72 chars.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Commit Message Example -->
+      <div class="mt-6 glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 animate-pulse-glow">
+        <h3 class="font-semibold text-white mb-3"><i class="fas fa-envelope text-indigo-400 mr-2"></i>Good vs Bad Commit Message</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="code-block">
+            <div class="text-red-400 text-xs font-semibold mb-1">BAD <i class="fas fa-times ml-1"></i></div>
+            <span class="out">$ git commit -m "fixed stuff"</span>
+          </div>
+          <div class="code-block border-emerald-700">
+            <div class="text-emerald-400 text-xs font-semibold mb-1">GOOD <i class="fas fa-check ml-1"></i></div>
+            <span class="cmd">$ git commit -m "Fix null pointer in user login</span><br>
+            <span class="cmd">   </span><br>
+            <span class="cmd">   The session object was not being checked for null</span><br>
+            <span class="cmd">   before accessing the user_id field, causing a crash</span><br>
+            <span class="cmd">   when an unauthenticated request hit the dashboard."</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 2: Some Advice (Part 2) -->
+    <!-- ============================================================ -->
+    <section id="advice2" class="mb-12 animate-slide-right delay-100">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-lightbulb text-3xl text-yellow-400"></i>
+        <h2 class="text-2xl font-bold text-white">Some Advice <span class="text-gray-400 text-lg font-normal">(Part 2)</span></h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-sync-alt text-emerald-400 mt-1 animate-spin"></i>
+            <div>
+              <h3 class="font-semibold text-white">Pull Often</h3>
+              <p class="text-sm text-gray-400 mt-1">Don't stay desynchronized from the remote. Run <code class="text-pink-300">git pull</code> frequently to avoid accumulating merge conflicts.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-code-branch text-cyan-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Merge Mainstream Often</h3>
+              <p class="text-sm text-gray-400 mt-1">Feature branches should regularly merge from <code class="text-pink-300">main</code> (or <code class="text-pink-300">master</code>) to stay up-to-date and reduce conflict complexity.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-puzzle-piece text-purple-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">One Branch per Patch</h3>
+              <p class="text-sm text-gray-400 mt-1">When handling external contributions, create one branch per complex patch. This keeps reviews isolated and history clean.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-code text-indigo-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Keep <code class="text-pink-300">gitk</code> Open</h3>
+              <p class="text-sm text-gray-400 mt-1">When doing complex operations (rebasing, cherry-picking), keep a <code class="text-pink-300">gitk --all</code> or <code class="text-pink-300">git log --graph</code> window open for visual feedback.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Regular Pull Example -->
+      <div class="mt-6 glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <h3 class="font-semibold text-white mb-3"><i class="fas fa-calendar-alt text-emerald-400 mr-2"></i>Regular Pull Schedule</h3>
+        <div class="code-block">
+          <span class="cmt"># First thing in the morning</span><br>
+          <span class="cmd">$ git checkout main</span><br>
+          <span class="cmd">$ git pull origin main</span><br>
+          <span class="cmd">$ git checkout feature/my-feature</span><br>
+          <span class="cmd">$ git merge main</span><br>
+          <span class="out">Already up to date.</span><br>
+          <br>
+          <span class="cmt"># Before pushing any commit</span><br>
+          <span class="cmd">$ git pull --rebase origin main</span><br>
+          <span class="out">Successfully rebased and updated refs/heads/feature/my-feature.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 3: Common Traps (Part 1) -->
+    <!-- ============================================================ -->
+    <section id="traps1" class="mb-12 animate-slide-left delay-200">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-exclamation-triangle text-3xl text-red-400"></i>
+        <h2 class="text-2xl font-bold text-white">Common Traps <span class="text-gray-400 text-lg font-normal">(Part 1)</span></h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-red-700/50">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-skull text-red-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white"><code class="text-pink-300">git diff</code> vs INDEX</h3>
+              <p class="text-sm text-gray-400 mt-1"><code class="text-pink-300">git diff</code> with no arguments shows differences between the working copy and the <strong class="text-amber-300">INDEX (staging area)</strong>, not the last commit!</p>
+              <div class="mt-2 text-xs text-gray-500">Use <code class="text-pink-300">git diff HEAD</code> to compare working copy with the last commit.</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-red-700/50">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-skull text-red-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white"><code class="text-pink-300">git reset</code> &amp; Working Copy</h3>
+              <p class="text-sm text-gray-400 mt-1"><code class="text-pink-300">git reset</code> reverts the <strong class="text-amber-300">index</strong> but leaves the working copy unchanged. Your files still have the modified content.</p>
+              <div class="mt-2 text-xs text-gray-500">Use <code class="text-pink-300">git reset --hard</code> to also revert the working copy (<strong class="text-red-400">warning: discards changes!</strong>).</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Trap Example -->
+      <div class="mt-6 glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <h3 class="font-semibold text-white mb-3"><i class="fas fa-code text-red-400 mr-2"></i>Common Trap: <code>git diff</code> Behavior</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="code-block border-red-700/50">
+            <div class="text-red-400 text-xs font-semibold mb-1">TRAP <i class="fas fa-exclamation-circle ml-1"></i></div>
+            <span class="cmd">$ echo "hello" > file.txt</span><br>
+            <span class="cmd">$ git add file.txt</span><br>
+            <span class="cmd">$ echo "hello world" > file.txt</span><br>
+            <span class="cmd">$ git diff</span><br>
+            <span class="out">diff --git a/file.txt b/file.txt</span><br>
+            <span class="out">--- a/file.txt</span><br>
+            <span class="out">+++ b/file.txt</span><br>
+            <span class="hl">+hello world</span><br>
+            <span class="err">-hello</span><br>
+            <span class="cmt"># Shows diff vs INDEX (staged version), not HEAD!</span>
+          </div>
+          <div class="code-block border-emerald-700">
+            <div class="text-emerald-400 text-xs font-semibold mb-1">CORRECT <i class="fas fa-check ml-1"></i></div>
+            <span class="cmd">$ git diff HEAD</span><br>
+            <span class="out">diff --git a/file.txt b/file.txt</span><br>
+            <span class="out">--- a/file.txt</span><br>
+            <span class="out">+++ b/file.txt</span><br>
+            <span class="hl">+hello world</span><br>
+            <span class="err">-</span><br>
+            <span class="cmt"># Shows diff vs HEAD (last commit)</span><br>
+            <span class="cmt"># Notice: the first version "hello" is gone</span><br>
+            <span class="cmt"># because it wasn't in HEAD yet.</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="mt-4 glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <h3 class="font-semibold text-white mb-3"><i class="fas fa-code text-red-400 mr-2"></i>Common Trap: <code>git reset</code> Behavior</h3>
+        <div class="code-block">
+          <span class="cmd">$ echo "urgent fix" > main.py</span><br>
+          <span class="cmd">$ git add main.py</span><br>
+          <span class="cmd">$ git reset</span><br>
+          <span class="out">Unstaged changes after reset:</span><br>
+          <span class="out">M  main.py</span><br>
+          <span class="cmt"># Index reverted, but main.py still has "urgent fix" in working copy</span><br>
+          <span class="cmd">$ cat main.py</span><br>
+          <span class="out">urgent fix</span><br>
+          <br>
+          <span class="cmt"># To fully undo both index and working copy:</span><br>
+          <span class="cmd">$ git reset --hard HEAD</span><br>
+          <span class="out">HEAD is now at a1b2c3d Previous commit message</span><br>
+          <span class="err"># DANGER: all uncommitted changes in working copy are lost!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 4: Common Traps (Part 2) -->
+    <!-- ============================================================ -->
+    <section id="traps2" class="mb-12 animate-slide-right delay-200">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-exclamation-triangle text-3xl text-red-400"></i>
+        <h2 class="text-2xl font-bold text-white">Common Traps <span class="text-gray-400 text-lg font-normal">(Part 2)</span></h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-red-700/50">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-skull text-red-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Git is Not Forgiving</h3>
+              <p class="text-sm text-gray-400 mt-1">Don't ignore warnings. Never use <code class="text-pink-300">--force</code> unless you fully understand the consequences. Git will let you shoot yourself in the foot.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-red-700/50">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-skull text-red-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">History is Not Immutable</h3>
+              <p class="text-sm text-gray-400 mt-1">Rebasing, amending, and force-pushing can rewrite history. Once pushed and shared, rewriting history causes pain for collaborators.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-red-700/50 md:col-span-2">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-skull text-red-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">Detached HEAD State</h3>
+              <p class="text-sm text-gray-400 mt-1"><code class="text-pink-300">git checkout</code> on an arbitrary commit or tag (not a branch) puts you in <strong class="text-amber-300">"detached HEAD"</strong> state. You can commit, but those commits will be lost without a branch or tag reference.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Detached HEAD Example -->
+      <div class="mt-6 glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <h3 class="font-semibold text-white mb-3"><i class="fas fa-code text-red-400 mr-2"></i>Detached HEAD Scenario</h3>
+        <div class="code-block">
+          <span class="cmd">$ git log --oneline</span><br>
+          <span class="out">a1b2c3d (HEAD -> main) Implement dashboard</span><br>
+          <span class="out">e5f6g7h Add user authentication</span><br>
+          <span class="out">i9j0k1l Initial commit</span><br>
+          <br>
+          <span class="cmd">$ git checkout e5f6g7h</span><br>
+          <span class="out">Note: switching to 'e5f6g7h'.</span><br>
+          <span class="out">You are in 'detached HEAD' state...</span><br>
+          <span class="out">HEAD is now at e5f6g7h Add user authentication</span><br>
+          <br>
+          <span class="cmd">$ git log --oneline</span><br>
+          <span class="out">e5f6g7h (HEAD) Add user authentication</span><br>
+          <span class="out">i9j0k1l Initial commit</span><br>
+          <span class="err"># Note: "main" branch & "Implement dashboard" are no longer reachable from HEAD!</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 5: Detached HEAD State -->
+    <!-- ============================================================ -->
+    <section id="detached" class="mb-12 animate-slide-left delay-300">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-code-branch text-3xl text-orange-400"></i>
+        <h2 class="text-2xl font-bold text-white">Detached HEAD State</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-search text-cyan-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">What It Looks Like</h3>
+              <p class="text-sm text-gray-400 mt-1">Git prints a warning message when entering detached HEAD. The prompt may show <code class="text-pink-300">(HEAD detached at a1b2c3d)</code>.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-sign-in-alt text-emerald-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">How to Get Into It</h3>
+              <p class="text-sm text-gray-400 mt-1">Run <code class="text-pink-300">git checkout &lt;commit-hash&gt;</code> or <code class="text-pink-300">git checkout &lt;tag&gt;</code> instead of a branch name.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-sign-out-alt text-purple-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">How to Get Out</h3>
+              <p class="text-sm text-gray-400 mt-1">Create a branch from the current position: <code class="text-pink-300">git checkout -b &lt;branch-name&gt;</code> or switch back: <code class="text-pink-300">git checkout main</code>.</p>
+            </div>
+          </div>
+        </div>
+
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-exclamation-circle text-red-400 mt-1"></i>
+            <div>
+              <h3 class="font-semibold text-white">The Risk</h3>
+              <p class="text-sm text-gray-400 mt-1">You can commit in detached HEAD state, but those commits become unreachable (and may be garbage collected) if no branch/tag points to them.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Visual Explanation -->
+      <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+        <h3 class="font-semibold text-white mb-3"><i class="fas fa-project-diagram text-orange-400 mr-2"></i>Visual: Detached HEAD</h3>
+        <div class="code-block">
+          <span class="cmt"># Normal state: HEAD points to a branch</span><br>
+          <span class="hl">HEAD  →  main  →  a1b2c3d  →  e5f6g7h  →  i9j0k1l</span><br>
+          <br>
+          <span class="cmt"># Detached HEAD: HEAD points directly to a commit</span><br>
+          <span class="cmd">$ git checkout e5f6g7h</span><br>
+          <span class="err">HEAD  →  e5f6g7h</span><br>
+          <span class="out">                ↓</span><br>
+          <span class="out">              i9j0k1l</span><br>
+          <span class="out">                ↓</span><br>
+          <span class="out">              ...</span><br>
+          <span class="out">(main branch still points to a1b2c3d)</span><br>
+          <br>
+          <span class="cmt"># To save work done in detached HEAD:</span><br>
+          <span class="cmd">$ git checkout -b save-my-work</span><br>
+          <span class="hl">HEAD  →  save-my-work  →  e5f6g7h (now safe!)</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 6: Other Useful Utility Commands -->
+    <!-- ============================================================ -->
+    <section id="utilities" class="mb-12 animate-slide-right delay-300">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-tools text-3xl text-sky-400"></i>
+        <h2 class="text-2xl font-bold text-white">Other Useful Utility Commands</h2>
+      </div>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- git gc -->
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-trash-alt text-green-400 mt-1 text-xl"></i>
+            <div>
+              <h3 class="font-semibold text-white"><code class="text-pink-300">git gc</code></h3>
+              <p class="text-sm text-gray-400 mt-1">Garbage collector. Cleans up unreachable objects and compresses the <code>.git/</code> directory. Run when <code>.git/</code> takes too much space.</p>
+              <div class="mt-2 code-block text-xs">
+                <span class="cmd">$ git gc</span><br>
+                <span class="out">Counting objects: 152, done.</span><br>
+                <span class="out">Delta compression using up to 8 threads.</span><br>
+                <span class="out">Removing duplicate objects: 100%...</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- git stash -->
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-box text-amber-400 mt-1 text-xl"></i>
+            <div>
+              <h3 class="font-semibold text-white"><code class="text-pink-300">git stash</code></h3>
+              <p class="text-sm text-gray-400 mt-1">Temporarily save the working copy and index. Perfect for urgent fix scenarios: stash, switch branches, fix, switch back, pop stash.</p>
+              <div class="mt-2 code-block text-xs">
+                <span class="cmd">$ git stash</span><br>
+                <span class="out">Saved working directory and index state "WIP on feature..."</span><br>
+                <span class="cmd">$ git stash pop</span><br>
+                <span class="out">Dropped refs/stash@{0}</span><br>
+                <span class="cmt"># Use git stash list to see all stashes</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- git clean -->
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-broom text-cyan-400 mt-1 text-xl"></i>
+            <div>
+              <h3 class="font-semibold text-white"><code class="text-pink-300">git clean</code></h3>
+              <p class="text-sm text-gray-400 mt-1">Remove untracked files from the working tree. <strong class="text-red-400">Ensure</strong> all valuable code is committed first!</p>
+              <div class="mt-2 code-block text-xs">
+                <span class="cmd">$ git clean -n</span><br>
+                <span class="out">Would remove build/output.o</span><br>
+                <span class="cmd">$ git clean -f</span><br>
+                <span class="out">Removing build/output.o</span><br>
+                <span class="cmt"># -n = dry run; -f = force; -fd = include dirs</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- git bisect -->
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-search-plus text-purple-400 mt-1 text-xl"></i>
+            <div>
+              <h3 class="font-semibold text-white"><code class="text-pink-300">git bisect</code></h3>
+              <p class="text-sm text-gray-400 mt-1">Binary search to find the exact commit that introduced a bug. Mark commits as "good" or "bad" and git narrows it down.</p>
+              <div class="mt-2 code-block text-xs">
+                <span class="cmd">$ git bisect start</span><br>
+                <span class="cmd">$ git bisect bad</span><br>
+                <span class="cmd">$ git bisect good v1.0</span><br>
+                <span class="out">Bisecting: 8 revisions left to test...</span><br>
+                <span class="cmd">$ git bisect good</span><br>
+                <span class="out">Bisecting: 4 revisions left to test...</span><br>
+                <span class="cmd">$ git bisect bad</span><br>
+                <span class="out">a1b2c3d is the first bad commit</span><br>
+                <span class="cmd">$ git bisect reset</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- git cherry-pick -->
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-cherry text-pink-400 mt-1 text-xl"></i>
+            <div>
+              <h3 class="font-semibold text-white"><code class="text-pink-300">git cherry-pick</code></h3>
+              <p class="text-sm text-gray-400 mt-1">Apply a specific commit from another branch onto the current branch. Useful for porting a single fix without merging the whole branch.</p>
+              <div class="mt-2 code-block text-xs">
+                <span class="cmd">$ git cherry-pick a1b2c3d</span><br>
+                <span class="out">[main a1b2c3d] Fix login bug</span><br>
+                <span class="out">Date: Mon May 18 14:30:00 2026</span><br>
+                <span class="out"> 1 file changed, 2 insertions(+), 1 deletion(-)</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- git revert -->
+        <div class="glow-card p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700">
+          <div class="flex items-start gap-3">
+            <i class="fas fa-undo-alt text-rose-400 mt-1 text-xl"></i>
+            <div>
+              <h3 class="font-semibold text-white"><code class="text-pink-300">git revert</code></h3>
+              <p class="text-sm text-gray-400 mt-1">Create a new commit that undoes a previous commit. Safer than <code class="text-pink-300">git reset</code> because it doesn't rewrite history.</p>
+              <div class="mt-2 code-block text-xs">
+                <span class="cmd">$ git log --oneline</span><br>
+                <span class="out">a1b2c3d (HEAD) BROKEN: added debug prints</span><br>
+                <span class="out">e5f6g7h Working version</span><br>
+                <span class="cmd">$ git revert a1b2c3d</span><br>
+                <span class="out">[main f8a9b0c] Revert "BROKEN: added debug prints"</span><br>
+                <span class="out"> 1 file changed, 3 deletions(-)</span><br>
+                <span class="cmt"># Creates a NEW commit that inverses a1b2c3d</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- SECTION 7: Further Documentation -->
+    <!-- ============================================================ -->
+    <section id="docs" class="mb-12 animate-slide-left delay-400">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-book text-3xl text-indigo-400"></i>
+        <h2 class="text-2xl font-bold text-white">Further Documentation</h2>
+      </div>
+
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <a href="https://git-scm.com/docs" target="_blank" rel="noopener noreferrer" class="glow-card block p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-terminal text-2xl text-emerald-400"></i>
+            <h3 class="font-semibold text-white">Man Pages</h3>
+          </div>
+          <p class="text-sm text-gray-400">Run <code class="text-pink-300">man git &lt;cmd&gt;</code> for exhaustive reference. Also <code class="text-pink-300">man gitglossary</code> for terminology.</p>
+        </a>
+
+        <a href="http://git-scm.com/book" target="_blank" rel="noopener noreferrer" class="glow-card block p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-book-open text-2xl text-blue-400"></i>
+            <h3 class="font-semibold text-white">Pro Git Book</h3>
+          </div>
+          <p class="text-sm text-gray-400">The official Git book by Scott Chacon &amp; Ben Straub. Free online at <code class="text-pink-300">git-scm.com/book</code>.</p>
+        </a>
+
+        <a href="https://git-scm.com/community" target="_blank" rel="noopener noreferrer" class="glow-card block p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-users text-2xl text-cyan-400"></i>
+            <h3 class="font-semibold text-white">Git Community Book</h3>
+          </div>
+          <p class="text-sm text-gray-400">Community-maintained reference covering workflows, advanced tricks, and best practices.</p>
+        </a>
+
+        <a href="http://learn.github.com/" target="_blank" rel="noopener noreferrer" class="glow-card block p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fab fa-github text-2xl text-orange-400"></i>
+            <h3 class="font-semibold text-white">GitHub Learning</h3>
+          </div>
+          <p class="text-sm text-gray-400">Interactive tutorials and hands-on labs at <code class="text-pink-300">learn.github.com</code>.</p>
+        </a>
+
+        <a href="https://www.atlassian.com/git/tutorials" target="_blank" rel="noopener noreferrer" class="glow-card block p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fab fa-atlassian text-2xl text-blue-500"></i>
+            <h3 class="font-semibold text-white">Atlassian Tutorials</h3>
+          </div>
+          <p class="text-sm text-gray-400">Comprehensive tutorials with visuals: <code class="text-pink-300">atlassian.com/git/tutorials</code>.</p>
+        </a>
+
+        <a href="https://www.youtube.com/watch?v=4XpnKHJAok8" target="_blank" rel="noopener noreferrer" class="glow-card block p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fab fa-youtube text-2xl text-red-400"></i>
+            <h3 class="font-semibold text-white">Linus Torvalds Tech Talk</h3>
+          </div>
+          <p class="text-sm text-gray-400">Google Tech Talk: Linus Torvalds on Git (2007). The origin story and design philosophy.</p>
+        </a>
+      </div>
+    </section>
+
+    <!-- Bottom Navigation -->
+    <div class="mt-12 pt-8 border-t border-slate-700/50 flex flex-wrap items-center justify-between gap-4 animate-fade-in delay-500">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-arrow-left"></i> Back to Index
+      </a>
+      <div class="text-xs text-gray-500">
+        <i class="fas fa-lightbulb mr-1 text-yellow-500"></i> Part 8: Extras &amp; Best Practices
+      </div>
+      <div class="flex gap-2">
+        <a href="ch07_contributors.html" class="inline-flex items-center gap-1 text-xs text-gray-400 hover:text-white transition-colors">
+          <i class="fas fa-chevron-left"></i> Prev
+        </a>
+        <span class="text-gray-600">|</span>
+        <span class="text-xs text-gray-600">Next <i class="fas fa-chevron-right"></i></span>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <div class="mt-6 text-center text-gray-600 text-xs">
+      <p>Based on "GIT for Beginners" by Anthony Baire — 96 slides</p>
+    </div>
+  </div>
+</body>
+</html>

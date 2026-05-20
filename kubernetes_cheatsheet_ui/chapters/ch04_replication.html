@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ch 4 — Replication & ReplicaSets | K8s Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    code { background: #1e293b; padding: 2px 6px; border-radius: 4px; font-size: 0.9em; color: #e2e8f0; }
+    pre { background: #1e293b !important; border: 1px solid #334155; border-radius: 10px; overflow-x: auto; }
+    .cmd-output { color: #94a3b8; }
+    .cmd-prompt { color: #22c55e; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .section-link { scroll-margin-top: 1.5rem; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back nav -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-sm text-gray-400 hover:text-white transition-colors mb-6">
+      <i class="fas fa-arrow-left"></i> Back to Cheatsheet Home
+    </a>
+
+    <!-- Header -->
+    <div class="text-center mb-10 animate-fade-in">
+      <i class="fas fa-copy text-6xl text-amber-400 mb-4"></i>
+      <h1 class="text-4xl md:text-5xl font-bold gradient-text">Ch 4: Replication & ReplicaSets</h1>
+      <p class="text-gray-400 mt-3 text-lg">High availability, load balancing, labels, selectors & scaling</p>
+      <div class="flex flex-wrap justify-center gap-2 mt-4">
+        <span class="bg-amber-900/30 text-amber-300 px-3 py-1 rounded-full text-xs"><i class="fas fa-copy mr-1"></i>ReplicationController</span>
+        <span class="bg-indigo-900/30 text-indigo-300 px-3 py-1 rounded-full text-xs"><i class="fas fa-cubes mr-1"></i>ReplicaSet</span>
+        <span class="bg-emerald-900/30 text-emerald-300 px-3 py-1 rounded-full text-xs"><i class="fas fa-tag mr-1"></i>Labels & Selectors</span>
+        <span class="bg-cyan-900/30 text-cyan-300 px-3 py-1 rounded-full text-xs"><i class="fas fa-expand-arrows-alt mr-1"></i>Scaling</span>
+      </div>
+    </div>
+
+    <!-- Section Nav -->
+    <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 mb-10 text-xs text-center">
+      <a href="#ha" class="glow-card p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-gray-300 hover:text-white"><i class="fas fa-shield-alt block text-sm mb-1 text-amber-400"></i>HA</a>
+      <a href="#lb" class="glow-card p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-gray-300 hover:text-white"><i class="fas fa-balance-scale block text-sm mb-1 text-amber-400"></i>LB & Scaling</a>
+      <a href="#rc-vs-rs" class="glow-card p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-gray-300 hover:text-white"><i class="fas fa-exchange-alt block text-sm mb-1 text-amber-400"></i>RC vs RS</a>
+      <a href="#labels" class="glow-card p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-gray-300 hover:text-white"><i class="fas fa-tags block text-sm mb-1 text-amber-400"></i>Labels</a>
+      <a href="#commands" class="glow-card p-3 rounded-lg bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 text-gray-300 hover:text-white"><i class="fas fa-terminal block text-sm mb-1 text-amber-400"></i>Commands</a>
+    </div>
+
+    <!-- ======================== 1. HIGH AVAILABILITY ======================== -->
+    <section id="ha" class="section-link mb-12">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-shield-alt text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">1. High Availability</h2>
+        </div>
+        <p class="text-gray-300 mb-4 leading-relaxed">
+          What happens if a POD crashes? Users lose access. A <strong>Replication Controller</strong> ensures the specified number of PODs are running at all times. Even with just 1 POD: if it fails, a new one is created automatically.
+        </p>
+        <div class="bg-indigo-900/20 border border-indigo-800/30 rounded-lg p-4 mb-4">
+          <p class="text-sm text-indigo-200"><i class="fas fa-lightbulb mr-2"></i><strong>Example:</strong> You set <code>replicas: 3</code>. If one POD dies, Kubernetes immediately creates a replacement POD to bring the count back to 3. Users never experience downtime.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-4 text-sm">
+          <div class="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+            <span class="text-emerald-400 font-semibold"><i class="fas fa-check-circle mr-1"></i>With Replication</span>
+            <ul class="mt-2 space-y-1 text-gray-400">
+              <li>3 PODs running</li>
+              <li>1 crashes → replaced instantly</li>
+              <li>Users stay online</li>
+              <li>System self-heals</li>
+            </ul>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+            <span class="text-red-400 font-semibold"><i class="fas fa-times-circle mr-1"></i>Without Replication</span>
+            <ul class="mt-2 space-y-1 text-gray-400">
+              <li>Single POD running</li>
+              <li>It crashes → service down</li>
+              <li>Users get errors</li>
+              <li>Manual intervention needed</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== 2. LOAD BALANCING & SCALING ======================== -->
+    <section id="lb" class="section-link mb-12">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-balance-scale text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">2. Load Balancing & Scaling</h2>
+        </div>
+        <p class="text-gray-300 mb-4 leading-relaxed">
+          Multiple PODs share the user load. When demand increases, deploy more PODs. When resources run out on one node, PODs are deployed on other nodes. The Replication Controller spans across <strong>multiple nodes</strong> in the cluster.
+        </p>
+        <div class="bg-emerald-900/20 border border-emerald-800/30 rounded-lg p-4 mb-4">
+          <p class="text-sm text-emerald-200"><i class="fas fa-lightbulb mr-2"></i><strong>Analogy:</strong> More workers = faster work. One cashier handles 10 customers/hour. Need 100 customers/hour? Deploy 10 cashiers across multiple checkout lanes (nodes).</p>
+        </div>
+        <pre class="p-4 text-sm"><span class="text-gray-500"># What happens under the hood:</span>
+<span class="text-purple-400">Node 1:</span>  <span class="text-cyan-300">[POD-a]</span> <span class="text-cyan-300">[POD-b]</span>   <span class="text-gray-500">← 2 replicas here</span>
+<span class="text-purple-400">Node 2:</span>  <span class="text-cyan-300">[POD-c]</span>              <span class="text-gray-500">← 1 replica here</span>
+<span class="text-gray-500">Request → distributed across all 3 PODs</span></pre>
+      </div>
+    </section>
+
+    <!-- ======================== 3. RC vs REPLICASET ======================== -->
+    <section id="rc-vs-rs" class="section-link mb-12">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-exchange-alt text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">3. Replication Controller vs ReplicaSet</h2>
+        </div>
+        <p class="text-gray-300 mb-4 leading-relaxed">
+          <strong>Replication Controller (RC)</strong> = older technology being replaced. <strong>ReplicaSet (RS)</strong> = the new, recommended way. Same purpose, different internals. This cheatsheet sticks with ReplicaSet going forward.
+        </p>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-slate-600">
+                <th class="text-left p-3 text-amber-300 font-semibold">Feature</th>
+                <th class="text-left p-3 text-red-300 font-semibold">ReplicationController</th>
+                <th class="text-left p-3 text-emerald-300 font-semibold">ReplicaSet</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-slate-700">
+                <td class="p-3 text-gray-300"><code>apiVersion</code></td>
+                <td class="p-3"><code class="bg-red-900/30 text-red-300">v1</code></td>
+                <td class="p-3"><code class="bg-emerald-900/30 text-emerald-300">apps/v1</code></td>
+              </tr>
+              <tr class="border-b border-slate-700">
+                <td class="p-3 text-gray-300"><code>kind</code></td>
+                <td class="p-3"><code class="bg-red-900/30 text-red-300">ReplicationController</code></td>
+                <td class="p-3"><code class="bg-emerald-900/30 text-emerald-300">ReplicaSet</code></td>
+              </tr>
+              <tr class="border-b border-slate-700">
+                <td class="p-3 text-gray-300">Selector required?</td>
+                <td class="p-3"><span class="text-red-300">No</span> <span class="text-gray-500">(implicit)</span></td>
+                <td class="p-3"><span class="text-emerald-300">Yes</span> <span class="text-gray-500">(<code>matchLabels</code>)</span></td>
+              </tr>
+              <tr>
+                <td class="p-3 text-gray-300">Status</td>
+                <td class="p-3"><span class="text-red-300">Deprecated</span></td>
+                <td class="p-3"><span class="text-emerald-300">Recommended</span></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== 4. RC YAML ======================== -->
+    <section id="rc-yaml" class="section-link mb-12">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-file-code text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">4. Replication Controller YAML</h2>
+        </div>
+        <p class="text-gray-400 text-sm mb-4">The POD definition is nested inside <code>spec.template</code>. The <code>replicas</code> field sits alongside <code>template</code>.</p>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-2"><i class="fas fa-file text-amber-400 mr-2"></i>rc-definition.yml</h3>
+            <pre class="p-4 text-sm leading-relaxed"><span class="text-purple-400">apiVersion</span>: <span class="text-green-300">v1</span>
+<span class="text-purple-400">kind</span>: <span class="text-green-300">ReplicationController</span>
+<span class="text-purple-400">metadata</span>:
+  <span class="text-cyan-300">name</span>: <span class="text-yellow-200">myapp-rc</span>
+  <span class="text-cyan-300">labels</span>:
+    <span class="text-cyan-300">app</span>: <span class="text-yellow-200">myapp</span>
+    <span class="text-cyan-300">type</span>: <span class="text-yellow-200">front-end</span>
+<span class="text-purple-400">spec</span>:
+  <span class="text-cyan-300">template</span>:
+    <span class="text-gray-500"># POD definition goes here</span>
+    <span class="text-cyan-300">metadata</span>:
+      <span class="text-cyan-300">name</span>: <span class="text-yellow-200">myapp-pod</span>
+      <span class="text-cyan-300">labels</span>:
+        <span class="text-cyan-300">app</span>: <span class="text-yellow-200">myapp</span>
+        <span class="text-cyan-300">type</span>: <span class="text-yellow-200">front-end</span>
+    <span class="text-cyan-300">spec</span>:
+      <span class="text-cyan-300">containers</span>:
+      <span class="text-purple-400">- name</span>: <span class="text-yellow-200">nginx-container</span>
+        <span class="text-cyan-300">image</span>: <span class="text-yellow-200">nginx</span>
+  <span class="text-cyan-300">replicas</span>: <span class="text-green-300">3</span></pre>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-2"><i class="fas fa-terminal text-emerald-400 mr-2"></i>Commands & Output</h3>
+            <div class="space-y-3">
+              <div>
+                <p class="text-sm text-gray-400 mb-1">Create the RC:</p>
+                <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl create -f rc-definition.yml
+<span class="cmd-output">replicationcontroller/myapp-rc created</span></pre>
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 mb-1">List RCs:</p>
+                <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl get replicationcontroller
+<span class="cmd-output">NAME       DESIRED   CURRENT   READY   AGE
+myapp-rc   3         3         3       10s</span></pre>
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 mb-1">List PODs (prefixed with RC name):</p>
+                <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl get pods
+<span class="cmd-output">NAME             READY   STATUS    RESTARTS   AGE
+myapp-rc-8d7k9   1/1     Running   0          10s
+myapp-rc-9m2n4   1/1     Running   0          10s
+myapp-rc-3p5r1   1/1     Running   0          10s</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== 5. REPLICASET YAML ======================== -->
+    <section id="rs-yaml" class="section-link mb-12">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-cubes text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">5. ReplicaSet YAML</h2>
+        </div>
+        <p class="text-gray-300 mb-4 leading-relaxed">
+          Very similar to RC, but with three key differences:
+        </p>
+        <ul class="list-disc list-inside text-gray-300 mb-4 space-y-1 text-sm">
+          <li><code>apiVersion</code> is <strong class="text-emerald-300">apps/v1</strong> (NOT <code>v1</code>!)</li>
+          <li><code>kind</code> is <strong class="text-emerald-300">ReplicaSet</strong></li>
+          <li><strong class="text-amber-300">Required:</strong> <code>selector.matchLabels</code> section to identify which PODs to monitor</li>
+        </ul>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-2"><i class="fas fa-file text-amber-400 mr-2"></i>replicaset-definition.yml</h3>
+            <pre class="p-4 text-sm leading-relaxed"><span class="text-purple-400">apiVersion</span>: <span class="text-green-300">apps/v1</span>
+<span class="text-purple-400">kind</span>: <span class="text-green-300">ReplicaSet</span>
+<span class="text-purple-400">metadata</span>:
+  <span class="text-cyan-300">name</span>: <span class="text-yellow-200">myapp-replicaset</span>
+  <span class="text-cyan-300">labels</span>:
+    <span class="text-cyan-300">app</span>: <span class="text-yellow-200">myapp</span>
+    <span class="text-cyan-300">type</span>: <span class="text-yellow-200">front-end</span>
+<span class="text-purple-400">spec</span>:
+  <span class="text-cyan-300">template</span>:
+    <span class="text-cyan-300">metadata</span>:
+      <span class="text-cyan-300">name</span>: <span class="text-yellow-200">myapp-pod</span>
+      <span class="text-cyan-300">labels</span>:
+        <span class="text-cyan-300">app</span>: <span class="text-yellow-200">myapp</span>
+        <span class="text-cyan-300">type</span>: <span class="text-yellow-200">front-end</span>
+    <span class="text-cyan-300">spec</span>:
+      <span class="text-cyan-300">containers</span>:
+      <span class="text-purple-400">- name</span>: <span class="text-yellow-200">nginx-container</span>
+        <span class="text-cyan-300">image</span>: <span class="text-yellow-200">nginx</span>
+  <span class="text-cyan-300">replicas</span>: <span class="text-green-300">3</span>
+  <span class="text-cyan-300">selector</span>:
+    <span class="text-cyan-300">matchLabels</span>:
+      <span class="text-cyan-300">type</span>: <span class="text-yellow-200">front-end</span></pre>
+          </div>
+
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-2"><i class="fas fa-terminal text-emerald-400 mr-2"></i>Commands & Output</h3>
+            <div class="space-y-3">
+              <div>
+                <p class="text-sm text-gray-400 mb-1">Create the ReplicaSet:</p>
+                <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl create -f replicaset-definition.yml
+<span class="cmd-output">replicaset.apps/myapp-replicaset created</span></pre>
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 mb-1">List ReplicaSets:</p>
+                <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl get replicaset
+<span class="cmd-output">NAME               DESIRED   CURRENT   READY   AGE
+myapp-replicaset   3         3         3       12s</span></pre>
+              </div>
+              <div>
+                <p class="text-sm text-gray-400 mb-1">Get detailed info:</p>
+                <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl describe replicaset myapp-replicaset
+<span class="cmd-output">Name:         myapp-replicaset
+Namespace:    default
+Selector:     type=front-end
+Labels:       app=myapp,type=front-end
+Annotations:  &lt;none&gt;
+Replicas:     3 current / 3 desired
+Pods Status:  3 Running / 0 Waiting / 0 Succeeded / 0 Failed</span></pre>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== 6. LABELS & SELECTORS EXPLAINED ======================== -->
+    <section id="labels" class="section-link mb-12">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-tags text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">6. Labels & Selectors Explained</h2>
+        </div>
+        <p class="text-gray-300 mb-4 leading-relaxed">
+          Why labels? A ReplicaSet needs to know <strong>which PODs</strong> to monitor — there could be 100s of PODs in a cluster. Labels act as filters. The <strong>Selector</strong> matches those labels.
+        </p>
+        <div class="bg-indigo-900/20 border border-indigo-800/30 rounded-lg p-4 mb-6">
+          <p class="text-sm text-indigo-200"><i class="fas fa-lightbulb mr-2"></i><strong>Analogy:</strong> Labels = nametags on people. Selector = "find all people wearing a 'VIP' nametag". The ReplicaSet only cares about PODs that match its selector.</p>
+        </div>
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-2">How Selector Works</h3>
+            <pre class="p-4 text-sm leading-relaxed"><span class="text-cyan-300">selector</span>:
+  <span class="text-cyan-300">matchLabels</span>:
+    <span class="text-cyan-300">type</span>: <span class="text-yellow-200">front-end</span></pre>
+            <p class="text-sm text-gray-400 mt-2">This ReplicaSet will monitor <strong>all</strong> PODs with label <code>type=front-end</code> — even PODs it didn't create itself.</p>
+          </div>
+          <div>
+            <h3 class="text-lg font-semibold text-white mb-2">Visual: Labels on PODs</h3>
+            <div class="space-y-2 text-sm">
+              <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700 flex items-center gap-2">
+                <i class="fas fa-cube text-blue-400"></i>
+                <span>POD A</span>
+                <span class="text-gray-500">|</span>
+                <span class="bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded text-xs">app=myapp</span>
+                <span class="bg-cyan-900/30 text-cyan-300 px-2 py-0.5 rounded text-xs">type=front-end</span>
+                <span class="text-emerald-400 text-xs"><i class="fas fa-check"></i> matched</span>
+              </div>
+              <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700 flex items-center gap-2">
+                <i class="fas fa-cube text-blue-400"></i>
+                <span>POD B</span>
+                <span class="text-gray-500">|</span>
+                <span class="bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded text-xs">app=myapp</span>
+                <span class="bg-cyan-900/30 text-cyan-300 px-2 py-0.5 rounded text-xs">type=front-end</span>
+                <span class="text-emerald-400 text-xs"><i class="fas fa-check"></i> matched</span>
+              </div>
+              <div class="bg-slate-800/60 rounded-lg p-3 border border-slate-700 flex items-center gap-2">
+                <i class="fas fa-cube text-blue-400"></i>
+                <span>POD C</span>
+                <span class="text-gray-500">|</span>
+                <span class="bg-amber-900/30 text-amber-300 px-2 py-0.5 rounded text-xs">app=myapp</span>
+                <span class="bg-gray-700 text-gray-400 px-2 py-0.5 rounded text-xs">type=back-end</span>
+                <span class="text-red-400 text-xs"><i class="fas fa-times"></i> not matched</span>
+              </div>
+            </div>
+            <p class="text-xs text-gray-500 mt-2">Only PODs where <code>type=front-end</code> are managed by this ReplicaSet.</p>
+          </div>
+        </div>
+
+        <div class="mt-6 bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-lg font-semibold text-white mb-2"><i class="fas fa-exclamation-triangle text-amber-400 mr-2"></i>Template Requirement</h3>
+          <p class="text-sm text-gray-300">
+            Even if PODs already exist with matching labels, the <code>template</code> is <strong>still required</strong>. Why? If an existing POD fails, the ReplicaSet needs the template to create a replacement. <strong>The template is the blueprint</strong> for new PODs.
+          </p>
+          <div class="mt-3 flex items-start gap-3 text-sm">
+            <div class="bg-green-900/30 text-green-300 px-3 py-2 rounded-lg flex-1">
+              <i class="fas fa-check-circle mr-1"></i> Existing PODs with matching labels = adopted by RS
+            </div>
+            <div class="bg-amber-900/30 text-amber-300 px-3 py-2 rounded-lg flex-1">
+              <i class="fas fa-file mr-1"></i> Template = blueprint for creating <strong>new</strong> PODs if needed
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== 7. SCALING ======================== -->
+    <section id="scaling" class="section-link mb-12">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-expand-arrows-alt text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">7. Scaling ReplicaSets</h2>
+        </div>
+        <p class="text-gray-300 mb-4 leading-relaxed">
+          Three ways to scale. The <code class="text-amber-300">kubectl scale</code> command is a quick way, but it <strong class="text-red-300">does not update</strong> the definition file!
+        </p>
+
+        <div class="space-y-4">
+          <div class="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+            <h3 class="font-semibold text-white mb-2">Method 1: Update YAML file & apply</h3>
+            <p class="text-xs text-gray-400 mb-2">Edit <code>replicas: 6</code> in your YAML, then run:</p>
+            <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl replace -f replicaset-definition.yml
+<span class="cmd-output">replicaset.apps/myapp-replicaset replaced</span></pre>
+          </div>
+
+          <div class="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+            <h3 class="font-semibold text-white mb-2">Method 2: Scale using the definition file</h3>
+            <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl scale --replicas=6 -f replicaset-definition.yml
+<span class="cmd-output">replicaset.apps/myapp-replicaset scaled</span></pre>
+            <p class="text-xs text-gray-500 mt-1"><i class="fas fa-exclamation-circle text-amber-400 mr-1"></i> The <code>replicaset-definition.yml</code> file is NOT updated!</p>
+          </div>
+
+          <div class="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+            <h3 class="font-semibold text-white mb-2">Method 3: Scale by type/name</h3>
+            <pre class="p-3 text-sm"><span class="cmd-prompt">$</span> kubectl scale --replicas=6 replicaset myapp-replicaset
+<span class="cmd-output">replicaset.apps/myapp-replicaset scaled</span></pre>
+          </div>
+        </div>
+
+        <div class="mt-4 bg-cyan-900/20 border border-cyan-800/30 rounded-lg p-4">
+          <p class="text-sm text-cyan-200"><i class="fas fa-eye mr-2"></i><strong>Verify scaling:</strong></p>
+          <pre class="mt-2 p-3 text-sm"><span class="cmd-prompt">$</span> kubectl get pods
+<span class="cmd-output">NAME                     READY   STATUS    RESTARTS   AGE
+myapp-replicaset-7k9d2   1/1     Running   0          2m
+myapp-replicaset-8m3n5   1/1     Running   0          2m
+myapp-replicaset-9p4r1   1/1     Running   0          2m
+myapp-replicaset-2j6k8   1/1     Running   0          5s    ← new
+myapp-replicaset-4h7n9   1/1     Running   0          5s    ← new
+myapp-replicaset-5t8v2   1/1     Running   0          5s    ← new</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== 8. COMMANDS SUMMARY ======================== -->
+    <section id="commands" class="section-link mb-12">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-terminal text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">8. Commands Summary</h2>
+        </div>
+
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm border-collapse">
+            <thead>
+              <tr class="border-b border-slate-600">
+                <th class="text-left p-3 text-amber-300 font-semibold">Command</th>
+                <th class="text-left p-3 text-gray-300 font-semibold">Description</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-slate-700">
+                <td class="p-3"><code class="text-green-300">kubectl create -f replicaset-definition.yml</code></td>
+                <td class="p-3 text-gray-400">Create ReplicaSet from YAML</td>
+              </tr>
+              <tr class="border-b border-slate-700">
+                <td class="p-3"><code class="text-green-300">kubectl get replicaset</code></td>
+                <td class="p-3 text-gray-400">List all ReplicaSets (DESIRED, CURRENT, READY)</td>
+              </tr>
+              <tr class="border-b border-slate-700">
+                <td class="p-3"><code class="text-green-300">kubectl get replicaset -o wide</code></td>
+                <td class="p-3 text-gray-400">Detailed list with container images</td>
+              </tr>
+              <tr class="border-b border-slate-700">
+                <td class="p-3"><code class="text-green-300">kubectl describe replicaset myapp-replicaset</code></td>
+                <td class="p-3 text-gray-400">Detailed info (selector, events, POD status)</td>
+              </tr>
+              <tr class="border-b border-slate-700">
+                <td class="p-3"><code class="text-green-300">kubectl delete replicaset myapp-replicaset</code></td>
+                <td class="p-3 text-gray-400">Delete RS <strong class="text-red-300">and all underlying PODs</strong></td>
+              </tr>
+              <tr class="border-b border-slate-700">
+                <td class="p-3"><code class="text-green-300">kubectl replace -f replicaset-definition.yml</code></td>
+                <td class="p-3 text-gray-400">Update RS from modified YAML</td>
+              </tr>
+              <tr class="border-b border-slate-700">
+                <td class="p-3"><code class="text-green-300">kubectl scale --replicas=6 -f replicaset-definition.yml</code></td>
+                <td class="p-3 text-gray-400">Scale (file-based, <span class="text-amber-400">doesn't update file</span>)</td>
+              </tr>
+              <tr>
+                <td class="p-3"><code class="text-green-300">kubectl scale --replicas=6 replicaset myapp-replicaset</code></td>
+                <td class="p-3 text-gray-400">Scale (name-based, <span class="text-amber-400">doesn't update file</span>)</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="mt-4 bg-red-900/20 border border-red-800/30 rounded-lg p-4">
+          <p class="text-sm text-red-300"><i class="fas fa-exclamation-triangle mr-2"></i><strong>Important:</strong> <code>kubectl delete replicaset</code> also deletes all PODs managed by that ReplicaSet! Use with care in production.</p>
+        </div>
+
+        <div class="mt-4 bg-emerald-900/20 border border-emerald-800/30 rounded-lg p-4">
+          <p class="text-sm text-emerald-200"><i class="fas fa-check-circle mr-2"></i><strong>Pro tip:</strong> Always prefer ReplicaSet over ReplicationController. ReplicaSet is the future — it offers richer label selectors and is required by Deployments (Ch 5).</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ======================== 9. QUICK REFERENCE CARD ======================== -->
+    <section class="mb-10">
+      <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300">
+        <div class="flex items-center gap-3 mb-4">
+          <div class="w-10 h-10 rounded-lg bg-amber-500/20 flex items-center justify-center"><i class="fas fa-star text-amber-400"></i></div>
+          <h2 class="text-2xl font-bold text-white">Quick Reference Card</h2>
+        </div>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 text-sm">
+          <div class="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+            <h4 class="text-amber-300 font-semibold mb-2"><i class="fas fa-file-code mr-1"></i> RC YAML</h4>
+            <p class="text-gray-400"><code class="text-purple-400">apiVersion</code>: <code>v1</code></p>
+            <p class="text-gray-400"><code class="text-purple-400">kind</code>: <code>ReplicationController</code></p>
+            <p class="text-gray-400 text-xs mt-1">No selector needed</p>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+            <h4 class="text-emerald-300 font-semibold mb-2"><i class="fas fa-file-code mr-1"></i> RS YAML</h4>
+            <p class="text-gray-400"><code class="text-purple-400">apiVersion</code>: <code>apps/v1</code></p>
+            <p class="text-gray-400"><code class="text-purple-400">kind</code>: <code>ReplicaSet</code></p>
+            <p class="text-gray-400 text-xs mt-1"><code>selector.matchLabels</code> required</p>
+          </div>
+          <div class="bg-slate-800/60 rounded-lg p-4 border border-slate-700">
+            <h4 class="text-cyan-300 font-semibold mb-2"><i class="fas fa-expand-arrows-alt mr-1"></i> Scale</h4>
+            <p class="text-gray-400"><code>kubectl scale --replicas=N</code></p>
+            <p class="text-gray-400 text-xs mt-1">Does NOT update YAML file</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="mt-12 pt-6 border-t border-slate-700 flex flex-col sm:flex-row justify-between items-center gap-4 text-sm text-gray-500">
+      <span><i class="fas fa-book-open mr-1"></i> Based on "Kubernetes for Absolute Beginners" — Mumshad Mannambeth</span>
+      <a href="../index.html" class="text-amber-400 hover:text-amber-300 transition-colors"><i class="fas fa-arrow-left mr-1"></i> Back to Cheatsheet</a>
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .section-link { scroll-margin-top: 1.5rem; }
+    ::-webkit-scrollbar { width: 8px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</body>
+</html>

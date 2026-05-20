@@ -1,0 +1,755 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Basic Configuration — NGINX Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .glow-card { background: linear-gradient(135deg, #1e293b, #0f172a); border: 1px solid #334155; border-radius: 16px; padding: 1.25rem; transition: all 0.3s; }
+    .code-block { background: #0d1117; border: 1px solid #21262d; border-radius: 10px; padding: 1rem; font-family: 'Fira Code', 'Cascadia Code', 'JetBrains Mono', 'Consolas', monospace; font-size: 0.85rem; overflow-x: auto; }
+    .code-block .kw { color: #ff79c6; }
+    .code-block .fn { color: #50fa7b; }
+    .code-block .str { color: #f1fa8c; }
+    .code-block .cm { color: #6272a4; font-style: italic; }
+    .code-block .num { color: #bd93f9; }
+    .code-block .op { color: #ff79c6; }
+    .code-block .prop { color: #8be9fd; }
+    .tag { background: #2d2d44; border-radius: 6px; padding: 2px 10px; font-family: monospace; font-size: 0.75rem; color: #82aaff; display: inline-block; margin: 2px; }
+    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
+    .slide-in-left { opacity: 0; transform: translateX(-30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-left.visible { opacity: 1; transform: translateX(0); }
+    .slide-in-right { opacity: 0; transform: translateX(30px); transition: opacity 0.5s ease-out, transform 0.5s ease-out; }
+    .slide-in-right.visible { opacity: 1; transform: translateX(0); }
+    .accordion-content { max-height: 0; overflow: hidden; transition: max-height 0.35s ease-out; }
+    .accordion-content.open { max-height: 800px; }
+    .pulse-icon { transition: transform 0.3s; }
+    .pulse-icon:hover { transform: scale(1.2); }
+    .comparison-table th { background: #1e293b; padding: 0.6rem 1rem; font-size: 0.85rem; }
+    .comparison-table td { padding: 0.6rem 1rem; font-size: 0.85rem; border-top: 1px solid #1e293b; }
+    .comparison-table tr:hover td { background: rgba(99,102,241,0.08); }
+    .badge-good { background: rgba(16,185,129,0.15); color: #6ee7b7; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .badge-bad { background: rgba(239,68,68,0.15); color: #fca5a5; padding: 0.15rem 0.6rem; border-radius: 999px; font-size: 0.7rem; font-weight: 600; }
+    .nav-link { padding: 0.35rem 0.85rem; border-radius: 999px; font-size: 0.8rem; background: rgba(30,41,59,0.6); border: 1px solid #334155; transition: all 0.2s; color: #94a3b8; white-space: nowrap; }
+    .nav-link:hover { background: #334155; color: #e2e8f0; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    @keyframes shimmer { 0% { background-position: -200% 0; } 100% { background-position: 200% 0; } }
+    .shimmer { background: linear-gradient(90deg, transparent, rgba(99,102,241,0.1), transparent); background-size: 200% 100%; animation: shimmer 3s infinite; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200 pb-16">
+  <div class="max-w-5xl mx-auto px-4 py-6">
+    <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 mb-6 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+
+    <div class="animate-fade-in mb-8">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-cog text-4xl text-blue-400 pulse-icon"></i>
+        <h1 class="text-3xl md:text-4xl font-bold gradient-text">Basic Configuration</h1>
+      </div>
+      <p class="text-gray-400 text-lg">Chapter 2 — The nginx.conf file, directives, static files, locations, virtual hosts, SSL</p>
+    </div>
+
+    <div class="overflow-x-auto pb-2 mb-8">
+      <div class="flex gap-2 min-w-max">
+        <a href="#nginx-conf" class="nav-link"><i class="fas fa-file-alt mr-1"></i>nginx.conf File</a>
+        <a href="#configuring-running" class="nav-link"><i class="fas fa-play mr-1"></i>Configuring & Running</a>
+        <a href="#default-values" class="nav-link"><i class="fas fa-undo mr-1"></i>Default Values</a>
+        <a href="#user-worker" class="nav-link"><i class="fas fa-users mr-1"></i>user & worker_processes</a>
+        <a href="#events-context" class="nav-link"><i class="fas fa-bolt mr-1"></i>Events Context</a>
+        <a href="#http-server" class="nav-link"><i class="fas fa-globe mr-1"></i>HTTP & Server</a>
+        <a href="#reload-stop" class="nav-link"><i class="fas fa-sync mr-1"></i>Reloading & Stopping</a>
+        <a href="#static-files" class="nav-link"><i class="fas fa-file mr-1"></i>Static Files</a>
+        <a href="#location-block" class="nav-link"><i class="fas fa-map-marker-alt mr-1"></i>Location Block</a>
+        <a href="#regex-location" class="nav-link"><i class="fas fa-code mr-1"></i>Regex Locations</a>
+        <a href="#named-location" class="nav-link"><i class="fas fa-at mr-1"></i>Named Locations</a>
+        <a href="#virtualhosts" class="nav-link"><i class="fas fa-server mr-1"></i>Virtualhosts</a>
+        <a href="#default-server" class="nav-link"><i class="fas fa-star mr-1"></i>Default Server</a>
+        <a href="#ssl" class="nav-link"><i class="fas fa-lock mr-1"></i>SSL</a>
+      </div>
+    </div>
+
+    <div id="nginx-conf" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-file-alt text-2xl text-blue-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">The nginx.conf File</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Like most software on Linux, the way that nginx works is specified in a configuration file called <strong class="text-amber-300">nginx.conf</strong>. When nginx is built from source, the path to the configuration file can be specified by changing the <strong class="text-amber-300">--conf-path</strong> flag.</p>
+      <p class="text-gray-300 mb-3">If nginx was installed from source, the default location of the nginx.conf file is <code class="text-cyan-300">/usr/local/nginx/conf</code>. If nginx was installed from a package, it may be located in <code class="text-cyan-300">/etc/nginx</code> or <code class="text-cyan-300">/usr/local/etc/nginx</code>, depending on the package maintainer and Linux distribution.</p>
+      <p class="text-gray-300 mb-4">If you're not sure where to find the nginx.conf file, you can run <code class="text-cyan-300">nginx -t</code> to determine the location:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Check config file location and test syntax</span><br>
+        $ /usr/sbin/nginx -t<br>
+        nginx: the configuration file /etc/nginx/nginx.conf syntax is ok<br>
+        nginx: configuration file /etc/nginx/nginx.conf test is successful
+      </div>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-4">
+        <p class="text-gray-300 font-medium"><i class="fas fa-info-circle text-blue-400 mr-2"></i>What does nginx -t do?</p>
+        <p class="text-gray-400 text-sm mt-1">In addition to running as a web server, the nginx binary includes a few extra bits of utility functions that you can use. Passing the <code class="text-cyan-300">-t</code> command line flag just tests that the configuration file is valid and exits.</p>
+      </div>
+      <p class="text-gray-300 mb-3">Here is a table for reference (this can be accessed by running <code class="text-cyan-300">nginx -h</code>):</p>
+      <div class="overflow-x-auto mb-4">
+        <table class="comparison-table w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th class="text-gray-200">Option</th>
+              <th class="text-gray-200">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="text-gray-300 font-mono">-?, -h</td><td class="text-gray-400">show the help</td></tr>
+            <tr><td class="text-gray-300 font-mono">-v</td><td class="text-gray-400">show version and exit</td></tr>
+            <tr><td class="text-gray-300 font-mono">-V</td><td class="text-gray-400">show version AND configure options then exit</td></tr>
+            <tr><td class="text-gray-300 font-mono">-t</td><td class="text-gray-400">test configuration and exit</td></tr>
+            <tr><td class="text-gray-300 font-mono">-q</td><td class="text-gray-400">suppress non-error messages during configuration testing</td></tr>
+            <tr><td class="text-gray-300 font-mono">-s signal</td><td class="text-gray-400">send signal to master process: stop, quit, reopen, reload</td></tr>
+            <tr><td class="text-gray-300 font-mono">-p prefix</td><td class="text-gray-400">set prefix path (default: /usr/share/nginx)</td></tr>
+            <tr><td class="text-gray-300 font-mono">-c filename</td><td class="text-gray-400">set configuration file (default: /etc/nginx/nginx.conf)</td></tr>
+            <tr><td class="text-gray-300 font-mono">-g directives</td><td class="text-gray-400">set global directives out of configuration file</td></tr>
+            <tr><td class="text-gray-300 font-mono">-T</td><td class="text-gray-400">dumps the entire configuration to stdout</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-gray-300 mb-3">If you don't want to use the default path of the nginx configuration file, you can pass in your own location with <code class="text-cyan-300">nginx -c filename</code>.</p>
+      <div class="code-block">
+        <span class="cm"># Use a custom config file location</span><br>
+        $ nginx -c /home/user/nginx.conf
+      </div>
+    </div>
+
+    <div id="configuring-running" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-play text-2xl text-emerald-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Configuring and Running nginx</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The nginx configuration file is easy to understand and quite readable — the syntax reads somewhat like code. The most basic nginx configuration that does something is shown below:</p>
+      <div class="code-block mb-4">
+        <span class="kw">events</span> {<br>
+        }<br>
+        <br>
+        <span class="kw">http</span> {<br>
+        &nbsp;&nbsp;<span class="kw">server</span> {<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">If you used a package manager to install nginx, it was probably packaged with an init script: <code class="text-cyan-300">service nginx start</code> will start the server. If you installed nginx from source, you can simply run <code class="text-cyan-300">nginx</code> to start the server.</p>
+      <p class="text-gray-300 mb-3">To verify that nginx is running, use <code class="text-cyan-300">ps</code> or <code class="text-cyan-300">curl</code>:</p>
+      <div class="code-block mb-3">
+        <span class="cm"># Verify with ps — should see master and worker processes</span><br>
+        $ ps aux | grep nginx<br>
+        root 24323 0.0 0.0 85772 1213 ? Ss 01:24 0:00  nginx: master process<br>
+        nobody 24324 0.0 0.0 85992 2004 ? S 01:24 0:00 nginx: worker process
+      </div>
+      <div class="code-block">
+        <span class="cm"># Verify with curl — should see HTML output</span><br>
+        $ curl 127.0.0.1<br>
+        &lt;!DOCTYPE html&gt;<br>
+        &lt;html&gt;<br>
+        &lt;head&gt;<br>
+        &lt;title&gt;Welcome to nginx!&lt;/title&gt;
+      </div>
+    </div>
+
+    <div id="default-values" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-undo text-2xl text-amber-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Filling in the Blanks (Default Values)</h2>
+      </div>
+      <p class="text-gray-300 mb-3">With a nearly blank configuration file, nginx still serves HTTP requests to <code class="text-cyan-300">/usr/share/nginx/html</code>. Here is what that configuration file actually looks like with the default values added:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Basic configuration file, with default values</span><br>
+        <span class="kw">user</span> nobody nogroup;<br>
+        <span class="kw">worker_processes</span> 1;<br>
+        <br>
+        <span class="kw">events</span> {<br>
+        &nbsp;&nbsp;<span class="prop">worker_connections</span> 512;<br>
+        }<br>
+        <br>
+        <span class="kw">http</span> {<br>
+        &nbsp;&nbsp;<span class="kw">server</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">listen</span> *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">server_name</span> <span class="str">""</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">root</span> /usr/share/nginx/html;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">The configuration file is made up of directives. There are two types:</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-cyan-300 font-semibold mb-2"><i class="fas fa-minus mr-2"></i>Simple Directives</h3>
+          <p class="text-gray-400 text-sm">A simple statement like <code class="text-cyan-300">listen *:80;</code>. Made up of a name, parameters, and a closing semicolon. Simple directives can take multiple parameters, some optional (key-value pairs or just the key name for true values).</p>
+          <div class="code-block text-xs p-3 mt-2">
+            <span class="prop">listen</span> *:80 <span class="kw">ssl</span> <span class="prop">backlog</span>=511;
+          </div>
+          <p class="text-gray-400 text-xs mt-2">For <code class="text-cyan-300">ssl</code>, the parameter was passed without a corresponding value — this indicates a true value and turns SSL on.</p>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-4 border border-slate-700">
+          <h3 class="text-purple-300 font-semibold mb-2"><i class="fas fa-code-branch mr-2"></i>Context Directives</h3>
+          <p class="text-gray-400 text-sm">Similar to a simple directive but wraps a group of directives inside curly braces instead of ending in a semicolon. Context directives can be nested and provide a configuration inheritance model. Examples: <code class="text-cyan-300">events</code>, <code class="text-cyan-300">http</code>, and <code class="text-cyan-300">server</code>.</p>
+        </div>
+      </div>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300 font-medium"><i class="fas fa-arrow-down text-indigo-400 mr-2"></i>Directive Inheritance</p>
+        <p class="text-gray-400 text-sm mt-1">nginx has a very lightweight inheritance model. Directives are always inherited downwards. You may overwrite previously defined directives in nested contexts:</p>
+        <div class="code-block text-xs p-3 mt-2">
+          <span class="kw">server</span> {<br>
+          &nbsp;&nbsp;<span class="prop">root</span> /usr/share/nginx/html;<br>
+          <br>
+          &nbsp;&nbsp;<span class="kw">location</span> /foo {<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">root</span> /usr/share;<br>
+          &nbsp;&nbsp;}<br>
+          }
+        </div>
+        <p class="text-gray-400 text-xs mt-2">If the <code class="text-cyan-300">root</code> directive was not explicitly specified inside the location block, the value would be inherited from the server context.</p>
+      </div>
+    </div>
+
+    <div id="user-worker" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-users text-2xl text-green-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">user and worker_processes</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">user</code> directive sets the unix user and group that the nginx worker processes will run as. By default, the user is <code class="text-cyan-300">nobody</code> and the group is <code class="text-cyan-300">nogroup</code>.</p>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-4">
+        <p class="text-gray-300 font-medium"><i class="fas fa-exclamation-triangle text-amber-400 mr-2"></i>Running nginx as a non-root user</p>
+        <p class="text-gray-400 text-sm mt-1">If you choose to run nginx as a non-root user, the <code class="text-cyan-300">user</code> directive will be ignored. nginx will also not be able to bind to ports below 1024.</p>
+      </div>
+      <p class="text-gray-300 mb-3">When you run <code class="text-cyan-300">ps</code>, you'll see two nginx processes — a master running as <strong class="text-amber-300">root</strong> and a worker running as <strong class="text-amber-300">nobody</strong>. On Linux, only the root user can bind to ports below 1024. The master process reads the config, binds ports, and runs the worker processes. The worker process serves incoming HTTP requests.</p>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">worker_processes</code> directive configures the number of worker processes. Default is <strong class="text-amber-300">1</strong>. It's common to set this to the number of CPU cores. The value <code class="text-cyan-300">auto</code> can be set to have nginx auto-detect the number of logical CPU cores.</p>
+      <div class="code-block">
+        <span class="cm"># ps output showing root master and nobody worker</span><br>
+        $ ps aux | grep nginx<br>
+        root   24484 0.0 0.0 85772 1312 ? Ss 1:38 0:00 nginx: master process<br>
+        nobody 24485 0.0 0.0 85992 2004 ? S 1:38 0:00 nginx: worker process
+      </div>
+    </div>
+
+    <div id="events-context" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-bolt text-2xl text-yellow-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Events Context</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">events</code> context is used to configure parts of the connection processing in nginx. There can only ever be one events context and it must be in the main context.</p>
+      <div class="code-block mb-4">
+        <span class="kw">events</span> {<br>
+        &nbsp;&nbsp;<span class="prop">worker_connections</span> 512;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">nginx is an event-driven server. Each worker process is single-threaded and runs a non-blocking event loop to process requests very quickly. The <code class="text-cyan-300">worker_connections</code> directive sets the maximum number of simultaneous connections per worker process (default: <strong class="text-amber-300">512</strong>).</p>
+      <p class="text-gray-300">This limit includes connections from clients and any subsequent connections nginx makes to talk to your PHP or Rails application. On Linux, each connection counts as an open file, and there is an OS limit on maximum open files per process.</p>
+    </div>
+
+    <div id="http-server" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-globe text-2xl text-indigo-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">HTTP and Server Contexts</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The HTTP context is where you define your HTTP servers. It is mostly a container for holding one or more <code class="text-cyan-300">server</code> contexts. Shared directives placed in the HTTP context apply to all server contexts within.</p>
+      <div class="code-block mb-4">
+        <span class="kw">http</span> {<br>
+        &nbsp;&nbsp;<span class="kw">server</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">listen</span> *:80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">server_name</span> <span class="str">""</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">root</span> /usr/share/nginx/html;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <h3 class="text-white font-semibold mb-2 mt-4"><i class="fas fa-headphones text-blue-400 mr-2"></i>Listen Directive</h3>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">listen</code> directive tells the server which network interface and port to listen on, defaulting to <code class="text-cyan-300">*:80</code>. It may be specified multiple times in a single server block:</p>
+      <div class="code-block mb-4">
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> *:80;<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> *:443 <span class="kw">ssl</span>;<br>
+        }
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-tag text-green-400 mr-2"></i>server_name Directive</h3>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">server_name</code> directive is used to determine which server context to use for an incoming request. It is matched against the HTTP <code class="text-cyan-300">Host</code> header. It can be an exact domain name, a wildcard, or a regular expression. A value of <code class="text-cyan-300">""</code> means no Host header is necessary.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Example HTTP request with Host header</span><br>
+        GET /foobar.html HTTP/1.0<br>
+        Host: example.org<br>
+        User-Agent: FakeUserAgent/1.0
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-folder text-amber-400 mr-2"></i>Root Directive</h3>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">root</code> directive specifies the path of the directory to serve static files out of. Any and all files in the root directory will become publicly available over HTTP. The URI is appended to the root path — a request to <code class="text-cyan-300">http://127.0.0.1/foo/test.html</code> resolves to <code class="text-cyan-300">/usr/share/nginx/html/foo/test.html</code>.</p>
+      <div class="code-block">
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> *:80;<br>
+        &nbsp;&nbsp;<span class="prop">server_name</span> <span class="str">""</span>;<br>
+        &nbsp;&nbsp;<span class="prop">root</span> /usr/share/nginx/html;<br>
+        }
+      </div>
+    </div>
+
+    <div id="reload-stop" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-sync text-2xl text-rose-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Reloading and Stopping nginx</h2>
+      </div>
+      <p class="text-gray-300 mb-3">When you modify the nginx configuration, nginx does <strong class="text-amber-300">not</strong> pick it up automatically — you need to reload the process. To reload, send the <code class="text-cyan-300">HUP</code> signal:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Reload nginx configuration gracefully</span><br>
+        $ <span class="kw">kill</span> -HUP `<span class="kw">cat</span> /var/run/nginx.pid`
+      </div>
+      <p class="text-gray-300 mb-3">When you reload, nginx verifies the config syntax first, so you don't have to worry about accidentally killing nginx with an invalid configuration. Reloading starts new worker processes and kills off old ones gracefully without dropping any requests.</p>
+      <p class="text-gray-300 mb-3">To shutdown nginx gracefully:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Graceful shutdown — no dropped requests</span><br>
+        $ <span class="kw">kill</span> -QUIT `<span class="kw">cat</span> /var/run/nginx.pid`
+      </div>
+      <p class="text-gray-300 mb-3">The list of Unix signals that nginx responds to:</p>
+      <div class="overflow-x-auto mb-4">
+        <table class="comparison-table w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th class="text-gray-200">Signal</th>
+              <th class="text-gray-200">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="text-gray-300 font-mono">TERM, INT</td><td class="text-gray-400">Quick shutdown</td></tr>
+            <tr><td class="text-gray-300 font-mono">QUIT</td><td class="text-gray-400">Graceful shutdown</td></tr>
+            <tr><td class="text-gray-300 font-mono">KILL</td><td class="text-gray-400">Halts a stubborn process</td></tr>
+            <tr><td class="text-gray-300 font-mono">HUP</td><td class="text-gray-400">Configuration reload</td></tr>
+            <tr><td class="text-gray-300 font-mono">USR1</td><td class="text-gray-400">Reopen the log files (useful for log rotation)</td></tr>
+            <tr><td class="text-gray-300 font-mono">USR2</td><td class="text-gray-400">Upgrade executable on the fly</td></tr>
+            <tr><td class="text-gray-300 font-mono">WINCH</td><td class="text-gray-400">Gracefully shutdown worker processes</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-4">
+        <p class="text-gray-300 font-medium"><i class="fas fa-pen text-amber-400 mr-2"></i>Making configuration changes</p>
+        <p class="text-gray-400 text-sm mt-1">Anytime you make a configuration change to your nginx.conf file, you'll have to explicitly tell nginx to reload the configuration with the <code class="text-cyan-300">HUP</code> signal — nginx does not pick up configuration changes automatically.</p>
+      </div>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-3">
+        <p class="text-gray-300 font-medium"><i class="fas fa-arrow-up text-emerald-400 mr-2"></i>Upgrading the nginx binary without Downtime</p>
+        <p class="text-gray-400 text-sm mt-1">nginx can upgrade itself on the fly without any downtime:</p>
+        <div class="code-block text-xs p-3 mt-2">
+          <span class="cm"># 1. Find the master PID</span><br>
+          $ cat /var/run/nginx.pid<br>
+          24484<br>
+          <br>
+          <span class="cm"># 2. Send USR2 — starts new master process and workers</span><br>
+          $ kill -USR2 24484<br>
+          <br>
+          <span class="cm"># 3. Send WINCH to old master — gracefully stop old workers</span><br>
+          $ kill -WINCH 24484<br>
+          <br>
+          <span class="cm"># 4. Once old workers are done, send QUIT to kill old master</span><br>
+          $ kill -QUIT 24484
+        </div>
+        <p class="text-gray-400 text-xs mt-2">After USR2, both old and new processes serve requests together. WINCH tells the old master to stop taking new requests and shut down children once in-flight requests complete. If you need to bail out, send HUP to the old master to spin up children again.</p>
+      </div>
+    </div>
+
+    <div id="static-files" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-file text-2xl text-cyan-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Serving Static Files</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The most basic case for nginx is serving static files (HTML, CSS, JavaScript, images, etc). All files are stored in a common directory called a <strong class="text-amber-300">document root</strong>. When someone requests <code class="text-cyan-300">http://example.org/test.html</code>, nginx looks for <code class="text-cyan-300">test.html</code> inside the document root directory.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Nginx with a document root</span><br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> *:80;<br>
+        &nbsp;&nbsp;<span class="prop">root</span> /usr/share/nginx/html;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">By default, nginx blesses a file named <strong class="text-amber-300">index.html</strong> to be shown when a filename isn't specified in the URL. You can override this with the <code class="text-cyan-300">index</code> directive:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Make foobar.html the index</span><br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> *:80;<br>
+        &nbsp;&nbsp;<span class="prop">root</span> /usr/share/nginx/html;<br>
+        &nbsp;&nbsp;<span class="prop">index</span> ADifferentIndexFile.html;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">You may also pass multiple index files. nginx will check for the existence of each file and serve the first one found:</p>
+      <div class="code-block mb-3">
+        <span class="cm"># Multiple index files — checks existence in order</span><br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> *:80;<br>
+        &nbsp;&nbsp;<span class="prop">root</span> /usr/share/nginx/html;<br>
+        &nbsp;&nbsp;<span class="prop">index</span> maintenance.html index.html;<br>
+        }
+      </div>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <p class="text-gray-300 font-medium"><i class="fas fa-wrench text-amber-400 mr-2"></i>Maintenance mode pattern</p>
+        <p class="text-gray-400 text-sm mt-1">Create a <code class="text-cyan-300">maintenance.html</code> page and nginx will serve that instead of <code class="text-cyan-300">index.html</code>. When you're done, just delete the file and it goes back to serving the regular index page. This is a common way to handle deployments or scheduled downtime.</p>
+      </div>
+    </div>
+
+    <div id="location-block" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-map-marker-alt text-2xl text-pink-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">The Location Block</h2>
+      </div>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">location</code> block allows us to provide a custom configuration for an incoming request URI by matching it against a prefix string or regular expression.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Basic location block syntax</span><br>
+        <span class="kw">location</span> optional_modifier uri_matcher {<br>
+        &nbsp;&nbsp;configuration_directives<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3"><strong class="text-amber-300">Prefix matching:</strong> The most specific match wins. Order of prefix blocks does not matter.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Basic location block example</span><br>
+        <span class="kw">location</span> / {<br>
+        &nbsp;&nbsp;<span class="prop">root</span> /var/www/html;<br>
+        }<br>
+        <span class="kw">location</span> /foobar/ {<br>
+        &nbsp;&nbsp;<span class="prop">root</span> /data;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">A request to <code class="text-cyan-300">http://example.org/foobar/test.html</code> resolves to <code class="text-cyan-300">/data/foobar/test.html</code>.</p>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-exchange-alt text-indigo-400 mr-2"></i>root vs alias</h3>
+      <p class="text-gray-300 mb-3"><code class="text-cyan-300">root</code> appends the URI path to the root value. <code class="text-cyan-300">alias</code> replaces the location path with the specified path. The trailing slash is important with alias.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># alias replaces the specified location path</span><br>
+        <span class="kw">location</span> /gifs/ {<br>
+        &nbsp;&nbsp;<span class="prop">alias</span> /data/images/;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">A request to <code class="text-cyan-300">http://example.org/gifs/business_cat.gif</code> resolves to <code class="text-cyan-300">/data/images/business_cat.gif</code>. With <code class="text-cyan-300">root</code>, it would resolve to <code class="text-cyan-300">/data/images/gifs/business_cat.gif</code>.</p>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-equals text-emerald-400 mr-2"></i>Exact Match (=)</h3>
+      <p class="text-gray-300 mb-3">The exact match modifier (<code class="text-cyan-300">=</code>) matches an exact request URI and terminates the search immediately. It can improve performance for highly accessed URIs.</p>
+      <div class="code-block mb-3">
+        <span class="cm"># Exact match — terminates search immediately</span><br>
+        <span class="kw">location</span> = /foobar/ {<br>
+        &nbsp;&nbsp;...<br>
+        }<br>
+        <span class="kw">location</span> /foobar/ {<br>
+        &nbsp;&nbsp;...<br>
+        }
+      </div>
+      <p class="text-gray-300">A request URI for <code class="text-cyan-300">/foobar/</code> will always use the first block, even though the prefix block also matches.</p>
+    </div>
+
+    <div id="regex-location" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-code text-2xl text-teal-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Regular Expression Location Blocks</h2>
+      </div>
+      <p class="text-gray-300 mb-3"><code class="text-cyan-300">~</code> for case-sensitive regex, <code class="text-cyan-300">~*</code> for case-insensitive. <strong class="text-amber-300">Order matters</strong> — the first regex match wins.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Case-sensitive: matches .gif and .jpg</span><br>
+        <span class="kw">location</span> ~ \.(gif|jpg)$ {<br>
+        &nbsp;&nbsp;...<br>
+        }<br>
+        <br>
+        <span class="cm"># Case-insensitive: matches .GIF, .Gif, etc.</span><br>
+        <span class="kw">location</span> ~* \.(gif|jpg)$ {<br>
+        &nbsp;&nbsp;...<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-4">Regex is processor-intensive — use only when necessary. Prefix matching is always faster.</p>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-forward text-amber-400 mr-2"></i>Skipping Regular Expressions (^~)</h3>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">^~</code> modifier (carat-tilde) skips regex matching when this prefix is the best match:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Using ^~ to skip regex evaluation</span><br>
+        <span class="kw">location</span> ^~ /foobar/images {<br>
+        &nbsp;&nbsp;<span class="prop">root</span> /var/www/foobar;<br>
+        }<br>
+        <br>
+        <span class="kw">location</span> ~* \.(gif|jpg)$ {<br>
+        &nbsp;&nbsp;<span class="prop">root</span> /var/www/images;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-4">Without <code class="text-cyan-300">^~</code>, a request for <code class="text-cyan-300">/foobar/images/dog.gif</code> would match the regex block. With <code class="text-cyan-300">^~</code>, it uses the prefix block instead.</p>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-sitemap text-purple-400 mr-2"></i>Location Block Selection Algorithm</h3>
+      <p class="text-gray-300 mb-3">The exact search algorithm nginx uses to select the location block:</p>
+      <div class="overflow-x-auto mb-4">
+        <table class="comparison-table w-full text-left border-collapse">
+          <thead>
+            <tr>
+              <th class="text-gray-200">Modifier</th>
+              <th class="text-gray-200">Name</th>
+              <th class="text-gray-200">Description</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr><td class="text-gray-300 font-mono">(none)</td><td class="text-gray-400">Prefix</td><td class="text-gray-400">Matches on the prefix of a URI</td></tr>
+            <tr><td class="text-gray-300 font-mono">=</td><td class="text-gray-400">Exact Match</td><td class="text-gray-400">Matches an exact URI</td></tr>
+            <tr><td class="text-gray-300 font-mono">~</td><td class="text-gray-400">Case-Sensitive Regex</td><td class="text-gray-400">Matches against a case-sensitive regular expression</td></tr>
+            <tr><td class="text-gray-300 font-mono">~*</td><td class="text-gray-400">Case-Insensitive Regex</td><td class="text-gray-400">Matches against a case-insensitive regular expression</td></tr>
+            <tr><td class="text-gray-300 font-mono">^~</td><td class="text-gray-400">Non-Regex Prefix</td><td class="text-gray-400">Matches against a prefix and skips regex matching</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <p class="text-gray-300 font-medium"><i class="fas fa-list-ol text-blue-400 mr-2"></i>Selection algorithm:</p>
+        <ol class="text-gray-400 text-sm mt-2 space-y-1 list-decimal list-inside">
+          <li>Exact match (<code class="text-cyan-300">=</code>) blocks are checked first. If found, terminate.</li>
+          <li>Check prefix blocks for the longest matching prefix.
+            <br>a. If the best match has <code class="text-cyan-300">^~</code>, terminate.</li>
+          <li>Check regex blocks in sequential order. First match wins, terminate.</li>
+          <li>If no regex matched, use the best prefix from step 2.</li>
+        </ol>
+      </div>
+    </div>
+
+    <div id="named-location" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-at text-2xl text-orange-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Named Location Blocks</h2>
+      </div>
+      <p class="text-gray-300 mb-3">Named location blocks are denoted by the <code class="text-cyan-300">@</code> prefix. They cannot match the request URI directly and are used for <strong class="text-amber-300">internal redirection</strong>.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Named location block (does nothing by itself)</span><br>
+        <span class="kw">location</span> @foobar {<br>
+        &nbsp;&nbsp;...<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">Named locations are commonly used with the <code class="text-cyan-300">try_files</code> directive:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Named location used with try_files</span><br>
+        <span class="kw">location</span> / {<br>
+        &nbsp;&nbsp;<span class="prop">try_files</span> maintenance.html index.html @foobar;<br>
+        }<br>
+        <br>
+        <span class="kw">location</span> @foobar {<br>
+        &nbsp;&nbsp;...<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3"><code class="text-cyan-300">try_files</code> checks for the existence of each file in order and uses the first one found. The last parameter may be a named location or an explicit error code:</p>
+      <div class="code-block mb-3">
+        <span class="cm"># try_files with an error code</span><br>
+        <span class="kw">location</span> / {<br>
+        &nbsp;&nbsp;<span class="prop">try_files</span> maintenance.html index.html <span class="op">=404</span>;<br>
+        }
+      </div>
+      <p class="text-gray-300">If neither file is found, nginx returns a 404 error.</p>
+    </div>
+
+    <div id="location-inheritance" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-level-down-alt text-2xl text-sky-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Location Block Inheritance</h2>
+      </div>
+      <p class="text-gray-300">Directives defined in parent contexts (such as <code class="text-cyan-300">server</code> or <code class="text-cyan-300">http</code>) are inherited by nested location blocks. You can override inherited directives inside a location block to customize behavior for specific URI patterns. If a directive is not explicitly set in the location block, the value from the enclosing context is used.</p>
+    </div>
+
+    <div id="virtualhosts" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-server text-2xl text-emerald-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Virtualhosts</h2>
+      </div>
+      <p class="text-gray-300 mb-3">nginx allows us to define as many server blocks as we want — this is called <strong class="text-amber-300">virtual hosting</strong>. Each server block can host a different website.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Basic virtual hosts example</span><br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> 80;<br>
+        &nbsp;&nbsp;<span class="prop">server_name</span> example.com;<br>
+        }<br>
+        <br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> 80;<br>
+        &nbsp;&nbsp;<span class="prop">server_name</span> foobar.com;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">The <code class="text-cyan-300">server_name</code> can contain subdomains, wildcards, and regular expressions:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Multiple server names</span><br>
+        <span class="prop">server_name</span> example.com www.example.com;<br>
+        <br>
+        <span class="cm"># Wildcards</span><br>
+        <span class="prop">server_name</span> example.com *.example.com www.example.*;<br>
+        <br>
+        <span class="cm"># Matches both example.com and *.example.com</span><br>
+        <span class="prop">server_name</span> .example.com;<br>
+        <br>
+        <span class="cm"># Regular expression</span><br>
+        <span class="prop">server_name</span> ~^www[0-9]\.example\.com$;
+      </div>
+      <p class="text-gray-300 mb-3">Regular expressions can contain named capturing groups to set dynamic variables:</p>
+      <div class="code-block mb-3">
+        <span class="cm"># Using capture groups in server_name</span><br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> 80;<br>
+        &nbsp;&nbsp;<span class="prop">server_name</span> ~^(www\.)?(?&lt;domain&gt;.+)$;<br>
+        <br>
+        &nbsp;&nbsp;<span class="kw">location</span> / {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">root</span> /sites/$domain;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+      <p class="text-gray-300">The <code class="text-cyan-300">(?&lt;domain&gt;.+)</code> syntax creates a named capture group, setting the <code class="text-cyan-300">$domain</code> variable to dynamically set the root path.</p>
+    </div>
+
+    <div id="default-server" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-star text-2xl text-yellow-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Default Server Block</h2>
+      </div>
+      <p class="text-gray-300 mb-3">nginx matches the IP:Port combination first, then the Host header against <code class="text-cyan-300">server_name</code>:</p>
+      <ol class="text-gray-300 mb-4 space-y-1 list-decimal list-inside">
+        <li>The exact name (<code class="text-cyan-300">www.example.com</code>)</li>
+        <li>The longest wildcard starting with an asterisk (<code class="text-cyan-300">*.example.com</code>)</li>
+        <li>The longest wildcard ending with an asterisk (<code class="text-cyan-300">www.*</code>)</li>
+        <li>The first matching regex, in order defined in the config</li>
+      </ol>
+      <p class="text-gray-300 mb-3">If no server_name matches, the <strong class="text-amber-300">default server</strong> is used. By default, this is the first server block defined. You can set it explicitly:</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Explicitly setting the default_server parameter</span><br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> 80;<br>
+        &nbsp;&nbsp;<span class="prop">server_name</span> example.com;<br>
+        }<br>
+        <br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> 80 <span class="kw">default_server</span>;<br>
+        &nbsp;&nbsp;<span class="prop">server_name</span> foobar.com;<br>
+        }
+      </div>
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700">
+        <p class="text-gray-300 font-medium"><i class="fas fa-ban text-red-400 mr-2"></i>Dropping requests without a server name</p>
+        <p class="text-gray-400 text-sm mt-1">You can drop requests made to your server without a Host header by returning the special nginx error code <strong class="text-amber-300">444</strong> (immediately close the connection):</p>
+        <div class="code-block text-xs p-3 mt-2">
+          <span class="cm"># Server that drops requests without a Host header</span><br>
+          <span class="kw">server</span> {<br>
+          &nbsp;&nbsp;<span class="prop">listen</span> 80;<br>
+          &nbsp;&nbsp;<span class="prop">server_name</span> <span class="str">""</span>;<br>
+          &nbsp;&nbsp;<span class="kw">return</span> 444;<br>
+          }
+        </div>
+      </div>
+    </div>
+
+    <div id="ssl" class="glow-card mb-6 fade-in">
+      <div class="flex items-center gap-3 mb-3">
+        <i class="fas fa-lock text-2xl text-green-400 pulse-icon"></i>
+        <h2 class="text-xl font-semibold text-white">Configuring SSL</h2>
+      </div>
+      <p class="text-gray-300 mb-3">SSL (Secure Sockets Layer) creates a secure connection between an HTTP Client and an HTTP(S) Server. nginx offers a very robust and high performance SSL implementation.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Most basic SSL Configuration</span><br>
+        <span class="kw">server</span> {<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> 80;<br>
+        &nbsp;&nbsp;<span class="prop">listen</span> 443 <span class="kw">ssl</span>;<br>
+        &nbsp;&nbsp;<span class="prop">server_name</span> www.foobar.com;<br>
+        &nbsp;&nbsp;<span class="prop">ssl_certificate</span> www.foobar.com.crt;<br>
+        &nbsp;&nbsp;<span class="prop">ssl_certificate_key</span> www.foobar.com.key;<br>
+        }
+      </div>
+      <p class="text-gray-300 mb-3">Two listen directives allow a compact server block that serves both non-SSL and SSL requests. The <code class="text-cyan-300">ssl</code> parameter tells nginx to expect SSL traffic on that port. <code class="text-cyan-300">ssl_certificate</code> specifies the path to the signed certificate (PEM format), and <code class="text-cyan-300">ssl_certificate_key</code> specifies the key.</p>
+      <p class="text-gray-300 mb-3">If you specify a relative path, nginx prefixes it with the configuration directory (<code class="text-cyan-300">/etc/nginx</code>). You may also specify an absolute path.</p>
+
+      <div class="bg-slate-800/40 rounded-lg p-4 border border-slate-700 mb-4">
+        <p class="text-gray-300 font-medium"><i class="fas fa-exclamation-triangle text-amber-400 mr-2"></i>Beware outdated SSL information</p>
+        <p class="text-gray-400 text-sm mt-1">In previous versions of nginx (prior to 0.7.14), you had to configure separate server blocks for non-SSL and SSL. The modern approach shown above is the correct syntax.</p>
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-share-alt text-indigo-400 mr-2"></i>Sharing a wildcard certificate</h3>
+      <p class="text-gray-300 mb-3">You can generate a wildcard SSL certificate valid for multiple subdomains (e.g., <code class="text-cyan-300">*.example.com</code>). Instead of configuring <code class="text-cyan-300">ssl_certificate</code> for each server block, set it at the <code class="text-cyan-300">http</code> block level for inheritance. This also has a lighter memory footprint as the certificate is loaded only once.</p>
+      <div class="code-block mb-4">
+        <span class="cm"># Sharing SSL directives at the http level</span><br>
+        <span class="kw">http</span> {<br>
+        &nbsp;&nbsp;<span class="prop">ssl_certificate</span> star.example.com.crt;<br>
+        &nbsp;&nbsp;<span class="prop">ssl_certificate_key</span> star.example.com.key;<br>
+        <br>
+        &nbsp;&nbsp;<span class="kw">server</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">listen</span> 80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">listen</span> 443 <span class="kw">ssl</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">server_name</span> www.example.com;<br>
+        &nbsp;&nbsp;}<br>
+        <br>
+        &nbsp;&nbsp;<span class="kw">server</span> {<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">listen</span> 80;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">listen</span> 443 <span class="kw">ssl</span>;<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="prop">server_name</span> billing.example.com;<br>
+        &nbsp;&nbsp;}<br>
+        }
+      </div>
+
+      <h3 class="text-white font-semibold mb-2"><i class="fas fa-globe text-cyan-400 mr-2"></i>SNI (Server Name Indication)</h3>
+      <p class="text-gray-300 mb-3">Up until recently, each HTTPS site needed its own dedicated IP address because the entire HTTP payload was encrypted — including the Host header needed to determine which SSL configuration to use. SNI solves this by passing the domain name <strong class="text-amber-300">unencrypted</strong>, allowing multiple SSL sites on a single IP address.</p>
+      <p class="text-gray-300 mb-3">SNI is supported on modern browsers:</p>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-2 mb-3">
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700 flex items-center gap-2">
+          <i class="fab fa-chrome text-blue-400"></i>
+          <span class="text-gray-300 text-sm">Chrome (Vista+)</span>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700 flex items-center gap-2">
+          <i class="fab fa-safari text-cyan-400"></i>
+          <span class="text-gray-300 text-sm">Safari 3.2.1 (Vista+)</span>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700 flex items-center gap-2">
+          <i class="fab fa-firefox text-orange-400"></i>
+          <span class="text-gray-300 text-sm">Firefox 2.0+</span>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700 flex items-center gap-2">
+          <i class="fab fa-internet-explorer text-blue-400"></i>
+          <span class="text-gray-300 text-sm">MSIE 7.0 (Vista+)</span>
+        </div>
+        <div class="bg-slate-800/50 rounded-lg p-3 border border-slate-700 flex items-center gap-2">
+          <i class="fab fa-opera text-red-400"></i>
+          <span class="text-gray-300 text-sm">Opera 8.0+</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex justify-between items-center mt-8 pt-4 border-t border-slate-800">
+      <a href="../index.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all"><i class="fas fa-arrow-left"></i> Back to Index</a>
+      <a href="ch03_advanced_configuration.html" class="inline-flex items-center gap-2 text-blue-400 hover:text-blue-300 transition-all">Next: Advanced Configuration <i class="fas fa-arrow-right"></i></a>
+    </div>
+
+    <div class="text-center text-gray-500 text-xs mt-8">
+      <i class="fas fa-book-open mr-1"></i> Based on "NGINX Cookbook" — Chapter 2: Basic Configuration
+    </div>
+  </div>
+
+  <script>
+    document.addEventListener('DOMContentLoaded', function() {
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      }, { threshold: 0.1 });
+
+      document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+
+      document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+        anchor.addEventListener('click', function(e) {
+          e.preventDefault();
+          const target = document.querySelector(this.getAttribute('href'));
+          if (target) {
+            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+          }
+        });
+      });
+    });
+
+    function toggleAnswer(btn) {
+      const answer = btn.nextElementSibling;
+      const icon = btn.querySelector('i');
+      if (answer.classList.contains('hidden')) {
+        answer.classList.remove('hidden');
+        icon.className = 'fas fa-chevron-up mr-1';
+      } else {
+        answer.classList.add('hidden');
+        icon.className = 'fas fa-chevron-down mr-1';
+      }
+    }
+  </script>
+</body>
+</html>

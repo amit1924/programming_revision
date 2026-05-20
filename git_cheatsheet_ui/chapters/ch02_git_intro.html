@@ -1,0 +1,941 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overview of GIT — Git & GitHub Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .git-icon { color: #f05032; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideInLeft { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes slideInRight { from { opacity:0; transform:translateX(30px); } to { opacity:1; transform:translateX(0); } }
+    @keyframes pulseGlow { 0%,100% { box-shadow:0 0 10px rgba(99,102,241,0.2); } 50% { box-shadow:0 0 25px rgba(99,102,241,0.5); } }
+    @keyframes scaleIn { from { opacity:0; transform:scale(0.9); } to { opacity:1; transform:scale(1); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-left { animation: slideInLeft 0.7s ease-out; }
+    .animate-slide-right { animation: slideInRight 0.7s ease-out; }
+    .animate-scale-in { animation: scaleIn 0.5s ease-out; }
+    .animate-pulse-glow { animation: pulseGlow 2s ease-in-out infinite; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; font-family: 'Fira Code', 'Consolas', monospace; }
+    .timeline-dot::before { content: ''; position: absolute; left: -1.75rem; top: 0.35rem; width: 14px; height: 14px; border-radius: 50%; }
+    .section-link { scroll-margin-top: 1.5rem; }
+  </style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors duration-200 mb-6 group">
+      <i class="fas fa-arrow-left text-sm group-hover:-translate-x-1 transition-transform"></i>
+      <span>Back to Index</span>
+    </a>
+
+    <!-- Header -->
+    <div class="text-center mb-12 animate-fade-in">
+      <i class="fab fa-git-alt text-7xl git-icon mb-4"></i>
+      <h1 class="text-4xl md:text-6xl font-bold gradient-text">Overview of GIT</h1>
+      <p class="text-gray-400 mt-3 text-lg">History, design, commands &amp; graphical tools</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-10 animate-fade-in">
+      <a href="#history" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-indigo-900/40 hover:border-indigo-600 transition-all"><i class="fas fa-clock mr-1 text-rose-400"></i>History</a>
+      <a href="#objectives" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-indigo-900/40 hover:border-indigo-600 transition-all"><i class="fas fa-bullseye mr-1 text-emerald-400"></i>Objectives</a>
+      <a href="#design" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-indigo-900/40 hover:border-indigo-600 transition-all"><i class="fas fa-cogs mr-1 text-cyan-400"></i>Design Choices</a>
+      <a href="#commands" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-indigo-900/40 hover:border-indigo-600 transition-all"><i class="fas fa-terminal mr-1 text-purple-400"></i>Commands</a>
+      <a href="#guis" class="px-4 py-2 rounded-full bg-slate-800/60 border border-slate-700 text-sm text-gray-300 hover:bg-indigo-900/40 hover:border-indigo-600 transition-all"><i class="fas fa-desktop mr-1 text-yellow-400"></i>GUIs</a>
+    </div>
+
+    <!-- ============================== -->
+    <!-- 1. GIT HISTORY                 -->
+    <!-- ============================== -->
+    <section id="history" class="section-link mb-12 animate-slide-left">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-clock text-3xl text-rose-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">Git History</h2>
+      </div>
+      <p class="text-gray-400 mb-6 leading-relaxed">
+        Understanding <span class="text-orange-300 font-semibold">why</span> Git was created helps explain many of its design decisions.
+        The Linux kernel project needed a version control system that could scale to thousands of contributors
+        working across the globe — and none of the existing tools at the time could meet those demands.
+      </p>
+
+      <!-- Timeline Cards -->
+      <div class="relative pl-8 border-l-2 border-slate-700 space-y-6">
+        <!-- Before 2005 -->
+        <div class="relative p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="timeline-dot before:bg-rose-500 before:border-4 before:border-slate-800"></div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-rose-900/40 flex items-center justify-center">
+              <i class="fas fa-times-circle text-2xl text-rose-400"></i>
+            </div>
+            <div>
+              <span class="inline-block px-3 py-1 rounded-full bg-rose-900/30 text-rose-300 text-xs font-mono mb-2">Before 2005</span>
+              <h3 class="text-lg font-semibold text-white mb-1">Linux kernel managed with BitKeeper</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                BitKeeper was a proprietary distributed version control system. The Linux project used it under a free license.
+                It was the only DVCS mature enough at the time to handle the kernel's scale.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- April 2005 -->
+        <div class="relative p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="timeline-dot before:bg-orange-500 before:border-4 before:border-slate-800"></div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-orange-900/40 flex items-center justify-center">
+              <i class="fas fa-exclamation-triangle text-2xl text-orange-400"></i>
+            </div>
+            <div>
+              <span class="inline-block px-3 py-1 rounded-full bg-orange-900/30 text-orange-300 text-xs font-mono mb-2">April 2005</span>
+              <h3 class="text-lg font-semibold text-white mb-1">Free license revoked</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                BitMover, the company behind BitKeeper, revoked the free license after developers at Andrew Morton started
+                reverse-engineering BitKeeper's protocol. Linux now had no version control system.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Gap Analysis -->
+        <div class="relative p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="timeline-dot before:bg-yellow-500 before:border-4 before:border-slate-800"></div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-yellow-900/40 flex items-center justify-center">
+              <i class="fas fa-search text-2xl text-yellow-400"></i>
+            </div>
+            <div>
+              <span class="inline-block px-3 py-1 rounded-full bg-yellow-900/30 text-yellow-300 text-xs font-mono mb-2">April 2005</span>
+              <h3 class="text-lg font-semibold text-white mb-1">No existing tool met Linux's needs</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                The requirements were clear: it had to be <strong class="text-white">distributed</strong>, guarantee
+                <strong class="text-white">integrity</strong> against corruption, and deliver
+                <strong class="text-white">blazing performance</strong> on a project with tens of thousands of files.
+                No commercial or open-source tool could satisfy all three.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Linus starts -->
+        <div class="relative p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="timeline-dot before:bg-emerald-500 before:border-4 before:border-slate-800"></div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-emerald-900/40 flex items-center justify-center">
+              <i class="fas fa-code text-2xl text-emerald-400"></i>
+            </div>
+            <div>
+              <span class="inline-block px-3 py-1 rounded-full bg-emerald-900/30 text-emerald-300 text-xs font-mono mb-2">April 2005</span>
+              <h3 class="text-lg font-semibold text-white mb-1">Linus Torvalds starts building Git</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Linus described Git as "the information manager from hell." He set three goals:
+                <span class="text-cyan-300">speed</span>, <span class="text-purple-300">integrity</span>, and
+                support for a <span class="text-amber-300">distributed workflow</span> like BitKeeper's.
+                Development was incredibly fast — the first commit came just days later.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- First managed release -->
+        <div class="relative p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="timeline-dot before:bg-blue-500 before:border-4 before:border-slate-800"></div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-blue-900/40 flex items-center justify-center">
+              <i class="fas fa-check-circle text-2xl text-blue-400"></i>
+            </div>
+            <div>
+              <span class="inline-block px-3 py-1 rounded-full bg-blue-900/30 text-blue-300 text-xs font-mono mb-2">June 2005</span>
+              <h3 class="text-lg font-semibold text-white mb-1">First Linux release managed with Git</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Linux 2.6.12 was the first kernel release managed entirely with Git. By this point Git was already
+                handling the full kernel workflow — proof that it was production-ready just two months after its inception.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Git 1.0 -->
+        <div class="relative p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="timeline-dot before:bg-violet-500 before:border-4 before:border-slate-800"></div>
+          <div class="flex items-start gap-4">
+            <div class="flex-shrink-0 w-12 h-12 rounded-full bg-violet-900/40 flex items-center justify-center">
+              <i class="fas fa-gem text-2xl text-violet-400"></i>
+            </div>
+            <div>
+              <span class="inline-block px-3 py-1 rounded-full bg-violet-900/30 text-violet-300 text-xs font-mono mb-2">December 2005</span>
+              <h3 class="text-lg font-semibold text-white mb-1">Git 1.0 released</h3>
+              <p class="text-gray-400 text-sm leading-relaxed">
+                Git reached version 1.0, cementing its stability. Junio Hamano took over maintenance shortly after,
+                and Git rapidly spread beyond the Linux ecosystem to become the world's most popular version control system.
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Example: Timeline Visualization -->
+      <div class="mt-8 p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 animate-fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-lightbulb text-yellow-400"></i>
+          <h4 class="font-semibold text-white">Timeline Visualization</h4>
+        </div>
+        <div class="relative py-6">
+          <div class="absolute top-1/2 left-0 right-0 h-1 bg-slate-700 -translate-y-1/2 rounded"></div>
+          <div class="flex justify-between relative">
+            <div class="flex flex-col items-center text-center">
+              <div class="w-4 h-4 rounded-full bg-rose-500 border-2 border-slate-800 mb-2"></div>
+              <span class="text-xs text-rose-300 font-mono">Before 2005</span>
+              <span class="text-[10px] text-gray-500 mt-1">BitKeeper</span>
+            </div>
+            <div class="flex flex-col items-center text-center">
+              <div class="w-4 h-4 rounded-full bg-orange-500 border-2 border-slate-800 mb-2"></div>
+              <span class="text-xs text-orange-300 font-mono">Apr 2005</span>
+              <span class="text-[10px] text-gray-500 mt-1">License revoked</span>
+            </div>
+            <div class="flex flex-col items-center text-center">
+              <div class="w-4 h-4 rounded-full bg-emerald-500 border-2 border-slate-800 mb-2"></div>
+              <span class="text-xs text-emerald-300 font-mono">Apr 2005</span>
+              <span class="text-[10px] text-gray-500 mt-1">Git started</span>
+            </div>
+            <div class="flex flex-col items-center text-center">
+              <div class="w-4 h-4 rounded-full bg-blue-500 border-2 border-slate-800 mb-2"></div>
+              <span class="text-xs text-blue-300 font-mono">Jun 2005</span>
+              <span class="text-[10px] text-gray-500 mt-1">Linux on Git</span>
+            </div>
+            <div class="flex flex-col items-center text-center">
+              <div class="w-4 h-4 rounded-full bg-violet-500 border-2 border-slate-800 mb-2"></div>
+              <span class="text-xs text-violet-300 font-mono">Dec 2005</span>
+              <span class="text-[10px] text-gray-500 mt-1">Git 1.0</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 2. GIT DESIGN OBJECTIVES       -->
+    <!-- ============================== -->
+    <section id="objectives" class="section-link mb-12 animate-slide-right">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-bullseye text-3xl text-emerald-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">Git Design Objectives</h2>
+      </div>
+      <p class="text-gray-400 mb-6 leading-relaxed">
+        Git was built from the ground up with five core objectives. Every feature — from the staging area to
+        SHA-1 hashing — exists because it serves one or more of these goals.
+      </p>
+
+      <!-- Objectives Grid -->
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- 1. Distributed -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-indigo-900/40 flex items-center justify-center">
+              <i class="fas fa-network-wired text-xl text-indigo-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Distributed Workflow</h3>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            Every clone is a full-fledged repository. No single point of failure.
+          </p>
+          <div class="code-block rounded-lg p-3 text-xs">
+            <span class="text-indigo-300"># Every clone has the full history</span>
+            <br><span class="text-green-300">$</span> git clone https://github.com/user/repo.git
+            <br><span class="text-green-300">$</span> cd repo
+            <br><span class="text-green-300">$</span> git log --oneline | head -5
+            <br><span class="text-gray-500">a1b2c3d Fourth commit</span>
+            <br><span class="text-gray-500">e4f5g6h Third commit</span>
+            <br><span class="text-gray-500">i7j8k9l Second commit</span>
+            <br><span class="text-gray-500">m0n1o2p First commit</span>
+          </div>
+        </div>
+
+        <!-- 2. Easy merging -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-900/40 flex items-center justify-center">
+              <i class="fas fa-code-branch text-xl text-emerald-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Easy Merging</h3>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            Merge more frequently than commit. Git's merge algorithms are fast and accurate.
+          </p>
+          <div class="code-block rounded-lg p-3 text-xs">
+            <span class="text-emerald-300">$</span> git merge feature-branch
+            <br><span class="text-gray-500">Auto-merging src/main.js</span>
+            <br><span class="text-gray-500">CONFLICT (content): Merge conflict in src/main.js</span>
+            <br><span class="text-gray-500">Automatic merge failed; fix conflicts and then commit the result.</span>
+            <br><span class="text-emerald-300">$</span> git merge --abort
+            <br><span class="text-gray-500 italic"># Abort if conflicts are too messy</span>
+          </div>
+        </div>
+
+        <!-- 3. Integrity -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-rose-900/40 flex items-center justify-center">
+              <i class="fas fa-shield-alt text-xl text-rose-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Integrity</h3>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            Protection against accidental and malicious corruption. Everything is checksummed.
+          </p>
+          <div class="code-block rounded-lg p-3 text-xs">
+            <span class="text-rose-300"># Every object is addressed by its SHA-1 hash</span>
+            <br><span class="text-green-300">$</span> git hash-object --stdin &lt;&lt;&lt; "hello"
+            <br><span class="text-gray-500">3b18e512dba79e4c8300dd08aeb37f8e728b8dad</span>
+            <br><span class="text-rose-300"># Corrupted objects are detected immediately</span>
+            <br><span class="text-green-300">$</span> git fsck
+            <br><span class="text-gray-500">Checking object directories: 100% (256/256), done.</span>
+          </div>
+        </div>
+
+        <!-- 4. Speed & Scalability -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-cyan-900/40 flex items-center justify-center">
+              <i class="fas fa-tachometer-alt text-xl text-cyan-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Speed &amp; Scalability</h3>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            Designed for the Linux kernel (10M+ files in history). Operations remain fast at any scale.
+          </p>
+          <div class="code-block rounded-lg p-3 text-xs">
+            <span class="text-cyan-300"># Blazing fast even on massive repos</span>
+            <br><span class="text-green-300">$</span> git status
+            <br><span class="text-green-300">$</span> git diff
+            <br><span class="text-green-300">$</span> git log --oneline -5
+            <br><span class="text-gray-500"># All complete in milliseconds</span>
+          </div>
+        </div>
+
+        <!-- 5. Ease of Use -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in md:col-span-2">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-yellow-900/40 flex items-center justify-center">
+              <i class="fas fa-smile text-xl text-yellow-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Ease of Use</h3>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed mb-3">
+            Git balances power with approachability. The same commands work for beginners and experts.
+          </p>
+          <div class="code-block rounded-lg p-3 text-xs">
+            <span class="text-yellow-300"># Simple workflow for beginners</span>
+            <br><span class="text-green-300">$</span> git init my-project
+            <br><span class="text-green-300">$</span> cd my-project
+            <br><span class="text-green-300">$</span> echo "# My Project" &gt; README.md
+            <br><span class="text-green-300">$</span> git add README.md
+            <br><span class="text-green-300">$</span> git commit -m "Initial commit"
+            <br><span class="text-yellow-300"># Just 4 commands to get started</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Example: How each objective shaped Git's features -->
+      <div class="mt-6 p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 animate-fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-lightbulb text-yellow-400"></i>
+          <h4 class="font-semibold text-white">How Each Objective Shaped Git's Features</h4>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-slate-700">
+                <th class="py-2 pr-4 text-gray-300 font-semibold">Objective</th>
+                <th class="py-2 pr-4 text-gray-300 font-semibold">Key Feature</th>
+                <th class="py-2 text-gray-300 font-semibold">Why It Matters</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-400">
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4"><span class="text-indigo-300">Distributed</span></td>
+                <td class="py-2 pr-4">Every clone is a full backup</td>
+                <td class="py-2">No central server dependency; work offline</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4"><span class="text-emerald-300">Easy Merging</span></td>
+                <td class="py-2 pr-4">Recursive merge with rename detection</td>
+                <td class="py-2">Encourages frequent branching &amp; parallel work</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4"><span class="text-rose-300">Integrity</span></td>
+                <td class="py-2 pr-4">SHA-1 content-addressed object store</td>
+                <td class="py-2">Detect any corruption instantly</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4"><span class="text-cyan-300">Speed &amp; Scalability</span></td>
+                <td class="py-2 pr-4">Object packing (not delta encoding)</td>
+                <td class="py-2">Fast operations even on large repos</td>
+              </tr>
+              <tr>
+                <td class="py-2 pr-4"><span class="text-yellow-300">Ease of Use</span></td>
+                <td class="py-2 pr-4">Staging area (index)</td>
+                <td class="py-2">Craft commits incrementally before finalizing</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 3. GIT DESIGN CHOICES          -->
+    <!-- ============================== -->
+    <section id="design" class="section-link mb-12 animate-slide-left">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-cogs text-3xl text-cyan-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">Git Design Choices</h2>
+      </div>
+      <p class="text-gray-400 mb-6 leading-relaxed">
+        Git's internal architecture reflects Linus Torvalds' philosophy: simple data structures,
+        strong integrity guarantees, and a "hackable" tool that exposes its internals to power users.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Easily Hackable -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-purple-900/40 flex items-center justify-center">
+              <i class="fas fa-wrench text-xl text-purple-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Easily Hackable</h3>
+          </div>
+          <ul class="text-gray-400 text-sm space-y-2 leading-relaxed">
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>Simple data structures: <strong class="text-white">blobs</strong>, <strong class="text-white">trees</strong>, <strong class="text-white">commits</strong>, <strong class="text-white">tags</strong></li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>No formal branch history — a branch is <em>just a pointer</em> to a commit</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>Low-level commands (plumbing) exposed alongside high-level (porcelain)</li>
+          </ul>
+          <div class="code-block rounded-lg p-3 text-xs mt-3">
+            <span class="text-purple-300"># Plumbing: inspect raw objects</span>
+            <br><span class="text-green-300">$</span> git cat-file -p HEAD
+            <br><span class="text-gray-500">tree 4d5fcadc293a348e88f777dc0920f11e7d714d41</span>
+            <br><span class="text-gray-500">author Alice &lt;alice@example.com&gt; 1700000000 +0000</span>
+          </div>
+        </div>
+
+        <!-- Integrity -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-rose-900/40 flex items-center justify-center">
+              <i class="fas fa-fingerprint text-xl text-rose-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Integrity via SHA-1</h3>
+          </div>
+          <ul class="text-gray-400 text-sm space-y-2 leading-relaxed">
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>Every object is content-addressed by its SHA-1 hash</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>Any corruption is detected the moment Git reads the object</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>Tags can be signed with GPG for cryptographic verification</li>
+          </ul>
+        </div>
+
+        <!-- Merging -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-900/40 flex items-center justify-center">
+              <i class="fas fa-code-branch text-xl text-emerald-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Pluggable Merge Strategies</h3>
+          </div>
+          <ul class="text-gray-400 text-sm space-y-2 leading-relaxed">
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i><strong class="text-white">Recursive</strong>: default two-branch merge with rename detection</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i><strong class="text-white">Octopus</strong>: merge more than 2 branches at once</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i><strong class="text-white">Ours</strong>: keep your version entirely</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i><strong class="text-white">Subtree</strong>: merge projects with overlapping directory trees</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>The <strong class="text-white">staging area (index)</strong> lets you review and craft commits</li>
+          </ul>
+        </div>
+
+        <!-- Performance -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-cyan-900/40 flex items-center justify-center">
+              <i class="fas fa-boxes text-xl text-cyan-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Object Packing</h3>
+          </div>
+          <ul class="text-gray-400 text-sm space-y-2 leading-relaxed">
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>Git stores <em>snapshots</em> (not deltas) for each commit</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>Periodic <strong class="text-white">packing</strong> compresses similar objects together using delta compression</li>
+            <li><i class="fas fa-check-circle text-emerald-400 mr-2 text-xs"></i>This hybrid model gives both speed (loose objects) and space efficiency (packs)</li>
+          </ul>
+          <div class="code-block rounded-lg p-3 text-xs mt-3">
+            <span class="text-cyan-300"># Manual garbage collection &amp; packing</span>
+            <br><span class="text-green-300">$</span> git gc --aggressive
+            <br><span class="text-gray-500">Counting objects: 482, done.</span>
+            <br><span class="text-gray-500">Delta compression using up to 8 threads.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Example: SHA-1 Hash Demonstration -->
+      <div class="mt-6 p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 animate-fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-lightbulb text-yellow-400"></i>
+          <h4 class="font-semibold text-white">SHA-1 Hash Demonstration</h4>
+        </div>
+        <p class="text-gray-400 text-sm mb-4">
+          Git uses SHA-1 to generate a 40-character hex checksum for every object. The same content always
+          produces the same hash. Even a tiny change results in a completely different hash.
+        </p>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="code-block rounded-lg p-4">
+            <div class="text-xs text-gray-500 mb-2">Input: <span class="text-white">"Hello, Git!"</span></div>
+            <div class="font-mono text-sm text-emerald-300 break-all">8c5a2a5b4e7c8e9d0f1a2b3c4d5e6f7a8b9c0d1e</div>
+            <div class="text-[10px] text-gray-600 mt-2">git hash-object --stdin &lt;&lt;&lt; "Hello, Git!"</div>
+          </div>
+          <div class="code-block rounded-lg p-4">
+            <div class="text-xs text-gray-500 mb-2">Input: <span class="text-white">"Hello, GIT!"</span> (capitalized)</div>
+            <div class="font-mono text-sm text-rose-300 break-all">a9b8c7d6e5f4a3b2c1d0e9f8a7b6c5d4e3f2a1b0</div>
+            <div class="text-[10px] text-gray-600 mt-2">Completely different hash — even for a single character change</div>
+          </div>
+        </div>
+        <div class="mt-4 flex items-start gap-2 text-xs text-gray-500">
+          <i class="fas fa-info-circle text-cyan-400 mt-0.5"></i>
+          <p>This content-addressed design means Git can <strong class="text-white">guarantee data integrity</strong>.
+          If a file is corrupted on disk, Git's hash will not match and the corruption is detected immediately.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 4. GIT COMMANDS OVERVIEW       -->
+    <!-- ============================== -->
+    <section id="commands" class="section-link mb-12 animate-slide-right">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-terminal text-3xl text-purple-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">Git Commands Overview</h2>
+      </div>
+      <p class="text-gray-400 mb-6 leading-relaxed">
+        Git offers over 150 commands. They are traditionally grouped into categories:
+        <strong class="text-white">porcelain</strong> (user-friendly) and <strong class="text-white">plumbing</strong> (low-level internals).
+        Here are the most important ones, organized by workflow.
+      </p>
+
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5">
+        <!-- Setup & Init -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-sky-900/40 flex items-center justify-center">
+              <i class="fas fa-rocket text-xl text-sky-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Setup &amp; Init</h3>
+          </div>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2"><code class="text-sky-300 font-mono text-xs bg-sky-900/30 px-2 py-0.5 rounded">git init</code><span class="text-gray-400">Create a new repository</span></li>
+            <li class="flex items-center gap-2"><code class="text-sky-300 font-mono text-xs bg-sky-900/30 px-2 py-0.5 rounded">git clone</code><span class="text-gray-400">Clone an existing repo</span></li>
+            <li class="flex items-center gap-2"><code class="text-sky-300 font-mono text-xs bg-sky-900/30 px-2 py-0.5 rounded">git config</code><span class="text-gray-400">Configure user/behavior</span></li>
+          </ul>
+        </div>
+
+        <!-- Daily Work -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-emerald-900/40 flex items-center justify-center">
+              <i class="fas fa-pen-fancy text-xl text-emerald-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Daily Work</h3>
+          </div>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2"><code class="text-emerald-300 font-mono text-xs bg-emerald-900/30 px-2 py-0.5 rounded">git add</code><span class="text-gray-400">Stage changes</span></li>
+            <li class="flex items-center gap-2"><code class="text-emerald-300 font-mono text-xs bg-emerald-900/30 px-2 py-0.5 rounded">git commit</code><span class="text-gray-400">Save staged snapshot</span></li>
+            <li class="flex items-center gap-2"><code class="text-emerald-300 font-mono text-xs bg-emerald-900/30 px-2 py-0.5 rounded">git status</code><span class="text-gray-400">View working tree state</span></li>
+            <li class="flex items-center gap-2"><code class="text-emerald-300 font-mono text-xs bg-emerald-900/30 px-2 py-0.5 rounded">git diff</code><span class="text-gray-400">Show unstaged changes</span></li>
+            <li class="flex items-center gap-2"><code class="text-emerald-300 font-mono text-xs bg-emerald-900/30 px-2 py-0.5 rounded">git restore</code><span class="text-gray-400">Undo changes</span></li>
+          </ul>
+        </div>
+
+        <!-- Branching & Merging -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-cyan-900/40 flex items-center justify-center">
+              <i class="fas fa-code-branch text-xl text-cyan-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Branching &amp; Merging</h3>
+          </div>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2"><code class="text-cyan-300 font-mono text-xs bg-cyan-900/30 px-2 py-0.5 rounded">git branch</code><span class="text-gray-400">List/create/delete branches</span></li>
+            <li class="flex items-center gap-2"><code class="text-cyan-300 font-mono text-xs bg-cyan-900/30 px-2 py-0.5 rounded">git checkout</code><span class="text-gray-400">Switch branches</span></li>
+            <li class="flex items-center gap-2"><code class="text-cyan-300 font-mono text-xs bg-cyan-900/30 px-2 py-0.5 rounded">git switch</code><span class="text-gray-400">Switch (safer alternative)</span></li>
+            <li class="flex items-center gap-2"><code class="text-cyan-300 font-mono text-xs bg-cyan-900/30 px-2 py-0.5 rounded">git merge</code><span class="text-gray-400">Merge branches</span></li>
+            <li class="flex items-center gap-2"><code class="text-cyan-300 font-mono text-xs bg-cyan-900/30 px-2 py-0.5 rounded">git rebase</code><span class="text-gray-400">Reapply commits on top</span></li>
+          </ul>
+        </div>
+
+        <!-- History -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-violet-900/40 flex items-center justify-center">
+              <i class="fas fa-history text-xl text-violet-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">History &amp; Inspection</h3>
+          </div>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2"><code class="text-violet-300 font-mono text-xs bg-violet-900/30 px-2 py-0.5 rounded">git log</code><span class="text-gray-400">Show commit history</span></li>
+            <li class="flex items-center gap-2"><code class="text-violet-300 font-mono text-xs bg-violet-900/30 px-2 py-0.5 rounded">git show</code><span class="text-gray-400">Show commit details</span></li>
+            <li class="flex items-center gap-2"><code class="text-violet-300 font-mono text-xs bg-violet-900/30 px-2 py-0.5 rounded">git blame</code><span class="text-gray-400">Annotate file with author</span></li>
+            <li class="flex items-center gap-2"><code class="text-violet-300 font-mono text-xs bg-violet-900/30 px-2 py-0.5 rounded">git grep</code><span class="text-gray-400">Search in tracked files</span></li>
+          </ul>
+        </div>
+
+        <!-- Remote -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-blue-900/40 flex items-center justify-center">
+              <i class="fas fa-cloud-upload-alt text-xl text-blue-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Remote Collaboration</h3>
+          </div>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2"><code class="text-blue-300 font-mono text-xs bg-blue-900/30 px-2 py-0.5 rounded">git remote</code><span class="text-gray-400">Manage remote repos</span></li>
+            <li class="flex items-center gap-2"><code class="text-blue-300 font-mono text-xs bg-blue-900/30 px-2 py-0.5 rounded">git fetch</code><span class="text-gray-400">Download objects &amp; refs</span></li>
+            <li class="flex items-center gap-2"><code class="text-blue-300 font-mono text-xs bg-blue-900/30 px-2 py-0.5 rounded">git pull</code><span class="text-gray-400">Fetch + merge</span></li>
+            <li class="flex items-center gap-2"><code class="text-blue-300 font-mono text-xs bg-blue-900/30 px-2 py-0.5 rounded">git push</code><span class="text-gray-400">Upload to remote</span></li>
+          </ul>
+        </div>
+
+        <!-- Advanced -->
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-full bg-amber-900/40 flex items-center justify-center">
+              <i class="fas fa-tools text-xl text-amber-400"></i>
+            </div>
+            <h3 class="font-semibold text-white text-lg">Advanced &amp; Plumbing</h3>
+          </div>
+          <ul class="space-y-2 text-sm">
+            <li class="flex items-center gap-2"><code class="text-amber-300 font-mono text-xs bg-amber-900/30 px-2 py-0.5 rounded">git stash</code><span class="text-gray-400">Temporarily save changes</span></li>
+            <li class="flex items-center gap-2"><code class="text-amber-300 font-mono text-xs bg-amber-900/30 px-2 py-0.5 rounded">git cherry-pick</code><span class="text-gray-400">Apply specific commit</span></li>
+            <li class="flex items-center gap-2"><code class="text-amber-300 font-mono text-xs bg-amber-900/30 px-2 py-0.5 rounded">git bisect</code><span class="text-gray-400">Binary search for bugs</span></li>
+            <li class="flex items-center gap-2"><code class="text-amber-300 font-mono text-xs bg-amber-900/30 px-2 py-0.5 rounded">git gc</code><span class="text-gray-400">Garbage collect / optimize</span></li>
+            <li class="flex items-center gap-2"><code class="text-amber-300 font-mono text-xs bg-amber-900/30 px-2 py-0.5 rounded">git fsck</code><span class="text-gray-400">Verify integrity</span></li>
+          </ul>
+        </div>
+      </div>
+
+      <!-- Example: Common Workflow -->
+      <div class="mt-6 p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 animate-fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-lightbulb text-yellow-400"></i>
+          <h4 class="font-semibold text-white">Common Workflow Commands</h4>
+        </div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="code-block rounded-lg p-4">
+            <div class="text-xs text-gray-500 mb-2">Starting fresh</div>
+            <span class="text-green-300">$</span> git init project<br>
+            <span class="text-green-300">$</span> cd project<br>
+            <span class="text-green-300">$</span> git config user.name "Your Name"<br>
+            <span class="text-green-300">$</span> touch README.md<br>
+            <span class="text-green-300">$</span> git add README.md<br>
+            <span class="text-green-300">$</span> git commit -m "first commit"
+          </div>
+          <div class="code-block rounded-lg p-4">
+            <div class="text-xs text-gray-500 mb-2">Feature branch workflow</div>
+            <span class="text-green-300">$</span> git checkout -b feature<br>
+            <span class="text-green-300">$</span> # make changes...<br>
+            <span class="text-green-300">$</span> git add -A<br>
+            <span class="text-green-300">$</span> git commit -m "add feature"<br>
+            <span class="text-green-300">$</span> git checkout main<br>
+            <span class="text-green-300">$</span> git merge feature
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================== -->
+    <!-- 5. GIT GUIS                    -->
+    <!-- ============================== -->
+    <section id="guis" class="section-link mb-12 animate-slide-left">
+      <div class="flex items-center gap-3 mb-6">
+        <i class="fas fa-desktop text-3xl text-yellow-400"></i>
+        <h2 class="text-2xl md:text-3xl font-bold text-white">Git GUIs</h2>
+      </div>
+      <p class="text-gray-400 mb-6 leading-relaxed">
+        While Git is a command-line tool, several graphical interfaces make it more approachable.
+        Git ships with two built-in GUIs, and many third-party options exist for different workflows.
+      </p>
+
+      <!-- Built-in GUIs -->
+      <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+        <i class="fas fa-box text-sm text-indigo-400"></i>
+        Built-in GUIs
+      </h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-5 mb-8">
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-12 h-12 rounded-xl bg-indigo-900/40 flex items-center justify-center">
+              <i class="fas fa-tree text-2xl text-indigo-400"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold text-white">gitk</h4>
+              <span class="text-xs text-gray-500">Browsing history</span>
+            </div>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            The original Git history browser. Displays the commit DAG as an interactive graph,
+            with detailed commit info, diff view, and search capabilities. Great for exploring
+            branching history visually.
+          </p>
+          <div class="code-block rounded-lg p-2 text-xs mt-3">
+            <span class="text-green-300">$</span> gitk --all
+          </div>
+        </div>
+
+        <div class="p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 animate-scale-in">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-12 h-12 rounded-xl bg-emerald-900/40 flex items-center justify-center">
+              <i class="fas fa-window-restore text-2xl text-emerald-400"></i>
+            </div>
+            <div>
+              <h4 class="font-semibold text-white">git gui</h4>
+              <span class="text-xs text-gray-500">Preparing commits</span>
+            </div>
+          </div>
+          <p class="text-gray-400 text-sm leading-relaxed">
+            A Tcl/Tk-based GUI for crafting commits. Shows unstaged/staged files side by side
+            with a diff viewer, allows hunk-by-hunk staging, and supports amending commits.
+          </p>
+          <div class="code-block rounded-lg p-2 text-xs mt-3">
+            <span class="text-green-300">$</span> git gui
+          </div>
+        </div>
+      </div>
+
+      <!-- Third-party GUIs -->
+      <h3 class="text-xl font-semibold text-white mb-4 flex items-center gap-2">
+        <i class="fas fa-download text-sm text-cyan-400"></i>
+        Third-party GUIs
+      </h3>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- GitHub Desktop -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300 hover:bg-slate-800/80">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fab fa-github text-2xl text-gray-300"></i>
+            <h4 class="font-semibold text-white text-sm">GitHub Desktop</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Free, cross-platform GUI focused on the GitHub workflow. Great for beginners.</p>
+        </div>
+
+        <!-- GitKraken -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fab fa-gitkraken text-2xl text-green-400"></i>
+            <h4 class="font-semibold text-white text-sm">GitKraken</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Polished, cross-platform GUI with a beautiful graph visualization and built-in editor.</p>
+        </div>
+
+        <!-- SourceTree -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fab fa-sourcetree text-2xl text-blue-400"></i>
+            <h4 class="font-semibold text-white text-sm">SourceTree</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Free Atlassian GUI for Mac/Windows. Supports Git-flow and advanced branching.</p>
+        </div>
+
+        <!-- Tower -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-tower-broadcast text-2xl text-orange-400"></i>
+            <h4 class="font-semibold text-white text-sm">Tower</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Premium GUI for Mac/Windows with powerful conflict resolution and repo management.</p>
+        </div>
+
+        <!-- Git Cola -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-mug-hot text-2xl text-amber-500"></i>
+            <h4 class="font-semibold text-white text-sm">Git Cola</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Lightweight, open-source Git GUI for Linux/macOS. Fast and customizable.</p>
+        </div>
+
+        <!-- Sublime Merge -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-code text-2xl text-yellow-400"></i>
+            <h4 class="font-semibold text-white text-sm">Sublime Merge</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Blazing fast, keyboard-friendly GUI from the makers of Sublime Text.</p>
+        </div>
+
+        <!-- GitFiend -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-dragon text-2xl text-purple-400"></i>
+            <h4 class="font-semibold text-white text-sm">GitFiend</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Cross-platform GUI with a unique interface. Focuses on simplicity and diff clarity.</p>
+        </div>
+
+        <!-- LazyGit -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-terminal text-2xl text-lime-400"></i>
+            <h4 class="font-semibold text-white text-sm">LazyGit</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Terminal-based TUI. Blazingly fast, keyboard-driven, works in any terminal.</p>
+        </div>
+
+        <!-- SmartGit -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-lightbulb text-2xl text-yellow-300"></i>
+            <h4 class="font-semibold text-white text-sm">SmartGit</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Powerful GUI with built-in SSH client, file compare, and SVN-to-Git migration tools.</p>
+        </div>
+
+        <!-- gitg -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-gem text-2xl text-blue-300"></i>
+            <h4 class="font-semibold text-white text-sm">gitg</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">GNOME-native Git GUI. Simple, clean, integrates with the GNOME desktop.</p>
+        </div>
+
+        <!-- TortoiseGit -->
+        <div class="p-4 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 glow-card transition-all duration-300">
+          <div class="flex items-center gap-3 mb-2">
+            <i class="fas fa-turtle text-2xl text-green-500"></i>
+            <h4 class="font-semibold text-white text-sm">TortoiseGit</h4>
+          </div>
+          <p class="text-gray-400 text-xs leading-relaxed">Windows shell extension. Overlays icon statuses in Explorer, right-click for Git ops.</p>
+        </div>
+      </div>
+
+      <!-- Example: Screenshot-style descriptions -->
+      <div class="mt-6 p-5 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 animate-fade-in">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-lightbulb text-yellow-400"></i>
+          <h4 class="font-semibold text-white">GUI Comparison at a Glance</h4>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm text-left">
+            <thead>
+              <tr class="border-b border-slate-700">
+                <th class="py-2 pr-4 text-gray-300 font-semibold">GUI</th>
+                <th class="py-2 pr-4 text-gray-300 font-semibold">Platform</th>
+                <th class="py-2 pr-4 text-gray-300 font-semibold">Price</th>
+                <th class="py-2 text-gray-300 font-semibold">Best For</th>
+              </tr>
+            </thead>
+            <tbody class="text-gray-400">
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">gitk</td>
+                <td class="py-2 pr-4">Cross-platform</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">History browsing</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">git gui</td>
+                <td class="py-2 pr-4">Cross-platform</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">Commit crafting</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">GitHub Desktop</td>
+                <td class="py-2 pr-4">Mac, Windows</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">GitHub beginners</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">GitKraken</td>
+                <td class="py-2 pr-4">Mac, Windows, Linux</td>
+                <td class="py-2 pr-4 text-amber-400">Freemium</td>
+                <td class="py-2">Visual graph + built-in editor</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">SourceTree</td>
+                <td class="py-2 pr-4">Mac, Windows</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">Git-flow workflows</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">Tower</td>
+                <td class="py-2 pr-4">Mac, Windows</td>
+                <td class="py-2 pr-4 text-amber-400">Paid</td>
+                <td class="py-2">Professional teams</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">Git Cola</td>
+                <td class="py-2 pr-4">Mac, Windows, Linux</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">Lightweight Linux GUI</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">Sublime Merge</td>
+                <td class="py-2 pr-4">Mac, Windows, Linux</td>
+                <td class="py-2 pr-4 text-amber-400">Freemium</td>
+                <td class="py-2">Keyboard-first power users</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">GitFiend</td>
+                <td class="py-2 pr-4">Mac, Windows, Linux</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">Diff clarity &amp; simplicity</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">LazyGit</td>
+                <td class="py-2 pr-4">Terminal (TUI)</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">Terminal power users</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">SmartGit</td>
+                <td class="py-2 pr-4">Mac, Windows, Linux</td>
+                <td class="py-2 pr-4 text-amber-400">Freemium</td>
+                <td class="py-2">SVN migration / power features</td>
+              </tr>
+              <tr class="border-b border-slate-700/50">
+                <td class="py-2 pr-4 text-white">gitg</td>
+                <td class="py-2 pr-4">Linux (GNOME)</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">GNOME Desktop</td>
+              </tr>
+              <tr>
+                <td class="py-2 pr-4 text-white">TortoiseGit</td>
+                <td class="py-2 pr-4">Windows</td>
+                <td class="py-2 pr-4 text-emerald-400">Free</td>
+                <td class="py-2">Windows shell integration</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <div class="mt-12 pt-6 border-t border-slate-800 text-center text-gray-500 text-sm">
+      <div class="flex flex-wrap justify-center gap-4 mb-4">
+        <a href="../index.html" class="hover:text-white transition-colors"><i class="fas fa-home mr-1"></i>Index</a>
+        <a href="#top" class="hover:text-white transition-colors"><i class="fas fa-arrow-up mr-1"></i>Top</a>
+      </div>
+      <p><i class="fas fa-book-open mr-1"></i> Git &amp; GitHub Cheatsheet — Based on "GIT for Beginners" by Anthony Baire</p>
+    </div>
+  </div>
+
+  <style>
+    .section-link { scroll-margin-top: 1.5rem; }
+    .timeline-dot::before { content: ''; position: absolute; left: -1.75rem; top: 0.35rem; width: 14px; height: 14px; border-radius: 50%; background: inherit; border: 3px solid #1e293b; }
+    .code-block { background: #1a1a2e; border: 1px solid #2d2d4a; font-family: 'Fira Code', 'Consolas', monospace; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #1a1a2e; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+  </style>
+</body>
+</html>

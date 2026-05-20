@@ -1,0 +1,471 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Chapter 7: Storage & Volumes — Docker Cheatsheet</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>tailwind.config = { darkMode: 'class' }</script>
+  <style>
+    body { background: #0f0f1a; }
+    .glow-card:hover { box-shadow: 0 0 25px rgba(99,102,241,0.3); transform: translateY(-4px); }
+    .gradient-text { background: linear-gradient(135deg, #60a5fa, #a78bfa, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; }
+    .docker-icon { color: #0db7ed; }
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-in { animation: slideIn 0.6s ease-out; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+    .delay-6 { animation-delay: 0.6s; }
+    code { font-family: 'Cascadia Code', 'Fira Code', 'JetBrains Mono', monospace; }
+    .card-code { background: #1a1a2e; border: 1px solid #2d2d4a; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</head>
+<body class="min-h-screen text-gray-200">
+  <div class="max-w-5xl mx-auto px-4 py-8">
+
+    <!-- Back Navigation -->
+    <a href="../index.html" class="inline-flex items-center gap-2 text-gray-400 hover:text-white transition-colors mb-6 animate-fade-in">
+      <i class="fas fa-arrow-left"></i> Back to Cheatsheet
+    </a>
+
+    <!-- Header -->
+    <div class="text-center mb-10 animate-fade-in">
+      <i class="fas fa-database text-6xl text-teal-400 mb-4"></i>
+      <h1 class="text-3xl md:text-5xl font-bold gradient-text">Chapter 7: Storage & Volumes</h1>
+      <p class="text-gray-400 mt-3 text-lg">How Docker manages data — file system layers, volumes, bind mounts, and storage drivers</p>
+    </div>
+
+    <!-- Section Navigation -->
+    <div class="flex flex-wrap justify-center gap-2 mb-10 animate-fade-in">
+      <a href="#filesystem" class="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-all"><i class="fas fa-folder-tree mr-1"></i> File System</a>
+      <a href="#layers" class="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-all"><i class="fas fa-layer-group mr-1"></i> Layered Architecture</a>
+      <a href="#container-layer" class="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-all"><i class="fas fa-sticky-note mr-1"></i> Container Layer</a>
+      <a href="#cow" class="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-all"><i class="fas fa-copy mr-1"></i> Copy-on-Write</a>
+      <a href="#volumes" class="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-all"><i class="fas fa-hdd mr-1"></i> Volumes</a>
+      <a href="#drivers" class="px-4 py-2 rounded-lg bg-slate-800 border border-slate-700 text-sm text-gray-300 hover:bg-slate-700 hover:text-white transition-all"><i class="fas fa-microchip mr-1"></i> Storage Drivers</a>
+    </div>
+
+    <!-- ===== 1. File System ===== -->
+    <section id="filesystem" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in delay-1">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-folder-tree text-2xl text-teal-400"></i>
+        <h2 class="text-2xl font-bold text-white">1. Docker File System</h2>
+      </div>
+      <p class="text-gray-300 mb-4">Docker stores all its data — images, containers, volumes, build caches — under <code class="text-teal-300 bg-slate-700/50 px-1 rounded">/var/lib/docker</code> on the host machine.</p>
+
+      <div class="card-code rounded-lg p-4 mb-4 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># Docker's data directory structure</div>
+        <div class="text-yellow-300">/var/lib/docker/</div>
+        <div class="text-gray-300">├── <span class="text-cyan-400">aufs/</span>        <span class="text-gray-500"># storage driver data (AUFS backend)</span></div>
+        <div class="text-gray-300">├── <span class="text-cyan-400">containers/</span>  <span class="text-gray-500"># each container's config, logs, metadata</span></div>
+        <div class="text-gray-300">├── <span class="text-cyan-400">image/</span>        <span class="text-gray-500"># image layer data and metadata</span></div>
+        <div class="text-gray-300">├── <span class="text-cyan-400">volumes/</span>      <span class="text-gray-500"># named volumes (persistent data)</span></div>
+        <div class="text-gray-300">├── <span class="text-cyan-400">overlay2/</span>    <span class="text-gray-500"># overlay2 driver data (modern default)</span></div>
+        <div class="text-gray-300">└── <span class="text-cyan-400">buildkit/</span>    <span class="text-gray-500"># BuildKit cache for faster builds</span></div>
+      </div>
+
+      <div class="card-code rounded-lg p-4 mb-3 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># On the host, inspect Docker's storage usage</div>
+        <div class="text-green-400">$ <span class="text-white">docker system df</span></div>
+        <div class="text-gray-300">TYPE            TOTAL     ACTIVE    SIZE      RECLAIMABLE</div>
+        <div class="text-gray-300">Images          5         3         1.2GB     452MB (37%)</div>
+        <div class="text-gray-300">Containers      4         2         25.4MB    25.4MB (100%)</div>
+        <div class="text-gray-300">Local Volumes   3         1         312MB     0B (0%)</div>
+        <div class="text-gray-300">Build Cache     12        -         89.7MB    89.7MB</div>
+      </div>
+
+      <div class="flex items-start gap-3 bg-teal-900/20 border border-teal-800/40 rounded-lg p-4">
+        <i class="fas fa-lightbulb text-teal-400 mt-1"></i>
+        <p class="text-sm text-gray-300"><strong class="text-teal-300">Real-world analogy:</strong> Think of <code class="text-teal-300">/var/lib/docker</code> like a filing cabinet. Each drawer has a purpose — one for recipes (images), one for cooked meals (containers), and one for leftovers (volumes).</p>
+      </div>
+    </section>
+
+    <!-- ===== 2. Layered Architecture ===== -->
+    <section id="layers" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in delay-2">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-layer-group text-2xl text-indigo-400"></i>
+        <h2 class="text-2xl font-bold text-white">2. Layered Architecture</h2>
+      </div>
+      <p class="text-gray-300 mb-4">Every Dockerfile instruction creates a <strong class="text-indigo-300">read-only layer</strong>. Layers are cached and reused across builds. If two images share the same base (e.g. Ubuntu), they share all the common layers — <strong class="text-teal-300">zero extra disk cost</strong>.</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="card-code rounded-lg p-4 font-mono text-sm overflow-x-auto">
+          <div class="text-gray-500"># Image A Dockerfile</div>
+          <div class="text-yellow-300">FROM ubuntu:22.04       <span class="text-gray-500">← Layer 1 (base)</span></div>
+          <div class="text-yellow-300">RUN apt update &amp;&amp; apt install -y python3</div>
+          <div class="text-gray-300">                         <span class="text-gray-500">← Layer 2 (shared)</span></div>
+          <div class="text-yellow-300">COPY app.py /app/       <span class="text-gray-500">← Layer 3</span></div>
+          <div class="text-yellow-300">CMD ["python3", "/app/app.py"]</div>
+        </div>
+        <div class="card-code rounded-lg p-4 font-mono text-sm overflow-x-auto">
+          <div class="text-gray-500"># Image B Dockerfile</div>
+          <div class="text-yellow-300">FROM ubuntu:22.04       <span class="text-gray-500">← Layer 1 (same, shared)</span></div>
+          <div class="text-yellow-300">RUN apt update &amp;&amp; apt install -y python3</div>
+          <div class="text-gray-300">                         <span class="text-gray-500">← Layer 2 (same, shared)</span></div>
+          <div class="text-yellow-300">COPY server.py /app/   <span class="text-gray-500">← Layer 3 (different)</span></div>
+          <div class="text-yellow-300">CMD ["python3", "/app/server.py"]</div>
+        </div>
+      </div>
+
+      <div class="card-code rounded-lg p-4 mb-4 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># Build both images and check shared bytes</div>
+        <div class="text-green-400">$ <span class="text-white">docker build -t image-a -f Dockerfile.a .</span></div>
+        <div class="text-green-400">$ <span class="text-white">docker build -t image-b -f Dockerfile.b .</span></div>
+        <div class="text-green-400">$ <span class="text-white">docker images</span></div>
+        <div class="text-gray-300">REPOSITORY   TAG       IMAGE ID       CREATED          SIZE</div>
+        <div class="text-gray-300">image-b      latest    a1b2c3d4e5f6   10 seconds ago   198 MB</div>
+        <div class="text-gray-300">image-a      latest    9f8e7d6c5b4a   20 seconds ago   195 MB</div>
+        <div class="text-gray-300">ubuntu       22.04     6a7b8c9d0e1f   2 weeks ago      77.8 MB</div>
+      </div>
+
+      <div class="card-code rounded-lg p-4 mb-3 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># See the layers of any image</div>
+        <div class="text-green-400">$ <span class="text-white">docker history image-a</span></div>
+        <div class="text-gray-300">IMAGE          CREATED              CREATED BY                                      SIZE</div>
+        <div class="text-gray-300">9f8e7d6c5b4a   20 seconds ago       CMD ["python3" "/app/app.py"]                 0B</div>
+        <div class="text-gray-300">d4c3b2a1f0e9   20 seconds ago       COPY app.py /app/                             5.2kB</div>
+        <div class="text-gray-300">b8a7c6d5e4f3   30 seconds ago       RUN apt update &amp;&amp; apt install -y python3    117MB</div>
+        <div class="text-gray-300">6a7b8c9d0e1f   2 weeks ago          /bin/sh -c #(nop)  CMD ["bash"]               0B</div>
+        <div class="text-gray-300">...</div>
+      </div>
+
+      <div class="flex items-start gap-3 bg-indigo-900/20 border border-indigo-800/40 rounded-lg p-4">
+        <i class="fas fa-lightbulb text-indigo-400 mt-1"></i>
+        <p class="text-sm text-gray-300"><strong class="text-indigo-300">Analogy:</strong> Like building blocks. The same flat base plate (Ubuntu) can be used to build a house <em>or</em> a castle. The shared blocks cost nothing extra and make the next build faster.</p>
+      </div>
+    </section>
+
+    <!-- ===== 3. Container Layer ===== -->
+    <section id="container-layer" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in delay-3">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-sticky-note text-2xl text-amber-400"></i>
+        <h2 class="text-2xl font-bold text-white">3. Container Layer (Read-Write)</h2>
+      </div>
+      <p class="text-gray-300 mb-4">When a container starts, Docker adds a thin <strong class="text-amber-300">read-write layer</strong> on top of the image's read-only layers. All changes made inside the container — creating, modifying, deleting files — happen in this writable layer. The original image is never touched.</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="card-code rounded-lg p-4 font-mono text-sm">
+          <div class="text-gray-400 mb-2"><i class="fas fa-cube text-indigo-400 mr-1"></i> Image Layers (read-only)</div>
+          <div class="text-gray-500">┌─────────────────────────────┐</div>
+          <div class="text-gray-500">│  CMD ["python3", "app.py"]  │  ← Layer 3</div>
+          <div class="text-gray-500">├─────────────────────────────┤</div>
+          <div class="text-gray-500">│  COPY app.py /app/          │  ← Layer 2</div>
+          <div class="text-gray-500">├─────────────────────────────┤</div>
+          <div class="text-gray-500">│  ubuntu:22.04 base          │  ← Layer 1</div>
+          <div class="text-gray-500">└─────────────────────────────┘</div>
+        </div>
+        <div class="card-code rounded-lg p-4 font-mono text-sm">
+          <div class="text-gray-400 mb-2"><i class="fas fa-play text-green-400 mr-1"></i> Running Container</div>
+          <div class="text-amber-300">┌─────────────────────────────┐</div>
+          <div class="text-amber-300">│  Container Layer (R/W)     │</div>
+          <div class="text-amber-300">│  app.py modified, logs     │</div>
+          <div class="text-amber-300">│  temp files, changes       │  ← NEW — unique to this container</div>
+          <div class="text-amber-300">└─────────────────────────────┘</div>
+          <div class="text-gray-600">┌─────────────────────────────┐</div>
+          <div class="text-gray-600">│  CMD ["python3", "app.py"]  │</div>
+          <div class="text-gray-600">├─────────────────────────────┤</div>
+          <div class="text-gray-600">│  COPY app.py /app/          │  ← Shared read-only</div>
+          <div class="text-gray-600">├─────────────────────────────┤</div>
+          <div class="text-gray-600">│  ubuntu:22.04 base          │</div>
+          <div class="text-gray-600">└─────────────────────────────┘</div>
+        </div>
+      </div>
+
+      <div class="card-code rounded-lg p-4 mb-4 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># Start a container and modify a file</div>
+        <div class="text-green-400">$ <span class="text-white">docker run -d --name myapp image-a</span></div>
+        <div class="text-green-400">$ <span class="text-white">docker exec myapp sh -c "echo 'print(\"modified\")' &gt; /app/app.py"</span></div>
+        <div class="text-green-400">$ <span class="text-white">docker exec myapp cat /app/app.py</span></div>
+        <div class="text-gray-300">print("modified")</div>
+        <br>
+        <div class="text-gray-500"># The image is untouched</div>
+        <div class="text-green-400">$ <span class="text-white">docker run --rm image-a cat /app/app.py</span></div>
+        <div class="text-gray-300">print("original")</div>
+      </div>
+
+      <div class="flex items-start gap-3 bg-amber-900/20 border border-amber-800/40 rounded-lg p-4">
+        <i class="fas fa-lightbulb text-amber-400 mt-1"></i>
+        <p class="text-sm text-gray-300"><strong class="text-amber-300">Key insight:</strong> The image is like a read-only master CD. Each container is a sticky note taped on top — you can write all you want on the note, but the CD stays pristine. Delete the container, and the sticky note is gone too (unless you use a volume).</p>
+      </div>
+    </section>
+
+    <!-- ===== 4. Copy-on-Write ===== -->
+    <section id="cow" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in delay-4">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-copy text-2xl text-rose-400"></i>
+        <h2 class="text-2xl font-bold text-white">4. Copy-on-Write (CoW)</h2>
+      </div>
+      <p class="text-gray-300 mb-4">When a container modifies a file that exists in a lower read-only layer, Docker <strong class="text-rose-300">copies</strong> that file up to the container's writable layer first — then makes the change. The original in the image layer stays untouched. This is called <strong class="text-rose-300">copy-on-write</strong>.</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="card-code rounded-lg p-4 font-mono text-sm">
+          <div class="text-gray-400 mb-2"><i class="fas fa-clock text-gray-500 mr-1"></i> Before edit</div>
+          <div class="text-amber-300">Container Layer: <span class="text-gray-500">(empty)</span></div>
+          <div class="text-gray-500">───</div>
+          <div class="text-gray-300">Image Layer:     <span class="text-teal-300">temp.txt</span>  <span class="text-gray-500">"hello"</span></div>
+        </div>
+        <div class="card-code rounded-lg p-4 font-mono text-sm">
+          <div class="text-gray-400 mb-2"><i class="fas fa-clock text-amber-400 mr-1"></i> After edit</div>
+          <div class="text-amber-300">Container Layer: <span class="text-amber-300">temp.txt</span> <span class="text-gray-500">"hello world"</span>  <span class="text-rose-400">← copied up, then modified</span></div>
+          <div class="text-gray-500">───</div>
+          <div class="text-gray-300">Image Layer:     <span class="text-teal-300">temp.txt</span>  <span class="text-gray-500">"hello"</span>   <span class="text-teal-400">← untouched</span></div>
+        </div>
+      </div>
+
+      <div class="card-code rounded-lg p-4 mb-4 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># CoW in action</div>
+        <div class="text-green-400">$ <span class="text-white">docker run -d --name demo ubuntu:22.04 sleep 300</span></div>
+        <div class="text-green-400">$ <span class="text-white">docker exec demo bash -c "echo 'hello world' &gt; /tmp/temp.txt"</span></div>
+        <div class="text-gray-500"># /tmp/temp.txt didn't exist in the image, but that's fine</div>
+        <div class="text-gray-500"># If it existed in a lower layer, Docker copies it up first.</div>
+        <div class="text-green-400">$ <span class="text-white">docker exec demo cat /tmp/temp.txt</span></div>
+        <div class="text-gray-300">hello world</div>
+        <br>
+        <div class="text-gray-500"># The image layer is untouched — new container still has original</div>
+        <div class="text-green-400">$ <span class="text-white">docker run --rm ubuntu:22.04 cat /tmp/temp.txt</span></div>
+        <div class="text-gray-300">cat: /tmp/temp.txt: No such file or directory</div>
+      </div>
+
+      <div class="flex items-start gap-3 bg-rose-900/20 border border-rose-800/40 rounded-lg p-4">
+        <i class="fas fa-lightbulb text-rose-400 mt-1"></i>
+        <p class="text-sm text-gray-300"><strong class="text-rose-300">Analogy:</strong> It's like photocopying a single page from a library book so you can scribble notes on it. The original book stays clean on the shelf. You only copy what you need to change — efficient and safe.</p>
+      </div>
+    </section>
+
+    <!-- ===== 5. Volumes & Bind Mounts ===== -->
+    <section id="volumes" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in delay-5">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-hdd text-2xl text-cyan-400"></i>
+        <h2 class="text-2xl font-bold text-white">5. Volumes & Bind Mounts</h2>
+      </div>
+      <p class="text-gray-300 mb-4">By default, data written inside a container is lost when the container is deleted. <strong class="text-cyan-300">Volumes</strong> and <strong class="text-cyan-300">bind mounts</strong> let you persist data outside the container's writable layer.</p>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div class="card-code rounded-lg p-4 font-mono text-sm overflow-x-auto">
+          <div class="text-cyan-300 mb-2"><i class="fas fa-database mr-1"></i> Named Volume</div>
+          <div class="text-gray-500"># Create a named volume</div>
+          <div class="text-green-400">$ <span class="text-white">docker volume create data_volume</span></div>
+          <div class="text-gray-300">data_volume</div>
+          <br>
+          <div class="text-gray-500"># Mount it into a container</div>
+          <div class="text-green-400">$ <span class="text-white">docker run -v data_volume:/var/lib/mysql mysql</span></div>
+          <br>
+          <div class="text-gray-500"># Volumes live here:</div>
+          <div class="text-gray-300">/var/lib/docker/volumes/data_volume/_data</div>
+        </div>
+        <div class="card-code rounded-lg p-4 font-mono text-sm overflow-x-auto">
+          <div class="text-cyan-300 mb-2"><i class="fas fa-link mr-1"></i> Bind Mount</div>
+          <div class="text-gray-500"># Mount a host directory (any path)</div>
+          <div class="text-green-400">$ <span class="text-white">docker run -v /data/mysql:/var/lib/mysql mysql</span></div>
+          <br>
+          <div class="text-gray-500"># Newer, more explicit syntax:</div>
+          <div class="text-green-400">$ <span class="text-white">docker run \</span></div>
+          <div class="text-green-400">  <span class="text-white">--mount type=bind,source=/data/mysql,target=/var/lib/mysql \</span></div>
+          <div class="text-green-400">  <span class="text-white">mysql</span></div>
+        </div>
+      </div>
+
+      <div class="card-code rounded-lg p-4 mb-4 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># Full example: MySQL with persistent database</div>
+        <div class="text-green-400">$ <span class="text-white">docker volume create mysql_data</span></div>
+        <div class="text-gray-300">mysql_data</div>
+        <br>
+        <div class="text-green-400">$ <span class="text-white">docker run -d \</span></div>
+        <div class="text-green-400">    <span class="text-white">--name mysql-db \</span></div>
+        <div class="text-green-400">    <span class="text-white">-e MYSQL_ROOT_PASSWORD=secret \</span></div>
+        <div class="text-green-400">    <span class="text-white">-v mysql_data:/var/lib/mysql \</span></div>
+        <div class="text-green-400">    <span class="text-white">mysql:8.0</span></div>
+        <div class="text-gray-300">a1b2c3d4e5f6...</div>
+        <br>
+        <div class="text-gray-500"># Stop and remove the container</div>
+        <div class="text-green-400">$ <span class="text-white">docker stop mysql-db && docker rm mysql-db</span></div>
+        <br>
+        <div class="text-gray-500"># Start a new container with the same volume — data is still there!</div>
+        <div class="text-green-400">$ <span class="text-white">docker run -d \</span></div>
+        <div class="text-green-400">    <span class="text-white">--name mysql-db-new \</span></div>
+        <div class="text-green-400">    <span class="text-white">-e MYSQL_ROOT_PASSWORD=secret \</span></div>
+        <div class="text-green-400">    <span class="text-white">-v mysql_data:/var/lib/mysql \</span></div>
+        <div class="text-green-400">    <span class="text-white">mysql:8.0</span></div>
+      </div>
+
+      <div class="card-code rounded-lg p-4 mb-4 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># List and inspect volumes</div>
+        <div class="text-green-400">$ <span class="text-white">docker volume ls</span></div>
+        <div class="text-gray-300">DRIVER    VOLUME NAME</div>
+        <div class="text-gray-300">local     mysql_data</div>
+        <div class="text-gray-300">local     data_volume</div>
+        <br>
+        <div class="text-green-400">$ <span class="text-white">docker volume inspect mysql_data</span></div>
+        <div class="text-gray-300">[</div>
+        <div class="text-gray-300">  {</div>
+        <div class="text-gray-300">    "CreatedAt": "2025-01-15T10:30:00Z",</div>
+        <div class="text-gray-300">    "Driver": "local",</div>
+        <div class="text-gray-300">    "Mountpoint": "/var/lib/docker/volumes/mysql_data/_data",</div>
+        <div class="text-gray-300">    "Name": "mysql_data"</div>
+        <div class="text-gray-300">  }</div>
+        <div class="text-gray-300">]</div>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-3">
+        <div class="card-code rounded-lg p-4 font-mono text-sm overflow-x-auto">
+          <div class="text-gray-400 mb-1"><i class="fas fa-plus-circle text-green-400 mr-1"></i> Volume — Pros</div>
+          <ul class="text-gray-300 space-y-1 text-xs">
+            <li><i class="fas fa-check text-green-400 mr-1"></i> Managed by Docker</li>
+            <li><i class="fas fa-check text-green-400 mr-1"></i> Works on all OSes</li>
+            <li><i class="fas fa-check text-green-400 mr-1"></i> Safer & isolated</li>
+            <li><i class="fas fa-check text-green-400 mr-1"></i> Can be shared across containers</li>
+            <li><i class="fas fa-check text-green-400 mr-1"></i> Backup/restore with Docker CLI</li>
+          </ul>
+        </div>
+        <div class="card-code rounded-lg p-4 font-mono text-sm overflow-x-auto">
+          <div class="text-gray-400 mb-1"><i class="fas fa-link text-cyan-400 mr-1"></i> Bind Mount — Pros</div>
+          <ul class="text-gray-300 space-y-1 text-xs">
+            <li><i class="fas fa-check text-cyan-400 mr-1"></i> Use any host path</li>
+            <li><i class="fas fa-check text-cyan-400 mr-1"></i> Great for development (live code reload)</li>
+            <li><i class="fas fa-check text-cyan-400 mr-1"></i> Files appear directly on host</li>
+            <li><i class="fas fa-check text-cyan-400 mr-1"></i> No Docker daemon management needed</li>
+          </ul>
+        </div>
+      </div>
+
+      <div class="flex items-start gap-3 bg-cyan-900/20 border border-cyan-800/40 rounded-lg p-4">
+        <i class="fas fa-lightbulb text-cyan-400 mt-1"></i>
+        <p class="text-sm text-gray-300"><strong class="text-cyan-300">Analogy:</strong> A volume is like a USB drive — you plug it into a computer (container), save your work, and even if you turn off the computer, the data is still on the USB drive. Plug it into a different computer, and your files are right there.</p>
+      </div>
+    </section>
+
+    <!-- ===== 6. Storage Drivers ===== -->
+    <section id="drivers" class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mb-6 animate-slide-in delay-6">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-microchip text-2xl text-purple-400"></i>
+        <h2 class="text-2xl font-bold text-white">6. Storage Drivers</h2>
+      </div>
+      <p class="text-gray-300 mb-4">Storage drivers are the technology that Docker uses to manage layers, copy-on-write, and container filesystems. They determine <strong class="text-purple-300">how</strong> Docker interacts with the underlying host filesystem.</p>
+
+      <div class="overflow-x-auto mb-4">
+        <table class="w-full text-sm font-mono card-code rounded-lg">
+          <thead>
+            <tr class="text-gray-400 border-b border-slate-700">
+              <th class="p-3 text-left">Driver</th>
+              <th class="p-3 text-left">Description</th>
+              <th class="p-3 text-left">Best For</th>
+            </tr>
+          </thead>
+          <tbody class="text-gray-300">
+            <tr class="border-b border-slate-700/50">
+              <td class="p-3 text-cyan-300">overlay2</td>
+              <td class="p-3">Modern union filesystem; merges multiple dirs</td>
+              <td class="p-3">Default on most modern Linux distros</td>
+            </tr>
+            <tr class="border-b border-slate-700/50">
+              <td class="p-3 text-cyan-300">overlay</td>
+              <td class="p-3">Predecessor of overlay2 (fewer inodes)</td>
+              <td class="p-3">Older kernels (&lt;4.0)</td>
+            </tr>
+            <tr class="border-b border-slate-700/50">
+              <td class="p-3 text-cyan-300">aufs</td>
+              <td class="p-3">Advanced multi-layered union fs</td>
+              <td class="p-3">Older Docker versions, Ubuntu &lt;16.04</td>
+            </tr>
+            <tr class="border-b border-slate-700/50">
+              <td class="p-3 text-cyan-300">devicemapper</td>
+              <td class="p-3">Kernel-based block-level storage</td>
+              <td class="p-3">RHEL/CentOS &lt;7 (no longer recommended)</td>
+            </tr>
+            <tr class="border-b border-slate-700/50">
+              <td class="p-3 text-cyan-300">btrfs / zfs</td>
+              <td class="p-3">Advanced filesystem with snapshots</td>
+              <td class="p-3">Systems already using btrfs/zfs</td>
+            </tr>
+            <tr>
+              <td class="p-3 text-cyan-300">vfs</td>
+              <td class="p-3">Simple copy (no CoW, no layering)</td>
+              <td class="p-3">Testing only (very slow, no sharing)</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="card-code rounded-lg p-4 mb-4 font-mono text-sm overflow-x-auto">
+        <div class="text-gray-500"># Check which storage driver Docker is using</div>
+        <div class="text-green-400">$ <span class="text-white">docker info | grep -i "storage driver"</span></div>
+        <div class="text-gray-300">Storage Driver: overlay2</div>
+        <br>
+        <div class="text-gray-500"># See detailed driver configuration</div>
+        <div class="text-green-400">$ <span class="text-white">docker info | grep -A 10 "Storage Driver"</span></div>
+        <div class="text-gray-300">Storage Driver: overlay2</div>
+        <div class="text-gray-300"> Backing Filesystem: extfs</div>
+        <div class="text-gray-300"> Supports d_type: true</div>
+        <div class="text-gray-300"> Native Overlay Diff: true</div>
+      </div>
+
+      <div class="flex items-start gap-3 bg-purple-900/20 border border-purple-800/40 rounded-lg p-4">
+        <i class="fas fa-lightbulb text-purple-400 mt-1"></i>
+        <p class="text-sm text-gray-300"><strong class="text-purple-300">Which one should you use?</strong> If you're on a modern Linux (kernel 4.0+), <code class="text-cyan-300">overlay2</code> is the default and best choice — performant, stable, and well-supported. You almost never need to change it.</p>
+      </div>
+    </section>
+
+    <!-- Summary Card -->
+    <div class="glow-card p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-slate-700 transition-all duration-300 mt-8 animate-fade-in">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fas fa-list-check text-2xl text-green-400"></i>
+        <h2 class="text-2xl font-bold text-white">Quick Recap</h2>
+      </div>
+      <div class="grid md:grid-cols-2 gap-4 text-sm">
+        <div class="card-code rounded-lg p-4">
+          <ul class="space-y-2 text-gray-300">
+            <li><i class="fas fa-folder-open text-teal-400 mr-2"></i> <strong class="text-white">File System</strong> — All Docker data lives in <code class="text-teal-300">/var/lib/docker/</code></li>
+            <li><i class="fas fa-layer-group text-indigo-400 mr-2"></i> <strong class="text-white">Layers</strong> — Each Dockerfile instruction is a read-only layer; layers are shared between images</li>
+            <li><i class="fas fa-sticky-note text-amber-400 mr-2"></i> <strong class="text-white">Container Layer</strong> — A thin R/W layer sits on top; changes stay in the container</li>
+          </ul>
+        </div>
+        <div class="card-code rounded-lg p-4">
+          <ul class="space-y-2 text-gray-300">
+            <li><i class="fas fa-copy text-rose-400 mr-2"></i> <strong class="text-white">Copy-on-Write</strong> — Files are copied up from image layers only when modified</li>
+            <li><i class="fas fa-hdd text-cyan-400 mr-2"></i> <strong class="text-white">Volumes / Bind Mounts</strong> — Persist data outside the container lifecycle</li>
+            <li><i class="fas fa-microchip text-purple-400 mr-2"></i> <strong class="text-white">Storage Drivers</strong> — overlay2 (modern default), aufs, devicemapper, btrfs, zfs</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer Navigation -->
+    <div class="flex justify-between items-center mt-10 pt-6 border-t border-slate-800 animate-fade-in">
+      <a href="ch06_networking.html" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-arrow-left"></i> Previous: Networking
+      </a>
+      <a href="../index.html" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+        <i class="fas fa-th"></i> All Chapters
+      </a>
+      <a href="ch08_compose.html" class="flex items-center gap-2 text-gray-400 hover:text-white transition-colors">
+        Next: Docker Compose <i class="fas fa-arrow-right"></i>
+      </a>
+    </div>
+
+    <div class="mt-8 text-center text-gray-500 text-sm">
+      <i class="fas fa-book-open mr-1"></i> Based on "Docker for Beginners" by Mumshad Mannambeth
+    </div>
+  </div>
+
+  <style>
+    @keyframes fadeIn { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+    @keyframes slideIn { from { opacity:0; transform:translateX(-30px); } to { opacity:1; transform:translateX(0); } }
+    .animate-fade-in { animation: fadeIn 0.8s ease-out; }
+    .animate-slide-in { animation: slideIn 0.6s ease-out; }
+    .delay-1 { animation-delay: 0.1s; }
+    .delay-2 { animation-delay: 0.2s; }
+    .delay-3 { animation-delay: 0.3s; }
+    .delay-4 { animation-delay: 0.4s; }
+    .delay-5 { animation-delay: 0.5s; }
+    .delay-6 { animation-delay: 0.6s; }
+  @media(max-width:640px){.code-block,.terminal,.terminal-block,.yaml-block,.card-code,pre,[class*="font-mono"]{font-size:.7rem!important;padding:.5rem!important;word-break:break-all!important}td,th{padding:.25rem .35rem!important;font-size:.6rem!important}table{font-size:.6rem!important}.glow-card{padding:.75rem!important}h1{font-size:1.5rem!important}h2{font-size:1.15rem!important}}code{word-break:break-all;overflow-x:auto}img{max-width:100%;height:auto}
+</style>
+</body>
+</html>
