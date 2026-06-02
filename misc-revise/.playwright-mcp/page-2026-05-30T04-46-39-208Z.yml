@@ -1,0 +1,262 @@
+- generic [ref=e2]:
+  - heading "Event Loop" [level=1] [ref=e3]
+  - paragraph [ref=e4]: How JavaScript's single thread handles async — call stack, queues, and the eternal cycle
+  - heading "1. The Big Picture single thread, async magic" [level=2] [ref=e5]:
+    - generic [ref=e6]: 1. The Big Picture
+    - generic [ref=e7]: single thread, async magic
+  - paragraph [ref=e8]:
+    - text: JavaScript is
+    - strong [ref=e9]: single-threaded
+    - text: — one call stack, one thing at a time. The
+    - strong [ref=e10]: event loop
+    - text: "is what makes async possible. It constantly checks:"
+    - emphasis [ref=e11]: "\"is the stack empty? if so, push the next waiting task.\""
+  - generic [ref=e12]:
+    - generic [ref=e13]:
+      - generic [ref=e14]: Call Stack
+      - generic [ref=e16]: (empty)
+      - generic [ref=e17]: "Stack: 0 frames"
+    - generic [ref=e19]:
+      - text: →
+      - generic [ref=e20]:
+        - text: stack
+        - text: empty?
+    - generic [ref=e21]:
+      - generic [ref=e22]: Microtask Queue
+      - generic [ref=e24]: (empty)
+    - generic [ref=e25]:
+      - text: →
+      - generic [ref=e26]:
+        - text: drain
+        - text: all
+    - generic [ref=e27]:
+      - generic [ref=e28]: Macrotask Queue
+      - generic [ref=e30]: (empty)
+    - generic [ref=e31]:
+      - text: →
+      - generic [ref=e32]:
+        - text: pick
+        - text: one
+    - generic [ref=e33]:
+      - generic [ref=e34]: Render
+      - generic [ref=e36]: (paint)
+  - paragraph [ref=e37]:
+    - text: "The event loop has one simple job:"
+    - strong [ref=e38]: monitor the call stack and the task queues
+    - text: . When the stack is empty, it takes the oldest task from a queue and pushes it onto the stack.
+  - generic [ref=e39]:
+    - strong [ref=e40]: "The Golden Rule:"
+    - text: Microtasks are drained
+    - strong [ref=e41]: completely
+    - text: after every macrotask, before rendering. A macrotask queue iteration picks
+    - strong [ref=e42]: one
+    - text: task. The microtask queue is drained until
+    - strong [ref=e43]: empty
+    - text: .
+  - heading "2. The Cycle — Step by Step 1 macrotask → all micro → render" [level=2] [ref=e44]:
+    - generic [ref=e45]: 2. The Cycle — Step by Step
+    - generic [ref=e46]: 1 macrotask → all micro → render
+  - generic [ref=e47]:
+    - generic [ref=e48]: 🔄 Click through the event loop cycle
+    - generic [ref=e49]:
+      - button "⏭️ Step" [ref=e50] [cursor=pointer]
+      - button "▶️ Auto" [ref=e51] [cursor=pointer]
+      - button "↺ Reset" [ref=e52] [cursor=pointer]
+    - generic [ref=e53]:
+      - generic [ref=e54]: ⏳ Wait
+      - generic [ref=e55]: →
+      - generic [ref=e56]: 📦 Pick macro
+      - generic [ref=e57]: →
+      - generic [ref=e58]: 🔬 Drain micro
+      - generic [ref=e59]: →
+      - generic [ref=e60]: 🎨 Render
+      - generic [ref=e61]: →
+      - generic [ref=e62]: ⏳ Wait
+    - generic [ref=e63]: Press "Step" to advance through the event loop cycle.
+  - heading "3. Call Stack in Action LIFO · stack frames · overflow" [level=2] [ref=e64]:
+    - generic [ref=e65]: 3. Call Stack in Action
+    - generic [ref=e66]: LIFO · stack frames · overflow
+  - paragraph [ref=e67]:
+    - text: The call stack is a LIFO (Last In, First Out) data structure. Each function call creates a
+    - strong [ref=e68]: stack frame
+    - text: . When a function returns, its frame is popped. The stack has a finite size (~10k frames) — exceeding it causes a
+    - strong [ref=e69]: stack overflow
+    - text: .
+  - generic [ref=e70]:
+    - generic [ref=e71]: 📚 Call stack visualizer — watch frames push and pop
+    - generic [ref=e72]:
+      - button "Run normal calls" [ref=e73] [cursor=pointer]
+      - button "Run nested calls" [ref=e74] [cursor=pointer]
+      - button "💥 Trigger overflow" [ref=e75] [cursor=pointer]
+      - button "🧹 Clear" [ref=e76] [cursor=pointer]
+    - generic [ref=e77]:
+      - generic [ref=e79]: Call Stack
+      - generic [ref=e82]: Execution Log
+  - heading "4. Microtasks vs Macrotasks the key to understanding async" [level=2] [ref=e84]:
+    - generic [ref=e85]: 4. Microtasks vs Macrotasks
+    - generic [ref=e86]: the key to understanding async
+  - generic [ref=e87]:
+    - generic [ref=e88]:
+      - generic [ref=e89]: Microtasks
+      - generic [ref=e90]: Promise.then / catch / finally, queueMicrotask, MutationObserver
+      - generic [ref=e91]:
+        - text: Drained
+        - strong [ref=e92]: completely
+        - text: after each macrotask, before rendering. Can starve the macrotask queue if they keep adding more microtasks.
+    - generic [ref=e93]:
+      - generic [ref=e94]: Macrotasks
+      - generic [ref=e95]: setTimeout, setInterval, I/O, UI events, postMessage, setImmediate
+      - generic [ref=e96]:
+        - text: Picked
+        - strong [ref=e97]: one at a time
+        - text: per event loop iteration. The browser may group rendering between macrotasks.
+    - generic [ref=e98]:
+      - generic [ref=e99]: requestAnimationFrame
+      - generic [ref=e100]: runs before the next paint, after microtasks, before render
+      - generic [ref=e101]: Scheduled by the browser at ~60fps. Not a task queue — runs in the render phase.
+    - generic [ref=e102]:
+      - generic [ref=e103]: Rendering
+      - generic [ref=e104]: style recalc → layout → paint → compositing
+      - generic [ref=e105]: Happens after all microtasks are drained. Not guaranteed between every macrotask — the browser optimizes.
+  - generic [ref=e106]:
+    - generic [ref=e107]: ⏱️ See the ordering — microtasks always win over macrotasks
+    - generic [ref=e108]:
+      - button "▶️ Run" [ref=e109] [cursor=pointer]
+      - button "🧹 Clear" [ref=e110] [cursor=pointer]
+    - generic [ref=e111]:
+      - generic [ref=e113]: 📥 Microtask Queue (Promise.then)
+      - generic [ref=e116]: 📤 Macrotask Queue (setTimeout)
+  - generic [ref=e119]:
+    - strong [ref=e120]: "Key insight:"
+    - code [ref=e121]: Promise.resolve().then(() => ...)
+    - text: runs
+    - strong [ref=e122]: before
+    - code [ref=e123]: setTimeout(() => ..., 0)
+    - text: — even though both are queued at the same time. Microtasks interrupt macrotasks.
+  - heading "5. Blocking the Event Loop long tasks · UI freeze · 50ms" [level=2] [ref=e124]:
+    - generic [ref=e125]: 5. Blocking the Event Loop
+    - generic [ref=e126]: long tasks · UI freeze · 50ms
+  - paragraph [ref=e127]:
+    - text: A task that takes too long (>50ms) is a
+    - strong [ref=e128]: Long Task
+    - text: — it blocks rendering, freezes the UI, and degrades user experience. The browser's
+    - strong [ref=e129]: Interation to Next Paint (INP)
+    - text: metric tracks this.
+  - generic [ref=e130]:
+    - generic [ref=e131]: 🧱 Blocking simulator — drag the slider to block the thread
+    - generic [ref=e132]:
+      - generic [ref=e133]: "Block duration:"
+      - slider [ref=e134]: "0"
+      - generic [ref=e135]: 0ms
+      - button "🧱 Block!" [ref=e136] [cursor=pointer]
+    - generic [ref=e137]:
+      - generic [ref=e138]: 0ms
+      - generic [ref=e139]: Ready
+      - generic [ref=e140]: 2000ms
+    - generic [ref=e142]: ⏱️ 0ms elapsed
+  - heading "6. requestAnimationFrame & Render Pipeline rAF · style · layout · paint" [level=2] [ref=e143]:
+    - generic [ref=e144]: 6. requestAnimationFrame & Render Pipeline
+    - generic [ref=e145]: rAF · style · layout · paint
+  - paragraph [ref=e146]:
+    - code [ref=e147]: requestAnimationFrame
+    - text: schedules a callback before the next browser paint. It's ideal for animations — the browser coordinates it with the display refresh rate.
+  - code [ref=e149]: "// Render pipeline order (one frame): Tasks → Microtasks → requestAnimationFrame → Style + Layout + Paint // rAF runs AFTER microtasks but BEFORE the actual paint"
+  - generic [ref=e150]:
+    - generic [ref=e151]:
+      - generic [ref=e152]: requestAnimationFrame(fn)
+      - generic [ref=e153]:
+        - text: Schedules
+        - code [ref=e154]: fn
+        - text: to run before the next paint. Passes a high-precision timestamp. Automatically pauses in background tabs.
+    - generic [ref=e155]:
+      - generic [ref=e156]: vs setTimeout(fn, 16)
+      - generic [ref=e157]: setTimeout may jitter, throttle in background, or miss frames. rAF synchronizes with the display refresh cycle.
+  - generic [ref=e158]:
+    - generic [ref=e159]: 🎬 Frame pipeline visualizer
+    - generic [ref=e160]:
+      - generic [ref=e161]: Macrotask
+      - generic [ref=e162]: Microtasks
+      - generic [ref=e163]: requestAnimationFrame
+      - generic [ref=e164]: Style + Layout + Paint
+      - generic [ref=e165]: Idle
+    - generic [ref=e166]:
+      - button "▶️ Start rAF demo" [ref=e167] [cursor=pointer]
+      - button "⏹️ Stop" [ref=e168] [cursor=pointer]
+  - heading "7. Common Pitfalls starvation · blocking · deadlocks" [level=2] [ref=e170]:
+    - generic [ref=e171]: 7. Common Pitfalls
+    - generic [ref=e172]: starvation · blocking · deadlocks
+  - generic [ref=e173]:
+    - generic [ref=e174]:
+      - generic [ref=e175]: Microtask Starvation
+      - generic [ref=e176]:
+        - text: "A microtask that keeps queueing more microtasks prevents macrotasks and rendering from ever running. Example:"
+        - code [ref=e177]: Promise.resolve().then(() => Promise.resolve().then(...))
+        - text: recursively.
+    - generic [ref=e178]:
+      - generic [ref=e179]: Long Tasks
+      - generic [ref=e180]:
+        - text: Sync
+        - code [ref=e181]: while
+        - text: loops or heavy computation blocks the stack. No microtasks, no rendering — the page freezes.
+    - generic [ref=e182]:
+      - generic [ref=e183]: setTimeout(fn, 0) delay
+      - generic [ref=e184]: Not actually 0ms. Minimum delay is 4ms after nesting level 5 (HTML spec). Plus, all pending microtasks run first.
+    - generic [ref=e185]:
+      - generic [ref=e186]: Zalgo
+      - generic [ref=e187]:
+        - text: A function that's sometimes sync, sometimes async. Bad practice — always use
+        - code [ref=e188]: Promise.resolve().then()
+        - text: or
+        - code [ref=e189]: queueMicrotask
+        - text: for consistent async.
+  - heading "8. Interactive Playground write code · watch the loop" [level=2] [ref=e190]:
+    - generic [ref=e191]: 8. Interactive Playground
+    - generic [ref=e192]: write code · watch the loop
+  - paragraph [ref=e193]:
+    - text: Edit code and run. Use the
+    - code [ref=e194]: log(msg, type)
+    - text: helper where type is
+    - code [ref=e195]: "\"sync\""
+    - text: ","
+    - code [ref=e196]: "\"micro\""
+    - text: ","
+    - code [ref=e197]: "\"macro\""
+    - text: ", or"
+    - code [ref=e198]: "\"info\""
+    - text: . The
+    - code [ref=e199]: wait(ms)
+    - text: helper returns a promise.
+  - generic [ref=e200]:
+    - generic [ref=e201]: 💻 Live event loop playground
+    - textbox [ref=e202]: "log(\"1: sync start\", \"sync\"); setTimeout(() => log(\"6: setTimeout(0)\", \"macro\"), 0); Promise.resolve().then(() => { log(\"3: micro 1\", \"micro\"); queueMicrotask(() => log(\"4: micro 2 (nested)\", \"micro\")); }); queueMicrotask(() => log(\"5: queueMicrotask\", \"micro\")); log(\"2: sync end\", \"sync\"); // After this code finishes, the event loop: // 1. drains microtask queue (3 → 4 → 5) // 2. picks the next macrotask (6)"
+    - generic [ref=e203]:
+      - button "▶️ Run" [ref=e204] [cursor=pointer]
+      - button "🧹 Clear" [ref=e205] [cursor=pointer]
+  - heading "Comparison Table" [level=2] [ref=e207]
+  - table [ref=e208]:
+    - rowgroup [ref=e209]:
+      - row "Queue Type Contains Order Can starve?" [ref=e210]:
+        - columnheader "Queue Type" [ref=e211]
+        - columnheader "Contains" [ref=e212]
+        - columnheader "Order" [ref=e213]
+        - columnheader "Can starve?" [ref=e214]
+      - row "Macrotask setTimeout, setInterval, I/O, events, postMessage One per loop iteration Yes (if microtasks keep coming)" [ref=e215]:
+        - cell "Macrotask" [ref=e216]
+        - cell "setTimeout, setInterval, I/O, events, postMessage" [ref=e217]
+        - cell "One per loop iteration" [ref=e218]
+        - cell "Yes (if microtasks keep coming)" [ref=e219]
+      - row "Microtask Promise.then/catch/finally, queueMicrotask, MutationObserver Drained completely before render Can starve macrotasks + render" [ref=e220]:
+        - cell "Microtask" [ref=e221]
+        - cell "Promise.then/catch/finally, queueMicrotask, MutationObserver" [ref=e222]
+        - cell "Drained completely before render" [ref=e223]
+        - cell "Can starve macrotasks + render" [ref=e224]
+      - row "requestAnimationFrame Animation callbacks Before each paint, after microtasks No (browser throttles)" [ref=e225]:
+        - cell "requestAnimationFrame" [ref=e226]
+        - cell "Animation callbacks" [ref=e227]
+        - cell "Before each paint, after microtasks" [ref=e228]
+        - cell "No (browser throttles)" [ref=e229]
+      - row "Render Style recalc, layout, paint, compositing After all microtasks, ~60fps Yes (blocked by long tasks)" [ref=e230]:
+        - cell "Render" [ref=e231]
+        - cell "Style recalc, layout, paint, compositing" [ref=e232]
+        - cell "After all microtasks, ~60fps" [ref=e233]
+        - cell "Yes (blocked by long tasks)" [ref=e234]

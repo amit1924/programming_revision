@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>WebKit CSS — Visualized</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f17; color: #cdd6f4; padding: 0; }
+    .page { max-width: 1060px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    h1 { font-size: 2.6rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    h1 .glyph { background: linear-gradient(135deg, #89b4fa, #a6e3a1, #f9e2af, #f38ba8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { font-size: 1.4rem; margin: 2.5rem 0 0.8rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .sub { font-size: 0.7rem; color: #6c7086; font-weight: 400; }
+    h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p { color: #a6adc8; line-height: 1.7; margin-bottom: 10px; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid #2a2a3c; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+    .subtitle { color: #6c7086; font-size: 1.05rem; margin-bottom: 2rem; }
+
+    .card { background: #1a1a2a; border: 1px solid #2a2a3c; border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .card-label { font-size: 0.7rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; letter-spacing: 0.3px; }
+    .card-label .hl { color: #89b4fa; }
+
+    .compare-row { display: flex; gap: 16px; margin: 12px 0; }
+    @media (max-width: 700px) { .compare-row { flex-direction: column; } }
+    .compare-side { flex: 1; background: #1a1a2a; border-radius: 10px; border: 1px solid #2a2a3c; overflow: hidden; }
+    .compare-side .cs-head { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .compare-side .cs-head.bad { background: #f38ba815; color: #f38ba8; }
+    .compare-side .cs-head.good { background: #a6e3a115; color: #a6e3a1; }
+    .compare-side .cs-head.info { background: #89b4fa15; color: #89b4fa; }
+    .compare-side .cs-body { padding: 12px; }
+
+    .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.7rem; font-family: monospace; border-radius: 4px; }
+    .tag-blue { background: #89b4fa20; color: #89b4fa; }
+    .tag-green { background: #a6e3a120; color: #a6e3a1; }
+    .tag-red { background: #f38ba820; color: #f38ba8; }
+    .tag-yellow { background: #f9e2af20; color: #f9e2af; }
+    .tag-purple { background: #cba6f720; color: #cba6f7; }
+    .tag-pink { background: #f5c2e720; color: #f5c2e7; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { background: #181825; color: #89b4fa; padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 2px solid #2a2a3c; }
+    td { padding: 10px 14px; border-bottom: 1px solid #2a2a3c; color: #a6adc8; }
+    tr:hover td { background: #1a1a2a; }
+    td:first-child { font-family: monospace; color: #fab387; }
+
+    .tip { background: #1a1a2a; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+    .tip.webkit { border-left-color: #89b4fa; }
+    .tip.webkit strong { color: #89b4fa; }
+
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .toggle-group button { background: #2a2a3c; color: #a6adc8; border: 1px solid #3a3a50; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-family: monospace; transition: all 0.2s; }
+    .toggle-group button:hover { background: #3a3a50; }
+    .toggle-group button.on { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 8px; height: 8px; }
+    ::-webkit-scrollbar-track { background: #0f0f17; }
+    ::-webkit-scrollbar-thumb { background: #3a3a50; border-radius: 4px; }
+    ::-webkit-scrollbar-thumb:hover { background: #585b70; }
+
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .text-center { text-align: center; }
+
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
+    .badge-webkit { background: #89b4fa20; color: #89b4fa; border: 1px solid #89b4fa50; }
+    .badge-safe { background: #a6e3a120; color: #a6e3a1; border: 1px solid #a6e3a150; }
+    .badge-dep { background: #f38ba820; color: #f38ba8; border: 1px solid #f38ba850; }
+    .badge-all { background: #cba6f720; color: #cba6f7; border: 1px solid #cba6f750; }
+
+    .demo-scroll { max-height: 120px; overflow-y: auto; padding: 8px; background: #181825; border-radius: 6px; border: 1px solid #2a2a3c; }
+
+    .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .prop-grid { grid-template-columns: 1fr; } }
+
+    .webkit-badge { display: inline-block; background: linear-gradient(135deg, #89b4fa, #cba6f7); color: #0f0f17; padding: 2px 10px; border-radius: 999px; font-size: 0.6rem; font-weight: 700; font-family: monospace; }
+
+    /* ===== Custom scrollbar demo ===== */
+    .scrollbar-demo-custom::-webkit-scrollbar { width: 10px; }
+    .scrollbar-demo-custom::-webkit-scrollbar-track { background: #2a2a3c; border-radius: 5px; }
+    .scrollbar-demo-custom::-webkit-scrollbar-thumb { background: linear-gradient(180deg, #89b4fa, #cba6f7); border-radius: 5px; }
+    .scrollbar-demo-custom::-webkit-scrollbar-thumb:hover { background: linear-gradient(180deg, #74c7ec, #b4befe); }
+
+    /* ===== Appearance demo ===== */
+    .native-select { -webkit-appearance: none; appearance: none; background: #2a2a3c; color: #cdd6f4; padding: 8px 12px; border: 1px solid #3a3a50; border-radius: 6px; font-size: 0.8rem; }
+    .native-select { background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 12 12'%3E%3Cpath fill='%23cdd6f4' d='M6 8L1 3h10z'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 10px center; padding-right: 30px; }
+
+    /* ===== Text stroke demo ===== */
+    .stroke-demo { font-size: 2.2rem; font-weight: 900; -webkit-text-stroke: 2px #89b4fa; -webkit-text-fill-color: transparent; }
+
+    /* ===== Line clamp demo ===== */
+    .clamp-demo { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+
+    /* ===== Mask demo ===== */
+    .mask-demo { width: 100%; height: 80px; background: linear-gradient(135deg, #89b4fa, #cba6f7); -webkit-mask: linear-gradient(to right, transparent, black 30%, black 70%, transparent); mask: linear-gradient(to right, transparent, black 30%, black 70%, transparent); border-radius: 6px; }
+
+    input[type="range"] { accent-color: #89b4fa; width: 100%; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1><span class="glyph">WebKit CSS</span> <span style="font-size:1.4rem;color:#6c7086;font-weight:400;">— Visualized</span></h1>
+  <p class="subtitle">
+    <span class="webkit-badge">-webkit-</span> vendor-prefixed CSS properties — what they do, when to use them, and when they're the <em>only</em> way to get the result you want.
+  </p>
+
+  <!-- ===== 0. WHAT IS WEBKIT ===== -->
+  <section>
+    <h2>0. What is WebKit? <span class="sub">— The browser engine behind Safari</span></h2>
+    <p>WebKit is the browser rendering engine used by <strong>Safari</strong> (macOS, iOS, iPadOS) and all iOS browsers (Chrome, Firefox, Edge on iOS are all WebKit underneath). CSS properties prefixed with <code>-webkit-</code> are WebKit-specific extensions — some are now standard, some are still unique to Safari.</p>
+
+    <div class="card">
+      <div class="card-label">Engine map — <span class="hl">which browser uses what</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;text-align:center;border:1px solid #89b4fa50;">
+          <div style="font-size:1.3rem;margin-bottom:4px;">🍏</div>
+          <div style="font-weight:700;color:#89b4fa;font-size:0.8rem;">WebKit</div>
+          <div style="font-size:0.6rem;color:#6c7086;">Safari · iOS all browsers</div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;text-align:center;border:1px solid #f38ba850;">
+          <div style="font-size:1.3rem;margin-bottom:4px;">🔥</div>
+          <div style="font-weight:700;color:#f38ba8;font-size:0.8rem;">Blink</div>
+          <div style="font-size:0.6rem;color:#6c7086;">Chrome · Edge · Opera · Brave</div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;text-align:center;border:1px solid #a6e3a150;">
+          <div style="font-size:1.3rem;margin-bottom:4px;">🦊</div>
+          <div style="font-weight:700;color:#a6e3a1;font-size:0.8rem;">Gecko</div>
+          <div style="font-size:0.6rem;color:#6c7086;">Firefox</div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;text-align:center;border:1px solid #f9e2af50;">
+          <div style="font-size:1.3rem;margin-bottom:4px;">🌐</div>
+          <div style="font-weight:700;color:#f9e2af;font-size:0.8rem;">Standard</div>
+          <div style="font-size:0.6rem;color:#6c7086;">Use unprefixed when possible</div>
+        </div>
+      </div>
+
+      <div class="tip webkit" style="margin-top:10px;">
+        <strong>Critical:</strong> iOS only allows WebKit engines. Chrome/Firefox on iOS are <strong>safari under the hood</strong>. If you want a feature to work on iPhone, it must work in WebKit. <code>-webkit-</code> prefixed properties are often the <em>only</em> way to style certain things on iOS.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 1. -webkit-line-clamp ===== -->
+  <section>
+    <h2>1. <code>-webkit-line-clamp</code> <span class="sub">— Multi-line text truncation</span></h2>
+    <p>The <strong>only</strong> cross-browser way to truncate text at N lines with an ellipsis. Still requires the <code>-webkit-</code> prefix in all browsers.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without — full text visible</div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:4px;padding:10px;font-size:0.75rem;line-height:1.6;width:220px;">
+            This is a long card description that keeps going and going without any truncation and takes up too much space in the layout and makes all cards uneven.
+          </div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With -webkit-line-clamp: 3</div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:4px;padding:10px;font-size:0.75rem;line-height:1.6;width:220px;">
+            <div class="clamp-demo">
+              This is a long card description that keeps going and going but now it gets truncated at exactly 3 lines with an ellipsis at the end thanks to line-clamp.
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Interactive — <span class="hl">change the number of lines</span></div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:0.7rem;">lines:</label>
+        <input type="range" id="clampSlider" min="1" max="6" value="3" style="width:200px;">
+        <span id="clampLabel" class="tag tag-blue">3 lines</span>
+      </div>
+      <div style="margin-top:8px;background:#181825;border-radius:6px;padding:12px;border:1px solid #2a2a3c;width:300px;">
+        <div style="font-weight:600;font-size:0.85rem;margin-bottom:4px;">Card Title</div>
+        <div id="clampDemo" style="display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden;font-size:0.75rem;line-height:1.6;color:#a6adc8;">
+          This is a long card description that demonstrates the line-clamp property. It shows how text can be truncated at any number of lines with an ellipsis automatically added by the browser at the end of the last visible line.
+        </div>
+      </div>
+      <pre style="margin-top:8px;"><code>.card-text {
+  display: -webkit-box;           /* required — creates a flex-like box */
+  -webkit-line-clamp: 3;          /* number of lines to show */
+  -webkit-box-orient: vertical;   /* required — sets box axis */
+  overflow: hidden;               /* required — clips the rest */
+}
+/* ⚠️ Still requires -webkit- prefix in ALL browsers (2024+) */</code></pre>
+    </div>
+
+    <div class="tip webkit">
+      <strong>This is the most-used -webkit- property.</strong> Every card grid, every preview, every feed uses it. The <code>-webkit-</code> prefix is required even in Chrome/Firefox — the unprefixed version doesn't exist. <a href="../typography/index.html" style="color:#89b4fa;">See typography notes for details.</a>
+    </div>
+  </section>
+
+  <!-- ===== 2. -webkit-scrollbar ===== -->
+  <section>
+    <h2>2. <code>-webkit-scrollbar</code> <span class="sub">— Custom scrollbar styling</span></h2>
+    <p>Style scrollbars with CSS. <strong>Only works in WebKit browsers</strong> (Safari, Chrome, Edge). Firefox uses <code>scrollbar-width</code> instead.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">Default scrollbar</div>
+        <div class="cs-body">
+          <div style="max-height:100px;overflow-y:auto;background:#181825;border-radius:4px;padding:8px;">
+            <div style="font-size:0.65rem;padding:4px;">Item 1</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 2</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 3</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 4</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 5</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 6</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 7</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 8</div>
+          </div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">Custom <code>-webkit-scrollbar</code></div>
+        <div class="cs-body">
+          <div style="max-height:100px;overflow-y:auto;background:#181825;border-radius:4px;padding:8px;" class="scrollbar-demo-custom">
+            <div style="font-size:0.65rem;padding:4px;">Item 1</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 2</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 3</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 4</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 5</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 6</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 7</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 8</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Custom scrollbar anatomy — <span class="hl">pseudo-elements</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #2a2a3c;">
+          <span class="tag tag-blue">::-webkit-scrollbar</span>
+          <p style="font-size:0.65rem;color:#6c7086;margin-top:4px;">The entire scrollbar (width, height)</p>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #2a2a3c;">
+          <span class="tag tag-green">::-webkit-scrollbar-track</span>
+          <p style="font-size:0.65rem;color:#6c7086;margin-top:4px;">The track (background area)</p>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #2a2a3c;">
+          <span class="tag tag-purple">::-webkit-scrollbar-thumb</span>
+          <p style="font-size:0.65rem;color:#6c7086;margin-top:4px;">The draggable handle</p>
+        </div>
+      </div>
+      <pre style="margin-top:8px;"><code>/* Only works in WebKit (Safari, Chrome, Edge) */
+::-webkit-scrollbar { width: 8px; }
+::-webkit-scrollbar-track { background: #1a1a2a; }
+::-webkit-scrollbar-thumb {
+  background: #89b4fa;
+  border-radius: 4px;
+}
+/* Firefox alternative: scrollbar-width: thin */</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 3. -webkit-text-stroke & -webkit-text-fill-color ===== -->
+  <section>
+    <h2>3. <code>-webkit-text-stroke</code> & <code>-webkit-text-fill-color</code> <span class="sub">— Outlined text</span></h2>
+    <p>Creates outlined/stroked text. Also supported in Firefox (unprefixed) but originally a WebKit invention.</p>
+
+    <div class="card">
+      <div class="card-label">Text stroke demo — <span class="hl">adjust stroke width</span></div>
+      <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+        <label style="font-size:0.7rem;">stroke:</label>
+        <input type="range" id="strokeSlider" min="0" max="6" value="2" step="0.5" style="width:200px;">
+        <span id="strokeLabel" class="tag tag-blue">2px</span>
+        <label style="font-size:0.7rem;">color:</label>
+        <input type="color" id="strokeColor" value="#89b4fa" style="width:40px;height:30px;background:transparent;border:none;">
+        <input type="color" id="fillColor" value="transparent" style="width:40px;height:30px;background:transparent;border:none;">
+      </div>
+      <div style="font-size:2.5rem;font-weight:900;text-align:center;padding:20px;background:#181825;border-radius:8px;border:1px solid #2a2a3c;margin-top:8px;">
+        <span id="strokeDemo" style="-webkit-text-stroke:2px #89b4fa;-webkit-text-fill-color:transparent;">Stroked Text</span>
+      </div>
+      <pre style="margin-top:8px;"><code>.text {
+  -webkit-text-stroke: 2px #89b4fa;       /* stroke width + color */
+  -webkit-text-fill-color: transparent;  /* makes text fill transparent */
+  /* also works unprefixed in Firefox */
+  text-stroke: 2px #89b4fa;
+  text-fill-color: transparent;
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 4. -webkit-appearance ===== -->
+  <section>
+    <h2>4. <code>-webkit-appearance</code> / <code>appearance</code> <span class="sub">— Reset native UI styles</span></h2>
+    <p>Removes native OS styling from form elements (buttons, inputs, selects, checkboxes). Required for custom-styled form controls.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head info">Native appearance</div>
+        <div class="cs-body">
+          <div style="display:flex;flex-direction:column;gap:8px;padding:8px;background:#181825;border-radius:4px;">
+            <select style="padding:6px;font-size:0.75rem;">
+              <option>Native select</option>
+              <option>Option 2</option>
+            </select>
+            <button style="padding:6px 16px;font-size:0.75rem;">Native button</button>
+            <label style="font-size:0.75rem;"><input type="checkbox"> Native checkbox</label>
+          </div>
+          <p style="font-size:0.6rem;color:#6c7086;margin-top:4px;">OS-dependent look — varies by browser/platform</p>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">appearance: none + custom</div>
+        <div class="cs-body">
+          <div style="display:flex;flex-direction:column;gap:8px;padding:8px;background:#181825;border-radius:4px;">
+            <select class="native-select">
+              <option>Custom select</option>
+              <option>Option 2</option>
+            </select>
+            <button style="padding:6px 16px;font-size:0.75rem;background:#89b4fa;color:#0f0f17;border:none;border-radius:6px;font-weight:600;">Custom button</button>
+            <label style="font-size:0.75rem;display:flex;align-items:center;gap:6px;">
+              <input type="checkbox" style="width:16px;height:16px;accent-color:#89b4fa;"> Custom checkbox
+            </label>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>select { -webkit-appearance: none;
+         appearance: none; } /* full reset */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip webkit">
+      <strong>Always use both</strong> <code>-webkit-appearance: none</code> and <code>appearance: none</code> (unprefixed). Safari still requires the <code>-webkit-</code> prefix. This is the most reliable cross-browser way to reset form controls.
+    </div>
+  </section>
+
+  <!-- ===== 5. -webkit-tap-highlight-color ===== -->
+  <section>
+    <h2>5. <code>-webkit-tap-highlight-color</code> <span class="sub">— Mobile tap feedback (iOS/Safari)</span></h2>
+    <p>Controls the gray highlight that appears when tapping links/buttons on iOS Safari. <strong>Only works in WebKit.</strong></p>
+
+    <div class="card">
+      <div class="card-label">Tap highlight — <span class="hl">click/tap to see the difference</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;text-align:center;border:1px solid #2a2a3c;">
+          <div style="font-size:0.65rem;color:#f38ba8;margin-bottom:6px;">Default (gray flash on tap)</div>
+          <a href="#" style="display:inline-block;padding:10px 20px;background:#2a2a3c;border-radius:6px;font-size:0.75rem;color:#cdd6f4;text-decoration:none;">Tap me (iOS)</a>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;text-align:center;border:1px solid #a6e3a150;">
+          <div style="font-size:0.65rem;color:#a6e3a1;margin-bottom:6px;">With transparent highlight</div>
+          <a href="#" style="display:inline-block;padding:10px 20px;background:#2a2a3c;border-radius:6px;font-size:0.75rem;color:#cdd6f4;text-decoration:none;-webkit-tap-highlight-color:transparent;">Tap me (no flash)</a>
+        </div>
+      </div>
+      <pre style="margin-top:8px;"><code>/* Remove the gray tap highlight on iOS Safari */
+* { -webkit-tap-highlight-color: transparent; }
+/* ⚠️ Only works in WebKit — no standard equivalent */</code></pre>
+      <p style="font-size:0.7rem;color:#6c7086;margin-top:4px;">Open on an iPhone/iPad to see the difference. On desktop, both behave the same.</p>
+    </div>
+  </section>
+
+  <!-- ===== 6. -webkit-font-smoothing ===== -->
+  <section>
+    <h2>6. <code>-webkit-font-smoothing</code> <span class="sub">— Font rendering (macOS)</span></h2>
+    <p>Controls font anti-aliasing on macOS Safari/Chrome. <code>antialiased</code> makes text thinner and lighter; <code>subpixel-antialiased</code> is the default (thicker).</p>
+
+    <div class="card">
+      <div class="card-label">Comparison — <span class="hl">only visible on macOS</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#181825;border-radius:6px;padding:16px;border:1px solid #2a2a3c;">
+          <div style="font-size:0.65rem;color:#f38ba8;margin-bottom:6px;">Default (subpixel-antialiased)</div>
+          <div style="font-size:1.3rem;font-weight:400;color:#cdd6f4;">The quick brown fox</div>
+          <div style="font-size:1rem;font-weight:300;color:#a6adc8;">The quick brown fox</div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:16px;border:1px solid #a6e3a150;">
+          <div style="font-size:0.65rem;color:#a6e3a1;margin-bottom:6px;">With -webkit-font-smoothing: antialiased</div>
+          <div style="font-size:1.3rem;font-weight:400;color:#cdd6f4;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;">The quick brown fox</div>
+          <div style="font-size:1rem;font-weight:300;color:#a6adc8;-webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;">The quick brown fox</div>
+        </div>
+      </div>
+      <pre style="margin-top:8px;"><code>/* Makes text thinner/lighter — common in dark themes */
+body {
+  -webkit-font-smoothing: antialiased;    /* macOS Safari/Chrome */
+  -moz-osx-font-smoothing: grayscale;     /* macOS Firefox */
+}
+/* Default: subpixel-antialiased (thicker text) */</code></pre>
+      <p style="font-size:0.65rem;color:#585b70;">Only affects macOS. On Windows/Linux, both look the same.</p>
+    </div>
+  </section>
+
+  <!-- ===== 7. -webkit-mask ===== -->
+  <section>
+    <h2>7. <code>-webkit-mask</code> <span class="sub">— Image/gradient masking</span></h2>
+    <p>Masks an element using another image or gradient. Transparent parts of the mask hide the element. Originally WebKit, now standard with prefix fallback needed for Safari < 15.</p>
+
+    <div class="card">
+      <div class="card-label">Mask demo — <span class="hl">gradient fades the edges</span></div>
+      <div class="mask-demo"></div>
+      <pre style="margin-top:8px;"><code>.element {
+  background: linear-gradient(135deg, #89b4fa, #cba6f7);
+  -webkit-mask: linear-gradient(           /* Safari fallback */
+    to right, transparent, black 30%, black 70%, transparent
+  );
+  mask: linear-gradient(
+    to right, transparent, black 30%, black 70%, transparent
+  );
+}</code></pre>
+      <p style="font-size:0.7rem;color:#6c7086;margin-top:4px;">The bar above fades in from left, is fully visible in the middle, and fades out to the right. This is achieved with a mask gradient, not opacity.</p>
+    </div>
+
+    <div class="tip webkit">
+      <strong>Always use both</strong> <code>-webkit-mask</code> and <code>mask</code>. Safari < 15 only supports the prefixed version. The standard <code>mask</code> property works in Chrome/Firefox/Safari 15+.
+    </div>
+  </section>
+
+  <!-- ===== 8. -webkit-overflow-scrolling ===== -->
+  <section>
+    <h2>8. <code>-webkit-overflow-scrolling</code> <span class="badge badge-dep">Deprecated</span> <span class="sub">— iOS momentum scrolling</span></h2>
+    <p>Used to enable smooth momentum scrolling on iOS. <strong>Now the default behavior</strong> — this property is no longer needed on iOS 13+.</p>
+
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #f38ba850;">
+          <div style="font-size:0.7rem;color:#f38ba8;margin-bottom:4px;">❌ Old code (iOS 5–12)</div>
+          <pre style="margin:0;padding:6px;font-size:0.6rem;"><code>.scroll {
+  overflow: auto;
+  -webkit-overflow-scrolling: touch;
+  /* iOS momentum scroll */
+}</code></pre>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #a6e3a150;">
+          <div style="font-size:0.7rem;color:#a6e3a1;margin-bottom:4px;">✅ Modern (iOS 13+)</div>
+          <pre style="margin:0;padding:6px;font-size:0.6rem;"><code>.scroll {
+  overflow: auto;
+  /* momentum is default now */
+}</code></pre>
+        </div>
+      </div>
+      <p style="font-size:0.7rem;color:#6c7086;margin-top:6px;">You can safely remove <code>-webkit-overflow-scrolling</code> from your code. It's been the default since iOS 13 (2019).</p>
+    </div>
+  </section>
+
+  <!-- ===== 9. -webkit-touch-callout ===== -->
+  <section>
+    <h2>9. <code>-webkit-touch-callout</code> <span class="sub">— iOS callout menu</span></h2>
+    <p>Disables the context menu (copy/paste/share) that appears on long-press in iOS Safari. <strong>Only works in WebKit.</strong></p>
+
+    <div class="card">
+      <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #2a2a3c;">
+        <div style="font-size:0.65rem;color:#f38ba8;margin-bottom:6px;">Default: long-press shows "Copy/Share" popup</div>
+        <a href="#" style="color:#89b4fa;">Long-press this link on iPhone (try it)</a>
+      </div>
+      <pre style="margin-top:8px;"><code>/* Disable the iOS callout menu on long-press */
+.no-callout {
+  -webkit-touch-callout: none;
+}
+/* Useful for web apps that have custom copy behavior */</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 10. -webkit-box (OLD FLEXBOX) ===== -->
+  <section>
+    <h2>10. <code>-webkit-box</code> <span class="badge badge-dep">Deprecated</span> <span class="sub">— The original flexbox (2009)</span></h2>
+    <p>The original WebKit flexbox model from 2009. Now replaced by the standard <code>flexbox</code> but still needed for <code>-webkit-line-clamp</code> to work.</p>
+
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #f38ba850;">
+          <div style="font-size:0.7rem;color:#f38ba8;margin-bottom:4px;">❌ Old -webkit-box (2009)</div>
+          <pre style="margin:0;padding:6px;font-size:0.6rem;"><code>.container {
+  display: -webkit-box;
+  -webkit-box-orient: horizontal;
+  -webkit-box-pack: center;
+  -webkit-box-align: center;
+}
+/* DO NOT use — only kept for line-clamp */</code></pre>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #a6e3a150;">
+          <div style="font-size:0.7rem;color:#a6e3a1;margin-bottom:4px;">✅ Modern flexbox</div>
+          <pre style="margin:0;padding:6px;font-size:0.6rem;"><code>.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+/* Use this instead */</code></pre>
+        </div>
+      </div>
+      <div class="tip webkit" style="margin-top:8px;">
+        <strong>The only reason -webkit-box still exists in CSS:</strong> <code>-webkit-line-clamp</code> requires <code>display: -webkit-box</code> and <code>-webkit-box-orient: vertical</code>. This is the <strong>only</strong> valid use case for the old box model in 2024. Everything else should use modern flexbox.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 11. WEBKIT-ONLY MEDIA QUERIES ===== -->
+  <section>
+    <h2>11. WebKit-Only Media Queries & Selectors <span class="sub">— Targeting Safari specifically</span></h2>
+
+    <div class="card">
+      <div class="card-label">Safari-only CSS — <span class="hl">hacks to target WebKit</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #2a2a3c;">
+          <div style="font-size:0.7rem;color:#89b4fa;margin-bottom:4px;">Target Safari only</div>
+          <pre style="margin:0;padding:6px;font-size:0.6rem;"><code>/* Safari 7.1+ */
+_::-webkit-full-page-media,
+_:future, .selector {
+  /* Safari-only styles */
+}
+
+/* Safari 10.1+ */
+@media not all and
+  (min-resolution:.001dpcm) {
+  .safari-only { }
+}</code></pre>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #2a2a3c;">
+          <div style="font-size:0.7rem;color:#a6e3a1;margin-bottom:4px;">Target iOS Safari only</div>
+          <pre style="margin:0;padding:6px;font-size:0.6rem;"><code>/* iOS Safari 10+ */
+@supports (-webkit-touch-callout: none) {
+  .ios-only { }
+}
+
+/* iOS Safari notch area */
+@viewport {
+  viewport-fit: cover;
+}
+.under-notch {
+  padding-top: env(safe-area-inset-top);
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip webkit">
+      <strong>Use <code>@supports</code> for feature detection, not UA sniffing.</strong> Instead of targeting Safari, test for the specific WebKit property you need: <code>@supports (-webkit-tap-highlight-color: transparent) { /* WebKit-only */ }</code>
+    </div>
+  </section>
+
+  <!-- ===== 12. SAFE AREA INSETS ===== -->
+  <section>
+    <h2>12. <code>env(safe-area-inset-*)</code> <span class="sub">— Notch & home indicator (iOS)</span></h2>
+    <p>WebKit-specific CSS environment variables that report the screen's unsafe areas (notch, rounded corners, home indicator). <strong>Critical for iOS web apps.</strong></p>
+
+    <div class="card">
+      <div class="card-label">Safe area variables — <span class="hl">values auto-set by iOS Safari</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #2a2a3c;">
+          <code>env(safe-area-inset-top)</code>
+          <div style="font-size:0.6rem;color:#6c7086;">Notch height (iPhone: ~44px)</div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #2a2a3c;">
+          <code>env(safe-area-inset-bottom)</code>
+          <div style="font-size:0.6rem;color:#6c7086;">Home indicator (iPhone: ~34px)</div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #2a2a3c;">
+          <code>env(safe-area-inset-left)</code>
+          <div style="font-size:0.6rem;color:#6c7086;">Rounded corners left</div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #2a2a3c;">
+          <code>env(safe-area-inset-right)</code>
+          <div style="font-size:0.6rem;color:#6c7086;">Rounded corners right</div>
+        </div>
+      </div>
+      <pre style="margin-top:8px;"><code>/* Full-screen web app on iPhone */
+body {
+  padding-top: env(safe-area-inset-top);
+  padding-bottom: env(safe-area-inset-bottom);
+  padding-left: env(safe-area-inset-left);
+  padding-right: env(safe-area-inset-right);
+}
+
+/* Or use with viewport-fit for full-bleed */
+/* &lt;meta name="viewport" content="viewport-fit=cover"&gt; */
+.fixed-footer {
+  padding-bottom: max(12px, env(safe-area-inset-bottom));
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 13. SUMMARY ===== -->
+  <section>
+    <h2>13. Quick Reference</h2>
+
+    <table>
+      <thead><tr><th>Property</th><th>Status</th><th>What it does</th><th>Cross-browser?</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>-webkit-line-clamp</code></td>
+          <td><span class="badge badge-webkit">WebKit</span></td>
+          <td>Multi-line text truncation</td>
+          <td style="color:#f9e2af;">Prefix needed everywhere</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-scrollbar</code></td>
+          <td><span class="badge badge-webkit">WebKit</span></td>
+          <td>Custom scrollbar styling</td>
+          <td style="color:#f38ba8;">WebKit only</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-text-stroke</code></td>
+          <td><span class="badge badge-safe">Standard</span></td>
+          <td>Text outline/stroke</td>
+          <td style="color:#a6e3a1;">All modern browsers</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-appearance</code></td>
+          <td><span class="badge badge-safe">Standard</span></td>
+          <td>Reset native form styling</td>
+          <td style="color:#f9e2af;">Needs both prefixed + unprefixed</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-tap-highlight-color</code></td>
+          <td><span class="badge badge-webkit">WebKit</span></td>
+          <td>iOS tap flash color</td>
+          <td style="color:#f38ba8;">iOS Safari only</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-font-smoothing</code></td>
+          <td><span class="badge badge-webkit">WebKit</span></td>
+          <td>macOS font rendering</td>
+          <td style="color:#f38ba8;">macOS only</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-mask</code></td>
+          <td><span class="badge badge-safe">Standard</span></td>
+          <td>Element masking</td>
+          <td style="color:#f9e2af;">Prefix needed for Safari < 15</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-overflow-scrolling</code></td>
+          <td><span class="badge badge-dep">Deprecated</span></td>
+          <td>iOS momentum scroll</td>
+          <td style="color:#a6e3a1;">Unnecessary since iOS 13</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-touch-callout</code></td>
+          <td><span class="badge badge-webkit">WebKit</span></td>
+          <td>iOS long-press menu</td>
+          <td style="color:#f38ba8;">iOS Safari only</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-box</code></td>
+          <td><span class="badge badge-dep">Deprecated</span></td>
+          <td>Old flexbox (2009)</td>
+          <td style="color:#f9e2af;">Only for line-clamp</td>
+        </tr>
+        <tr>
+          <td><code>env(safe-area-inset-*)</code></td>
+          <td><span class="badge badge-webkit">WebKit</span></td>
+          <td>iPhone notch/home indicator</td>
+          <td style="color:#f38ba8;">iOS Safari only</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="tip webkit" style="margin-top:20px;">
+      <strong>The golden rule:</strong> Always write the standard property alongside the <code>-webkit-</code> prefixed version. Modern browsers drop the prefix eventually. Test on real iOS devices — the browser inspector can't simulate everything. The 3 you'll actually use daily: <code>-webkit-line-clamp</code>, <code>-webkit-appearance</code> (with standard), and <code>-webkit-tap-highlight-color</code>.
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #2a2a3c;padding-top:24px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    WebKit CSS — Visualized &bull; css-notes/webkit
+  </footer>
+</div>
+
+<script>
+// Clamp slider
+(function() {
+  const slider = document.getElementById('clampSlider');
+  const label = document.getElementById('clampLabel');
+  const demo = document.getElementById('clampDemo');
+  function update() {
+    const v = slider.value;
+    label.textContent = v + ' lines';
+    demo.style.webkitLineClamp = v;
+  }
+  slider.addEventListener('input', update);
+  update();
+})();
+
+// Stroke slider
+(function() {
+  const slider = document.getElementById('strokeSlider');
+  const label = document.getElementById('strokeLabel');
+  const demo = document.getElementById('strokeDemo');
+  const colorPicker = document.getElementById('strokeColor');
+  const fillPicker = document.getElementById('fillColor');
+  function update() {
+    const v = slider.value;
+    label.textContent = v + 'px';
+    demo.style.webkitTextStroke = v + 'px ' + colorPicker.value;
+    if (fillPicker.value === '#000000' || fillPicker.value === 'transparent') {
+      // keep transparent
+    }
+    demo.style.webkitTextFillColor = fillPicker.value === '#000000' ? 'transparent' : fillPicker.value;
+  }
+  slider.addEventListener('input', update);
+  colorPicker.addEventListener('input', update);
+  fillPicker.addEventListener('input', update);
+  update();
+})();
+</script>
+</body>
+</html>

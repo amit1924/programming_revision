@@ -1,0 +1,573 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSS Position · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--coral:#f28fad;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--orange)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;scroll-margin-top:70px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}.code .keyword{color:var(--blue)}.code .string{color:var(--green)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.orange{background:rgba(248,189,127,.18);color:var(--orange)}
+
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--orange);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+.demo-stage{position:relative;background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);margin:10px 0;min-height:200px;overflow:hidden;padding:12px}
+.demo-stage .scroll-hint{position:absolute;bottom:4px;right:8px;font-size:.65rem;color:var(--muted)}.demo-stage .scroll-hint.l{left:8px;right:auto}
+
+.pos-card{display:inline-flex;align-items:center;justify-content:center;padding:8px 16px;border-radius:4px;font-size:.78rem;font-weight:600;font-family:monospace;transition:.3s}
+
+.pos-relative{background:rgba(249,226,175,.12);border:2px solid var(--yellow);color:var(--yellow)}
+.pos-absolute{background:rgba(137,180,250,.12);border:2px solid var(--blue);color:var(--blue)}
+.pos-fixed{background:rgba(243,139,168,.12);border:2px solid var(--red);color:var(--red)}
+.pos-sticky{background:rgba(148,226,213,.12);border:2px solid var(--teal);color:var(--teal)}
+.pos-static{background:rgba(108,112,134,.12);border:2px solid var(--muted);color:var(--muted)}
+
+.offset-controls{display:flex;gap:12px;flex-wrap:wrap;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin:8px 0;align-items:center}
+.offset-controls label{font-size:.76rem;color:var(--muted);display:flex;align-items:center;gap:6px}
+.offset-controls input[type=range]{accent-color:var(--orange);width:100px}
+
+.side-by-side{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+.sbs-box{background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);padding:12px;position:relative;min-height:180px}
+.sbs-box .ref-line{position:absolute;top:30px;left:0;right:0;height:1px;background:var(--muted);opacity:.3}
+.sbs-box .sbs-label{font-size:.7rem;color:var(--muted);margin-bottom:6px}
+
+.player{position:relative;height:160px;border-radius:4px;margin:8px 0;background:var(--bg);border:1px solid var(--surface2);overflow:hidden}
+.player .track{position:absolute;top:50%;left:0;right:0;height:2px;background:var(--surface2);transform:translateY(-50%)}
+.player .runner{position:absolute;top:50%;width:20px;height:20px;border-radius:50%;transform:translate(-50%,-50%);transition:.03s linear;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:.6rem;color:#0f0f17;font-weight:700}
+.player .runner.rel{background:var(--yellow);left:0%}
+.player .runner.abs{background:var(--blue);left:50%}
+.player .runner.fix{background:var(--red);left:100%}
+.player .runner.stk{background:var(--teal);left:25%}
+
+.sticky-witness{height:100px;background:rgba(148,226,213,.03);border:1px dashed rgba(148,226,213,.2);border-radius:4px;margin:8px 0;display:flex;align-items:center;justify-content:center;font-size:.78rem;color:var(--muted)}
+
+.stack-box{position:relative;margin:10px 0;height:200px}
+.stack-layer{position:absolute;width:180px;height:100px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;transition:.2s}
+
+.z-slider{accent-color:var(--orange);width:100%}
+.z-block{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:4px;margin:4px 0;font-size:.78rem}
+
+.toggle-group{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--orange);color:#0f0f17;border-color:var(--orange)}
+
+/* Scrollable stage for sticky */
+.sticky-scroll-stage{height:250px;overflow-y:auto;background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);padding:0;position:relative}
+.sticky-scroll-stage .inner{padding:0}
+.sticky-scroll-stage .spacer{height:80px;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:.78rem}
+.sticky-scroll-stage .sticky-block{padding:14px 16px;background:rgba(148,226,213,.1);border:2px solid var(--teal);border-radius:0;font-size:.82rem;font-weight:600;color:var(--teal)}
+.sticky-scroll-stage .content-after{min-height:400px;padding:16px;font-size:.82rem;color:var(--muted);line-height:1.8}
+.sticky-scroll-stage .sticky-tracker{font-size:.7rem;color:var(--muted);text-align:center;padding:4px;border-bottom:1px solid var(--surface2)}
+
+/* Fixed overlay demo */
+.fixed-overlay{display:none;position:fixed;top:0;left:0;right:0;bottom:0;background:rgba(0,0,0,.6);z-index:999;align-items:center;justify-content:center}
+.fixed-overlay.show{display:flex}
+.fixed-overlay .modal{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:24px;max-width:400px;text-align:center}
+.fixed-overlay .modal h3{color:var(--blue);margin-bottom:8px}
+.fixed-overlay .modal p{color:var(--muted);font-size:.84rem;margin-bottom:12px}
+
+/* Nav tabs for position types */
+.pos-tabs{display:flex;gap:6px;flex-wrap:wrap;margin:12px 0}
+.pos-tab{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.pos-tab.active{font-weight:600}
+.pos-tab.active.static-tab{background:rgba(108,112,134,.18);border-color:var(--muted);color:var(--muted)}
+.pos-tab.active.rel-tab{background:rgba(249,226,175,.18);border-color:var(--yellow);color:var(--yellow)}
+.pos-tab.active.abs-tab{background:rgba(137,180,250,.18);border-color:var(--blue);color:var(--blue)}
+.pos-tab.active.fix-tab{background:rgba(243,139,168,.18);border-color:var(--red);color:var(--red)}
+.pos-tab.active.stk-tab{background:rgba(148,226,213,.18);border-color:var(--teal);color:var(--teal)}
+
+.all-playground{position:relative;background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);min-height:280px;margin:10px 0;overflow:hidden}
+.all-playground .ref-grid{position:absolute;top:0;left:0;right:0;bottom:0;background-image:linear-gradient(rgba(255,255,255,.03) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.03) 1px,transparent 1px);background-size:20px 20px}
+.all-playground .p-item{position:absolute;width:120px;height:60px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;cursor:move;transition:box-shadow .2s;font-family:monospace;z-index:5}
+.all-playground .p-item:hover{box-shadow:0 0 20px rgba(255,255,255,.1);z-index:10}
+.all-playground .p-item .name{position:absolute;top:-18px;font-size:.65rem;white-space:nowrap;color:var(--muted);font-weight:400}
+.all-playground .p-item.rel{background:rgba(249,226,175,.15);border:2px solid var(--yellow);color:var(--yellow);resize:both;overflow:hidden}
+.all-playground .p-item.abs{background:rgba(137,180,250,.15);border:2px solid var(--blue);color:var(--blue)}
+.all-playground .p-item.fix{background:rgba(243,139,168,.15);border:2px solid var(--red);color:var(--red)}
+.all-playground .p-item.stk{background:rgba(148,226,213,.15);border:2px solid var(--teal);color:var(--teal)}
+.all-playground .p-item.stc{background:rgba(108,112,134,.12);border:2px solid var(--muted);color:var(--muted)}
+
+.pos-info{font-family:monospace;font-size:.74rem;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin:10px 0;line-height:1.7}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>CSS</span> Position</div>
+  <div class="crumbs">CSS &rsaquo; Positioning</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(248,189,127,.18);color:var(--orange)">Layout</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. OVERVIEW -->
+<div class="section-title"><span class="num">1</span> What Is CSS Positioning?</div>
+<div class="card">
+  <p>The <code>position</code> property controls <strong>how an element is placed</strong> in the document flow. It has 5 values: <code>static</code>, <code>relative</code>, <code>absolute</code>, <code>fixed</code>, and <code>sticky</code>. The <code>top</code>, <code>right</code>, <code>bottom</code>, <code>left</code> offset properties work differently depending on the position value.</p>
+  <div class="grid3" style="text-align:center;font-size:.82rem">
+    <div style="padding:12px;border-radius:6px;background:rgba(249,226,175,.06);border:1px solid var(--yellow)"><strong style="color:var(--yellow)">Static</strong><br><span style="font-size:.72rem;color:var(--muted)">Default — normal flow</span></div>
+    <div style="padding:12px;border-radius:6px;background:rgba(249,226,175,.06);border:1px solid var(--yellow)"><strong style="color:var(--yellow)">Relative</strong><br><span style="font-size:.72rem;color:var(--muted)">Offset from its normal position</span></div>
+    <div style="padding:12px;border-radius:6px;background:rgba(137,180,250,.06);border:1px solid var(--blue)"><strong style="color:var(--blue)">Absolute</strong><br><span style="font-size:.72rem;color:var(--muted)">Positioned relative to nearest positioned ancestor</span></div>
+    <div style="padding:12px;border-radius:6px;background:rgba(243,139,168,.06);border:1px solid var(--red)"><strong style="color:var(--red)">Fixed</strong><br><span style="font-size:.72rem;color:var(--muted)">Positioned relative to the viewport</span></div>
+    <div style="padding:12px;border-radius:6px;background:rgba(148,226,213,.06);border:1px solid var(--teal)"><strong style="color:var(--teal)">Sticky</strong><br><span style="font-size:.72rem;color:var(--muted)">Toggles between relative and fixed based on scroll</span></div>
+    <div style="padding:12px;border-radius:6px;background:rgba(137,180,250,.06);border:1px solid var(--blue)"><strong style="color:var(--blue)">Z-index</strong><br><span style="font-size:.72rem;color:var(--muted)">Stacking order on the z-axis</span></div>
+  </div>
+</div>
+
+<!-- 2. STATIC -->
+<div class="section-title" id="s-static"><span class="num">2</span> Static · The Default</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.74rem">
+<span class="comment">/* Default — no position needed */</span>
+.element {
+  position: static;
+  <span class="comment">/* top/right/bottom/left have NO effect */</span>
+  <span class="comment">/* z-index has NO effect */</span>
+}
+      </div>
+      <p><strong>Static</strong> is the default. Elements flow in normal document order — block elements stack vertically, inline elements flow horizontally. <code>top</code>, <code>left</code>, <code>z-index</code> are <strong>ignored</strong>.</p>
+      <div class="callout" style="font-size:.78rem;padding:8px">
+        <strong>&#9432;</strong> You rarely write <code>position: static</code>. It's the default. But it's useful to reset a positioned element back to normal flow.
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Try setting <code>left</code> and <code>top</code> — they do nothing:</p>
+      <div class="demo-stage" style="min-height:140px">
+        <div class="pos-card pos-static" id="staticDemo" style="position:static">static · offsets ignored</div>
+      </div>
+      <div class="offset-controls">
+        <label>top: <input type="range" min="-40" max="40" value="0" oninput="document.getElementById('staticDemo').style.top=this.value+'px';document.getElementById('staticTopVal').textContent=this.value"></label>
+        <span id="staticTopVal" style="font-family:monospace;color:var(--muted)">0</span>
+        <label>left: <input type="range" min="-40" max="40" value="0" oninput="document.getElementById('staticDemo').style.left=this.value+'px';document.getElementById('staticLeftVal').textContent=this.value"></label>
+        <span id="staticLeftVal" style="font-family:monospace;color:var(--muted)">0</span>
+      </div>
+      <div class="pos-info" id="staticInfo">position: static; left: 0px; top: 0px; &#8594; <span style="color:var(--muted)">Offsets ignored by browser</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. RELATIVE -->
+<div class="section-title" id="s-relative"><span class="num">3</span> Relative · Offset From Self</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.74rem">
+<span class="comment">/* Offset from where it WOULD have been */</span>
+.element {
+  position: relative;
+  top: 20px;   <span class="comment">/* pushed DOWN 20px */</span>
+  left: 30px;  <span class="comment">/* pushed RIGHT 30px */</span>
+  <span class="comment">/* Original space is PRESERVED — no reflow */</span>
+}
+      </div>
+      <p><strong>Relative</strong> offsets the element from its normal position. The element's <strong>original space is preserved</strong> — other elements don't reflow to fill the gap. Relative also establishes a <strong>positioning context</strong> for absolutely-positioned children.</p>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Drag the sliders — the element moves but its original space stays:</p>
+      <div class="demo-stage" id="relStage" style="min-height:150px">
+        <div style="padding:6px;background:rgba(108,112,134,.2);border-radius:4px;font-size:.7rem;color:var(--muted);text-align:center">Normal flow element (doesn't move)</div>
+        <div class="pos-card pos-relative" id="relDemo" style="position:relative;top:0;left:0;margin:6px 0">relative · I move, my space stays</div>
+        <div style="padding:6px;background:rgba(108,112,134,.2);border-radius:4px;font-size:.7rem;color:var(--muted);text-align:center">Normal flow element (doesn't move)</div>
+      </div>
+      <div class="offset-controls">
+        <label>top: <input type="range" min="-30" max="50" value="0" oninput="document.getElementById('relDemo').style.top=this.value+'px';document.getElementById('relTopVal').textContent=this.value;updateRelInfo()"></label>
+        <span id="relTopVal" style="font-family:monospace;color:var(--muted)">0</span>
+        <label>left: <input type="range" min="-30" max="50" value="0" oninput="document.getElementById('relDemo').style.left=this.value+'px';document.getElementById('relLeftVal').textContent=this.value;updateRelInfo()"></label>
+        <span id="relLeftVal" style="font-family:monospace;color:var(--muted)">0</span>
+      </div>
+      <div class="pos-info" id="relInfo">position: relative; top: 0px; left: 0px;</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. ABSOLUTE -->
+<div class="section-title" id="s-absolute"><span class="num">4</span> Absolute · Relative to Ancestor</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.74rem">
+<span class="comment">/* Removed from flow, positioned relative to nearest positioned ancestor */</span>
+.parent {
+  position: relative; <span class="comment">/* becomes the reference */</span>
+}
+.child {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  <span class="comment">/* Removed from normal flow — no space preserved */</span>
+}
+      </div>
+      <p><strong>Absolute</strong> removes the element from normal flow (no space preserved). It positions relative to the <strong>nearest positioned ancestor</strong> (any ancestor with <code>position: relative/absolute/fixed/sticky</code>). If none exists, it uses the <strong>initial containing block</strong> (usually the viewport).</p>
+      <div class="callout danger" style="font-size:.76rem;padding:8px">
+        <strong>&#9888; THE #1 GOTCHA:</strong> Absolute elements look for the NEAREST positioned ancestor. Forgetting to set <code>position: relative</code> on the parent causes the absolute child to fly to the top of the page!
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Toggle the parent's <code>position: relative</code> — watch the blue box jump:</p>
+      <div class="demo-stage" id="absStage" style="min-height:180px">
+        <div id="absParent" style="position:relative;background:rgba(137,180,250,.04);border:1px dashed var(--blue);border-radius:4px;padding:10px;min-height:140px;transition:.3s">
+          <span style="font-size:.7rem;color:var(--muted)">Parent <span id="absParentPos">[position: relative]</span></span>
+          <div class="pos-card pos-absolute" id="absDemo" style="position:absolute;top:10px;right:10px">absolute · pinned to parent</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:60px">Other content in parent — absolute doesn't affect layout</div>
+        </div>
+      </div>
+      <div class="toggle-group">
+        <button class="toggle-btn active" onclick="toggleAbsParent(true)">parent: relative</button>
+        <button class="toggle-btn" onclick="toggleAbsParent(false)">parent: static (remove reference)</button>
+      </div>
+      <div class="offset-controls">
+        <label>top: <input type="range" min="0" max="80" value="10" oninput="document.getElementById('absDemo').style.top=this.value+'px';document.getElementById('absTopVal').textContent=this.value"></label>
+        <span id="absTopVal" style="font-family:monospace;color:var(--muted)">10</span>
+        <label>right: <input type="range" min="0" max="80" value="10" oninput="document.getElementById('absDemo').style.right=this.value+'px';document.getElementById('absRightVal').textContent=this.value"></label>
+        <span id="absRightVal" style="font-family:monospace;color:var(--muted)">10</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. FIXED -->
+<div class="section-title" id="s-fixed"><span class="num">5</span> Fixed · Relative to Viewport</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.74rem">
+<span class="comment">/* Stays in place regardless of scroll */</span>
+.navbar {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: 60px;
+  <span class="comment">/* Removed from flow, relative to viewport */</span>
+  <span class="comment">/* Scrollbars don't push it */</span>
+}
+      </div>
+      <p><strong>Fixed</strong> positions the element relative to the <strong>viewport</strong>. It's <strong>removed from normal flow</strong> and ignores scrolling. Commonly used for navbars, modals, and back-to-top buttons.</p>
+      <div class="callout warn" style="font-size:.76rem;padding:8px">
+        <strong>&#9888; On mobile, fixed behaves differently.</strong> iOS Safari has issues with fixed elements during keyboard open / elastic scrolling. Test thoroughly.
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Scroll the box below — the red bar stays at the top:</p>
+      <div class="sticky-scroll-stage" id="fixedDemoStage">
+        <div class="inner">
+          <div class="sticky-tracker">&#8595; scroll down</div>
+          <div class="pos-card pos-fixed" id="fixedDemo" style="position:sticky;top:0;left:0;right:0;border-radius:0;z-index:10;width:100%">&#128204; position: fixed (stays at top while scrolling)</div>
+          <div class="spacer" style="height:200px;align-items:flex-start;padding-top:20px">&#8595; Scroll down — the bar stays at the top of the viewport</div>
+        </div>
+      </div>
+      <div style="display:flex;gap:6px;margin-top:8px">
+        <button class="btn primary" onclick="showFixedModal()">&#9654; Show Fixed Modal</button>
+        <span style="font-size:.72rem;color:var(--muted)">(Modal is also position: fixed)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Fixed Modal -->
+<div class="fixed-overlay" id="fixedModal">
+  <div class="modal">
+    <h3>&#128205; Fixed Modal</h3>
+    <p>This modal uses <code>position: fixed</code>. It stays centered regardless of scroll position. The overlay uses <code>position: fixed</code> + <code>inset: 0</code>.</p>
+    <button class="btn primary" onclick="document.getElementById('fixedModal').classList.remove('show')">Close</button>
+  </div>
+</div>
+
+<!-- 6. STICKY -->
+<div class="section-title" id="s-sticky"><span class="num">6</span> Sticky · Relative + Fixed Hybrid</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.74rem">
+<span class="comment">/* Becomes fixed when it reaches top: 0 */</span>
+.section-header {
+  position: sticky;
+  top: 0;
+  <span class="comment">/* Behaves as relative until it hits top: 0,</span>
+<span class="comment">   then "sticks" (behaves as fixed) */</span>
+  <span class="comment">/* Stays in its container — doesn't escape parent */</span>
+}
+      </div>
+      <p><strong>Sticky</strong> is a hybrid: it's <strong>relative</strong> until the scroll reaches its threshold, then it <strong>"sticks"</strong> (becomes fixed-like). But unlike fixed, it's <strong>bounded by its parent container</strong> — when the container scrolls past, the sticky element goes with it.</p>
+      <div class="callout" style="font-size:.76rem;padding:8px">
+        <strong>&#9432; Sticky requires a threshold:</strong> <code>top</code>, <code>bottom</code>, <code>left</code>, or <code>right</code> must be set. Without it, sticky behaves like relative.
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Scroll inside this box — the teal header sticks:</p>
+      <div class="sticky-scroll-stage" id="stickyDemoStage">
+        <div class="inner">
+          <div class="spacer" style="height:40px">&#8593; top spacer</div>
+          <div class="pos-card pos-sticky" id="stickyDemo" style="position:sticky;top:0;left:0;right:0;border-radius:0;z-index:5;width:100%">&#128204; position: sticky · I'll stick at top: 0</div>
+          <div class="content-after">
+            <p>I'm regular content below the sticky header. When you scroll down, the teal header <strong>sticks</strong> at the top of the scroll container.</p>
+            <br>
+            <p>Unlike <code>position: fixed</code>, sticky stays within its parent container. When this container scrolls out of view, the sticky element goes with it.</p>
+            <br>
+            <p style="color:var(--yellow)">&#8595; Keep scrolling to see the sticky release at the container bottom...</p>
+            <br><br><br><br><br>
+            <p style="color:var(--muted)">End of container. Sticky released.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. STACKING CONTEXT -->
+<div class="section-title" id="s-stack"><span class="num">7</span> Z-Index &amp; Stacking Context</div>
+<div class="card">
+  <p><code>z-index</code> controls stacking <strong>within the same stacking context</strong>. A <strong>stacking context</strong> is created by positioned elements, <code>opacity &lt; 1</code>, <code>transform</code>, <code>filter</code>, etc.</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">/* Stacking context is created by: */</span>
+.element {
+  position: relative; <span class="comment">/* + z-index !== auto */</span>
+  opacity: 0.9;       <span class="comment">/* also creates context */</span>
+  transform: scale(1);<span class="comment">/* also creates context */</span>
+  filter: blur(1px);  <span class="comment">// also creates context</span>
+}
+      </div>
+      <table>
+        <tr><th>Property</th><th>Creates stacking context?</th></tr>
+        <tr><td><code>position + z-index</code></td><td><span class="badge green">Yes</span></td></tr>
+        <tr><td><code>opacity &lt; 1</code></td><td><span class="badge green">Yes</span></td></tr>
+        <tr><td><code>transform</code></td><td><span class="badge green">Yes</span></td></tr>
+        <tr><td><code>filter</code></td><td><span class="badge green">Yes</span></td></tr>
+        <tr><td><code>isolation: isolate</code></td><td><span class="badge green">Yes</span></td></tr>
+        <tr><td><code>position: static</code></td><td><span class="badge red">No</span></td></tr>
+      </table>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Drag the z-index slider for each box:</p>
+      <div class="demo-stage" id="stackStage" style="min-height:200px;overflow:visible">
+        <div class="stack-layer" id="stack1" style="background:rgba(137,180,250,.15);border:2px solid var(--blue);top:20px;left:20px;z-index:2"><div>Box 1</div><div style="font-size:.65rem;color:var(--muted)">z-index: <span id="stack1z">2</span></div></div>
+        <div class="stack-layer" id="stack2" style="background:rgba(166,227,161,.15);border:2px solid var(--green);top:50px;left:80px;z-index:1"><div>Box 2</div><div style="font-size:.65rem;color:var(--muted)">z-index: <span id="stack2z">1</span></div></div>
+        <div class="stack-layer" id="stack3" style="background:rgba(243,139,168,.15);border:2px solid var(--red);top:80px;left:140px;z-index:0"><div>Box 3</div><div style="font-size:.65rem;color:var(--muted)">z-index: <span id="stack3z">0</span></div></div>
+      </div>
+      <div style="margin-top:90px">
+        <div class="z-block"><span style="color:var(--blue)">Box 1</span> <input type="range" class="z-slider" min="0" max="5" value="2" oninput="document.getElementById('stack1').style.zIndex=this.value;document.getElementById('stack1z').textContent=this.value"></div>
+        <div class="z-block"><span style="color:var(--green)">Box 2</span> <input type="range" class="z-slider" min="0" max="5" value="1" oninput="document.getElementById('stack2').style.zIndex=this.value;document.getElementById('stack2z').textContent=this.value"></div>
+        <div class="z-block"><span style="color:var(--red)">Box 3</span> <input type="range" class="z-slider" min="0" max="5" value="0" oninput="document.getElementById('stack3').style.zIndex=this.value;document.getElementById('stack3z').textContent=this.value"></div>
+      </div>
+    </div>
+  </div>
+  <div class="callout danger" style="font-size:.78rem;padding:8px">
+    <strong>&#9888; z-index only works within the same stacking context.</strong> A child with <code>z-index: 9999</code> inside a parent with <code>z-index: 1</code> might still appear below a sibling with <code>z-index: 2</code> from the parent's context.
+  </div>
+</div>
+
+<!-- 8. INTERACTIVE PLAYGROUND -->
+<div class="section-title" id="s-play"><span class="num">8</span> Interactive Playground</div>
+<div class="card">
+  <p>Drag the colored boxes around. Each uses a different <code>position</code> value. The grid helps visualize their containing block.</p>
+  <div class="pos-tabs">
+    <button class="pos-tab active static-tab" onclick="selectPosType('static',this)">Static</button>
+    <button class="pos-tab rel-tab" onclick="selectPosType('relative',this)">Relative</button>
+    <button class="pos-tab abs-tab" onclick="selectPosType('absolute',this)">Absolute</button>
+    <button class="pos-tab fix-tab" onclick="selectPosType('fixed',this)">Fixed</button>
+    <button class="pos-tab stk-tab" onclick="selectPosType('sticky',this)">Sticky</button>
+  </div>
+  <div class="all-playground" id="playground" style="min-height:300px">
+    <div class="ref-grid"></div>
+    <div class="p-item stc" id="playStatic" style="position:static;top:auto;left:auto;width:auto;height:auto;display:inline-block;margin:4px">static (default)</div>
+    <div class="p-item rel" id="playRel" style="position:relative;top:80px;left:30px">relative</div>
+    <div class="p-item abs" id="playAbs" style="position:absolute;top:100px;right:20px">absolute</div>
+    <div class="p-item fix" id="playFix" style="position:absolute;top:200px;left:200px">absolute (simulated)</div>
+    <div class="p-item stk" id="playStk" style="position:relative;top:160px;left:300px">sticky (simulated)</div>
+  </div>
+  <div class="pos-info" id="playInfo">Click a position type to see its behavior visualized</div>
+  <button class="btn outline" onclick="resetPlayground()" style="margin-top:6px">Reset positions</button>
+</div>
+
+<!-- 9. COMPARISON TABLE -->
+<div class="section-title"><span class="num">9</span> All 5 Values Compared</div>
+<div class="card">
+  <table>
+    <tr><th>Property</th><th>Static</th><th>Relative</th><th>Absolute</th><th>Fixed</th><th>Sticky</th></tr>
+    <tr><td>Normal flow</td><td><span class="badge green">Yes</span></td><td><span class="badge green">Yes (space preserved)</span></td><td><span class="badge red">Removed</span></td><td><span class="badge red">Removed</span></td><td><span class="badge green">Yes (until sticks)</span></td></tr>
+    <tr><td>Offset reference</td><td><span class="badge red">N/A</span></td><td>Itself (normal position)</td><td>Nearest positioned ancestor</td><td>Viewport</td><td>Scroll container</td></tr>
+    <tr><td>top/left/right/bottom</td><td><span class="badge red">Ignored</span></td><td><span class="badge green">Works</span></td><td><span class="badge green">Works</span></td><td><span class="badge green">Works</span></td><td><span class="badge green">Required</span></td></tr>
+    <tr><td>z-index</td><td><span class="badge red">Ignored</span></td><td><span class="badge green">Works</span></td><td><span class="badge green">Works</span></td><td><span class="badge green">Works</span></td><td><span class="badge green">Works</span></td></tr>
+    <tr><td>Escapes parent overflow</td><td>—</td><td>No</td><td>Yes (if positioned ancestor is outside)</td><td>Yes</td><td>No (bounded by parent)</td></tr>
+    <tr><td>Common use</td><td>Default</td><td>Fine-tuning, positioning context for absolute children</td><td>Overlays, tooltips, badges</td><td>Navbars, modals, back-to-top</td><td>Section headers, table headers</td></tr>
+  </table>
+</div>
+
+<!-- 10. QUICK REFERENCE -->
+<div class="section-title"><span class="num">R</span> Quick Reference</div>
+<div class="card">
+  <table>
+    <tr><th>Concept</th><th>Summary</th><th>Key takeaway</th></tr>
+    <tr><td>position: static</td><td>Default normal flow</td><td><span class="badge">Offsets ignored</span></td></tr>
+    <tr><td>position: relative</td><td>Offset from its normal position, space preserved</td><td><span class="badge yellow">Use for absolute reference</span></td></tr>
+    <tr><td>position: absolute</td><td>Removed from flow, positioned relative to nearest positioned ancestor</td><td><span class="badge blue">Needs ancestor with position</span></td></tr>
+    <tr><td>position: fixed</td><td>Removed from flow, positioned relative to viewport</td><td><span class="badge red">Ignores scroll</span></td></tr>
+    <tr><td>position: sticky</td><td>Hybrid: relative until threshold, then "sticks"</td><td><span class="badge teal">Requires top/bottom</span></td></tr>
+    <tr><td>z-index</td><td>Stacking order on z-axis</td><td><span class="badge">Only within same stacking context</span></td></tr>
+    <tr><td>Stacking context</td><td>Isolated z-index group (created by position + z-index, opacity, transform, etc.)</td><td><span class="badge orange">Organizes z-axis groups</span></td></tr>
+    <tr><td>inset</td><td>Shorthand for top/right/bottom/left</td><td><span class="badge">inset: 0 = all four edges</span></td></tr>
+  </table>
+</div>
+
+<div class="callout success" style="text-align:center;padding:16px">
+  <strong>&#10003; Position is the foundation of CSS layout.</strong><br>
+  <span style="color:var(--muted);font-size:.85rem">Relative for context, absolute for overlay, fixed for sticky UI, sticky for section headers.</span>
+</div>
+
+</div>
+
+<!-- Fixed Modal -->
+<div class="fixed-overlay" id="fixedModal">
+  <div class="modal">
+    <h3>&#128205; Fixed Modal</h3>
+    <p>This modal uses <code>position: fixed</code>. It stays centered regardless of scroll position.</p>
+    <button class="btn primary" onclick="document.getElementById('fixedModal').classList.remove('show')">Close</button>
+  </div>
+</div>
+
+<script>
+// =====================================================
+// RELATIVE INFO
+// =====================================================
+function updateRelInfo() {
+  const top = document.getElementById('relDemo').style.top || '0px';
+  const left = document.getElementById('relDemo').style.left || '0px';
+  document.getElementById('relInfo').innerHTML = `position: relative; top: ${top}; left: ${left}; ${top !== '0px' || left !== '0px' ? '&#8594; Offset from original position, space preserved' : ''}`;
+}
+
+// =====================================================
+// ABSOLUTE PARENT TOGGLE
+// =====================================================
+function toggleAbsParent(isRelative) {
+  const parent = document.getElementById('absParent');
+  const btns = document.querySelectorAll('#absStage + .toggle-group .toggle-btn');
+  btns.forEach(b => b.classList.remove('active'));
+  if (isRelative) {
+    parent.style.position = 'relative';
+    document.getElementById('absParentPos').textContent = '[position: relative]';
+    parent.style.borderColor = 'var(--blue)';
+    btns[0].classList.add('active');
+  } else {
+    parent.style.position = 'static';
+    document.getElementById('absParentPos').textContent = '[position: static &#9888; No reference!]';
+    parent.style.borderColor = 'var(--red)';
+    btns[1].classList.add('active');
+  }
+}
+
+// =====================================================
+// FIXED MODAL
+// =====================================================
+function showFixedModal() {
+  document.getElementById('fixedModal').classList.add('show');
+}
+
+// =====================================================
+// PLAYGROUND
+// =====================================================
+function selectPosType(type, btn) {
+  document.querySelectorAll('.pos-tab').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+
+  const info = document.getElementById('playInfo');
+  const views = {
+    static: 'Static: elements flow in normal document order. top/left/z-index are IGNORED. You can\'t move or stack static elements.',
+    relative: 'Relative: element is offset from its normal position. Original space is PRESERVED. Creates a positioning context for absolute children.',
+    absolute: 'Absolute: REMOVED from normal flow (no space). Positioned relative to the nearest positioned ancestor. Without a relative parent, it flies to the viewport.',
+    fixed: 'Fixed: REMOVED from normal flow. Positioned relative to the VIEWPORT. Ignores scrolling completely. Stays pinned even when page scrolls.',
+    sticky: 'Sticky: HYBRID — behaves as relative until it hits the threshold (top: 0), then "sticks" as if fixed. Bounded by its parent container — can\'t escape it.',
+  };
+  info.innerHTML = views[type] || '';
+}
+
+function resetPlayground() {
+  document.getElementById('playRel').style.top = '80px';
+  document.getElementById('playRel').style.left = '30px';
+  document.getElementById('playAbs').style.top = '100px';
+  document.getElementById('playAbs').style.right = '20px';
+  document.getElementById('playAbs').style.left = '';
+  document.getElementById('playFix').style.top = '200px';
+  document.getElementById('playFix').style.left = '200px';
+  document.getElementById('playStk').style.top = '160px';
+  document.getElementById('playStk').style.left = '300px';
+}
+
+// =====================================================
+// STATIC SLIDER
+// =====================================================
+function updateStaticInfo() {
+  const top = document.getElementById('staticDemo').style.top || '0px';
+  const left = document.getElementById('staticDemo').style.left || '0px';
+  document.getElementById('staticInfo').innerHTML = `position: static; left: ${left}; top: ${top}; &#8594; <span style="color:var(--muted)">Offsets ignored by browser</span>`;
+}
+
+// =====================================================
+// DRAG HANDLING FOR PLAYGROUND
+// =====================================================
+document.querySelectorAll('.p-item').forEach(el => {
+  let isDragging = false, startX, startY, origX, origY;
+  el.addEventListener('mousedown', (e) => {
+    if (el.classList.contains('stc')) return;
+    isDragging = true;
+    startX = e.clientX;
+    startY = e.clientY;
+    const left = parseInt(el.style.left) || 0;
+    const top = parseInt(el.style.top) || 0;
+    origX = left;
+    origY = top;
+    el.style.cursor = 'grabbing';
+    el.style.zIndex = 20;
+    e.preventDefault();
+  });
+  document.addEventListener('mousemove', (e) => {
+    if (!isDragging) return;
+    const dx = e.clientX - startX;
+    const dy = e.clientY - startY;
+    el.style.left = (origX + dx) + 'px';
+    el.style.top = (origY + dy) + 'px';
+    // For absolute, also adjust right
+    if (el.classList.contains('abs')) {
+      el.style.right = '';
+    }
+  });
+  document.addEventListener('mouseup', () => {
+    if (isDragging) {
+      isDragging = false;
+      el.style.cursor = '';
+      el.style.zIndex = 5;
+    }
+  });
+});
+</script>
+</body>
+</html>

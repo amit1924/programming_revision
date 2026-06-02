@@ -1,0 +1,911 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Community MCP Servers · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--radius:8px;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--teal)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+@media(max-width:680px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .highlight{color:var(--yellow)}
+.code .danger{color:var(--red)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.callout.teal{border-color:var(--teal);background:rgba(148,226,213,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.badge.orange{background:rgba(248,189,127,.18);color:var(--orange)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--teal);color:#0f0f17}
+.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}
+.btn.outline:hover{background:var(--surface2)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+.demo-box{padding:14px;min-height:60px;border-radius:6px;background:var(--bg);border:1px dashed var(--surface2);margin:8px 0}
+.log-area{font-family:monospace;font-size:.76rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:60px;max-height:200px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.toggle-group{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--teal);color:#0f0f17;border-color:var(--teal)}
+
+/* Registry cards */
+.registry-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px;margin:14px 0}
+.registry-card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:16px;text-align:center;transition:.2s}
+.registry-card:hover{transform:translateY(-2px);border-color:var(--accent,var(--blue))}
+.registry-card .count{font-size:1.6rem;font-weight:800;margin:6px 0}
+.registry-card .src{font-size:.68rem;color:var(--muted);margin-top:4px}
+.registry-card .note{font-size:.72rem;color:var(--muted);margin-top:6px;font-style:italic}
+
+/* Server cards */
+.server-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(280px,1fr));gap:12px;margin:14px 0}
+.server-card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:16px;transition:.2s;position:relative;overflow:hidden}
+.server-card:hover{transform:translateY(-2px);border-color:var(--accent,var(--blue))}
+.server-card .emoji{font-size:1.3rem;margin-bottom:6px}
+.server-card h4{font-size:.9rem;margin-bottom:4px}
+.server-card p{font-size:.78rem;color:var(--muted);margin-bottom:6px;line-height:1.5}
+.server-card .meta{display:flex;gap:4px;flex-wrap:wrap;margin-top:6px}
+.server-card .rank-badge{position:absolute;top:8px;right:10px;font-size:.65rem;color:var(--muted);background:var(--surface2);padding:1px 8px;border-radius:10px}
+
+/* Popularity bar */
+.pop-row{display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--surface2)}
+.pop-row .rank{width:24px;font-size:.78rem;color:var(--muted);text-align:center;font-weight:700}
+.pop-row .name{width:130px;font-size:.82rem;font-weight:600;flex-shrink:0}
+.pop-row .bar-wrap{flex:1;height:18px;background:var(--surface2);border-radius:4px;overflow:hidden;position:relative}
+.pop-row .bar-fill{height:100%;border-radius:4px;transition:width .6s ease;display:flex;align-items:center;padding-left:6px;font-size:.65rem;color:#0f0f17;font-weight:600;min-width:20px}
+.pop-row .vol{width:60px;font-size:.72rem;color:var(--muted);text-align:right;flex-shrink:0}
+
+/* Transport / Auth viz */
+.transport-row{display:flex;align-items:center;gap:12px;padding:10px 14px;margin:4px 0;border-radius:6px;background:var(--bg)}
+.transport-row .dot{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.transport-row .t-name{width:180px;font-size:.82rem;font-weight:600;flex-shrink:0}
+
+/* Filter tabs */
+.filter-bar{display:flex;gap:6px;flex-wrap:wrap;margin:10px 0}
+.filter-tab{padding:5px 14px;border-radius:16px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.74rem;transition:.15s}
+.filter-tab.active{background:var(--teal);color:#0f0f17;border-color:var(--teal)}
+.filter-tab:hover:not(.active){border-color:var(--muted);color:var(--text)}
+
+/* Ecosystem timeline */
+.timeline{position:relative;padding-left:28px;margin:14px 0}
+.timeline::before{content:'';position:absolute;left:8px;top:0;bottom:0;width:2px;background:var(--surface2)}
+.tl-item{position:relative;padding:8px 0 8px 16px}
+.tl-item::before{content:'';position:absolute;left:-24px;top:14px;width:10px;height:10px;border-radius:50%;background:var(--teal);border:2px solid var(--bg)}
+.tl-item .date{font-size:.7rem;color:var(--muted);font-weight:600}
+.tl-item .desc{font-size:.84rem;margin-top:2px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>MCP</span> Community Servers</div>
+  <div class="crumbs"><a href="index.html" style="color:var(--muted);text-decoration:none">MCP</a> <span style="color:var(--muted)">›</span> Community</div>
+</nav>
+
+<div class="container">
+
+<!-- Hero -->
+<div style="text-align:center;padding:30px 0 20px">
+  <div style="font-size:2.5rem;margin-bottom:6px">🌐</div>
+  <h1 style="font-size:clamp(1.3rem,3vw,2rem);font-weight:800;background:linear-gradient(135deg,var(--blue),var(--teal),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">Community MCP Servers</h1>
+  <p style="color:var(--muted);font-size:.9rem;margin-top:6px">The ecosystem of 16,000+ servers built by the community — beyond the official reference implementations</p>
+</div>
+
+<div class="callout teal" style="font-size:.82rem;padding:14px 18px">
+  <strong>Landscape snapshot (May 2026):</strong> 16,000+ servers across 4 major registries — PulseMCP (15,930+), Smithery (~7,300), Official MCP Registry (~2,000), GitHub (15,000+ repos). 14,000+ servers on PulseMCP alone. MCP SDKs surpass 97M cumulative monthly downloads. Protocol is now Linux Foundation–governed via the Agentic AI Foundation.
+</div>
+
+<!-- ===== REGISTRIES ===== -->
+<div class="section-title" style="margin-top:20px">
+  <span class="num">01</span> Where to Find Community Servers
+</div>
+<p style="color:var(--muted);font-size:.86rem;margin-bottom:12px">Community MCP servers are spread across multiple directories. No single registry covers everything — cross-reference at least two sources.</p>
+
+<div class="registry-grid">
+  <div class="registry-card" style="--accent:var(--teal);border-top:3px solid var(--teal)">
+    <div style="font-size:1.8rem;margin-bottom:4px">📊</div>
+    <h4 style="color:var(--teal);font-size:.9rem">PulseMCP</h4>
+    <div class="count" style="color:var(--teal)">15,900+</div>
+    <div class="src">Curated, updated daily</div>
+    <div class="note">Largest directory. Categorised listings, reviews, adoption metrics</div>
+  </div>
+  <div class="registry-card" style="--accent:var(--orange);border-top:3px solid var(--orange)">
+    <div style="font-size:1.8rem;margin-bottom:4px">⚙️</div>
+    <h4 style="color:var(--orange);font-size:.9rem">Smithery</h4>
+    <div class="count" style="color:var(--orange)">7,300+</div>
+    <div class="src">Includes installable servers</div>
+    <div class="note">Any npm/Python MCP that can be installed. Less curation</div>
+  </div>
+  <div class="registry-card" style="--accent:var(--blue);border-top:3px solid var(--blue)">
+    <div style="font-size:1.8rem;margin-bottom:4px">✅</div>
+    <h4 style="color:var(--blue);font-size:.9rem">Official Registry</h4>
+    <div class="count" style="color:var(--blue)">~2,000</div>
+    <div class="src">registry.modelcontextprotocol.io</div>
+    <div class="note">Curated. Servers that pass automated compatibility tests</div>
+  </div>
+  <div class="registry-card" style="--accent:var(--pink);border-top:3px solid var(--pink)">
+    <div style="font-size:1.8rem;margin-bottom:4px">🐙</div>
+    <h4 style="color:var(--pink);font-size:.9rem">GitHub Topics</h4>
+    <div class="count" style="color:var(--pink)">15,000+</div>
+    <div class="src">github.com/topics/mcp-server</div>
+    <div class="note">Bleeding edge. Many experimental or abandoned. High signal-to-noise filtering needed</div>
+  </div>
+</div>
+
+<div class="grid2" style="margin-bottom:10px">
+  <div class="card" style="padding:14px">
+    <h3 style="font-size:.85rem;color:var(--teal)">🔍 How to Search</h3>
+    <div class="code" style="font-size:.74rem;margin:6px 0">
+      <span class="comment"># PulseMCP</span><br>
+      pulsemcp.com/search?q=github<br><br>
+      <span class="comment"># Smithery</span><br>
+      smithery.ai/servers?q=postgres<br><br>
+      <span class="comment"># GitHub</span><br>
+      github.com/topics/mcp-server?q=slack
+    </div>
+  </div>
+  <div class="card" style="padding:14px">
+    <h3 style="font-size:.85rem;color:var(--yellow)">💡 Pro Tips</h3>
+    <ul style="list-style:none;padding:0;font-size:.8rem;color:var(--muted);line-height:1.8">
+      <li>✓ A server appearing in <strong>both</strong> Official Registry and PulseMCP has cleared two curation filters</li>
+      <li>✓ Prioritize servers with active GitHub repos (recent commits, open issues)</li>
+      <li>✓ Check for <strong>vendor-maintained</strong> badge — these are safer than pure community forks</li>
+      <li>✓ Avoid servers archived since 2025 — most migrated to vendor ownership</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== TIMELINE ===== -->
+<div class="section-title">
+  <span class="num">02</span> Ecosystem Evolution
+</div>
+<p style="color:var(--muted);font-size:.86rem;margin-bottom:10px">How the community MCP ecosystem grew from a few reference servers to 16,000+</p>
+
+<div class="timeline">
+  <div class="tl-item">
+    <div class="date">Nov 2024</div>
+    <div class="desc">Anthropic releases MCP with <strong>7 reference servers</strong> (filesystem, git, GitHub, PostgreSQL, etc.) — the seed of the ecosystem</div>
+  </div>
+  <div class="tl-item">
+    <div class="date">Early 2025</div>
+    <div class="desc">Community explosion: hundreds of hobbyist servers on GitHub. <strong>awesome-mcp-servers</strong> list starts tracking them. First registries (Smithery, PulseMCP) appear</div>
+  </div>
+  <div class="tl-item">
+    <div class="date">Mar 2025</div>
+    <div class="desc">OpenAI adopts MCP → inflection point. <strong>Streamable HTTP</strong> and <strong>OAuth 2.1</strong> formalized. Vendor-maintained servers begin replacing community forks</div>
+  </div>
+  <div class="tl-item">
+    <div class="date">Sep 2025</div>
+    <div class="desc">Official MCP Registry launches at <strong>registry.modelcontextprotocol.io</strong> — grows to ~2,000 servers within months</div>
+  </div>
+  <div class="tl-item">
+    <div class="date">Dec 2025</div>
+    <div class="desc">MCP donated to <strong>Linux Foundation's Agentic AI Foundation</strong>. Vendor-neutral governance with Anthropic, OpenAI, Google, Microsoft, AWS</div>
+  </div>
+  <div class="tl-item">
+    <div class="date">Jan–May 2026</div>
+    <div class="desc">Ecosystem reaches <strong>16,000+ servers</strong>. PulseMCP grows 1,000+/month. AWS ships 60+ official servers. Remote MCP (hosted + OAuth) becomes the 2026 norm</div>
+  </div>
+</div>
+
+<!-- ===== TOP 20 RANKING ===== -->
+<div class="section-title">
+  <span class="num">03</span> Most Popular Community Servers
+</div>
+<p style="color:var(--muted);font-size:.86rem;margin-bottom:10px">Ranked by worldwide monthly search volume (March 2026). These 20 servers account for the majority of MCP adoption.</p>
+
+<div id="popRanking" style="margin:10px 0">
+  <div class="pop-row">
+    <div class="rank">#1</div>
+    <div class="name">Playwright</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:100%;background:var(--blue)">82K</div></div>
+    <div class="vol">82K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#2</div>
+    <div class="name">Figma</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:90%;background:var(--teal)">74K</div></div>
+    <div class="vol">74K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#3</div>
+    <div class="name">GitHub</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:84%;background:var(--green)">69K</div></div>
+    <div class="vol">69K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#4</div>
+    <div class="name">Jira/Atlassian</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:49%;background:var(--blue)">40K</div></div>
+    <div class="vol">40K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#5</div>
+    <div class="name">Context7</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:39%;background:var(--peach)">32K</div></div>
+    <div class="vol">32K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#6</div>
+    <div class="name">Supabase</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:32%;background:var(--green)">26K</div></div>
+    <div class="vol">26K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#7</div>
+    <div class="name">Notion</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:28%;background:var(--orange)">23K</div></div>
+    <div class="vol">23K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#8</div>
+    <div class="name">Slack</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:22%;background:var(--pink)">17.7K</div></div>
+    <div class="vol">17.7K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#9</div>
+    <div class="name">AWS</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:20%;background:var(--orange)">16K</div></div>
+    <div class="vol">16K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#10</div>
+    <div class="name">Sequential Thinking</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:16%;background:var(--lavender)">13K</div></div>
+    <div class="vol">13K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#11</div>
+    <div class="name">Zapier</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:var(--red)">10.8K</div></div>
+    <div class="vol">10.8K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#12</div>
+    <div class="name">Docker</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:13%;background:var(--blue)">10.3K</div></div>
+    <div class="vol">10.3K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#13</div>
+    <div class="name">PostgreSQL</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:10%;background:var(--teal)">7.9K</div></div>
+    <div class="vol">7.9K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#14</div>
+    <div class="name">Puppeteer</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:9%;background:var(--yellow)">7.3K</div></div>
+    <div class="vol">7.3K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#15</div>
+    <div class="name">Firecrawl</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:9%;background:var(--peach)">7.2K</div></div>
+    <div class="vol">7.2K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#16</div>
+    <div class="name">Stripe</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:7%;background:var(--lavender)">5.7K</div></div>
+    <div class="vol">5.7K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#17</div>
+    <div class="name">Filesystem</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:6%;background:var(--muted)">4.9K</div></div>
+    <div class="vol">4.9K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#18</div>
+    <div class="name">Brave Search</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:5%;background:var(--blue)">4.3K</div></div>
+    <div class="vol">4.3K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#19</div>
+    <div class="name">Snowflake</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:4%;background:var(--teal)">3.6K</div></div>
+    <div class="vol">3.6K/mo</div>
+  </div>
+  <div class="pop-row">
+    <div class="rank">#20</div>
+    <div class="name">Redis</div>
+    <div class="bar-wrap"><div class="bar-fill" style="width:2%;background:var(--red)">1.4K</div></div>
+    <div class="vol">1.4K/mo</div>
+  </div>
+</div>
+
+<!-- ===== BY CATEGORY ===== -->
+<div class="section-title">
+  <span class="num">04</span> Servers by Category
+</div>
+
+<div class="filter-bar" id="catFilter">
+  <button class="filter-tab active" data-cat="all">🔥 All</button>
+  <button class="filter-tab" data-cat="coding">💻 Coding</button>
+  <button class="filter-tab" data-cat="research">🔍 Research</button>
+  <button class="filter-tab" data-cat="database">🗄️ Database</button>
+  <button class="filter-tab" data-cat="productivity">📋 Productivity</button>
+  <button class="filter-tab" data-cat="devops">🛠️ DevOps</button>
+  <button class="filter-tab" data-cat="browser">🌐 Browser</button>
+</div>
+
+<div class="server-grid" id="serverGrid">
+  <!-- Coding -->
+  <div class="server-card" data-cat="coding" style="--accent:var(--green);border-left:3px solid var(--green)">
+    <span class="rank-badge">#1</span>
+    <div class="emoji">📄</div>
+    <h4>Context7</h4>
+    <p>Version-accurate docs for React, Next.js, Tailwind, and more. 54K ★ GitHub. 890K weekly npm downloads. The most popular MCP server overall.</p>
+    <div class="meta">
+      <span class="badge green">Free</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="coding" style="--accent:var(--blue);border-left:3px solid var(--blue)">
+    <span class="rank-badge">#2</span>
+    <div class="emoji">🎨</div>
+    <h4>Figma MCP</h4>
+    <p>Read and edit Figma files, components, and styles directly from AI. 30K+ ★. Design-to-code workflows.</p>
+    <div class="meta">
+      <span class="badge orange">API Key</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">Streamable HTTP</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="coding" style="--accent:var(--blue);border-left:3px solid var(--blue)">
+    <span class="rank-badge">#3</span>
+    <div class="emoji">🐙</div>
+    <h4>GitHub MCP</h4>
+    <p>Repos, issues, PRs, Actions, code search. Vendor-maintained (replaced community reference in late 2025).</p>
+    <div class="meta">
+      <span class="badge yellow">PAT</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+
+  <!-- Research -->
+  <div class="server-card" data-cat="research" style="--accent:var(--peach);border-left:3px solid var(--peach)">
+    <span class="rank-badge">#18</span>
+    <div class="emoji">🌐</div>
+    <h4>Brave Search MCP</h4>
+    <p>Real search via Brave's independent index. No Google bias. v2.x streamlined to 7 tools. Web, local, image, video, news.</p>
+    <div class="meta">
+      <span class="badge yellow">API Key</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="research" style="--accent:var(--orange);border-left:3px solid var(--orange)">
+    <span class="rank-badge">#15</span>
+    <div class="emoji">🔥</div>
+    <h4>Firecrawl MCP</h4>
+    <p>Web scraping → LLM-ready data. 110K ★ GitHub. Strips nav, ads, markup. Autonomous agent mode.</p>
+    <div class="meta">
+      <span class="badge orange">API Key</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="research" style="--accent:var(--lavender);border-left:3px solid var(--lavender)">
+    <span class="rank-badge">—</span>
+    <div class="emoji">🧠</div>
+    <h4>Perplexity MCP</h4>
+    <p>Research with citations. Uses Perplexity API for sourced answers with references.</p>
+    <div class="meta">
+      <span class="badge orange">API Key</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+
+  <!-- Database -->
+  <div class="server-card" data-cat="database" style="--accent:var(--teal);border-left:3px solid var(--teal)">
+    <span class="rank-badge">#13</span>
+    <div class="emoji">🐘</div>
+    <h4>PostgreSQL MCP</h4>
+    <p>SQL queries via natural language. ⚠️ High token cost with large schemas — use <code>psql</code> for complex queries.</p>
+    <div class="meta">
+      <span class="badge green">OSS</span>
+      <span class="badge" style="background:rgba(137,180,250,.18);color:var(--blue)">Python</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="database" style="--accent:var(--blue);border-left:3px solid var(--blue)">
+    <span class="rank-badge">#6</span>
+    <div class="emoji">⚡</div>
+    <h4>Supabase MCP</h4>
+    <p>Supabase project management, SQL queries, schema inspection. 26K monthly searches.</p>
+    <div class="meta">
+      <span class="badge orange">API Key</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="database" style="--accent:var(--teal);border-left:3px solid var(--teal)">
+    <span class="rank-badge">#19</span>
+    <div class="emoji">❄️</div>
+    <h4>Snowflake MCP</h4>
+    <p>Snowflake data warehouse access. SQL queries, schema discovery, warehouse management.</p>
+    <div class="meta">
+      <span class="badge yellow">Connection String</span>
+      <span class="badge" style="background:rgba(137,180,250,.18);color:var(--blue)">Python</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+
+  <!-- Productivity -->
+  <div class="server-card" data-cat="productivity" style="--accent:var(--pink);border-left:3px solid var(--pink)">
+    <span class="rank-badge">#7</span>
+    <div class="emoji">📝</div>
+    <h4>Notion MCP</h4>
+    <p>Read/write Notion pages, databases, and blocks. Vendor-operated, OAuth 2.1, hosted endpoint.</p>
+    <div class="meta">
+      <span class="badge" style="background:rgba(180,190,254,.18);color:var(--lavender)">OAuth 2.1</span>
+      <span class="badge teal">Streamable HTTP</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="productivity" style="--accent:var(--orange);border-left:3px solid var(--orange)">
+    <span class="rank-badge">#8</span>
+    <div class="emoji">💬</div>
+    <h4>Slack MCP</h4>
+    <p>Read/write Slack messages, search channels, manage workspaces. Community + vendor-operated versions.</p>
+    <div class="meta">
+      <span class="badge" style="background:rgba(180,190,254,.18);color:var(--lavender)">OAuth 2.1</span>
+      <span class="badge teal">Streamable HTTP</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="productivity" style="--accent:var(--red);border-left:3px solid var(--red)">
+    <span class="rank-badge">#4</span>
+    <div class="emoji">📋</div>
+    <h4>Jira/Atlassian MCP</h4>
+    <p>72+ tools for Jira, Confluence, Compass. GA since Feb 2026. Vendor-maintained remote MCP.</p>
+    <div class="meta">
+      <span class="badge" style="background:rgba(180,190,254,.18);color:var(--lavender)">OAuth 2.1</span>
+      <span class="badge teal">Streamable HTTP</span>
+    </div>
+  </div>
+
+  <!-- DevOps -->
+  <div class="server-card" data-cat="devops" style="--accent:var(--blue);border-left:3px solid var(--blue)">
+    <span class="rank-badge">#11</span>
+    <div class="emoji">🔗</div>
+    <h4>Zapier MCP</h4>
+    <p>Connect 250+ apps through MCP. One server, thousands of integrations. Natural language automation.</p>
+    <div class="meta">
+      <span class="badge orange">API Key</span>
+      <span class="badge teal">Streamable HTTP</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="devops" style="--accent:var(--teal);border-left:3px solid var(--teal)">
+    <span class="rank-badge">#12</span>
+    <div class="emoji">🐳</div>
+    <h4>Docker MCP</h4>
+    <p>Container management: list, start, stop, inspect, logs. Docker Hub catalog with built-in isolation.</p>
+    <div class="meta">
+      <span class="badge green">OSS</span>
+      <span class="badge" style="background:rgba(137,180,250,.18);color:var(--blue)">Go</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="devops" style="--accent:var(--peach);border-left:3px solid var(--peach)">
+    <span class="rank-badge">—</span>
+    <div class="emoji">☁️</div>
+    <h4>Cloudflare MCP</h4>
+    <p>13 remote MCPs for Workers, KV, R2, D1, Logs, Containers. No local install. OAuth-protected.</p>
+    <div class="meta">
+      <span class="badge" style="background:rgba(180,190,254,.18);color:var(--lavender)">OAuth 2.1</span>
+      <span class="badge teal">Streamable HTTP</span>
+    </div>
+  </div>
+
+  <!-- Browser -->
+  <div class="server-card" data-cat="browser" style="--accent:var(--green);border-left:3px solid var(--green)">
+    <span class="rank-badge">#1</span>
+    <div class="emoji">🎭</div>
+    <h4>Playwright MCP</h4>
+    <p>Microsoft's official browser automation MCP. 30K+ ★ GitHub. 22 tools. Accessibility snapshots (not screenshots). Chromium + Firefox + WebKit.</p>
+    <div class="meta">
+      <span class="badge green">Free</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="browser" style="--accent:var(--yellow);border-left:3px solid var(--yellow)">
+    <span class="rank-badge">#14</span>
+    <div class="emoji">🤖</div>
+    <h4>Puppeteer MCP</h4>
+    <p>Headless Chrome/Chromium automation via MCP. Screenshots, PDFs, page interaction, network interception.</p>
+    <div class="meta">
+      <span class="badge green">Free</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+  <div class="server-card" data-cat="browser" style="--accent:var(--orange);border-left:3px solid var(--orange)">
+    <span class="rank-badge">#10</span>
+    <div class="emoji">🌍</div>
+    <h4>Browser MCP</h4>
+    <p>Generic browser automation with headless Chrome. Navigation, clicking, form filling, content extraction.</p>
+    <div class="meta">
+      <span class="badge green">OSS</span>
+      <span class="badge blue">TypeScript</span>
+      <span class="badge teal">stdio</span>
+    </div>
+  </div>
+</div>
+
+<div class="callout" style="margin:8px 0">
+  <strong>💡 Note:</strong> Many servers have both <strong>community</strong> and <strong>vendor-maintained</strong> versions. For example, GitHub MCP was community-maintained until late 2025 when GitHub took over as vendor. Always check the maintainer field before installing.
+</div>
+
+<!-- ===== TRANSPORT + AUTH SHIFT ===== -->
+<div class="section-title">
+  <span class="num">05</span> The Big Shift: stdio → Hosted, API Key → OAuth 2.1
+</div>
+<p style="color:var(--muted);font-size:.86rem;margin-bottom:10px">The ecosystem is mid-transition. Pre-2026 community servers use <strong>stdio + API key</strong>. Post-2026 vendor servers use <strong>Streamable HTTP + OAuth 2.1</strong>.</p>
+
+<div class="grid2" style="margin:14px 0">
+  <div class="compare-col bad">
+    <h4>👴 Community (2024–2025)</h4>
+    <ul>
+      <li>✗ stdio transport (spawn as subprocess)</li>
+      <li>✗ API key or PAT auth</li>
+      <li>✗ Manual npm/pip install</li>
+      <li>✗ Local-only deployment</li>
+      <li>✗ No SSO integration</li>
+    </ul>
+  </div>
+  <div class="compare-col good">
+    <h4>🚀 Vendor (2026+)</h4>
+    <ul>
+      <li>✓ Streamable HTTP transport</li>
+      <li>✓ OAuth 2.1 with audience binding</li>
+      <li>✓ One-click install via Claude Desktop</li>
+      <li>✓ Remote/managed hosting</li>
+      <li>✓ SSO-integrated auth flows</li>
+    </ul>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="font-size:.9rem">Transport & Auth Distribution (56-server catalog, May 2026)</h3>
+  <div style="margin:12px 0">
+    <div class="transport-row">
+      <div class="dot" style="background:var(--teal)"></div>
+      <div class="t-name">stdio-only</div>
+      <div class="bar-wrap" style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">
+        <div class="bar-fill" style="width:50%;background:var(--teal);height:100%"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);width:40px;text-align:right">50%</div>
+    </div>
+    <div class="transport-row">
+      <div class="dot" style="background:var(--blue)"></div>
+      <div class="t-name">Hosted endpoint</div>
+      <div class="bar-wrap" style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">
+        <div class="bar-fill" style="width:39%;background:var(--blue);height:100%"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);width:40px;text-align:right">39%</div>
+    </div>
+    <div class="transport-row">
+      <div class="dot" style="background:var(--orange)"></div>
+      <div class="t-name">Both</div>
+      <div class="bar-wrap" style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">
+        <div class="bar-fill" style="width:11%;background:var(--orange);height:100%"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);width:40px;text-align:right">11%</div>
+    </div>
+  </div>
+  <div style="margin:12px 0">
+    <div class="transport-row">
+      <div class="dot" style="background:var(--lavender)"></div>
+      <div class="t-name">OAuth 2.1</div>
+      <div class="bar-wrap" style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">
+        <div class="bar-fill" style="width:38%;background:var(--lavender);height:100%"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);width:40px;text-align:right">38%</div>
+    </div>
+    <div class="transport-row">
+      <div class="dot" style="background:var(--yellow)"></div>
+      <div class="t-name">API Key</div>
+      <div class="bar-wrap" style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">
+        <div class="bar-fill" style="width:30%;background:var(--yellow);height:100%"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);width:40px;text-align:right">30%</div>
+    </div>
+    <div class="transport-row">
+      <div class="dot" style="background:var(--green)"></div>
+      <div class="t-name">Connection String</div>
+      <div class="bar-wrap" style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">
+        <div class="bar-fill" style="width:13%;background:var(--green);height:100%"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);width:40px;text-align:right">13%</div>
+    </div>
+    <div class="transport-row">
+      <div class="dot" style="background:var(--red)"></div>
+      <div class="t-name">PAT</div>
+      <div class="bar-wrap" style="flex:1;height:20px;background:var(--surface2);border-radius:4px;overflow:hidden">
+        <div class="bar-fill" style="width:5%;background:var(--red);height:100%"></div>
+      </div>
+      <div style="font-size:.78rem;color:var(--muted);width:40px;text-align:right">5%</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== HOW TO INSTALL ===== -->
+<div class="section-title">
+  <span class="num">06</span> How to Install a Community Server
+</div>
+<p style="color:var(--muted);font-size:.86rem;margin-bottom:10px">Most community servers follow one of these patterns.</p>
+
+<div class="grid3">
+  <div class="card" style="padding:16px">
+    <h3 style="font-size:.85rem;color:var(--teal)">📦 npm</h3>
+    <div class="code" style="font-size:.73rem">
+      <span class="comment"># Install globally</span><br>
+      npm install -g @modelcontextprotocol/server-github<br><br>
+      <span class="comment"># Or run with npx</span><br>
+      npx -y @modelcontextprotocol/server-filesystem /path
+    </div>
+    <p style="font-size:.76rem;margin-top:6px">Most TypeScript MCP servers publish to npm. Use <code>npx</code> for one-off runs.</p>
+  </div>
+  <div class="card" style="padding:16px">
+    <h3 style="font-size:.85rem;color:var(--green)">🐍 pip / uv</h3>
+    <div class="code" style="font-size:.73rem">
+      <span class="comment"># pip</span><br>
+      pip install mcp-server-postgres<br><br>
+      <span class="comment"># uv (faster)</span><br>
+      uv add mcp-server-postgres
+    </div>
+    <p style="font-size:.76rem;margin-top:6px">Python servers use PyPI. <code>uv</code> is the recommended installer for Python MCP servers.</p>
+  </div>
+  <div class="card" style="padding:16px">
+    <h3 style="font-size:.85rem;color:var(--peach)">⚙️ Claude Desktop Config</h3>
+    <div class="code" style="font-size:.73rem">
+      <span class="comment">// ~/.config/Claude/claude_desktop_config.json</span><br>
+      {<br>
+      &nbsp;&nbsp;"mcpServers": {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;"github": {<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"command": "npx",<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"args": ["-y",<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"@modelcontextprotocol/<br>server-github"]<br>
+      &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+      &nbsp;&nbsp;}<br>
+      }
+    </div>
+    <p style="font-size:.76rem;margin-top:6px">For Claude Code: <code>claude mcp add</code> commands.</p>
+  </div>
+</div>
+
+<div class="callout" style="margin:12px 0">
+  <strong>⚠️ 2026 remote servers need no install.</strong> Many vendor servers (GitHub, Notion, Linear, Cloudflare, Atlassian) are <strong>remote endpoints</strong> — you authenticate via OAuth in the UI, no CLI install needed. In Claude Desktop, use <strong>Custom Connectors</strong> → enter the server URL → OAuth flow starts automatically.
+</div>
+
+<!-- ===== SECURITY ===== -->
+<div class="section-title">
+  <span class="num">07</span> ⚠️ Security — The Ecosystem's Weakest Link
+</div>
+
+<div class="callout danger" style="margin:10px 0">
+  <strong>🚨 April 2026: Systemic RCE vulnerability in all MCP SDKs.</strong> OX Security disclosed that <strong>all MCP SDK implementations</strong> (Python, TypeScript, Java, Rust) have a systemic RCE vulnerability via stdio transport. Estimated impact: 150M+ downloads, 7,000+ public servers. Anthropic responded that this behavior is "expected" and declined to modify the protocol architecture. <strong>Only install servers you trust.</strong>
+</div>
+
+<div class="grid2" style="margin:14px 0">
+  <div class="card" style="padding:16px;border-left:4px solid var(--red)">
+    <h3 style="font-size:.85rem;color:var(--red)">🔴 High Risk</h3>
+    <ul style="list-style:none;padding:0;font-size:.8rem;color:var(--muted);line-height:1.9">
+      <li>⚠️ <strong>Shell/server exec:</strong> mcp-shell-server and equivalents — RCE by design</li>
+      <li>⚠️ <strong>Filesystem servers</strong> with write access — data exfiltration risk</li>
+      <li>⚠️ <strong>Unofficial forks</strong> of popular servers — no security review</li>
+      <li>⚠️ <strong>Archived servers</strong> still being served via npm/PyPI — unpatched vulnerabilities</li>
+    </ul>
+  </div>
+  <div class="card" style="padding:16px;border-left:4px solid var(--green)">
+    <h3 style="font-size:.85rem;color:var(--green)">🟢 Safer Practices</h3>
+    <ul style="list-style:none;padding:0;font-size:.8rem;color:var(--muted);line-height:1.9">
+      <li>✅ Use <strong>vendor-operated remote MCPs</strong> (OAuth + hosted) when available</li>
+      <li>✅ Run servers in Docker containers for isolation</li>
+      <li>✅ Use <strong>Docker MCP Catalog</strong> — containerized with built-in isolation</li>
+      <li>✅ Pin versions — avoid <code>npx -y @latest</code> — use explicit version tags</li>
+      <li>✅ Prefer servers in <strong>both</strong> Official Registry + PulseMCP</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ===== INTERACTIVE DEMO ===== -->
+<div class="section-title">
+  <span class="num">08</span> 🎮 Interactive: Explore the Ecosystem
+</div>
+
+<div class="card">
+  <h3 style="font-size:.9rem">Server Scanner Sim</h3>
+  <p style="font-size:.82rem;margin-bottom:10px">Click a registry to see what the "community server scanner" would find for a specific tool:</p>
+
+  <div class="toggle-group" id="scanToolGroup">
+    <button class="toggle-btn active" data-tool="github">GitHub</button>
+    <button class="toggle-btn" data-tool="postgres">PostgreSQL</button>
+    <button class="toggle-btn" data-tool="slack">Slack</button>
+    <button class="toggle-btn" data-tool="browser">Browser</button>
+  </div>
+
+  <div id="scanResults" class="code" style="min-height:120px;font-size:.74rem;margin-top:8px"></div>
+</div>
+
+<div class="card" style="margin-top:14px">
+  <h3 style="font-size:.9rem">Quick Start: Pick Your Stack</h3>
+  <p style="font-size:.82rem;margin-bottom:10px">Select your primary use case to see the recommended server combo:</p>
+
+  <div class="toggle-group" id="stackGroup">
+    <button class="toggle-btn active" data-stack="backend">Backend Dev</button>
+    <button class="toggle-btn" data-stack="frontend">Frontend Dev</button>
+    <button class="toggle-btn" data-stack="research">Research</button>
+    <button class="toggle-btn" data-stack="data">Data / DB</button>
+  </div>
+
+  <div id="stackResults" class="demo-box" style="font-size:.82rem;line-height:1.8"></div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// Category filter
+document.querySelectorAll('.filter-tab').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('.filter-tab').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const cat = btn.dataset.cat;
+    document.querySelectorAll('.server-card').forEach(card => {
+      card.style.display = cat === 'all' || card.dataset.cat === cat ? '' : 'none';
+    });
+  });
+});
+
+// Scanner sim
+const scanData = {
+  github: {
+    title: '🔍 Scanning for "GitHub MCP Server"',
+    results: [
+      { registry: 'Official Registry', status: '✅ Listed', note: 'Vendor-maintained (GitHub)' },
+      { registry: 'PulseMCP', status: '✅ Listed', note: '★ 4.8 · 69K/mo searches' },
+      { registry: 'Smithery', status: '✅ Listed', note: 'npm install @modelcontextprotocol/server-github' },
+      { registry: 'GitHub Topics', status: '✅ Found', note: '245+ repos · mostly forks of original reference' }
+    ],
+    verdict: '✅ Production-ready. Use the vendor-maintained version. Original community reference was archived in 2025 — migrated to GitHub-owned repo.'
+  },
+  postgres: {
+    title: '🔍 Scanning for "PostgreSQL MCP Server"',
+    results: [
+      { registry: 'Official Registry', status: '✅ Listed', note: 'Reference implementation' },
+      { registry: 'PulseMCP', status: '✅ Listed', note: '★ 4.2 · 7.9K/mo searches' },
+      { registry: 'Smithery', status: '✅ Listed', note: 'Multiple variants · check for "atopic" fork' },
+      { registry: 'GitHub Topics', status: '✅ Found', note: '180+ repos · many experimental' }
+    ],
+    verdict: '⚠️ Use with caution. High token cost with large schemas. Prefer psql CLI for complex queries. Pin to known version.'
+  },
+  slack: {
+    title: '🔍 Scanning for "Slack MCP Server"',
+    results: [
+      { registry: 'Official Registry', status: '✅ Listed', note: 'Community + vendor versions' },
+      { registry: 'PulseMCP', status: '✅ Listed', note: '★ 3.9 · 17.7K/mo searches' },
+      { registry: 'Smithery', status: '✅ Listed', note: 'zencoderai/slack-mcp-server (Apache-2.0)' },
+      { registry: 'GitHub Topics', status: '✅ Found', note: '95+ repos · most popular is sooperset/mcp-discord' }
+    ],
+    verdict: '⚠️ Multiple versions exist. Prefer the OAuth 2.1 Streamable HTTP variant. Avoid stdio-only community forks for production.'
+  },
+  browser: {
+    title: '🔍 Scanning for "Browser Automation MCP"',
+    results: [
+      { registry: 'Official Registry', status: '✅ Listed', note: 'Playwright (Microsoft), Puppeteer' },
+      { registry: 'PulseMCP', status: '✅ Listed', note: 'Playwright ★ 5.0 · 82K/mo searches (#1 overall)' },
+      { registry: 'Smithery', status: '✅ Listed', note: 'Playwright, Puppeteer, generic Browser' },
+      { registry: 'GitHub Topics', status: '✅ Found', note: '310+ repos · Playwright dominates' }
+    ],
+    verdict: '✅ Playwright MCP is the gold standard. 30K+ GitHub stars, 22 tools, works across all browser engines. Prefer it over Puppeteer or generic browser MCP.'
+  }
+};
+
+const scanResults = document.getElementById('scanResults');
+function showScan(tool) {
+  const data = scanData[tool];
+  let html = `<span class="highlight">${data.title}</span>\n`;
+  data.results.forEach(r => {
+    html += `  ${r.status} <span class="keyword">${r.registry}</span> — ${r.note}\n`;
+  });
+  html += `\n<span class="comment"># ${data.verdict}</span>`;
+  scanResults.innerHTML = html;
+}
+showScan('github');
+
+document.querySelectorAll('#scanToolGroup .toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#scanToolGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    showScan(btn.dataset.tool);
+  });
+});
+
+// Stack recommender
+const stackData = {
+  backend: {
+    emoji: '💻',
+    title: 'Backend Developer',
+    servers: ['GitHub MCP (issues/PRs/code search)', 'Context7 (docs)', 'PostgreSQL MCP (SQL queries)', 'Sentry MCP (error monitoring)', 'Docker MCP (container management)'],
+    note: 'GitHub + Context7 covers most backend needs. Add Sentry for debugging, Docker for infra.'
+  },
+  frontend: {
+    emoji: '🎨',
+    title: 'Frontend Developer',
+    servers: ['Figma MCP (design-to-code)', 'Context7 (React/Next.js/Tailwind docs)', 'Playwright MCP (browser testing)', 'Vercel MCP (deployments)', 'Brave Search MCP (research)'],
+    note: 'Figma + Context7 is the essential combo for frontend. Playwright for E2E, Vercel for deploy.'
+  },
+  research: {
+    emoji: '🔍',
+    title: 'Researcher',
+    servers: ['Brave Search MCP (web search, no bias)', 'Firecrawl MCP (scrape → LLM-ready)', 'Perplexity MCP (sourced answers)', 'Sequential Thinking (structured reasoning)', 'Filesystem MCP (save/load notes)'],
+    note: 'Brave + Firecrawl + Perplexity covers the full research pipeline.'
+  },
+  data: {
+    emoji: '🗄️',
+    title: 'Data / Database Engineer',
+    servers: ['PostgreSQL MCP (SQL queries)', 'Snowflake MCP (data warehouse)', 'Supabase MCP (project management)', 'MySQL MCP (relational DB)', 'Redis MCP (caching/kv)'],
+    note: '⚠️ Database MCPs have high token costs with large schemas. Use CLI for complex queries, MCP for fast lookups.'
+  }
+};
+
+const stackResults = document.getElementById('stackResults');
+function showStack(stack) {
+  const data = stackData[stack];
+  let html = `<strong>${data.emoji} ${data.title}</strong><br><br>`;
+  html += `<strong>Recommended combo:</strong><br>`;
+  data.servers.forEach(s => { html += `  → ${s}<br>`; });
+  html += `<br><em style="color:var(--muted);font-size:.78rem">${data.note}</em>`;
+  stackResults.innerHTML = html;
+}
+showStack('backend');
+
+document.querySelectorAll('#stackGroup .toggle-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    document.querySelectorAll('#stackGroup .toggle-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    showStack(btn.dataset.stack);
+  });
+});
+</script>
+
+</body>
+</html>

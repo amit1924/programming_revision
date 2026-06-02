@@ -1,0 +1,1128 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Flexbox - All Properties</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #11111b; color: #cdd6f4; padding: 20px; }
+    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.5rem; margin: 2rem 0 1rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .badge { font-size: 0.7rem; background: #313244; color: #a6adc8; padding: 2px 8px; border-radius: 999px; font-weight: 400; }
+    h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p, li { color: #bac2de; line-height: 1.7; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Cascadia Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 10px 0; border: 1px solid #313244; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+
+    .wrapper { max-width: 960px; margin: 0 auto; }
+
+    .gradient-text { background: linear-gradient(135deg, #89b4fa, #a6e3a1, #f9e2af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .subtitle { color: #6c7086; margin-bottom: 2rem; }
+
+    .flex-demo { background: #1e1e2e; border: 1px solid #313244; border-radius: 12px; padding: 20px; margin: 20px 0; }
+    .flex-demo.dark { background: #181825; }
+    .flex-demo .label { font-size: 0.75rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; }
+    .flex-demo .label span { color: #89b4fa; }
+
+    .flex-box { display: flex; border: 2px dashed #585b70; border-radius: 8px; padding: 8px; min-height: 80px; transition: all 0.4s ease; position: relative; }
+    .flex-box.tall { min-height: 180px; }
+    .flex-box.short { min-height: 60px; }
+    .flex-box.wide { min-height: 140px; }
+
+    .flex-item { border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); min-width: 40px; min-height: 36px; padding: 8px 14px; user-select: none; position: relative; overflow: hidden; }
+    .flex-item::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%); border-radius: 6px; pointer-events: none; }
+    .flex-item.lg { min-height: 60px; padding: 14px 20px; }
+    .flex-item.sm { min-height: 28px; padding: 4px 10px; font-size: 0.7rem; }
+
+    .c0 { background: #89b4fa; color: #1e1e2e; }
+    .c1 { background: #a6e3a1; color: #1e1e2e; }
+    .c2 { background: #f9e2af; color: #1e1e2e; }
+    .c3 { background: #f38ba8; color: #1e1e2e; }
+    .c4 { background: #cba6f7; color: #1e1e2e; }
+    .c5 { background: #fab387; color: #1e1e2e; }
+    .c6 { background: #94e2d5; color: #1e1e2e; }
+    .c7 { background: #74c7ec; color: #1e1e2e; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+    .controls button { background: #313244; color: #cdd6f4; border: 1px solid #45475a; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: monospace; transition: all 0.2s; }
+    .controls button:hover { background: #45475a; }
+    .controls button.active { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+
+    .axis-arrow { position: absolute; font-size: 1.2rem; opacity: 0.4; pointer-events: none; }
+    .axis-main { color: #89b4fa; }
+    .axis-cross { color: #a6e3a1; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+    @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+    .info-card { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 12px; font-size: 0.85rem; }
+    .info-card .prop { color: #89b4fa; font-family: monospace; font-weight: 600; }
+    .info-card .val { color: #a6e3a1; }
+    .info-card .desc { color: #6c7086; font-size: 0.8rem; margin-top: 4px; }
+
+    .tip { background: #1e1e2e; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 10px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.85rem; }
+    th { background: #181825; color: #89b4fa; padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 2px solid #313244; }
+    td { padding: 10px 14px; border-bottom: 1px solid #313244; color: #a6adc8; }
+    tr:hover td { background: #1e1e2e50; }
+    td:first-child { font-family: monospace; color: #fab387; }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(137, 180, 250, 0); }
+      50% { box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.3); }
+    }
+    @keyframes float {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-3px); }
+    }
+    @keyframes shimmer {
+      0% { background-position: -200% center; }
+      100% { background-position: 200% center; }
+    }
+    @keyframes slide-in {
+      from { opacity: 0; transform: translateX(-10px); }
+      to { opacity: 1; transform: translateX(0); }
+    }
+    @keyframes grow-bar {
+      from { width: 0; }
+    }
+    @keyframes flicker {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.3; }
+    }
+
+    .flow-diagram { display: flex; align-items: center; gap: 6px; padding: 14px; background: #181825; border-radius: 8px; border: 1px solid #313244; flex-wrap: wrap; justify-content: center; }
+    .flow-step { background: #313244; border-radius: 6px; padding: 6px 12px; font-size: 0.75rem; color: #cdd6f4; text-align: center; min-width: 70px; }
+    .flow-step .icon { font-size: 1.1rem; }
+    .flow-step.active { background: #89b4fa30; border: 1px solid #89b4fa; }
+    .flow-arrow { color: #585b70; font-size: 1.2rem; }
+
+    .axis-diagram { position: relative; padding: 16px; background: #181825; border-radius: 8px; border: 1px solid #313244; overflow: hidden; }
+    .axis-diagram .main-label { position: absolute; font-size: 0.65rem; font-weight: 600; letter-spacing: 0.5px; text-transform: uppercase; display: flex; align-items: center; gap: 4px; }
+    .axis-diagram .main-label.label-main { color: #89b4fa; }
+    .axis-diagram .main-label.label-cross { color: #a6e3a1; }
+
+    .size-vis { display: flex; align-items: stretch; gap: 0; border-radius: 8px; overflow: hidden; border: 1px solid #313244; }
+    .size-vis .seg { padding: 10px 8px; font-size: 0.65rem; font-weight: 600; text-align: center; display: flex; align-items: center; justify-content: center; min-height: 40px; }
+    .size-vis .seg.content { background: #89b4fa30; color: #89b4fa; flex: 0 0 auto; }
+    .size-vis .seg.basis { background: #a6e3a130; color: #a6e3a1; flex: 0 0 auto; }
+    .size-vis .seg.grow { background: #f9e2af30; color: #f9e2af; flex: 1; }
+    .size-vis .seg.shrink { background: #f38ba830; color: #f38ba8; flex: 1; }
+
+    .pitfall-card { background: #181825; border: 1px solid #313244; border-radius: 8px; overflow: hidden; }
+    .pitfall-card .pf-header { display: flex; align-items: center; gap: 8px; padding: 10px 14px; background: #31324440; font-size: 0.85rem; font-weight: 600; }
+    .pitfall-card .pf-body { padding: 14px; }
+    .pitfall-card .pf-bad { border-left: 3px solid #f38ba8; margin-bottom: 10px; }
+    .pitfall-card .pf-good { border-left: 3px solid #a6e3a1; }
+    .pitfall-card .pf-label { font-size: 0.65rem; text-transform: uppercase; letter-spacing: 0.5px; margin-bottom: 4px; }
+    .pitfall-card .pf-label.bad { color: #f38ba8; }
+    .pitfall-card .pf-label.good { color: #a6e3a1; }
+
+    .rule-card { display: flex; flex-direction: column; background: #181825; border-radius: 8px; border: 1px solid #313244; overflow: hidden; transition: all 0.3s; }
+    .rule-card:hover { border-color: #585b70; }
+    .rule-card .rc-head { padding: 10px 14px; font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .rule-card .rc-body { padding: 0 14px 10px; font-size: 0.78rem; color: #6c7086; }
+    .rule-card .rc-demo { padding: 10px; background: #11111b; border-top: 1px solid #313244; }
+
+    .responsive-frame { background: #181825; border-radius: 8px; border: 1px solid #313244; overflow: hidden; }
+    .responsive-frame .rf-header { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #31324440; font-size: 0.75rem; }
+    .responsive-frame .rf-header .rf-dot { width: 8px; height: 8px; border-radius: 50%; }
+    .responsive-frame .rf-body { padding: 14px; transition: all 0.3s; }
+    .responsive-frame.resize-handle { resize: horizontal; overflow: auto; min-width: 200px; max-width: 100%; }
+
+    .badge-danger { background: #f38ba8; color: #1e1e2e; }
+    .badge-success { background: #a6e3a1; color: #1e1e2e; }
+    .badge-warning { background: #f9e2af; color: #1e1e2e; }
+
+    .interactive-toggle { background: #313244; border-radius: 20px; padding: 3px; display: inline-flex; gap: 2px; margin-bottom: 10px; }
+    .interactive-toggle button { padding: 5px 14px; border: none; border-radius: 18px; cursor: pointer; font-size: 0.75rem; transition: all 0.2s; background: transparent; color: #6c7086; }
+    .interactive-toggle button.active { background: #89b4fa; color: #1e1e2e; font-weight: 600; }
+    .interactive-toggle button:hover:not(.active) { color: #cdd6f4; }
+
+    .item-controls { display: flex; gap: 8px; align-items: center; margin-top: 8px; flex-wrap: wrap; }
+    .item-controls label { font-size: 0.75rem; color: #6c7086; }
+    .item-controls input[type="range"] { accent-color: #89b4fa; }
+    .item-controls select { background: #313244; color: #cdd6f4; border: 1px solid #45475a; border-radius: 4px; padding: 3px 6px; font-size: 0.75rem; }
+
+    .code-inline { background: #181825; padding: 2px 6px; border-radius: 4px; font-family: monospace; font-size: 0.85em; }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #11111b; }
+    ::-webkit-scrollbar-thumb { background: #45475a; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <h1><span class="gradient-text">Flexbox</span> — All Properties</h1>
+  <p class="subtitle">Interactive visual guide. Every property demonstrated live. Tap the buttons to see changes.</p>
+
+  <!-- ===== 1. display: flex ===== -->
+  <section>
+    <h2><span>1. <code>display: flex</code></span> <span class="badge">Foundation</span></h2>
+    <p>Flexbox is a one-dimensional layout model. Items sit along a <strong>main axis</strong> (horizontal by default) and optionally wrap to a <strong>cross axis</strong>.</p>
+
+    <div class="flex-demo">
+      <div class="label">Without <code>display: flex</code> — block items stack vertically</div>
+      <div style="border:2px dashed #585b70;border-radius:8px;padding:8px;">
+        <div class="flex-item c0" style="display:block;width:100%;">Block 1</div>
+        <div class="flex-item c1" style="display:block;width:100%;">Block 2</div>
+        <div class="flex-item c2" style="display:block;width:100%;">Block 3</div>
+      </div>
+    </div>
+
+    <div class="flex-demo">
+      <div class="label">With <code>display: flex</code> — items sit side-by-side</div>
+      <div class="flex-box" style="display:flex;">
+        <div class="flex-item c0">Flex 1</div>
+        <div class="flex-item c1">Flex 2</div>
+        <div class="flex-item c2">Flex 3</div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Key insight:</strong> <code>display: flex</code> turns the container into a <strong>flex container</strong> and its children into <strong>flex items</strong>. The default main axis is horizontal (<code>flex-direction: row</code>).
+    </div>
+  </section>
+
+  <!-- ===== 2. Flex Direction ===== -->
+  <section>
+    <h2><span>2. <code>flex-direction</code></span> <span class="badge">Main Axis</span></h2>
+    <p>Controls the <strong>direction</strong> of the main axis. Items flow along this axis.</p>
+
+    <div class="flex-demo">
+      <div class="interactive-toggle" id="fdToggles">
+        <button class="active" data-v="row">row</button>
+        <button data-v="column">column</button>
+        <button data-v="row-reverse">row-reverse</button>
+        <button data-v="column-reverse">column-reverse</button>
+      </div>
+      <div class="flex-box" id="fdBox" style="display:flex;flex-direction:row;min-height:120px;">
+        <div class="flex-item lg c0">1</div>
+        <div class="flex-item lg c1">2</div>
+        <div class="flex-item lg c2">3</div>
+        <div class="flex-item lg c3">4</div>
+      </div>
+      <div class="label">Current: <span id="fdLabel">flex-direction: row</span></div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card"><div class="prop">flex-direction: row</div><div class="desc">Default. Left to right.</div></div>
+      <div class="info-card"><div class="prop">flex-direction: column</div><div class="desc">Top to bottom.</div></div>
+      <div class="info-card"><div class="prop">flex-direction: row-reverse</div><div class="desc">Right to left.</div></div>
+      <div class="info-card"><div class="prop">flex-direction: column-reverse</div><div class="desc">Bottom to top.</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 3. Justify Content ===== -->
+  <section>
+    <h2><span>3. <code>justify-content</code></span> <span class="badge">Main Axis Alignment</span></h2>
+    <p>Aligns items along the <strong>main axis</strong> (the direction set by <code>flex-direction</code>). Distributes extra space.</p>
+
+    <div class="flex-demo">
+      <div class="controls" id="jcControls">
+        <button class="active" data-v="flex-start">flex-start</button>
+        <button data-v="center">center</button>
+        <button data-v="flex-end">flex-end</button>
+        <button data-v="space-between">space-between</button>
+        <button data-v="space-around">space-around</button>
+        <button data-v="space-evenly">space-evenly</button>
+      </div>
+      <div class="flex-box" id="jcBox" style="display:flex;justify-content:flex-start;">
+        <div class="flex-item c0">A</div>
+        <div class="flex-item c1">B</div>
+        <div class="flex-item c2">C</div>
+        <div class="flex-item c3">D</div>
+      </div>
+      <div class="label">Current: <span id="jcLabel">justify-content: flex-start</span></div>
+    </div>
+
+    <div class="tip">
+      <strong>Remember:</strong> <code>justify-content</code> works on the <strong>main axis</strong>. When <code>flex-direction: column</code>, it aligns <strong>vertically</strong>!
+    </div>
+  </section>
+
+  <!-- ===== 4. Align Items ===== -->
+  <section>
+    <h2><span>4. <code>align-items</code></span> <span class="badge">Cross Axis Alignment</span></h2>
+    <p>Aligns items along the <strong>cross axis</strong> (perpendicular to <code>flex-direction</code>).</p>
+
+    <div class="flex-demo">
+      <div class="controls" id="aiControls">
+        <button class="active" data-v="stretch">stretch</button>
+        <button data-v="flex-start">flex-start</button>
+        <button data-v="center">center</button>
+        <button data-v="flex-end">flex-end</button>
+      </div>
+      <div class="flex-box tall" id="aiBox" style="display:flex;align-items:stretch;">
+        <div class="flex-item c0" style="min-height:auto;">Short</div>
+        <div class="flex-item c1 lg">Tall</div>
+        <div class="flex-item c2" style="min-height:auto;">Short</div>
+      </div>
+      <div class="label">Current: <span id="aiLabel">align-items: stretch</span></div>
+    </div>
+
+    <div class="tip">
+      <strong>Default is <code>stretch</code>:</strong> items expand to fill the container's cross-axis size. Switch to <code>flex-start</code> or <code>center</code> to see them shrink to content size.
+    </div>
+  </section>
+
+  <!-- ===== 5. Flex Wrap ===== -->
+  <section>
+    <h2><span>5. <code>flex-wrap</code></span> <span class="badge">Multi-line</span></h2>
+    <p>Controls whether items <strong>wrap</strong> to a new line when they overflow the container.</p>
+
+    <div class="flex-demo">
+      <div class="controls" id="fwControls">
+        <button class="active" data-v="nowrap">nowrap</button>
+        <button data-v="wrap">wrap</button>
+        <button data-v="wrap-reverse">wrap-reverse</button>
+      </div>
+      <div class="flex-box tall" id="fwBox" style="display:flex;flex-wrap:nowrap;">
+        <div class="flex-item c0">Item 1</div>
+        <div class="flex-item c1">Item 2</div>
+        <div class="flex-item c2">Item 3</div>
+        <div class="flex-item c3">Item 4</div>
+        <div class="flex-item c4">Item 5</div>
+        <div class="flex-item c5">Item 6</div>
+        <div class="flex-item c6">Item 7</div>
+        <div class="flex-item c7">Item 8</div>
+      </div>
+      <div class="label">Current: <span id="fwLabel">flex-wrap: nowrap</span></div>
+    </div>
+  </section>
+
+  <!-- ===== 6. Align Content ===== -->
+  <section>
+    <h2><span>6. <code>align-content</code></span> <span class="badge">Cross Axis (Wrapped)</span></h2>
+    <p>Aligns <strong>multiple lines</strong> of wrapped items along the cross axis. Only works when <code>flex-wrap: wrap</code> is active.</p>
+
+    <div class="flex-demo">
+      <div class="controls" id="acControls">
+        <button class="active" data-v="flex-start">flex-start</button>
+        <button data-v="center">center</button>
+        <button data-v="flex-end">flex-end</button>
+        <button data-v="space-between">space-between</button>
+        <button data-v="space-around">space-around</button>
+        <button data-v="stretch">stretch</button>
+      </div>
+      <div class="flex-box tall" id="acBox" style="display:flex;flex-wrap:wrap;align-content:flex-start;">
+        <div class="flex-item c0 sm">1</div>
+        <div class="flex-item c1 sm">2</div>
+        <div class="flex-item c2 sm">3</div>
+        <div class="flex-item c3 sm">4</div>
+        <div class="flex-item c4 sm">5</div>
+        <div class="flex-item c5 sm">6</div>
+        <div class="flex-item c6 sm">7</div>
+        <div class="flex-item c7 sm">8</div>
+        <div class="flex-item c0 sm">9</div>
+        <div class="flex-item c1 sm">10</div>
+      </div>
+      <div class="label">Current: <span id="acLabel">align-content: flex-start</span></div>
+    </div>
+
+    <div class="tip">
+      <strong>Compare:</strong> <code>align-items</code> aligns items <em>within</em> each row. <code>align-content</code> aligns the <em>rows themselves</em> within the container.
+    </div>
+  </section>
+
+  <!-- ===== 7. Gap ===== -->
+  <section>
+    <h2><span>7. <code>gap</code> / <code>row-gap</code> / <code>column-gap</code></span> <span class="badge">Spacing</span></h2>
+    <p>Creates <strong>gaps</strong> between flex items. Unlike margins, gap only applies <em>between</em> items, not at the edges.</p>
+
+    <div class="flex-demo">
+      <div class="label">gap: <span id="gapLabel">8px</span></div>
+      <input type="range" id="gapSlider" min="0" max="40" value="8" style="width:200px;accent-color:#89b4fa;">
+      <div class="flex-box" id="gapBox" style="display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;">
+        <div class="flex-item c0">Gap</div>
+        <div class="flex-item c1">Between</div>
+        <div class="flex-item c2">Items</div>
+        <div class="flex-item c3">Demo</div>
+        <div class="flex-item c4">With</div>
+        <div class="flex-item c5">Wrap</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 8. Order ===== -->
+  <section>
+    <h2><span>8. <code>order</code></span> <span class="badge">Item Property</span></h2>
+    <p>Reorders individual items. Default is <code>0</code>. Items with a lower <code>order</code> value appear first.</p>
+
+    <div class="flex-demo">
+      <div class="label">Click an item to set its <code>order</code></div>
+      <div class="flex-box" id="orderBox" style="display:flex;">
+        <div class="flex-item c0" data-order="0" style="cursor:pointer;">A (order:0)</div>
+        <div class="flex-item c1" data-order="0" style="cursor:pointer;">B (order:0)</div>
+        <div class="flex-item c2" data-order="0" style="cursor:pointer;">C (order:0)</div>
+        <div class="flex-item c3" data-order="0" style="cursor:pointer;">D (order:0)</div>
+        <div class="flex-item c4" data-order="0" style="cursor:pointer;">E (order:0)</div>
+      </div>
+      <div class="controls" style="margin-top:10px;">
+        <button id="orderReset">Reset order</button>
+        <button id="orderRandom">Randomize order</button>
+        <button id="orderReverse">Reverse</button>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Note:</strong> <code>order</code> only changes <em>visual</em> order, not source order. Screen readers follow the DOM order.
+    </div>
+  </section>
+
+  <!-- ===== 9. Flex Grow ===== -->
+  <section>
+    <h2><span>9. <code>flex-grow</code></span> <span class="badge">Item Property</span></h2>
+    <p>Controls how much an item <strong>grows</strong> relative to siblings when there's extra space. Default <code>0</code> (no grow).</p>
+
+    <div class="flex-demo">
+      <div class="controls" id="fgControls">
+        <button class="active" data-v="0,0,0">all: 0 (no grow)</button>
+        <button data-v="1,1,1">all: 1 (equal)</button>
+        <button data-v="1,2,1">A:1, B:2, C:1</button>
+        <button data-v="0,1,0">only B grows</button>
+      </div>
+      <div class="flex-box" id="fgBox" style="display:flex;">
+        <div class="flex-item c0 lg" data-fg="0">A</div>
+        <div class="flex-item c1 lg" data-fg="0">B</div>
+        <div class="flex-item c2 lg" data-fg="0">C</div>
+      </div>
+      <div class="label"><span id="fgLabel">flex-grow: A=0, B=0, C=0</span></div>
+    </div>
+
+    <pre><code>/* Formula: each item gets (flex-grow / total flex-grow) of extra space */
+.item-a { flex-grow: 1; }  /* gets 1/3 of extra space */
+.item-b { flex-grow: 2; }  /* gets 2/3 of extra space */</code></pre>
+  </section>
+
+  <!-- ===== 10. Flex Shrink ===== -->
+  <section>
+    <h2><span>10. <code>flex-shrink</code></span> <span class="badge">Item Property</span></h2>
+    <p>Controls how much an item <strong>shrinks</strong> when there's not enough space. Default <code>1</code> (shrinks proportionally).</p>
+
+    <div class="flex-demo">
+      <div class="controls" id="fsControls">
+        <button class="active" data-v="1,1,1">all: 1 (equal shrink)</button>
+        <button data-v="0,1,1">A: 0 (won't shrink)</button>
+        <button data-v="0,0,1">A&B: 0, C shrinks</button>
+        <button data-v="3,1,1">A: 3 (shrinks 3x more)</button>
+      </div>
+      <div class="flex-box" id="fsBox" style="display:flex;">
+        <div class="flex-item c0 lg" style="flex-basis:200px;" data-fs="1">A</div>
+        <div class="flex-item c1 lg" style="flex-basis:200px;" data-fs="1">B</div>
+        <div class="flex-item c2 lg" style="flex-basis:200px;" data-fs="1">C</div>
+      </div>
+      <div class="label"><span id="fsLabel">flex-shrink: A=1, B=1, C=1</span> (basis: 200px each)</div>
+    </div>
+  </section>
+
+  <!-- ===== 11. Flex Basis ===== -->
+  <section>
+    <h2><span>11. <code>flex-basis</code></span> <span class="badge">Item Property</span></h2>
+    <p>Sets the <strong>initial size</strong> of an item along the main axis <em>before</em> grow/shrink is applied. Overrides <code>width</code> or <code>height</code>.</p>
+
+    <div class="flex-demo">
+      <div class="controls" id="fbControls">
+        <button class="active" data-v="auto,auto,auto">auto (content)</button>
+        <button data-v="60px,100px,160px">60px, 100px, 160px</button>
+        <button data-v="25%,50%,25%">25%, 50%, 25%</button>
+        <button data-v="1,1,1">all flex:1 (basis:0)</button>
+      </div>
+      <div class="flex-box" id="fbBox" style="display:flex;">
+        <div class="flex-item c0 lg" data-fb="auto">A</div>
+        <div class="flex-item c1 lg" data-fb="auto">B</div>
+        <div class="flex-item c2 lg" data-fb="auto">C</div>
+      </div>
+      <div class="label"><span id="fbLabel">flex-basis: auto</span></div>
+    </div>
+  </section>
+
+  <!-- ===== 12. Flex Shorthand ===== -->
+  <section>
+    <h2><span>12. <code>flex</code> shorthand</span> <span class="badge">grow · shrink · basis</span></h2>
+    <p>The <code>flex</code> property combines <code>flex-grow</code>, <code>flex-shrink</code>, and <code>flex-basis</code> into one declaration.</p>
+
+    <div class="info-grid">
+      <div class="info-card"><div class="prop">flex: initial</div><div class="val">0 1 auto</div><div class="desc">Default. Won't grow, can shrink.</div></div>
+      <div class="info-card"><div class="prop">flex: auto</div><div class="val">1 1 auto</div><div class="desc">Can grow & shrink.</div></div>
+      <div class="info-card"><div class="prop">flex: none</div><div class="val">0 0 auto</div><div class="desc">Fully inflexible.</div></div>
+      <div class="info-card"><div class="prop">flex: 1</div><div class="val">1 1 0</div><div class="desc">Grow & shrink equally (basis 0).</div></div>
+      <div class="info-card"><div class="prop">flex: 2</div><div class="val">2 1 0</div><div class="desc">Grows 2x relative to flex:1 items.</div></div>
+    </div>
+
+    <div class="flex-demo">
+      <div class="controls" id="flexShorthandControls">
+        <button class="active" data-v="initial,initial,initial">initial</button>
+        <button data-v="1,1,1">flex: 1</button>
+        <button data-v="1,2,1">flex: 1,2,1</button>
+        <button data-v="none,none,none">none</button>
+        <button data-v="auto,auto,auto">auto</button>
+      </div>
+      <div class="flex-box" id="flexShortBox" style="display:flex;">
+        <div class="flex-item c0 lg" data-flex="initial">A</div>
+        <div class="flex-item c1 lg" data-flex="initial">B</div>
+        <div class="flex-item c2 lg" data-flex="initial">C</div>
+      </div>
+      <div class="label"><span id="flexShortLabel">flex: initial (0 1 auto)</span></div>
+    </div>
+  </section>
+
+  <!-- ===== 13. Align Self ===== -->
+  <section>
+    <h2><span>13. <code>align-self</code></span> <span class="badge">Item Property</span></h2>
+    <p>Overrides <code>align-items</code> for <strong>individual items</strong>. Each item can have its own cross-axis alignment.</p>
+
+    <div class="flex-demo">
+      <div class="label">Each item has a different <code>align-self</code></div>
+      <div class="flex-box tall" id="asBox" style="display:flex;align-items:flex-start;">
+        <div class="flex-item c0 lg" style="align-self:flex-start;">flex-start</div>
+        <div class="flex-item c1 lg" style="align-self:center;">center</div>
+        <div class="flex-item c2 lg" style="align-self:flex-end;">flex-end</div>
+        <div class="flex-item c3 lg" style="align-self:stretch;">stretch</div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Tip:</strong> The container has <code>align-items: flex-start</code>, but each item overrides it with <code>align-self</code>. Items can all align differently!
+    </div>
+  </section>
+
+  <!-- ===== 14. Real UI Examples ===== -->
+  <section>
+    <h2><span>14. Real-World Patterns</span> <span class="badge">Putting It Together</span></h2>
+
+    <h3>Centering (justify-content + align-items)</h3>
+    <div class="flex-demo">
+      <div class="flex-box tall" style="display:flex;justify-content:center;align-items:center;min-height:120px;">
+        <div class="flex-item c0 lg" style="animation:float 2s ease-in-out infinite;">Perfectly Centered</div>
+      </div>
+      <pre><code>.container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}</code></pre>
+    </div>
+
+    <h3>Card Row (flex-wrap + gap)</h3>
+    <div class="flex-demo">
+      <div class="flex-box" style="display:flex;flex-wrap:wrap;gap:12px;">
+        <div class="flex-item c0" style="flex:1;min-width:100px;padding:20px;">Card 1</div>
+        <div class="flex-item c1" style="flex:1;min-width:100px;padding:20px;">Card 2</div>
+        <div class="flex-item c2" style="flex:1;min-width:100px;padding:20px;">Card 3</div>
+      </div>
+      <pre><code>.card-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 12px;
+}
+.card { flex: 1; min-width: 100px; }</code></pre>
+    </div>
+
+    <h3>Navbar (space-between + align-items)</h3>
+    <div class="flex-demo">
+      <div class="flex-box" style="display:flex;justify-content:space-between;align-items:center;padding:10px 16px;min-height:50px;">
+        <div style="display:flex;gap:8px;">
+          <div class="flex-item c0 sm">Logo</div>
+        </div>
+        <div style="display:flex;gap:8px;">
+          <div class="flex-item c1 sm">Home</div>
+          <div class="flex-item c2 sm">About</div>
+          <div class="flex-item c3 sm">Contact</div>
+        </div>
+      </div>
+      <pre><code>.navbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}</code></pre>
+    </div>
+
+    <h3>Holy Grail Layout (column + grow)</h3>
+    <div class="flex-demo">
+      <div style="display:flex;flex-direction:column;min-height:200px;border:2px dashed #585b70;border-radius:8px;">
+        <div class="flex-item c0" style="padding:10px;border-radius:0;">Header</div>
+        <div style="display:flex;flex:1;">
+          <div class="flex-item c1" style="flex:0 0 80px;border-radius:0;">Sidebar</div>
+          <div class="flex-item c2" style="flex:1;border-radius:0;">Main</div>
+        </div>
+        <div class="flex-item c3" style="padding:10px;border-radius:0;">Footer</div>
+      </div>
+      <pre><code>.page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+.content { display: flex; flex: 1; }
+.sidebar { flex: 0 0 80px; }
+.main    { flex: 1; }</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 15. Flexbox Mental Model & Responsive Strategy ===== -->
+  <section>
+    <h2><span>15. Flexbox Mental Model & Responsive Strategy</span> <span class="badge">Mastery</span></h2>
+    <p>Flexbox is powerful but easy to misuse. Here's the <strong>mental model</strong> you need to internalize, plus universal <strong>width/height rules</strong> for responsive layouts.</p>
+
+    <!-- === 15a. Axis Awareness === -->
+    <h3>A. Axis Awareness — The #1 Concept</h3>
+    <p><code>flex-direction</code> determines which axis is <strong>main</strong> (where items flow) and which is <strong>cross</strong> (perpendicular). All alignment properties flip meaning based on this.</p>
+
+    <div class="flex-demo">
+      <div class="label">Toggle <code>flex-direction</code> to see main/cross axes swap</div>
+      <div class="interactive-toggle" id="axisToggle">
+        <button class="active" data-v="row">row</button>
+        <button data-v="column">column</button>
+      </div>
+      <div class="axis-diagram" id="axisDiagram">
+        <div class="main-label label-main" id="axisMainLabel" style="top:4px;left:12px;">← main axis →</div>
+        <div class="main-label label-cross" id="axisCrossLabel" style="top:4px;right:12px;">cross axis ↓</div>
+        <div class="flex-box" id="axisBox" style="display:flex;flex-direction:row;min-height:100px;margin-top:20px;">
+          <div class="flex-item c0 lg">Item</div>
+          <div class="flex-item c1 lg">Item</div>
+          <div class="flex-item c2 lg">Item</div>
+        </div>
+        <div style="display:flex;gap:16px;margin-top:12px;font-size:0.75rem;">
+          <div><span style="color:#89b4fa;">● justify-content</span> <span style="color:#6c7086;">aligns along main axis</span></div>
+          <div><span style="color:#a6e3a1;">● align-items</span> <span style="color:#6c7086;">aligns along cross axis</span></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Rule of thumb:</strong> In <code>row</code>, <code>justify-content</code> = horizontal, <code>align-items</code> = vertical. In <code>column</code>, they <strong>swap</strong>. Always ask: "what's my main axis?"
+    </div>
+
+    <!-- === 15b. The Flex Sizing Flow === -->
+    <h3>B. How Flex Calculates Sizes — The Flow</h3>
+    <p>Every flex item's final size is determined in this order:</p>
+
+    <div class="flow-diagram">
+      <div class="flow-step" id="flow1"><div class="icon">📏</div>Content<br><span style="font-size:0.6rem;color:#6c7086;">natural size</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" id="flow2"><div class="icon">📐</div>flex-basis<br><span style="font-size:0.6rem;color:#6c7086;">initial main-axis size</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" id="flow3"><div class="icon">📈</div>flex-grow<br><span style="font-size:0.6rem;color:#6c7086;">expand if space</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" id="flow4"><div class="icon">📉</div>flex-shrink<br><span style="font-size:0.6rem;color:#6c7086;">contract if overflow</span></div>
+      <div class="flow-arrow">→</div>
+      <div class="flow-step" id="flow5"><div class="icon">✅</div>Final Size<br><span style="font-size:0.6rem;color:#6c7086;">rendered</span></div>
+    </div>
+
+    <div class="flex-demo">
+      <div class="label">Visual breakdown of <code>flex: 1</code> — <span id="sizeFlowLabel">content + basis:0 + grow</span></div>
+      <div class="size-vis">
+        <div class="seg content" style="padding:12px 16px;flex:0 0 auto;">content text</div>
+        <div class="seg basis" style="padding:12px 4px;">basis<br><span style="font-size:0.55rem;">0</span></div>
+        <div class="seg grow" style="padding:12px 16px;">grow fills<br><span style="font-size:0.55rem;">remaining space</span></div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="prop-chip" style="background:#89b4fa30;color:#89b4fa;">flex: 1 → 1 1 0</span>
+        <span class="prop-chip" style="background:#a6e3a130;color:#a6e3a1;">flex: auto → 1 1 auto</span>
+        <span class="prop-chip" style="background:#f9e2af30;color:#f9e2af;">flex: initial → 0 1 auto</span>
+        <span class="prop-chip" style="background:#f38ba830;color:#f38ba8;">flex: none → 0 0 auto</span>
+      </div>
+    </div>
+
+    <!-- === 15c. Universal Width/Height Rules === -->
+    <h3>C. Universal Width & Height Rules for Responsive Sites</h3>
+    <p>These patterns work <strong>everywhere</strong> — mobile, tablet, desktop — without media queries:</p>
+
+    <div class="info-grid">
+      <div class="rule-card">
+        <div class="rc-head" style="background:#89b4fa20;color:#89b4fa;">
+          <span>📦</span> Container fill
+        </div>
+        <div class="rc-body">Make containers span full width, then let flex distribute</div>
+        <div class="rc-demo"><pre style="margin:0;padding:8px;font-size:0.7rem;"><code>.container { width: 100%; max-width: 1200px; margin-inline: auto; }</code></pre></div>
+      </div>
+      <div class="rule-card">
+        <div class="rc-head" style="background:#a6e3a120;color:#a6e3a1;">
+          <span>📏</span> Fill remaining space
+        </div>
+        <div class="rc-body">The universal "take what's left" trick</div>
+        <div class="rc-demo"><pre style="margin:0;padding:8px;font-size:0.7rem;"><code>.fill { flex: 1; min-width: 0; }</code></pre></div>
+      </div>
+      <div class="rule-card">
+        <div class="rc-head" style="background:#f9e2af20;color:#f9e2af;">
+          <span>📐</span> Side-by-side → stack
+        </div>
+        <div class="rc-body">Row on desktop, column on mobile — no media query</div>
+        <div class="rc-demo"><pre style="margin:0;padding:8px;font-size:0.7rem;"><code>.row { display: flex; flex-wrap: wrap; }<br>.col { flex: 1; min-width: 280px; }</code></pre></div>
+      </div>
+      <div class="rule-card">
+        <div class="rc-head" style="background:#cba6f720;color:#cba6f7;">
+          <span>📏</span> Full-height page
+        </div>
+        <div class="rc-body">Sticky footer without hacks</div>
+        <div class="rc-demo"><pre style="margin:0;padding:8px;font-size:0.7rem;"><code>body { min-height: 100vh; display: flex; flex-direction: column; }<br>main { flex: 1; }</code></pre></div>
+      </div>
+      <div class="rule-card">
+        <div class="rc-head" style="background:#fab38720;color:#fab387;">
+          <span>🎯</span> Perfect centering
+        </div>
+        <div class="rc-body">Both axes — works for any content size</div>
+        <div class="rc-demo"><pre style="margin:0;padding:8px;font-size:0.7rem;"><code>.center { display: flex; justify-content: center; align-items: center; }</code></pre></div>
+      </div>
+      <div class="rule-card">
+        <div class="rc-head" style="background:#f38ba820;color:#f38ba8;">
+          <span>🔄</span> Auto margins
+        </div>
+        <div class="rc-body">Push items apart without justify-content</div>
+        <div class="rc-demo"><pre style="margin:0;padding:8px;font-size:0.7rem;"><code>.push-right { margin-left: auto; }<br>.push-bottom { margin-top: auto; }</code></pre></div>
+      </div>
+    </div>
+
+    <!-- === 15d. Interactive Responsive Demo === -->
+    <h3>D. Responsive Card Grid — Drag to Resize</h3>
+    <p>Drag the bottom-right corner to see the layout adapt. The <code>min-width: 250px</code> on each card makes them wrap automatically.</p>
+
+    <div class="flex-demo">
+      <div class="responsive-frame resize-handle" id="responsiveFrame">
+        <div class="rf-header">
+          <span class="rf-dot" style="background:#f38ba8;"></span>
+          <span class="rf-dot" style="background:#f9e2af;"></span>
+          <span class="rf-dot" style="background:#a6e3a1;"></span>
+          <span style="margin-left:auto;font-size:0.65rem;color:#585b70;" id="rfWidthLabel">width: — px</span>
+        </div>
+        <div class="rf-body" id="rfBody">
+          <div style="display:flex;flex-wrap:wrap;gap:12px;">
+            <div style="flex:1;min-width:250px;background:#89b4fa20;border:1px solid #89b4fa50;border-radius:8px;padding:20px;text-align:center;">
+              <div style="font-size:2rem;margin-bottom:8px;">📱</div>
+              <div style="font-weight:600;font-size:0.9rem;">Card 1</div>
+              <div style="font-size:0.7rem;color:#6c7086;margin-top:4px;">min-width: 250px</div>
+            </div>
+            <div style="flex:1;min-width:250px;background:#a6e3a120;border:1px solid #a6e3a150;border-radius:8px;padding:20px;text-align:center;">
+              <div style="font-size:2rem;margin-bottom:8px;">💻</div>
+              <div style="font-weight:600;font-size:0.9rem;">Card 2</div>
+              <div style="font-size:0.7rem;color:#6c7086;margin-top:4px;">flex: 1</div>
+            </div>
+            <div style="flex:1;min-width:250px;background:#f9e2af20;border:1px solid #f9e2af50;border-radius:8px;padding:20px;text-align:center;">
+              <div style="font-size:2rem;margin-bottom:8px;">🌐</div>
+              <div style="font-weight:600;font-size:0.9rem;">Card 3</div>
+              <div style="font-size:0.7rem;color:#6c7086;margin-top:4px;">No media query needed</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <pre style="margin-top:10px;"><code>.card-row { display: flex; flex-wrap: wrap; gap: 12px; }
+.card    { flex: 1; min-width: 250px; }
+/* That's it — responsive automatically! */</code></pre>
+      <div class="tip">
+        <strong>Magic:</strong> <code>min-width</code> on flex items + <code>flex-wrap: wrap</code> = responsive layout with <strong>zero media queries</strong>. The browser handles the rest.
+      </div>
+    </div>
+
+    <!-- === 15e. Common Pitfalls === -->
+    <h3>E. Common Pitfalls — Before & After</h3>
+
+    <div class="info-grid">
+      <div class="pitfall-card">
+        <div class="pf-header"><span class="badge badge-danger" style="padding:1px 8px;border-radius:999px;font-size:0.6rem;">⚠</span> Overflow without wrap</div>
+        <div class="pf-body">
+          <div class="pf-bad">
+            <div class="pf-label bad">❌ Bad — items overflow</div>
+            <div style="display:flex;gap:4px;border:1px dashed #f38ba850;border-radius:4px;padding:6px;overflow:hidden;">
+              <div style="flex:0 0 200px;background:#f38ba830;border-radius:4px;padding:8px;font-size:0.7rem;">fixed 200px</div>
+              <div style="flex:0 0 200px;background:#f38ba830;border-radius:4px;padding:8px;font-size:0.7rem;">fixed 200px</div>
+              <div style="flex:0 0 200px;background:#f38ba830;border-radius:4px;padding:8px;font-size:0.7rem;">fixed 200px</div>
+            </div>
+          </div>
+          <div class="pf-good">
+            <div class="pf-label good">✅ Good — wrap or shrink</div>
+            <div style="display:flex;flex-wrap:wrap;gap:4px;border:1px dashed #a6e3a150;border-radius:4px;padding:6px;">
+              <div style="flex:1;min-width:100px;background:#a6e3a130;border-radius:4px;padding:8px;font-size:0.7rem;">flex:1<br>min-width:100px</div>
+              <div style="flex:1;min-width:100px;background:#a6e3a130;border-radius:4px;padding:8px;font-size:0.7rem;">flex:1<br>min-width:100px</div>
+              <div style="flex:1;min-width:100px;background:#a6e3a130;border-radius:4px;padding:8px;font-size:0.7rem;">flex:1<br>min-width:100px</div>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>/* Use flex-wrap + min-width to prevent overflow */</code></pre>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pf-header"><span class="badge badge-danger" style="padding:1px 8px;border-radius:999px;font-size:0.6rem;">⚠</span> Items won't shrink below content</div>
+        <div class="pf-body">
+          <div class="pf-bad">
+            <div class="pf-label bad">❌ Bad — long text breaks layout</div>
+            <div style="display:flex;border:1px dashed #f38ba850;border-radius:4px;padding:6px;">
+              <div style="flex:1;background:#f38ba830;border-radius:4px;padding:8px;font-size:0.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">VeryLongTextNoSpaces</div>
+              <div style="flex:1;background:#f38ba830;border-radius:4px;padding:8px;font-size:0.7rem;">B</div>
+            </div>
+          </div>
+          <div class="pf-good">
+            <div class="pf-label good">✅ Good — min-width: 0 allows shrinking</div>
+            <div style="display:flex;border:1px dashed #a6e3a150;border-radius:4px;padding:6px;">
+              <div style="flex:1;min-width:0;background:#a6e3a130;border-radius:4px;padding:8px;font-size:0.7rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">VeryLongTextNoSpaces</div>
+              <div style="flex:1;min-width:0;background:#a6e3a130;border-radius:4px;padding:8px;font-size:0.7rem;">B</div>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.item { flex: 1; min-width: 0; } /* allows shrink past content */</code></pre>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pf-header"><span class="badge badge-danger" style="padding:1px 8px;border-radius:999px;font-size:0.6rem;">⚠</span> Wrong axis for alignment</div>
+        <div class="pf-body">
+          <div class="pf-bad">
+            <div class="pf-label bad">❌ Bad — using justifyContent in column</div>
+            <div style="display:flex;flex-direction:column;justify-content:center;height:60px;border:1px dashed #f38ba850;border-radius:4px;padding:6px;">
+              <div style="background:#f38ba830;border-radius:4px;padding:4px 8px;font-size:0.7rem;">justify-content does nothing</div>
+            </div>
+          </div>
+          <div class="pf-good">
+            <div class="pf-label good">✅ Good — align-items in column</div>
+            <div style="display:flex;flex-direction:column;align-items:center;height:60px;border:1px dashed #a6e3a150;border-radius:4px;padding:6px;">
+              <div style="background:#a6e3a130;border-radius:4px;padding:4px 8px;font-size:0.7rem;">align-items: center works!</div>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>/* column → justify-content = vertical, align-items = horizontal */</code></pre>
+        </div>
+      </div>
+
+      <div class="pitfall-card">
+        <div class="pf-header"><span class="badge badge-danger" style="padding:1px 8px;border-radius:999px;font-size:0.6rem;">⚠</span> Sidebar not filling height</div>
+        <div class="pf-body">
+          <div class="pf-bad">
+            <div class="pf-label bad">❌ Bad — no min-height on parent</div>
+            <div style="display:flex;border:1px dashed #f38ba850;border-radius:4px;padding:6px;">
+              <div style="flex:0 0 60px;background:#f38ba830;border-radius:4px;padding:8px;font-size:0.7rem;">Sidebar</div>
+              <div style="flex:1;background:#f38ba820;border-radius:4px;padding:8px;font-size:0.7rem;">Main</div>
+            </div>
+          </div>
+          <div class="pf-good">
+            <div class="pf-label good">✅ Good — min-height: 100vh</div>
+            <div style="display:flex;min-height:80px;border:1px dashed #a6e3a150;border-radius:4px;padding:6px;">
+              <div style="flex:0 0 60px;background:#a6e3a130;border-radius:4px;padding:8px;font-size:0.7rem;">Sidebar</div>
+              <div style="flex:1;background:#a6e3a120;border-radius:4px;padding:8px;font-size:0.7rem;">Main fills height</div>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.layout { display: flex; min-height: 100vh; }</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- === 15f. Decision Tree === -->
+    <h3>F. Flexbox Decision Tree — Which Property To Use?</h3>
+    <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:16px;">
+      <pre style="margin:0;font-size:0.78rem;line-height:1.9;"><code>  ┌─ Want items side-by-side? ─→ <span style="color:#89b4fa;">display: flex</span>
+  │
+  ├─ Want to change direction? ─→ <span style="color:#89b4fa;">flex-direction: column</span>
+  │
+  ├─ Want to align along flow? ─→ <span style="color:#89b4fa;">justify-content</span>
+  │     (main axis)
+  │
+  ├─ Want to align perpendicular? → <span style="color:#89b4fa;">align-items</span>
+  │     (cross axis)
+  │
+  ├─ Want items to wrap? ───────→ <span style="color:#89b4fa;">flex-wrap: wrap</span>
+  │     + <span style="color:#a6e3a1;">min-width</span> on items
+  │
+  ├─ Want items to fill space? ─→ <span style="color:#89b4fa;">flex: 1</span> on items
+  │     + <span style="color:#a6e3a1;">min-width: 0</span> to allow shrink
+  │
+  ├─ Want gap between items? ───→ <span style="color:#89b4fa;">gap</span>
+  │
+  ├─ Want to reorder visually? ─→ <span style="color:#89b4fa;">order</span>
+  │
+  └─ Want per-item alignment? ──→ <span style="color:#89b4fa;">align-self</span></code></pre>
+    </div>
+
+    <div class="tip">
+      <strong>Golden rule for responsive width:</strong> <code>flex: 1; min-width: 0;</code> on children, <code>flex-wrap: wrap</code> on container. Handle spacing with <code>gap</code>. That's 90% of responsive layouts solved.
+    </div>
+  </section>
+
+  <!-- ===== Quick Reference Table ===== -->
+  <section>
+    <h2><span>Quick Reference</span> <span class="badge">All Properties</span></h2>
+    <table>
+      <thead><tr><th>Property</th><th>Applies To</th><th>What It Does</th><th>Common Values</th></tr></thead>
+      <tbody>
+        <tr><td>display</td><td>Container</td><td>Enables flexbox</td><td>flex, inline-flex</td></tr>
+        <tr><td>flex-direction</td><td>Container</td><td>Sets main axis direction</td><td>row · column · row-reverse · column-reverse</td></tr>
+        <tr><td>justify-content</td><td>Container</td><td>Aligns along main axis</td><td>flex-start · center · flex-end · space-between · space-around · space-evenly</td></tr>
+        <tr><td>align-items</td><td>Container</td><td>Aligns along cross axis</td><td>stretch · flex-start · center · flex-end · baseline</td></tr>
+        <tr><td>flex-wrap</td><td>Container</td><td>Allow wrapping to new lines</td><td>nowrap · wrap · wrap-reverse</td></tr>
+        <tr><td>align-content</td><td>Container</td><td>Aligns wrapped lines</td><td>flex-start · center · flex-end · space-between · space-around · stretch</td></tr>
+        <tr><td>gap</td><td>Container</td><td>Spacing between items</td><td>length (px, em, rem)</td></tr>
+        <tr><td>order</td><td>Item</td><td>Visual reordering</td><td>integer (default 0)</td></tr>
+        <tr><td>flex-grow</td><td>Item</td><td>How much to grow</td><td>number (default 0)</td></tr>
+        <tr><td>flex-shrink</td><td>Item</td><td>How much to shrink</td><td>number (default 1)</td></tr>
+        <tr><td>flex-basis</td><td>Item</td><td>Initial main-axis size</td><td>length · auto · content</td></tr>
+        <tr><td>flex</td><td>Item</td><td>Shorthand: grow shrink basis</td><td>initial · auto · none · 1 · 2 · etc</td></tr>
+        <tr><td>align-self</td><td>Item</td><td>Override align-items</td><td>auto · stretch · flex-start · center · flex-end · baseline</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer style="border-top:1px solid #313244;padding-top:20px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    Flexbox · All Properties Visual Guide
+  </footer>
+</div>
+
+<script>
+// ===== 2. Flex Direction =====
+(function(){
+  const box = document.getElementById('fdBox');
+  const label = document.getElementById('fdLabel');
+  document.querySelectorAll('#fdToggles button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#fdToggles button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.flexDirection = v;
+      label.textContent = 'flex-direction: ' + v;
+    });
+  });
+})();
+
+// ===== 3. Justify Content =====
+(function(){
+  const box = document.getElementById('jcBox');
+  const label = document.getElementById('jcLabel');
+  document.querySelectorAll('#jcControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#jcControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.justifyContent = v;
+      label.textContent = 'justify-content: ' + v;
+    });
+  });
+})();
+
+// ===== 4. Align Items =====
+(function(){
+  const box = document.getElementById('aiBox');
+  const label = document.getElementById('aiLabel');
+  document.querySelectorAll('#aiControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#aiControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.alignItems = v;
+      label.textContent = 'align-items: ' + v;
+    });
+  });
+})();
+
+// ===== 5. Flex Wrap =====
+(function(){
+  const box = document.getElementById('fwBox');
+  const label = document.getElementById('fwLabel');
+  document.querySelectorAll('#fwControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#fwControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.flexWrap = v;
+      label.textContent = 'flex-wrap: ' + v;
+    });
+  });
+})();
+
+// ===== 6. Align Content =====
+(function(){
+  const box = document.getElementById('acBox');
+  const label = document.getElementById('acLabel');
+  document.querySelectorAll('#acControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#acControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.alignContent = v;
+      label.textContent = 'align-content: ' + v;
+    });
+  });
+})();
+
+// ===== 7. Gap =====
+(function(){
+  const box = document.getElementById('gapBox');
+  const slider = document.getElementById('gapSlider');
+  const label = document.getElementById('gapLabel');
+  slider.addEventListener('input', () => {
+    const v = slider.value + 'px';
+    box.style.gap = v;
+    label.textContent = v;
+  });
+})();
+
+// ===== 8. Order =====
+(function(){
+  const box = document.getElementById('orderBox');
+  const items = box.querySelectorAll('.flex-item');
+
+  function applyOrders() {
+    items.forEach(item => {
+      item.style.order = item.dataset.order;
+    });
+  }
+
+  items.forEach(item => {
+    item.addEventListener('click', () => {
+      let o = parseInt(item.dataset.order);
+      o = (o + 1) % 4;
+      item.dataset.order = o;
+      item.textContent = item.textContent.replace(/\(order:\d+\)/, `(order:${o})`);
+      applyOrders();
+    });
+  });
+
+  document.getElementById('orderReset').addEventListener('click', () => {
+    items.forEach((item, i) => {
+      item.dataset.order = '0';
+      const base = String.fromCharCode(65 + i);
+      item.textContent = base + ' (order:0)';
+    });
+    applyOrders();
+  });
+
+  document.getElementById('orderRandom').addEventListener('click', () => {
+    const orders = [0, 1, 2, 3, 4].sort(() => Math.random() - 0.5);
+    items.forEach((item, i) => {
+      item.dataset.order = orders[i];
+      const base = String.fromCharCode(65 + i);
+      item.textContent = base + ' (order:' + orders[i] + ')';
+    });
+    applyOrders();
+  });
+
+  document.getElementById('orderReverse').addEventListener('click', () => {
+    const current = Array.from(items).map(item => parseInt(item.dataset.order));
+    current.reverse();
+    items.forEach((item, i) => {
+      item.dataset.order = current[i];
+      const base = String.fromCharCode(65 + i);
+      item.textContent = base + ' (order:' + current[i] + ')';
+    });
+    applyOrders();
+  });
+})();
+
+// ===== 9. Flex Grow =====
+(function(){
+  const box = document.getElementById('fgBox');
+  const items = box.querySelectorAll('.flex-item');
+  const label = document.getElementById('fgLabel');
+  document.querySelectorAll('#fgControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#fgControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const vals = btn.dataset.v.split(',').map(Number);
+      items.forEach((item, i) => {
+        item.style.flexGrow = vals[i];
+        item.dataset.fg = vals[i];
+      });
+      label.textContent = 'flex-grow: A=' + vals[0] + ', B=' + vals[1] + ', C=' + vals[2];
+    });
+  });
+})();
+
+// ===== 10. Flex Shrink =====
+(function(){
+  const box = document.getElementById('fsBox');
+  const items = box.querySelectorAll('.flex-item');
+  const label = document.getElementById('fsLabel');
+  document.querySelectorAll('#fsControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#fsControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const vals = btn.dataset.v.split(',').map(Number);
+      items.forEach((item, i) => {
+        item.style.flexShrink = vals[i];
+        item.dataset.fs = vals[i];
+      });
+      label.textContent = 'flex-shrink: A=' + vals[0] + ', B=' + vals[1] + ', C=' + vals[2];
+    });
+  });
+})();
+
+// ===== 11. Flex Basis =====
+(function(){
+  const box = document.getElementById('fbBox');
+  const items = box.querySelectorAll('.flex-item');
+  const label = document.getElementById('fbLabel');
+  document.querySelectorAll('#fbControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#fbControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const vals = btn.dataset.v.split(',');
+      items.forEach((item, i) => {
+        const v = vals[i].trim();
+        if (v === '1') {
+          item.style.flex = '1';
+          item.style.flexBasis = '';
+        } else {
+          item.style.flex = '';
+          item.style.flexBasis = v;
+        }
+        item.dataset.fb = v;
+      });
+      label.textContent = 'flex-basis: ' + vals.join(', ');
+    });
+  });
+})();
+
+// ===== 15a. Axis Toggle =====
+(function(){
+  const box = document.getElementById('axisBox');
+  const mainLabel = document.getElementById('axisMainLabel');
+  const crossLabel = document.getElementById('axisCrossLabel');
+  document.querySelectorAll('#axisToggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#axisToggle button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.flexDirection = v;
+      if (v === 'row') {
+        mainLabel.innerHTML = '← main axis →';
+        crossLabel.innerHTML = 'cross axis ↓';
+      } else {
+        mainLabel.innerHTML = '↑ main axis ↑';
+        crossLabel.innerHTML = 'cross axis →';
+      }
+    });
+  });
+})();
+
+// ===== 15d. Responsive Frame Width =====
+(function(){
+  const frame = document.getElementById('responsiveFrame');
+  const label = document.getElementById('rfWidthLabel');
+  const updateWidth = () => {
+    const w = frame.offsetWidth;
+    label.textContent = 'width: ' + w + 'px';
+  };
+  new ResizeObserver(updateWidth).observe(frame);
+  updateWidth();
+})();
+
+// ===== 12. Flex Shorthand =====
+(function(){
+  const box = document.getElementById('flexShortBox');
+  const items = box.querySelectorAll('.flex-item');
+  const label = document.getElementById('flexShortLabel');
+  const labels = { initial: 'initial (0 1 auto)', none: 'none (0 0 auto)', auto: 'auto (1 1 auto)' };
+  document.querySelectorAll('#flexShorthandControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#flexShorthandControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const vals = btn.dataset.v.split(',');
+      items.forEach((item, i) => {
+        const v = vals[i].trim();
+        item.style.flex = v;
+        item.dataset.flex = v;
+      });
+      label.textContent = 'flex: ' + vals.join(', ') + '  →  ' + vals.map(v => labels[v] || v).join(', ');
+    });
+  });
+})();
+</script>
+</body>
+</html>

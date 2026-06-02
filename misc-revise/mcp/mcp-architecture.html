@@ -1,0 +1,776 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Architecture · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--teal)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;scroll-margin-top:70px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px;animation:fadeSlide .35s ease-out}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .highlight{color:var(--yellow)}
+.code .danger{color:var(--red)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.callout.teal{border-color:var(--teal);background:rgba(148,226,213,.04)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.badge.peach{background:rgba(250,179,135,.18);color:var(--peach)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--teal);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.small{padding:5px 12px;font-size:.72rem}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ===== ARCHITECTURE LAYERS ===== */
+.arch-layers{display:flex;flex-direction:column;gap:6px;padding:8px 0;position:relative}
+.arch-layer{display:flex;align-items:center;gap:12px;padding:14px 18px;border-radius:var(--radius);border:2px solid;transition:.3s;cursor:pointer;position:relative}
+.arch-layer:hover{transform:translateX(4px)}
+.arch-layer .icon{font-size:1.3rem;width:36px;text-align:center}
+.arch-layer .info{flex:1}
+.arch-layer .info h4{font-size:.88rem;font-weight:600}
+.arch-layer .info p{font-size:.74rem;color:var(--muted);margin:0}
+.arch-layer .badge-group{display:flex;gap:4px;flex-wrap:wrap}
+.arch-layer.host{border-color:var(--teal);background:rgba(148,226,213,.04)}
+.arch-layer.host .info h4{color:var(--teal)}
+.arch-layer.client{border-color:var(--blue);background:rgba(137,180,250,.04)}
+.arch-layer.client .info h4{color:var(--blue)}
+.arch-layer.server{border-color:var(--green);background:rgba(166,227,161,.04)}
+.arch-layer.server .info h4{color:var(--green)}
+.arch-layer .arrow-down{position:absolute;bottom:-14px;left:30px;color:var(--muted);font-size:.8rem;z-index:2}
+
+/* ===== LIFECYCLE TIMELINE ===== */
+.timeline{position:relative;padding:10px 0;margin:10px 0}
+.timeline::before{content:'';position:absolute;left:24px;top:0;bottom:0;width:3px;background:var(--surface2);border-radius:2px}
+.tl-item{position:relative;padding:6px 0 6px 54px;min-height:44px;transition:.2s}
+.tl-item .dot{position:absolute;left:18px;top:10px;width:16px;height:16px;border-radius:50%;border:3px solid;background:var(--bg);transition:.3s}
+.tl-item .dot.green{border-color:var(--green)}.tl-item .dot.blue{border-color:var(--blue)}.tl-item .dot.peach{border-color:var(--peach)}.tl-item .dot.red{border-color:var(--red)}
+.tl-item.active .dot{background:currentColor;transform:scale(1.2)}
+.tl-item .tl-label{font-size:.82rem;font-weight:600}
+.tl-item .tl-desc{font-size:.73rem;color:var(--muted)}
+.tl-item .tl-code{font-family:monospace;font-size:.7rem;color:var(--peach);background:var(--bg);padding:2px 8px;border-radius:4px;display:inline-block;margin-top:2px}
+
+/* ===== TRANSPORT CARDS ===== */
+.transport-card{padding:16px;border-radius:var(--radius);border:2px solid;background:var(--surface);transition:.3s}
+.transport-card.stdio{border-color:var(--peach)}
+.transport-card.sse{border-color:var(--blue)}
+.transport-card h4{font-size:.9rem;margin-bottom:4px}
+.transport-card.stdio h4{color:var(--peach)}
+.transport-card.sse h4{color:var(--blue)}
+.transport-card .flow-viz{display:flex;align-items:center;justify-content:center;gap:8px;padding:10px 0}
+.transport-card .flow-viz .box{width:70px;height:44px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;font-family:monospace}
+.transport-card .flow-viz .box.client{border:2px solid var(--blue);color:var(--blue)}
+.transport-card .flow-viz .box.server{border:2px solid var(--green);color:var(--green)}
+.transport-card .flow-viz .arrow{color:var(--muted);font-size:.7rem}
+
+/* ===== JSON-RPC MESSAGE ===== */
+.rpc-msg{font-family:monospace;font-size:.72rem;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);overflow:hidden;margin:6px 0}
+.rpc-msg .line{padding:3px 12px;border-bottom:1px solid rgba(255,255,255,.02);white-space:pre}
+.rpc-msg .line:last-child{border-bottom:none}
+.rpc-msg .k{color:var(--blue)}.rpc-msg .s{color:var(--green)}.rpc-msg .n{color:var(--peach)}.rpc-msg .p{color:var(--muted)}
+
+/* ===== CAPABILITY BOXES ===== */
+.cap-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.cap-card{padding:16px;border-radius:var(--radius);border:2px solid;text-align:center;transition:.2s;background:var(--surface)}
+.cap-card:hover{transform:translateY(-3px);box-shadow:0 6px 20px rgba(0,0,0,.25)}
+.cap-card .cap-icon{font-size:1.6rem;margin-bottom:6px}
+.cap-card h4{font-size:.85rem;margin-bottom:4px}
+.cap-card p{font-size:.72rem;color:var(--muted);margin:0}
+
+/* ===== CONNECTION LIFECYCLE ===== */
+.conn-steps{display:flex;gap:8px;flex-wrap:wrap;justify-content:center;padding:12px 0}
+.conn-step{padding:10px 14px;border-radius:var(--radius);text-align:center;min-width:90px;font-size:.72rem;font-weight:600;transition:.3s;cursor:pointer;background:var(--surface);border:2px solid var(--surface2)}
+.conn-step:hover{transform:scale(1.05)}
+.conn-step .step-num{font-size:.6rem;color:var(--muted);margin-bottom:2px}
+.conn-step.init{border-color:var(--peach)}.conn-step.init.active{background:rgba(250,179,135,.12)}
+.conn-step.ops{border-color:var(--blue)}.conn-step.ops.active{background:rgba(137,180,250,.12)}
+.conn-step.shut{border-color:var(--red)}.conn-step.shut.active{background:rgba(243,139,168,.12)}
+.conn-arrow{color:var(--muted);font-size:.7rem;display:flex;align-items:center}
+
+/* ===== INTERACTIVE ARCH DIAGRAM ===== */
+.arch-canvas{position:relative;min-height:320px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--surface2);padding:16px;margin:12px 0;overflow:hidden}
+.arch-canvas .layer{position:absolute;left:16px;right:16px;border-radius:var(--radius);padding:14px;border:2px solid;transition:.5s;cursor:pointer}
+.arch-canvas .layer .lbl{font-weight:700;font-size:.78rem;display:flex;align-items:center;gap:8px}
+.arch-canvas .layer .desc{font-size:.68rem;margin-top:2px}
+.arch-canvas .layer.l-host{top:16px;height:80px;border-color:var(--teal);background:rgba(148,226,213,.06)}
+.arch-canvas .layer.l-host .lbl{color:var(--teal)}
+.arch-canvas .layer.l-client{top:106px;height:80px;border-color:var(--blue);background:rgba(137,180,250,.06)}
+.arch-canvas .layer.l-client .lbl{color:var(--blue)}
+.arch-canvas .layer.l-server{top:196px;height:80px;border-color:var(--green);background:rgba(166,227,161,.06)}
+.arch-canvas .layer.l-server .lbl{color:var(--green)}
+.arch-canvas .layer.highlight{transform:scale(1.03);box-shadow:0 0 30px rgba(255,255,255,.08);z-index:5}
+.arch-canvas .layer.l-host.highlight{box-shadow:0 0 30px rgba(148,226,213,.2)}
+.arch-canvas .layer.l-client.highlight{box-shadow:0 0 30px rgba(137,180,250,.2)}
+.arch-canvas .layer.l-server.highlight{box-shadow:0 0 30px rgba(166,227,161,.2)}
+.arch-canvas .info-panel{position:absolute;bottom:10px;right:14px;background:var(--surface);border:1px solid var(--surface2);border-radius:6px;padding:10px 14px;font-size:.74rem;max-width:200px;opacity:0;transition:.3s;pointer-events:none}
+.arch-canvas .info-panel.show{opacity:1}
+
+/* ===== MESSAGE FLOW VIZ ===== */
+.msg-flow{display:flex;flex-direction:column;gap:4px;padding:10px 0}
+.msg-row{display:flex;align-items:center;gap:10px;padding:6px 10px;border-radius:4px;font-size:.74rem;font-family:monospace;transition:.3s}
+.msg-row .dir{font-weight:700;min-width:18px;font-size:.8rem}
+.msg-row .dir.req{color:var(--blue)}.msg-row .dir.res{color:var(--green)}.msg-row .dir.notif{color:var(--yellow)}.msg-row .dir.err{color:var(--red)}
+.msg-row .method{color:var(--text);font-weight:600}
+.msg-row .params{color:var(--muted);flex:1}
+.msg-row .id{color:var(--peach);font-size:.65rem;min-width:30px}
+.msg-row:hover{background:var(--surface)}
+
+/* ===== ANIMATIONS ===== */
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+@keyframes flowPulse{0%{transform:translateX(-100%)}100%{transform:translateX(100%)}}
+
+/* ===== LOG AREA ===== */
+.log-area{font-family:monospace;font-size:.75rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:80px;max-height:200px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.log-area .entry:last-child{border-bottom:none}
+.log-area .t-teal{color:var(--teal)}.log-area .t-blue{color:var(--blue)}.log-area .t-green{color:var(--green)}
+.log-area .t-peach{color:var(--peach)}.log-area .t-red{color:var(--red)}.log-area .t-yellow{color:var(--yellow)}
+.log-area .t-muted{color:var(--muted)}
+
+/* ===== COMPARISON ROW ===== */
+.comp-row{display:flex;gap:14px;margin:10px 0;flex-wrap:wrap}
+.comp-side{flex:1;min-width:200px;padding:14px;border-radius:var(--radius)}
+.comp-side.bad{background:rgba(243,139,168,.04);border:1px solid rgba(243,139,168,.15)}
+.comp-side.good{background:rgba(166,227,161,.04);border:1px solid rgba(166,227,161,.15)}
+.comp-side h4{font-size:.82rem;margin-bottom:6px}
+.comp-side.bad h4{color:var(--red)}.comp-side.good h4{color:var(--green)}
+.comp-side ul{list-style:none;padding:0;font-size:.75rem;color:var(--muted)}
+.comp-side li{padding:3px 0 3px 16px;position:relative}
+.comp-side.bad li::before{content:'✗';position:absolute;left:0;color:var(--red)}
+.comp-side.good li::before{content:'✓';position:absolute;left:0;color:var(--green)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>MCP</span> Architecture</div>
+  <div class="crumbs"><a href="mcp.html">MCP</a> &rsaquo; Architecture</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(148,226,213,.18);color:var(--teal)">Deep Dive</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. THREE-LAYER ARCHITECTURE -->
+<div class="section-title"><span class="num">1</span> The 3-Layer Architecture</div>
+<div class="card">
+  <p>MCP is built on <strong>3 distinct layers</strong>. Every MCP connection follows this pattern: <strong>Host</strong> spawns a <strong>Client</strong> (one per server) which communicates with the <strong>Server</strong> over a transport.</p>
+
+  <div class="arch-layers">
+    <div class="arch-layer host" onclick="showArchInfo('host')">
+      <div class="icon">🧑‍💻</div>
+      <div class="info">
+        <h4>Host Layer</h4>
+        <p>The application that <em>initiates</em> the connection. Examples: Claude Desktop, VS Code, your custom AI app. The host decides <strong>which</strong> servers to connect to.</p>
+      </div>
+      <div class="badge-group">
+        <span class="badge teal">Initiator</span>
+        <span class="badge teal">Orchestrator</span>
+      </div>
+    </div>
+
+    <div class="arch-layer client" onclick="showArchInfo('client')">
+      <div class="icon">🔌</div>
+      <div class="info">
+        <h4>Client Layer</h4>
+        <p>A <strong>1:1 connection</strong> from host to a server. One host can have many clients — one for each server. The client sends the host's intent as JSON-RPC messages.</p>
+      </div>
+      <div class="badge-group">
+        <span class="badge blue">1:1 per server</span>
+        <span class="badge blue">JSON-RPC</span>
+      </div>
+    </div>
+
+    <div class="arch-layer server" onclick="showArchInfo('server')">
+      <div class="icon">⚡</div>
+      <div class="info">
+        <h4>Server Layer</h4>
+        <p>Provides <strong>context</strong> to the AI — tools, resources, prompts. Each server is a program that exposes capabilities via MCP. Can run locally (stdio) or remotely (HTTP+SSE).</p>
+      </div>
+      <div class="badge-group">
+        <span class="badge green">Context provider</span>
+        <span class="badge green">Tools / Resources</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout teal">
+    <strong>Key insight:</strong> One Host → many Clients → many Servers. Each server gets its own dedicated client. A host can talk to 10 different MCP servers simultaneously through 10 separate clients.
+  </div>
+</div>
+
+<!-- 2. INTERACTIVE ARCHITECTURE EXPLORER -->
+<div class="section-title"><span class="num">2</span> Interactive Architecture Explorer</div>
+<div class="card">
+  <p>Click on any layer to see details about its responsibilities and how it interacts with other layers.</p>
+
+  <div class="arch-canvas" id="archCanvas">
+    <div class="layer l-host" id="aHost" onclick="exploreLayer('host')">
+      <div class="lbl">🧑‍💻 Host</div>
+      <div class="desc">Claude Desktop, VS Code, your AI app</div>
+    </div>
+    <div class="layer l-client" id="aClient" onclick="exploreLayer('client')">
+      <div class="lbl">🔌 MCP Client (1 per server)</div>
+      <div class="desc">Manages one connection to one server</div>
+    </div>
+    <div class="layer l-server" id="aServer" onclick="exploreLayer('server')">
+      <div class="lbl">⚡ MCP Server</div>
+      <div class="desc">Exposes tools, resources, and prompts</div>
+    </div>
+
+    <div class="info-panel" id="infoPanel">
+      <div id="panelTitle" style="font-weight:700;font-size:.82rem;margin-bottom:4px"></div>
+      <div id="panelBody" style="color:var(--muted);font-size:.7rem;line-height:1.5"></div>
+    </div>
+  </div>
+
+  <div class="code">
+    <span class="comment">// Pseudocode: Host creates a Client for each server</span>
+    <span class="keyword">const</span> host = <span class="keyword">new</span> <span class="highlight">MCPHost</span>(myApp);
+
+    <span class="comment">// Each server gets its own Client (1:1)</span>
+    <span class="keyword">const</span> client1 = <span class="keyword">await</span> host.<span class="highlight">connect</span>(<span class="string">"stdio"</span>, <span class="string">"node server.js"</span>);
+    <span class="keyword">const</span> client2 = <span class="keyword">await</span> host.<span class="highlight">connect</span>(<span class="string">"sse"</span>, <span class="string">"https://api.example.com/mcp"</span>);
+
+    <span class="comment">// AI asks client1 to list tools</span>
+    <span class="keyword">const</span> tools = <span class="keyword">await</span> client1.<span class="highlight">listTools</span>();
+  </div>
+</div>
+
+<!-- 3. ARCHITECTURE BENEFITS (BEFORE vs AFTER) -->
+<div class="section-title"><span class="num">3</span> Architecture Benefits: Before vs After</div>
+<div class="card">
+  <div class="comp-row">
+    <div class="comp-side bad">
+      <h4>❌ Without MCP Architecture</h4>
+      <ul>
+        <li>Each AI app writes custom connectors</li>
+        <li>Each tool needs its own protocol</li>
+        <li>No standard lifecycle management</li>
+        <li>Auth, transport, error handling all bespoke</li>
+        <li>Hard to reuse tools across AI apps</li>
+      </ul>
+    </div>
+    <div class="comp-side good">
+      <h4>✅ With MCP Architecture</h4>
+      <ul>
+        <li>Host/client/server separation of concerns</li>
+        <li>Standard JSON-RPC protocol everywhere</li>
+        <li>Clear lifecycle: init → operate → shutdown</li>
+        <li>Shared transport, auth, error patterns</li>
+        <li>Any MCP server works with any MCP host</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 4. LIFECYCLE PHASES -->
+<div class="section-title"><span class="num">4</span> Connection Lifecycle</div>
+<div class="card">
+  <p>Every MCP connection goes through <strong>3 phases</strong>: <span class="badge peach">Initialize</span> → <span class="badge blue">Operate</span> → <span class="badge red">Shutdown</span>. Click each phase to see details.</p>
+
+  <div class="timeline" id="timeline">
+    <div class="tl-item" id="tlInit">
+      <div class="dot peach"></div>
+      <div class="tl-label">Phase 1: Initialize</div>
+      <div class="tl-desc">Client sends <code>initialize</code> request. Client and Server exchange capabilities and protocol versions. Both must agree on version.</div>
+      <div class="tl-code">Client → Server: { method: "initialize", params: { protocolVersion: "2025-03-26", capabilities: {tools, resources} } }</div>
+      <div class="tl-code">Server → Client: { result: { protocolVersion: "2025-03-26", capabilities: {tools: {}, resources: {}} } }</div>
+    </div>
+    <div class="tl-item" id="tlOps">
+      <div class="dot blue"></div>
+      <div class="tl-label">Phase 2: Operate</div>
+      <div class="tl-desc">Normal operation. Client sends <strong>requests</strong> (tools/call, resources/read) and <strong>notifications</strong> (notifications/initialized). Server responds.</div>
+      <div class="tl-code">Client → Server: { method: "tools/list" }</div>
+      <div class="tl-code">Server → Client: { result: { tools: [{ name: "get_weather", ... }] } }</div>
+    </div>
+    <div class="tl-item" id="tlShut">
+      <div class="dot red"></div>
+      <div class="tl-label">Phase 3: Shutdown</div>
+      <div class="tl-desc">Connection terminates. Client disconnects, server process exits (for stdio) or closes the SSE stream (for HTTP). Cleanup happens.</div>
+      <div class="tl-code">Client → Server: (close transport / terminate process)</div>
+    </div>
+  </div>
+
+  <div id="lifecycleInfo" class="callout" style="font-size:.8rem;transition:.3s">
+    <strong>Click a phase above</strong> to see more details about it.
+  </div>
+
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-top:8px">
+    <button class="btn small primary" onclick="highlightPhase('init')">Highlight Initialize</button>
+    <button class="btn small outline" onclick="highlightPhase('ops')">Highlight Operate</button>
+    <button class="btn small outline" onclick="highlightPhase('shut')">Highlight Shutdown</button>
+  </div>
+</div>
+
+<!-- 5. CAPABILITIES DEEP DIVE -->
+<div class="section-title"><span class="num">5</span> Capabilities (What Servers Expose)</div>
+<div class="card">
+  <p>During <strong>initialization</strong>, server and client advertise their capabilities. These determine what the server can do and what the client supports.</p>
+
+  <div class="cap-grid">
+    <div class="cap-card" style="border-color:var(--peach)">
+      <div class="cap-icon">🔧</div>
+      <h4 style="color:var(--peach)">Tools</h4>
+      <p>Actions the AI can <strong>call</strong>. Each tool has a name, description, and JSON Schema for parameters.</p>
+      <span class="badge peach">Action</span>
+    </div>
+    <div class="cap-card" style="border-color:var(--blue)">
+      <div class="cap-icon">📄</div>
+      <h4 style="color:var(--blue)">Resources</h4>
+      <p>Data the AI can <strong>read</strong>. Like files or API responses. Each has a URI and MIME type.</p>
+      <span class="badge blue">Data</span>
+    </div>
+    <div class="cap-card" style="border-color:var(--green)">
+      <div class="cap-icon">📝</div>
+      <h4 style="color:var(--green)">Prompts</h4>
+      <p>Pre-built <strong>templates</strong> the AI can use. Helpful for common tasks like "summarize this" or "analyze that".</p>
+      <span class="badge green">Template</span>
+    </div>
+    <div class="cap-card" style="border-color:var(--teal)">
+      <div class="cap-icon">🌿</div>
+      <h4 style="color:var(--teal)">Roots</h4>
+      <p>Filesystem directories the server can access. Host tells the server which directories are available.</p>
+      <span class="badge teal">Directory</span>
+    </div>
+    <div class="cap-card" style="border-color:var(--pink)">
+      <div class="cap-icon">🎯</div>
+      <h4 style="color:var(--pink)">Sampling</h4>
+      <p>Server can request the AI to <strong>generate</strong> responses (server → AI). Useful for agentic patterns.</p>
+      <span class="badge pink">Generation</span>
+    </div>
+  </div>
+
+  <div class="code" style="font-size:.72rem;margin-top:12px">
+<span class="comment">// Server advertises its capabilities during init</span>
+{
+  <span class="string">"capabilities"</span>: {
+    <span class="string">"tools"</span>: {},       <span class="comment">// Supports tools/list and tools/call</span>
+    <span class="string">"resources"</span>: {},   <span class="comment">// Supports resources/read, resources/list</span>
+    <span class="string">"prompts"</span>: {},     <span class="comment">// Supports prompts/get</span>
+    <span class="string">"logging"</span>: {}      <span class="comment">// Supports server-side logging</span>
+  }
+}
+  </div>
+</div>
+
+<!-- 6. TRANSPORT LAYER DEEP DIVE -->
+<div class="section-title"><span class="num">6</span> Transport Layer Deep Dive</div>
+<div class="card">
+  <p>MCP defines <strong>2 transport types</strong> for communication. Each serves different use cases.</p>
+
+  <div class="grid2">
+    <div class="transport-card stdio">
+      <h4>📦 stdio Transport</h4>
+      <p style="font-size:.76rem;color:var(--muted)">Client spawns server as a subprocess. Messages flow over stdin/stdout.</p>
+      <div class="flow-viz">
+        <div class="box client">Client</div>
+        <span class="arrow">stdin →</span>
+        <span class="arrow">← stdout</span>
+        <div class="box server">Server</div>
+      </div>
+      <div class="code" style="font-size:.68rem">
+<span class="comment"># Client launches server process</span>
+$ node my-mcp-server.js
+
+<span class="comment"># stdin stdout (JSON-RPC on each line)</span>
+<span class="keyword">&gt;</span> {<span class="string">"jsonrpc"</span>:<span class="string">"2.0"</span>,<span class="string">"id"</span>:1,<span class="string">"method"</span>:<span class="string">"tools/list"</span>}
+<span class="keyword">&lt;</span> {<span class="string">"jsonrpc"</span>:<span class="string">"2.0"</span>,<span class="string">"id"</span>:1,<span class="string">"result"</span>:{<span class="string">"tools"</span>:[]}}
+      </div>
+      <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+        <span class="badge green">Local only</span>
+        <span class="badge yellow">Fast (no HTTP overhead)</span>
+        <span class="badge green">Simple auth (local)</span>
+      </div>
+    </div>
+
+    <div class="transport-card sse">
+      <h4>🌐 HTTP + SSE Transport</h4>
+      <p style="font-size:.76rem;color:var(--muted)">Client connects via HTTP POST for requests, SSE stream for responses.</p>
+      <div class="flow-viz">
+        <div class="box client">Client</div>
+        <span class="arrow">HTTP POST →</span>
+        <span class="arrow">← SSE</span>
+        <div class="box server">Server</div>
+      </div>
+      <div class="code" style="font-size:.68rem">
+POST /mcp HTTP/1.1
+Content-Type: application/json
+
+{<span class="string">"jsonrpc"</span>:<span class="string">"2.0"</span>,<span class="string">"id"</span>:1,<span class="string">"method"</span>:<span class="string">"tools/list"</span>}
+
+<span class="comment">// Server responds over SSE:</span>
+event: message
+data: {<span class="string">"jsonrpc"</span>:<span class="string">"2.0"</span>,<span class="string">"id"</span>:1,<span class="string">"result"</span>:{...}}
+      </div>
+      <div style="margin-top:8px;display:flex;gap:4px;flex-wrap:wrap">
+        <span class="badge blue">Remote access</span>
+        <span class="badge pink">Streaming responses</span>
+        <span class="badge yellow">Standard auth (Bearer, etc.)</span>
+      </div>
+    </div>
+  </div>
+
+  <div style="display:flex;align-items:center;gap:10px;margin-top:12px;padding:10px 14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--surface2);flex-wrap:wrap">
+    <span style="font-size:.78rem;color:var(--muted)">Try it:</span>
+    <span style="font-size:.82rem;font-weight:600" id="transportDemo">📦 stdio</span>
+    <div style="display:flex;gap:4px">
+      <button class="btn small primary" onclick="simTransport('stdio')">Send via stdio →</button>
+      <button class="btn small outline" onclick="simTransport('sse')">Send via SSE →</button>
+    </div>
+    <span id="transportResult" style="font-size:.75rem;color:var(--teal)"></span>
+  </div>
+</div>
+
+<!-- 7. JSON-RPC MESSAGE FORMAT -->
+<div class="section-title"><span class="num">7</span> JSON-RPC Message Format</div>
+<div class="card">
+  <p>All MCP communication uses <strong>JSON-RPC 2.0</strong>. There are <strong>4 message types</strong>: Request, Response, Notification, Error.</p>
+
+  <div class="grid2">
+    <div>
+      <h4 style="color:var(--blue);font-size:.85rem">✅ Request</h4>
+      <div class="rpc-msg">
+        <div class="line">{</div>
+        <div class="line">  <span class="k">"jsonrpc"</span>: <span class="s">"2.0"</span>,</div>
+        <div class="line">  <span class="k">"id"</span>: <span class="n">1</span>,</div>
+        <div class="line">  <span class="k">"method"</span>: <span class="s">"tools/call"</span>,</div>
+        <div class="line">  <span class="k">"params"</span>: {</div>
+        <div class="line">    <span class="k">"name"</span>: <span class="s">"get_weather"</span>,</div>
+        <div class="line">    <span class="k">"arguments"</span>: {</div>
+        <div class="line">      <span class="k">"city"</span>: <span class="s">"Mumbai"</span></div>
+        <div class="line">    }</div>
+        <div class="line">  }</div>
+        <div class="line">}</div>
+      </div>
+      <span class="badge blue">Has id + method</span>
+    </div>
+
+    <div>
+      <h4 style="color:var(--green);font-size:.85rem">✅ Response</h4>
+      <div class="rpc-msg">
+        <div class="line">{</div>
+        <div class="line">  <span class="k">"jsonrpc"</span>: <span class="s">"2.0"</span>,</div>
+        <div class="line">  <span class="k">"id"</span>: <span class="n">1</span>,</div>
+        <div class="line">  <span class="k">"result"</span>: {</div>
+        <div class="line">    <span class="k">"content"</span>: [{</div>
+        <div class="line">      <span class="k">"type"</span>: <span class="s">"text"</span>,</div>
+        <div class="line">      <span class="k">"text"</span>: <span class="s">"27°C, Sunny"</span></div>
+        <div class="line">    }]</div>
+        <div class="line">  }</div>
+        <div class="line">}</div>
+      </div>
+      <span class="badge green">Same id as request</span>
+    </div>
+
+    <div>
+      <h4 style="color:var(--yellow);font-size:.85rem">🔔 Notification</h4>
+      <div class="rpc-msg">
+        <div class="line">{</div>
+        <div class="line">  <span class="k">"jsonrpc"</span>: <span class="s">"2.0"</span>,</div>
+        <div class="line">  <span class="k">"method"</span>: <span class="s">"notifications/initialized"</span>,</div>
+        <div class="line">  <span class="k">"params"</span>: {}</div>
+        <div class="line">  <span class="p">// No "id" field!</span></div>
+        <div class="line">}</div>
+      </div>
+      <span class="badge yellow">No id — fire and forget</span>
+    </div>
+
+    <div>
+      <h4 style="color:var(--red);font-size:.85rem">❌ Error</h4>
+      <div class="rpc-msg">
+        <div class="line">{</div>
+        <div class="line">  <span class="k">"jsonrpc"</span>: <span class="s">"2.0"</span>,</div>
+        <div class="line">  <span class="k">"id"</span>: <span class="n">1</span>,</div>
+        <div class="line">  <span class="k">"error"</span>: {</div>
+        <div class="line">    <span class="k">"code"</span>: <span class="n">-32603</span>,</div>
+        <div class="line">    <span class="k">"message"</span>: <span class="s">"Internal error"</span>,</div>
+        <div class="line">    <span class="k">"data"</span>: <span class="s">"API key expired"</span></div>
+        <div class="line">  }</div>
+        <div class="line">}</div>
+      </div>
+      <span class="badge red">Error instead of result</span>
+    </div>
+  </div>
+
+  <table style="margin-top:8px">
+    <tr><th>Message Type</th><th>Has id?</th><th>Has method?</th><th>Has result?</th><th>Has error?</th></tr>
+    <tr><td>Request</td><td>✅ Yes</td><td>✅ Yes</td><td>❌ No</td><td>❌ No</td></tr>
+    <tr><td>Response</td><td>✅ Yes</td><td>❌ No</td><td>✅ Yes</td><td>❌ No</td></tr>
+    <tr><td>Notification</td><td>❌ No</td><td>✅ Yes</td><td>❌ No</td><td>❌ No</td></tr>
+    <tr><td>Error</td><td>✅ Yes</td><td>❌ No</td><td>❌ No</td><td>✅ Yes</td></tr>
+  </table>
+</div>
+
+<!-- 8. MESSAGE FLOW WALKTHROUGH -->
+<div class="section-title"><span class="num">8</span> Message Flow Walkthrough</div>
+<div class="card">
+  <p>See the <strong>exact sequence</strong> of JSON-RPC messages for a complete MCP interaction — from initialization through tool execution.</p>
+
+  <div class="conn-steps">
+    <div class="conn-step init active" id="stepInit">Initialize</div>
+    <div class="conn-arrow">→</div>
+    <div class="conn-step ops" id="stepNotify">Notify</div>
+    <div class="conn-arrow">→</div>
+    <div class="conn-step ops" id="stepList">List Tools</div>
+    <div class="conn-arrow">→</div>
+    <div class="conn-step ops" id="stepCall">Call Tool</div>
+    <div class="conn-arrow">→</div>
+    <div class="conn-step ops" id="stepRead">Read Resource</div>
+  </div>
+
+  <div class="log-area" id="flowLog" style="min-height:120px">
+    <div class="entry t-muted">Click any step above to see the actual JSON-RPC messages exchanged</div>
+  </div>
+</div>
+
+<!-- 9. HANDS-ON: SIMULATE MCP CONNECTION -->
+<div class="section-title"><span class="num">9</span> Hands-On: Simulate MCP Connection</div>
+<div class="card">
+  <p>Click <strong>Start Connection</strong> to simulate how a connection lifecycle flows step by step.</p>
+
+  <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+    <button class="btn primary" onclick="simulateConnection()">🚀 Start Connection</button>
+    <button class="btn outline" onclick="resetSim()">🔄 Reset</button>
+  </div>
+
+  <div class="log-area" id="simLog" style="min-height:140px;max-height:300px">
+    <div class="entry t-muted">▸ Ready to simulate MCP connection...</div>
+  </div>
+</div>
+
+<!-- 10. COMPLETE ARCHITECTURE SUMMARY -->
+<div class="section-title"><span class="num">10</span> Architecture At a Glance</div>
+<div class="card">
+  <div class="grid3" style="margin-bottom:8px">
+    <div style="padding:12px;border-radius:var(--radius);border:1px solid var(--surface2);text-align:center">
+      <div style="font-size:1.8rem;font-weight:700;color:var(--teal)">3</div>
+      <div style="font-size:.78rem;color:var(--muted)">Layers<br>Host · Client · Server</div>
+    </div>
+    <div style="padding:12px;border-radius:var(--radius);border:1px solid var(--surface2);text-align:center">
+      <div style="font-size:1.8rem;font-weight:700;color:var(--blue)">3</div>
+      <div style="font-size:.78rem;color:var(--muted)">Lifecycle Phases<br>Init · Operate · Shutdown</div>
+    </div>
+    <div style="padding:12px;border-radius:var(--radius);border:1px solid var(--surface2);text-align:center">
+      <div style="font-size:1.8rem;font-weight:700;color:var(--green)">4</div>
+      <div style="font-size:.78rem;color:var(--muted)">Message Types<br>Request · Response · Notif · Error</div>
+    </div>
+  </div>
+
+  <div class="code" style="font-size:.72rem;text-align:center">
+    <span class="comment">/* MCP Architecture — One standard to connect them all */</span>
+    <span class="highlight">Host</span>  ──<span class="keyword">spawns</span>──▶  <span class="highlight">Client</span>  ──<span class="keyword">JSON-RPC</span>──▶  <span class="highlight">Server</span>  ──<span class="keyword">exposes</span>──▶  <span class="string">Tools | Resources | Prompts</span>
+  </div>
+
+  <div class="callout" style="margin-bottom:0">
+    <strong>Bottom line:</strong> MCP's architecture separates <em>who</em> connects (Host), <em>how</em> they connect (Client), and <em>what</em> they connect to (Server). This separation makes the system modular, testable, and reusable across different AI applications.
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// === Architecture Info ===
+function showArchInfo(layer) {
+  const el = document.querySelector('.arch-layer.' + layer);
+  el.style.transform = 'translateX(8px)';
+  el.style.boxShadow = '0 0 15px rgba(255,255,255,.05)';
+  setTimeout(() => { el.style.transform = ''; el.style.boxShadow = ''; }, 500);
+}
+
+// === Interactive Architecture Explorer ===
+function exploreLayer(layer) {
+  const host = document.getElementById('aHost');
+  const client = document.getElementById('aClient');
+  const server = document.getElementById('aServer');
+  const panel = document.getElementById('infoPanel');
+  const title = document.getElementById('panelTitle');
+  const body = document.getElementById('panelBody');
+
+  [host, client, server].forEach(el => el.classList.remove('highlight'));
+  const info = {
+    host: {
+      title: '🧑‍💻 Host Layer',
+      body: 'The Host is the application that INITIATES the MCP connection. It decides which servers to connect to and manages the overall lifecycle. Examples: Claude Desktop, VS Code extensions, custom AI agents. The host creates one Client per server it needs to talk to.'
+    },
+    client: {
+      title: '🔌 Client Layer',
+      body: 'The Client is a 1:1 connection from the Host to ONE server. It\'s responsible for sending the host\'s intent as JSON-RPC messages over the transport layer. One host can have many clients — one for each connected server. The client manages the connection state and message exchange.'
+    },
+    server: {
+      title: '⚡ Server Layer',
+      body: 'The Server provides context (data and actions) to the AI. It exposes capabilities like Tools (callable actions), Resources (readable data), and Prompts (templates). Each server is an independent program — it can be a local subprocess (stdio) or a remote service (HTTP+SSE).'
+    }
+  };
+
+  const el = document.getElementById('a' + layer.charAt(0).toUpperCase() + layer.slice(1));
+  el.classList.add('highlight');
+  title.textContent = info[layer].title;
+  body.textContent = info[layer].body;
+  panel.classList.add('show');
+}
+
+// === Lifecycle Highlight ===
+let phaseData = {
+  init: {
+    title: '🟠 Initialize Phase',
+    desc: 'This is where the MCP connection is ESTABLISHED. The client sends an <strong>initialize</strong> request with its protocol version and capabilities. The server must respond with its own version and capabilities. <strong>Both must agree on the protocol version</strong> (e.g., "2025-03-26"). If versions mismatch, the connection fails. After successful init, the client sends a <strong>notifications/initialized</strong> notification to confirm readiness.'
+  },
+  ops: {
+    title: '🔵 Operate Phase',
+    desc: 'The MAIN working phase. The AI (through the host) sends <strong>requests</strong> to list/call tools, read resources, or get prompts. The server processes each request and returns a response. The client may also send <strong>notifications</strong> (which don\'t expect a response). This phase continues until the host decides to disconnect.'
+  },
+  shut: {
+    title: '🔴 Shutdown Phase',
+    desc: 'The connection TERMINATES. The host closes the client, which closes the transport. For <strong>stdio</strong>, the server process exits. For <strong>HTTP+SSE</strong>, the SSE stream closes. Both sides should clean up resources — close file handles, release memory, persist state. There\'s no formal "shutdown" message — the transport closing signals termination.'
+  }
+};
+
+function highlightPhase(phase) {
+  document.querySelectorAll('.tl-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('tl' + phase.charAt(0).toUpperCase() + phase.slice(1)).classList.add('active');
+  const info = document.getElementById('lifecycleInfo');
+  info.innerHTML = '<strong>' + phaseData[phase].title + ':</strong> ' + phaseData[phase].desc;
+  info.style.borderLeftColor = phase === 'init' ? 'var(--peach)' : phase === 'ops' ? 'var(--blue)' : 'var(--red)';
+}
+
+// === Transport Simulation ===
+function simTransport(type) {
+  const demo = document.getElementById('transportDemo');
+  const result = document.getElementById('transportResult');
+  if (type === 'stdio') {
+    demo.textContent = '📦 stdio';
+    demo.style.color = 'var(--peach)';
+    result.textContent = '';
+    let i = 0;
+    const msgs = ['Sending: tools/list', 'Receiving: [get_weather, send_email, ...]', '✓ Done via stdio'];
+    const int = setInterval(() => {
+      if (i < msgs.length) {
+        result.textContent = msgs[i];
+        i++;
+      } else { clearInterval(int); }
+    }, 500);
+  } else {
+    demo.textContent = '🌐 SSE';
+    demo.style.color = 'var(--blue)';
+    result.textContent = '';
+    let i = 0;
+    const msgs = ['POST /mcp tools/list', 'SSE: event: message', 'data: [get_weather, send_email, ...]', '✓ Done via SSE'];
+    const int = setInterval(() => {
+      if (i < msgs.length) {
+        result.textContent = msgs[i];
+        i++;
+      } else { clearInterval(int); }
+    }, 500);
+  }
+}
+
+// === Message Flow Walkthrough ===
+const flowSteps = {
+  init: { title: 'Initialize', msgs: [
+    { dir: '→', cls: 't-blue', text: 'Client → Server: {"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{}}}' },
+    { dir: '←', cls: 't-green', text: 'Server → Client: {"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-03-26","capabilities":{"tools":{},"resources":{}}}}' }
+  ]},
+  notify: { title: 'Notify Initialized', msgs: [
+    { dir: '→', cls: 't-yellow', text: 'Client → Server: {"jsonrpc":"2.0","method":"notifications/initialized","params":{}}  (no id — fire and forget)' }
+  ]},
+  list: { title: 'List Tools', msgs: [
+    { dir: '→', cls: 't-blue', text: 'Client → Server: {"jsonrpc":"2.0","id":2,"method":"tools/list"}' },
+    { dir: '←', cls: 't-green', text: 'Server → Client: {"jsonrpc":"2.0","id":2,"result":{"tools":[{"name":"get_weather","description":"Get weather for a city","inputSchema":{...}}]}}' }
+  ]},
+  call: { title: 'Call Tool', msgs: [
+    { dir: '→', cls: 't-blue', text: 'Client → Server: {"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"get_weather","arguments":{"city":"Mumbai"}}}' },
+    { dir: '←', cls: 't-green', text: 'Server → Client: {"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"27°C, Sunny in Mumbai"}]}}' }
+  ]},
+  read: { title: 'Read Resource', msgs: [
+    { dir: '→', cls: 't-blue', text: 'Client → Server: {"jsonrpc":"2.0","id":4,"method":"resources/read","params":{"uri":"weather://Mumbai"}}' },
+    { dir: '←', cls: 't-green', text: 'Server → Client: {"jsonrpc":"2.0","id":4,"result":{"contents":[{"uri":"weather://Mumbai","mimeType":"application/json","text":"{\\"temp\\":27,\\"condition\\":\\"Sunny\\"}"}]}}' }
+  ]}
+};
+
+document.querySelectorAll('.conn-step').forEach(el => {
+  el.addEventListener('click', function() {
+    document.querySelectorAll('.conn-step').forEach(s => s.classList.remove('active'));
+    this.classList.add('active');
+    const log = document.getElementById('flowLog');
+    const key = this.id.replace('step', '').toLowerCase();
+    const step = flowSteps[key];
+    if (!step) return;
+    log.innerHTML = '<div class="entry t-muted" style="font-weight:600;margin-bottom:4px">▸ ' + step.title + '</div>';
+    step.msgs.forEach(m => {
+      log.innerHTML += '<div class="entry ' + m.cls + '">' + m.dir + ' ' + m.text + '</div>';
+    });
+  });
+});
+
+// === Connection Simulation ===
+function simulateConnection() {
+  const log = document.getElementById('simLog');
+  log.innerHTML = '<div class="entry t-muted">▸ Starting MCP connection simulation...</div>';
+
+  function add(msg, cls) {
+    log.innerHTML += '<div class="entry ' + cls + '">▸ ' + msg + '</div>';
+    log.scrollTop = log.scrollHeight;
+  }
+
+  setTimeout(() => add('🧑‍💻 Host: Creating client for server...', 't-teal'), 300);
+  setTimeout(() => add('🔌 Client: Connecting via stdio transport...', 't-blue'), 700);
+  setTimeout(() => add('🔌 Client: Sending "initialize" (protocolVersion: 2025-03-26)', 't-blue'), 1200);
+  setTimeout(() => add('⚡ Server: Received initialize. Comparing protocol versions...', 't-green'), 1700);
+  setTimeout(() => add('⚡ Server: Versions match! Sending capabilities...', 't-green'), 2200);
+  setTimeout(() => add('🔌 Client: Received server capabilities. Sending "notifications/initialized"...', 't-blue'), 2700);
+  setTimeout(() => add('✅ Connection established! Server ready for tools/list, resources/read, etc.', 't-teal'), 3200);
+  setTimeout(() => add('🔌 Client: Calling tools/list...', 't-blue'), 3800);
+  setTimeout(() => add('⚡ Server: Returning [get_weather, send_email, search_docs]', 't-green'), 4400);
+  setTimeout(() => add('🔌 Client: Calling tools/call { name: "get_weather", city: "Mumbai" }', 't-blue'), 5000);
+  setTimeout(() => add('⚡ Server: Result — 27°C, Sunny in Mumbai', 't-green'), 5600);
+  setTimeout(() => add('🔌 Client: Shutting down connection...', 't-yellow'), 6200);
+  setTimeout(() => add('🔌 Client: Transport closed. Server process exiting.', 't-red'), 6700);
+  setTimeout(() => add('🧑‍💻 Host: Connection ended. ✓', 't-teal'), 7200);
+}
+
+function resetSim() {
+  document.getElementById('simLog').innerHTML = '<div class="entry t-muted">▸ Ready to simulate MCP connection...</div>';
+  document.getElementById('flowLog').innerHTML = '<div class="entry t-muted">Click any step above to see the actual JSON-RPC messages exchanged</div>';
+  document.querySelectorAll('.conn-step').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tl-item').forEach(el => el.classList.remove('active'));
+  document.getElementById('lifecycleInfo').innerHTML = '<strong>Click a phase above</strong> to see more details about it.';
+  document.getElementById('lifecycleInfo').style.borderLeftColor = 'var(--blue)';
+  document.getElementById('infoPanel').classList.remove('show');
+  document.querySelectorAll('.arch-canvas .layer').forEach(el => el.classList.remove('highlight'));
+  document.getElementById('transportDemo').textContent = '📦 stdio';
+  document.getElementById('transportDemo').style.color = '';  document.getElementById('transportResult').textContent = '';
+}
+
+// Init default
+highlightPhase('init');
+</script>
+</body>
+</html>

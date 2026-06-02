@@ -1,0 +1,590 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Hooks</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--subtext:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--coral:#f28fad;
+  --radius:12px;--transition:0.5s cubic-bezier(0.22,1,0.36,1);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#3a3a5c}
+
+/* Particles */
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.particle{position:absolute;border-radius:50%;opacity:0;animation:particleUp linear infinite}
+@keyframes particleUp{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:0.6}90%{opacity:0.6}100%{transform:translateY(-10vh) scale(1);opacity:0}}
+
+/* Hero */
+.hero{
+  position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:2rem;overflow:hidden;
+}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%, rgba(137,180,250,0.08) 0%, transparent 60%),
+             radial-gradient(ellipse at 80% 100%, rgba(166,227,161,0.05) 0%, transparent 50%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;padding:0.4rem 1rem;
+  background:rgba(137,180,250,0.1);border:1px solid rgba(137,180,250,0.2);
+  border-radius:100px;font-size:0.8rem;color:var(--blue);margin-bottom:1.5rem;
+  letter-spacing:0.5px;
+}
+.hero h1{
+  font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;
+  background:linear-gradient(135deg,var(--blue),var(--lavender),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:1rem;
+}
+.hero p{font-size:clamp(1rem,2vw,1.3rem);color:var(--subtext);max-width:600px;margin-bottom:2rem}
+.hero-arrow{width:32px;height:32px;border-right:2px solid var(--blue);border-bottom:2px solid var(--blue);transform:rotate(45deg);animation:bounce 2s infinite;opacity:0.5}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translate(0,0)}50%{transform:rotate(45deg) translate(8px,8px)}}
+
+.container{max-width:1000px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:1}
+.section{opacity:0;transform:translateY(50px);transition:opacity 0.8s ease,transform 0.8s ease;margin-bottom:6rem}
+.section.visible{opacity:1;transform:translateY(0)}
+.section-number{
+  display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;
+  border-radius:10px;font-size:0.85rem;font-weight:700;margin-bottom:1rem;
+}
+.section h2{
+  font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:1.5rem;line-height:1.3;
+  background:linear-gradient(135deg,var(--text),var(--lavender));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.section h3{font-size:1.15rem;font-weight:600;margin-bottom:0.75rem;color:var(--text)}
+.section p{color:var(--subtext);margin-bottom:1rem;font-size:0.95rem}
+
+.card{
+  background:var(--surface);border-radius:var(--radius);padding:1.5rem;
+  border:1px solid rgba(255,255,255,0.05);transition:var(--transition);
+}
+.card:hover{border-color:rgba(137,180,250,0.2);transform:translateY(-2px)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1.5rem}
+
+/* Comparison SVG */
+.comparison-wrap{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin:2rem 0}
+.comp-card{
+  background:var(--surface);border-radius:var(--radius);padding:2rem;text-align:center;
+  border:1px solid rgba(255,255,255,0.05);transition:var(--transition);
+}
+.comp-card h3{margin-bottom:1rem;font-size:1.3rem}
+.comp-card svg{width:100%;max-width:320px;height:160px;margin:0 auto 1rem;display:block}
+.comp-label{display:flex;align-items:center;justify-content:center;gap:0.5rem;font-size:0.9rem}
+@media(max-width:700px){.comparison-wrap{grid-template-columns:1fr}}
+
+/* Timeline */
+.timeline{position:relative;padding:2rem 0;margin:2rem 0}
+.timeline-line{
+  position:absolute;left:32px;top:0;bottom:0;width:3px;
+  background:linear-gradient(to bottom,var(--blue),var(--lavender),var(--pink),var(--teal),var(--yellow),var(--red));
+  border-radius:2px;opacity:0.4;
+}
+.timeline-line-glow{
+  position:absolute;left:28px;top:0;width:11px;height:100%;
+  background:linear-gradient(to bottom,var(--blue),var(--lavender),var(--pink),var(--teal),var(--yellow),var(--red));
+  filter:blur(6px);opacity:0.15;border-radius:6px;
+}
+.tl-item{position:relative;padding:0 0 2rem 80px;cursor:pointer;transition:var(--transition)}
+.tl-item:last-child{padding-bottom:0}
+.tl-dot{
+  position:absolute;left:20px;top:4px;width:26px;height:26px;border-radius:50%;
+  border:3px solid;display:flex;align-items:center;justify-content:center;
+  font-size:0.7rem;font-weight:700;z-index:2;transition:var(--transition);
+  background:var(--surface);
+}
+.tl-item:hover .tl-dot{transform:scale(1.2);box-shadow:0 0 20px currentColor}
+.tl-content{background:var(--surface);border-radius:var(--radius);padding:1.2rem 1.5rem;border:1px solid rgba(255,255,255,0.05);transition:var(--transition)}
+.tl-item:hover .tl-content{border-color:rgba(255,255,255,0.12)}
+.tl-content h4{font-weight:600;margin-bottom:0.3rem}
+.tl-content p{font-size:0.85rem;color:var(--subtext);margin:0}
+
+/* Hook Types */
+.hook-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:1rem;margin:2rem 0}
+.hook-card{
+  background:var(--surface);border-radius:var(--radius);padding:1.5rem;text-align:center;
+  border:1px solid rgba(255,255,255,0.05);transition:var(--transition);position:relative;overflow:hidden;
+  cursor:pointer;
+}
+.hook-card:hover{transform:translateY(-4px)}
+.hook-icon{font-size:2rem;margin-bottom:0.75rem}
+.hook-name{font-weight:700;font-size:0.9rem;margin-bottom:0.3rem}
+.hook-desc{font-size:0.78rem;color:var(--subtext);line-height:1.4}
+.hook-indicator{width:40px;height:4px;border-radius:2px;margin:0.75rem auto 0;position:relative;overflow:hidden}
+.hook-indicator-bar{position:absolute;left:-100%;top:0;height:100%;width:100%;border-radius:2px;animation:indicatorSlide 2s ease-in-out infinite}
+@keyframes indicatorSlide{0%{left:-100%}50%{left:100%}100%{left:100%}}
+
+/* Table */
+.table-wrap{overflow-x:auto;margin:2rem 0}
+.table-wrap table{width:100%;border-collapse:separate;border-spacing:0;font-size:0.9rem}
+.table-wrap th{
+  padding:0.9rem 1.2rem;text-align:left;font-weight:600;font-size:0.8rem;
+  text-transform:uppercase;letter-spacing:0.5px;color:var(--subtext);
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+.table-wrap td{
+  padding:1rem 1.2rem;border-bottom:1px solid rgba(255,255,255,0.04);
+  transition:var(--transition);
+}
+.table-wrap tr:last-child td{border-bottom:none}
+.table-wrap tr{transition:var(--transition);opacity:0;transform:translateX(-20px)}
+.table-wrap tr.visible{opacity:1;transform:translateX(0)}
+.table-wrap tr:hover td{background:rgba(137,180,250,0.04)}
+.scope-tag{
+  display:inline-block;padding:0.2rem 0.6rem;border-radius:4px;
+  font-size:0.75rem;font-weight:600;
+}
+
+/* Code blocks */
+.code-block{
+  background:#12121f;border-radius:8px;padding:1rem;margin:0.75rem 0;
+  font-family:'JetBrains Mono','Fira Code',monospace;font-size:0.82rem;line-height:1.5;
+  position:relative;overflow-x:auto;border:1px solid rgba(255,255,255,0.04);
+}
+.code-block .kw{color:var(--pink)}.code-block .fn{color:var(--blue)}.code-block .str{color:var(--green)}
+.code-block .cm{color:var(--subtext);font-style:italic}.code-block .num{color:var(--yellow)}
+.code-block .var{color:var(--teal)}.code-block .op{color:var(--peach)}
+.copy-btn{
+  position:absolute;top:8px;right:8px;padding:4px 10px;font-size:0.72rem;
+  background:var(--surface2);border:1px solid rgba(255,255,255,0.06);color:var(--subtext);
+  border-radius:4px;cursor:pointer;transition:var(--transition);font-family:inherit;
+}
+.copy-btn:hover{background:var(--surface);color:var(--text)}
+.example-cards{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:2rem 0}
+@media(max-width:700px){.example-cards{grid-template-columns:1fr}}
+.example-card{
+  background:var(--surface);border-radius:var(--radius);padding:1.5rem;
+  border-left:4px solid;transition:var(--transition);
+}
+.example-card:hover{transform:translateY(-2px)}
+.example-card h4{font-size:1rem;margin-bottom:0.4rem}
+.example-card p{font-size:0.85rem;color:var(--subtext);margin-bottom:0.75rem}
+
+/* Demo */
+.demo-box{
+  background:var(--surface);border-radius:var(--radius);padding:1.5rem;
+  border:1px solid rgba(255,255,255,0.05);margin:2rem 0;
+}
+.demo-box h3{margin-bottom:1rem}
+.demo-controls{display:flex;gap:0.75rem;margin-bottom:1rem;flex-wrap:wrap}
+.btn{
+  padding:0.6rem 1.4rem;border:none;border-radius:8px;font-weight:600;font-size:0.85rem;
+  cursor:pointer;transition:var(--transition);font-family:inherit;
+}
+.btn-primary{background:var(--blue);color:#0f0f17}
+.btn-primary:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(137,180,250,0.3)}
+.btn-secondary{background:var(--surface2);color:var(--text);border:1px solid rgba(255,255,255,0.08)}
+.btn-secondary:hover{background:var(--surface);border-color:rgba(255,255,255,0.15)}
+.demo-log{background:#0a0a12;border-radius:8px;padding:1rem;min-height:120px;max-height:360px;overflow-y:auto;font-family:'JetBrains Mono','Fira Code',monospace;font-size:0.82rem;line-height:1.6}
+.demo-log-entry{padding:0.4rem 0.6rem;border-radius:4px;margin-bottom:0.3rem;opacity:0;animation:fadeInLog 0.4s ease forwards;border-left:3px solid transparent}
+@keyframes fadeInLog{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+.log-ts{color:var(--subtext);margin-right:0.5rem;font-size:0.72rem}
+.log-ev{font-weight:600}
+.log-arrow{color:var(--subtext);margin:0 0.3rem}
+.log-msg{color:var(--text)}
+
+/* Modal */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,0.6);backdrop-filter:blur(4px);z-index:1000;display:none;align-items:center;justify-content:center}
+.modal-overlay.active{display:flex}
+.modal{
+  background:var(--surface);border-radius:var(--radius);padding:2rem;max-width:440px;width:90%;
+  border:1px solid rgba(255,255,255,0.08);position:relative;animation:modalIn 0.3s ease;
+}
+@keyframes modalIn{from{transform:scale(0.9) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-close{
+  position:absolute;top:12px;right:16px;background:none;border:none;color:var(--subtext);
+  font-size:1.4rem;cursor:pointer;transition:var(--transition);font-family:inherit;
+}
+.modal-close:hover{color:var(--text)}
+.modal h3{margin-bottom:0.5rem;font-size:1.2rem}
+.modal p{color:var(--subtext);font-size:0.9rem;line-height:1.6}
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<section class="hero">
+  <div class="hero-badge">⚡ Claude Code</div>
+  <h1>Hooks Deep Guide</h1>
+  <p>Deterministic lifecycle callbacks that always fire — unlike Skills. Control every phase of a Claude Code session.</p>
+  <div class="hero-arrow"></div>
+</section>
+
+<div class="container">
+
+<!-- 1. What are Hooks -->
+<section class="section" id="sec1">
+  <div class="section-number" style="background:rgba(137,180,250,0.15);color:var(--blue)">01</div>
+  <h2>What are Hooks?</h2>
+  <p>Skills are probabilistic — they <em>may</em> fire based on Claude's judgment. Hooks are deterministic — they <strong>always</strong> fire at specific lifecycle points. Hooks are your guarantee.</p>
+  <div class="comparison-wrap">
+    <div class="comp-card" style="border-color:rgba(243,139,168,0.2)">
+      <h3 style="color:var(--red)">Skills</h3>
+      <svg viewBox="0 0 320 160">
+        <rect x="40" y="20" width="80" height="36" rx="8" fill="#23234a" stroke="#f38ba8" stroke-width="1.5"/>
+        <text x="80" y="44" text-anchor="middle" fill="#f38ba8" font-size="11" font-weight="600">EVENT</text>
+        <rect x="200" y="20" width="80" height="36" rx="8" fill="#23234a" stroke="#6c7086" stroke-width="1"/>
+        <text x="240" y="44" text-anchor="middle" fill="#6c7086" font-size="11" font-weight="600">SKILL</text>
+        <line x1="120" y1="38" x2="196" y2="38" stroke="#f38ba8" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.5"/>
+        <line x1="120" y1="38" x2="196" y2="55" stroke="#f38ba8" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.3"/>
+        <line x1="120" y1="38" x2="196" y2="21" stroke="#f38ba8" stroke-width="1.5" stroke-dasharray="5,5" opacity="0.3"/>
+        <circle cx="210" cy="70" r="8" fill="none" stroke="#f38ba8" stroke-width="1.5" opacity="0.5"/>
+        <line x1="205" y1="75" x2="215" y2="65" stroke="#f38ba8" stroke-width="1.5" opacity="0.5"/>
+        <text x="240" y="74" fill="#f38ba8" font-size="9" opacity="0.5">may fire</text>
+      </svg>
+      <div class="comp-label">
+        <span style="color:var(--red)">✗</span>
+        <span>Probabilistic — Claude decides</span>
+      </div>
+    </div>
+    <div class="comp-card" style="border-color:rgba(166,227,161,0.2)">
+      <h3 style="color:var(--green)">Hooks</h3>
+      <svg viewBox="0 0 320 160">
+        <rect x="40" y="20" width="80" height="36" rx="8" fill="#23234a" stroke="#a6e3a1" stroke-width="1.5"/>
+        <text x="80" y="44" text-anchor="middle" fill="#a6e3a1" font-size="11" font-weight="600">EVENT</text>
+        <rect x="200" y="20" width="80" height="36" rx="8" fill="#23234a" stroke="#a6e3a1" stroke-width="1.5"/>
+        <text x="240" y="44" text-anchor="middle" fill="#a6e3a1" font-size="11" font-weight="600">HOOK</text>
+        <line x1="120" y1="38" x2="196" y2="38" stroke="#a6e3a1" stroke-width="2.5"/>
+        <line x1="120" y1="38" x2="196" y2="38" stroke="#a6e3a1" stroke-width="6" opacity="0.2" filter="url(#glow)"/>
+        <defs><filter id="glow"><feGaussianBlur stdDeviation="3"/></filter></defs>
+        <circle cx="210" cy="70" r="8" fill="#a6e3a1" opacity="0.2"/>
+        <path d="M206 70l3 3 5-6" fill="none" stroke="#a6e3a1" stroke-width="2" opacity="0.9"/>
+        <text x="240" y="74" fill="#a6e3a1" font-size="9">always fires</text>
+      </svg>
+      <div class="comp-label">
+        <span style="color:var(--green)">✓</span>
+        <span>Deterministic — guaranteed execution</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 2. All Hook Events -->
+<section class="section" id="sec2">
+  <div class="section-number" style="background:rgba(180,190,254,0.15);color:var(--lavender)">02</div>
+  <h2>All Hook Events</h2>
+  <p>Six lifecycle events where hooks can attach. Click any event for details.</p>
+  <div class="timeline" id="timeline">
+    <div class="timeline-line-glow"></div>
+    <div class="timeline-line"></div>
+    <div class="tl-item" onclick="showEvent(0)">
+      <div class="tl-dot" style="border-color:var(--blue);color:var(--blue)">S</div>
+      <div class="tl-content"><h4 style="color:var(--blue)">SessionStart</h4><p>Fires when a Claude Code session begins. Use for initialization, loading config, or setting up environment.</p></div>
+    </div>
+    <div class="tl-item" onclick="showEvent(1)">
+      <div class="tl-dot" style="border-color:var(--green);color:var(--green)">U</div>
+      <div class="tl-content"><h4 style="color:var(--green)">UserPromptSubmit</h4><p>Fires after user submits a prompt. Pre-process input, inject context, rewrite queries.</p></div>
+    </div>
+    <div class="tl-item" onclick="showEvent(2)">
+      <div class="tl-dot" style="border-color:var(--yellow);color:var(--yellow)">P</div>
+      <div class="tl-content"><h4 style="color:var(--yellow)">PreToolUse</h4><p>Fires before a tool is invoked. Validate arguments, block dangerous operations, transform parameters.</p></div>
+    </div>
+    <div class="tl-item" onclick="showEvent(3)">
+      <div class="tl-dot" style="border-color:var(--peach);color:var(--peach)">O</div>
+      <div class="tl-content"><h4 style="color:var(--peach)">PostToolUse</h4><p>Fires after a tool returns. Inspect results, log usage, transform output, trigger notifications.</p></div>
+    </div>
+    <div class="tl-item" onclick="showEvent(4)">
+      <div class="tl-dot" style="border-color:var(--red);color:var(--red)">T</div>
+      <div class="tl-content"><h4 style="color:var(--red)">Stop</h4><p>Fires when a turn ends (after tool results are processed). Cleanup, summarize, persist state.</p></div>
+    </div>
+    <div class="tl-item" onclick="showEvent(5)">
+      <div class="tl-dot" style="border-color:var(--teal);color:var(--teal)">C</div>
+      <div class="tl-content"><h4 style="color:var(--teal)">ConfigChange</h4><p>Fires when hooks config or settings are modified. Hot-reload hook definitions.</p></div>
+    </div>
+  </div>
+</section>
+
+<!-- 3. Hook Types -->
+<section class="section" id="sec3">
+  <div class="section-number" style="background:rgba(245,194,231,0.15);color:var(--pink)">03</div>
+  <h2>Hook Types</h2>
+  <p>Five hook type implementations — each with a different execution model.</p>
+  <div class="hook-grid">
+    <div class="hook-card" style="border-top:3px solid var(--blue)">
+      <div class="hook-icon">⌨️</div>
+      <div class="hook-name" style="color:var(--blue)">command</div>
+      <div class="hook-desc">Runs a shell command synchronously. Access to stdin/stdout.</div>
+      <div class="hook-indicator"><div class="hook-indicator-bar" style="background:var(--blue);animation-delay:0s"></div></div>
+    </div>
+    <div class="hook-card" style="border-top:3px solid var(--green)">
+      <div class="hook-icon">🌐</div>
+      <div class="hook-name" style="color:var(--green)">http</div>
+      <div class="hook-desc">Makes an HTTP request to your endpoint. Async with JSON payload.</div>
+      <div class="hook-indicator"><div class="hook-indicator-bar" style="background:var(--green);animation-delay:0.3s"></div></div>
+    </div>
+    <div class="hook-card" style="border-top:3px solid var(--yellow)">
+      <div class="hook-icon">🔧</div>
+      <div class="hook-name" style="color:var(--yellow)">mcp_tool</div>
+      <div class="hook-desc">Calls an MCP tool as a hook. Full MCP protocol integration.</div>
+      <div class="hook-indicator"><div class="hook-indicator-bar" style="background:var(--yellow);animation-delay:0.6s"></div></div>
+    </div>
+    <div class="hook-card" style="border-top:3px solid var(--peach)">
+      <div class="hook-icon">💬</div>
+      <div class="hook-name" style="color:var(--peach)">prompt</div>
+      <div class="hook-desc">Returns a prompt string appended to the system prompt.</div>
+      <div class="hook-indicator"><div class="hook-indicator-bar" style="background:var(--peach);animation-delay:0.9s"></div></div>
+    </div>
+    <div class="hook-card" style="border-top:3px solid var(--lavender)">
+      <div class="hook-icon">🤖</div>
+      <div class="hook-name" style="color:var(--lavender)">agent</div>
+      <div class="hook-desc">Runs a sub-agent with its own instructions and tools.</div>
+      <div class="hook-indicator"><div class="hook-indicator-bar" style="background:var(--lavender);animation-delay:1.2s"></div></div>
+    </div>
+  </div>
+</section>
+
+<!-- 4. Where Hooks Live -->
+<section class="section" id="sec4">
+  <div class="section-number" style="background:rgba(148,226,213,0.15);color:var(--teal)">04</div>
+  <h2>Where Hooks Live</h2>
+  <p>Hooks can be defined at different levels with varying scope and shareability.</p>
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Location</th><th>Path / Key</th><th>Scope</th><th>Shareable</th></tr>
+      </thead>
+      <tbody>
+        <tr><td style="color:var(--blue);font-weight:600">Global config</td><td>~/.config/opencode/opencode.json</td><td><span class="scope-tag" style="background:rgba(137,180,250,0.12);color:var(--blue)">All projects</span></td><td style="color:var(--green)">✓ Yes</td></tr>
+        <tr><td style="color:var(--green);font-weight:600">Project config</td><td>./opencode.json</td><td><span class="scope-tag" style="background:rgba(166,227,161,0.12);color:var(--green)">Single project</span></td><td style="color:var(--green)">✓ Yes</td></tr>
+        <tr><td style="color:var(--yellow);font-weight:600">Project config (JSONC)</td><td>./opencode.jsonc</td><td><span class="scope-tag" style="background:rgba(249,226,175,0.12);color:var(--yellow)">Single project</span></td><td style="color:var(--green)">✓ Yes</td></tr>
+        <tr><td style="color:var(--peach);font-weight:600">CLI flag</td><td>--hooks-config path</td><td><span class="scope-tag" style="background:rgba(250,179,135,0.12);color:var(--peach)">Session only</span></td><td style="color:var(--red)">✗ No</td></tr>
+        <tr><td style="color:var(--lavender);font-weight:600">Legacy claude_hooks</td><td>./.claude/settings.json</td><td><span class="scope-tag" style="background:rgba(180,190,254,0.12);color:var(--lavender)">Single project</span></td><td style="color:var(--green)">✓ Yes</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- 5. Practical Examples -->
+<section class="section" id="sec5">
+  <div class="section-number" style="background:rgba(248,189,127,0.15);color:var(--orange)">05</div>
+  <h2>Practical Examples</h2>
+  <p>Real-world hooks you can use today. Click the copy button to copy any example.</p>
+  <div class="example-cards">
+    <div class="example-card" style="border-left-color:var(--green)">
+      <h4 style="color:var(--green)">⚡ Auto-format with Prettier</h4>
+      <p>Auto-format files after every tool writes to disk.</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <span class="cm"># Runs after any tool that modifies files</span><br>
+        <span class="op">hooks</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;<span class="fn">PostToolUse</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="op">- command</span><span class="kw">:</span> <span class="str">"npx prettier --write ."</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">onlyOnEventPayload</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">toolResult.isError</span><span class="kw">:</span> <span class="num">false</span>
+      </div>
+    </div>
+    <div class="example-card" style="border-left-color:var(--red)">
+      <h4 style="color:var(--red)">🛡️ Block Dangerous Commands</h4>
+      <p>Intercept and block destructive shell commands.</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <span class="cm"># Block rm -rf / and similar commands</span><br>
+        <span class="op">hooks</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;<span class="fn">PreToolUse</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="op">- command</span><span class="kw">:</span> <span class="str">"sh -c '</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">if echo \"$HOOK_TOOL_INPUT\" | grep -qiE \"rm\\s+-rf\\s+/\";</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">then echo \"{\\&quot;isError\\&quot;:true,\\&quot;result\\&quot;:\\&quot;BLOCKED\\&quot;}\";</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">else exit 0; fi'"</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">onlyOnEventPayload</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="fn">tool.name</span><span class="kw">:</span> <span class="str">"Bash"</span>
+      </div>
+    </div>
+    <div class="example-card" style="border-left-color:var(--teal)">
+      <h4 style="color:var(--teal)">🔔 macOS Notification</h4>
+      <p>Get a native macOS notification when a long task completes.</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <span class="cm"># Notify on long-running tool completion</span><br>
+        <span class="op">hooks</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;<span class="fn">PostToolUse</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="op">- command</span><span class="kw">:</span> <span class="str">"terminal-notifier"</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">args</span><span class="kw">:</span> <span class="op">[</span><span class="str">"-title"</span>, <span class="str">"Claude Code"</span>,<br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">"-message"</span>, <span class="str">"Tool completed!"</span><span class="op">]</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">timeout</span><span class="kw">:</span> <span class="num">5000</span>
+      </div>
+    </div>
+    <div class="example-card" style="border-left-color:var(--yellow)">
+      <h4 style="color:var(--yellow)">🔑 Env Var Injection</h4>
+      <p>Inject environment variables from a secure vault into each session.</p>
+      <div class="code-block">
+        <button class="copy-btn" onclick="copyCode(this)">Copy</button>
+        <span class="cm"># Inject secrets from 1Password CLI</span><br>
+        <span class="op">hooks</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;<span class="fn">SessionStart</span><span class="kw">:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;<span class="op">- command</span><span class="kw">:</span> <span class="str">"sh -c '</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">export VAULT_TOKEN=$(op read</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">&nbsp;&nbsp;\"op://vault/ci/token\" 2>/dev/null);</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">echo \"{\\&quot;envVars\\&quot;:</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="str">&nbsp;&nbsp;{\\&quot;VAULT_TOKEN\\&quot;:\\&quot;$VAULT_TOKEN\\&quot;}}\""</span><br>
+        &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="var">timeout</span><span class="kw">:</span> <span class="num">10000</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- 6. Hook Execution Demo -->
+<section class="section" id="sec6">
+  <div class="section-number" style="background:rgba(242,143,173,0.15);color:var(--coral)">06</div>
+  <h2>Hook Execution Demo</h2>
+  <p>Simulate a Claude Code session and watch hooks fire at each lifecycle event.</p>
+  <div class="demo-box">
+    <h3>⚡ Session Simulator</h3>
+    <div class="demo-controls">
+      <button class="btn btn-primary" onclick="runDemo()">▶ Simulate Hook Flow</button>
+      <button class="btn btn-secondary" onclick="clearDemo()">✕ Clear</button>
+    </div>
+    <div class="demo-log" id="demoLog">
+      <div style="color:var(--subtext);font-size:0.85rem;text-align:center;padding:2rem 0">Click "Simulate Hook Flow" to run the demo</div>
+    </div>
+  </div>
+</section>
+
+</div>
+
+<!-- Modal -->
+<div class="modal-overlay" id="eventModal" onclick="closeModal(event)">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal(event)">×</button>
+    <h3 id="modalTitle"></h3>
+    <p id="modalDesc"></p>
+  </div>
+</div>
+
+<script>
+const eventData = [
+  { title: 'SessionStart', desc: 'Fires when a Claude Code session begins. Use for initialization tasks: loading config files, setting up environment variables, running startup checks, or warming caches. This hook runs once per session and has access to the session context.' },
+  { title: 'UserPromptSubmit', desc: 'Fires every time the user submits a prompt. Use for pre-processing: rewriting queries, injecting additional context, enforcing policies, or logging user input. The hook receives the raw prompt text and can modify it before Claude sees it.' },
+  { title: 'PreToolUse', desc: 'Fires before each tool invocation. This is your guard: validate arguments, block dangerous operations, transform parameters, or add audit logging. Return a special error payload to cancel the tool. Critical for security policies.' },
+  { title: 'PostToolUse', desc: 'Fires after a tool returns its result. Inspect outputs, log usage metrics, trigger notifications, or transform results. The hook receives the full tool result including stdout, stderr, and exit code.' },
+  { title: 'Stop', desc: 'Fires when a turn ends after all tool results are processed. Use for cleanup, persisting state, sending summaries, or triggering follow-up actions. Does not fire on config changes.' },
+  { title: 'ConfigChange', desc: 'Fires when hook configuration is modified at runtime. Enables hot-reloading of hook definitions without restarting the session. Receives the old and new config for comparison.' }
+];
+
+function showEvent(idx) {
+  const d = eventData[idx];
+  document.getElementById('modalTitle').textContent = d.title;
+  document.getElementById('modalDesc').textContent = d.desc;
+  document.getElementById('eventModal').classList.add('active');
+}
+
+function closeModal(e) {
+  if (e) e.stopPropagation();
+  document.getElementById('eventModal').classList.remove('active');
+}
+
+document.getElementById('eventModal').addEventListener('click', function(e) {
+  if (e.target === this) closeModal(e);
+});
+
+document.addEventListener('keydown', function(e) {
+  if (e.key === 'Escape') closeModal(e);
+});
+
+function copyCode(btn) {
+  const code = btn.parentNode.cloneNode(true);
+  const b = code.querySelector('.copy-btn');
+  if (b) b.remove();
+  const text = code.textContent.trim();
+  navigator.clipboard.writeText(text).then(() => {
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1500);
+  });
+}
+
+const events = [
+  { ev: 'SessionStart', color: 'var(--blue)', msg: 'Hook fires — loading config, injecting env vars' },
+  { ev: 'UserPromptSubmit', color: 'var(--green)', msg: 'Hook fires — pre-processing user prompt' },
+  { ev: 'PreToolUse', color: 'var(--yellow)', msg: 'Hook fires — validating tool arguments' },
+  { ev: 'PostToolUse', color: 'var(--peach)', msg: 'Hook fires — inspecting tool result' },
+  { ev: 'Stop', color: 'var(--red)', msg: 'Hook fires — cleaning up, persisting state' },
+  { ev: 'UserPromptSubmit', color: 'var(--green)', msg: 'Hook fires — next user prompt submitted' },
+  { ev: 'PreToolUse', color: 'var(--yellow)', msg: 'Hook fires — blocking dangerous command (shield)' },
+  { ev: 'PostToolUse', color: 'var(--peach)', msg: 'Hook fires — macOS notification sent' },
+  { ev: 'Stop', color: 'var(--red)', msg: 'Hook fires — turn complete' },
+];
+
+function runDemo() {
+  const log = document.getElementById('demoLog');
+  log.innerHTML = '<div style="color:var(--subtext);font-size:0.85rem;padding:0.5rem 0">— Session started —</div>';
+  let delay = 0;
+  events.forEach((e, i) => {
+    delay += 400 + Math.random() * 300;
+    setTimeout(() => {
+      const entry = document.createElement('div');
+      entry.className = 'demo-log-entry';
+      entry.style.borderLeftColor = e.color;
+      entry.innerHTML = `<span class="log-ts">[${String(i+1).padStart(2,'0')}]</span><span class="log-ev" style="color:${e.color}">${e.ev}</span><span class="log-arrow">→</span><span class="log-msg">${e.msg}</span>`;
+      log.appendChild(entry);
+      log.scrollTop = log.scrollHeight;
+    }, delay);
+  });
+  setTimeout(() => {
+    const entry = document.createElement('div');
+    entry.className = 'demo-log-entry';
+    entry.style.borderLeftColor = 'var(--blue)';
+    entry.innerHTML = `<span class="log-ts">[--]</span><span class="log-ev" style="color:var(--blue)">Done</span><span class="log-arrow">→</span><span class="log-msg">Session simulation complete</span>`;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+  }, delay + 500);
+}
+
+function clearDemo() {
+  const log = document.getElementById('demoLog');
+  log.innerHTML = '<div style="color:var(--subtext);font-size:0.85rem;text-align:center;padding:2rem 0">Click "Simulate Hook Flow" to run the demo</div>';
+}
+
+/* Particles */
+(function() {
+  const c = document.getElementById('particles');
+  const colors = ['#89b4fa','#a6e3a1','#f38ba8','#f9e2af','#fab387','#94e2d5','#f5c2e7','#b4befe'];
+  for (let i = 0; i < 30; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = 2 + Math.random() * 5;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.left = Math.random() * 100 + '%';
+    p.style.background = colors[i % colors.length];
+    p.style.animationDuration = (15 + Math.random() * 25) + 's';
+    p.style.animationDelay = Math.random() * 20 + 's';
+    c.appendChild(p);
+  }
+})();
+
+/* Scroll observer */
+(function() {
+  const observer = new IntersectionObserver((entries) => {
+    entries.forEach(e => { if (e.isIntersecting) e.target.classList.add('visible'); });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.section').forEach(s => observer.observe(s));
+
+  const rowObserver = new IntersectionObserver((entries) => {
+    entries.forEach(e => {
+      if (e.isIntersecting) {
+        e.target.querySelectorAll('tr').forEach((tr, i) => {
+          setTimeout(() => tr.classList.add('visible'), i * 100);
+        });
+      }
+    });
+  }, { threshold: 0.3 });
+  const tbl = document.querySelector('.table-wrap table tbody');
+  if (tbl) rowObserver.observe(tbl.parentElement.parentElement);
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,384 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>useEffect - All Features - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px;
+      border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:12px 14px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .card { background:#181825; border-radius:12px; border:1px solid #313244; padding:14px; margin-bottom:10px; }
+
+    .log-entry { padding:6px 10px; margin-bottom:4px; border-radius:6px; font-size:12px; font-family:monospace; border-left:3px solid #585b70; background:#11111b; animation:logIn 0.2s ease-out; }
+    @keyframes logIn { from { opacity:0; transform:translateX(-10px); } to { opacity:1; transform:translateX(0); } }
+    .log-entry.mount { border-color:#a6e3a1; }
+    .log-entry.update { border-color:#89b4fa; }
+    .log-entry.cleanup { border-color:#f38ba8; }
+    .log-entry.timer { border-color:#f9e2af; }
+
+    .badge { font-size:10px; padding:2px 8px; border-radius:8px; font-weight:600; }
+    .badge-mount { background:#a6e3a120; color:#a6e3a1; }
+    .badge-update { background:#89b4fa20; color:#89b4fa; }
+    .badge-cleanup { background:#f38ba820; color:#f38ba8; }
+
+    .gradient-text { background:linear-gradient(135deg, #a6e3a1, #89b4fa, #cba6f7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+    .hl { background:rgba(137,180,250,0.12); border-left:3px solid #89b4fa; padding-left:10px; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      React Hooks
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">useEffect</span>
+    </h1>
+    <p class="text-[#a6adc8]">All features: <span class="text-[#a6e3a1]">mount</span> · <span class="text-[#89b4fa]">update</span> · <span class="text-[#f38ba8]">cleanup</span> · <span class="text-[#f9e2af]">deps</span></p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">useEffect Playground</span>
+          </div>
+          <div class="body-scroll" id="phoneBody">
+            <!-- Controls -->
+            <div class="card">
+              <div class="text-sm font-semibold mb-2">Counter</div>
+              <div class="flex items-center gap-3">
+                <button id="decBtn" class="w-9 h-9 rounded-lg bg-[#313244] hover:bg-[#45475a] text-lg"><i class="fas fa-minus"></i></button>
+                <span id="countDisplay" class="text-2xl font-bold font-mono text-[#f9e2af]">0</span>
+                <button id="incBtn" class="w-9 h-9 rounded-lg bg-[#313244] hover:bg-[#45475a] text-lg"><i class="fas fa-plus"></i></button>
+                <button id="resetBtn" class="ml-auto text-xs bg-[#f38ba8]/20 text-[#f38ba8] px-3 py-1.5 rounded-lg hover:bg-[#f38ba8]/30 transition">Reset</button>
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold">Toggle Box</span>
+                <button id="toggleBtn" class="text-xs bg-[#313244] px-3 py-1.5 rounded-lg hover:bg-[#45475a] transition"><span id="toggleLabel">Hide</span></button>
+              </div>
+              <div id="toggleBox" class="h-20 rounded-lg bg-[#89b4fa]/20 border border-[#89b4fa]/40 flex items-center justify-center text-sm text-[#89b4fa] transition-all">
+                <i class="fas fa-cube mr-2"></i> I'm visible
+              </div>
+            </div>
+
+            <div class="card">
+              <div class="flex items-center gap-2 mb-2 text-sm font-semibold">
+                <i class="fas fa-list text-[#f9e2af]"></i> Effect Log
+                <span id="logCount" class="text-xs text-[#585b70] ml-auto">0 entries</span>
+              </div>
+              <div id="logArea" class="max-h-40 overflow-y-auto" style="scrollbar-width:thin;scrollbar-color:#313244 transparent;"></div>
+            </div>
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home text-[#a6e3a1]"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <!-- Feature buttons -->
+        <div class="grid grid-cols-2 gap-2" id="effectTabs">
+          <button data-tab="mount" class="active-tab text-xs font-semibold px-3 py-2 rounded-xl border transition-all" style="background:#a6e3a120;border-color:#a6e3a1;color:#a6e3a1;">Mount</button>
+          <button data-tab="deps" class="text-xs font-semibold px-3 py-2 rounded-xl border transition-all" style="background:#1e1e2e;border-color:#313244;color:#a6adc8;">Deps Array</button>
+          <button data-tab="cleanup" class="text-xs font-semibold px-3 py-2 rounded-xl border transition-all" style="background:#1e1e2e;border-color:#313244;color:#a6adc8;">Cleanup</button>
+          <button data-tab="timer" class="text-xs font-semibold px-3 py-2 rounded-xl border transition-all" style="background:#1e1e2e;border-color:#313244;color:#a6adc8;">Timer</button>
+        </div>
+
+        <!-- Code display -->
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] flex items-center gap-2 text-xs text-[#6c7086]">
+            <i class="fas fa-file-alt"></i> <span id="codeTitle">useEffect — Mount</span>
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto" id="codeDisplay">
+<span class="text-[#cba6f7]">useEffect</span><span class="text-[#cdd6f4]">(() => {</span>
+  <span class="text-[#6c7086]">// Runs once on mount</span>
+  <span class="text-[#89b4fa]">console</span><span class="text-[#cdd6f4]">.log('Mounted');</span>
+<span class="text-[#cdd6f4]">}, []);</span>
+<span class="text-[#6c7086]">// empty deps → only on mount</span></pre>
+        </div>
+
+        <div class="bg-[#1e1e2e] border border-[#f9e2af]/30 rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Tip:</span> <span id="tipText">Empty deps <code>[]</code> = run once on mount. Never re-runs.</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- === ALL FORMS REFERENCE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-table text-[#cba6f7]"></i> All useEffect Forms
+      </h2>
+      <div class="overflow-x-auto rounded-xl border border-[#313244]">
+        <table class="w-full text-sm">
+          <thead><tr class="bg-[#181825] text-left"><th class="px-5 py-3 text-[#89b4fa]">Pattern</th><th class="px-5 py-3 text-[#a6e3a1]">Deps</th><th class="px-5 py-3">When it runs</th></tr></thead>
+          <tbody class="divide-y divide-[#313244]">
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">useEffect(fn)</td><td class="px-5 py-3">none</td><td class="text-[#a6adc8]">Every render (mount + every update)</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">useEffect(fn, [])</td><td class="px-5 py-3">empty</td><td class="text-[#a6adc8]">✅ Once on mount only</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">useEffect(fn, [x])</td><td class="px-5 py-3">[x]</td><td class="text-[#a6adc8]">On mount + whenever <code>x</code> changes</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">useEffect(fn, [x, y])</td><td class="px-5 py-3">[x, y]</td><td class="text-[#a6adc8]">On mount + when <code>x</code> or <code>y</code> changes</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- === CODE SAMPLES === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#f9e2af]"></i> Every Pattern in Code
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#a6e3a1] text-[#1e1e2e]">1. Mount Only</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7]">useEffect</span>(() => {
+  <span class="text-[#89b4fa]">fetchData</span>();
+}, []); <span class="text-[#6c7086]">// ← empty deps</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#89b4fa] text-[#1e1e2e]">2. On Change</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7]">useEffect</span>(() => {
+  <span class="text-[#89b4fa]">filterResults</span>(query);
+}, [query]); <span class="text-[#6c7086]">// ← runs when query changes</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#f38ba8] text-[#1e1e2e]">3. With Cleanup</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7]">useEffect</span>(() => {
+  <span class="text-[#cba6f7">const</span> sub = <span class="text-[#89b4fa]">subscribe</span>();
+  <span class="text-[#cba6f7">return</span> () => <span class="text-[#89b4fa]">unsubscribe</span>(sub);
+  <span class="text-[#6c7086]">// ↑ cleanup runs on unmount + before re-run</span>
+}, [sub]);</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#f9e2af] text-[#1e1e2e]">4. Interval Timer</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7]">useEffect</span>(() => {
+  <span class="text-[#cba6f7">const</span> id = <span class="text-[#89b4fa]">setInterval</span>(tick, 1000);
+  <span class="text-[#cba6f7">return</span> () => <span class="text-[#89b4fa]">clearInterval</span>(id);
+  <span class="text-[#6c7086]">// ← cleanup prevents memory leaks</span>
+}, []);</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#cba6f7] text-[#1e1e2e]">5. No Deps (careful)</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7]">useEffect</span>(() => {
+  <span class="text-[#89b4fa]">console</span>.log(<span class="text-[#a6e3a1]">'Rendered!'</span>);
+}); <span class="text-[#6c7086]">// ← no deps = runs EVERY render</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#f38ba8] rounded-xl p-4">
+          <div class="flex items-center gap-2 text-xs text-[#f38ba8] font-semibold mb-1"><i class="fas fa-exclamation-triangle"></i> Common Mistake</div>
+          <pre class="text-xs font-mono leading-relaxed">
+<span class="text-[#6c7086]">// Forgot deps → infinite loop!</span>
+<span class="text-[#cba6f7]">useEffect</span>(() => {
+  <span class="text-[#89b4fa]">setCount</span>(count + 1);
+}); <span class="text-[#6c7086]">// ⚠️ no deps → setCount → re-render → loop</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://react.dev/reference/react/useEffect" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> React Docs: useEffect</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      let count = 0;
+      let visible = true;
+      let logEntries = [];
+
+      const countDisplay = document.getElementById('countDisplay');
+      const logArea = document.getElementById('logArea');
+      const logCount = document.getElementById('logCount');
+      const toggleBox = document.getElementById('toggleBox');
+      const toggleLabel = document.getElementById('toggleLabel');
+      const codeDisplay = document.getElementById('codeDisplay');
+      const codeTitle = document.getElementById('codeTitle');
+      const tipText = document.getElementById('tipText');
+
+      // Simulate useEffect behaviors
+
+      // Mount effect (run once)
+      let mounted = false;
+      function mountEffect() {
+        if (mounted) return;
+        mounted = true;
+        addLog('useEffect([]) — Component mounted', 'mount');
+      }
+
+      // Update effect (runs on count change)
+      function updateEffect(prev, next) {
+        addLog(`useEffect([count]) — count changed: ${prev} → ${next}`, 'update');
+      }
+
+      // Cleanup effect (runs when toggling box)
+      function cleanupEffect() {
+        addLog('useEffect cleanup — component unmounting / deps changing', 'cleanup');
+      }
+
+      // Timer effect
+      let timerId = null;
+      function startTimer() {
+        if (timerId) return;
+        addLog('useEffect([]) — setInterval started', 'timer');
+        timerId = setInterval(() => {
+          addLog('⏱️ tick (interval)', 'timer');
+        }, 3000);
+      }
+      function stopTimer() {
+        if (timerId) {
+          clearInterval(timerId);
+          timerId = null;
+          addLog('clearInterval — timer cleaned up', 'cleanup');
+        }
+      }
+
+      function addLog(text, type = 'mount') {
+        logEntries.push({ text, type });
+        renderLog();
+      }
+
+      function renderLog() {
+        logArea.innerHTML = logEntries.map(e =>
+          `<div class="log-entry ${e.type}">${e.text}</div>`
+        ).join('');
+        logArea.scrollTop = logArea.scrollHeight;
+        logCount.textContent = logEntries.length + ' entries';
+      }
+
+      function updateCountDisplay() {
+        countDisplay.textContent = count;
+      }
+
+      // Increment
+      document.getElementById('incBtn').addEventListener('click', () => {
+        const prev = count;
+        count++;
+        updateCountDisplay();
+        updateEffect(prev, count);
+      });
+
+      // Decrement
+      document.getElementById('decBtn').addEventListener('click', () => {
+        const prev = count;
+        count--;
+        updateCountDisplay();
+        updateEffect(prev, count);
+      });
+
+      // Reset
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        const prev = count;
+        count = 0;
+        updateCountDisplay();
+        if (prev !== 0) updateEffect(prev, count);
+      });
+
+      // Toggle box (simulate mount/unmount)
+      document.getElementById('toggleBtn').addEventListener('click', () => {
+        visible = !visible;
+        toggleBox.style.display = visible ? 'flex' : 'none';
+        toggleLabel.textContent = visible ? 'Hide' : 'Show';
+        if (visible) {
+          addLog('Box mounted — useEffect([]) runs', 'mount');
+        } else {
+          cleanupEffect();
+        }
+      });
+
+      // Tab switching
+      document.querySelectorAll('[data-tab]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          document.querySelectorAll('[data-tab]').forEach(b => {
+            b.style.background = '#1e1e2e';
+            b.style.borderColor = '#313244';
+            b.style.color = '#a6adc8';
+          });
+          btn.style.background = btn.dataset.tab === 'mount' ? '#a6e3a120' :
+            btn.dataset.tab === 'deps' ? '#89b4fa20' :
+            btn.dataset.tab === 'cleanup' ? '#f38ba820' : '#f9e2af20';
+          btn.style.borderColor = btn.dataset.tab === 'mount' ? '#a6e3a1' :
+            btn.dataset.tab === 'deps' ? '#89b4fa' :
+            btn.dataset.tab === 'cleanup' ? '#f38ba8' : '#f9e2af';
+          btn.style.color = btn.dataset.tab === 'mount' ? '#a6e3a1' :
+            btn.dataset.tab === 'deps' ? '#89b4fa' :
+            btn.dataset.tab === 'cleanup' ? '#f38ba8' : '#f9e2af';
+
+          const tab = btn.dataset.tab;
+          if (tab === 'mount') {
+            codeTitle.textContent = 'useEffect — Mount Only';
+            codeDisplay.innerHTML = `<span class="text-[#cba6f7]">useEffect</span><span class="text-[#cdd6f4]">(() => {</span>
+  <span class="text-[#89b4fa]">console</span><span class="text-[#cdd6f4]">.log(</span><span class="text-[#a6e3a1]">'Mounted'</span><span class="text-[#cdd6f4]">);</span>
+  <span class="text-[#89b4fa]">fetchData</span><span class="text-[#cdd6f4]">();</span>
+<span class="text-[#cdd6f4]">}, []);</span>
+<span class="text-[#6c7086]">// empty deps → runs once on mount</span>`;
+            tipText.textContent = 'Empty deps [] = run once on mount. Never re-runs.';
+          } else if (tab === 'deps') {
+            codeTitle.textContent = 'useEffect — With Deps Array';
+            codeDisplay.innerHTML = `<span class="text-[#cba6f7]">useEffect</span><span class="text-[#cdd6f4]">(() => {</span>
+  <span class="text-[#89b4fa]">console</span><span class="text-[#cdd6f4]">.log(</span><span class="text-[#a6e3a1]">'Count changed:'</span><span class="text-[#cdd6f4]">, count);</span>
+<span class="text-[#cdd6f4]">}, [</span><span class="text-[#89b4fa]">count</span><span class="text-[#cdd6f4]">]);</span>
+<span class="text-[#6c7086]">// runs on mount + whenever count changes</span>`;
+            tipText.textContent = 'Deps [count] = runs on mount AND every time count changes.';
+          } else if (tab === 'cleanup') {
+            codeTitle.textContent = 'useEffect — Cleanup Function';
+            codeDisplay.innerHTML = `<span class="text-[#cba6f7]">useEffect</span><span class="text-[#cdd6f4]">(() => {</span>
+  <span class="text-[#89b4fa]">subscribe</span><span class="text-[#cdd6f4]">(id);</span>
+  <span class="text-[#cba6f7]">return</span><span class="text-[#cdd6f4]"> () => {</span>
+    <span class="text-[#89b4fa]">unsubscribe</span><span class="text-[#cdd6f4]">(id);</span>
+  <span class="text-[#cdd6f4]">};</span>
+<span class="text-[#cdd6f4]">}, [id]);</span>
+<span class="text-[#6c7086]">// cleanup runs on unmount OR before re-run</span>`;
+            tipText.textContent = 'Return a function = cleanup. Runs on unmount + before every re-run. Prevents memory leaks.';
+          } else if (tab === 'timer') {
+            codeTitle.textContent = 'useEffect — Timer / Interval';
+            codeDisplay.innerHTML = `<span class="text-[#cba6f7]">useEffect</span><span class="text-[#cdd6f4]">(() => {</span>
+  <span class="text-[#cba6f7]">const</span><span class="text-[#cdd6f4]"> id = </span><span class="text-[#89b4fa]">setInterval</span><span class="text-[#cdd6f4]">(tick, 1000);</span>
+  <span class="text-[#cba6f7]">return</span><span class="text-[#cdd6f4]"> () => </span><span class="text-[#89b4fa]">clearInterval</span><span class="text-[#cdd6f4]">(id);</span>
+<span class="text-[#cdd6f4]">}, []);</span>
+<span class="text-[#6c7086]">// cleanup prevents interval leak on unmount</span>`;
+            tipText.textContent = 'Always clean up timers/listeners in the return function. Otherwise they keep running after unmount.';
+          }
+        });
+      });
+
+      // Init
+      mountEffect();
+      startTimer();
+      window.addEventListener('beforeunload', stopTimer);
+    })();
+  </script>
+</body>
+</html>

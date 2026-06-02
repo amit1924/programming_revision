@@ -1,0 +1,816 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hero Section CSS — Visualized</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f17; color: #cdd6f4; padding: 0; }
+    .page { max-width: 1060px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    h1 { font-size: 2.6rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    h1 .glyph { background: linear-gradient(135deg, #89b4fa, #a6e3a1, #f9e2af, #f38ba8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { font-size: 1.4rem; margin: 2.5rem 0 0.8rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .sub { font-size: 0.7rem; color: #6c7086; font-weight: 400; }
+    h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p { color: #a6adc8; line-height: 1.7; margin-bottom: 10px; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid #2a2a3c; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+    .subtitle { color: #6c7086; font-size: 1.05rem; margin-bottom: 2rem; }
+
+    .card { background: #1a1a2a; border: 1px solid #2a2a3c; border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .card-label { font-size: 0.7rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; letter-spacing: 0.3px; }
+    .card-label .hl { color: #89b4fa; }
+
+    .compare-row { display: flex; gap: 16px; margin: 12px 0; }
+    @media (max-width: 700px) { .compare-row { flex-direction: column; } }
+    .compare-side { flex: 1; background: #1a1a2a; border-radius: 10px; border: 1px solid #2a2a3c; overflow: hidden; }
+    .compare-side .cs-head { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .compare-side .cs-head.bad { background: #f38ba815; color: #f38ba8; }
+    .compare-side .cs-head.good { background: #a6e3a115; color: #a6e3a1; }
+    .compare-side .cs-head.info { background: #89b4fa15; color: #89b4fa; }
+    .compare-side .cs-body { padding: 0; }
+
+    .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.7rem; font-family: monospace; border-radius: 4px; }
+    .tag-blue { background: #89b4fa20; color: #89b4fa; }
+    .tag-green { background: #a6e3a120; color: #a6e3a1; }
+    .tag-red { background: #f38ba820; color: #f38ba8; }
+    .tag-yellow { background: #f9e2af20; color: #f9e2af; }
+    .tag-purple { background: #cba6f720; color: #cba6f7; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { background: #181825; color: #89b4fa; padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 2px solid #2a2a3c; }
+    td { padding: 10px 14px; border-bottom: 1px solid #2a2a3c; color: #a6adc8; }
+    tr:hover td { background: #1a1a2a; }
+    td:first-child { font-family: monospace; color: #fab387; }
+
+    .tip { background: #1a1a2a; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .toggle-group button { background: #2a2a3c; color: #a6adc8; border: 1px solid #3a3a50; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-family: monospace; transition: all 0.2s; }
+    .toggle-group button:hover { background: #3a3a50; }
+    .toggle-group button.on { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f17; }
+    ::-webkit-scrollbar-thumb { background: #3a3a50; border-radius: 3px; }
+
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .text-center { text-align: center; }
+
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
+    .badge-req { background: #f38ba820; color: #f38ba8; border: 1px solid #f38ba850; }
+    .badge-opt { background: #a6e3a120; color: #a6e3a1; border: 1px solid #a6e3a150; }
+    .badge-rec { background: #f9e2af20; color: #f9e2af; border: 1px solid #f9e2af50; }
+
+    /* ===== Hero mini preview ===== */
+    .hero-mini { display: flex; align-items: center; justify-content: center; min-height: 140px; border-radius: 8px; position: relative; overflow: hidden; text-align: center; padding: 30px 20px; transition: all 0.4s; }
+    .hero-mini .hm-content { position: relative; z-index: 2; }
+    .hero-mini .hm-content h2 { font-size: 1.3rem; color: #fff; margin: 0 0 6px; font-weight: 700; }
+    .hero-mini .hm-content p { font-size: 0.75rem; color: rgba(255,255,255,0.8); margin: 0 0 12px; }
+    .hero-mini .hm-content .hm-btn { display: inline-block; background: #89b4fa; color: #0f0f17; padding: 8px 24px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; text-decoration: none; }
+    .hero-mini .hm-overlay { position: absolute; inset: 0; background: rgba(0,0,0,0.4); z-index: 1; transition: all 0.4s; }
+    .hero-mini .hm-bg { position: absolute; inset: 0; z-index: 0; transition: all 0.4s; }
+
+    .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .prop-grid { grid-template-columns: 1fr; } }
+    .prop-card { background: #181825; border: 1px solid #2a2a3c; border-radius: 8px; overflow: hidden; transition: all 0.2s; }
+    .prop-card .pc-head { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: 600; }
+    .prop-card .pc-body { padding: 10px 14px; font-size: 0.75rem; color: #a6adc8; }
+    .prop-card .pc-body ul { padding-left: 16px; line-height: 1.8; }
+
+    @keyframes fadeSlide { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+    .hero-mini { animation: fadeSlide 0.4s ease-out; }
+
+    input[type="range"] { accent-color: #89b4fa; width: 100%; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1><span class="glyph">Hero Section CSS</span> <span style="font-size:1.4rem;color:#6c7086;font-weight:400;">— Visualized</span></h1>
+  <p class="subtitle">
+    Every CSS property you need for a hero section, why each matters, what breaks without it, and the universal hero template.
+  </p>
+
+  <!-- ===== 1. THE COMPLETE HERO ===== -->
+  <section>
+    <h2>1. The Complete Hero <span class="sub">— Every property togglable</span></h2>
+    <p>This is a production hero. Toggle each property off to see exactly what breaks.</p>
+
+    <div class="card">
+      <div class="card-label">Live hero — <span class="hl">toggle each property on/off</span></div>
+
+      <div class="hero-mini" id="liveHero" style="min-height:140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e);">
+        <div class="hm-overlay" id="liveOverlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:1;"></div>
+        <div class="hm-content" style="position:relative;z-index:2;">
+          <h2 style="font-size:1.3rem;color:#fff;margin:0 0 6px;font-weight:700;">Build Something Great</h2>
+          <p style="font-size:0.75rem;color:rgba(255,255,255,0.8);margin:0 0 12px;">A hero section sets the first impression. Make it count.</p>
+          <a href="#" style="display:inline-block;background:#89b4fa;color:#0f0f17;padding:8px 24px;border-radius:6px;font-size:0.75rem;font-weight:600;text-decoration:none;">Get Started</a>
+        </div>
+      </div>
+
+      <div class="prop-grid" style="margin-top:12px;">
+        <div class="prop-card">
+          <div class="pc-head">
+            <span><span class="badge badge-req">REQ</span> min-height</span>
+            <span class="tag tag-blue" id="mhHeroState">on</span>
+          </div>
+          <div class="pc-body">
+            Gives the hero a minimum height so it's visually substantial. Without it, hero <strong>collapses to content height</strong> — no visual impact.
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="pc-head">
+            <span><span class="badge badge-req">REQ</span> display: flex + centering</span>
+            <span class="tag tag-blue" id="flexHeroState">on</span>
+          </div>
+          <div class="pc-body">
+            Flexbox centers content both horizontally and vertically. Without it, content <strong>sits at top-left</strong> — looks broken.
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="pc-head">
+            <span><span class="badge badge-req">REQ</span> background</span>
+            <span class="tag tag-blue" id="bgHeroState">on</span>
+          </div>
+          <div class="pc-body">
+            Sets the visual backdrop (color, gradient, image). Without it, hero is <strong>invisible</strong> against the page background.
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="pc-head">
+            <span><span class="badge badge-rec">REC</span> overlay</span>
+            <span class="tag tag-blue" id="ovHeroState">on</span>
+          </div>
+          <div class="pc-body">
+            Darkens/highlights the background so text is readable. Without it, <strong>text may be unreadable</strong> against a busy background.
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="pc-head">
+            <span><span class="badge badge-rec">REC</span> text-align: center</span>
+            <span class="tag tag-blue" id="taHeroState">on</span>
+          </div>
+          <div class="pc-body">
+            Centers hero text for a balanced look. Without it, text is <strong>left-aligned</strong> — mismatch with centered layout.
+          </div>
+        </div>
+
+        <div class="prop-card">
+          <div class="pc-head">
+            <span><span class="badge badge-rec">REC</span> responsive font sizes</span>
+            <span class="tag tag-blue" id="fsHeroState">on</span>
+          </div>
+          <div class="pc-body">
+            Uses <code>clamp()</code> or media queries to scale text. Without it, <strong>headings stay huge on mobile</strong>.
+          </div>
+        </div>
+      </div>
+
+      <div class="toggle-group" style="margin-top:12px;">
+        <button class="on" id="resetHeroBtn">Reset all ON</button>
+        <button id="breakHeroBtn">Toggle all OFF</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2. BEFORE & AFTER ===== -->
+  <section>
+    <h2>2. Before & After <span class="sub">— Each property visualized</span></h2>
+
+    <!-- min-height -->
+    <h3>A. Without <code>min-height</code></h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without — hero collapses to content</div>
+        <div class="cs-body">
+          <div class="hero-mini" style="min-height:auto;display:flex;align-items:center;justify-content:center;text-align:center;padding:10px 20px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e);">
+            <div class="hm-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:1;"></div>
+            <div class="hm-content" style="position:relative;z-index:2;">
+              <h2 style="font-size:1.1rem;color:#fff;margin:0 0 4px;">Too small</h2>
+              <p style="font-size:0.7rem;color:rgba(255,255,255,0.8);margin:0;">No visual impact</p>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero { /* no min-height set */ }
+/* height = auto (content only) — hero looks like a regular section */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With min-height</div>
+        <div class="cs-body">
+          <div class="hero-mini" style="min-height:140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e);">
+            <div class="hm-overlay" style="position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:1;"></div>
+            <div class="hm-content" style="position:relative;z-index:2;">
+              <h2 style="font-size:1.3rem;color:#fff;margin:0 0 6px;">Impactful Hero</h2>
+              <p style="font-size:0.75rem;color:rgba(255,255,255,0.8);margin:0 0 8px;">Fills the screen — commands attention</p>
+              <a href="#" style="display:inline-block;background:#89b4fa;color:#0f0f17;padding:6px 20px;border-radius:6px;font-size:0.7rem;font-weight:600;text-decoration:none;">CTA</a>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero { min-height: 100vh; }
+/* or min-height: 600px — always visually substantial */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Flex centering -->
+    <h3>B. Without <code>display: flex + centering</code></h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without — content stuck top-left</div>
+        <div class="cs-body">
+          <div class="hero-mini" style="min-height:140px;display:block;text-align:left;padding:10px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e);position:relative;">
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:1;"></div>
+            <div style="position:relative;z-index:2;">
+              <h2 style="font-size:0.95rem;color:#fff;margin:0;">Stuck</h2>
+              <p style="font-size:0.65rem;color:rgba(255,255,255,0.8);margin:2px 0 0;">In the corner</p>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero { min-height: 80vh; }
+/* content flows at top — wasted space below */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With flex centering</div>
+        <div class="cs-body">
+          <div class="hero-mini" style="min-height:140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e);">
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:1;"></div>
+            <div style="position:relative;z-index:2;">
+              <h2 style="font-size:1.1rem;color:#fff;margin:0 0 4px;">Perfectly Centered</h2>
+              <p style="font-size:0.7rem;color:rgba(255,255,255,0.8);margin:0;">Balanced, professional</p>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Background image + cover -->
+    <h3>C. Without <code>background-size: cover</code></h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without cover — image repeats</div>
+        <div class="cs-body">
+          <div class="hero-mini" style="min-height:140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:url('data:image/svg+xml,%3Csvg xmlns=%22http://www.w3.org/2000/svg%22 width=%2240%22 height=%2240%22%3E%3Crect width=%2240%22 height=%2240%22 fill=%22%232a2a40%22/%3E%3Ccircle cx=%2220%22 cy=%2220%22 r=%228%22 fill=%22%233a3a60%22/%3E%3C/svg%3E');position:relative;">
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.4);z-index:1;"></div>
+            <div style="position:relative;z-index:2;">
+              <h2 style="font-size:1rem;color:#fff;margin:0;">Image Repeats</h2>
+              <p style="font-size:0.65rem;color:rgba(255,255,255,0.8);margin:2px 0 0;">Looks like a pattern, not a hero</p>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero { background: url(hero.jpg); }
+/* default: repeat — tile pattern */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With background-size: cover</div>
+        <div class="cs-body">
+          <div class="hero-mini" style="min-height:140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e 70%,#5a1a3e);position:relative;">
+            <div style="position:absolute;inset:0;background:rgba(0,0,0,0.3);z-index:1;"></div>
+            <div style="position:relative;z-index:2;">
+              <h2 style="font-size:1.1rem;color:#fff;margin:0 0 4px;">Full Background</h2>
+              <p style="font-size:0.7rem;color:rgba(255,255,255,0.8);margin:0;">Covers entire area — professional</p>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero {
+  background: url(hero.jpg) center/cover no-repeat;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Overlay -->
+    <h3>D. Without overlay — text unreadable</h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without overlay — text lost</div>
+        <div class="cs-body">
+          <div style="border-radius:8px;overflow:hidden;">
+            <div class="hero-mini" style="min-height:140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:linear-gradient(135deg,#89b4fa,#a6e3a1);">
+              <div style="position:relative;z-index:2;">
+                <h2 style="font-size:1.1rem;color:#0f0f17;margin:0 0 4px;mix-blend-mode:difference;">Hard to Read</h2>
+                <p style="font-size:0.65rem;color:#0f0f17;margin:0;mix-blend-mode:difference;">Text blends with background</p>
+              </div>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero { /* no overlay */ }
+/* text directly on image — hard to read */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With overlay — readable</div>
+        <div class="cs-body">
+          <div style="border-radius:8px;overflow:hidden;">
+            <div class="hero-mini" style="min-height:140px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:linear-gradient(135deg,#89b4fa,#a6e3a1);position:relative;">
+              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:1;"></div>
+              <div style="position:relative;z-index:2;">
+                <h2 style="font-size:1.1rem;color:#fff;margin:0 0 4px;">Clear & Readable</h2>
+                <p style="font-size:0.7rem;color:rgba(255,255,255,0.9);margin:0;">The overlay creates contrast</p>
+              </div>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.4);
+  z-index: 1;
+}</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Responsive font sizes -->
+    <h3>E. Without responsive font sizes</h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without — fixed font size</div>
+        <div class="cs-body">
+          <div class="hero-mini" style="min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;background:#1e1e30;">
+            <div style="z-index:2;">
+              <h2 style="font-size:1.4rem;color:#fff;margin:0;">48px on mobile</h2>
+              <p style="font-size:0.75rem;color:rgba(255,255,255,0.7);margin:4px 0 0;">Too large for small screens</p>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero h1 { font-size: 48px; }
+/* stays 48px on mobile — overflows */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With clamp() or media query</div>
+        <div class="cs-body">
+          <div class="hero-mini" style="min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:16px;background:#1e1e30;">
+            <div style="z-index:2;">
+              <h2 style="font-size:clamp(1.2rem,4vw,2rem);color:#fff;margin:0;">Scales to fit</h2>
+              <p style="font-size:clamp(0.65rem,2vw,0.9rem);color:rgba(255,255,255,0.7);margin:4px 0 0;">Looks good on every screen</p>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.hero h1 { font-size: clamp(1.5rem, 5vw, 3.5rem); }
+/* fluid: 1.5rem min, 5vw preferred, 3.5rem max */</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3. THE THREE HERO BACKGROUND TYPES ===== -->
+  <section>
+    <h2>3. The Three Hero Types <span class="sub">— Color, Gradient, Image</span></h2>
+    <p>Every hero uses one of these three background strategies. Each requires different CSS.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0;">
+      <div style="background:#181825;border-radius:8px;border:1px solid #2a2a3c;overflow:hidden;">
+        <div class="hero-mini" style="min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:#1a1a3e;border-radius:0;">
+          <div style="z-index:2;">
+            <h2 style="font-size:0.95rem;color:#fff;margin:0;">Solid Color</h2>
+            <p style="font-size:0.6rem;color:rgba(255,255,255,0.7);margin:4px 0 0;">Simplest, fastest</p>
+          </div>
+        </div>
+        <pre style="margin:0;padding:8px;font-size:0.55rem;border-radius:0;"><code>.hero {
+  background: #1a1a3e;
+  /* No overlay needed */
+}</code></pre>
+      </div>
+
+      <div style="background:#181825;border-radius:8px;border:1px solid #2a2a3c;overflow:hidden;">
+        <div class="hero-mini" style="min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e,#5a1a3e);border-radius:0;">
+          <div style="z-index:2;">
+            <h2 style="font-size:0.95rem;color:#fff;margin:0;">Gradient</h2>
+            <p style="font-size:0.6rem;color:rgba(255,255,255,0.7);margin:4px 0 0;">Modern, visually rich</p>
+          </div>
+        </div>
+        <pre style="margin:0;padding:8px;font-size:0.55rem;border-radius:0;"><code>.hero {
+  background: linear-gradient(
+    135deg, #1a1a3e, #5a1a3e
+  );
+}</code></pre>
+      </div>
+
+      <div style="background:#181825;border-radius:8px;border:1px solid #2a2a3c;overflow:hidden;">
+        <div class="hero-mini" style="min-height:100px;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;background:linear-gradient(rgba(0,0,0,0.5),rgba(0,0,0,0.5)),linear-gradient(135deg,#1a1a3e,#3a1a5e);background-size:cover;background-position:center;position:relative;border-radius:0;">
+          <div style="z-index:2;">
+            <h2 style="font-size:0.95rem;color:#fff;margin:0;">Image</h2>
+            <p style="font-size:0.6rem;color:rgba(255,255,255,0.7);margin:4px 0 0;">Needs overlay + cover</p>
+          </div>
+        </div>
+        <pre style="margin:0;padding:8px;font-size:0.55rem;border-radius:0;"><code>.hero {
+  background: url(hero.jpg)
+    center/cover no-repeat;
+}
+.hero::before {
+  background: rgba(0,0,0,0.4);
+} /* overlay */</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4. RESPONSIVE HERO ===== -->
+  <section>
+    <h2>4. Responsive Hero <span class="sub">— Drag to resize</span></h2>
+    <p>The hero must look good at every screen size. Drag the slider to see the responsive behavior.</p>
+
+    <div class="card">
+      <div class="card-label">Responsive hero — <span class="hl">resize between mobile and desktop</span></div>
+      <input type="range" id="heroResizeSlider" min="320" max="900" value="700" style="width:100%;">
+      <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:#585b70;">
+        <span>mobile 320px</span><span>desktop 900px</span>
+      </div>
+
+      <div id="responsiveHeroContainer" style="overflow:hidden;border-radius:8px;border:1px solid #2a2a3c;margin-top:8px;">
+        <div class="hero-mini" id="responsiveHero" style="min-height:160px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e);position:relative;border-radius:0;">
+          <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:1;"></div>
+          <div style="position:relative;z-index:2;max-width:600px;">
+            <h2 id="heroTitle" style="font-size:clamp(1.2rem,4vw,2rem);color:#fff;margin:0 0 6px;font-weight:700;transition:font-size 0.3s;">Build Products People Love</h2>
+            <p id="heroSub" style="font-size:clamp(0.65rem,2vw,0.9rem);color:rgba(255,255,255,0.8);margin:0 0 14px;">A great hero section works on every screen size without breaking.</p>
+            <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+              <a href="#" style="display:inline-block;background:#89b4fa;color:#0f0f17;padding:8px 24px;border-radius:6px;font-size:clamp(0.65rem,1.5vw,0.85rem);font-weight:600;text-decoration:none;">Get Started</a>
+              <a href="#" style="display:inline-block;background:transparent;color:#fff;padding:8px 24px;border-radius:6px;font-size:clamp(0.65rem,1.5vw,0.85rem);font-weight:600;text-decoration:none;border:1px solid rgba(255,255,255,0.3);">Learn More</a>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <span class="tag tag-blue" id="heroScreenSize">width: 700px</span>
+        <span class="tag tag-green" id="heroTitleSize">title: 1.7rem</span>
+      </div>
+
+      <pre style="margin-top:8px;"><code>/* Responsive hero pattern */
+.hero {
+  min-height: 100vh;                /* full screen on any device */
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 40px 20px;               /* breathing room on mobile */
+}
+
+.hero h1 {
+  font-size: clamp(1.8rem, 5vw, 3.5rem);  /* fluid typography */
+}
+
+.hero p {
+  font-size: clamp(0.85rem, 2.5vw, 1.2rem);
+  max-width: 600px;                       /* readable line length */
+}</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 5. THE UNIVERSAL HERO TEMPLATE ===== -->
+  <section>
+    <h2>5. The Universal Hero Template <span class="sub">— Copy-paste ready</span></h2>
+
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:0.7rem;color:#89b4fa;margin-bottom:4px;">✅ Complete hero</div>
+          <div style="border-radius:8px;overflow:hidden;border:1px solid #2a2a3c;">
+            <div style="min-height:160px;display:flex;align-items:center;justify-content:center;text-align:center;padding:30px 20px;background:linear-gradient(135deg,#1a1a3e,#3a1a5e);position:relative;">
+              <div style="position:absolute;inset:0;background:rgba(0,0,0,0.35);z-index:1;"></div>
+              <div style="position:relative;z-index:2;max-width:500px;">
+                <span style="display:inline-block;background:rgba(137,180,250,0.2);color:#89b4fa;padding:3px 12px;border-radius:999px;font-size:0.6rem;font-weight:600;margin-bottom:8px;">New Feature</span>
+                <h2 style="font-size:1.3rem;color:#fff;margin:0 0 6px;font-weight:700;">The Easiest Way to Ship</h2>
+                <p style="font-size:0.7rem;color:rgba(255,255,255,0.8);margin:0 0 14px;line-height:1.6;">A short, compelling description that tells users why they should care.</p>
+                <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+                  <a href="#" style="background:#89b4fa;color:#0f0f17;padding:8px 24px;border-radius:6px;font-size:0.75rem;font-weight:600;text-decoration:none;">Start Free Trial</a>
+                  <a href="#" style="background:transparent;color:#fff;padding:8px 24px;border-radius:6px;font-size:0.75rem;font-weight:500;text-decoration:none;border:1px solid rgba(255,255,255,0.3);">Watch Demo</a>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div>
+          <pre style="margin:0;font-size:0.6rem;"><code>&lt;section class="hero"&gt;
+  &lt;div class="hero-content"&gt;
+    &lt;span class="badge"&gt;New&lt;/span&gt;
+    &lt;h1&gt;Headline&lt;/h1&gt;
+    &lt;p&gt;Subtext&lt;/p&gt;
+    &lt;div class="hero-ctas"&gt;
+      &lt;a href="#" class="btn"&gt;Primary&lt;/a&gt;
+      &lt;a href="#" class="btn-ghost"&gt;Secondary&lt;/a&gt;
+    &lt;/div&gt;
+  &lt;/div&gt;
+&lt;/section&gt;</code></pre>
+        </div>
+      </div>
+
+      <pre style="margin-top:8px;font-size:0.7rem;"><code>/* === UNIVERSAL HERO CSS — copy this === */
+.hero {
+  min-height: 100vh;                /* 1. full viewport height */
+  display: flex;                    /* 2. enable flexbox */
+  align-items: center;              /* 3. vertical center */
+  justify-content: center;          /* 4. horizontal center */
+  text-align: center;               /* 5. center text */
+  padding: 40px 20px;               /* 6. edge spacing */
+  background: linear-gradient(      /* 7. visual backdrop */
+    135deg, #1a1a3e, #3a1a5e
+  ) center/cover no-repeat;
+  position: relative;               /* 8. overlay anchor */
+  overflow: hidden;                 /* 9. contain decorations */
+}
+
+.hero::before {                     /* 10. overlay for text readability */
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.35);
+  z-index: 1;
+  pointer-events: none;
+}
+
+.hero-content {
+  position: relative;               /* 11. above overlay */
+  z-index: 2;
+  max-width: 720px;                 /* 12. readable line length */
+}
+
+.hero h1 {
+  font-size: clamp(1.8rem, 5vw, 3.5rem);  /* 13. fluid heading */
+  color: #fff;
+  font-weight: 800;
+  margin-bottom: 0.5em;
+}
+
+.hero p {
+  font-size: clamp(0.85rem, 2.5vw, 1.2rem); /* 14. fluid body */
+  color: rgba(255,255,255,0.85);
+  max-width: 540px;                 /* 15. limit line length */
+  margin: 0 auto 1.5em;
+}
+
+.hero .btn {
+  display: inline-block;
+  padding: 12px 32px;
+  background: #89b4fa;
+  color: #0f0f17;
+  border-radius: 8px;
+  font-weight: 600;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+.hero .btn-ghost {
+  display: inline-block;
+  padding: 12px 32px;
+  color: #fff;
+  border: 1px solid rgba(255,255,255,0.3);
+  border-radius: 8px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.2s;
+}
+
+@media (max-width: 640px) {
+  .hero { min-height: 90vh; }       /* 16. slightly shorter on mobile */
+  .hero .btn,
+  .hero .btn-ghost {
+    width: 100%;                    /* 17. full-width CTAs on mobile */
+    text-align: center;
+  }
+}</code></pre>
+    </div>
+
+    <div class="tip" style="border-left-color:#89b4fa;">
+      <strong>The hero formula:</strong> <code>min-height: 100vh</code> + <code>flex centering</code> + <code>background</code> + <code>overlay</code> + <code>clamp() typography</code> = a hero that works on every screen. <strong>17 CSS declarations</strong> minimum.
+    </div>
+  </section>
+
+  <!-- ===== 6. CHEAT SHEET ===== -->
+  <section>
+    <h2>6. Quick Reference</h2>
+
+    <table>
+      <thead><tr><th>Category</th><th>Property</th><th>Why Required</th><th>Without it</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-req">REQ</span> Sizing</td>
+          <td><code>min-height: 100vh</code></td>
+          <td>Hero fills the viewport</td>
+          <td style="color:#f38ba8;">Collapses to content height</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-req">REQ</span> Layout</td>
+          <td><code>display: flex + centering</code></td>
+          <td>Content centered both axes</td>
+          <td style="color:#f38ba8;">Content stuck at top-left</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-req">REQ</span> Background</td>
+          <td><code>background</code> (color/gradient/image)</td>
+          <td>Visual backdrop distinguishes hero</td>
+          <td style="color:#f38ba8;">Invisible, no visual separation</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-req">REQ</span> Text</td>
+          <td><code>text-align: center</code></td>
+          <td>Centered text for balanced hero</td>
+          <td style="color:#f38ba8;">Left-aligned, mismatched</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rec">REC</span> Overlay</td>
+          <td><code>::before { background: rgba(0,0,0,0.4) }</code></td>
+          <td>Makes text readable on images</td>
+          <td style="color:#f38ba8;">Text unreadable on busy backgrounds</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rec">REC</span> Background</td>
+          <td><code>background-size: cover</code></td>
+          <td>Image fills entire hero without repeating</td>
+          <td style="color:#f38ba8;">Image repeats/tiles</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rec">REC</span> Typography</td>
+          <td><code>font-size: clamp()</code></td>
+          <td>Text scales fluidly across screens</td>
+          <td style="color:#f38ba8;">Too large on mobile, too small on desktop</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rec">REC</span> Layout</td>
+          <td><code>max-width: 720px</code></td>
+          <td>Limits line length for readability</td>
+          <td style="color:#f38ba8;">Text spans full width, hard to read</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-opt">OPT</span> Polish</td>
+          <td><code>padding: 40px 20px</code></td>
+          <td>Breathing room, especially on mobile</td>
+          <td style="color:#f38ba8;">Content touches edges</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-opt">OPT</span> Responsive</td>
+          <td><code>@media (max-width: 640px)</code></td>
+          <td>Adjust min-height, full-width CTAs</td>
+          <td style="color:#f38ba8;">CTAs too small on mobile</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="tip" style="border-left-color:#89b4fa;margin-top:20px;">
+      <strong>Minimum viable hero:</strong> <code>min-height: 100vh</code> + <code>flex centering</code> + <code>background</code> + <code>text-align: center</code> + <code>clamp() font-size</code>. That's <strong>5 properties</strong> for a basic hero. Add overlay + max-width + responsive tweaks for production. <strong>~17 properties</strong> total.
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #2a2a3c;padding-top:24px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    Hero Section CSS — Visualized &bull; css-notes/hero
+  </footer>
+</div>
+
+<script>
+// ===== 1. Live Hero Toggle =====
+(function() {
+  const hero = document.getElementById('liveHero');
+  const overlay = document.getElementById('liveOverlay');
+  const content = hero.querySelector('.hm-content');
+  const h2 = content.querySelector('h2');
+  const p = content.querySelector('p');
+  const btn = content.querySelector('a');
+
+  // Store original values
+  const origMH = '140px';
+  const origDisplay = 'flex';
+  const origAlign = 'center';
+  const origJustify = 'center';
+  const origBG = 'linear-gradient(135deg,#1a1a3e,#3a1a5e)';
+  const origTA = 'center';
+  const origH2Size = '1.3rem';
+  const origPSize = '0.75rem';
+
+  let state = {
+    minHeight: true,
+    flex: true,
+    bg: true,
+    overlay: true,
+    textAlign: true,
+    fontSize: true
+  };
+
+  function updateHero() {
+    // min-height
+    if (state.minHeight) {
+      hero.style.minHeight = origMH;
+      document.getElementById('mhHeroState').textContent = 'on';
+    } else {
+      hero.style.minHeight = 'auto';
+      document.getElementById('mhHeroState').textContent = 'off';
+    }
+
+    // flex centering
+    if (state.flex) {
+      hero.style.display = 'flex';
+      hero.style.alignItems = 'center';
+      hero.style.justifyContent = 'center';
+      document.getElementById('flexHeroState').textContent = 'on';
+    } else {
+      hero.style.display = 'block';
+      hero.style.alignItems = '';
+      hero.style.justifyContent = '';
+      document.getElementById('flexHeroState').textContent = 'off';
+    }
+
+    // background
+    if (state.bg) {
+      hero.style.background = origBG;
+      document.getElementById('bgHeroState').textContent = 'on';
+    } else {
+      hero.style.background = 'none';
+      document.getElementById('bgHeroState').textContent = 'off';
+    }
+
+    // overlay
+    if (state.overlay) {
+      overlay.style.background = 'rgba(0,0,0,0.4)';
+      document.getElementById('ovHeroState').textContent = 'on';
+    } else {
+      overlay.style.background = 'transparent';
+      document.getElementById('ovHeroState').textContent = 'off';
+    }
+
+    // text-align
+    if (state.textAlign) {
+      hero.style.textAlign = 'center';
+      document.getElementById('taHeroState').textContent = 'on';
+    } else {
+      hero.style.textAlign = 'left';
+      document.getElementById('taHeroState').textContent = 'off';
+    }
+
+    // font-size
+    if (state.fontSize) {
+      h2.style.fontSize = origH2Size;
+      p.style.fontSize = origPSize;
+      btn.style.fontSize = '0.75rem';
+      document.getElementById('fsHeroState').textContent = 'on';
+    } else {
+      h2.style.fontSize = '0.9rem';
+      p.style.fontSize = '0.6rem';
+      btn.style.fontSize = '0.6rem';
+      document.getElementById('fsHeroState').textContent = 'off';
+    }
+  }
+
+  // Toggle each property card
+  document.querySelectorAll('.prop-card').forEach((card, idx) => {
+    const keys = ['minHeight', 'flex', 'bg', 'overlay', 'textAlign', 'fontSize'];
+    card.addEventListener('click', () => {
+      const key = keys[idx];
+      if (key) {
+        state[key] = !state[key];
+        updateHero();
+      }
+    });
+    card.style.cursor = 'pointer';
+  });
+
+  document.getElementById('resetHeroBtn').addEventListener('click', () => {
+    Object.keys(state).forEach(k => state[k] = true);
+    updateHero();
+  });
+
+  document.getElementById('breakHeroBtn').addEventListener('click', () => {
+    Object.keys(state).forEach(k => state[k] = false);
+    updateHero();
+  });
+
+  // Init
+  updateHero();
+})();
+
+// ===== 4. Responsive slider =====
+(function() {
+  const container = document.getElementById('responsiveHeroContainer');
+  const slider = document.getElementById('heroResizeSlider');
+  const sizeLabel = document.getElementById('heroScreenSize');
+  const titleSizeLabel = document.getElementById('heroTitleSize');
+  const title = document.getElementById('heroTitle');
+
+  function update(v) {
+    container.style.width = v + 'px';
+    sizeLabel.textContent = 'width: ' + v + 'px';
+    const cs = getComputedStyle(title);
+    titleSizeLabel.textContent = 'title: ' + cs.fontSize;
+  }
+
+  slider.addEventListener('input', () => update(slider.value));
+  update(slider.value);
+})();
+</script>
+</body>
+</html>

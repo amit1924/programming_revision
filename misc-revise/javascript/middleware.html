@@ -1,0 +1,1156 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Express Middleware — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f0f17;color:#cdd6f4;font-family:system-ui,-apple-system,sans-serif;line-height:1.6;padding:2rem 1rem}
+.container{max-width:1100px;margin:0 auto}
+h1{font-size:clamp(2rem,5vw,3rem);background:linear-gradient(135deg,#89b4fa,#cba6f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.3rem}
+.subtitle{color:#6c7086;font-size:1.1rem;margin-bottom:2rem}
+h2{font-size:1.5rem;color:#89b4fa;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid #313244}
+h3{font-size:1.15rem;color:#cdd6f4;margin:1.5rem 0 .8rem}
+.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;border:1px solid #313244}
+.card-highlight{border-color:#89b4fa;background:#1e2030}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
+
+/* Pipeline */
+.pipeline{display:flex;align-items:center;justify-content:center;gap:.4rem;flex-wrap:wrap;padding:1.5rem 1rem;background:#11111b;border-radius:10px;min-height:100px;position:relative;overflow:hidden}
+.pipe-stage{background:#181825;border:2px solid #45475a;border-radius:8px;padding:.6rem .9rem;font-size:.8rem;text-align:center;min-width:70px;transition:.3s;position:relative;z-index:2}
+.pipe-stage .name{font-weight:700;white-space:nowrap}
+.pipe-stage .desc{font-size:.65rem;color:#6c7086;margin-top:2px}
+.pipe-stage.active{background:#1e3a5f;border-color:#89b4fa;transform:scale(1.08)}
+.pipe-stage.done{background:#1e3a2f;border-color:#a6e3a1}
+.pipe-stage.error{background:#3a1e1e;border-color:#f38ba8;animation:shake .3s}
+.pipe-arrow{color:#585b70;font-size:1.2rem;z-index:2}
+.pipe-arrow.active{color:#89b4fa}
+.pipe-arrow.error{color:#f38ba8}
+@keyframes shake{0%,100%{transform:translateX(0)}25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(137,180,250,.4)}50%{box-shadow:0 0 0 8px rgba(137,180,250,0)}}
+
+/* Request flow animation */
+.req-dot{width:14px;height:14px;border-radius:50%;background:#f38ba8;position:absolute;left:-20px;top:50%;transform:translateY(-50%);z-index:3;transition:left 1.5s cubic-bezier(.4,0,.2,1);display:none}
+.req-dot.animate{display:block}
+
+/* Step buttons */
+.step-controls{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:1rem;justify-content:center}
+.btn{padding:.5rem 1.2rem;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.85rem;transition:.2s}
+.btn-primary{background:#89b4fa;color:#0f0f17}
+.btn-primary:hover{background:#74c7ec}
+.btn-primary:disabled{opacity:.4;cursor:not-allowed}
+.btn-danger{background:#f38ba8;color:#0f0f17}
+.btn-danger:hover{background:#eba0ac}
+.btn-success{background:#a6e3a1;color:#0f0f17}
+.btn-success:hover{background:#94e2d5}
+.btn-warning{background:#fab387;color:#0f0f17}
+.btn-outline{background:transparent;border:1px solid #585b70;color:#cdd6f4}
+.btn-outline:hover{border-color:#89b4fa;color:#89b4fa}
+.btn-sm{padding:.35rem .8rem;font-size:.75rem}
+
+/* Without middleware comparison */
+.compare{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin:1rem 0}
+@media(max-width:700px){.compare{grid-template-columns:1fr}}
+.compare-col{border-radius:8px;padding:1rem;position:relative}
+.compare-col.before{background:#1e1e2e;border:1px solid #45475a}
+.compare-col.after{background:#1e2e2e;border:1px solid #a6e3a1}
+.compare-col h4{font-size:.85rem;margin-bottom:.6rem;display:flex;align-items:center;gap:.4rem}
+.badge{display:inline-block;padding:.15rem .5rem;border-radius:4px;font-size:.7rem;font-weight:700}
+.badge-danger{background:#f38ba8;color:#0f0f17}
+.badge-success{background:#a6e3a1;color:#0f0f17}
+.code-block{background:#0f0f17;border-radius:6px;padding:.8rem;font-family:'Fira Code','Cascadia Code',monospace;font-size:.78rem;line-height:1.5;overflow-x:auto;color:#cdd6f4;margin:.5rem 0}
+.code-block .kw{color:#cba6f7}
+.code-block .fn{color:#89b4fa}
+.code-block .str{color:#a6e3a1}
+.code-block .cm{color:#6c7086;font-style:italic}
+.code-block .num{color:#fab387}
+.code-block .err-line{background:rgba(243,139,168,.15);display:block}
+.code-block .ok-line{background:rgba(166,227,161,.1);display:block}
+
+/* Toggle */
+.toggle-wrap{display:flex;align-items:center;gap:.6rem;margin:.5rem 0}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0;cursor:pointer}
+.toggle input{opacity:0;position:absolute;inset:0;width:100%;height:100%;cursor:pointer;z-index:2}
+.toggle .slider{position:absolute;inset:0;background:#45475a;border-radius:11px;transition:.3s;pointer-events:none}
+.toggle .slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;bottom:3px;background:#cdd6f4;border-radius:50%;transition:.3s}
+.toggle input:checked+.slider{background:#a6e3a1}
+.toggle input:checked+.slider::before{transform:translateX(18px)}
+
+/* Middleware configurator */
+.mw-config{display:flex;flex-direction:column;gap:.5rem;margin:1rem 0}
+.mw-item{display:flex;align-items:center;gap:.8rem;padding:.6rem .8rem;background:#181825;border-radius:6px;border:1px solid #313244;transition:.3s}
+.mw-item.on{border-color:#a6e3a1;background:#1a2a1a}
+.mw-item.off{opacity:.5}
+.mw-item .mw-color{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.mw-item .mw-label{font-size:.85rem;font-weight:600;flex:1}
+.mw-item .mw-desc{font-size:.72rem;color:#6c7086;flex:2}
+.mw-item .mw-status{font-size:.7rem;font-weight:700;padding:.15rem .5rem;border-radius:4px}
+.mw-item.on .mw-status{background:#a6e3a1;color:#0f0f17}
+.mw-item.off .mw-status{background:#45475a;color:#585b70}
+
+/* Log output */
+.log-box{background:#0f0f17;border-radius:8px;padding:.8rem;font-family:monospace;font-size:.78rem;max-height:180px;overflow-y:auto;margin-top:.8rem}
+.log-box .log-line{padding:2px 0;border-bottom:1px solid #181825}
+.log-line .log-time{color:#6c7086;margin-right:.5rem}
+.log-line .log-pass{color:#a6e3a1}
+.log-line .log-skip{color:#fab387}
+.log-line .log-block{color:#f38ba8}
+.log-line .log-info{color:#89b4fa}
+
+/* Order demo drag */
+.order-stack{display:flex;flex-direction:column;gap:.4rem;max-width:400px;margin:1rem 0}
+.order-item{display:flex;align-items:center;gap:.6rem;padding:.5rem .8rem;background:#181825;border:1px solid #313244;border-radius:6px;cursor:pointer;transition:.2s;user-select:none}
+.order-item:hover{border-color:#89b4fa;background:#1e2030}
+.order-item .order-num{color:#6c7086;font-size:.75rem;width:20px}
+.order-item .order-color{width:10px;height:10px;border-radius:50%;flex-shrink:0}
+.order-item .order-label{font-size:.82rem;font-weight:600;flex:1}
+.order-item.selected{border-color:#f38ba8;background:#2a1e1e}
+.order-result{font-size:.82rem;padding:.6rem;border-radius:6px;margin-top:.5rem}
+.order-result.ok{background:#1a2a1a;border:1px solid #a6e3a1;color:#a6e3a1}
+.order-result.bad{background:#2a1a1a;border:1px solid #f38ba8;color:#f38ba8}
+
+/* Error demo */
+.error-flow{display:flex;align-items:center;gap:.4rem;flex-wrap:wrap;padding:1rem;background:#11111b;border-radius:8px;margin:.5rem 0}
+.err-stage{padding:.4rem .7rem;border-radius:6px;font-size:.78rem;border:2px solid #45475a;background:#181825;transition:.3s}
+.err-stage.pass{border-color:#a6e3a1;background:#1a2a1a}
+.err-stage.catch{border-color:#f38ba8;background:#3a1e1e;animation:shake .3s}
+.err-stage.skip{opacity:.3}
+
+/* Conditional demo */
+.cond-route{display:flex;gap:.5rem;flex-wrap:wrap;margin:.8rem 0}
+.cond-route button{padding:.4rem 1rem;border:1px solid #45475a;border-radius:6px;background:#181825;color:#cdd6f4;cursor:pointer;font-size:.8rem;transition:.2s}
+.cond-route button:hover{border-color:#89b4fa}
+.cond-route button.active{background:#1e3a5f;border-color:#89b4fa}
+
+/* Types grid */
+.types-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(250px,1fr));gap:.8rem;margin:1rem 0}
+.type-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:1rem;transition:.3s;cursor:pointer}
+.type-card:hover{border-color:#89b4fa;transform:translateY(-2px)}
+.type-card .tc-icon{font-size:1.5rem;margin-bottom:.4rem}
+.type-card h4{font-size:.9rem;margin-bottom:.3rem}
+.type-card p{font-size:.78rem;color:#6c7086;margin-bottom:.4rem}
+.type-card .tc-code{background:#0f0f17;border-radius:4px;padding:.4rem;font-family:monospace;font-size:.72rem;color:#a6e3a1}
+.type-card.active{border-color:#f38ba8;background:#2a1e1e}
+
+/* Common middleware patterns */
+.pattern-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:1rem;margin:1rem 0}
+.pattern-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:1.2rem}
+.pattern-card h4{font-size:.9rem;margin-bottom:.5rem;display:flex;align-items:center;gap:.4rem}
+.pattern-card .pc-demo{margin-top:.6rem;display:flex;gap:.5rem;flex-wrap:wrap}
+
+/* Info box */
+.info-box{display:flex;gap:.8rem;align-items:flex-start;background:#1e2030;border-left:3px solid #89b4fa;border-radius:0 8px 8px 0;padding:.8rem 1rem;margin:.8rem 0;font-size:.88rem}
+.info-box.warn{border-color:#fab387;background:#2a221e}
+.info-box.danger{border-color:#f38ba8;background:#2a1e1e}
+.info-box .info-icon{font-size:1.2rem;flex-shrink:0}
+
+/* Misc */
+.tag{display:inline-block;background:#313244;border-radius:4px;padding:.1rem .4rem;font-size:.7rem;color:#a6adc8;font-family:monospace}
+.highlight{color:#89b4fa;font-weight:600}
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem;margin:1rem 0}
+.summary-card{background:#181825;border-radius:8px;padding:1rem;text-align:center;border:1px solid #313244}
+.summary-card .sc-num{font-size:2rem;font-weight:700;background:linear-gradient(135deg,#89b4fa,#cba6f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.summary-card p{font-size:.78rem;color:#6c7086;margin-top:.3rem}
+.arrow-sym{color:#585b70;font-size:1.5rem}
+code{padding:.1rem .4rem;background:#313244;border-radius:4px;font-size:.85em;font-family:monospace}
+pre{background:#0f0f17;border-radius:8px;padding:1rem;overflow-x:auto;font-family:monospace;font-size:.8rem;line-height:1.6;margin:.5rem 0}
+pre .hl{background:rgba(137,180,250,.15);display:inline-block;width:100%}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>⚡ Express Middleware</h1>
+<p class="subtitle">The request-response pipeline — visualized step by step</p>
+
+<!-- SUMMARY STATS -->
+<div class="summary-grid">
+<div class="summary-card"><div class="sc-num">3</div><p>Middleware arguments<br><span class="tag">req</span> <span class="tag">res</span> <span class="tag">next</span></p></div>
+<div class="summary-card"><div class="sc-num">4</div><p>Error middleware args<br><span class="tag">err</span> <span class="tag">req</span> <span class="tag">res</span> <span class="tag">next</span></p></div>
+<div class="summary-card"><div class="sc-num">2</div><p>Middleware outcomes<br><span class="tag" style="background:#a6e3a144">next()</span> <span class="tag" style="background:#f38ba844">send()</span></p></div>
+<div class="summary-card"><div class="sc-num">5</div><p>Middleware types<br>app · router · error · built-in · 3rd-party</p></div>
+</div>
+
+<!-- SECTION 1: WHAT IS MIDDLEWARE -->
+<h2>What is Middleware?</h2>
+<div class="card">
+<p style="margin-bottom:.8rem">Middleware is a function that sits between the <span class="highlight">request</span> and the <span class="highlight">response</span>. It can modify the request, end the request, or call the next middleware.</p>
+<div class="pipeline" id="pipeline">
+<div class="req-dot" id="reqDot"></div>
+<div class="pipe-stage" data-stage="0"><div class="name">📨 Request</div><div class="desc">Incoming</div></div>
+<div class="pipe-arrow">→</div>
+<div class="pipe-stage" data-stage="1"><div class="name">🔒 Auth</div><div class="desc">Check token</div></div>
+<div class="pipe-arrow">→</div>
+<div class="pipe-stage" data-stage="2"><div class="name">📝 Logger</div><div class="desc">Log request</div></div>
+<div class="pipe-arrow">→</div>
+<div class="pipe-stage" data-stage="3"><div class="name">📦 Body Parser</div><div class="desc">Parse JSON</div></div>
+<div class="pipe-arrow">→</div>
+<div class="pipe-stage" data-stage="4"><div class="name">🎯 Route</div><div class="desc">Handler</div></div>
+<div class="pipe-arrow">→</div>
+<div class="pipe-stage" data-stage="5"><div class="name">📨 Response</div><div class="desc">Outgoing</div></div>
+</div>
+<div class="step-controls">
+<button class="btn btn-primary" id="sendReqBtn">🚀 Send Request</button>
+<button class="btn btn-outline btn-sm" id="resetPipelineBtn">Reset</button>
+<span style="font-size:.8rem;color:#6c7086;margin-left:.5rem" id="pipeStatus">Ready</span>
+</div>
+<div class="info-box" style="margin-top:1rem">
+<div class="info-icon">💡</div>
+<div>Each middleware either calls <code>next()</code> to pass control forward or sends a response with <code>res.send()</code> / <code>res.json()</code> / etc. If neither happens, the request <strong>hangs</strong> forever.</div>
+</div>
+</div>
+
+<!-- SECTION 2: WITHOUT MIDDLEWARE -->
+<h2>Without Middleware</h2>
+<div class="card">
+<p style="margin-bottom:1rem;font-size:.9rem">Without middleware, every route handler must repeat the same logic — logging, auth checks, body parsing, error handling. This leads to massive code duplication.</p>
+<div class="compare">
+<div class="compare-col before">
+<h4><span class="badge badge-danger">❌ Without Middleware</span></h4>
+<pre><span style="color:#fab387">// Every route duplicates logic</span>
+app.get(<span style="color:#a6e3a1">'/api/users'</span>, <span style="color:#f38ba8">(req, res)</span> => {
+  <span class="hl">if (!req.headers.authorization)</span>
+  <span class="hl">  return res.status(401).end();</span>
+  <span class="hl">console.log(req.method, req.url);</span>
+  <span class="hl">let body = '';</span>
+  <span class="hl">req.on('data', c => body += c);</span>
+  <span class="hl">req.on('end', () => {</span>
+  <span class="hl">  const data = JSON.parse(body);</span>
+    res.json({ users: [] });
+  <span class="hl">});</span>
+});
+
+app.post(<span style="color:#a6e3a1">'/api/users'</span>, <span style="color:#f38ba8">(req, res)</span> => {
+  <span class="hl">if (!req.headers.authorization)</span>
+  <span class="hl">  return res.status(401).end();</span>
+  <span class="hl">console.log(req.method, req.url);</span>
+  <span class="hl">let body = '';</span>
+  <span class="hl">req.on('data', c => body += c);</span>
+  <span class="hl">req.on('end', () => {</span>
+  <span class="hl">  const data = JSON.parse(body);</span>
+    res.json({ created: true });
+  <span class="hl">});</span>
+});</pre>
+</div>
+<div class="compare-col after">
+<h4><span class="badge badge-success">✅ With Middleware</span></h4>
+<pre><span style="color:#6c7086">// Middleware handles auth once</span>
+app.use(<span style="color:#89b4fa">authMiddleware</span>); <span style="color:#6c7086">// Checks token</span>
+app.use(<span style="color:#89b4fa">loggerMiddleware</span>); <span style="color:#6c7086">// Logs request</span>
+app.use(<span style="color:#89b4fa">express.json</span>()); <span style="color:#6c7086">// Parses body</span>
+
+<span style="color:#6c7086">// Routes are clean</span>
+app.get(<span style="color:#a6e3a1">'/api/users'</span>, <span style="color:#f38ba8">(req, res)</span> => {
+  res.json({ users: [] });
+});
+
+app.post(<span style="color:#a6e3a1">'/api/users'</span>, <span style="color:#f38ba8">(req, res)</span> => {
+  res.json({ created: true });
+});</pre>
+</div>
+</div>
+<div class="info-box warn">
+<div class="info-icon">⚠️</div>
+<div><strong>Without middleware</strong>, every route is a tangled mess of boilerplate. A single cross-cutting concern (auth, logging, CORS) requires changes in every route handler.</div>
+</div>
+</div>
+
+<!-- SECTION 3: THE next() FUNCTION -->
+<h2>The <code>next()</code> Function</h2>
+<div class="card">
+<p style="margin-bottom:1rem;font-size:.9rem">The <code>next()</code> function is the <span class="highlight">control flow mechanism</span> of Express. It tells Express to move to the next middleware in the chain. Three behaviors:</p>
+<div class="grid-2">
+<div class="card card-highlight" style="margin:0">
+<h3 style="border:none;margin:0 0 .4rem;color:#a6e3a1">next()</h3>
+<p style="font-size:.85rem;color:#a6adc8">Passes control to the <strong>next matching middleware</strong>. The default — normal flow continues.</p>
+<pre style="font-size:.75rem;margin-top:.5rem">
+app.use(<span style="color:#f38ba8">(req, res, next)</span> => {
+  console.log(<span style="color:#a6e3a1">'Logging...'</span>);
+  <strong>next();</strong> <span style="color:#6c7086">// → next middleware runs</span>
+});</pre>
+</div>
+<div class="card" style="margin:0;border-color:#fab387">
+<h3 style="border:none;margin:0 0 .4rem;color:#fab387">next('route')</h3>
+<p style="font-size:.85rem;color:#a6adc8">Skips to the <strong>next route handler</strong> (skips remaining middleware in the current route).</p>
+<pre style="font-size:.75rem;margin-top:.5rem">
+app.get(<span style="color:#a6e3a1">'/user'</span>, checkAdmin, handler);
+<span style="color:#6c7086">// checkAdmin calls next('route')</span>
+<span style="color:#6c7086">// ↳ skips handler, tries next route</span></pre>
+</div>
+<div class="card" style="margin:0;border-color:#f38ba8">
+<h3 style="border:none;margin:0 0 .4rem;color:#f38ba8">next(err)</h3>
+<p style="font-size:.85rem;color:#a6adc8">Passes an <strong>error</strong>. Jumps directly to error-handling middleware.</p>
+<pre style="font-size:.75rem;margin-top:.5rem">
+app.use(<span style="color:#f38ba8">(req, res, next)</span> => {
+  <span style="color:#f38ba8">if (!req.user)</span>
+    <strong>next(new Error('Unauth'));</strong>
+  <span style="color:#6c7086">// ↳ skips all normal middleware</span>
+  <span style="color:#6c7086">// ↳ goes to error handler</span>
+});</pre>
+</div>
+<div class="card" style="margin:0;border-color:#f38ba8">
+<h3 style="border:none;margin:0 0 .4rem;color:#f38ba8">Nothing (HANG)</h3>
+<p style="font-size:.85rem;color:#a6adc8">If middleware neither calls <code>next()</code> nor sends a response, the request <strong>hangs indefinitely</strong>.</p>
+<pre style="font-size:.75rem;margin-top:.5rem">
+app.use(<span style="color:#f38ba8">(req, res, next)</span> => {
+  console.log(<span style="color:#a6e3a1">'Forgot next()'</span>);
+  <span style="color:#6c7086">// ❌ no next(), no res.send()</span>
+  <span style="color:#6c7086">// ↳ request times out (hangs)</span>
+});</pre>
+</div>
+</div>
+</div>
+
+<!-- SECTION 4: MIDDLEWARE WALKTHROUGH -->
+<h2>Middleware Chain — Step Through</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">Click "Step" to advance through the middleware chain one at a time. Watch how each middleware processes the request and calls <code>next()</code>.</p>
+
+<div class="mw-config" id="mwConfig">
+<div class="mw-item on" data-mw="logger">
+<div class="mw-color" style="background:#89b4fa"></div>
+<div class="mw-label">Logger</div>
+<div class="mw-desc">Logs method &amp; URL</div>
+<div class="mw-status">ON</div>
+<div class="toggle"><input type="checkbox" checked><span class="slider"></span></div>
+</div>
+<div class="mw-item on" data-mw="auth">
+<div class="mw-color" style="background:#fab387"></div>
+<div class="mw-label">Auth Check</div>
+<div class="mw-desc">Verifies auth token</div>
+<div class="mw-status">ON</div>
+<div class="toggle"><input type="checkbox" checked><span class="slider"></span></div>
+</div>
+<div class="mw-item on" data-mw="parser">
+<div class="mw-color" style="background:#a6e3a1"></div>
+<div class="mw-label">Body Parser</div>
+<div class="mw-desc">Parses JSON body</div>
+<div class="mw-status">ON</div>
+<div class="toggle"><input type="checkbox" checked><span class="slider"></span></div>
+</div>
+<div class="mw-item on" data-mw="ratelimit">
+<div class="mw-color" style="background:#cba6f7"></div>
+<div class="mw-label">Rate Limiter</div>
+<div class="mw-desc">Checks request count</div>
+<div class="mw-status">ON</div>
+<div class="toggle"><input type="checkbox" checked><span class="slider"></span></div>
+</div>
+<div class="mw-item on" data-mw="handler">
+<div class="mw-color" style="background:#94e2d5"></div>
+<div class="mw-label">Route Handler</div>
+<div class="mw-desc">Sends response</div>
+<div class="mw-status">ON</div>
+<div class="toggle"><input type="checkbox" checked><span class="slider"></span></div>
+</div>
+</div>
+
+<div class="step-controls">
+<button class="btn btn-primary" id="stepBtn">▶ Step Through Chain</button>
+<button class="btn btn-danger btn-sm" id="blockAtBtn">✋ Block at Auth</button>
+<button class="btn btn-outline btn-sm" id="resetStepBtn">Reset</button>
+</div>
+<div class="log-box" id="stepLog">
+<div class="log-line" style="color:#6c7086">— Click "Step Through Chain" to begin —</div>
+</div>
+</div>
+
+<!-- SECTION 5: TYPES OF MIDDLEWARE -->
+<h2>Types of Middleware</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">Express has 5 categories of middleware. Click each card to see a code example.</p>
+<div class="types-grid" id="typesGrid">
+<div class="type-card active" data-type="app">
+<div class="tc-icon">📱</div>
+<h4>Application-level</h4>
+<p>Bound to the <code>app</code> instance. Runs on every request matching the path.</p>
+<div class="tc-code">app.use('/api', logger)</div>
+</div>
+<div class="type-card" data-type="router">
+<div class="tc-icon">🗂️</div>
+<h4>Router-level</h4>
+<p>Bound to a <code>Router</code> instance. Scoped to a group of routes.</p>
+<div class="tc-code">router.use(authMW)</div>
+</div>
+<div class="type-card" data-type="error">
+<div class="tc-icon">🚨</div>
+<h4>Error-handling</h4>
+<p>4 arguments <code>(err, req, res, next)</code>. Called when <code>next(err)</code> is invoked.</p>
+<div class="tc-code">app.use((err, req, res, next) => {})</div>
+</div>
+<div class="type-card" data-type="builtin">
+<div class="tc-icon">⚙️</div>
+<h4>Built-in</h4>
+<p>Bundled with Express: <code>express.json()</code>, <code>express.static()</code>, <code>express.urlencoded()</code>.</p>
+<div class="tc-code">app.use(express.json())</div>
+</div>
+<div class="type-card" data-type="third">
+<div class="tc-icon">📦</div>
+<h4>Third-party</h4>
+<p>npm packages like <code>cors</code>, <code>morgan</code>, <code>helmet</code>, <code>cookie-parser</code>.</p>
+<div class="tc-code">app.use(cors())</div>
+</div>
+</div>
+<div class="code-block" id="typeCodeBlock" style="margin-top:.8rem">
+<span class="cm">// Application-level middleware example</span>
+<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">'express'</span>);
+<span class="kw">const</span> app = express();
+
+<span class="cm">// Runs on every request</span>
+app.<span class="fn">use</span>(<span class="f38ba8">(req, res, next)</span> => {
+  console.<span class="fn">log</span>(<span class="str">`${req.method} ${req.url}`</span>);
+  <span class="fn">next</span>();
+});
+</div>
+</div>
+
+<!-- SECTION 6: ORDER MATTERS -->
+<h2>Order Matters</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">In Express, middleware runs in the <span class="highlight">order it was registered</span>. Reordering middleware can break your app. Click two items to swap them and see what changes.</p>
+
+<div class="grid-2" style="margin-bottom:1rem">
+<div>
+<h4 style="font-size:.85rem;margin-bottom:.5rem;color:#a6adc8">Middleware Stack</h4>
+<div class="order-stack" id="orderStack">
+<div class="order-item" data-idx="0"><span class="order-num">1</span><span class="order-color" style="background:#89b4fa"></span><span class="order-label">Logger</span><span style="font-size:.7rem;color:#6c7086">← must come first</span></div>
+<div class="order-item" data-idx="1"><span class="order-num">2</span><span class="order-color" style="background:#a6e3a1"></span><span class="order-label">Body Parser</span><span style="font-size:.7rem;color:#6c7086">← must come before routes</span></div>
+<div class="order-item" data-idx="2"><span class="order-num">3</span><span class="order-color" style="background:#fab387"></span><span class="order-label">Auth Check</span><span style="font-size:.7rem;color:#6c7086">← protects routes</span></div>
+<div class="order-item" data-idx="3"><span class="order-num">4</span><span class="order-color" style="background:#f38ba8"></span><span class="order-label">Error Handler</span><span style="font-size:.7rem;color:#6c7086">← must come LAST</span></div>
+</div>
+</div>
+<div>
+<h4 style="font-size:.85rem;margin-bottom:.5rem;color:#a6adc8">Effect</h4>
+<div id="orderEffect" class="order-result ok">✅ Correct order. Logger runs first, body is parsed before auth, auth protects routes, error handler catches all.</div>
+</div>
+</div>
+<div class="step-controls">
+<button class="btn btn-warning btn-sm" id="swapOrderBtn">🔀 Swap Selected (click two items)</button>
+<button class="btn btn-outline btn-sm" id="resetOrderBtn">Reset Order</button>
+</div>
+<div class="info-box warn" style="margin-top:.8rem">
+<div class="info-icon">⚠️</div>
+<div><strong>Common order mistakes:</strong> Putting the error handler before routes (it will never catch errors). Putting the body parser after a route that needs it. Putting CORS after your routes.</div>
+</div>
+</div>
+
+<!-- SECTION 7: CONDITIONAL MIDDLEWARE -->
+<h2>Conditional Middleware</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">Middleware can be applied <span class="highlight">conditionally</span> — by path, by HTTP method, by request property, or using a function wrapper.</p>
+
+<div class="grid-2">
+<div>
+<h4 style="font-size:.85rem;margin-bottom:.5rem">Path-based</h4>
+<pre style="font-size:.75rem">
+<span style="color:#6c7086">// Only runs on /api/* routes</span>
+app.use(<span style="color:#a6e3a1">'/api'</span>, authMiddleware);
+
+<span style="color:#6c7086">// Only runs on /public/* routes</span>
+app.use(<span style="color:#a6e3a1">'/'</span>, express.<span style="color:#89b4fa">static</span>(<span style="color:#a6e3a1">'public'</span>));
+</pre>
+</div>
+<div>
+<h4 style="font-size:.85rem;margin-bottom:.5rem">Function-based</h4>
+<pre style="font-size:.75rem">
+<span style="color:#6c708ie">// Conditional wrapper function</span>
+<span style="color:#89b4fa">const unless</span> = (path, mw) => {
+  <span style="color:#f38ba8">return</span> (req, res, next) => {
+    <span style="color:#f38ba8">if</span> (req.path.startsWith(path))
+      <span style="color:#f38ba8">return</span> next(); <span style="color:#6c7086">// skip middleware</span>
+    mw(req, res, next); <span style="color:#6c7086">// run middleware</span>
+  };
+};
+app.use(<span style="color:#89b4fa">unless</span>(<span style="color:#a6e3a1">'/public'</span>, authMW));
+</pre>
+</div>
+</div>
+
+<div style="margin-top:1rem">
+<h4 style="font-size:.85rem;margin-bottom:.5rem">Live Demo: Click a route to see which middleware applies</h4>
+<div class="cond-route" id="condRoute">
+<button data-path="/api/users" class="active">GET /api/users</button>
+<button data-path="/api/login" class="active">POST /api/login</button>
+<button data-path="/public/style.css">GET /public/style.css</button>
+<button data-path="/public/script.js">GET /public/script.js</button>
+<button data-path="/health">GET /health</button>
+</div>
+<div class="log-box" id="condLog" style="max-height:120px">
+<div class="log-line" style="color:#6c7086">Click a route button to simulate middleware flow</div>
+</div>
+</div>
+</div>
+
+<!-- SECTION 8: ERROR MIDDLEWARE -->
+<h2>Error Middleware</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">Error-handling middleware has <span class="highlight">4 parameters</span> <code>(err, req, res, next)</code>. It only runs when <code>next(err)</code> or a <code>throw</code> is triggered. It must be registered <strong>last</strong> in the stack.</p>
+
+<div style="display:flex;align-items:center;flex-wrap:wrap;gap:.5rem;margin-bottom:1rem">
+<button class="btn btn-success" id="noErrorBtn">✅ No Error (normal flow)</button>
+<button class="btn btn-danger" id="triggerErrorBtn">💥 Simulate Error</button>
+<button class="btn btn-warning" id="customErrorBtn">🎯 Custom 404</button>
+<button class="btn btn-outline btn-sm" id="resetErrorBtn">Reset</button>
+</div>
+
+<div class="error-flow" id="errorFlow">
+<div class="err-stage" data-e="0">📨 Request</div>
+<div class="arrow-sym">→</div>
+<div class="err-stage" data-e="1">🔒 Auth</div>
+<div class="arrow-sym">→</div>
+<div class="err-stage" data-e="2">📝 Logger</div>
+<div class="arrow-sym">→</div>
+<div class="err-stage" data-e="3">🎯 Route</div>
+<div class="arrow-sym">→</div>
+<div class="err-stage" data-e="4">📨 Response</div>
+<div class="arrow-sym">→</div>
+<div class="err-stage" data-e="5" style="border-color:#f38ba8;background:#2a1e1e">🚨 Error Handler</div>
+</div>
+<div class="log-box" id="errorLog" style="margin-top:1rem">
+<div class="log-line" style="color:#6c7086">Click a button to simulate error handling</div>
+</div>
+</div>
+
+<!-- SECTION 9: COMMON PATTERNS -->
+<h2>Common Middleware Patterns</h2>
+<div class="pattern-grid">
+<div class="pattern-card">
+<h4>🔐 Authentication</h4>
+<pre style="font-size:.72rem;margin-bottom:.4rem">
+<span style="color:#cba6f7">const</span> auth = <span style="color:#f38ba8">(req, res, next)</span> => {
+  <span style="color:#f38ba8">const</span> token = req.headers.authorization;
+  <span style="color:#f38ba8">if</span> (!token) <span style="color:#f38ba8">return</span> res.status(401).json({error:<span style="color:#a6e3a1">'Unauthorized'</span>});
+  <span style="color:#f38ba8">try</span> {
+    req.user = jwt.verify(token, SECRET);
+    next();
+  } <span style="color:#f38ba8">catch</span> { next(err); }
+};</pre>
+<div class="pc-demo">
+<button class="btn btn-sm btn-primary" data-pat="auth-ok">✅ Valid Token</button>
+<button class="btn btn-sm btn-danger" data-pat="auth-fail">❌ No Token</button>
+</div>
+</div>
+<div class="pattern-card">
+<h4>📝 Request Logging</h4>
+<pre style="font-size:.72rem;margin-bottom:.4rem">
+<span style="color:#cba6f7">const</span> logger = <span style="color:#f38ba8">(req, res, next)</span> => {
+  console.log(<span style="color:#a6e3a1">`${req.method} ${req.url} - ${Date.now()}`</span>);
+  <span style="color:#cba6f7">const</span> start = Date.now();
+  res.on(<span style="color:#a6e3a1">'finish'</span>, () => {
+    console.log(<span style="color:#a6e3a1">`${req.method} ${req.url} ${res.statusCode} ${Date.now()-start}ms`</span>);
+  });
+  next();
+};</pre>
+<div class="pc-demo">
+<button class="btn btn-sm btn-primary" data-pat="log">📋 Simulate Log</button>
+</div>
+</div>
+<div class="pattern-card">
+<h4>🚦 Rate Limiting</h4>
+<pre style="font-size:.72rem;margin-bottom:.4rem">
+<span style="color:#cba6f7">const</span> rateLimit = {};
+<span style="color:#cba6f7">const</span> limiter = <span style="color:#f38ba8">(req, res, next)</span> => {
+  <span style="color:#cba6f7">const</span> ip = req.ip;
+  rateLimit[ip] = (rateLimit[ip] || 0) + 1;
+  <span style="color:#f38ba8">if</span> (rateLimit[ip] > 100)
+    <span style="color:#f38ba8">return</span> res.status(429).json({error:<span style="color:#a6e3a1">'Too Many Requests'</span>});
+  next();
+};</pre>
+<div class="pc-demo">
+<button class="btn btn-sm btn-primary" data-pat="limit-ok">✅ Under Limit</button>
+<button class="btn btn-sm btn-danger" data-pat="limit-fail">⛔ Exceeded</button>
+</div>
+</div>
+<div class="pattern-card">
+<h4>🌐 CORS</h4>
+<pre style="font-size:.72rem;margin-bottom:.4rem">
+<span style="color:#cba6f7">const</span> cors = <span style="color:#f38ba8">(req, res, next)</span> => {
+  res.setHeader(<span style="color:#a6e3a1">'Access-Control-Allow-Origin'</span>, <span style="color:#a6e3a1">'*'</span>);
+  res.setHeader(<span style="color:#a6e3a1">'Access-Control-Allow-Methods'</span>, <span style="color:#a6e3a1">'GET,POST,PUT,DELETE'</span>);
+  <span style="color:#f38ba8">if</span> (req.method === <span style="color:#a6e3a1">'OPTIONS'</span>)
+    <span style="color:#f38ba8">return</span> res.sendStatus(204);
+  next();
+};</pre>
+<div class="pc-demo">
+<button class="btn btn-sm btn-primary" data-pat="cors">🌍 Simulate CORS</button>
+</div>
+</div>
+</div>
+
+<!-- SECTION 10: REFERENCE TABLE -->
+<h2>Middleware Quick Reference</h2>
+<div class="card" style="overflow-x:auto">
+<table style="width:100%;border-collapse:collapse;font-size:.85rem">
+<thead><tr><th style="text-align:left;padding:.6rem .8rem;border-bottom:2px solid #45475a;color:#89b4fa">Concept</th><th style="text-align:left;padding:.6rem .8rem;border-bottom:2px solid #45475a;color:#89b4fa">Description</th><th style="text-align:left;padding:.6rem .8rem;border-bottom:2px solid #45475a;color:#89b4fa">Example</th></tr></thead>
+<tbody>
+<tr><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6e3a1">app.use()</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6adc8">Register middleware for all routes</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;font-family:monospace;font-size:.78rem">app.use(logger)</td></tr>
+<tr><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#fab387">app.use('/path')</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6adc8">Register middleware for specific path</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;font-family:monospace;font-size:.78rem">app.use('/api', auth)</td></tr>
+<tr><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6e3a1">next()</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6adc8">Pass control to next middleware</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;font-family:monospace;font-size:.78rem">next()</td></tr>
+<tr><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#f38ba8">next(err)</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6adc8">Trigger error middleware</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;font-family:monospace;font-size:.78rem">next(new Error('fail'))</td></tr>
+<tr><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#fab387">next('route')</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6adc8">Skip to next route handler</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;font-family:monospace;font-size:.78rem">next('route')</td></tr>
+<tr><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#cba6f7">Error MW</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6adc8">4-arg function, must be LAST</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;font-family:monospace;font-size:.78rem">app.use((e,r,q,n) => {})</td></tr>
+<tr><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6e3a1">express.json()</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6adc8">Parse JSON request bodies</td><td style="padding:.5rem .8rem;border-bottom:1px solid #313244;font-family:monospace;font-size:.78rem">app.use(express.json())</td></tr>
+<tr><td style="padding:.5rem .8rem;color:#a6e3a1">express.static()</td><td style="padding:.5rem .8rem;color:#a6adc8">Serve static files</td><td style="padding:.5rem .8rem;font-family:monospace;font-size:.78rem">app.use(express.static('public'))</td></tr>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+// ==================== PIPELINE ANIMATION ====================
+const stages = document.querySelectorAll('.pipe-stage');
+const arrows = document.querySelectorAll('.pipe-arrow');
+const reqDot = document.getElementById('reqDot');
+const pipeStatus = document.getElementById('pipeStatus');
+let pipelineRunning = false;
+let pipelineTimeout = null;
+
+function resetPipeline() {
+  if (pipelineTimeout) { clearTimeout(pipelineTimeout); pipelineTimeout = null; }
+  pipelineRunning = false;
+  stages.forEach(s => { s.className = 'pipe-stage'; });
+  arrows.forEach(a => { a.className = 'pipe-arrow'; });
+  reqDot.className = 'req-dot';
+  pipeStatus.textContent = 'Ready';
+  document.getElementById('sendReqBtn').disabled = false;
+}
+
+document.getElementById('resetPipelineBtn').addEventListener('click', resetPipeline);
+
+document.getElementById('sendReqBtn').addEventListener('click', () => {
+  if (pipelineRunning) return;
+  resetPipeline();
+  pipelineRunning = true;
+  document.getElementById('sendReqBtn').disabled = true;
+  const stageEls = [...stages];
+  const arrowEls = [...arrows];
+  let i = 0;
+
+  // Position dot at start
+  reqDot.style.left = '-20px';
+  reqDot.className = 'req-dot animate';
+
+  function nextStage() {
+    if (i >= stageEls.length) {
+      pipeStatus.textContent = '✅ Response sent!';
+      document.getElementById('sendReqBtn').disabled = false;
+      pipelineRunning = false;
+      return;
+    }
+
+    // Light up current stage
+    stageEls[i].classList.add('active');
+    pipeStatus.textContent = `Processing: ${stageEls[i].querySelector('.name').textContent}`;
+
+    // Move dot to this stage
+    const rect = stageEls[i].getBoundingClientRect();
+    const pipelineRect = stageEls[i].parentElement.getBoundingClientRect();
+    reqDot.style.left = (rect.left - pipelineRect.left + rect.width / 2 - 7) + 'px';
+
+    const delay = 400;
+
+    // If last stage (Response), mark done
+    if (i === stageEls.length - 1) {
+      pipelineTimeout = setTimeout(() => {
+        stageEls[i].classList.remove('active');
+        stageEls[i].classList.add('done');
+        pipeStatus.textContent = '✅ Response sent!';
+        document.getElementById('sendReqBtn').disabled = false;
+        pipelineRunning = false;
+      }, delay);
+      return;
+    }
+
+    pipelineTimeout = setTimeout(() => {
+      stageEls[i].classList.remove('active');
+      stageEls[i].classList.add('done');
+      if (arrowEls[i]) arrowEls[i].classList.add('active');
+      i++;
+      nextStage();
+    }, delay);
+  }
+  nextStage();
+});
+
+// ==================== MIDDLEWARE WALKTHROUGH ====================
+const mwItems = document.querySelectorAll('.mw-item');
+const stepLog = document.getElementById('stepLog');
+let stepIndex = 0;
+let stepBlocked = false;
+
+function updateMws() {
+  mwItems.forEach(item => {
+    const cb = item.querySelector('input[type="checkbox"]');
+    if (cb.checked) {
+      item.classList.remove('off');
+      item.classList.add('on');
+      item.querySelector('.mw-status').textContent = 'ON';
+    } else {
+      item.classList.remove('on');
+      item.classList.add('off');
+      item.querySelector('.mw-status').textContent = 'OFF';
+    }
+  });
+}
+
+mwItems.forEach(item => {
+  item.querySelector('input[type="checkbox"]').addEventListener('change', () => {
+    updateMws();
+    resetStep();
+  });
+});
+
+function resetStep() {
+  stepIndex = 0;
+  stepBlocked = false;
+  stepLog.innerHTML = '<div class="log-line" style="color:#6c7086">— Click "Step Through Chain" to begin —</div>';
+  document.getElementById('stepBtn').disabled = false;
+  document.getElementById('stepBtn').textContent = '▶ Step Through Chain';
+  mwItems.forEach(item => item.style.opacity = '');
+}
+
+document.getElementById('resetStepBtn').addEventListener('click', resetStep);
+updateMws();
+
+function getActiveItems() {
+  return [...mwItems].filter(item => item.classList.contains('on'));
+}
+
+document.getElementById('stepBtn').addEventListener('click', () => {
+  if (stepBlocked) { resetStep(); return; }
+  const items = getActiveItems();
+  if (items.length === 0) {
+    addLogLine('log-skip', '⚠️ No middleware is ON. Turn some on first.');
+    return;
+  }
+  if (stepIndex >= items.length) {
+    addLogLine('log-pass', '✅ Response sent! All middleware completed.');
+    document.getElementById('stepBtn').disabled = true;
+    document.getElementById('stepBtn').textContent = '✅ Done — Reset to replay';
+    return;
+  }
+  const current = items[stepIndex];
+  const label = current.querySelector('.mw-label').textContent;
+
+  items.forEach((item, idx) => {
+    item.style.opacity = idx < stepIndex ? '0.5' : '';
+  });
+  current.style.opacity = '1';
+  current.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+
+  addLogLine('log-pass', `➡️ ${label}: ran, calling next()`);
+  stepIndex++;
+  if (stepIndex >= items.length) {
+    addLogLine('log-pass', '✅ All middleware ran. Response sent.');
+    document.getElementById('stepBtn').disabled = true;
+    document.getElementById('stepBtn').textContent = '✅ Done — Reset to replay';
+  }
+});
+
+document.getElementById('blockAtBtn').addEventListener('click', () => {
+  resetStep();
+  const items = getActiveItems();
+  if (items.length === 0) {
+    addLogLine('log-skip', '⚠️ No middleware is ON. Turn some on first.');
+    return;
+  }
+  const authIdx = items.findIndex(item => item.dataset.mw === 'auth');
+  let i = 0;
+  function blockStep() {
+    if (items[i].dataset.mw === 'auth' || i >= items.length) {
+      if (authIdx === -1) {
+        addLogLine('log-skip', '⚠️ Auth middleware is OFF. Enable it first.');
+        return;
+      }
+      items[authIdx].style.opacity = '1';
+      addLogLine('log-block', '✋ Auth: Token missing! Sending 401...');
+      addLogLine('log-block', '⛔ Request blocked. Route handler never reached.');
+      stepBlocked = true;
+      document.getElementById('stepBtn').disabled = false;
+      document.getElementById('stepBtn').textContent = '🔄 Reset';
+      return;
+    }
+    items[i].style.opacity = '1';
+    addLogLine('log-pass', `➡️ ${items[i].querySelector('.mw-label').textContent}: ran, calling next()`);
+    i++;
+    setTimeout(blockStep, 300);
+  }
+  if (items.length > 0) blockStep();
+});
+
+function addLogLine(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="log-time">▸</span> <span class="${cls}">${text}</span>`;
+  stepLog.appendChild(div);
+  stepLog.scrollTop = stepLog.scrollHeight;
+}
+
+// ==================== MIDDLEWARE TYPES ====================
+const typeCards = document.querySelectorAll('.type-card');
+const typeCodeBlock = document.getElementById('typeCodeBlock');
+
+function codeLines(lines) { return lines.join('\n'); }
+const typeExamples = {
+  app: codeLines([
+    '<span class="cm">// Application-level: runs on every request to /api</span>',
+    '<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">\'express\'</span>);',
+    '<span class="kw">const</span> app = express();',
+    '',
+    '<span class="cm">// Bound to app — global scope</span>',
+    'app.<span class="fn">use</span>(<span class="str">\'/api\'</span>, <span class="f38ba8">(req, res, next)</span> => {',
+    '  console.<span class="fn">log</span>(<span class="str">\'`API request: ${req.method}`\'</span>);',
+    '  <span class="fn">next</span>();',
+    '});'
+  ]),
+  router: codeLines([
+    '<span class="cm">// Router-level: scoped to a subset of routes</span>',
+    '<span class="kw">const</span> router = express.<span class="fn">Router</span>();',
+    '',
+    '<span class="cm">// Only applies within this router</span>',
+    'router.<span class="fn">use</span>(<span class="f38ba8">(req, res, next)</span> => {',
+    '  console.<span class="fn">log</span>(<span class="str">\'Router-specific middleware\'</span>);',
+    '  <span class="fn">next</span>();',
+    '});',
+    '',
+    'router.<span class="fn">get</span>(<span class="str">\'/users\'</span>, <span class="f38ba8">(req, res)</span> => {',
+    '  res.<span class="fn">json</span>({ users: [] });',
+    '});',
+    '',
+    'app.<span class="fn">use</span>(<span class="str">\'/api\'</span>, router); <span class="cm">// Mount router on /api</span>'
+  ]),
+  error: codeLines([
+    '<span class="cm">// Error-handling: 4 arguments (err, req, res, next)</span>',
+    '<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">\'express\'</span>);',
+    '<span class="kw">const</span> app = express();',
+    '',
+    '<span class="cm">// Must be registered LAST in the stack</span>',
+    'app.<span class="fn">use</span>(<span class="f38ba8">(err, req, res, next)</span> => {',
+    '  console.<span class="fn">error</span>(<span class="str">\'Error:\'</span>, err.message);',
+    '',
+    '  <span class="kw">if</span> (err.status === 404) {',
+    '    <span class="fn">return</span> res.<span class="fn">status</span>(404).<span class="fn">json</span>({ error: <span class="str">\'Not found\'</span> });',
+    '  }',
+    '',
+    '  res.<span class="fn">status</span>(500).<span class="fn">json</span>({ error: <span class="str">\'Internal server error\'</span> });',
+    '});'
+  ]),
+  builtin: codeLines([
+    '<span class="cm">// Built-in middleware (bundled with Express)</span>',
+    '<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">\'express\'</span>);',
+    '<span class="kw">const</span> app = express();',
+    '',
+    '<span class="cm">// Parse JSON bodies (Content-Type: application/json)</span>',
+    'app.<span class="fn">use</span>(express.<span class="fn">json</span>());',
+    '',
+    '<span class="cm">// Parse URL-encoded bodies (forms)</span>',
+    'app.<span class="fn">use</span>(express.<span class="fn">urlencoded</span>({ extended: <span class="kw">true</span> }));',
+    '',
+    '<span class="cm">// Serve static files from \'public\' directory</span>',
+    'app.<span class="fn">use</span>(express.<span class="fn">static</span>(<span class="str">\'public\'</span>));'
+  ]),
+  third: codeLines([
+    '<span class="cm">// Third-party middleware (npm packages)</span>',
+    '<span class="kw">const</span> express = <span class="fn">require</span>(<span class="str">\'express\'</span>);',
+    '<span class="kw">const</span> cors = <span class="fn">require</span>(<span class="str">\'cors\'</span>);',
+    '<span class="kw">const</span> morgan = <span class="fn">require</span>(<span class="str">\'morgan\'</span>);',
+    '<span class="kw">const</span> helmet = <span class="fn">require</span>(<span class="str">\'helmet\'</span>);',
+    '<span class="kw">const</span> cookieParser = <span class="fn">require</span>(<span class="str">\'cookie-parser\'</span>);',
+    '<span class="kw">const</span> app = express();',
+    '',
+    'app.<span class="fn">use</span>(<span class="fn">helmet</span>());        <span class="cm">// Security headers</span>',
+    'app.<span class="fn">use</span>(<span class="fn">cors</span>());          <span class="cm">// Cross-Origin Resource Sharing</span>',
+    'app.<span class="fn">use</span>(<span class="fn">morgan</span>(<span class="str">\'dev\'</span>));   <span class="cm">// Request logging</span>',
+    'app.<span class="fn">use</span>(<span class="fn">cookieParser</span>()); <span class="cm">// Parse cookies</span>'
+  ])
+};
+
+typeCards.forEach(card => {
+  card.addEventListener('click', () => {
+    typeCards.forEach(c => c.classList.remove('active'));
+    card.classList.add('active');
+    const type = card.dataset.type;
+    if (typeExamples[type]) {
+      typeCodeBlock.innerHTML = typeExamples[type];
+    }
+  });
+});
+
+// ==================== ORDER MATTERS ====================
+const orderItems = document.querySelectorAll('.order-item');
+const orderEffect = document.getElementById('orderEffect');
+const defaultOrder = ['Logger', 'Body Parser', 'Auth Check', 'Error Handler'];
+let selectedOrderIdx = null;
+
+orderItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const idx = parseInt(item.dataset.idx);
+    if (selectedOrderIdx === null) {
+      selectedOrderIdx = idx;
+      item.classList.add('selected');
+    } else if (selectedOrderIdx === idx) {
+      item.classList.remove('selected');
+      selectedOrderIdx = null;
+    } else {
+      // Swap
+      const itemsArr = [...orderItems];
+      const a = itemsArr[selectedOrderIdx];
+      const b = itemsArr[idx];
+      const aLabel = a.querySelector('.order-label').textContent;
+      const bLabel = b.querySelector('.order-label').textContent;
+      const aColor = a.querySelector('.order-color').style.background;
+      const bColor = b.querySelector('.order-color').style.background;
+      const aNote = a.querySelector('span:last-child') ? a.querySelector('span:last-child').textContent : '';
+      const bNote = b.querySelector('span:last-child') ? b.querySelector('span:last-child').textContent : '';
+
+      a.querySelector('.order-label').textContent = bLabel;
+      a.querySelector('.order-color').style.background = bColor;
+      if (a.querySelector('span:last-child') && a.querySelector('span:last-child') !== a.querySelector('.order-num') && a.querySelector('span:last-child') !== a.querySelector('.order-label')) {
+        a.querySelector('span:last-child').textContent = bNote;
+      }
+      b.querySelector('.order-label').textContent = aLabel;
+      b.querySelector('.order-color').style.background = aColor;
+      if (b.querySelector('span:last-child') && b.querySelector('span:last-child') !== b.querySelector('.order-num') && b.querySelector('span:last-child') !== b.querySelector('.order-label')) {
+        b.querySelector('span:last-child').textContent = aNote;
+      }
+
+      a.classList.remove('selected');
+      b.classList.remove('selected');
+
+      // Evaluate new order
+      const newOrder = itemsArr.map(i => i.querySelector('.order-label').textContent);
+      evaluateOrder(newOrder);
+      selectedOrderIdx = null;
+    }
+  });
+});
+
+function evaluateOrder(order) {
+  const loggerIdx = order.indexOf('Logger');
+  const parserIdx = order.indexOf('Body Parser');
+  const authIdx = order.indexOf('Auth Check');
+  const errorIdx = order.indexOf('Error Handler');
+
+  const issues = [];
+
+  if (parserIdx < loggerIdx) issues.push('Body Parser runs before Logger — logging will miss body parsing errors');
+
+  if (errorIdx < Math.max(loggerIdx, parserIdx, authIdx)) issues.push('Error Handler runs too early — it will catch errors before routes run (useless)');
+
+  if (errorIdx !== order.length - 1) {
+    const afterError = order.slice(errorIdx + 1);
+    if (afterError.length > 0) issues.push('Middleware after Error Handler will never catch errors');
+  }
+
+  if (authIdx < parserIdx) issues.push('Auth runs before Body Parser — you cannot access req.body in auth middleware');
+
+  if (authIdx < loggerIdx) issues.push('Auth runs before Logger — unauthenticated requests won\'t be logged');
+
+  // Check if error handler is last
+  if (issues.length === 0) {
+    orderEffect.className = 'order-result ok';
+    orderEffect.textContent = '✅ Correct order. Logger runs first, body is parsed, auth protects routes, error handler catches all at the end.';
+  } else {
+    orderEffect.className = 'order-result bad';
+    const mainIssue = issues[0];
+    orderEffect.textContent = `⚠️ Issue: ${mainIssue}${issues.length > 1 ? ` (+${issues.length - 1} more issues)` : ''}`;
+  }
+}
+
+document.getElementById('swapOrderBtn').addEventListener('click', () => {
+  if (selectedOrderIdx !== null) {
+    orderItems[selectedOrderIdx].classList.remove('selected');
+    selectedOrderIdx = null;
+  }
+});
+
+document.getElementById('resetOrderBtn').addEventListener('click', () => {
+  const labels = ['Logger', 'Body Parser', 'Auth Check', 'Error Handler'];
+  const colors = ['#89b4fa', '#a6e3a1', '#fab387', '#f38ba8'];
+  const notes = ['← must come first', '← must come before routes', '← protects routes', '← must come LAST'];
+  orderItems.forEach((item, idx) => {
+    item.querySelector('.order-label').textContent = labels[idx];
+    item.querySelector('.order-color').style.background = colors[idx];
+    if (item.querySelector('span:last-child') && item.querySelector('span:last-child') !== item.querySelector('.order-num') && item.querySelector('span:last-child') !== item.querySelector('.order-label')) {
+      item.querySelector('span:last-child').textContent = notes[idx];
+    }
+    item.classList.remove('selected');
+  });
+  selectedOrderIdx = null;
+  orderEffect.className = 'order-result ok';
+  orderEffect.textContent = '✅ Correct order. Logger runs first, body is parsed before auth, auth protects routes, error handler catches all.';
+});
+
+// ==================== CONDITIONAL MIDDLEWARE ====================
+const condButtons = document.querySelectorAll('.cond-route button');
+const condLog = document.getElementById('condLog');
+
+condButtons.forEach(btn => {
+  btn.addEventListener('click', () => {
+    condButtons.forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    const path = btn.dataset.path;
+    condLog.innerHTML = '';
+
+    // Simulate middleware chain
+    addCondLog('log-info', `📨 Request: GET ${path}`);
+
+    if (path.startsWith('/api')) {
+      addCondLog('log-pass', `  ↳ app.use('/api', authMiddleware) → ✅ MATCHES path /api`);
+      addCondLog('log-pass', `  ↳ Auth middleware runs → token verified ✅`);
+      addCondLog('log-pass', `  ↳ app.use('/api', loggerMiddleware) → ✅ runs logger`);
+    } else if (path.startsWith('/public')) {
+      addCondLog('log-pass', `  ↳ app.use('/', express.static('public')) → ✅ serves static file`);
+      addCondLog('log-skip', `  ↳ app.use('/api', authMiddleware) → ❌ path /public doesn't match /api → SKIPPED`);
+      addCondLog('log-skip', `  ↳ app.use('/api', loggerMiddleware) → ❌ SKIPPED`);
+    } else {
+      addCondLog('log-pass', `  ↳ app.use('/', loggerMiddleware) → ✅ runs logger`);
+      addCondLog('log-skip', `  ↳ app.use('/api', authMiddleware) → ❌ path doesn't match /api → SKIPPED`);
+      addCondLog('log-skip', `  ↳ app.use('/', express.static('public')) → ❌ no file matches → SKIPPED`);
+    }
+    addCondLog('log-info', `  ↳ Route handler: sending response ✅`);
+  });
+});
+
+function addCondLog(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="${cls}">${text}</span>`;
+  condLog.appendChild(div);
+  condLog.scrollTop = condLog.scrollHeight;
+}
+
+// ==================== ERROR MIDDLEWARE ====================
+const errStages = document.querySelectorAll('.err-stage');
+const errorLog = document.getElementById('errorLog');
+
+function resetErrorFlow() {
+  errStages.forEach(s => { s.className = 'err-stage'; });
+  errorLog.innerHTML = '<div class="log-line" style="color:#6c7086">Click a button to simulate error handling</div>';
+}
+
+document.getElementById('resetErrorBtn').addEventListener('click', resetErrorFlow);
+
+document.getElementById('noErrorBtn').addEventListener('click', () => {
+  resetErrorFlow();
+  simulateErrorFlow(false);
+});
+
+document.getElementById('triggerErrorBtn').addEventListener('click', () => {
+  resetErrorFlow();
+  simulateErrorFlow(true);
+});
+
+document.getElementById('customErrorBtn').addEventListener('click', () => {
+  resetErrorFlow();
+  simulateErrorFlow('404');
+});
+
+function simulateErrorFlow(hasError) {
+  const stages = [...errStages];
+  addErrLog('log-info', '📨 Request received');
+  stages[0].classList.add('pass');
+
+  setTimeout(() => {
+    addErrLog('log-pass', '🔒 Auth: token valid, calling next()');
+    stages[1].classList.add('pass');
+  }, 200);
+
+  setTimeout(() => {
+    addErrLog('log-pass', '📝 Logger: logged request, calling next()');
+    stages[2].classList.add('pass');
+  }, 400);
+
+  setTimeout(() => {
+    if (hasError === false) {
+      addErrLog('log-pass', '🎯 Route handler: processing request...');
+      stages[3].classList.add('pass');
+      setTimeout(() => {
+        addErrLog('log-pass', '📨 Response sent successfully ✅');
+        stages[4].classList.add('pass');
+      }, 200);
+    } else if (hasError === true) {
+      addErrLog('log-block', '💥 Route handler: throws error!');
+      stages[3].classList.add('catch');
+      stages[4].style.opacity = '0.3';
+      setTimeout(() => {
+        addErrLog('log-info', '⏩ Normal response skipped — error in flight');
+        addErrLog('log-block', '🚨 Error Handler (4 args): caught error!');
+        stages[5].classList.add('catch');
+        addErrLog('log-block', '📨 Sending 500 Internal Server Error');
+      }, 300);
+    } else if (hasError === '404') {
+      addErrLog('log-block', '🎯 Route handler: no matching route found!');
+      stages[3].classList.add('skip');
+      stages[3].style.opacity = '0.3';
+      stages[4].style.opacity = '0.3';
+      setTimeout(() => {
+        addErrLog('log-block', '🚨 Error Handler: caught, sending 404...');
+        stages[5].classList.add('catch');
+        addErrLog('log-block', '📨 Sending 404 Not Found');
+      }, 300);
+    }
+  }, 600);
+}
+
+function addErrLog(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'log-line';
+  div.innerHTML = `<span class="${cls}">${text}</span>`;
+  errorLog.appendChild(div);
+  errorLog.scrollTop = errorLog.scrollHeight;
+}
+
+// ==================== COMMON PATTERNS ====================
+document.querySelectorAll('[data-pat]').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const pat = btn.dataset.pat;
+    let msg = '';
+    let cls = 'log-info';
+
+    switch(pat) {
+      case 'auth-ok':
+        msg = '🔐 Auth: Token verified (eyJhbGciOiJIUzI1NiIs...). User attached to req.user. Calling next() ✅';
+        cls = 'log-pass';
+        break;
+      case 'auth-fail':
+        msg = '🔐 Auth: No Authorization header! Sending 401 Unauthorized. Request blocked ❌';
+        cls = 'log-block';
+        break;
+      case 'log':
+        msg = '📝 Logger: GET /api/users — 200 — 42ms ✅';
+        cls = 'log-pass';
+        break;
+      case 'limit-ok':
+        msg = '🚦 Rate Limit: IP 192.168.1.1 — 42/100 requests. Under limit ✅';
+        cls = 'log-pass';
+        break;
+      case 'limit-fail':
+        msg = '🚦 Rate Limit: IP 192.168.1.1 — 101/100 requests. Sending 429 Too Many Requests ❌';
+        cls = 'log-block';
+        break;
+      case 'cors':
+        msg = '🌐 CORS: Set Access-Control-Allow-Origin: * | Handled OPTIONS preflight ✅';
+        cls = 'log-pass';
+        break;
+    }
+
+    // Find parent pattern card
+    const card = btn.closest('.pattern-card');
+    const demoDiv = card.querySelector('.pc-demo');
+    let logDiv = card.querySelector('.pattern-log');
+    if (!logDiv) {
+      logDiv = document.createElement('div');
+      logDiv.className = 'log-box';
+      logDiv.style.marginTop = '.6rem';
+      logDiv.style.maxHeight = '60px';
+      demoDiv.after(logDiv);
+    }
+    logDiv.innerHTML = `<div class="log-line"><span class="${cls}">${msg}</span></div>`;
+  });
+});
+</script>
+</body>
+</html>

@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AsyncStorage - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:12px 14px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #f9e2af, #fab387); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:8px; padding:7px 14px; font-size:12px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#fab387; color:#1e1e2e; }
+    .btn-p:hover { background:#f9e2af; }
+    .btn-s { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+    .btn-s:hover { background:#45475a; }
+    .btn-danger { background:#f38ba820; color:#f38ba8; border:1px solid #f38ba8; }
+    .btn-danger:hover { background:#f38ba830; }
+
+    .input-field { background:#11111b; border:1px solid #45475a; border-radius:8px; padding:8px 12px; color:#cdd6f4; font-size:13px; width:100%; outline:none; }
+    .input-field:focus { border-color:#fab387; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+    .hl { border-left:3px solid #fab387; padding-left:10px; background:rgba(250,179,135,0.08); }
+
+    .storage-row { display:flex; align-items:center; gap:8px; padding:8px 10px; border-radius:8px; background:#11111b; border:1px solid #313244; margin-bottom:4px; }
+    .storage-row .key { color:#fab387; font-family:monospace; font-size:11px; min-width:80px; }
+    .storage-row .val { color:#a6adc8; font-family:monospace; font-size:11px; word-break:break-all; flex:1; }
+    .storage-row .del { color:#585b70; cursor:pointer; font-size:13px; }
+    .storage-row .del:hover { color:#f38ba8; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      React Native APIs
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">AsyncStorage</span>
+    </h1>
+    <p class="text-[#a6adc8]">Simple <span class="text-[#fab387]">key-value</span> persistent storage. Like localStorage for React Native.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">AsyncStorage Lab</span>
+            <span id="storageCount" class="text-xs text-[#585b70]">0 keys</span>
+          </div>
+          <div class="body-scroll" id="phoneBody">
+
+            <!-- Add key-value -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4 mb-3">
+              <div class="text-sm font-semibold mb-2">Set Item</div>
+              <div class="flex gap-2 mb-2">
+                <input id="keyInput" class="input-field" placeholder="Key" value="username" style="flex:1">
+                <input id="valInput" class="input-field" placeholder="Value" value="alice" style="flex:1">
+              </div>
+              <div class="flex gap-2">
+                <button id="setBtn" class="btn btn-p flex-1"><i class="fas fa-save mr-1"></i> Save</button>
+                <button id="setObjBtn" class="btn btn-s"><i class="fas fa-box mr-1"></i> Save Object</button>
+              </div>
+            </div>
+
+            <!-- Get by key -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4 mb-3">
+              <div class="text-sm font-semibold mb-2">Get Item</div>
+              <div class="flex gap-2">
+                <input id="getInput" class="input-field" placeholder="Enter key" value="username" style="flex:1">
+                <button id="getBtn" class="btn btn-s"><i class="fas fa-search mr-1"></i> Get</button>
+              </div>
+              <div id="getResult" class="text-xs text-[#6c7086] mt-2 font-mono">→ null</div>
+            </div>
+
+            <!-- All stored keys -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold">Stored Items</span>
+                <div class="flex gap-1">
+                  <button id="clearBtn" class="btn btn-danger" style="padding:4px 10px;font-size:10px"><i class="fas fa-trash mr-1"></i> Clear All</button>
+                </div>
+              </div>
+              <div id="storageList">
+                <div class="text-xs text-[#6c7086]">No items stored.</div>
+              </div>
+            </div>
+
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">API Reference</h3>
+          <div class="space-y-1 text-xs font-mono">
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#fab387]">await</span> <span class="text-[#89b4fa]">setItem</span>(key, value) <span class="text-[#6c7086]">// string only</span></div>
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#fab387]">await</span> <span class="text-[#89b4fa]">getItem</span>(key) <span class="text-[#6c7086]">// → string | null</span></div>
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#fab387]">await</span> <span class="text-[#89b4fa]">removeItem</span>(key)</div>
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#fab387]">await</span> <span class="text-[#89b4fa]">clear</span>() <span class="text-[#6c7086]">// removes everything</span></div>
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#fab387]">await</span> <span class="text-[#89b4fa]">getAllKeys</span>() <span class="text-[#6c7086]">// → string[]</span></div>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Storing Objects</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed">
+<span class="text-[#6c7086]">// AsyncStorage only stores strings</span>
+<span class="text-[#6c7086]">// Use JSON.stringify / JSON.parse</span>
+
+<span class="text-[#6c7086]">// Save</span>
+<span class="text-[#fab387">await</span> <span class="text-[#89b4fa]">setItem</span>(<span class="text-[#a6e3a1]">'user'</span>, JSON.stringify({
+  name: <span class="text-[#a6e3a1]">'Alice'</span>,
+  age: 25
+}));
+
+<span class="text-[#6c7086]">// Read</span>
+<span class="text-[#cba6f7">const</span> raw = <span class="text-[#fab387">await</span> <span class="text-[#89b4fa]">getItem</span>(<span class="text-[#a6e3a1]">'user'</span>);
+<span class="text-[#cba6f7">const</span> user = raw ? JSON.parse(raw) : null;</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Important:</span> All methods are <strong>async</strong>. Always use <code>await</code>. AsyncStorage is global — data persists even after app restart. Max storage varies by platform (~6MB on Android).
+        </div>
+      </div>
+    </section>
+
+    <!-- === CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#fab387]"></i> Minimal Example
+      </h2>
+      <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+        <div class="px-5 py-2.5 bg-[#181825] border-b border-[#313244] flex items-center gap-2 text-sm text-[#6c7086]">
+          <i class="fas fa-file-alt"></i> App.tsx
+        </div>
+        <pre class="p-5 text-sm font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#cba6f7">import</span> AsyncStorage <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'@react-native-async-storage/async-storage'</span>;
+
+<span class="text-[#6c7086]">// Save a string</span>
+<span class="text-[#cba6f7">await</span> <span class="text-[#89b4fa]">AsyncStorage.setItem</span>(<span class="text-[#a6e3a1]">'username'</span>, <span class="text-[#a6e3a1]">'alice'</span>);
+
+<span class="text-[#6c7086]">// Read it back</span>
+<span class="text-[#cba6f7">const</span> name = <span class="text-[#cba6f7">await</span> <span class="text-[#89b4fa]">AsyncStorage.getItem</span>(<span class="text-[#a6e3a1]">'username'</span>);
+<span class="text-[#6c7086]">// name = 'alice'</span>
+
+<span class="text-[#6c7086]">// Save an object</span>
+<span class="text-[#fab387">await</span> <span class="text-[#89b4fa]">AsyncStorage.setItem</span>(<span class="text-[#a6e3a1]">'user'</span>, JSON.stringify({
+  name: <span class="text-[#a6e3a1]">'Alice'</span>,
+  age: 25
+}));
+
+<span class="text-[#6c7086]">// Read object</span>
+<span class="text-[#cba6f7">const</span> raw = <span class="text-[#cba6f7">await</span> <span class="text-[#89b4fa]">AsyncStorage.getItem</span>(<span class="text-[#a6e3a1]">'user'</span>);
+<span class="text-[#cba6f7">const</span> user = raw ? <span class="text-[#89b4fa]">JSON.parse</span>(raw) : null;
+
+<span class="text-[#6c7086]">// Delete</span>
+<span class="text-[#cba6f7">await</span> <span class="text-[#89b4fa]">AsyncStorage.removeItem</span>(<span class="text-[#a6e3a1]">'username'</span>);
+
+<span class="text-[#6c7086]">// Clear everything</span>
+<span class="text-[#cba6f7">await</span> <span class="text-[#89b4fa]">AsyncStorage.clear</span>();</pre>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70">
+      <a href="https://react-native-async-storage.github.io/async-storage/" target="_blank" class="hover:text-[#fab387] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> AsyncStorage Docs</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      // In-memory storage simulation
+      const store = {
+        username: 'alice',
+        theme: 'dark',
+        'user-settings': JSON.stringify({ notifications: true, language: 'en' }),
+        todos: JSON.stringify(['Buy milk', 'Learn RN', 'Build app'])
+      };
+
+      const storageList = document.getElementById('storageList');
+      const storageCount = document.getElementById('storageCount');
+      const keyInput = document.getElementById('keyInput');
+      const valInput = document.getElementById('valInput');
+      const getInput = document.getElementById('getInput');
+      const getResult = document.getElementById('getResult');
+
+      function renderStorage() {
+        const keys = Object.keys(store);
+        storageCount.textContent = keys.length + ' key' + (keys.length !== 1 ? 's' : '');
+
+        if (keys.length === 0) {
+          storageList.innerHTML = '<div class="text-xs text-[#6c7086]">No items stored.</div>';
+          return;
+        }
+
+        storageList.innerHTML = keys.map(k => {
+          let display = store[k];
+          let isJson = false;
+          try { JSON.parse(display); isJson = true; } catch(e) {}
+          if (isJson) display = '<span class="text-[#a6e3a1]">' + display + '</span>';
+          return `
+            <div class="storage-row">
+              <span class="key">${k}</span>
+              <span class="val">${display}</span>
+              <span class="del" data-del="${k}"><i class="fas fa-times"></i></span>
+            </div>
+          `;
+        }).join('');
+
+        storageList.querySelectorAll('.del').forEach(el => {
+          el.addEventListener('click', () => {
+            const key = el.dataset.del;
+            delete store[key];
+            renderStorage();
+            getResult.textContent = '→ removed: ' + key;
+          });
+        });
+      }
+
+      document.getElementById('setBtn').addEventListener('click', () => {
+        const k = keyInput.value.trim();
+        const v = valInput.value;
+        if (!k) return;
+        store[k] = v;
+        renderStorage();
+        getInput.value = k;
+        getResult.textContent = '→ saved: ' + v;
+      });
+
+      document.getElementById('setObjBtn').addEventListener('click', () => {
+        const k = keyInput.value.trim() || 'user';
+        const obj = { name: valInput.value || 'Alice', age: 25, time: Date.now() };
+        store[k] = JSON.stringify(obj);
+        renderStorage();
+        getResult.textContent = '→ object saved under "' + k + '"';
+      });
+
+      document.getElementById('getBtn').addEventListener('click', () => {
+        const k = getInput.value.trim();
+        if (!k) { getResult.textContent = '→ enter a key'; return; }
+        if (k in store) {
+          let val = store[k];
+          try { val = JSON.parse(val); val = JSON.stringify(val, null, 0); } catch(e) {}
+          getResult.textContent = '→ ' + val;
+        } else {
+          getResult.textContent = '→ null (key not found)';
+        }
+      });
+
+      document.getElementById('clearBtn').addEventListener('click', () => {
+        Object.keys(store).forEach(k => delete store[k]);
+        renderStorage();
+        getResult.textContent = '→ storage cleared';
+      });
+
+      renderStorage();
+    })();
+  </script>
+</body>
+</html>

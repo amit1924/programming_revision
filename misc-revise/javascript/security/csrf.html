@@ -1,0 +1,510 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CSRF · Cross-Site Request Forgery</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--radius:8px;--orange:#f8bd7f;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--orange)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+nav .tag{font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(248,189,127,.2);color:var(--orange);margin-left:auto}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.78rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .danger{color:var(--red);font-weight:700}
+
+.flow-scene{position:relative;background:var(--bg);border-radius:var(--radius);padding:20px;margin:14px 0;border:1px solid var(--surface2);min-height:220px}
+.flow-scene .site{position:absolute;padding:12px 18px;border-radius:var(--radius);text-align:center;font-size:.82rem;font-weight:600;transition:.3s}
+.flow-scene .site label{display:block;font-weight:400;font-size:.7rem;color:var(--muted);margin-top:2px}
+.flow-scene .bank{border:2px solid var(--blue);background:rgba(137,180,250,.08);top:20px;left:20px;width:160px}
+.flow-scene .evil{border:2px solid var(--red);background:rgba(243,139,168,.08);top:20px;right:20px;width:160px}
+.flow-scene .user-site{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);border:2px solid var(--yellow);background:rgba(249,226,175,.08);width:160px}
+.flow-scene .arrow-line{position:absolute;font-size:1.2rem;color:var(--muted);transition:.3s}
+.flow-scene .arrow-line.active{color:var(--red);font-weight:700}
+
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.danger{background:var(--red);color:white}
+.btn.danger:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}
+.btn.outline:hover{background:var(--surface2)}
+.btn.blue{background:var(--blue);color:#0f0f17}
+.btn.green{background:var(--green);color:#0f0f17}
+
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.72rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+
+.toggle-group{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--blue);color:#0f0f17}
+
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+.demo-box{min-height:60px;padding:14px;background:var(--bg);border-radius:6px;border:1px dashed var(--surface2);margin:8px 0;font-size:.85rem}
+.demo-box.csrf-hit{border-color:var(--red);background:rgba(243,139,168,.05)}
+
+.csrf-step{padding:12px 14px;border-radius:6px;margin:6px 0;background:var(--bg);border:1px solid var(--surface2);display:flex;align-items:center;gap:12px;transition:.3s;font-size:.84rem}
+.csrf-step .num{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0}
+.csrf-step.active{background:rgba(243,139,168,.06);border-color:var(--red)}
+.csrf-step.active .num{background:var(--red);color:white}
+.csrf-step.done .num{background:var(--green);color:white}
+.csrf-step.fail .num{background:var(--muted);color:var(--bg)}
+
+.payload-box{background:#0a0a14;border-radius:6px;padding:12px;font-family:monospace;font-size:.76rem;border:1px solid var(--surface2);margin:8px 0;line-height:1.6;overflow-x:auto}
+
+.form-preview{padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin:8px 0}
+.form-preview .hidden-input{color:var(--red);font-weight:700}
+
+.defense-card{border-top:3px solid var(--green);padding:16px;background:var(--bg);border-radius:var(--radius);margin:10px 0}
+.defense-card h4{color:var(--green);margin-bottom:6px}
+.defense-card p{font-size:.82rem;color:var(--muted)}
+
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 0}
+.flow-node{background:var(--surface2);padding:8px 14px;border-radius:var(--radius);font-size:.8rem;text-align:center}
+.flow-node.attacker{background:var(--red);color:white}
+.flow-node.victim{background:var(--yellow);color:#0f0f17}
+.flow-node.server{background:var(--blue);color:#0f0f17}
+.flow-node.green{background:var(--green);color:#0f0f17}
+.flow-arrow{color:var(--muted);font-size:1rem}
+
+@media(max-width:600px){
+  .flow-scene{min-height:300px}
+  .flow-scene .site{position:static;display:block;margin:8px auto;width:auto;max-width:200px}
+  .flow-scene .arrow-line{display:none}
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>CSRF</span> · Cross-Site Request Forgery</div>
+  <div class="crumbs"><a href="index.html">SECURITY</a> &rsaquo; CSRF</div>
+  <div class="tag">High risk</div>
+</nav>
+
+<div class="container">
+
+<!-- INTRO -->
+<div class="section-title"><span class="num">1</span> What is CSRF?</div>
+<div class="grid2">
+  <div class="card">
+    <p><strong>Cross-Site Request Forgery (CSRF)</strong> tricks an authenticated user into executing unintended actions on a trusted site. The attack exploits the fact that <strong>browsers automatically send cookies</strong> with every request to a domain.</p>
+    <div class="flow">
+      <div class="flow-node victim">&#128100; Victim (logged into bank.com)</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node attacker" style="background:var(--red);color:white">&#128520; Evil.com</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node server" style="background:var(--blue);color:white">&#127974; Bank.com (auto-sends cookie)</div>
+    </div>
+  </div>
+  <div class="card">
+    <p><strong>Key insight:</strong> The attacker never sees the cookie or response. They just <strong>trigger a request</strong> — the browser does the rest.</p>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2;margin-top:6px">
+      <li>&#10060; Cookie sent automatically</li>
+      <li>&#10060; Server sees valid session = trusts request</li>
+      <li>&#10060; Attacker doesn't need the cookie value</li>
+      <li>&#10003; <strong>Fix:</strong> CSRF tokens + SameSite cookies</li>
+    </ul>
+  </div>
+</div>
+
+<!-- THE SCENE (visual) -->
+<div class="section-title"><span class="num">2</span> The Attack Scene · Animated</div>
+<div class="card">
+  <div class="flow-scene" id="csrfScene">
+    <div class="site bank" id="bankSite" style="top:20px;left:20px">
+      &#127974; bank.com<br>
+      <label>Victim is logged in</label>
+      <div class="cookie-display" style="font-size:.7rem;margin-top:4px">
+        <span style="display:inline-block;padding:2px 6px;background:rgba(249,226,175,.1);border-radius:10px;border:1px solid rgba(249,226,175,.2)">&#127850; session=abc</span>
+      </div>
+    </div>
+    <div class="site evil" id="evilSite" style="top:20px;right:20px">
+      &#127761; evil.com<br>
+      <label>Attacker's page</label>
+      <div style="font-size:.7rem;margin-top:4px">Contains hidden form &#8594; bank.com/transfer</div>
+    </div>
+    <div class="user-site" id="userSite" style="bottom:20px;left:50%;transform:translateX(-50%)">
+      &#128100; Victim<br>
+      <label>Visits evil.com while logged into bank</label>
+    </div>
+    <!-- Arrow lines (positioned absolutely) -->
+    <div class="arrow-line" id="arrow1" style="top:70px;left:190px;right:190px;text-align:center">
+      &#8595; visits &#8595;
+    </div>
+    <div class="arrow-line" id="arrow2" style="top:180px;left:35%;text-align:center">
+      &#8595; auto-submits form &#8595;
+    </div>
+    <div class="arrow-line" id="arrow3" style="top:180px;left:65%;text-align:center">
+      &#8593; transfers $1000 &#8593;
+    </div>
+    <div class="arrow-line" id="arrow4" style="top:250px;left:10%;text-align:center;font-size:.7rem;color:var(--muted)">
+      (cookie auto-sent with request)
+    </div>
+  </div>
+  <div class="toggle-group" style="margin-top:4px">
+    <button class="btn danger" onclick="animateCSRF()">&#9654; Play Attack</button>
+    <button class="btn outline" onclick="resetCSRFScene()">Reset</button>
+  </div>
+  <div id="csrfSceneLog" style="font-family:monospace;font-size:.76rem;min-height:30px;padding:8px;background:var(--bg);border-radius:4px;border:1px solid var(--surface2);margin-top:8px">
+    // Click "Play Attack" to see the flow
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<div class="section-title"><span class="num">3</span> How a CSRF Attack Works</div>
+<div class="card">
+  <div id="csrfSteps">
+    <div class="csrf-step" data-cs="1">
+      <div class="num">1</div>
+      <div><strong>Victim logs into bank.com</strong><br><span style="color:var(--muted);font-size:.78rem">Server sets a session cookie. Browser stores it.</span></div>
+    </div>
+    <div class="csrf-step" data-cs="2">
+      <div class="num">2</div>
+      <div><strong>Victim visits evil.com (in another tab)</strong><br><span style="color:var(--muted);font-size:.78rem">Attacker page loads — bank.com cookie is still valid.</span></div>
+    </div>
+    <div class="csrf-step" data-cs="3">
+      <div class="num">3</div>
+      <div><strong>Evil.com auto-submits a form to bank.com</strong><br><span style="color:var(--muted);font-size:.78rem">Hidden form: <code>&lt;form action="https://bank.com/transfer" method="POST"&gt;</code></span></div>
+    </div>
+    <div class="csrf-step" data-cs="4">
+      <div class="num">4</div>
+      <div><strong>Browser auto-attaches the cookie</strong><br><span style="color:var(--muted);font-size:.78rem">Cookie for bank.com is sent automatically with the request.</span></div>
+    </div>
+    <div class="csrf-step" data-cs="5">
+      <div class="num">5</div>
+      <div><strong>Bank.com sees valid session → executes transfer</strong><br><span style="color:var(--muted);font-size:.78rem">Server thinks the victim authorized the transfer. Money is gone!</span></div>
+    </div>
+  </div>
+  <div class="toggle-group" style="margin-top:10px">
+    <button class="btn danger" onclick="animateCSRFSteps()">&#9654; Walk Through Steps</button>
+    <button class="btn outline" onclick="resetCSRFSteps()">Reset</button>
+  </div>
+</div>
+
+<!-- THE HIDDEN FORM -->
+<div class="section-title"><span class="num">4</span> The Malicious Form</div>
+<div class="grid2">
+  <div class="card">
+    <h3>&#128520; The hidden form on evil.com</h3>
+    <div class="payload-box">
+<span style="color:var(--muted)">&lt;!-- Victim never sees this --&gt;</span>
+<span style="color:var(--blue)">&lt;form</span> <span class="danger">action=<span class="string">"https://bank.com/transfer"</span></span>
+      <span class="danger">method=<span class="string">"POST"</span></span> <span style="color:var(--blue)">id=<span class="string">"csrf-form"</span>&gt;</span>
+  <span style="color:var(--blue)">&lt;input</span> <span class="danger">name=<span class="string">"toAccount"</span></span> <span class="danger">value=<span class="string">"attacker-123"</span></span><span style="color:var(--blue)">&gt;</span>
+  <span style="color:var(--blue)">&lt;input</span> <span class="danger">name=<span class="string">"amount"</span></span> <span class="danger">value=<span class="string">"1000"</span></span><span style="color:var(--blue)">&gt;</span>
+  <span style="color:var(--blue)">&lt;input</span> <span class="danger">type=<span class="string">"hidden"</span></span><span style="color:var(--blue)">&gt;</span>
+<span style="color:var(--blue)">&lt;/form&gt;</span>
+<span style="color:var(--blue)">&lt;script&gt;</span>
+  document.getElementById(<span class="string">'csrf-form'</span>).submit();
+<span style="color:var(--blue)">&lt;/script&gt;</span>
+    </div>
+    <p style="font-size:.78rem;color:var(--muted)">The form auto-submits when the page loads. The victim just sees an innocent-looking page.</p>
+  </div>
+  <div class="card">
+    <h3>&#9654; Demo: The invisible attack</h3>
+    <p style="font-size:.82rem">Click the button below to simulate what evil.com does — submitting a hidden request to a vulnerable endpoint.</p>
+    <div class="demo-box" id="csrfDemoBox">
+      <span style="color:var(--muted)">// Ready. Click to simulate CSRF.</span>
+    </div>
+    <div style="display:flex;gap:6px;margin-top:8px">
+      <button class="btn danger" onclick="simulateCSRF()">&#128520; Trigger CSRF</button>
+      <button class="btn outline" onclick="resetCSRFDemo()">Reset</button>
+    </div>
+    <div id="csrfTransferLog" style="font-family:monospace;font-size:.76rem;padding:8px;background:var(--bg);border-radius:4px;margin-top:8px;min-height:40px;border:1px solid var(--surface2)"></div>
+  </div>
+</div>
+
+<!-- PREVENTION -->
+<div class="section-title"><span class="num">5</span> Prevention · The Defenses</div>
+
+<div class="grid3">
+  <div class="defense-card" style="border-top-color:var(--green)">
+    <h4>1. CSRF Tokens</h4>
+    <p>Server embeds a unique, unpredictable token in the page/form. Server validates the token on every state-changing request.</p>
+    <div class="code" style="font-size:.72rem">
+<span class="comment">// Server sends token in form:</span>
+<span class="blue">&lt;input</span> <span class="danger">type=<span class="string">"hidden"</span></span>
+  name=<span class="string">"_csrf"</span>
+  value=<span class="string">"aB3dF9..."</span><span class="blue">&gt;</span>
+
+<span class="comment">// Server validates:</span>
+<span class="keyword">if</span> (req.body._csrf !== session.csrf) {
+  <span class="keyword">throw</span> <span class="string">'CSRF attack!'</span>;
+}
+    </div>
+  </div>
+  <div class="defense-card" style="border-top-color:var(--green)">
+    <h4>2. SameSite Cookies</h4>
+    <p>Browser tells whether to send cookies with cross-site requests.</p>
+    <div class="code" style="font-size:.72rem">
+Set-Cookie: session=abc;
+  <span style="color:var(--green)">SameSite=Strict</span>
+<span class="comment">// Cookie NOT sent for POST from evil.com</span>
+<span class="comment">// (cross-site request)</span>
+
+Set-Cookie: session=abc;
+  <span style="color:var(--green)">SameSite=Lax</span>
+<span class="comment">// Sent for top-level GET navigations</span>
+<span class="comment">// NOT sent for POST forms</span>
+    </div>
+  </div>
+  <div class="defense-card" style="border-top-color:var(--green)">
+    <h4>3. Referer / Origin Header</h4>
+    <p>Check the <code>Origin</code> or <code>Referer</code> header to confirm the request came from your site.</p>
+    <div class="code" style="font-size:.72rem">
+<span class="keyword">const</span> origin = req.headers.origin;
+<span class="keyword">if</span> (origin !== <span class="string">'https://bank.com'</span>) {
+  <span class="keyword">return</span> res.status(403);
+}
+<span class="comment">// Blocks requests from evil.com</span>
+    </div>
+  </div>
+</div>
+
+<!-- SameSite in depth -->
+<div class="section-title"><span class="num">6</span> SameSite Values · Visualized</div>
+<div class="card">
+  <div class="grid3">
+    <div style="padding:14px;border-radius:var(--radius);border:2px solid var(--green);text-align:center">
+      <h4 style="color:var(--green)">SameSite=Strict</h4>
+      <div style="font-size:2rem;margin:8px 0">&#128737;</div>
+      <p style="font-size:.8rem">Cookie never sent for cross-site requests.</p>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:8px">
+        &#10003; Most secure<br>
+        &#10007; Breaks "social login" links
+      </div>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);border:2px solid var(--yellow);text-align:center">
+      <h4 style="color:var(--yellow)">SameSite=Lax</h4>
+      <div style="font-size:2rem;margin:8px 0">&#128274;</div>
+      <p style="font-size:.8rem">Cookie sent for top-level GET navigations (but not POST/CORS).</p>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:8px">
+        &#10003; Good balance<br>
+        &#10003; Prevents CSRF on state changes<br>
+        &#10003; Links still work
+      </div>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);border:2px solid var(--red);text-align:center">
+      <h4 style="color:var(--red)">SameSite=None</h4>
+      <div style="font-size:2rem;margin:8px 0">&#127760;</div>
+      <p style="font-size:.8rem">Cookie sent with all cross-site requests. <strong>Must be Secure</strong> (HTTPS only).</p>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:8px">
+        &#9888; Vulnerable to CSRF<br>
+        &#10003; Required for third-party widgets
+      </div>
+    </div>
+  </div>
+
+  <table style="margin-top:14px">
+    <tr><th>SameSite value</th><th>Link from evil.com</th><th>Form POST from evil.com</th><th>fetch/iframe from evil.com</th></tr>
+    <tr><td><strong style="color:var(--green)">Strict</strong></td><td><span class="badge red">&#10007; No cookie</span></td><td><span class="badge red">&#10007; No cookie</span></td><td><span class="badge red">&#10007; No cookie</span></td></tr>
+    <tr><td><strong style="color:var(--yellow)">Lax</strong></td><td><span class="badge green">&#10003; Sent</span></td><td><span class="badge red">&#10007; No cookie</span></td><td><span class="badge red">&#10007; No cookie</span></td></tr>
+    <tr><td><strong style="color:var(--red)">None</strong></td><td><span class="badge green">&#10003; Sent</span></td><td><span class="badge green">&#10003; Sent</span></td><td><span class="badge green">&#10003; Sent</span></td></tr>
+  </table>
+</div>
+
+<!-- CSRF TOKEN FLOW -->
+<div class="section-title"><span class="num">7</span> CSRF Token Flow</div>
+<div class="card">
+  <div class="flow">
+    <div class="flow-node server" style="background:var(--blue);color:white">1. Server generates token</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node green">2. Embeds in HTML form</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node" style="background:var(--yellow);color:#0f0f17">3. User submits form</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node server" style="background:var(--blue);color:white">4. Server validates token</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node green">5. Match → execute action</div>
+  </div>
+  <div class="grid2" style="margin-top:10px">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">With CSRF token:</p>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">// POST /transfer (with valid token)</span>
+POST /transfer HTTP/1.1
+Cookie: session=abc
+Content-Type: application/x-www-form-urlencoded
+
+toAccount=attacker-123&amount=1000
+<span style="color:var(--green)">&_csrf=ab3dF9kL2z</span>  <span class="comment">&#10003; Server validates</span>
+      </div>
+      <div style="font-size:.82rem;color:var(--green);margin-top:4px">&#10003; Request passes — token matched!</div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Without CSRF token (evil.com):</p>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">// POST /transfer (no token, from evil.com)</span>
+POST /transfer HTTP/1.1
+Cookie: session=abc
+Origin: https://evil.com
+
+toAccount=attacker-123&amount=1000
+<span style="color:var(--red)">// No _csrf token!</span>
+      </div>
+      <div style="font-size:.82rem;color:var(--red);margin-top:4px">&#10007; Request rejected — missing CSRF token!</div>
+    </div>
+  </div>
+</div>
+
+<!-- COMPARISON -->
+<div class="section-title"><span class="num">8</span> CSRF vs XSS</div>
+<div class="card">
+  <table>
+    <tr><th>Feature</th><th>CSRF</th><th>XSS</th></tr>
+    <tr><td>Attacker sees response</td><td><span class="badge red">No</span> (blind request)</td><td><span class="badge red">Yes</span> (reads data)</td></tr>
+    <tr><td>Needs user authentication</td><td><span class="badge yellow">Yes</span> (valid session)</td><td><span class="badge red">No</span> (any visitor)</td></tr>
+    <tr><td>Steals data</td><td><span class="badge red">No</span> (can't read)</td><td><span class="badge red">Yes</span> (reads everything)</td></tr>
+    <tr><td>Exploits</td><td>Cookie auto-send behavior</td><td>Unsafe rendering of input</td></tr>
+    <tr><td>Primary defense</td><td>CSRF tokens + SameSite cookies</td><td>Output encoding + CSP + HttpOnly</td></tr>
+  </table>
+</div>
+
+<!-- CHECKLIST -->
+<div class="section-title"><span class="num">9</span> CSRF Prevention Checklist</div>
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3 style="color:var(--green)">&#10003; Must Do</h3>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+      <li>Use <strong>CSRF tokens</strong> for all state-changing requests (POST, PUT, DELETE)</li>
+      <li>Set <strong>SameSite=Lax</strong> or <strong>SameSite=Strict</strong> on session cookies</li>
+      <li>Use <strong>custom request headers</strong> for AJAX (not auto-sent cross-origin)</li>
+      <li>Validate <strong>Origin/Referer</strong> headers server-side</li>
+      <li>Use <strong>POST</strong> for state changes (not GET)</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3 style="color:var(--red)">&#10007; Common Mistakes</h3>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+      <li>Relying only on <strong>POST</strong> (attacker can submit forms)</li>
+      <li>Using <strong>GET</strong> for state-changing actions</li>
+      <li>Disabling SameSite without understanding the risk</li>
+      <li>No CSRF token on <strong>login forms</strong> (attacker can log you in)</li>
+      <li>Accepting requests without <strong>Origin</strong> check</li>
+    </ul>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// =====================================================
+// CSRF SCENE ANIMATION
+// =====================================================
+function animateCSRF() {
+  const log = document.getElementById('csrfSceneLog');
+  const steps = [
+    {msg: '&#128100; Victim visits evil.com (bank.com tab still open)', delay: 0},
+    {msg: '&#128279; evil.com page loads — hidden form ready', delay: 800},
+    {msg: '&#128520; Hidden form auto-submits to bank.com/transfer', delay: 1600},
+    {msg: '&#127850; Browser auto-attaches bank.com cookie to request', delay: 2400},
+    {msg: '&#128176; bank.com sees valid session — transfers $1000!', delay: 3200},
+    {msg: '&#10007; Victim is charged. Attacker wins.', delay: 4000},
+  ];
+  log.innerHTML = '';
+  steps.forEach((s,i)=>{
+    setTimeout(()=>{
+      log.innerHTML += `<div style="color:${i===4?'var(--red)':'var(--muted)'}">${s.msg}</div>\n`;
+      // Highlight sites
+      const bank = document.getElementById('bankSite');
+      const evil = document.getElementById('evilSite');
+      const user = document.getElementById('userSite');
+      bank.style.borderColor = i>=3 ? 'var(--green)' : 'var(--blue)';
+      evil.style.borderColor = i>=2 ? 'var(--red)' : 'var(--red)';
+    }, s.delay);
+  });
+}
+
+function resetCSRFScene() {
+  document.getElementById('csrfSceneLog').innerHTML = '// Click "Play Attack" to see the flow';
+  document.getElementById('bankSite').style.borderColor = 'var(--blue)';
+  document.getElementById('evilSite').style.borderColor = 'var(--red)';
+}
+
+// =====================================================
+// CSRF STEPS WALKTHROUGH
+// =====================================================
+let csTimer = null;
+function animateCSRFSteps() {
+  clearInterval(csTimer);
+  const steps = document.querySelectorAll('.csrf-step');
+  steps.forEach(s => s.className = 'csrf-step');
+  let i = 0;
+  steps[0].className = 'csrf-step active';
+  csTimer = setInterval(() => {
+    i++;
+    if (i >= steps.length) {
+      clearInterval(csTimer);
+      steps.forEach(s => s.className = 'csrf-step done');
+      return;
+    }
+    steps[i-1].className = 'csrf-step done';
+    steps[i].className = 'csrf-step active';
+  }, 1000);
+}
+
+function resetCSRFSteps() {
+  clearInterval(csTimer);
+  document.querySelectorAll('.csrf-step').forEach(s => s.className = 'csrf-step');
+}
+
+// =====================================================
+// CSRF DEMO
+// =====================================================
+function simulateCSRF() {
+  const box = document.getElementById('csrfDemoBox');
+  const log = document.getElementById('csrfTransferLog');
+  box.innerHTML = `<span style="color:var(--red)">&#128520; CSRF attack in progress...</span>`;
+  box.classList.add('csrf-hit');
+  log.innerHTML = `<span style="color:var(--muted)">[${new Date().toLocaleTimeString()}]</span> <span style="color:var(--red)">&#10007; POST https://bank.com/transfer</span>
+<span style="color:var(--muted)">  &#8594; Cookie: session=abc (auto-attached)</span>
+<span style="color:var(--muted)">  &#8594; Body: toAccount=attacker-123&amount=1000</span>
+<span style="color:var(--red)">  &#8594; STATUS 200: Transfer completed!</span>
+<span style="color:var(--red)">  &#8594; $1000 sent to attacker!</span>`;
+}
+
+function resetCSRFDemo() {
+  const box = document.getElementById('csrfDemoBox');
+  box.innerHTML = `<span style="color:var(--muted)">// Ready. Click to simulate CSRF.</span>`;
+  box.classList.remove('csrf-hit');
+  document.getElementById('csrfTransferLog').innerHTML = '';
+}
+
+// =====================================================
+// INIT
+// =====================================================
+</script>
+</body>
+</html>

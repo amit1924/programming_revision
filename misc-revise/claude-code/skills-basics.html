@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Skills Basics</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--subtext:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--coral:#f28fad;
+  --radius:12px;--transition:0.5s cubic-bezier(0.22,1,0.36,1);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#3a3a5c}
+
+/* Particles */
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.particle{position:absolute;border-radius:50%;opacity:0;animation:particleUp linear infinite}
+@keyframes particleUp{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:0.6}90%{opacity:0.6}100%{transform:translateY(-10vh) scale(1);opacity:0}}
+
+/* Hero */
+.hero{
+  position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:2rem;overflow:hidden;
+}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%, rgba(137,180,250,0.08) 0%, transparent 60%),
+             radial-gradient(ellipse at 80% 100%, rgba(166,227,161,0.05) 0%, transparent 50%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;padding:0.4rem 1rem;
+  background:rgba(137,180,250,0.1);border:1px solid rgba(137,180,250,0.2);
+  border-radius:100px;font-size:0.8rem;color:var(--blue);margin-bottom:1.5rem;
+  letter-spacing:0.5px;
+}
+.hero h1{
+  font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;
+  background:linear-gradient(135deg,var(--blue),var(--lavender),var(--pink));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:1rem;
+}
+.hero p{font-size:clamp(1rem,2vw,1.3rem);color:var(--subtext);max-width:600px;margin-bottom:2rem}
+.hero-arrow{width:32px;height:32px;border-right:2px solid var(--blue);border-bottom:2px solid var(--blue);transform:rotate(45deg);animation:bounce 2s infinite;opacity:0.5}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translate(0,0)}50%{transform:rotate(45deg) translate(8px,8px)}}
+
+/* Layout */
+.container{max-width:1000px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:1}
+
+/* Sections */
+.section{opacity:0;transform:translateY(50px);transition:opacity 0.8s ease,transform 0.8s ease;margin-bottom:6rem}
+.section.visible{opacity:1;transform:translateY(0)}
+.section-number{
+  display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;
+  border-radius:10px;font-size:0.85rem;font-weight:700;margin-bottom:1rem;
+}
+.section h2{
+  font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:1.5rem;line-height:1.3;
+  background:linear-gradient(135deg,var(--text),var(--lavender));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.section h3{font-size:1.15rem;font-weight:600;margin-bottom:0.75rem;color:var(--text)}
+.section p{color:var(--subtext);margin-bottom:1rem;font-size:0.95rem}
+
+/* Cards */
+.card{
+  background:var(--surface);border-radius:var(--radius);padding:1.5rem;
+  border:1px solid rgba(255,255,255,0.05);transition:var(--transition);
+}
+.card:hover{border-color:rgba(137,180,250,0.2);transform:translateY(-2px)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1.5rem}
+
+/* Code blocks / pre */
+.code-block{
+  background:#13132a;border-radius:var(--radius);padding:1.25rem;overflow-x:auto;
+  font-family:'JetBrains Mono','SF Mono','Fira Code',monospace;font-size:0.82rem;line-height:1.7;
+  border:1px solid rgba(255,255,255,0.06);position:relative;
+}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;
+  font-size:0.75rem;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;
+}
+.code-dots{display:flex;gap:6px}
+.code-dot{width:10px;height:10px;border-radius:50%}
+.code-dot.r{background:#ff5f56}.code-dot.y{background:#ffbd2e}.code-dot.g{background:#27c93f}
+.code-keyword{color:var(--pink)}.code-prop{color:var(--blue)}.code-str{color:var(--green)}
+.code-comment{color:var(--subtext);font-style:italic}.code-punct{color:var(--text)}
+.code-val{color:var(--peach)}.code-section{color:var(--yellow)}
+
+/* Buttons */
+.btn{
+  display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1.25rem;
+  border-radius:8px;border:none;font-size:0.85rem;font-weight:500;cursor:pointer;
+  transition:var(--transition);font-family:inherit;
+}
+.btn-primary{background:var(--blue);color:#0f0f17}.btn-primary:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,0.05);color:var(--text);border:1px solid rgba(255,255,255,0.08)}
+.btn-ghost:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15)}
+.btn-sm{padding:0.35rem 0.85rem;font-size:0.78rem}
+
+/* SVG Diagrams */
+.diagram{width:100%;max-width:700px;margin:1.5rem auto;display:block;overflow:visible}
+.diagram path.flow-line{fill:none;stroke-width:2;stroke-dasharray:8,4;animation:dashFlow 1s linear infinite}
+@keyframes dashFlow{to{stroke-dashoffset:-24}}
+.diagram circle.node{transition:r 0.3s ease,fill 0.3s ease;cursor:pointer}
+.diagram circle.node:hover{r:22}
+.diagram text.label{font-size:11px;fill:var(--text);font-family:system-ui;dominant-baseline:middle;text-anchor:middle}
+.pulse-ring{animation:pulseRing 2s ease-in-out infinite}
+@keyframes pulseRing{0%{opacity:0.6;r:8}50%{opacity:0;r:20}100%{opacity:0;r:20}}
+
+/* Interactive Toggle */
+.toggle-group{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.toggle-btn{
+  padding:0.5rem 1.1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.03);color:var(--subtext);cursor:pointer;font-size:0.82rem;
+  font-family:inherit;transition:var(--transition);
+}
+.toggle-btn.active{background:rgba(137,180,250,0.15);border-color:var(--blue);color:var(--blue)}
+.toggle-btn:hover:not(.active){background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12)}
+
+/* Table */
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.06)}
+table{width:100%;border-collapse:collapse;font-size:0.85rem}
+thead th{
+  text-align:left;padding:0.85rem 1rem;background:var(--surface2);
+  color:var(--subtext);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+tbody td{padding:0.75rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+tbody tr{transition:var(--transition);position:relative}
+tbody tr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 3px 3px 0;opacity:0;transition:var(--transition)}
+tbody tr:hover{background:rgba(255,255,255,0.03)}
+tbody tr:hover::before{opacity:1}
+.badge{
+  display:inline-block;padding:0.15rem 0.5rem;border-radius:100px;font-size:0.7rem;
+  font-weight:600;letter-spacing:0.3px;
+}
+
+/* Invocation Cards */
+.invocation-cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:1rem;margin-bottom:1.5rem}
+.invoke-card{
+  background:var(--surface);border:2px solid rgba(255,255,255,0.06);border-radius:var(--radius);
+  padding:1.25rem;text-align:center;cursor:pointer;transition:var(--transition);
+}
+.invoke-card:hover{transform:translateY(-3px)}
+.invoke-card.active{border-color:var(--blue);background:rgba(137,180,250,0.06)}
+.invoke-card .icon{font-size:1.8rem;margin-bottom:0.5rem;display:block}
+.invoke-card h4{font-size:0.95rem;font-weight:600;margin-bottom:0.25rem}
+.invoke-card p{font-size:0.8rem;color:var(--subtext);margin:0}
+
+/* Quiz */
+.quiz-options{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:0.5rem;margin-top:0.75rem}
+.quiz-opt{
+  padding:0.6rem 1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);
+  background:var(--surface);color:var(--text);cursor:pointer;font-size:0.82rem;
+  font-family:inherit;text-align:center;transition:var(--transition);
+}
+.quiz-opt:hover{border-color:var(--blue);background:rgba(137,180,250,0.06)}
+.quiz-opt.correct{background:rgba(166,227,161,0.15);border-color:var(--green);color:var(--green)}
+.quiz-opt.wrong{background:rgba(243,139,168,0.15);border-color:var(--red);color:var(--red)}
+
+/* Execution Log */
+.log-window{
+  background:#0a0a18;border-radius:var(--radius);padding:1rem;font-family:'JetBrains Mono','SF Mono',monospace;
+  font-size:0.8rem;line-height:1.8;border:1px solid rgba(255,255,255,0.06);min-height:200px;position:relative;
+}
+.log-line{opacity:0;transform:translateX(-10px);transition:opacity 0.3s,transform 0.3s;padding:2px 0}
+.log-line.visible{opacity:1;transform:translateX(0)}
+.log-line .ts{color:var(--subtext)}.log-line .ok{color:var(--green)}.log-line .info{color:var(--blue)}
+.log-line .warn{color:var(--yellow)}.log-line .err{color:var(--red)}
+.log-cursor::after{content:'\25A0';color:var(--green);animation:blink 1s step-end infinite;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+
+/* Skill location hierarchy */
+.hierarchy{
+  display:flex;flex-direction:column;align-items:center;gap:1rem;padding:1.5rem 0;
+}
+.h-layer{display:flex;align-items:center;gap:1rem;padding:0.75rem 1.5rem;border-radius:var(--radius);transition:var(--transition);cursor:pointer;width:100%;max-width:380px}
+.h-layer:hover{transform:scale(1.03)}
+.h-layer .rank{font-size:0.7rem;color:var(--subtext);min-width:20px;font-weight:700}
+.h-layer .name{font-size:0.9rem;font-weight:600;flex:1}
+.h-layer .desc{font-size:0.75rem;color:var(--subtext)}
+.h-arrow{color:var(--subtext);font-size:1.1rem;opacity:0.5}
+
+/* Step builder */
+.steps{display:flex;flex-direction:column;gap:0.75rem}
+.step{
+  padding:1rem;background:var(--surface);border-radius:var(--radius);
+  border-left:3px solid var(--surface2);cursor:pointer;transition:var(--transition);
+  border:1px solid rgba(255,255,255,0.04);border-left-width:3px;
+}
+.step:hover{transform:translateX(4px)}
+.step.active{border-left-color:var(--blue);background:rgba(137,180,250,0.06)}
+.step .step-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:6px;background:var(--surface2);font-size:0.75rem;font-weight:700;margin-right:0.5rem}
+.step.active .step-num{background:var(--blue);color:#0f0f17}
+.step .step-label{font-size:0.88rem;font-weight:500}
+.step .step-desc{font-size:0.8rem;color:var(--subtext);margin-top:0.3rem}
+
+/* Skill side-by-side layout */
+.skill-demo{display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem}
+@media(max-width:700px){.skill-demo{grid-template-columns:1fr}}
+
+/* Floating label highlight */
+.highlight-bar{display:inline-block;height:2px;border-radius:2px;transition:width 0.5s ease;width:0}
+.section.visible .highlight-bar{width:60px}
+
+/* Color helpers */
+.c-blue{color:var(--blue)}.c-green{color:var(--green)}.c-red{color:var(--red)}
+.c-yellow{color:var(--yellow)}.c-peach{color:var(--peach)}.c-teal{color:var(--teal)}
+.c-pink{color:var(--pink)}.c-lavender{color:var(--lavender)}.c-orange{color:var(--orange)}
+.bg-blue{background:var(--blue);color:#0f0f17}.bg-green{background:var(--green);color:#0f0f17}
+.bg-red{background:var(--red);color:#0f0f17}.bg-yellow{background:var(--yellow);color:#0f0f17}
+.bg-peach{background:var(--peach);color:#0f0f17}.bg-teal{background:var(--teal);color:#0f0f17}
+.bg-pink{background:var(--pink);color:#0f0f17}.bg-lavender{background:var(--lavender);color:#0f0f17}
+.bg-orange{background:var(--orange);color:#0f0f17}
+
+/* Utility */
+.mt-1{margin-top:1rem}
+.mb-1{margin-bottom:1rem}
+.flex{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap}
+.gap-1{gap:1rem}
+.text-center{text-align:center}
+.text-sm{font-size:0.85rem;color:var(--subtext)}
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<!-- HERO -->
+<section class="hero">
+  <div class="hero-badge">&#9670; Claude Code Guide</div>
+  <h1>Skills Basics</h1>
+  <p>Everything you need to know about SKILL.md — how skills work, where they live, and how to build your own.</p>
+  <div class="hero-arrow"></div>
+</section>
+
+<div class="container">
+
+<!-- SECTION 1: What is a Skill -->
+<section class="section" id="s1">
+  <div class="section-number" style="background:rgba(137,180,250,0.15);color:var(--blue)">01</div>
+  <h2>What is a Skill?</h2>
+  <p>A skill is a reusable instruction file (<code style="color:var(--blue)">SKILL.md</code>) that teaches Claude how to handle a specific task. Skills live in your project, your home directory, or in plugins.</p>
+
+  <svg class="diagram" viewBox="0 0 600 140">
+    <defs>
+      <marker id="arrowhead" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="var(--blue)"/>
+      </marker>
+      <marker id="arrowhead2" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="var(--green)"/>
+      </marker>
+      <linearGradient id="flowGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="var(--blue)"/>
+        <stop offset="100%" stop-color="var(--green)"/>
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <!-- Flow line -->
+    <path d="M 60 70 L 170 70" stroke="url(#flowGrad)" stroke-width="2" marker-end="url(#arrowhead)" class="flow-line"/>
+    <path d="M 230 70 L 340 70" stroke="url(#flowGrad)" stroke-width="2" marker-end="url(#arrowhead)" class="flow-line"/>
+    <path d="M 400 70 L 510 70" stroke="url(#flowGrad)" stroke-width="2" marker-end="url(#arrowhead2)" class="flow-line"/>
+
+    <!-- Nodes -->
+    <circle cx="40" cy="70" r="20" fill="var(--blue)" opacity="0.9" filter="url(#glow)"/>
+    <text x="40" y="70" class="label" fill="#0f0f17" font-weight="700">You</text>
+
+    <circle cx="200" cy="70" r="28" fill="var(--surface2)" stroke="var(--blue)" stroke-width="2"/>
+    <text x="200" y="67" class="label" fill="var(--blue)" font-size="9">/skill</text>
+    <text x="200" y="81" class="label" fill="var(--blue)" font-size="9">command</text>
+
+    <circle cx="370" cy="70" r="28" fill="var(--green)" opacity="0.15"/>
+    <circle cx="370" cy="70" r="20" fill="var(--green)" opacity="0.8" filter="url(#glow)"/>
+    <text x="370" y="70" class="label" fill="#0f0f17" font-weight="700">Claude</text>
+
+    <rect x="520" y="48" width="70" height="44" rx="8" fill="var(--surface)" stroke="var(--green)" stroke-width="1.5"/>
+    <text x="555" y="67" class="label" fill="var(--green)" font-size="8">SKILL.md</text>
+    <text x="555" y="81" class="label" fill="var(--green)" font-size="8">loaded</text>
+
+    <!-- Response arrow -->
+    <path d="M 555 92 L 555 115 L 40 115 L 40 90" stroke="var(--peach)" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#arrowhead)"/>
+    <text x="290" y="112" class="label" fill="var(--peach)" font-size="8">skill instructions injected into prompt</text>
+  </svg>
+</section>
+
+<!-- SECTION 2: SKILL.md Anatomy -->
+<section class="section" id="s2">
+  <div class="section-number" style="background:rgba(166,227,161,0.15);color:var(--green)">02</div>
+  <h2>SKILL.md Anatomy</h2>
+  <p>A SKILL.md file has two parts: <strong>frontmatter</strong> (YAML metadata) and <strong>body</strong> (markdown instructions).</p>
+
+  <div class="toggle-group" id="anatomyToggle">
+    <button class="toggle-btn active" data-anatomy="minimal">Minimal</button>
+    <button class="toggle-btn" data-anatomy="full">Full</button>
+  </div>
+
+  <div class="skill-demo">
+    <div style="display:flex;flex-direction:column;gap:0.5rem">
+      <div style="font-size:0.8rem;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px">File Tree</div>
+      <div style="background:var(--surface);border-radius:var(--radius);padding:1rem;border:1px solid rgba(255,255,255,0.06);flex:1">
+        <div class="flex" style="padding:0.25rem 0"><span style="color:var(--yellow)">&#128193;</span><span style="color:var(--subtext)">my-project/</span></div>
+        <div class="flex" style="padding:0.25rem 0;padding-left:1.5rem"><span style="color:var(--yellow)">&#128193;</span><span style="color:var(--subtext)">.claude/</span></div>
+        <div class="flex" style="padding:0.25rem 0;padding-left:3rem;background:rgba(137,180,250,0.08);border-radius:4px;border-left:2px solid var(--blue)">
+          <span style="color:var(--blue)">&#128196;</span><span style="color:var(--blue);font-weight:600">SKILL.md</span>
+          <span style="font-size:0.7rem;color:var(--subtext);margin-left:auto">&#9679; active</span>
+        </div>
+        <div class="flex" style="padding:0.25rem 0;padding-left:1.5rem"><span style="color:var(--yellow)">&#128193;</span><span style="color:var(--subtext)">src/</span></div>
+        <div class="flex" style="padding:0.25rem 0;padding-left:3rem"><span style="color:var(--subtext)">&#128196; index.js</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="code-block" id="anatomyCode">
+        <div class="code-header">
+          <div class="code-dots"><span class="code-dot r"></span><span class="code-dot y"></span><span class="code-dot g"></span></div>
+          <span>SKILL.md</span>
+        </div>
+        <pre id="anatomyPre" style="margin:0;white-space:pre-wrap;word-break:break-word">---
+<span class="code-prop">name</span>: <span class="code-str">my-skill</span>
+<span class="code-prop">mode</span>: <span class="code-str">auto</span>
+<span class="code-prop">description</span>: <span class="code-str">Does a thing</span>
+---
+
+<span class="code-section">## Instructions</span>
+
+When asked to do the thing, follow these steps:
+1. Step one here
+2. Step two here</pre>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3: Frontmatter Reference -->
+<section class="section" id="s3">
+  <div class="section-number" style="background:rgba(249,226,175,0.15);color:var(--yellow)">03</div>
+  <h2>Frontmatter Reference</h2>
+  <p>Frontmatter sits between <code style="color:var(--peach)">---</code> delimiters at the top of SKILL.md. All fields are optional.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Field</th><th>Type</th><th>Description</th><th>Default</th></tr>
+      </thead>
+      <tbody>
+        <tr style="--row-color:var(--blue)"><td><span class="badge bg-blue">core</span> name</td><td>string</td><td>Unique skill identifier</td><td>—</td></tr>
+        <tr style="--row-color:var(--blue)"><td><span class="badge bg-blue">core</span> mode</td><td>string</td><td><code>auto</code> | <code>manual</code> | <code>both</code></td><td><code>both</code></td></tr>
+        <tr style="--row-color:var(--green)"><td><span class="badge bg-green">info</span> description</td><td>string</td><td>Human-readable purpose</td><td>—</td></tr>
+        <tr style="--row-color:var(--green)"><td><span class="badge bg-green">info</span> model</td><td>string</td><td>Model name (e.g. <code>claude-sonnet-4-20250514</code>)</td><td>—</td></tr>
+        <tr style="--row-color:var(--green)"><td><span class="badge bg-green">info</span> modelDescription</td><td>string</td><td>Shown to model for routing</td><td>—</td></tr>
+        <tr style="--row-color:var(--peach)"><td><span class="badge bg-peach">behavior</span> systemPrompt</td><td>string</td><td>Prepended to system prompt</td><td>—</td></tr>
+        <tr style="--row-color:var(--peach)"><td><span class="badge bg-peach">behavior</span> beforeCommands</td><td>string</td><td>Run before registered commands</td><td>—</td></tr>
+        <tr style="--row-color:var(--peach)"><td><span class="badge bg-peach">behavior</span> afterCommands</td><td>string</td><td>Run after registered commands</td><td>—</td></tr>
+        <tr style="--row-color:var(--coral)"><td><span class="badge bg-orange">ux</span> autocomplete</td><td>string</td><td>Autocomplete hint for manual invocations</td><td>—</td></tr>
+        <tr style="--row-color:var(--coral)"><td><span class="badge bg-orange">ux</span> placeholder</td><td>string</td><td>Placeholder for prompt input</td><td>—</td></tr>
+        <tr style="--row-color:var(--coral)"><td><span class="badge bg-orange">ux</span> readonlyPlaceholder</td><td>string</td><td>Placeholder for read-only mode</td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SECTION 4: Where Skills Live -->
+<section class="section" id="s4">
+  <div class="section-number" style="background:rgba(244,194,231,0.15);color:var(--pink)">04</div>
+  <h2>Where Skills Live</h2>
+  <p>Skills can live in three locations, checked in order of priority:</p>
+
+  <div class="card-grid">
+    <div class="card" style="border-top:3px solid var(--blue);cursor:pointer" onclick="highlightLayer('user')" id="layer-user">
+      <div style="font-size:2rem;margin-bottom:0.5rem">&#128100;</div>
+      <h3>User-Level</h3>
+      <p style="font-size:0.82rem"><code style="color:var(--blue)">~/.claude/skills/SKILL.md</code></p>
+      <p style="font-size:0.8rem;color:var(--subtext)">Lowest priority. Global skills available everywhere.</p>
+    </div>
+    <div class="card" style="border-top:3px solid var(--green);cursor:pointer" onclick="highlightLayer('project')" id="layer-project">
+      <div style="font-size:2rem;margin-bottom:0.5rem">&#128218;</div>
+      <h3>Project-Level</h3>
+      <p style="font-size:0.82rem"><code style="color:var(--green)">.claude/skills/SKILL.md</code></p>
+      <p style="font-size:0.8rem;color:var(--subtext)">Medium priority. Scoped to current project.</p>
+    </div>
+    <div class="card" style="border-top:3px solid var(--peach);cursor:pointer" onclick="highlightLayer('plugin')" id="layer-plugin">
+      <div style="font-size:2rem;margin-bottom:0.5rem">&#128230;</div>
+      <h3>Plugin-Level</h3>
+      <p style="font-size:0.82rem"><code style="color:var(--peach)">&lt;plugin&gt;/skills/SKILL.md</code></p>
+      <p style="font-size:0.8rem;color:var(--subtext)">Highest priority. Bundled with plugins.</p>
+    </div>
+  </div>
+
+  <div style="background:var(--surface);border-radius:var(--radius);padding:1.5rem;border:1px solid rgba(255,255,255,0.06)">
+    <div style="font-size:0.85rem;font-weight:600;margin-bottom:1rem;text-align:center">Priority Hierarchy</div>
+    <div class="hierarchy">
+      <div class="h-layer" style="border:2px solid var(--peach);background:rgba(250,188,135,0.08)" data-layer="plugin">
+        <span class="rank">#1</span>
+        <span class="name" style="color:var(--peach)">Plugin-Level</span>
+        <span class="desc">&#60;plugin&#62;/skills/SKILL.md</span>
+      </div>
+      <div class="h-arrow">&#9660;</div>
+      <div class="h-layer" style="border:2px solid var(--green);background:rgba(166,227,161,0.08)" data-layer="project">
+        <span class="rank">#2</span>
+        <span class="name" style="color:var(--green)">Project-Level</span>
+        <span class="desc">.claude/skills/SKILL.md</span>
+      </div>
+      <div class="h-arrow">&#9660;</div>
+      <div class="h-layer" style="border:2px solid var(--blue);background:rgba(137,180,250,0.08)" data-layer="user">
+        <span class="rank">#3</span>
+        <span class="name" style="color:var(--blue)">User-Level</span>
+        <span class="desc">~/.claude/skills/SKILL.md</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: Invocation Modes -->
+<section class="section" id="s5">
+  <div class="section-number" style="background:rgba(148,226,213,0.15);color:var(--teal)">05</div>
+  <h2>Invocation Modes</h2>
+  <p>The <code style="color:var(--teal)">mode</code> field controls <em>who</em> can invoke the skill — the user, Claude, or both.</p>
+
+  <div class="invocation-cards" id="invokeCards">
+    <div class="invoke-card active" data-invoke="both" onclick="selectInvoke('both')">
+      <span class="icon">&#128101;&#65039;</span>
+      <h4>both</h4>
+      <p>User + Claude</p>
+    </div>
+    <div class="invoke-card" data-invoke="manual" onclick="selectInvoke('manual')">
+      <span class="icon">&#128100;</span>
+      <h4>manual</h4>
+      <p>User only</p>
+    </div>
+    <div class="invoke-card" data-invoke="auto" onclick="selectInvoke('auto')">
+      <span class="icon">&#129302;</span>
+      <h4>auto</h4>
+      <p>Claude only</p>
+    </div>
+  </div>
+
+  <svg class="diagram" viewBox="0 0 500 100" id="invokeDiagram">
+    <defs><marker id="arrIv" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto"><polygon points="0 0,10 3.5,0 7" fill="var(--green)"/></marker></defs>
+    <rect x="20" y="30" width="70" height="40" rx="8" fill="var(--blue)" opacity="0.9"/>
+    <text x="55" y="55" class="label" fill="#0f0f17" font-weight="700" font-size="12">User</text>
+    <rect x="200" y="30" width="100" height="40" rx="8" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.5"/>
+    <text x="250" y="55" class="label" fill="var(--text)" font-size="10">SKILL.md</text>
+    <rect x="410" y="30" width="70" height="40" rx="8" fill="var(--green)" opacity="0.8"/>
+    <text x="445" y="55" class="label" fill="#0f0f17" font-weight="700" font-size="12">Claude</text>
+    <path d="M90 50 L195 50" stroke="var(--green)" stroke-width="2" marker-end="url(#arrIv)" id="invokeLine1" class="flow-line"/>
+    <path d="M300 50 L405 50" stroke="var(--teal)" stroke-width="2" marker-end="url(#arrIv)" id="invokeLine2" class="flow-line"/>
+    <text x="140" y="25" fill="var(--blue)" font-size="9" text-anchor="middle" id="invokeLabel1">/skill name</text>
+    <text x="355" y="25" fill="var(--teal)" font-size="9" text-anchor="middle" id="invokeLabel2">auto-invoke</text>
+  </svg>
+
+  <div style="margin-top:1rem;padding:1rem;background:var(--surface);border-radius:var(--radius);border:1px solid rgba(255,255,255,0.06)">
+    <div style="font-size:0.9rem;font-weight:600;margin-bottom:0.75rem">&#128161; Skill Mode Quiz</div>
+    <p style="font-size:0.82rem;color:var(--subtext);margin-bottom:0.5rem">Which mode for a skill that refactors code automatically?</p>
+    <div class="quiz-options">
+      <button class="quiz-opt" data-quiz="both" onclick="checkQuiz(this,'both')">both</button>
+      <button class="quiz-opt" data-quiz="manual" onclick="checkQuiz(this,'manual')">manual</button>
+      <button class="quiz-opt" data-quiz="auto" onclick="checkQuiz(this,'auto')">auto</button>
+    </div>
+    <div id="quizResult" style="font-size:0.82rem;margin-top:0.5rem;min-height:1.2rem"></div>
+  </div>
+</section>
+
+<!-- SECTION 6: Bundled Skills -->
+<section class="section" id="s6">
+  <div class="section-number" style="background:rgba(248,143,173,0.15);color:var(--coral)">06</div>
+  <h2>Bundled Skills</h2>
+  <p>Claude Code ships with 8 built-in skills available out of the box.</p>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr><th>Skill</th><th>Mode</th><th>Description</th></tr>
+      </thead>
+      <tbody>
+        <tr><td><span class="badge bg-blue">/commit</span></td><td><span class="badge" style="background:rgba(166,227,161,0.15);color:var(--green)">auto</span></td><td>Generate commit messages from staged changes</td></tr>
+        <tr><td><span class="badge bg-green">/docs</span></td><td><span class="badge" style="background:rgba(166,227,161,0.15);color:var(--green)">auto</span></td><td>Generate documentation from code</td></tr>
+        <tr><td><span class="badge bg-peach">/explain</span></td><td><span class="badge" style="background:rgba(148,226,213,0.15);color:var(--teal)">both</span></td><td>Explain selected code</td></tr>
+        <tr><td><span class="badge bg-red">/review</span></td><td><span class="badge" style="background:rgba(148,226,213,0.15);color:var(--teal)">both</span></td><td>Review uncommitted changes</td></tr>
+        <tr><td><span class="badge bg-yellow">/test</span></td><td><span class="badge" style="background:rgba(243,139,168,0.15);color:var(--red)">manual</span></td><td>Write tests for selected code</td></tr>
+        <tr><td><span class="badge bg-teal">/debug</span></td><td><span class="badge" style="background:rgba(243,139,168,0.15);color:var(--red)">manual</span></td><td>Add debugging to selected code</td></tr>
+        <tr><td><span class="badge bg-lavender">/plan</span></td><td><span class="badge" style="background:rgba(148,226,213,0.15);color:var(--teal)">both</span></td><td>Create multi-step plan from request</td></tr>
+        <tr><td><span class="badge bg-pink">/pr-review</span></td><td><span class="badge" style="background:rgba(166,227,161,0.15);color:var(--green)">auto</span></td><td>Review a GitHub PR</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- SECTION 7: Real Example -->
+<section class="section" id="s7">
+  <div class="section-number" style="background:rgba(180,190,254,0.15);color:var(--lavender)">07</div>
+  <h2>Real Example: /commit</h2>
+  <p>Let's build the commit skill step by step.</p>
+
+  <div class="steps" id="commitSteps">
+    <div class="step active" onclick="selectStep(0)">
+      <div><span class="step-num">1</span><span class="step-label">Define frontmatter</span></div>
+      <div class="step-desc">Name, mode, and description tell Claude Code when this skill applies.</div>
+    </div>
+    <div class="step" onclick="selectStep(1)">
+      <div><span class="step-num">2</span><span class="step-label">Add system prompt override</span></div>
+      <div class="step-desc"><code style="color:var(--peach)">systemPrompt</code> sets custom instructions for this skill.</div>
+    </div>
+    <div class="step" onclick="selectStep(2)">
+      <div><span class="step-num">3</span><span class="step-label">Write markdown instructions</span></div>
+      <div class="step-desc">The body tells Claude exactly what to do — conventions, format, etc.</div>
+    </div>
+    <div class="step" onclick="selectStep(3)">
+      <div><span class="step-num">4</span><span class="step-label">Place in project</span></div>
+      <div class="step-desc">Save as <code style="color:var(--blue)">.claude/skills/SKILL.md</code> to activate.</div>
+    </div>
+  </div>
+
+  <div class="code-block" id="commitCode">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot r"></span><span class="code-dot y"></span><span class="code-dot g"></span></div>
+      <span>.claude/skills/SKILL.md</span>
+    </div>
+    <pre id="commitPre" style="margin:0;white-space:pre-wrap;word-break:break-word">---
+<span class="code-prop">name</span>: commit
+<span class="code-prop">mode</span>: auto
+<span class="code-prop">description</span>: Generate commit messages from staged changes
+<span class="code-prop">systemPrompt</span>:
+  You are an expert at writing conventional commits
+  following the Conventional Commits specification.
+---
+
+<span class="code-section">## Instructions</span>
+
+When the user asks to commit or when changes are staged:
+1. Run <span class="code-str">`git diff --cached`</span>
+2. Analyze the diff for:
+   - Scope (component, module)
+   - Change type (feat, fix, refactor, etc.)
+   - Breaking changes (<span class="code-str">`!`</span> after type)
+3. Generate commit messages in format:
+   <span class="code-str">`type(scope): description`</span>
+4. Offer 3-5 options to the user
+5. Commit with their choice</pre>
+  </div>
+</section>
+
+<!-- SECTION 8: Execution Flow -->
+<section class="section" id="s8">
+  <div class="section-number" style="background:rgba(248,189,127,0.15);color:var(--orange)">08</div>
+  <h2>Skill Execution Flow</h2>
+  <p>What happens when Claude loads and runs a skill.</p>
+
+  <div style="display:flex;gap:0.75rem;flex-wrap:wrap;margin-bottom:1rem">
+    <button class="btn btn-primary" onclick="runExecution()">&#9654; Run Skill</button>
+    <button class="btn btn-ghost" onclick="clearExecution()">&#8634; Clear</button>
+  </div>
+
+  <div class="log-window" id="logWindow">
+    <div style="color:var(--subtext);font-size:0.75rem;margin-bottom:0.5rem">$ claude --skill my-skill</div>
+    <div id="logContent"></div>
+    <div id="logCursor" class="log-cursor"></div>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+// Particles
+(function(){
+  const c = document.getElementById('particles');
+  const colors = ['var(--blue)','var(--green)','var(--pink)','var(--lavender)','var(--peach)','var(--teal)','var(--orange)'];
+  for(let i=0;i<30;i++){
+    const d = document.createElement('div');
+    d.className = 'particle';
+    d.style.left = Math.random()*100+'%';
+    d.style.width = d.style.height = (2+Math.random()*4)+'px';
+    d.style.background = colors[i%colors.length];
+    d.style.animationDuration = (15+Math.random()*25)+'s';
+    d.style.animationDelay = (Math.random()*20)+'s';
+    c.appendChild(d);
+  }
+})();
+
+// IntersectionObserver
+(function(){
+  const opts = {threshold:0.1};
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}});
+  },opts);
+  document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+})();
+
+// Row hover colors
+document.querySelectorAll('tbody tr').forEach(tr=>{
+  tr.addEventListener('mouseenter',()=>{
+    tr.style.borderLeftColor = tr.style.getPropertyValue('--row-color') || 'transparent';
+  });
+  tr.addEventListener('mouseleave',()=>{
+    tr.style.borderLeftColor = 'transparent';
+  });
+});
+
+// Section 2 - Anatomy Toggle
+document.querySelectorAll('[data-anatomy]').forEach(btn=>{
+  btn.addEventListener('click',function(){
+    document.querySelectorAll('[data-anatomy]').forEach(b=>b.classList.remove('active'));
+    this.classList.add('active');
+    const pre = document.getElementById('anatomyPre');
+    if(this.dataset.anatomy==='minimal'){
+      pre.innerHTML = `---\n<span class="code-prop">name</span>: <span class="code-str">my-skill</span>\n<span class="code-prop">mode</span>: <span class="code-str">auto</span>\n<span class="code-prop">description</span>: <span class="code-str">Does a thing</span>\n---\n\n<span class="code-section">## Instructions</span>\n\nDo the thing when asked.`;
+    } else {
+      pre.innerHTML = `---\n<span class="code-prop">name</span>: <span class="code-str">code-review</span>\n<span class="code-prop">mode</span>: <span class="code-str">both</span>\n<span class="code-prop">description</span>: <span class="code-str">Review code changes</span>\n<span class="code-prop">model</span>: <span class="code-str">claude-sonnet-4-20250514</span>\n<span class="code-prop">modelDescription</span>: <span class="code-str">Code review expert</span>\n<span class="code-prop">systemPrompt</span>: <span class="code-str">You are a strict code reviewer.</span>\n<span class="code-prop">autocomplete</span>: <span class="code-str">review</span>\n---\n\n<span class="code-section">## Instructions</span>\n\nReview staged changes for bugs, style issues, and security.`;
+    }
+  });
+});
+
+// Section 4 - Layer highlight
+function highlightLayer(layer){
+  document.querySelectorAll('[id^="layer-"]').forEach(el=>{
+    el.style.transform = el.id === 'layer-'+layer ? 'scale(1.03)' : 'scale(1)';
+    el.style.borderColor = el.id === 'layer-'+layer ? '' : '';
+  });
+  document.querySelectorAll('[data-layer]').forEach(el=>{
+    el.style.transform = el.dataset.layer === layer ? 'scale(1.05)' : 'scale(1)';
+    el.style.background = el.dataset.layer === layer ? 'rgba(137,180,250,0.15)' : '';
+  });
+}
+
+// Section 5 - Invocation
+function selectInvoke(mode){
+  document.querySelectorAll('.invoke-card').forEach(c=>c.classList.remove('active'));
+  document.querySelector(`[data-invoke="${mode}"]`).classList.add('active');
+  const l1 = document.getElementById('invokeLabel1');
+  const l2 = document.getElementById('invokeLabel2');
+  const line1 = document.getElementById('invokeLine1');
+  const line2 = document.getElementById('invokeLine2');
+  if(mode==='both'){
+    l1.textContent = '/skill name'; l1.style.fill = 'var(--blue)';
+    l2.textContent = 'auto-invoke'; l2.style.fill = 'var(--teal)';
+    line1.style.stroke = line2.style.stroke = '';
+    line1.style.opacity = line2.style.opacity = '1';
+  } else if(mode==='manual'){
+    l1.textContent = '/skill name (required)'; l1.style.fill = 'var(--blue)';
+    l2.textContent = 'not auto-invoked'; l2.style.fill = 'var(--red)';
+    line1.style.stroke = 'var(--blue)'; line2.style.opacity = '0.3';
+    line1.style.opacity = '1';
+  } else {
+    l1.textContent = 'no manual trigger'; l1.style.fill = 'var(--red)';
+    l2.textContent = 'auto-invoked by context'; l2.style.fill = 'var(--green)';
+    line1.style.opacity = '0.3'; line2.style.stroke = 'var(--green)';
+    line2.style.opacity = '1';
+  }
+}
+
+// Section 5 - Quiz
+function checkQuiz(el, answer){
+  const correct = 'auto';
+  document.querySelectorAll('.quiz-opt').forEach(b=>{
+    b.classList.remove('correct','wrong');
+    b.disabled = true; b.style.cursor = 'default';
+    if(b.dataset.quiz === correct) b.classList.add('correct');
+  });
+  if(answer !== correct) el.classList.add('wrong');
+  document.getElementById('quizResult').innerHTML = answer === correct
+    ? '<span style="color:var(--green)">&#10003; Correct! An auto-refactoring skill runs without manual invocation.</span>'
+    : '<span style="color:var(--red)">&#10007; Not quite. Auto mode means Claude invokes it automatically based on context.</span>';
+}
+
+// Section 7 - Step builder
+const commitCodes = [
+  `---\n<span class="code-prop">name</span>: <span class="code-str">commit</span>\n<span class="code-prop">mode</span>: <span class="code-str">auto</span>\n<span class="code-prop">description</span>: <span class="code-str">Generate commit messages from staged changes</span>\n---`,
+  `---\n<span class="code-prop">name</span>: <span class="code-str">commit</span>\n<span class="code-prop">mode</span>: <span class="code-str">auto</span>\n<span class="code-prop">description</span>: <span class="code-str">Generate commit messages from staged changes</span>\n<span class="code-prop">systemPrompt</span>:\n  <span class="code-str">You are an expert at writing conventional commits.</span>\n---`,
+  `---\n<span class="code-prop">name</span>: <span class="code-str">commit</span>\n<span class="code-prop">mode</span>: <span class="code-str">auto</span>\n<span class="code-prop">description</span>: <span class="code-str">Generate commit messages from staged changes</span>\n<span class="code-prop">systemPrompt</span>:\n  <span class="code-str">You are an expert at writing conventional commits.</span>\n---\n\n<span class="code-section">## Instructions</span>\n\nWhen the user asks to commit or when changes are staged:\n1. Run <span class="code-str">\`git diff --cached\`</span>\n2. Analyze the diff\n3. Generate 3-5 commit message options\n4. Commit with their choice`,
+  `---\n<span class="code-prop">name</span>: <span class="code-str">commit</span>\n<span class="code-prop">mode</span>: <span class="code-str">auto</span>\n<span class="code-prop">description</span>: <span class="code-str">Generate commit messages from staged changes</span>\n<span class="code-prop">systemPrompt</span>:\n  <span class="code-str">You are an expert at writing conventional commits.</span>\n---\n\n<span class="code-section">## Instructions</span>\n\nWhen the user asks to commit or when changes are staged:\n1. Run <span class="code-str">\`git diff --cached\`</span>\n2. Analyze the diff\n3. Generate 3-5 commit message options\n4. Commit with their choice\n\n<span class="code-comment"># Saved to .claude/skills/SKILL.md</span>`
+];
+
+function selectStep(idx){
+  document.querySelectorAll('.step').forEach((s,i)=>{
+    s.classList.toggle('active',i===idx);
+  });
+  document.getElementById('commitPre').innerHTML = commitCodes[idx];
+}
+
+// Section 8 - Execution Flow
+const logs = [
+  {text:'User types request or skill auto-detects context',cls:'info'},
+  {text:'Claude locates SKILL.md in priority order',cls:'info'},
+  {text:'Frontmatter parsed: mode=boot, description, systemPrompt loaded',cls:'ok'},
+  {text:'System prompt extended with skill instructions',cls:'ok'},
+  {text:'Skill instructions injected into user prompt',cls:'info'},
+  {text:'Claude executes skill instructions...',cls:'info'},
+  {text:'Output delivered to user',cls:'ok'},
+  {text:'Done.',cls:'ok'}
+];
+let execRunning = false;
+
+function runExecution(){
+  if(execRunning) return;
+  execRunning = true;
+  const log = document.getElementById('logContent');
+  const cursor = document.getElementById('logCursor');
+  log.innerHTML = '';
+  cursor.style.display = 'inline';
+  let i=0;
+  function addLine(){
+    if(i>=logs.length){
+      cursor.style.display = 'none';
+      const done = document.createElement('div');
+      done.style.color = 'var(--green)';
+      done.style.fontWeight = '700';
+      done.style.marginTop = '0.5rem';
+      done.textContent = '\u2713 Skill execution complete';
+      log.appendChild(done);
+      execRunning = false;
+      return;
+    }
+    const d = document.createElement('div');
+    d.className = 'log-line';
+    d.innerHTML = `<span class="ts">[${String(i+1).padStart(2,'0')}]</span> <span class="${logs[i].cls}">${logs[i].text}</span>`;
+    log.appendChild(d);
+    requestAnimationFrame(()=>d.classList.add('visible'));
+    i++;
+    setTimeout(addLine,500);
+  }
+  addLine();
+}
+
+function clearExecution(){
+  if(execRunning) return;
+  document.getElementById('logContent').innerHTML = '';
+  document.getElementById('logCursor').style.display = 'inline';
+}
+</script>
+</body>
+</html>

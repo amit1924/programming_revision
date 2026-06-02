@@ -1,0 +1,553 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Client vs LangChain · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--peach)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;scroll-margin-top:70px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px;animation:fadeSlide .35s ease-out}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .highlight{color:var(--yellow)}
+.code .danger{color:var(--red)}
+.code .pink{color:var(--pink)}
+.code .teal{color:var(--teal)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.callout.teal{border-color:var(--teal);background:rgba(148,226,213,.04)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--peach);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.small{padding:5px 12px;font-size:.72rem}
+.log-area{font-family:monospace;font-size:.75rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:80px;max-height:240px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.log-area .entry:last-child{border-bottom:none}
+.log-area .t-teal{color:var(--teal)}.log-area .t-blue{color:var(--blue)}.log-area .t-green{color:var(--green)}.log-area .t-peach{color:var(--peach)}.log-area .t-red{color:var(--red)}.log-area .t-yellow{color:var(--yellow)}.log-area .t-muted{color:var(--muted)}.log-area .t-pink{color:var(--pink)}
+
+/* ===== COMPARISON SPLIT ===== */
+.comp-split{display:grid;grid-template-columns:1fr 1fr;gap:0;margin:12px 0;border-radius:var(--radius);overflow:hidden;border:2px solid var(--surface2)}
+@media(max-width:680px){.comp-split{grid-template-columns:1fr}}
+.comp-half{padding:20px}
+.comp-half.raw{background:rgba(243,139,168,.03);border-right:1px solid var(--surface2)}
+@media(max-width:680px){.comp-half.raw{border-right:none;border-bottom:1px solid var(--surface2)}}
+.comp-half.langchain{background:rgba(148,226,213,.03)}
+.comp-half .head{display:flex;align-items:center;gap:8px;margin-bottom:12px;padding-bottom:8px;border-bottom:2px solid}
+.comp-half.raw .head{border-color:rgba(243,139,168,.3)}
+.comp-half.langchain .head{border-color:rgba(148,226,213,.3)}
+.comp-half .head h3{font-size:.95rem;margin:0}
+.comp-half.raw .head h3{color:var(--red)}
+.comp-half.langchain .head h3{color:var(--teal)}
+.comp-half .head .icon{font-size:1.2rem}
+
+/* ===== STEP FLOW ===== */
+.steps{display:flex;flex-direction:column;gap:4px;padding:6px 0}
+.step-item{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:6px;font-size:.76rem;transition:.2s}
+.step-item .num{width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0}
+.step-item .text{flex:1}
+.step-item.raw-manual .num{background:rgba(243,139,168,.15);color:var(--red)}
+.step-item.raw-auto .num{background:rgba(148,226,213,.15);color:var(--teal)}
+.step-item.raw-manual{background:rgba(243,139,168,.04);border-left:3px solid var(--red)}
+.step-item.raw-auto{background:rgba(148,226,213,.04);border-left:3px solid var(--teal)}
+
+/* ===== ANALOGY CARDS ===== */
+.analogy-card{padding:16px;border-radius:var(--radius);text-align:center;flex:1}
+.analogy-card.manual{border:2px solid var(--red);background:rgba(243,139,168,.04)}
+.analogy-card.auto{border:2px solid var(--teal);background:rgba(148,226,213,.04)}
+.analogy-card .car-icon{font-size:2.2rem;margin-bottom:6px}
+.analogy-card h4{font-size:.9rem;margin-bottom:4px}
+.analogy-card.manual h4{color:var(--red)}
+.analogy-card.auto h4{color:var(--teal)}
+.analogy-card ul{list-style:none;padding:0;font-size:.74rem;color:var(--muted)}
+.analogy-card li{padding:2px 0}
+
+/* ===== ARCHITECTURE PIPE ===== */
+.pipe-viz{display:flex;flex-direction:column;gap:6px;padding:10px 0}
+.pipe-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:.74rem;font-family:monospace}
+.pipe-row .arrow{color:var(--muted);min-width:16px}
+.pipe-row.visible{background:rgba(243,139,168,.06);border-left:3px solid var(--red)}
+.pipe-row.hidden{background:rgba(148,226,213,.06);border-left:3px solid var(--teal);color:var(--muted)}
+.pipe-row.hidden .arrow{opacity:.5}
+
+/* ===== TOOL CALL COMPARISON ===== */
+.call-blocks{display:flex;flex-direction:column;gap:6px;padding:8px 0}
+.call-row{display:flex;align-items:center;gap:8px;padding:6px 10px;border-radius:4px;font-size:.74rem}
+.call-row .dir{font-weight:700;min-width:24px;font-size:.8rem}
+
+/* ===== WHEN TO USE TABLE ===== */
+.when-cards{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+@media(max-width:680px){.when-cards{grid-template-columns:1fr}}
+.when-card{padding:18px;border-radius:var(--radius)}
+.when-card.raw{border:2px solid var(--red);background:rgba(243,139,168,.04)}
+.when-card.lang{border:2px solid var(--teal);background:rgba(148,226,213,.04)}
+.when-card h4{font-size:.88rem;margin-bottom:6px}
+.when-card.raw h4{color:var(--red)}
+.when-card.lang h4{color:var(--teal)}
+.when-card ul{list-style:none;padding:0;font-size:.76rem;color:var(--muted)}
+.when-card li{padding:3px 0 3px 16px;position:relative}
+.when-card.raw li::before{content:'🛠️';position:absolute;left:-4px;font-size:.65rem}
+.when-card.lang li::before{content:'🤖';position:absolute;left:-4px;font-size:.65rem}
+
+/* ===== AGENT FLOW ===== */
+.agent-flow{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;flex-wrap:wrap}
+.agent-flow .box{width:100px;padding:12px 8px;border-radius:8px;text-align:center;font-size:.72rem;font-weight:600;border:2px solid}
+.agent-flow .box.user{border-color:var(--blue);color:var(--blue);background:rgba(137,180,250,.06)}
+.agent-flow .box.agent{border-color:var(--teal);color:var(--teal);background:rgba(148,226,213,.06)}
+.agent-flow .box.tool{border-color:var(--green);color:var(--green);background:rgba(166,227,161,.06)}
+.agent-flow .box.aim{border-color:var(--yellow);color:var(--yellow);background:rgba(249,226,175,.06)}
+.agent-flow .arw{color:var(--muted);font-size:.7rem}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>MCP</span> Client vs LangChain</div>
+  <div class="crumbs"><a href="index.html">MCP</a> &rsaquo; Client Comparison</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(250,179,135,.18);color:var(--peach)">Comparison</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. THE TWO CLIENTS -->
+<div class="section-title"><span class="num">1</span> The Two Clients at a Glance</div>
+<div class="card">
+  <p>You've used <strong>two different ways</strong> to connect to an MCP server. They serve different purposes.</p>
+
+  <div class="comp-split">
+    <div class="comp-half raw">
+      <div class="head"><span class="icon">🔧</span><h3>Raw MCP Client</h3></div>
+      <div class="code" style="font-size:.72rem">
+<span class="keyword">from</span> mcp.client.stdio <span class="keyword">import</span> <span class="highlight">stdio_client</span>
+<span class="keyword">from</span> mcp <span class="keyword">import</span> <span class="highlight">ClientSession</span>
+
+<span class="keyword">async with</span> <span class="highlight">stdio_client</span>(server_params) <span class="keyword">as</span> (read, write):
+    <span class="keyword">async with</span> <span class="highlight">ClientSession</span>(read, write) <span class="keyword">as</span> session:
+        <span class="keyword">await</span> session.<span class="highlight">initialize</span>()
+        tools = <span class="keyword">await</span> session.<span class="highlight">list_tools</span>()
+        result = <span class="keyword">await</span> session.<span class="highlight">call_tool</span>(...)
+      </div>
+      <span class="badge red">Manual</span>
+      <span class="badge yellow">Low-level</span>
+      <span class="badge blue">Full control</span>
+    </div>
+    <div class="comp-half langchain">
+      <div class="head"><span class="icon">🤖</span><h3>LangChain MCP Client</h3></div>
+      <div class="code" style="font-size:.72rem">
+<span class="keyword">from</span> langchain_mcp_adapters.client <span class="keyword">import</span> <span class="highlight">MultiServerMCPClient</span>
+
+client = <span class="highlight">MultiServerMCPClient</span>({...})
+tools = <span class="keyword">await</span> client.<span class="highlight">get_tools</span>()
+
+<span class="comment"># Tools are ready for AI agents</span>
+agent = <span class="highlight">create_react_agent</span>(llm, tools)
+      </div>
+      <span class="badge teal">Automatic</span>
+      <span class="badge green">Agent-ready</span>
+      <span class="badge pink">High-level</span>
+    </div>
+  </div>
+</div>
+
+<!-- 2. WHAT HAPPENS INTERNALLY -->
+<div class="section-title"><span class="num">2</span> What Happens Internally?</div>
+
+<div class="card">
+  <h3 style="color:var(--red)">🔧 Raw MCP Client — You Do Every Step</h3>
+  <p>You <strong>manually control</strong> the entire lifecycle. Every step is explicit in your code.</p>
+
+  <div class="steps">
+    <div class="step-item raw-manual">
+      <span class="num">1</span>
+      <span class="text">Start the server process via <code>stdio_client(server_params)</code></span>
+    </div>
+    <div class="step-item raw-manual">
+      <span class="num">2</span>
+      <span class="text">Create read/write pipes from stdio</span>
+    </div>
+    <div class="step-item raw-manual">
+      <span class="num">3</span>
+      <span class="text">Wrap pipes in <code>ClientSession(read, write)</code></span>
+    </div>
+    <div class="step-item raw-manual">
+      <span class="num">4</span>
+      <span class="text">Call <code>session.initialize()</code> — handshake with server</span>
+    </div>
+    <div class="step-item raw-manual">
+      <span class="num">5</span>
+      <span class="text">Call <code>session.list_tools()</code> — discover available tools</span>
+    </div>
+    <div class="step-item raw-manual">
+      <span class="num">6</span>
+      <span class="text">Call <code>session.call_tool(name, args)</code> — invoke each tool</span>
+    </div>
+  </div>
+
+  <div class="callout danger" style="font-size:.78rem">
+    <strong>🚗 Manual car analogy:</strong> You start the engine, press the clutch, change gears, control the speed — <em>you</em> do everything.
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="color:var(--teal)">🤖 LangChain MCP Client — Automatic</h3>
+  <p><code>MultiServerMCPClient</code> handles <strong>all the boilerplate</strong> internally. You never see the individual steps.</p>
+
+  <div class="steps">
+    <div class="step-item raw-auto">
+      <span class="num">1</span>
+      <span class="text">✅ Starts the server process (hidden from you)</span>
+    </div>
+    <div class="step-item raw-auto">
+      <span class="num">2</span>
+      <span class="text">✅ Creates the session (hidden from you)</span>
+    </div>
+    <div class="step-item raw-auto">
+      <span class="num">3</span>
+      <span class="text">✅ Calls <code>initialize()</code> automatically</span>
+    </div>
+    <div class="step-item raw-auto">
+      <span class="num">4</span>
+      <span class="text">✅ Discovers all tools automatically</span>
+    </div>
+    <div class="step-item raw-auto">
+      <span class="num">5</span>
+      <span class="text">✅ Converts MCP tools into LangChain-compatible <code>BaseTool</code> objects</span>
+    </div>
+    <div class="step-item raw-auto">
+      <span class="num">6</span>
+      <span class="text">✅ Returns ready-to-use tools — just call <code>get_tools()</code></span>
+    </div>
+  </div>
+
+  <div class="callout teal" style="font-size:.78rem">
+    <strong>🚙 Automatic car analogy:</strong> You just press the accelerator. The car handles gear changes, clutch, and engine management for you.
+  </div>
+</div>
+
+<!-- 3. SIDE-BY-SIDE PIPE VISUALIZATION -->
+<div class="section-title"><span class="num">3</span> Visual: What You Write vs What Happens</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <h3 style="color:var(--red);font-size:.85rem">🔧 Raw MCP Client</h3>
+      <p style="font-size:.74rem;color:var(--muted)">Your code</p>
+      <div class="code" style="font-size:.7rem">
+<span class="highlight">stdio_client</span>(params)  <span class="comment"># 🔴 You write this</span>
+<span class="highlight">ClientSession</span>(r, w)   <span class="comment"># 🔴 You write this</span>
+<span class="highlight">session.initialize</span>() <span class="comment"># 🔴 You write this</span>
+<span class="highlight">session.list_tools</span>() <span class="comment"># 🔴 You write this</span>
+<span class="highlight">session.call_tool</span>()  <span class="comment"># 🔴 You write this</span>
+      </div>
+    </div>
+    <div>
+      <h3 style="color:var(--teal);font-size:.85rem">🤖 LangChain MCP Client</h3>
+      <p style="font-size:.74rem;color:var(--muted)">Your code</p>
+      <div class="code" style="font-size:.7rem">
+<span class="highlight">MultiServerMCPClient</span>({...})  <span class="comment"># 🟢 You write this</span>
+<span class="highlight">client.get_tools</span>()             <span class="comment"># 🟢 You write this</span>
+<span class="comment"># ↓ Everything below happens automatically:</span>
+<span class="teal">stdio_client(params)</span>       <span class="comment"># 🤖 Hidden</span>
+<span class="teal">ClientSession(r, w)</span>        <span class="comment"># 🤖 Hidden</span>
+<span class="teal">session.initialize()</span>       <span class="comment"># 🤖 Hidden</span>
+<span class="teal">session.list_tools()</span>       <span class="comment"># 🤖 Hidden</span>
+<span class="teal">session.call_tool()</span>        <span class="comment"># 🤖 Hidden</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="font-size:.78rem">
+    <strong>Key insight:</strong> Both do the <strong>same steps</strong> internally. The difference is <em>who writes the code</em> — you (Raw) or the library (LangChain).
+  </div>
+</div>
+
+<!-- 4. TOOL CALLING COMPARISON -->
+<div class="section-title"><span class="num">4</span> Tool Calling Comparison</div>
+
+<div class="card">
+  <h3 style="color:var(--red)">🔧 Raw MCP: You Call Every Tool By Name</h3>
+  <p>You manually call each tool with its name and arguments.</p>
+  <div class="code" style="font-size:.74rem">
+<span class="comment"># You decide which tool to call and when</span>
+result1 = <span class="keyword">await</span> session.<span class="highlight">call_tool</span>(<span class="string">"fetch_data"</span>, {})
+result2 = <span class="keyword">await</span> session.<span class="highlight">call_tool</span>(<span class="string">"process_data"</span>, {<span class="string">"input"</span>: result1})
+
+<span class="comment"># You must know: tool names, parameters, order of execution</span>
+  </div>
+
+  <div class="callout danger" style="font-size:.76rem">
+    <strong>You control the flow.</strong> The AI is not deciding anything — <em>you</em> are hardcoding the tool calls.
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="color:var(--teal)">🤖 LangChain: AI Agent Calls Tools Automatically</h3>
+  <p>Tools become LangChain <strong>BaseTool</strong> objects. An AI agent decides when to use them.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.74rem">
+<span class="comment"># Get tools — now they're LangChain tools</span>
+tools = <span class="keyword">await</span> client.<span class="highlight">get_tools</span>()
+
+<span class="comment"># Give tools to an AI agent</span>
+agent = <span class="highlight">create_react_agent</span>(llm, tools)
+
+<span class="comment"># The AI decides tool calls automatically</span>
+result = <span class="keyword">await</span> agent.invoke({
+  <span class="string">"messages"</span>: [
+    {<span class="string">"role"</span>: <span class="string">"user"</span>, <span class="string">"content"</span>: <span class="string">"Get data and process it"</span>}
+  ]
+})
+      </div>
+    </div>
+    <div>
+      <div class="agent-flow">
+        <div class="box user">🧑 User</div>
+        <span class="arw">→</span>
+        <div class="box agent">🤖 Agent</div>
+        <span class="arw">→</span>
+        <div class="box tool">🔧 Tool</div>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted);text-align:center;padding:6px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2)">
+        Agent sees tools → decides → calls the right one → returns answer
+      </div>
+    </div>
+  </div>
+
+  <div class="callout teal" style="font-size:.76rem">
+    <strong>The AI decides.</strong> You just provide the tools. The LLM chooses <code>fetch_data</code> or <code>process_data</code> based on the user's request.
+  </div>
+</div>
+
+<!-- 5. LIVE EXAMPLE -->
+<div class="section-title"><span class="num">5</span> Live Example: Same Server, Different Clients</div>
+<div class="card">
+  <p>Suppose your MCP server exposes these tools: <code>fetch_data()</code> and <code>process_data()</code>. Here's how each client handles the user request: <em>"Get data and process it."</em></p>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn primary" onclick="runRaw()">🔧 Run Raw Client</button>
+    <button class="btn outline" onclick="runLangChain()">🤖 Run LangChain Client</button>
+    <button class="btn small outline" onclick="clearDemo()">Clear</button>
+  </div>
+
+  <div class="log-area" id="demoLog" style="min-height:180px;max-height:300px">
+    <div class="entry t-muted">▸ Click a button to see how each client handles the request.</div>
+  </div>
+</div>
+
+<!-- 6. BIGGEST DIFFERENCE -->
+<div class="section-title"><span class="num">6</span> The Biggest Difference</div>
+<div class="card">
+  <div class="comp-split">
+    <div class="comp-half raw">
+      <div class="head"><span class="icon">🎯</span><h3>Raw MCP Client</h3></div>
+      <p style="font-size:.78rem;color:var(--muted)"><strong>Purpose:</strong> Learn, debug, and manually control MCP.</p>
+      <div style="font-size:.76rem;color:var(--muted);line-height:1.8">
+        ✅ Understanding protocol internals<br>
+        ✅ Debugging server issues<br>
+        ✅ Testing tool implementations<br>
+        ✅ Learning how MCP works
+      </div>
+    </div>
+    <div class="comp-half langchain">
+      <div class="head"><span class="icon">🎯</span><h3>LangChain MCP Client</h3></div>
+      <p style="font-size:.78rem;color:var(--muted)"><strong>Purpose:</strong> Use MCP tools inside AI agents.</p>
+      <div style="font-size:.76rem;color:var(--muted);line-height:1.8">
+        ✅ Building production AI assistants<br>
+        ✅ Creating chatbots with tools<br>
+        ✅ Autonomous agent workflows<br>
+        ✅ Connecting MCP tools to LLMs
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. WHEN TO USE EACH -->
+<div class="section-title"><span class="num">7</span> When You'll Use Each One</div>
+<div class="card">
+  <div class="when-cards">
+    <div class="when-card raw">
+      <h4>🛠️ Use Raw MCP Client When...</h4>
+      <ul>
+        <li>Learning MCP protocol</li>
+        <li>Debugging a server</li>
+        <li>Testing tools manually</li>
+        <li>Understanding the internals</li>
+        <li>Writing custom MCP tooling</li>
+      </ul>
+    </div>
+    <div class="when-card lang">
+      <h4>🤖 Use LangChain MCP Client When...</h4>
+      <ul>
+        <li>Building AI agents</li>
+        <li>Creating chatbots with tool access</li>
+        <li>Building autonomous workflows</li>
+        <li>Connecting MCP tools to LLMs</li>
+        <li>Production deployments</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- 8. FULL CODE COMPARISON -->
+<div class="section-title"><span class="num">8</span> Full Code Side by Side</div>
+<div class="card">
+  <div class="comp-split">
+    <div class="comp-half raw">
+      <div class="head"><span class="icon">🔧</span><h3>Raw MCP Client</h3></div>
+      <div class="code" style="font-size:.7rem;line-height:1.5">
+<span class="keyword">async def</span> <span class="highlight">main</span>():
+    <span class="comment"># 1. Start server & create pipes</span>
+    <span class="keyword">async with</span> <span class="highlight">stdio_client</span>(params) <span class="keyword">as</span> (r, w):
+        <span class="comment"># 2. Create session</span>
+        <span class="keyword">async with</span> <span class="highlight">ClientSession</span>(r, w) <span class="keyword">as</span> sess:
+            <span class="comment"># 3. Initialize</span>
+            <span class="keyword">await</span> sess.<span class="highlight">initialize</span>()
+            <span class="comment"># 4. List tools</span>
+            tools = <span class="keyword">await</span> sess.<span class="highlight">list_tools</span>()
+            <span class="comment"># 5. Call tools manually</span>
+            data = <span class="keyword">await</span> sess.<span class="highlight">call_tool</span>(
+                <span class="string">"fetch_data"</span>, {}
+            )
+            <span class="keyword">await</span> sess.<span class="highlight">call_tool</span>(
+                <span class="string">"process_data"</span>,
+                {<span class="string">"data"</span>: data}
+            )
+      </div>
+    </div>
+    <div class="comp-half langchain">
+      <div class="head"><span class="icon">🤖</span><h3>LangChain MCP Client</h3></div>
+      <div class="code" style="font-size:.7rem;line-height:1.5">
+<span class="keyword">async def</span> <span class="highlight">main</span>():
+    <span class="comment"># 1. Create client — handles everything</span>
+    client = <span class="highlight">MultiServerMCPClient</span>({
+        <span class="string">"weather"</span>: {
+            <span class="string">"transport"</span>: <span class="string">"stdio"</span>,
+            <span class="string">"command"</span>: <span class="string">"python"</span>,
+            <span class="string">"args"</span>: [<span class="string">"server.py"</span>]
+        }
+    })
+
+    <span class="comment"># 2. Get LangChain tools</span>
+    tools = <span class="keyword">await</span> client.<span class="highlight">get_tools</span>()
+    <span class="comment"># (Init + list done automatically)</span>
+
+    <span class="comment"># 3. Give tools to agent</span>
+    agent = <span class="highlight">create_react_agent</span>(llm, tools)
+    <span class="comment"># Agent calls tools as needed</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 9. ONE-SENTENCE SUMMARY -->
+<div class="section-title"><span class="num">9</span> One-Sentence Summary</div>
+<div class="card" style="border-left:4px solid var(--peach);background:rgba(250,179,135,.04)">
+  <p style="font-size:1rem;line-height:1.8;color:var(--text)">
+    The <strong style="color:var(--red)">Raw MCP Client</strong> is a low-level client where you <strong>manually manage</strong> sessions and tool calls, while the <strong style="color:var(--teal)">LangChain MCP Client</strong> is a high-level wrapper that <strong>automatically</strong> connects MCP tools to LangChain agents so AI models can use them directly.
+  </p>
+  <div style="display:flex;gap:12px;margin-top:12px;flex-wrap:wrap;justify-content:center">
+    <span class="badge red">🔧 Raw: You control everything</span>
+    <span class="badge teal">🤖 LangChain: AI controls the tools</span>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+function addLogLine(id, msg, cls) {
+  const log = document.getElementById(id);
+  log.innerHTML += '<div class="entry ' + cls + '">▸ ' + msg + '</div>';
+  log.scrollTop = log.scrollHeight;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function runRaw() {
+  const log = document.getElementById('demoLog');
+  log.innerHTML = '';
+  addLogLine('demoLog', '🔧 Raw MCP Client: Handling "Get data and process it"', 't-peach');
+  await sleep(400);
+  addLogLine('demoLog', 'Starting server process...', 't-muted');
+  await sleep(300);
+  addLogLine('demoLog', 'Creating stdio pipes...', 't-muted');
+  await sleep(300);
+  addLogLine('demoLog', 'ClientSession created. Initializing...', 't-blue');
+  await sleep(400);
+  addLogLine('demoLog', '✅ Server initialized. Listing tools...', 't-green');
+  await sleep(400);
+  addLogLine('demoLog', '📋 Found tools: fetch_data, process_data', 't-yellow');
+  await sleep(400);
+  addLogLine('demoLog', '🔧 You: calling fetch_data()', 't-red');
+  await sleep(500);
+  addLogLine('demoLog', '📥 fetch_data returned: { rows: 42 }', 't-green');
+  await sleep(400);
+  addLogLine('demoLog', '🔧 You: calling process_data({ data: rows })', 't-red');
+  await sleep(500);
+  addLogLine('demoLog', '📥 process_data returned: { result: "done" }', 't-green');
+  await sleep(300);
+  addLogLine('demoLog', '✅ Done. You manually orchestrated every step.', 't-peach');
+}
+
+async function runLangChain() {
+  const log = document.getElementById('demoLog');
+  log.innerHTML = '';
+  addLogLine('demoLog', '🤖 LangChain MCP Client: Handling "Get data and process it"', 't-peach');
+  await sleep(400);
+  addLogLine('demoLog', 'MultiServerMCPClient created. Connecting...', 't-muted');
+  await sleep(400);
+  addLogLine('demoLog', '✅ Server connected. Tools auto-discovered.', 't-teal');
+  await sleep(400);
+  addLogLine('demoLog', '🤖 Tools converted to LangChain BaseTools', 't-pink');
+  await sleep(300);
+  addLogLine('demoLog', '🤖 Agent created with tools: fetch_data, process_data', 't-teal');
+  await sleep(500);
+  addLogLine('demoLog', '🧑 User: "Get data and process it"', 't-blue');
+  await sleep(500);
+  addLogLine('demoLog', '🤖 Agent: I need to call fetch_data first', 't-teal');
+  await sleep(400);
+  addLogLine('demoLog', '🔧 Agent → fetch_data() → { rows: 42 }', 't-green');
+  await sleep(400);
+  addLogLine('demoLog', '🤖 Agent: Now I need to call process_data', 't-teal');
+  await sleep(400);
+  addLogLine('demoLog', '🔧 Agent → process_data() → { result: "done" }', 't-green');
+  await sleep(400);
+  addLogLine('demoLog', '🤖 Agent: Processed 42 rows successfully ✅', 't-teal');
+  await sleep(300);
+  addLogLine('demoLog', '✅ Done. The AI agent decided which tools to call.', 't-peach');
+}
+
+function clearDemo() {
+  document.getElementById('demoLog').innerHTML = '<div class="entry t-muted">▸ Click a button to see how each client handles the request.</div>';
+}
+</script>
+</body>
+</html>

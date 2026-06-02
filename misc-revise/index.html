@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Notes · Visual Learning Hub</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--coral:#f28fad;
+  --radius:10px;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px}
+
+/* Nav */
+nav{background:var(--header-bg);padding:12px 24px;display:flex;align-items:center;gap:16px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.15rem;display:flex;align-items:center;gap:8px}
+nav .logo .dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+nav .nav-links{display:flex;gap:6px;flex-wrap:wrap}
+nav .nav-links a{padding:4px 12px;border-radius:20px;font-size:.76rem;color:var(--muted);text-decoration:none;transition:.15s;font-weight:500}
+nav .nav-links a:hover{color:var(--text);background:var(--surface2)}
+nav .hamburger{display:none;background:none;border:none;color:var(--text);font-size:1.3rem;cursor:pointer;padding:4px;margin-left:auto;line-height:1}
+@media(max-width:720px){
+  nav .nav-links{display:none;position:absolute;top:100%;left:0;right:0;background:var(--header-bg);flex-direction:column;padding:10px 20px 16px;border-bottom:1px solid var(--surface2);gap:4px}
+  nav .nav-links.open{display:flex}
+  nav .nav-links a{padding:8px 12px;border-radius:6px;font-size:.82rem}
+  nav .hamburger{display:block}
+}
+.container{max-width:1100px;margin:0 auto;padding:24px 20px}
+
+/* Hero */
+.hero{text-align:center;padding:40px 20px 30px}
+.hero h1{font-size:clamp(1.6rem,4vw,2.6rem);font-weight:800;background:linear-gradient(135deg,var(--blue),var(--teal),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hero p{color:var(--muted);font-size:.92rem;margin-top:8px;max-width:500px;margin-left:auto;margin-right:auto}
+
+/* Section headers */
+.section-header{display:flex;align-items:center;gap:12px;margin:32px 0 14px;padding-bottom:8px;border-bottom:1px solid var(--surface2)}
+.section-header .icon{font-size:1.1rem}
+.section-header h2{font-size:1.25rem;font-weight:700;color:var(--yellow)}
+.section-header .count{font-size:.7rem;color:var(--muted);background:var(--surface2);padding:1px 10px;border-radius:20px;margin-left:auto}
+
+/* Cards grid */
+.card-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(240px,1fr));gap:12px;margin-bottom:8px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:16px;transition:.2s;cursor:pointer;position:relative;overflow:hidden;text-decoration:none;display:block}
+.card:hover{transform:translateY(-3px);border-color:var(--accent,var(--blue));box-shadow:0 6px 20px rgba(0,0,0,.3)}
+.card .top{display:flex;align-items:flex-start;gap:10px;margin-bottom:6px}
+.card .top .emoji{font-size:1.2rem;flex-shrink:0;width:32px;height:32px;display:flex;align-items:center;justify-content:center;background:var(--bg);border-radius:6px;border:1px solid var(--surface2)}
+.card h3{font-size:.88rem;font-weight:600;color:var(--text);line-height:1.3}
+.card p{font-size:.73rem;color:var(--muted);margin-top:4px;line-height:1.4}
+.card .tags{display:flex;gap:4px;flex-wrap:wrap;margin-top:8px}
+.card .tag{font-size:.65rem;padding:1px 8px;border-radius:10px;background:var(--surface2);color:var(--muted)}
+
+/* Sub-section label */
+.sub-label{font-size:.78rem;color:var(--muted);margin:18px 0 8px;display:flex;align-items:center;gap:8px}
+.sub-label::after{content:'';flex:1;height:1px;background:var(--surface2)}
+
+/* Anim */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.card-grid .card{animation:fadeUp .35s ease-out both}
+.card-grid .card:nth-child(2){animation-delay:.05s}
+.card-grid .card:nth-child(3){animation-delay:.1s}
+.card-grid .card:nth-child(4){animation-delay:.15s}
+.card-grid .card:nth-child(5){animation-delay:.2s}
+.card-grid .card:nth-child(6){animation-delay:.25s}
+.card-grid .card:nth-child(7){animation-delay:.3s}
+.card-grid .card:nth-child(8){animation-delay:.35s}
+
+/* Subdir card */
+.subdir-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px}
+.subdir-card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:14px;text-align:center;transition:.2s;text-decoration:none;display:block}
+.subdir-card:hover{transform:translateY(-2px);border-color:var(--accent,var(--teal));box-shadow:0 4px 16px rgba(0,0,0,.25)}
+.subdir-card .emoji{font-size:1.4rem;margin-bottom:4px}
+.subdir-card h4{font-size:.82rem;font-weight:600;color:var(--text)}
+.subdir-card .count{font-size:.68rem;color:var(--muted);margin-top:2px}
+
+/* Responsive search */
+.search-bar{width:100%;max-width:400px;margin:0 auto 24px;display:block;padding:10px 16px;border-radius:30px;border:1px solid var(--surface2);background:var(--surface);color:var(--text);font-size:.85rem;outline:none;transition:.2s;font-family:inherit}
+.search-bar:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(148,226,213,.1)}
+.search-bar::placeholder{color:var(--muted)}
+.card.hidden{display:none}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo">
+    <span class="dot" style="background:var(--teal)"></span>
+    <span>Visual Notes</span>
+  </div>
+  <div class="nav-links" id="navLinks">
+    <a href="#react-native">React Native</a>
+    <a href="#javascript">JavaScript</a>
+    <a href="#mcp">MCP</a>
+    <a href="#claude-code">Claude Code</a>
+    <a href="#python">Python</a>
+    <a href="#css">CSS</a>
+  </div>
+  <button class="hamburger" onclick="toggleNav()" aria-label="Menu">☰</button>
+</nav>
+
+<div class="container">
+
+<div class="hero">
+  <h1>📚 Visual Learning Hub</h1>
+  <p>Interactive, self-contained visual guides for web & mobile development</p>
+  <input class="search-bar" id="searchBar" type="text" placeholder="Search notes..." oninput="filterCards()">
+</div>
+
+<!-- ===== REACT NATIVE ===== -->
+<div class="section-header" id="react-native">
+  <span class="icon">⚛️</span>
+  <h2>React Native</h2>
+  <span class="count">27</span>
+</div>
+<div class="card-grid" data-section="rn">
+  <a class="card" href="react-native/asyncstorage.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">💾</div><h3>AsyncStorage</h3></div>
+    <p>Local storage, setItem/getItem, multiGet, mergeItem, secure storage</p>
+    <div class="tags"><span class="tag">AsyncStorage</span><span class="tag">Storage</span></div>
+  </a>
+  <a class="card" href="react-native/expo-router-file-routing.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">📁</div><h3>Expo Router: File Routing</h3></div>
+    <p>File-based routing in Expo Router, directory structure, dynamic routes</p>
+    <div class="tags"><span class="tag">Expo</span><span class="tag">Router</span></div>
+  </a>
+  <a class="card" href="react-native/expo-router-layout.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">🧩</div><h3>Expo Router: Layout</h3></div>
+    <p>Layout routes, nested layouts, tabs, stack, groups</p>
+    <div class="tags"><span class="tag">Expo</span><span class="tag">Layout</span></div>
+  </a>
+  <a class="card" href="react-native/expo-router-master-structure.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">🏗️</div><h3>Expo Router: Structure</h3></div>
+    <p>Complete app directory structure, conventions, organization patterns</p>
+    <div class="tags"><span class="tag">Expo</span><span class="tag">Structure</span></div>
+  </a>
+  <a class="card" href="react-native/expo-router-navigation.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">🧭</div><h3>Expo Router: Navigation</h3></div>
+    <p>Navigation patterns, linking, deep links, navigate vs push</p>
+    <div class="tags"><span class="tag">Expo</span><span class="tag">Navigation</span></div>
+  </a>
+  <a class="card" href="react-native/expo-router-notation.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">📝</div><h3>Expo Router: Notation</h3></div>
+    <p>Route notation, segments, groups, (app), (auth), _layout patterns</p>
+    <div class="tags"><span class="tag">Expo</span><span class="tag">Notation</span></div>
+  </a>
+  <a class="card" href="react-native/expo-router-patterns.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">🔁</div><h3>Expo Router: Patterns</h3></div>
+    <p>Common routing patterns, modals, protected routes, redirects</p>
+    <div class="tags"><span class="tag">Expo</span><span class="tag">Patterns</span></div>
+  </a>
+  <a class="card" href="react-native/expo-router-protected-routes.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">🔒</div><h3>Expo Router: Protected Routes</h3></div>
+    <p>Auth guards, redirect logic, role-based access, middleware</p>
+    <div class="tags"><span class="tag">Expo</span><span class="tag">Auth</span></div>
+  </a>
+  <a class="card" href="react-native/expo-vs-rncli.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">⚔️</div><h3>Expo vs RN CLI</h3></div>
+    <p>Comparison: Expo managed vs bare workflow vs React Native CLI</p>
+    <div class="tags"><span class="tag">Expo</span><span class="tag">CLI</span></div>
+  </a>
+  <a class="card" href="react-native/flatlist-pull-to-refresh.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🔄</div><h3>FlatList Pull to Refresh</h3></div>
+    <p>RefreshControl, onRefresh, refreshing state, custom refresh indicators</p>
+    <div class="tags"><span class="tag">FlatList</span><span class="tag">Refresh</span></div>
+  </a>
+  <a class="card" href="react-native/flex1-vs-no-flex.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">📐</div><h3>flex:1 vs No Flex</h3></div>
+    <p>Visual comparison of flex:1 behavior, flexGrow, flexShrink, flexBasis</p>
+    <div class="tags"><span class="tag">Flex</span><span class="tag">Layout</span></div>
+  </a>
+  <a class="card" href="react-native/flexbox-all-properties.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🎯</div><h3>Flexbox All Properties</h3></div>
+    <p>Complete flexbox reference: justify, align, wrap, gap, order, grow</p>
+    <div class="tags"><span class="tag">Flexbox</span><span class="tag">Layout</span></div>
+  </a>
+  <a class="card" href="react-native/image-properties.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🖼️</div><h3>Image Properties</h3></div>
+    <p>Image component props: resizeMode, source, style, caching, blurRadius</p>
+    <div class="tags"><span class="tag">Image</span><span class="tag">Media</span></div>
+  </a>
+  <a class="card" href="react-native/keyboardavoidingview.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">⌨️</div><h3>KeyboardAvoidingView</h3></div>
+    <p>Keyboard behavior, KeyboardAvoidingView props, behavior modes, scroll fix</p>
+    <div class="tags"><span class="tag">Keyboard</span><span class="tag">UX</span></div>
+  </a>
+  <a class="card" href="react-native/lists-with-map.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">📋</div><h3>Lists with .map()</h3></div>
+    <p>Rendering lists using map(), keys, FlatList vs ScrollView, performance</p>
+    <div class="tags"><span class="tag">Lists</span><span class="tag">Map</span></div>
+  </a>
+  <a class="card" href="react-native/navigation-lifecycle.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🔄</div><h3>Navigation Lifecycle</h3></div>
+    <p>Screen lifecycle, focus/blur events, useFocusEffect, useIsFocused</p>
+    <div class="tags"><span class="tag">Navigation</span><span class="tag">Lifecycle</span></div>
+  </a>
+  <a class="card" href="react-native/overflow-properties.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🚧</div><h3>Overflow Properties</h3></div>
+    <p>Overflow visible/hidden/scroll, clipping, overflow with border radius</p>
+    <div class="tags"><span class="tag">Overflow</span><span class="tag">Layout</span></div>
+  </a>
+  <a class="card" href="react-native/renderitem-keyextractor.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🔑</div><h3>renderItem & keyExtractor</h3></div>
+    <p>FlatList renderItem patterns, keyExtractor, performance optimization</p>
+    <div class="tags"><span class="tag">FlatList</span><span class="tag">Keys</span></div>
+  </a>
+  <a class="card" href="react-native/render-render-mount-unmount.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🔄</div><h3>Render, Mount, Unmount</h3></div>
+    <p>Component lifecycle, render phases, mount/unmount, reconciliation</p>
+    <div class="tags"><span class="tag">Lifecycle</span><span class="tag">Render</span></div>
+  </a>
+  <a class="card" href="react-native/stack-navigation.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🥞</div><h3>Stack Navigation</h3></div>
+    <p>Stack navigator, push/pop, transitions, header customization, modals</p>
+    <div class="tags"><span class="tag">Navigation</span><span class="tag">Stack</span></div>
+  </a>
+  <a class="card" href="react-native/usecallback.html" style="--accent:var(--coral)">
+    <div class="top"><div class="emoji">⚡</div><h3>useCallback</h3></div>
+    <p>Memoization, dependency array, preventing re-renders, inline functions</p>
+    <div class="tags"><span class="tag">Hooks</span><span class="tag">Optimization</span></div>
+  </a>
+  <a class="card" href="react-native/useeffect-all-features.html" style="--accent:var(--coral)">
+    <div class="top"><div class="emoji">🌀</div><h3>useEffect All Features</h3></div>
+    <p>Side effects, cleanup, dependency array, mount/unmount, data fetching</p>
+    <div class="tags"><span class="tag">Hooks</span><span class="tag">Effects</span></div>
+  </a>
+  <a class="card" href="react-native/usememo.html" style="--accent:var(--coral)">
+    <div class="top"><div class="emoji">🧠</div><h3>useMemo</h3></div>
+    <p>Memoization, expensive computations, dependency array, referential equality</p>
+    <div class="tags"><span class="tag">Hooks</span><span class="tag">Optimization</span></div>
+  </a>
+  <a class="card" href="react-native/useref.html" style="--accent:var(--coral)">
+    <div class="top"><div class="emoji">🔗</div><h3>useRef</h3></div>
+    <p>Refs, DOM access, mutable values, forwardRef, useImperativeHandle</p>
+    <div class="tags"><span class="tag">Hooks</span><span class="tag">Refs</span></div>
+  </a>
+  <a class="card" href="react-native/usesearchparams.html" style="--accent:var(--coral)">
+    <div class="top"><div class="emoji">🔍</div><h3>useSearchParams</h3></div>
+    <p>URL search params, query strings, get/set/delete params, useSearchParams hook</p>
+    <div class="tags"><span class="tag">Hooks</span><span class="tag">URL</span></div>
+  </a>
+  <a class="card" href="react-native/virtual-dom.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">⚛️</div><h3>Virtual DOM</h3></div>
+    <p>Virtual DOM, diffing, reconciliation, fiber architecture, batching</p>
+    <div class="tags"><span class="tag">React</span><span class="tag">Internals</span></div>
+  </a>
+</div>
+
+<!-- ===== JAVASCRIPT ===== -->
+<div class="section-header" id="javascript">
+  <span class="icon">🟨</span>
+  <h2>JavaScript</h2>
+  <span class="count">15</span>
+</div>
+
+<div class="sub-label">Core JS</div>
+<div class="card-grid" data-section="js">
+  <a class="card" href="javascript/arrays.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">📊</div><h3>Arrays</h3></div>
+    <p>Array methods, mutating vs non-mutating, map/filter/reduce, spread, destructuring</p>
+    <div class="tags"><span class="tag">Arrays</span><span class="tag">Methods</span></div>
+  </a>
+  <a class="card" href="javascript/closure.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🔒</div><h3>Closures</h3></div>
+    <p>Scope chain, factory functions, loop closures, IIFE, memoize patterns</p>
+    <div class="tags"><span class="tag">Closure</span><span class="tag">Scope</span></div>
+  </a>
+  <a class="card" href="javascript/equality.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">⚖️</div><h3>Equality</h3></div>
+    <p>== vs ===, Object.is, type coercion, NaN, +0 vs -0, sameness comparisons</p>
+    <div class="tags"><span class="tag">Equality</span><span class="tag">Types</span></div>
+  </a>
+  <a class="card" href="javascript/event-loop.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🔄</div><h3>Event Loop</h3></div>
+    <p>Call stack, task queue, microtasks, async/await execution order, setTimeout</p>
+    <div class="tags"><span class="tag">Event Loop</span><span class="tag">Async</span></div>
+  </a>
+  <a class="card" href="javascript/events.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🎯</div><h3>Events</h3></div>
+    <p>Propagation, capturing vs bubbling, delegation, custom events, event phases</p>
+    <div class="tags"><span class="tag">Events</span><span class="tag">DOM</span></div>
+  </a>
+  <a class="card" href="javascript/middleware.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🔗</div><h3>Middleware</h3></div>
+    <p>Express middleware, next(), error handling, async middleware, middleware chain</p>
+    <div class="tags"><span class="tag">Middleware</span><span class="tag">Express</span></div>
+  </a>
+  <a class="card" href="javascript/node-event-loop.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🟢</div><h3>Node Event Loop</h3></div>
+    <p>Phases: timers, poll, check, close; setImmediate, nextTick, I/O callbacks</p>
+    <div class="tags"><span class="tag">Node</span><span class="tag">Event Loop</span></div>
+  </a>
+  <a class="card" href="javascript/objects.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">📦</div><h3>Objects</h3></div>
+    <p>Object creation, properties, descriptors, getters/setters, freeze/seal, prototype chain</p>
+    <div class="tags"><span class="tag">Objects</span><span class="tag">OOP</span></div>
+  </a>
+  <a class="card" href="javascript/promises.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🤝</div><h3>Promises</h3></div>
+    <p>Promise states, chaining, error handling, Promise.all/race/any/allSettled, async/await</p>
+    <div class="tags"><span class="tag">Promises</span><span class="tag">Async</span></div>
+  </a>
+  <a class="card" href="javascript/prototype.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🧬</div><h3>Prototype</h3></div>
+    <p>Prototype chain, __proto__, Object.create, class inheritance vs prototypal</p>
+    <div class="tags"><span class="tag">Prototype</span><span class="tag">Inheritance</span></div>
+  </a>
+  <a class="card" href="javascript/scope.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🎯</div><h3>Scope</h3></div>
+    <p>Global/function/block scope, lexical scope, hoisting, temporal dead zone, var/let/const</p>
+    <div class="tags"><span class="tag">Scope</span><span class="tag">Hoisting</span></div>
+  </a>
+  <a class="card" href="javascript/string-array-conversion.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🔄</div><h3>String ↔ Array Conversion</h3></div>
+    <p>split/join, Array.from, spread, String methods, character encoding</p>
+    <div class="tags"><span class="tag">String</span><span class="tag">Array</span></div>
+  </a>
+  <a class="card" href="javascript/strings.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">📝</div><h3>Strings</h3></div>
+    <p>String methods, template literals, regex, Unicode, locale comparison</p>
+    <div class="tags"><span class="tag">String</span><span class="tag">Text</span></div>
+  </a>
+</div>
+
+<div class="sub-label">Web & Security</div>
+<div class="card-grid" data-section="js">
+  <a class="card" href="javascript/cors.html" style="--accent:var(--pink)">
+    <div class="top"><div class="emoji">🌐</div><h3>CORS</h3></div>
+    <p>Same-Origin Policy, preflight, simple requests, headers, credentials, CORS errors</p>
+    <div class="tags"><span class="tag">CORS</span><span class="tag">Security</span></div>
+  </a>
+  <a class="card" href="javascript/user-agent.html" style="--accent:var(--pink)">
+    <div class="top"><div class="emoji">🧑‍💻</div><h3>User-Agent</h3></div>
+    <p>UA string parsing, device detection, platform identification, spoofing</p>
+    <div class="tags"><span class="tag">UA</span><span class="tag">Browser</span></div>
+  </a>
+  <a class="card" href="javascript/jsonwebtoken/index.html" style="--accent:var(--pink)">
+    <div class="top"><div class="emoji">🔐</div><h3>JWT</h3></div>
+    <p>Token generation, verification, middleware, cookies vs Bearer, refresh tokens</p>
+    <div class="tags"><span class="tag">JWT</span><span class="tag">Auth</span></div>
+  </a>
+  <a class="card" href="javascript/security/index.html" style="--accent:var(--pink)">
+    <div class="top"><div class="emoji">🛡️</div><h3>Web Security</h3></div>
+    <p>XSS, CSRF, cookie flags, session hijacking, CSP, HSTS, clickjacking</p>
+    <div class="tags"><span class="tag">Security</span><span class="tag">Web</span></div>
+  </a>
+</div>
+
+<!-- ===== MCP ===== -->
+<div class="section-header" id="mcp">
+  <span class="icon">🔌</span>
+  <h2>MCP · Model Context Protocol</h2>
+  <span class="count">8</span>
+</div>
+<div class="card-grid" data-section="mcp">
+  <a class="card" href="mcp/mcp.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">🔌</div><h3>MCP Overview</h3></div>
+    <p>What is MCP? USB-C for AI. Standard bridge between AI and external tools. Examples: Gmail, WhatsApp bot, bank balance. Without vs with MCP.</p>
+    <div class="tags"><span class="tag">Basics</span><span class="tag">Examples</span></div>
+  </a>
+  <a class="card" href="mcp/mcp-architecture.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">🏗️</div><h3>MCP Architecture</h3></div>
+    <p>Deep dive into 3-layer architecture: Host, Client, Server. Lifecycle, transport, JSON-RPC, capabilities, interactive flow simulation.</p>
+    <div class="tags"><span class="tag">Architecture</span><span class="tag">Deep Dive</span></div>
+  </a>
+  <a class="card" href="mcp/mcp-how-it-works.html" style="--accent:var(--peach)">
+    <div class="top"><div class="emoji">🌤️</div><h3>MCP How It Works</h3></div>
+    <p>Complete end-to-end weather example. Step-by-step walkthrough with code, visualization, live demo — Host → Client → Server → API.</p>
+    <div class="tags"><span class="tag">Example</span><span class="tag">Weather</span></div>
+  </a>
+  <a class="card" href="mcp/mcp-client-comparison.html" style="--accent:var(--orange)">
+    <div class="top"><div class="emoji">⚔️</div><h3>Raw vs LangChain Client</h3></div>
+    <p>Side-by-side comparison: Raw MCP Client (manual) vs LangChain MCP Client (automatic). Internals, tool calling, code, when to use each.</p>
+    <div class="tags"><span class="tag">Comparison</span><span class="tag">LangChain</span></div>
+  </a>
+  <a class="card" href="mcp/mcp-streamable-http.html" style="--accent:var(--orange)">
+    <div class="top"><div class="emoji">⚡</div><h3>Streamable HTTP Transport</h3></div>
+    <p>Newest MCP transport using HTTP POST + chunked encoding. No persistent connections. SSE vs Streamable HTTP, code, when to use.</p>
+    <div class="tags"><span class="tag">Transport</span><span class="tag">HTTP</span></div>
+  </a>
+  <a class="card" href="mcp/mcp-inspector.html" style="--accent:var(--lavender)">
+    <div class="top"><div class="emoji">🔍</div><h3>MCP Inspector</h3></div>
+    <p>Web-based debugging UI for MCP servers. Browse tools, resources, prompts, call tools with custom args, see every JSON-RPC message in real-time.</p>
+    <div class="tags"><span class="tag">Debug</span><span class="tag">Testing</span></div>
+  </a>
+  <a class="card" href="mcp/mcp-community-servers.html" style="--accent:var(--pink)">
+    <div class="top"><div class="emoji">🌐</div><h3>Community MCP Servers</h3></div>
+    <p>16,000+ community-built servers across 4 registries. Top 20 ranking, category browser, ecosystem timeline, security, install guides.</p>
+    <div class="tags"><span class="tag">Ecosystem</span><span class="tag">Directory</span></div>
+  </a>
+  <a class="card" href="mcp/mcp-best-for-daily-life.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🏆</div><h3>MCP for Daily Life</h3></div>
+    <p>Which MCPs to actually install? Hand-picked for devs and students. Interactive quiz, token costs, day-in-the-life scenarios, install reference.</p>
+    <div class="tags"><span class="tag">Best Picks</span><span class="tag">Guide</span></div>
+  </a>
+</div>
+
+<!-- ===== CLAUDE CODE ===== -->
+<div class="section-header" id="claude-code">
+  <span class="icon">/</span>
+  <h2>Claude Code Skills</h2>
+  <span class="count">5</span>
+</div>
+<div class="card-grid" data-section="claude-code">
+  <a class="card" href="claude-code/skills-basics.html" style="--accent:var(--teal)">
+    <div class="top"><div class="emoji">📜</div><h3>Skills Basics</h3></div>
+    <p>SKILL.md structure, YAML frontmatter, user/project/plugin locations, invocation modes, bundled skills. Build your first /commit skill.</p>
+    <div class="tags"><span class="tag">SKILL.md</span><span class="tag">Basics</span></div>
+  </a>
+  <a class="card" href="claude-code/skills-advanced.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">⚡</div><h3>Skills Advanced</h3></div>
+    <p>Dynamic context injection with !commands, subagent skills via context:fork, $ARGUMENTS, supporting files, allowed-tools, skill overrides.</p>
+    <div class="tags"><span class="tag">Subagents</span><span class="tag">Dynamic</span></div>
+  </a>
+  <a class="card" href="claude-code/hooks.html" style="--accent:var(--peach)">
+    <div class="top"><div class="emoji">🪝</div><h3>Hooks</h3></div>
+    <p>Lifecycle events (SessionStart, PreToolUse, PostToolUse, Stop), hook types, block dangerous commands, auto-format, notifications.</p>
+    <div class="tags"><span class="tag">Hooks</span><span class="tag">Automation</span></div>
+  </a>
+  <a class="card" href="claude-code/plugins.html" style="--accent:var(--lavender)">
+    <div class="top"><div class="emoji">🧩</div><h3>Plugins</h3></div>
+    <p>Packaging skills, hooks, agents, MCP servers into shareable plugins. Manifest, namespacing, migration from standalone, lifecycle.</p>
+    <div class="tags"><span class="tag">Plugins</span><span class="tag">Distribution</span></div>
+  </a>
+  <a class="card" href="claude-code/decision-guide.html" style="--accent:var(--yellow)">
+    <div class="top"><div class="emoji">🧭</div><h3>Decision Guide</h3></div>
+    <p>Interactive decision tree and quiz: when to use CLAUDE.md vs Skill vs Hook vs MCP vs Subagent vs Plugin. The full extension spectrum.</p>
+    <div class="tags"><span class="tag">Comparison</span><span class="tag">Architecture</span></div>
+  </a>
+</div>
+
+<!-- ===== PYTHON ===== -->
+<div class="section-header" id="python">
+  <span class="icon">🐍</span>
+  <h2>Python</h2>
+  <span class="count">1</span>
+</div>
+<div class="card-grid" data-section="python">
+  <a class="card" href="python/name-main.html" style="--accent:var(--blue)">
+    <div class="top"><div class="emoji">🔰</div><h3>__name__ == "__main__"</h3></div>
+    <p>What is the guard? What happens without it? Benefits, interactive demo, real CLI example, common mistakes — with deep visualization</p>
+    <div class="tags"><span class="tag">Python</span><span class="tag">Idiom</span></div>
+  </a>
+</div>
+
+<!-- ===== CSS ===== -->
+<div class="section-header" id="css">
+  <span class="icon">🎨</span>
+  <h2>CSS</h2>
+  <span class="count">8</span>
+</div>
+<div class="subdir-grid">
+  <a class="subdir-card" href="css-notes/flexbox/index.html" style="--accent:var(--blue)">
+    <div class="emoji">📐</div>
+    <h4>Flexbox</h4>
+    <div class="count">5 guides</div>
+  </a>
+  <a class="subdir-card" href="css-notes/grid/index.html" style="--accent:var(--green)">
+    <div class="emoji">🔲</div>
+    <h4>Grid</h4>
+    <div class="count">1 guide</div>
+  </a>
+  <a class="subdir-card" href="css-notes/position/index.html" style="--accent:var(--peach)">
+    <div class="emoji">📍</div>
+    <h4>Position</h4>
+    <div class="count">2 guides</div>
+  </a>
+  <a class="subdir-card" href="css-notes/navbar/index.html" style="--accent:var(--teal)">
+    <div class="emoji">🧭</div>
+    <h4>Navbar</h4>
+    <div class="count">1 guide</div>
+  </a>
+  <a class="subdir-card" href="css-notes/hero/index.html" style="--accent:var(--pink)">
+    <div class="emoji">🦸</div>
+    <h4>Hero</h4>
+    <div class="count">1 guide</div>
+  </a>
+  <a class="subdir-card" href="css-notes/typography/index.html" style="--accent:var(--yellow)">
+    <div class="emoji">🔤</div>
+    <h4>Typography</h4>
+    <div class="count">1 guide</div>
+  </a>
+  <a class="subdir-card" href="css-notes/webkit/index.html" style="--accent:var(--lavender)">
+    <div class="emoji">🌐</div>
+    <h4>WebKit</h4>
+    <div class="count">1 guide</div>
+  </a>
+  <a class="subdir-card" href="css-notes/css-units/index.html" style="--accent:var(--orange)">
+    <div class="emoji">📏</div>
+    <h4>CSS Units</h4>
+    <div class="count">1 guide</div>
+  </a>
+</div>
+
+<div style="margin-top:40px;padding:20px;text-align:center;border-top:1px solid var(--surface2)">
+  <p style="color:var(--muted);font-size:.78rem">70 interactive visual guides &middot; Dark theme &middot; Self-contained HTML</p>
+</div>
+
+</div><!-- /container -->
+
+<script>
+function toggleNav() {
+  document.getElementById('navLinks').classList.toggle('open');
+}
+document.addEventListener('click', function(e) {
+  const nav = document.getElementById('navLinks');
+  const hamburger = document.querySelector('.hamburger');
+  if (!nav.contains(e.target) && !hamburger.contains(e.target)) {
+    nav.classList.remove('open');
+  }
+});
+function filterCards() {
+  const q = document.getElementById('searchBar').value.toLowerCase();
+  document.querySelectorAll('.card-grid .card, .subdir-card').forEach(card => {
+    const text = card.textContent.toLowerCase();
+    card.classList.toggle('hidden', !text.includes(q));
+  });
+}
+</script>
+</body>
+</html>

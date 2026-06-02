@@ -1,0 +1,844 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS String Methods — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#11111b;color:#cdd6f4;padding:20px}
+h1{font-size:2.5rem;margin-bottom:.3rem}
+h2{font-size:1.35rem;margin:2rem 0 .8rem;color:#89b4fa;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.7rem;background:#313244;color:#a6adc8;padding:2px 8px;border-radius:999px;font-weight:400}
+h3{font-size:1.05rem;margin:1.2rem 0 .5rem;color:#a6e3a1}
+p,li{color:#bac2de;line-height:1.7}
+code{background:#181825;padding:2px 6px;border-radius:4px;font-size:.85em;color:#fab387;font-family:'JetBrains Mono',monospace}
+pre{background:#181825;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0;border:1px solid #313244;line-height:1.7}
+pre code{background:none;padding:0;color:#a6e3a1}
+.wrapper{max-width:1000px;margin:0 auto}
+.gradient-text{background:linear-gradient(135deg,#89b4fa,#a6e3a1,#f9e2af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#6c7086;margin-bottom:2rem}
+.demo-panel{background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:20px;margin:20px 0}
+.demo-panel .label{font-size:.75rem;color:#6c7086;margin-bottom:8px;font-family:monospace}
+.demo-panel .label span{color:#89b4fa}
+.tip{background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.85rem;color:#a6adc8}
+.tip strong{color:#f9e2af}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.84rem;border-left:4px solid #89b4fa;background:rgba(137,180,250,.04)}
+.callout.danger{border-color:#f38ba8;background:rgba(243,139,168,.06)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;font-size:.85rem}
+.info-card .prop{color:#89b4fa;font-family:monospace;font-weight:600}
+.info-card .val{color:#a6e3a1}
+.info-card .desc{color:#6c7086;font-size:.8rem;margin-top:4px}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.controls button,.btn{background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:monospace;transition:.2s}
+.controls button:hover,.btn:hover{background:#45475a}
+.controls button.active,.btn.active{background:#89b4fa30;border-color:#89b4fa;color:#89b4fa}
+.slider-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.slider-group label{font-size:.78rem;color:#a6adc8}
+.slider-group input[type=range]{accent-color:#89b4fa;width:140px}
+.slider-group .value{font-family:monospace;font-size:.8rem;color:#fab387;min-width:40px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{background:#181825;color:#89b4fa;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid #313244}
+td{padding:10px 14px;border-bottom:1px solid #313244;color:#a6adc8}
+tr:hover td{background:#1e1e2e50}
+td:first-child{font-family:monospace;color:#fab387}
+::selection{background:#89b4fa40}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#11111b}
+::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+.str-vis{display:flex;gap:2px;align-items:stretch;flex-wrap:wrap;padding:10px;background:#181825;border-radius:6px;border:1px solid #313244;min-height:44px;margin:8px 0;font-family:monospace}
+.str-vis .char{display:inline-flex;align-items:center;justify-content:center;min-width:28px;height:36px;border-radius:4px;font-size:.85rem;font-weight:600;position:relative;transition:.2s}
+.str-vis .char .idx{position:absolute;bottom:-14px;font-size:.55rem;font-weight:400;color:#585b70}
+.str-vis .char.highlight{border:2px solid #f9e2af;transform:scale(1.12);z-index:2;box-shadow:0 0 12px rgba(249,226,175,.3)}
+.str-vis .char.selected{background:#f38ba850!important;border:2px solid #f38ba8}
+.str-vis .char.range{background:#89b4fa50!important;border:2px dashed #89b4fa}
+.c0{background:#89b4fa;color:#1e1e2e}
+.c1{background:#a6e3a1;color:#1e1e2e}
+.c2{background:#f9e2af;color:#1e1e2e}
+.c3{background:#f38ba8;color:#1e1e2e}
+.c4{background:#cba6f7;color:#1e1e2e}
+.c5{background:#fab387;color:#1e1e2e}
+.c6{background:#94e2d5;color:#1e1e2e}
+.c7{background:#74c7ec;color:#1e1e2e}
+.c8{background:#f5c2e7;color:#1e1e2e}
+.c9{background:#b4befe;color:#1e1e2e}
+.console-box{background:#0a0a14;border:1px solid #313244;border-radius:8px;padding:14px;font-family:monospace;font-size:.82rem;line-height:1.9;min-height:40px;margin:8px 0}
+.console-box .prompt{color:#6c7086}
+.console-box .result{color:#a6e3a1}
+.console-box .error{color:#f38ba8}
+.console-box .val{color:#fab387}
+.console-box .str{color:#a6e3a1}
+.console-box .num{color:#89b4fa}
+.console-box .bool{color:#f9e2af}
+.playground-row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.playground-row input,.playground-row select{background:#313244;color:#cdd6f4;border:1px solid #45475a;border-radius:4px;padding:4px 8px;font-family:monospace;font-size:.8rem}
+.playground-row input{width:160px}
+.playground-row .pg-label{font-size:.75rem;color:#6c7086;font-family:monospace}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1><span class="gradient-text">JS String Methods</span> — Deep Visual Guide</h1>
+<p class="subtitle">Every string method demonstrated with live visuals. Characters indexed, results highlighted, return values shown inline.</p>
+
+<!-- ===== 0. Strings Are Indexed ===== -->
+<section>
+<h2><span>0. Strings Are Indexed</span> <span class="badge">Foundation</span></h2>
+<p>Every character in a string has a <strong>zero-based index</strong>. The first character is at <code>0</code>, the last at <code>length - 1</code>. Strings are <strong>immutable</strong> — methods return new strings, they never modify the original.</p>
+
+<div class="demo-panel">
+  <div class="label">Visual index map — each colored block = one character</div>
+  <div class="slider-group">
+    <label>String</label>
+    <input id="indexString" value="JavaScript" style="background:#313244;border:1px solid #45475a;color:#cdd6f4;border-radius:4px;padding:4px 8px;font-family:monospace;font-size:.85rem;width:200px">
+    <button id="indexUpdateBtn" class="btn active">Update</button>
+  </div>
+  <div id="indexVisual" class="str-vis" style="font-size:1rem;"></div>
+  <div class="label" id="indexInfo">Length: 10 characters</div>
+</div>
+
+<div class="tip">
+  <strong>Immutable:</strong> <code>"hello".toUpperCase()</code> returns <code>"HELLO"</code> but the original <code>"hello"</code> is unchanged. Methods never modify the string — they return a <strong>new</strong> string.
+</div>
+</section>
+
+<!-- ===== 1. Access & Inspection ===== -->
+<section>
+<h2><span>1. Access &amp; Inspection</span> <span class="badge">charAt · at · charCodeAt · length</span></h2>
+
+<div class="demo-panel">
+  <div class="label">Click a character to see all access methods at once</div>
+  <div id="accessVisual" class="str-vis" style="font-size:1.1rem;cursor:pointer;"></div>
+  <div class="info-grid" id="accessResults">
+    <div class="info-card"><div class="prop">charAt(4)</div><div class="val" id="accessCharAt">—</div></div>
+    <div class="info-card"><div class="prop">at(4)</div><div class="val" id="accessAt">—</div></div>
+    <div class="info-card"><div class="prop">charCodeAt(4)</div><div class="val" id="accessCharCodeAt">—</div></div>
+    <div class="info-card"><div class="prop">at(-3) (negative)</div><div class="val" id="accessAtNeg">—</div></div>
+  </div>
+</div>
+
+<pre><code><span style="color:#6c7086">// Access methods</span>
+<span class="str">"Hello"</span>.charAt(1)     <span style="color:#6c7086">// → "e"  (returns char or "")</span>
+<span class="str">"Hello"</span>.at(1)         <span style="color:#6c7086">// → "e"  (ES2022, supports negative)</span>
+<span class="str">"Hello"</span>.at(-1)        <span style="color:#6c7086">// → "o"  (negative = from end)</span>
+<span class="str">"Hello"</span>.charCodeAt(1) <span style="color:#6c7086">// → 101  (UTF-16 code unit)</span>
+<span class="str">"Hello"</span>.length        <span style="color:#6c7086">// → 5   (property, not method)</span></code></pre>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop">charAt(i)</div><div class="desc">Returns char at index <code>i</code>, or <code>""</code> if out of range. Old school.</div></div>
+  <div class="info-card"><div class="prop">at(i)</div><div class="desc">ES2022. Supports negative indices (<code>-1</code> = last char). Returns <code>undefined</code> if out of range.</div></div>
+  <div class="info-card"><div class="prop">charCodeAt(i)</div><div class="desc">Returns the UTF-16 code unit (0-65535) at index <code>i</code>. For emoji/astral symbols, use <code>codePointAt()</code>.</div></div>
+  <div class="info-card"><div class="prop">length</div><div class="desc">Property, not a method. Number of UTF-16 code units. Emoji like "😊" count as 2.</div></div>
+</div>
+</section>
+
+<!-- ===== 2. Search & Check ===== -->
+<section>
+<h2><span>2. Search &amp; Check</span> <span class="badge">includes · startsWith · endsWith · indexOf · lastIndexOf</span></h2>
+
+<div class="demo-panel">
+  <div class="label">Search within: <span id="searchStrDisplay">"Hello, World!"</span></div>
+  <div class="playground-row">
+    <span class="pg-label">Search for:</span>
+    <input id="searchQuery" value="World" style="width:120px">
+    <button id="searchRun" class="btn active">Search</button>
+  </div>
+  <div id="searchVisual" class="str-vis" style="font-size:1rem;"></div>
+  <div class="info-grid" id="searchResults">
+    <div class="info-card"><div class="prop">includes("World")</div><div class="val" id="sIncludes">—</div></div>
+    <div class="info-card"><div class="prop">startsWith("Hello")</div><div class="val" id="sStartsWith">—</div></div>
+    <div class="info-card"><div class="prop">endsWith("!")</div><div class="val" id="sEndsWith">—</div></div>
+    <div class="info-card"><div class="prop">indexOf("o")</div><div class="val" id="sIndexOf">—</div></div>
+    <div class="info-card"><div class="prop">lastIndexOf("o")</div><div class="val" id="sLastIndexOf">—</div></div>
+    <div class="info-card"><div class="prop">search(/world/i)</div><div class="val" id="sSearch">—</div></div>
+  </div>
+</div>
+
+<pre><code><span class="str">"Hello, World!"</span>.includes(<span class="str">"World"</span>)     <span style="color:#6c7086">// → true  (case-sensitive)</span>
+<span class="str">"Hello, World!"</span>.startsWith(<span class="str">"Hello"</span>)   <span style="color:#6c7086">// → true  (checks start)</span>
+<span class="str">"Hello, World!"</span>.endsWith(<span class="str">"!"</span>)         <span style="color:#6c7086">// → true  (checks end)</span>
+<span class="str">"Hello, World!"</span>.indexOf(<span class="str">"o"</span>)          <span style="color:#6c7086">// → 4     (first occurrence)</span>
+<span class="str">"Hello, World!"</span>.lastIndexOf(<span class="str">"o"</span>)      <span style="color:#6c7086">// → 8     (last occurrence)</span>
+<span class="str">"Hello, World!"</span>.search(<span class="str">/world/i</span>)      <span style="color:#6c7086">// → 7     (regex, returns index)</span></code></pre>
+
+<div class="tip">
+  <strong>indexOf vs search:</strong> <code>indexOf</code> takes a plain string, <code>search</code> takes a regex. Both return the index or <code>-1</code>. <code>search</code> can't take a start position; <code>indexOf</code> can (<code>indexOf("o", 5)</code> starts from index 5).
+</div>
+</section>
+
+<!-- ===== 3. Extract & Slice ===== -->
+<section>
+<h2><span>3. Extract &amp; Slice</span> <span class="badge">slice · substring · substr</span></h2>
+
+<div class="demo-panel">
+  <div class="label">Drag the sliders to see each method extract differently</div>
+  <div class="slider-group">
+    <label>Start</label>
+    <input type="range" id="sliceStart" min="-5" max="13" value="7">
+    <span class="value" id="sliceStartVal">7</span>
+    <label>End / Length</label>
+    <input type="range" id="sliceEnd" min="0" max="13" value="12">
+    <span class="value" id="sliceEndVal">12</span>
+  </div>
+  <div id="sliceVisual" class="str-vis" style="font-size:1rem;"></div>
+  <div class="info-grid">
+    <div class="info-card"><div class="prop">slice(start, end)</div><div class="val" id="sliceResult">—</div><div class="desc">start inclusive, end exclusive. Supports negative.</div></div>
+    <div class="info-card"><div class="prop">substring(start, end)</div><div class="val" id="substringResult">—</div><div class="desc">Like slice, but negative = 0. Swaps if start &gt; end.</div></div>
+    <div class="info-card"><div class="prop">substr(start, length)</div><div class="val" id="substrResult">—</div><div class="desc">Deprecated. Second param is length, not end index.</div></div>
+  </div>
+</div>
+
+<div class="callout danger">
+  <strong>&#9888; substring vs slice critical difference:</strong><br>
+  <code>"Hello".substring(-2, 3)</code> → <code>"Hel"</code> (negative → 0)<br>
+  <code>"Hello".slice(-2, 3)</code> → <code>""</code> (negative counts from end = index 3 to 3 = empty)<br>
+  <code>"Hello".substring(3, 0)</code> → <code>"Hel"</code> (swaps start/end!)<br>
+  <code>"Hello".slice(3, 0)</code> → <code>""</code> (does NOT swap)
+</div>
+</section>
+
+<!-- ===== 4. Transform ===== -->
+<section>
+<h2><span>4. Transform</span> <span class="badge">toUpperCase · toLowerCase · trim · padStart · padEnd · repeat</span></h2>
+
+<div class="demo-panel">
+  <div class="label">Original: <span id="transformSrc">"  Hello World  "</span></div>
+  <div class="info-grid">
+    <div class="info-card"><div class="prop">toUpperCase()</div><div class="val" id="tUpper">—</div></div>
+    <div class="info-card"><div class="prop">toLowerCase()</div><div class="val" id="tLower">—</div></div>
+    <div class="info-card"><div class="prop">trim()</div><div class="val" id="tTrim">—</div></div>
+    <div class="info-card"><div class="prop">trimStart()</div><div class="val" id="tTrimStart">—</div></div>
+    <div class="info-card"><div class="prop">trimEnd()</div><div class="val" id="tTrimEnd">—</div></div>
+    <div class="info-card"><div class="prop">padStart(10, "*")</div><div class="val" id="tPadStart">—</div></div>
+    <div class="info-card"><div class="prop">padEnd(10, "*")</div><div class="val" id="tPadEnd">—</div></div>
+    <div class="info-card"><div class="prop">repeat(3)</div><div class="val" id="tRepeat">—</div></div>
+  </div>
+</div>
+
+<pre><code><span class="str">"  Hi  "</span>.trim()          <span style="color:#6c7086">// → "Hi"         (both sides)</span>
+<span class="str">"  Hi  "</span>.trimStart()    <span style="color:#6c7086">// → "Hi  "       (left only)</span>
+<span class="str">"  Hi  "</span>.trimEnd()      <span style="color:#6c7086">// → "  Hi"       (right only)</span>
+<span class="str">"5"</span>.padStart(<span class="num">3</span>, <span class="str">"0"</span>)    <span style="color:#6c7086">// → "005"       (for numbers/dates)</span>
+<span class="str">"5"</span>.padEnd(<span class="num">3</span>, <span class="str">"0"</span>)      <span style="color:#6c7086">// → "500"</span>
+<span class="str">"Ha"</span>.repeat(<span class="num">3</span>)          <span style="color:#6c7086">// → "HaHaHa"    (great for patterns)</span></code></pre>
+
+<div class="tip">
+  <strong>padStart is perfect for:</strong> zero-padding numbers (<code>"7" → "007"</code>), aligning text in tables, formatting hex colors, adding left-padding for display.
+</div>
+</section>
+
+<!-- ===== 5. Replace & Match ===== -->
+<section>
+<h2><span>5. Replace &amp; Match</span> <span class="badge">replace · replaceAll · match · matchAll</span></h2>
+
+<div class="demo-panel">
+  <div class="label">Click presets to see replace behavior:</div>
+  <div class="controls" id="replaceControls">
+    <button class="active" data-v='{"s":"I like dogs. Dogs are great.","p":"dogs","r":"cats"}'>replace("dogs", "cats")</button>
+    <button data-v='{"s":"I like dogs. Dogs are great.","p":"dogs","r":"cats","f":"g"}'>replace(/dogs/i, "cats")</button>
+    <button data-v='{"s":"I like dogs. Dogs are great.","p":"dogs","r":"cats","f":"gi"}'>replaceAll(/dogs/gi, "cats")</button>
+    <button data-v='{"s":"Apples, apples, apples!","p":"apple","r":"orange","f":"gi"}'>replaceAll("apple", "orange")</button>
+  </div>
+  <div id="replaceVisual" class="str-vis" style="font-size:.9rem;"></div>
+  <div class="info-grid">
+    <div class="info-card"><div class="prop">replace("dogs", "cats")</div><div class="val" id="replaceResult">—</div><div class="desc">Only replaces <strong>first</strong> match (string or regex without /g)</div></div>
+    <div class="info-card"><div class="prop">replaceAll("dogs", "cats")</div><div class="val" id="replaceAllResult">—</div><div class="desc">Replaces <strong>all</strong> matches. Accepts string or regex with /g.</div></div>
+    <div class="info-card"><div class="prop">match(/dogs/gi)</div><div class="val" id="matchResult">—</div><div class="desc">Returns array of matches or <code>null</code>. With /g = all, without = details.</div></div>
+    <div class="info-card"><div class="prop">search(/dogs/i)</div><div class="val" id="matchSearch">—</div><div class="desc">Returns index of first match, or -1.</div></div>
+  </div>
+</div>
+
+<pre><code><span class="str">"cat cat"</span>.replace(<span class="str">"cat"</span>, <span class="str">"dog"</span>)       <span style="color:#6c7086">// → "dog cat"  (only first)</span>
+<span class="str">"cat cat"</span>.replaceAll(<span class="str">"cat"</span>, <span class="str">"dog"</span>)  <span style="color:#6c7086">// → "dog dog"  (all)</span>
+<span class="str">"CAT cat"</span>.replaceAll(<span class="str">/cat/gi</span>, <span class="str">"dog"</span>) <span style="color:#6c7086">// → "dog dog"  (regex + flag)</span>
+<span class="str">"a1b2c3"</span>.match(<span class="str">/\d+/g</span>)               <span style="color:#6c7086">// → ["1", "2", "3"]</span></code></pre>
+
+<div class="tip">
+  <strong>replaceAll requires global flag:</strong> <code>replaceAll(/cats/gi, "dogs")</code> works. <code>replaceAll(/cats/i, "dogs")</code> throws TypeError! Use <code>/cats/gi</code> with the <code>g</code> flag.
+</div>
+</section>
+
+<!-- ===== 6. Split ===== -->
+<section>
+<h2><span>6. Split</span> <span class="badge">string → array</span></h2>
+<p><code>split(separator)</code> splits a string into an array. The separator can be a string or regex. The original string is unchanged.</p>
+
+<div class="demo-panel">
+  <div class="playground-row">
+    <span class="pg-label">String:</span>
+    <input id="splitInput" value="apple,banana,cherry,date" style="width:200px">
+    <span class="pg-label">Separator:</span>
+    <input id="splitSep" value="," style="width:60px">
+    <span class="pg-label">Limit:</span>
+    <input id="splitLimit" value="" style="width:50px" placeholder="none">
+    <button id="splitRun" class="btn active">Split</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0;">
+    <div style="background:#181825;border:1px solid #313244;border-radius:6px;padding:12px;">
+      <div style="font-size:.75rem;color:#6c7086;margin-bottom:6px;">Source string</div>
+      <div style="display:flex;gap:2px;flex-wrap:wrap;" id="splitSrcVisual"></div>
+    </div>
+    <div style="background:#181825;border:1px solid #313244;border-radius:6px;padding:12px;">
+      <div style="font-size:.75rem;color:#6c7086;margin-bottom:6px;">Result array</div>
+      <div id="splitResultVisual" style="display:flex;gap:4px;flex-wrap:wrap;"></div>
+    </div>
+  </div>
+  <div class="console-box" id="splitConsole">
+    <div class="prompt">&gt; "apple,banana,cherry,date".split(",")</div>
+    <div class="result">&lArr; ["apple", "banana", "cherry", "date"]</div>
+  </div>
+</div>
+
+<pre><code><span class="str">"a,b,c"</span>.split(<span class="str">","</span>)          <span style="color:#6c7086">// → ["a","b","c"]</span>
+<span class="str">"a,b,c"</span>.split(<span class="str">","</span>, <span class="num">2</span>)       <span style="color:#6c7086">// → ["a","b"]  (limit)</span>
+<span class="str">"hello"</span>.split(<span class="str">""</span>)            <span style="color:#6c7086">// → ["h","e","l","l","o"]</span>
+<span class="str">"a b  c"</span>.split(<span class="str">/\s+/</span>)        <span style="color:#6c7086">// → ["a","b","c"]  (regex)</span>
+<span class="str">""</span>.split(<span class="str">","</span>)               <span style="color:#6c7086">// → [""]  (array with one empty string)</span></code></pre>
+
+<div class="tip">
+  <strong>split("") splits into characters</strong> — useful for iterating over letters. But emoji like "😊" or "👨‍👩‍👧" are multiple code units — <code>split("")</code> breaks them. Use <code>Array.from(str)</code> or spread <code>[...str]</code> for proper Unicode.
+</div>
+</section>
+
+<!-- ===== 7. Concat ===== -->
+<section>
+<h2><span>7. Concat</span> <span class="badge">Joining Strings</span></h2>
+
+<div class="demo-panel">
+  <div class="label">concat() vs + vs template literals:</div>
+  <div class="info-grid">
+    <div class="info-card"><div class="prop">"Hello".concat(" ", "World")</div><div class="val" style="color:#a6e3a1;">"Hello World"</div><div class="desc">Joins strings. Rarely used — + is shorter.</div></div>
+    <div class="info-card"><div class="prop">"Hello" + " " + "World"</div><div class="val" style="color:#a6e3a1;">"Hello World"</div><div class="desc">Most common. Concise, but can be slower in loops.</div></div>
+    <div class="info-card"><div class="prop">`Hello ${name}`</div><div class="val" style="color:#a6e3a1;">"Hello World"</div><div class="desc">Template literals. Best for readability + expressions.</div></div>
+  </div>
+</div>
+</section>
+
+<!-- ===== 8. Interactive Playground ===== -->
+<section>
+<h2><span>8. Interactive Playground</span> <span class="badge">Try Any Method</span></h2>
+<p>Select a method, enter a string and arguments, see the result with visuals.</p>
+
+<div class="demo-panel">
+  <div class="playground-row">
+    <span class="pg-label">String</span>
+    <input id="pgStr" value="  JavaScript is awesome!  " style="width:200px">
+  </div>
+  <div class="playground-row">
+    <span class="pg-label">Method</span>
+    <select id="pgMethod" style="width:160px;">
+      <optgroup label="Access">
+        <option value="toUpperCase">toUpperCase()</option>
+        <option value="toLowerCase">toLowerCase()</option>
+        <option value="trim">trim()</option>
+        <option value="trimStart">trimStart()</option>
+        <option value="trimEnd">trimEnd()</option>
+      </optgroup>
+      <optgroup label="Search">
+        <option value="includes">includes(search)</option>
+        <option value="startsWith">startsWith(search)</option>
+        <option value="endsWith">endsWith(search)</option>
+        <option value="indexOf">indexOf(search)</option>
+        <option value="lastIndexOf">lastIndexOf(search)</option>
+      </optgroup>
+      <optgroup label="Transform">
+        <option value="repeat">repeat(n)</option>
+        <option value="padStart">padStart(len, fill)</option>
+        <option value="padEnd">padEnd(len, fill)</option>
+      </optgroup>
+      <optgroup label="Extract">
+        <option value="slice">slice(start, end)</option>
+        <option value="substring">substring(start, end)</option>
+        <option value="charAt">charAt(i)</option>
+      </optgroup>
+      <optgroup label="Replace / Split">
+        <option value="replace">replace(search, replace)</option>
+        <option value="replaceAll">replaceAll(search, replace)</option>
+        <option value="split">split(sep)</option>
+        <option value="concat">concat(str2)</option>
+      </optgroup>
+    </select>
+  </div>
+  <div class="playground-row" id="pgArgs">
+    <span class="pg-label">Args</span>
+    <input id="pgArg1" value="JavaScript" style="width:120px" placeholder="arg 1">
+    <input id="pgArg2" value="fun" style="width:120px" placeholder="arg 2 (optional)">
+  </div>
+  <button id="pgRun" class="btn active" style="margin:6px 0">Run</button>
+  <div class="console-box" id="pgConsole">
+    <div class="result">Click "Run" to see the result</div>
+  </div>
+  <div id="pgVisual" class="str-vis" style="font-size:.9rem;min-height:36px;"></div>
+</div>
+</section>
+
+<!-- ===== 9. Quick Reference ===== -->
+<section>
+<h2><span>Quick Reference</span> <span class="badge">All Methods</span></h2>
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>charAt(i)</td><td>string</td><td>Character at index i, or ""</td></tr>
+    <tr><td>charCodeAt(i)</td><td>number</td><td>UTF-16 code at index i</td></tr>
+    <tr><td>at(i)</td><td>string|undefined</td><td>Character at i (supports negative), ES2022</td></tr>
+    <tr><td>includes(s)</td><td>boolean</td><td>True if string contains s</td></tr>
+    <tr><td>startsWith(s)</td><td>boolean</td><td>True if string starts with s</td></tr>
+    <tr><td>endsWith(s)</td><td>boolean</td><td>True if string ends with s</td></tr>
+    <tr><td>indexOf(s, from?)</td><td>number</td><td>First index of s, or -1</td></tr>
+    <tr><td>lastIndexOf(s, from?)</td><td>number</td><td>Last index of s, or -1</td></tr>
+    <tr><td>search(regex)</td><td>number</td><td>Index of first regex match, or -1</td></tr>
+    <tr><td>slice(start, end?)</td><td>string</td><td>Extracts start→end (end exclusive). Supports negative.</td></tr>
+    <tr><td>substring(start, end?)</td><td>string</td><td>Like slice, but negatives→0, swaps if start>end</td></tr>
+    <tr><td>substr(start, length?)</td><td>string</td><td>Deprecated. Start + length instead of end index.</td></tr>
+    <tr><td>toUpperCase()</td><td>string</td><td>All uppercase</td></tr>
+    <tr><td>toLowerCase()</td><td>string</td><td>All lowercase</td></tr>
+    <tr><td>trim()</td><td>string</td><td>Removes whitespace both sides</td></tr>
+    <tr><td>trimStart()</td><td>string</td><td>Removes leading whitespace</td></tr>
+    <tr><td>trimEnd()</td><td>string</td><td>Removes trailing whitespace</td></tr>
+    <tr><td>padStart(len, fill)</td><td>string</td><td>Pads left until length len</td></tr>
+    <tr><td>padEnd(len, fill)</td><td>string</td><td>Pads right until length len</td></tr>
+    <tr><td>repeat(n)</td><td>string</td><td>Repeats string n times</td></tr>
+    <tr><td>replace(s, r)</td><td>string</td><td>Replaces first match of s with r</td></tr>
+    <tr><td>replaceAll(s, r)</td><td>string</td><td>Replaces all matches of s with r</td></tr>
+    <tr><td>match(regex)</td><td>array|null</td><td>Array of matches, or null</td></tr>
+    <tr><td>matchAll(regex)</td><td>iterator</td><td>Iterator of all match details</td></tr>
+    <tr><td>split(sep, limit?)</td><td>array</td><td>Splits string into array at sep</td></tr>
+    <tr><td>concat(...strs)</td><td>string</td><td>Joins strings (use + instead)</td></tr>
+  </tbody>
+</table>
+</section>
+
+<footer style="border-top:1px solid #313244;padding-top:20px;margin-top:40px;text-align:center;font-size:.85rem;color:#585b70;">
+  JS String Methods · Deep Visual Guide
+</footer>
+</div>
+
+<script>
+// ===== Color palette for characters =====
+const colors = ['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9'];
+
+// ===== Build visual string =====
+function renderStrVis(containerId, str, highlightIdx = -1, rangeStart = -1, rangeEnd = -1, selectedIndices = []) {
+  const container = document.getElementById(containerId);
+  container.innerHTML = '';
+  let colorIdx = 0;
+  for (let i = 0; i < str.length; i++) {
+    const span = document.createElement('span');
+    span.className = 'char ' + colors[colorIdx % colors.length];
+    if (str[i] === ' ') span.style.opacity = '0.5';
+    span.textContent = str[i] === ' ' ? '\u00B7' : str[i];
+    const idx = document.createElement('span');
+    idx.className = 'idx';
+    idx.textContent = i;
+    span.appendChild(idx);
+    if (i === highlightIdx) span.classList.add('highlight');
+    if (i >= rangeStart && i < rangeEnd) span.classList.add('range');
+    if (selectedIndices.includes(i)) span.classList.add('selected');
+    container.appendChild(span);
+    colorIdx++;
+  }
+}
+
+// ===== 0. Index Visual =====
+(function(){
+  const input = document.getElementById('indexString');
+  const btn = document.getElementById('indexUpdateBtn');
+  const info = document.getElementById('indexInfo');
+  function update() {
+    const s = input.value || ' ';
+    renderStrVis('indexVisual', s);
+    info.textContent = 'Length: ' + s.length + ' character' + (s.length !== 1 ? 's' : '');
+  }
+  btn.addEventListener('click', update);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') update(); });
+  update();
+})();
+
+// ===== 1. Access =====
+(function(){
+  const testStr = 'JavaScript';
+  const vis = document.getElementById('accessVisual');
+  function buildAccessVis() {
+    vis.innerHTML = '';
+    let ci = 0;
+    for (let i = 0; i < testStr.length; i++) {
+      const span = document.createElement('span');
+      span.className = 'char ' + colors[ci % colors.length];
+      span.textContent = testStr[i];
+      span.style.cursor = 'pointer';
+      const idx = document.createElement('span');
+      idx.className = 'idx';
+      idx.textContent = i;
+      span.appendChild(idx);
+      span.addEventListener('click', () => updateAccess(i));
+      vis.appendChild(span);
+      ci++;
+    }
+  }
+
+  function updateAccess(idx) {
+    const allChars = vis.querySelectorAll('.char');
+    allChars.forEach((c, i) => {
+      c.classList.remove('highlight', 'selected');
+      if (i === idx) c.classList.add('highlight');
+    });
+    document.getElementById('accessCharAt').textContent = '"' + testStr.charAt(idx) + '"';
+    document.getElementById('accessAt').textContent = '"' + testStr.at(idx) + '"';
+    document.getElementById('accessCharCodeAt').textContent = testStr.charCodeAt(idx);
+    document.getElementById('accessAtNeg').textContent = '"' + testStr.at(-(testStr.length - idx)) + '"  (from: ' + (-(testStr.length - idx)) + ')';
+  }
+
+  buildAccessVis();
+  updateAccess(4);
+})();
+
+// ===== 2. Search =====
+(function(){
+  const searchStr = "Hello, World!";
+  const input = document.getElementById('searchQuery');
+  const btn = document.getElementById('searchRun');
+  const vis = document.getElementById('searchVisual');
+  document.getElementById('searchStrDisplay').textContent = '"' + searchStr + '"';
+
+  function updateSearch() {
+    const q = input.value;
+    renderStrVis('searchVisual', searchStr);
+    const idx = searchStr.indexOf(q);
+    const lastIdx = searchStr.lastIndexOf(q);
+    const reSearch = searchStr.search(new RegExp(q.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), 'i'));
+
+    document.getElementById('sIncludes').innerHTML = '<span class="bool">' + searchStr.includes(q) + '</span>';
+    document.getElementById('sStartsWith').innerHTML = '<span class="bool">' + searchStr.startsWith(q) + '</span>';
+    document.getElementById('sEndsWith').innerHTML = '<span class="bool">' + searchStr.endsWith(q) + '</span>';
+    document.getElementById('sIndexOf').innerHTML = '<span class="num">' + idx + '</span>';
+    document.getElementById('sLastIndexOf').innerHTML = '<span class="num">' + lastIdx + '</span>';
+    document.getElementById('sSearch').innerHTML = '<span class="num">' + reSearch + '</span>';
+
+    if (idx !== -1) {
+      const chars = vis.querySelectorAll('.char');
+      for (let i = 0; i < q.length && (i + idx) < chars.length; i++) {
+        chars[idx + i].classList.add('highlight');
+      }
+      if (lastIdx !== idx && lastIdx !== -1) {
+        for (let i = 0; i < q.length && (i + lastIdx) < chars.length; i++) {
+          chars[lastIdx + i].classList.add('selected');
+        }
+      }
+    }
+  }
+
+  btn.addEventListener('click', updateSearch);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') updateSearch(); });
+  updateSearch();
+})();
+
+// ===== 3. Slice / Substring / Substr =====
+(function(){
+  const s = "Hello, World!";
+  const startSlider = document.getElementById('sliceStart');
+  const endSlider = document.getElementById('sliceEnd');
+
+  function updateSlice() {
+    const start = parseInt(startSlider.value);
+    const end = parseInt(endSlider.value);
+    document.getElementById('sliceStartVal').textContent = start;
+    document.getElementById('sliceEndVal').textContent = end;
+
+    const sliceRes = s.slice(start, end);
+    const subRes = s.substring(start, end);
+    const subStrRes = s.substr(start, Math.max(0, end - start));
+
+    document.getElementById('sliceResult').innerHTML = '<span class="str">"' + sliceRes + '"</span>';
+    document.getElementById('substringResult').innerHTML = '<span class="str">"' + subRes + '"</span>';
+    document.getElementById('substrResult').innerHTML = '<span class="str">"' + subStrRes + '"</span>';
+
+    // Visual
+    renderStrVis('sliceVisual', s);
+    const chars = document.querySelectorAll('#sliceVisual .char');
+    // Highlight the slice range
+    let effectiveStart, effectiveEnd;
+    if (start < 0) {
+      effectiveStart = Math.max(0, s.length + start);
+    } else {
+      effectiveStart = Math.min(start, s.length);
+    }
+    if (end < 0) {
+      effectiveEnd = Math.max(0, s.length + end);
+    } else {
+      effectiveEnd = Math.min(end, s.length);
+    }
+
+    if (effectiveStart < effectiveEnd) {
+      for (let i = effectiveStart; i < effectiveEnd && i < chars.length; i++) {
+        chars[i].classList.add('range');
+      }
+    }
+  }
+
+  startSlider.addEventListener('input', updateSlice);
+  endSlider.addEventListener('input', updateSlice);
+  updateSlice();
+})();
+
+// ===== 4. Transform =====
+(function(){
+  const src = "  Hello World  ";
+  document.getElementById('transformSrc').textContent = '"' + src + '"';
+  document.getElementById('tUpper').innerHTML = '<span class="str">"' + src.toUpperCase() + '"</span>';
+  document.getElementById('tLower').innerHTML = '<span class="str">"' + src.toLowerCase() + '"</span>';
+  document.getElementById('tTrim').innerHTML = '<span class="str">"' + src.trim() + '"</span>';
+  document.getElementById('tTrimStart').innerHTML = '<span class="str">"' + src.trimStart() + '"</span>';
+  document.getElementById('tTrimEnd').innerHTML = '<span class="str">"' + src.trimEnd() + '"</span>';
+  document.getElementById('tPadStart').innerHTML = '<span class="str">"' + "5".padStart(10, "*") + '"</span>';
+  document.getElementById('tPadEnd').innerHTML = '<span class="str">"' + "5".padEnd(10, "*") + '"</span>';
+  document.getElementById('tRepeat').innerHTML = '<span class="str">"' + "Ha".repeat(3) + '"</span>';
+})();
+
+// ===== 5. Replace & Match =====
+(function(){
+  const vis = document.getElementById('replaceVisual');
+  const consoleBox = document.getElementById('replaceResult');
+  const consoleAll = document.getElementById('replaceAllResult');
+  const consoleMatch = document.getElementById('matchResult');
+  const consoleSearch = document.getElementById('matchSearch');
+
+  function escapeRegex(str) {
+    return str.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  }
+
+  function updateReplace(data) {
+    const obj = JSON.parse(data);
+    const s = obj.s;
+    const p = obj.p;
+    const r = obj.r;
+    const f = obj.f || '';
+
+    renderStrVis('replaceVisual', s);
+
+    let replaceRes, replaceAllRes, matchRes, searchRes;
+    try {
+      if (f.includes('g') || f === '') {
+        replaceRes = s.replace(p, r);
+      } else {
+        replaceRes = s.replace(new RegExp(escapeRegex(p), f), r);
+      }
+    } catch(e) {
+      replaceRes = s.replace(p, r);
+    }
+
+    try {
+      if (f) {
+        replaceAllRes = s.replaceAll(new RegExp(escapeRegex(p), f), r);
+      } else {
+        replaceAllRes = s.replaceAll(p, r);
+      }
+    } catch(e) {
+      replaceAllRes = '⚠ Error: replaceAll needs string or regex with /g';
+    }
+
+    try {
+      const re = f ? new RegExp(escapeRegex(p), f) : new RegExp(escapeRegex(p));
+      matchRes = s.match(re);
+      matchRes = matchRes ? matchRes.join('", "') : 'null';
+    } catch(e) {
+      matchRes = 'null';
+    }
+
+    searchRes = s.search(new RegExp(escapeRegex(p), 'i'));
+
+    consoleBox.innerHTML = '<span class="str">"' + replaceRes + '"</span>';
+    consoleAll.innerHTML = '<span class="str">"' + replaceAllRes + '"</span>';
+    consoleMatch.innerHTML = '<span class="val">["' + matchRes + '"]</span>';
+    consoleSearch.innerHTML = '<span class="num">' + searchRes + '</span>';
+  }
+
+  document.querySelectorAll('#replaceControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#replaceControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateReplace(btn.dataset.v);
+    });
+  });
+  updateReplace(document.querySelector('#replaceControls .active').dataset.v);
+})();
+
+// ===== 6. Split =====
+(function(){
+  const input = document.getElementById('splitInput');
+  const sep = document.getElementById('splitSep');
+  const limit = document.getElementById('splitLimit');
+  const runBtn = document.getElementById('splitRun');
+  const consoleEl = document.getElementById('splitConsole');
+
+  function updateSplit() {
+    const str = input.value;
+    const separator = sep.value;
+    const lim = limit.value ? parseInt(limit.value) : undefined;
+
+    renderStrVis('splitSrcVisual', str);
+
+    const parts = lim !== undefined ? str.split(separator, lim) : str.split(separator);
+    const resultVis = document.getElementById('splitResultVisual');
+    resultVis.innerHTML = '';
+    parts.forEach((part) => {
+      const el = document.createElement('span');
+      el.style.cssText = 'background:#313244;border-radius:4px;padding:4px 10px;font-size:.75rem;font-family:monospace;color:#cdd6f4;';
+      el.textContent = '"' + part + '"';
+      resultVis.appendChild(el);
+    });
+
+    let sepDisplay = separator === '' ? '"" (empty)' : '"' + separator + '"';
+    let limitDisplay = lim !== undefined ? ', ' + lim : '';
+    consoleEl.innerHTML = '<div class="prompt">&gt; "' + str + '".split(' + sepDisplay + limitDisplay + ')</div><div class="result">&lArr; [' + parts.map(p => '"' + p + '"').join(', ') + '] <span style="color:#6c7086">(' + parts.length + ' items)</span></div>';
+  }
+
+  runBtn.addEventListener('click', updateSplit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') updateSplit(); });
+  updateSplit();
+})();
+
+// ===== 8. Interactive Playground =====
+(function(){
+  const pgStr = document.getElementById('pgStr');
+  const pgMethod = document.getElementById('pgMethod');
+  const pgArg1 = document.getElementById('pgArg1');
+  const pgArg2 = document.getElementById('pgArg2');
+  const pgRun = document.getElementById('pgRun');
+  const pgConsole = document.getElementById('pgConsole');
+  const pgVisual = document.getElementById('pgVisual');
+
+  function escapeHtml(str) {
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function run() {
+    const str = pgStr.value;
+    const method = pgMethod.value;
+    const arg1 = pgArg1.value;
+    const arg2 = pgArg2.value;
+
+    renderStrVis('pgVisual', str);
+    let result, expr;
+
+    try {
+      switch(method) {
+        case 'toUpperCase':
+          result = str.toUpperCase();
+          expr = escapeHtml(str) + '.toUpperCase()';
+          break;
+        case 'toLowerCase':
+          result = str.toLowerCase();
+          expr = escapeHtml(str) + '.toLowerCase()';
+          break;
+        case 'trim':
+          result = str.trim();
+          expr = escapeHtml(str) + '.trim()';
+          break;
+        case 'trimStart':
+          result = str.trimStart();
+          expr = escapeHtml(str) + '.trimStart()';
+          break;
+        case 'trimEnd':
+          result = str.trimEnd();
+          expr = escapeHtml(str) + '.trimEnd()';
+          break;
+        case 'includes':
+          result = str.includes(arg1);
+          expr = escapeHtml(str) + '.includes("' + escapeHtml(arg1) + '")';
+          break;
+        case 'startsWith':
+          result = str.startsWith(arg1);
+          expr = escapeHtml(str) + '.startsWith("' + escapeHtml(arg1) + '")';
+          break;
+        case 'endsWith':
+          result = str.endsWith(arg1);
+          expr = escapeHtml(str) + '.endsWith("' + escapeHtml(arg1) + '")';
+          break;
+        case 'indexOf':
+          result = str.indexOf(arg1);
+          expr = escapeHtml(str) + '.indexOf("' + escapeHtml(arg1) + '")';
+          break;
+        case 'lastIndexOf':
+          result = str.lastIndexOf(arg1);
+          expr = escapeHtml(str) + '.lastIndexOf("' + escapeHtml(arg1) + '")';
+          break;
+        case 'repeat':
+          const n = parseInt(arg1) || 0;
+          result = str.repeat(n);
+          expr = escapeHtml(str) + '.repeat(' + n + ')';
+          break;
+        case 'padStart':
+          const psLen = parseInt(arg1) || 0;
+          result = str.padStart(psLen, arg2 || ' ');
+          expr = escapeHtml(str) + '.padStart(' + psLen + ', "' + escapeHtml(arg2 || ' ') + '")';
+          break;
+        case 'padEnd':
+          const peLen = parseInt(arg1) || 0;
+          result = str.padEnd(peLen, arg2 || ' ');
+          expr = escapeHtml(str) + '.padEnd(' + peLen + ', "' + escapeHtml(arg2 || ' ') + '")';
+          break;
+        case 'slice':
+          const sStart = parseInt(arg1) || 0;
+          const sEnd = arg2 !== '' ? parseInt(arg2) : undefined;
+          result = str.slice(sStart, sEnd);
+          expr = escapeHtml(str) + '.slice(' + sStart + (sEnd !== undefined ? ', ' + sEnd : '') + ')';
+          break;
+        case 'substring':
+          const ssStart = parseInt(arg1) || 0;
+          const ssEnd = arg2 !== '' ? parseInt(arg2) : undefined;
+          result = str.substring(ssStart, ssEnd);
+          expr = escapeHtml(str) + '.substring(' + ssStart + (ssEnd !== undefined ? ', ' + ssEnd : '') + ')';
+          break;
+        case 'charAt':
+          const ci = parseInt(arg1) || 0;
+          result = str.charAt(ci);
+          expr = escapeHtml(str) + '.charAt(' + ci + ')';
+          break;
+        case 'replace':
+          result = str.replace(arg1, arg2 || '');
+          expr = escapeHtml(str) + '.replace("' + escapeHtml(arg1) + '", "' + escapeHtml(arg2 || '') + '")';
+          break;
+        case 'replaceAll':
+          result = str.replaceAll(arg1, arg2 || '');
+          expr = escapeHtml(str) + '.replaceAll("' + escapeHtml(arg1) + '", "' + escapeHtml(arg2 || '') + '")';
+          break;
+        case 'split':
+          result = str.split(arg1 || ',');
+          expr = escapeHtml(str) + '.split("' + escapeHtml(arg1 || ',') + '")';
+          break;
+        case 'concat':
+          result = str.concat(arg1 || '');
+          expr = escapeHtml(str) + '.concat("' + escapeHtml(arg1 || '') + '")';
+          break;
+        default:
+          result = 'Unknown method';
+      }
+    } catch(e) {
+      result = '⚠ Error: ' + e.message;
+    }
+
+    const resultStr = typeof result === 'string' ? '"' + result + '"' : String(result);
+    pgConsole.innerHTML = '<div class="prompt">&gt; ' + expr + '</div><div class="result">&lArr; ' + escapeHtml(resultStr) + '</div>';
+  }
+
+  pgRun.addEventListener('click', run);
+  pgStr.addEventListener('keydown', e => { if (e.key === 'Enter') run(); });
+
+  // Show/hide args based on method
+  function updateArgs() {
+    const method = pgMethod.value;
+    const methods1 = ['includes','startsWith','endsWith','indexOf','lastIndexOf','charAt','repeat','concat','replace','replaceAll','split'];
+    const methods2 = ['padStart','padEnd','slice','substring','replace','replaceAll'];
+    pgArg1.style.display = methods1.includes(method) ? '' : 'none';
+    pgArg2.parentElement.style.display = methods2.includes(method) ? '' : 'none';
+  }
+  pgMethod.addEventListener('change', updateArgs);
+  updateArgs();
+  run();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,1157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JavaScript Prototype — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{background:#0f0f17;color:#cdd6f4;font-family:system-ui,-apple-system,sans-serif;line-height:1.6;padding:2rem 1rem}
+.container{max-width:1100px;margin:0 auto}
+h1{font-size:clamp(2rem,5vw,2.8rem);background:linear-gradient(135deg,#89b4fa,#cba6f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;margin-bottom:.3rem}
+.subtitle{color:#6c7086;font-size:1.05rem;margin-bottom:2rem}
+h2{font-size:1.4rem;color:#89b4fa;margin:2.5rem 0 1rem;padding-bottom:.5rem;border-bottom:1px solid #313244}
+h3{font-size:1.1rem;color:#cdd6f4;margin:1.2rem 0 .7rem}
+.card{background:#1a1a2e;border-radius:12px;padding:1.5rem;margin-bottom:1.5rem;border:1px solid #313244}
+.card-highlight{border-color:#89b4fa;background:#1e2030}
+.grid-2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
+@media(max-width:700px){.grid-2{grid-template-columns:1fr}}
+.grid-3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:.8rem}
+@media(max-width:700px){.grid-3{grid-template-columns:1fr}}
+.btn{padding:.5rem 1.2rem;border:none;border-radius:6px;cursor:pointer;font-weight:600;font-size:.85rem;transition:.2s}
+.btn-primary{background:#89b4fa;color:#0f0f17}
+.btn-primary:hover{background:#74c7ec}
+.btn-primary:disabled{opacity:.5;cursor:not-allowed}
+.btn-danger{background:#f38ba8;color:#0f0f17}
+.btn-danger:hover{background:#eba0ac}
+.btn-success{background:#a6e3a1;color:#0f0f17}
+.btn-outline{background:transparent;border:1px solid #585b70;color:#cdd6f4}
+.btn-outline:hover{border-color:#89b4fa;color:#89b4fa}
+.btn-sm{padding:.35rem .85rem;font-size:.75rem}
+
+code{padding:.1rem .4rem;background:#313244;border-radius:4px;font-size:.85em;font-family:'Fira Code',monospace}
+pre{background:#0f0f17;border-radius:8px;padding:1rem;overflow-x:auto;font-family:'Fira Code',monospace;font-size:.8rem;line-height:1.6;margin:.5rem 0;color:#cdd6f4}
+pre .hl{background:rgba(137,180,250,.12);display:block}
+pre .kw{color:#cba6f7}
+pre .fn{color:#89b4fa}
+pre .str{color:#a6e3a1}
+pre .cm{color:#6c7086;font-style:italic}
+pre .num{color:#fab387}
+pre .err{color:#f38ba8}
+.tag{display:inline-block;background:#313244;border-radius:4px;padding:.1rem .4rem;font-size:.7rem;color:#a6adc8;font-family:monospace}
+.highlight{color:#89b4fa;font-weight:600}
+.info-box{display:flex;gap:.8rem;align-items:flex-start;background:#1e2030;border-left:3px solid #89b4fa;border-radius:0 8px 8px 0;padding:.8rem 1rem;margin:.8rem 0;font-size:.88rem}
+.info-box.warn{border-color:#fab387;background:#2a221e}
+.info-box.danger{border-color:#f38ba8;background:#2a1e1e}
+.info-box .icon{font-size:1.2rem;flex-shrink:0}
+
+/* Chain visualization */
+.chain-viz{display:flex;flex-direction:column;gap:.5rem;padding:1rem;background:#11111b;border-radius:10px;margin:.5rem 0;overflow-x:auto}
+.chain-link{display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;border-radius:8px;background:#181825;border:2px solid #45475a;transition:.3s;flex-shrink:0}
+.chain-link .prop{font-weight:700;font-size:.85rem;font-family:monospace;white-space:nowrap}
+.chain-link .val{font-size:.78rem;color:#a6adc8;font-family:monospace;margin-left:auto}
+.chain-link .arrow-down{color:#585b70;font-size:.8rem;margin-left:.5rem}
+.chain-link.active{border-color:#89b4fa;background:#1e3a5f}
+.chain-link.found{border-color:#a6e3a1;background:#1a2a1a}
+.chain-link.null{border-color:#f38ba8;background:#2a1e1e;opacity:.7}
+.chain-link.own{border-color:#fab387;background:#2a221e}
+.chain-arrow{text-align:center;color:#585b70;font-size:.9rem;padding:2px 0}
+.chain-arrow .proto-text{font-size:.65rem;color:#6c7086;display:block}
+
+/* __proto__ vs prototype comparison */
+.dual-col{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin:1rem 0}
+@media(max-width:700px){.dual-col{grid-template-columns:1fr}}
+.dual-card{background:#181825;border-radius:10px;padding:1.2rem;border:2px solid #45475a}
+.dual-card.proto{border-color:#fab387}
+.dual-card.prototype{border-color:#89b4fa}
+.dual-card h4{font-size:.9rem;margin-bottom:.5rem;font-family:monospace}
+.dual-card .obj-box{background:#0f0f17;border-radius:6px;padding:.7rem;font-family:monospace;font-size:.78rem;margin:.4rem 0;position:relative}
+.obj-box .pointer{color:#fab387;font-weight:700}
+.obj-box .link-line{display:block;border-left:2px dashed #585b70;padding-left:1rem;margin-top:4px;color:#6c7086;font-size:.72rem}
+
+/* new operator step through */
+.new-steps{display:flex;flex-direction:column;gap:.6rem;margin:.5rem 0}
+.new-step{padding:.7rem 1rem;background:#181825;border:1px solid #313244;border-radius:8px;transition:.3s;opacity:.4}
+.new-step .ns-num{display:inline-flex;align-items:center;justify-content:center;width:24px;height:24px;border-radius:50%;background:#45475a;color:#cdd6f4;font-size:.75rem;font-weight:700;margin-right:.6rem}
+.new-step .ns-desc{font-size:.88rem}
+.new-step .ns-code{font-family:monospace;font-size:.78rem;color:#a6adc8;margin-top:4px;padding-left:2rem}
+.new-step.active{opacity:1;border-color:#89b4fa;background:#1e2030}
+.new-step.active .ns-num{background:#89b4fa;color:#0f0f17}
+.new-step.done{opacity:1;border-color:#a6e3a1}
+.new-step.done .ns-num{background:#a6e3a1;color:#0f0f17}
+.new-step.current{border-color:#fab387}
+
+/* Method lookup playground */
+.lookup-play{display:flex;gap:.6rem;flex-wrap:wrap;align-items:center;margin:.5rem 0}
+.lookup-play input{padding:.5rem .8rem;background:#0f0f17;border:1px solid #45475a;border-radius:6px;color:#cdd6f4;font-family:monospace;font-size:.85rem;flex:1;min-width:180px;outline:none;transition:.2s}
+.lookup-play input:focus{border-color:#89b4fa}
+.lookup-result{background:#0f0f17;border-radius:8px;padding:.8rem;margin-top:.5rem;font-family:monospace;font-size:.82rem;min-height:50px}
+.lookup-result .lr-step{padding:3px 0;border-bottom:1px solid #181825}
+
+/* instanceof tester */
+.inst-play{display:flex;gap:.5rem;flex-wrap:wrap;margin:.5rem 0}
+.inst-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:.8rem 1rem;cursor:pointer;transition:.2s;text-align:center;min-width:120px;flex:1}
+.inst-card:hover{border-color:#89b4fa}
+.inst-card h5{font-size:.82rem;margin-bottom:.3rem}
+.inst-card .inst-result{font-size:.75rem;padding:.2rem;border-radius:4px}
+.inst-card .inst-result.true{color:#a6e3a1}
+.inst-card .inst-result.false{color:#f38ba8}
+.inst-card.active{border-color:#fab387;background:#2a221e}
+
+/* Built-in prototype browser */
+.builtin-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.8rem;margin:.5rem 0}
+.builtin-item{background:#181825;border:1px solid #313244;border-radius:8px;padding:1rem;cursor:pointer;transition:.2s}
+.builtin-item:hover{border-color:#89b4fa;transform:translateY(-2px)}
+.builtin-item h4{font-size:.88rem;font-family:monospace;margin-bottom:.3rem}
+.builtin-item p{font-size:.75rem;color:#6c7086}
+.builtin-item .bi-chain{font-size:.7rem;color:#a6adc8;font-family:monospace;margin-top:.5rem;background:#0f0f17;padding:.3rem .5rem;border-radius:4px}
+
+/* Inhertance playground */
+.inh-tree{display:flex;flex-direction:column;align-items:center;gap:.4rem;padding:1rem}
+.inh-node{background:#181825;border:2px solid #45475a;border-radius:8px;padding:.6rem 1.2rem;font-size:.85rem;text-align:center;min-width:140px;transition:.3s}
+.inh-node .inh-label{font-weight:700}
+.inh-node .inh-props{font-size:.7rem;color:#6c7086;margin-top:2px}
+.inh-node.active{border-color:#89b4fa;background:#1e2030}
+.inh-node.found{border-color:#a6e3a1;background:#1a2a1a}
+.inh-arrow{color:#585b70;font-size:.8rem}
+
+/* Log box */
+.log-box{background:#0f0f17;border-radius:8px;padding:.8rem;font-family:monospace;font-size:.78rem;max-height:180px;overflow-y:auto;margin-top:.8rem}
+.log-box .ll{padding:2px 0;border-bottom:1px solid #181825}
+.ll .l-pass{color:#a6e3a1}
+.ll .l-info{color:#89b4fa}
+.ll .l-skip{color:#fab387}
+.ll .l-block{color:#f38ba8}
+
+/* Toggle */
+.toggle-wrap{display:flex;align-items:center;gap:.6rem;margin:.3rem 0}
+.toggle{position:relative;width:38px;height:20px;flex-shrink:0;cursor:pointer}
+.toggle input{opacity:0;width:0;height:0}
+.toggle .sl{position:absolute;inset:0;background:#45475a;border-radius:10px;transition:.3s}
+.toggle .sl::before{content:'';position:absolute;width:14px;height:14px;left:3px;bottom:3px;background:#cdd6f4;border-radius:50%;transition:.3s}
+.toggle input:checked+.sl{background:#a6e3a1}
+.toggle input:checked+.sl::before{transform:translateX(18px)}
+
+.summary-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.8rem;margin:1rem 0}
+.summary-card{background:#181825;border-radius:8px;padding:1rem;text-align:center;border:1px solid #313244}
+.summary-card .sc-num{font-size:1.8rem;font-weight:700;background:linear-gradient(135deg,#89b4fa,#cba6f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.summary-card p{font-size:.78rem;color:#6c7086;margin-top:.3rem}
+
+table{width:100%;border-collapse:collapse;font-size:.85rem;margin:.5rem 0}
+th{text-align:left;padding:.6rem .8rem;border-bottom:2px solid #45475a;color:#89b4fa}
+td{padding:.5rem .8rem;border-bottom:1px solid #313244;color:#a6adc8}
+pre .gr{color:#a6e3a1}
+pre .bl{color:#89b4fa}
+pre .or{color:#fab387}
+pre .rd{color:#f38ba8}
+</style>
+</head>
+<body>
+<div class="container">
+
+<h1>🔗 JavaScript Prototype</h1>
+<p class="subtitle">The prototype chain — how JavaScript really works under the hood</p>
+
+<div class="summary-grid">
+<div class="summary-card"><div class="sc-num">[[Prototype]]</div><p>Every object has a hidden internal link to another object</p></div>
+<div class="summary-card"><div class="sc-num">null</div><p>The chain always ends at <code>null</code> — no more ancestors</p></div>
+<div class="summary-card"><div class="sc-num">2</div><p>Confused properties<br><span class="tag">__proto__</span> vs <span class="tag">prototype</span></p></div>
+<div class="summary-card"><div class="sc-num">4</div><p>Steps of <code>new</code><br>create · link · bind · return</p></div>
+</div>
+
+<!-- SECTION 1: WHAT IS A PROTOTYPE -->
+<h2>What is a Prototype?</h2>
+<div class="card">
+<p style="margin-bottom:.8rem">A <span class="highlight">prototype</span> is just an object that another object inherits from. When you access a property on an object, JavaScript first checks the object itself, then walks up the <strong>prototype chain</strong> until it finds it or hits <code>null</code>.</p>
+<div class="chain-viz" id="chainViz">
+<div class="chain-link own active" style="border-color:#fab387">
+<span class="prop" style="color:#fab387">myObj</span>
+<span class="val">{ name: "Alice", age: 25 }</span>
+</div>
+<div class="chain-arrow"><span class="proto-text">── [[Prototype]] ──▶</span></div>
+<div class="chain-link active" style="border-color:#89b4fa">
+<span class="prop" style="color:#89b4fa">myObj's Prototype</span>
+<span class="val">{ greet: ƒ, toString: ƒ }</span>
+</div>
+<div class="chain-arrow"><span class="proto-text">── [[Prototype]] ──▶</span></div>
+<div class="chain-link active" style="border-color:#89b4fa">
+<span class="prop" style="color:#89b4fa">Object.prototype</span>
+<span class="val">{ hasOwnProperty: ƒ, toString: ƒ, ... }</span>
+</div>
+<div class="chain-arrow"><span class="proto-text">── [[Prototype]] ──▶</span></div>
+<div class="chain-link null">
+<span class="prop" style="color:#f38ba8">null</span>
+<span class="val" style="color:#6c7086">— end of chain —</span>
+</div>
+</div>
+<div class="lookup-play">
+<input id="propLookupInput" type="text" placeholder="Type a property name (e.g. greet, toString, name, xyz)" value="greet">
+<button class="btn btn-primary btn-sm" id="lookupBtn">🔍 Lookup</button>
+<button class="btn btn-outline btn-sm" id="resetLookupBtn">Reset</button>
+</div>
+<div class="lookup-result" id="lookupResult">
+<div class="lr-step" style="color:#6c7086">Type a property name and click Lookup to trace the prototype chain</div>
+</div>
+</div>
+
+<!-- SECTION 2: __proto__ vs prototype -->
+<h2><code>__proto__</code> vs <code>prototype</code></h2>
+<div class="card">
+<p style="margin-bottom:1rem;font-size:.9rem">These are the <span class="highlight">most confused</span> two properties in JavaScript. They are <strong>not the same thing</strong>.</p>
+<div class="dual-col">
+<div class="dual-card proto">
+<h4 style="color:#fab387">__proto__</h4>
+<p style="font-size:.82rem;color:#a6adc8;margin-bottom:.6rem">The actual prototype link of an <strong>instance</strong>. Points to the object it inherits from.</p>
+<div class="obj-box">
+<span style="color:#fab387">const</span> arr = []<br>
+<span style="color:#fab387">arr.__proto__</span> <span style="color:#6c7086">// → Array.prototype</span>
+</div>
+<div style="font-size:.78rem;color:#a6adc8;margin-top:.6rem">
+<div>✅ Exists on <strong>instances</strong></div>
+<div>✅ The <strong>actual</strong> prototype link</div>
+<div>✅ Also accessible via <code>Object.getPrototypeOf(obj)</code></div>
+</div>
+</div>
+<div class="dual-card prototype">
+<h4 style="color:#89b4fa">prototype</h4>
+<p style="font-size:.82rem;color:#a6adc8;margin-bottom:.6rem">A property on <strong>constructor functions/classes</strong>. Sets the <code>__proto__</code> of created instances.</p>
+<div class="obj-box">
+<span style="color:#89b4fa">class</span> Foo {}<br>
+<span style="color:#89b4fa">Foo.prototype</span> <span style="color:#6c7086">// → { constructor: ƒ Foo }</span><br>
+<span style="color:#6c7086">// Now:</span><br>
+<span style="color:#89b4fa">new Foo().__proto__</span> <span style="color:#6c7086">// → Foo.prototype ✅</span>
+</div>
+<div style="font-size:.78rem;color:#a6adc8;margin-top:.6rem">
+<div>✅ Exists on <strong>constructors</strong> only</div>
+<div>✅ Used to set <code>__proto__</code> of <code>new</code> instances</div>
+<div>❌ NOT the actual prototype of the constructor itself</div>
+</div>
+</div>
+</div>
+<div class="info-box warn">
+<div class="icon">⚠️</div>
+<div><code>Function.__proto__</code> points to <code>Function.prototype</code> (the function's own prototype). But <code>Function.prototype</code> is what <code>new Function()</code> instances get. They point in opposite directions.</div>
+</div>
+<div class="grid-2" style="margin-top:.5rem">
+<pre style="margin:0;font-size:.78rem"><span class="kw">function</span> <span class="fn">Animal</span>(name) {
+  <span class="kw">this</span>.name = name;
+}
+<span class="bl">Animal.prototype</span>.speak = <span class="kw">function</span>() {
+  console.log(<span class="str">`${this.name} speaks`</span>);
+};
+
+<span class="kw">const</span> dog = <span class="kw">new</span> <span class="fn">Animal</span>(<span class="str">'Rex'</span>);
+
+<span class="cm">// dog.__proto__ → Animal.prototype ✅</span>
+<span class="cm">// Animal.prototype → { speak: ƒ, constructor: ƒ }</span>
+<span class="cm">// Animal.__proto__ → Function.prototype (not Animal.prototype!)</span></pre>
+<pre style="margin:0;font-size:.78rem"><span class="kw">class</span> <span class="fn">Cat</span> {
+  constructor(name) { <span class="kw">this</span>.name = name; }
+  meow() { console.log(<span class="str">'meow'</span>); }
+}
+
+<span class="kw">const</span> cat = <span class="kw">new</span> <span class="fn">Cat</span>(<span class="str">'Whiskers'</span>);
+
+<span class="cm">// cat.__proto__ → Cat.prototype ✅</span>
+<span class="cm">// Cat.prototype → { meow: ƒ, constructor: ƒ }</span>
+<span class="cm">// Cat.__proto__ → Function.prototype (classes are functions)</span></pre>
+</div>
+</div>
+
+<!-- SECTION 3: HOW new WORKS -->
+<h2>The <code>new</code> Operator — 4 Steps</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">When you call a function with <code>new</code>, JavaScript does exactly <span class="highlight">4 things</span> behind the scenes. Click "Step Through" to see each one.</p>
+
+<div class="new-steps" id="newSteps">
+<div class="new-step" data-ns="0">
+<span class="ns-num">1</span>
+<span class="ns-desc"><strong>Create</strong> a brand new empty object <code>{}</code></span>
+<div class="ns-code"><span class="cm">// const obj = {}; (empty)</span></div>
+</div>
+<div class="new-step" data-ns="1">
+<span class="ns-num">2</span>
+<span class="ns-desc"><strong>Link</strong> the new object's <code>__proto__</code> to the constructor's <code>.prototype</code></span>
+<div class="ns-code">obj.__proto__ = Constructor.prototype;</div>
+</div>
+<div class="new-step" data-ns="2">
+<span class="ns-num">3</span>
+<span class="ns-desc"><strong>Bind</strong> <code>this</code> to the new object and run the constructor</span>
+<div class="ns-code"><span class="cm">// Constructor.call(obj, args)</span></div>
+</div>
+<div class="new-step" data-ns="3">
+<span class="ns-num">4</span>
+<span class="ns-desc"><strong>Return</strong> the new object <code>obj</code> (unless constructor returns an object)</span>
+<div class="ns-code"><span class="kw">return</span> obj;</div>
+</div>
+</div>
+
+<div class="step-controls" style="margin-top:.8rem;display:flex;gap:.6rem;flex-wrap:wrap">
+<button class="btn btn-primary" id="newStepBtn">▶ Step Through <code>new</code></button>
+<button class="btn btn-outline btn-sm" id="resetNewBtn">Reset</button>
+</div>
+<div class="log-box" id="newLog">
+<div class="ll" style="color:#6c7086">Click "Step Through" to see what <code>new Animal('Rex')</code> does step by step</div>
+</div>
+
+<div style="margin-top:1rem;display:flex;gap:.5rem;flex-wrap:wrap">
+<div class="toggle-wrap"><label class="toggle"><input type="checkbox" id="showCodeToggle" checked><span class="sl"></span></label><span style="font-size:.82rem">Show code</span></div>
+</div>
+
+<div class="grid-2" style="margin-top:1rem">
+<pre style="margin:0;font-size:.78rem"><span class="cm">// What new actually does:</span>
+<span class="kw">function</span> <span class="fn">_new</span>(Constructor, ...args) {
+  <span class="cm">// 1. Create empty object</span>
+  <span class="kw">const</span> obj = {};
+
+  <span class="cm">// 2. Link prototype</span>
+  Object.<span class="fn">setPrototypeOf</span>(obj, Constructor.prototype);
+
+  <span class="cm">// 3. Bind this + run constructor</span>
+  <span class="kw">const</span> result = Constructor.<span class="fn">call</span>(obj, ...args);
+
+  <span class="cm">// 4. Return object</span>
+  <span class="kw">return</span> result <span class="kw">instanceof</span> Object ? result : obj;
+}</pre>
+<pre style="margin:0;font-size:.78rem"><span class="cm">// Visual demo:</span>
+<span class="kw">function</span> <span class="fn">Animal</span>(name) {
+  <span class="kw">this</span>.name = name;
+}
+
+<span class="kw">const</span> rex = <span class="kw">new</span> <span class="fn">Animal</span>(<span class="str">'Rex'</span>);
+
+<span class="cm">// Step 1: {} created</span>
+<span class="cm">// Step 2: rex.__proto__ = Animal.prototype</span>
+<span class="cm">// Step 3: this.name = 'Rex' runs</span>
+<span class="cm">// Step 4: rex is returned</span>
+console.log(rex.name); <span class="cm">// 'Rex'</span>
+console.log(rex.__proto__ === Animal.prototype); <span class="cm">// true</span></pre>
+</div>
+</div>
+
+<!-- SECTION 4: PROTOTYPE CHAIN WALKTHROUGH -->
+<h2>Prototype Chain — Property Resolution</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">When you access <code>obj.prop</code>, JavaScript searches in this order:</p>
+<div class="chain-viz" id="chainWalkViz" style="flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:.3rem">
+<div class="chain-link own" data-cw="0" style="border-color:#fab387"><span class="prop" style="color:#fab387">obj</span><span class="val" style="font-size:.72rem">own properties</span></div>
+<div class="chain-arrow" style="font-size:.7rem">⬇</div>
+<div class="chain-link" data-cw="1" style="border-color:#89b4fa"><span class="prop" style="color:#89b4fa">.prototype</span><span class="val" style="font-size:.72rem">constructor's proto</span></div>
+<div class="chain-arrow" style="font-size:.7rem">⬇</div>
+<div class="chain-link" data-cw="2" style="border-color:#89b4fa"><span class="prop" style="color:#89b4fa">Object.prototype</span><span class="val" style="font-size:.72rem">built-in methods</span></div>
+<div class="chain-arrow" style="font-size:.7rem">⬇</div>
+<div class="chain-link null" data-cw="3" style="border-color:#f38ba8"><span class="prop" style="color:#f38ba8">null</span><span class="val" style="color:#6c7086;font-size:.72rem">stop</span></div>
+</div>
+
+<div class="lookup-play" style="margin-top:.8rem">
+<button class="btn btn-sm btn-primary" id="walkOwnBtn">📍 Own Property</button>
+<button class="btn btn-sm btn-success" id="walkProtoBtn">📎 Inherited Method</button>
+<button class="btn btn-sm btn-danger" id="walkMissingBtn">❌ Missing Property</button>
+<button class="btn btn-outline btn-sm" id="resetWalkBtn">Reset</button>
+</div>
+<div class="log-box" id="walkLog">
+<div class="ll" style="color:#6c7086">Click a button to see how JS resolves each type of property access</div>
+</div>
+</div>
+
+<!-- SECTION 5: PROTOTYPAL INHERITANCE -->
+<h2>Prototypal Inheritance</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">JavaScript's inheritance is <span class="highlight">prototypal</span>, not classical. Objects inherit directly from other objects via the prototype chain. Click items to see property resolution.</p>
+
+<div class="inh-tree" id="inhTree">
+<div class="inh-node" data-inh="0">
+<div class="inh-label" style="color:#fab387">rex (instance)</div>
+<div class="inh-props">name: "Rex" ← <strong>own</strong></div>
+</div>
+<div class="inh-arrow">⬇ __proto__</div>
+<div class="inh-node" data-inh="1">
+<div class="inh-label" style="color:#89b4fa">Animal.prototype</div>
+<div class="inh-props">speak: ƒ, constructor: ƒ</div>
+</div>
+<div class="inh-arrow">⬇ __proto__</div>
+<div class="inh-node" data-inh="2">
+<div class="inh-label" style="color:#89b4fa">Object.prototype</div>
+<div class="inh-props">toString: ƒ, hasOwnProperty: ƒ, valueOf: ƒ</div>
+</div>
+<div class="inh-arrow">⬇ __proto__</div>
+<div class="inh-node" data-inh="3" style="border-color:#f38ba8">
+<div class="inh-label" style="color:#f38ba8">null</div>
+<div class="inh-props" style="color:#6c7086">— end of chain —</div>
+</div>
+</div>
+
+<div class="lookup-play" style="margin-top:1rem">
+<input id="inhLookupInput" type="text" placeholder="Property to look up (e.g. speak, name, toString)" value="speak">
+<button class="btn btn-primary btn-sm" id="inhLookupBtn">🔍 Trace</button>
+</div>
+<div class="lookup-result" id="inhLookupResult" style="margin-top:.5rem">
+<div class="lr-step" style="color:#6c7086">Type a property name and click Trace to see where it's found on the chain</div>
+</div>
+
+<div class="grid-2" style="margin-top:1rem">
+<pre style="margin:0;font-size:.78rem"><span class="cm">// 1. Prototypal inheritance with Object.create</span>
+<span class="kw">const</span> animal = {
+  speak() { console.log(<span class="str">`${this.name} speaks`</span>); }
+};
+
+<span class="kw">const</span> dog = Object.<span class="fn">create</span>(animal);
+dog.name = <span class="str">'Rex'</span>;
+dog.speak(); <span class="cm">// 'Rex speaks' — from prototype</span>
+
+<span class="cm">// 2. Constructor function inheritance</span>
+<span class="kw">function</span> <span class="fn">Dog</span>(name) { <span class="kw">this</span>.name = name; }
+<span class="bl">Dog.prototype</span> = Object.<span class="fn">create</span>(animal);
+<span class="bl">Dog.prototype</span>.bark = <span class="kw">function</span>() {
+  console.log(<span class="str">'Woof!'</span>);
+};</pre>
+<pre style="margin:0;font-size:.78rem"><span class="cm">// 3. ES6 class inheritance (same under the hood)</span>
+<span class="kw">class</span> <span class="fn">Animal</span> {
+  constructor(name) { <span class="kw">this</span>.name = name; }
+  speak() { console.log(<span class="str">`${this.name} speaks`</span>); }
+}
+
+<span class="kw">class</span> <span class="fn">Dog</span> <span class="kw">extends</span> <span class="fn">Animal</span> {
+  constructor(name) { <span class="kw">super</span>(name); }
+  bark() { console.log(<span class="str">'Woof!'</span>); }
+}
+
+<span class="cm">// Dog.prototype.__proto__ → Animal.prototype</span>
+<span class="cm">// Animal.prototype.__proto__ → Object.prototype</span>
+
+<span class="kw">const</span> rex = <span class="kw">new</span> <span class="fn">Dog</span>(<span class="str">'Rex'</span>);
+console.log(rex <span class="kw">instanceof</span> Dog);    <span class="cm">// true</span>
+console.log(rex <span class="kw">instanceof</span> Animal);  <span class="cm">// true</span>
+console.log(rex <span class="kw">instanceof</span> Object);  <span class="cm">// true</span></pre>
+</div>
+</div>
+
+<!-- SECTION 6: instanceof -->
+<h2><code>instanceof</code> — How It Works</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem"><code>instanceof</code> walks the <span class="highlight">prototype chain</span> of the left operand and checks if <code>Right.prototype</code> appears anywhere. It's essentially: <code>left.__proto__ === right.prototype</code> <strong>or</strong> <code>left.__proto__.__proto__ === right.prototype</code> ... and so on.</p>
+
+<div class="inst-play" id="instPlay">
+<div class="inst-card" data-inst="arr">
+<h5>[]</h5>
+<p style="font-size:.72rem;color:#6c7086">Empty Array</p>
+<div class="inst-result" id="instArr">Check below</div>
+</div>
+<div class="inst-card" data-inst="fn">
+<h5>() => {}</h5>
+<p style="font-size:.72rem;color:#6c7086">Arrow Function</p>
+<div class="inst-result" id="instFn">Check below</div>
+</div>
+<div class="inst-card" data-inst="date">
+<h5>new Date()</h5>
+<p style="font-size:.72rem;color:#6c7086">Date instance</p>
+<div class="inst-result" id="instDate">Check below</div>
+</div>
+<div class="inst-card" data-inst="regexp">
+<h5>/./</h5>
+<p style="font-size:.72rem;color:#6c7086">RegExp literal</p>
+<div class="inst-result" id="instRegexp">Check below</div>
+</div>
+</div>
+
+<div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.5rem;margin-top:.8rem" id="instResults">
+<div style="background:#181825;border-radius:6px;padding:.5rem .7rem;font-size:.78rem"><span style="color:#fab387">arr instanceof Array</span> → <span class="inst-true">true ✅</span></div>
+<div style="background:#181825;border-radius:6px;padding:.5rem .7rem;font-size:.78rem"><span style="color:#fab387">arr instanceof Object</span> → <span class="inst-true">true ✅</span></div>
+<div style="background:#181825;border-radius:6px;padding:.5rem .7rem;font-size:.78rem"><span style="color:#f38ba8">arr instanceof Function</span> → <span class="inst-false">false ❌</span></div>
+<div style="background:#181825;border-radius:6px;padding:.5rem .7rem;font-size:.78rem"><span style="color:#fab387">fn instanceof Function</span> → <span class="inst-true">true ✅</span></div>
+<div style="background:#181825;border-radius:6px;padding:.5rem .7rem;font-size:.78rem"><span style="color:#fab387">date instanceof Date</span> → <span class="inst-true">true ✅</span></div>
+<div style="background:#181825;border-radius:6px;padding:.5rem .7rem;font-size:.78rem"><span style="color:#fab387">date instanceof Object</span> → <span class="inst-true">true ✅</span></div>
+<div style="background:#181825;border-radius:6px;padding:.5rem .7rem;font-size:.78rem"><span style="color:#fab387">/./ instanceof RegExp</span> → <span class="inst-true">true ✅</span></div>
+<div style="background:#181825;border-radius:6px;padding:.5rem .7rem;font-size:.78rem"><span style="color:#fab387">/./ instanceof Object</span> → <span class="inst-true">true ✅</span></div>
+</div>
+
+<pre style="margin-top:.8rem;font-size:.78rem"><span class="cm">// How instanceof works under the hood:</span>
+<span class="kw">function</span> <span class="fn">myInstanceof</span>(left, right) {
+  <span class="kw">let</span> proto = Object.<span class="fn">getPrototypeOf</span>(left);
+  <span class="kw">while</span> (proto !== <span class="kw">null</span>) {
+    <span class="kw">if</span> (proto === right.prototype) <span class="kw">return true</span>;
+    proto = Object.<span class="fn">getPrototypeOf</span>(proto);
+  }
+  <span class="kw">return false</span>;
+}
+
+console.log(<span class="fn">myInstanceof</span>([], Array));   <span class="cm">// true</span>
+console.log(<span class="fn">myInstanceof</span>([], Object));  <span class="cm">// true</span>
+console.log(<span class="fn">myInstanceof</span>([], Function)); <span class="cm">// false</span></pre>
+
+<div class="info-box warn">
+<div class="icon">⚠️</div>
+<div><code>instanceof</code> checks the prototype chain. If you change <code>Constructor.prototype</code> after creating an instance, <code>instanceof</code> stops working correctly for that instance.</div>
+</div>
+</div>
+
+<!-- SECTION 7: hasOwnProperty & Property Shadowing -->
+<h2>Own Properties vs Inherited</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem"><code>hasOwnProperty</code> checks if a property exists <span class="highlight">directly on the object</span> (not on the prototype chain). Inherited properties are "shadowed" when you assign them directly.</p>
+
+<div class="grid-2">
+<div>
+<h4 style="font-size:.9rem;margin-bottom:.4rem">hasOwnProperty Demo</h4>
+<pre style="font-size:.76rem;margin:0">
+<span class="kw">function</span> <span class="fn">Animal</span>(name) {
+  <span class="kw">this</span>.name = name; <span class="cm">// own</span>
+}
+<span class="bl">Animal.prototype</span>.speak = <span class="kw">function</span>() {}; <span class="cm">// inherited</span>
+
+<span class="kw">const</span> a = <span class="kw">new</span> <span class="fn">Animal</span>(<span class="str">'Rex'</span>);
+
+a.<span class="fn">hasOwnProperty</span>(<span class="str">'name'</span>);  <span class="cm">// true ✅  (own)</span>
+a.<span class="fn">hasOwnProperty</span>(<span class="str">'speak'</span>); <span class="cm">// false ❌ (inherited)</span>
+<span class="str">'speak'</span> <span class="kw">in</span> a;              <span class="cm">// true ✅  (in chain)</span></pre>
+<div class="lookup-play" style="margin-top:.6rem">
+<button class="btn btn-sm btn-primary" id="ownDemoBtn">▶ Run Demo</button>
+</div>
+<div class="log-box" id="ownDemoLog" style="max-height:80px">
+<div class="ll" style="color:#6c7086">Click to see hasOwnProperty in action</div>
+</div>
+</div>
+<div>
+<h4 style="font-size:.9rem;margin-bottom:.4rem">Shadowing</h4>
+<pre style="font-size:.76rem;margin:0">
+<span class="kw">const</span> parent = { x: <span class="num">10</span> };
+<span class="kw">const</span> child = Object.<span class="fn">create</span>(parent);
+
+console.log(child.x); <span class="cm">// 10 (from parent)</span>
+
+child.x = <span class="num">20</span>; <span class="cm">// shadows parent.x</span>
+console.log(child.x);           <span class="cm">// 20 (own)</span>
+console.log(parent.x);          <span class="cm">// 10 (unchanged)</span>
+console.log(child.__proto__.x); <span class="cm">// 10 (still accessible)</span>
+
+<span class="cm">// To access the proto's property after shadowing:</span>
+<span class="kw">delete</span> child.x; <span class="cm">// removes shadow</span>
+console.log(child.x); <span class="cm">// 10 (from parent again)</span></pre>
+</div>
+</div>
+<div class="info-box">
+<div class="icon">💡</div>
+<div>Use <code>Object.hasOwn(obj, prop)</code> (ES2022+) instead of <code>obj.hasOwnProperty(prop)</code> — safer because it doesn't break if the object overrides <code>hasOwnProperty</code>.</div>
+</div>
+</div>
+
+<!-- SECTION 8: BUILT-IN PROTOTYPES -->
+<h2>Built-in Prototypes</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">All JavaScript built-in types use prototypes. Every array you create inherits from <code>Array.prototype</code>, every function from <code>Function.prototype</code>, etc. Click a card to expand its chain.</p>
+
+<div class="builtin-grid" id="builtinGrid">
+<div class="builtin-item" data-bi="array">
+<h4 style="color:#a6e3a1">Array</h4>
+<p>map, filter, reduce, push, pop, ...</p>
+<div class="bi-chain">[] → Array.prototype → Object.prototype → null</div>
+</div>
+<div class="builtin-item" data-bi="function">
+<h4 style="color:#fab387">Function</h4>
+<p>call, apply, bind, ...</p>
+<div class="bi-chain">ƒ → Function.prototype → Object.prototype → null</div>
+</div>
+<div class="builtin-item" data-bi="string">
+<h4 style="color:#f38ba8">String</h4>
+<p>toUpperCase, trim, slice, split, ...</p>
+<div class="bi-chain">"abc" → String.prototype → Object.prototype → null</div>
+</div>
+<div class="builtin-item" data-bi="number">
+<h4 style="color:#cba6f7">Number</h4>
+<p>toFixed, toPrecision, toString, ...</p>
+<div class="bi-chain">42 → Number.prototype → Object.prototype → null</div>
+</div>
+<div class="builtin-item" data-bi="boolean">
+<h4 style="color:#89b4fa">Boolean</h4>
+<p>toString, valueOf</p>
+<div class="bi-chain">true → Boolean.prototype → Object.prototype → null</div>
+</div>
+<div class="builtin-item" data-bi="date">
+<h4 style="color:#94e2d5">Date</h4>
+<p>getTime, toISOString, getMonth, ...</p>
+<div class="bi-chain">new Date() → Date.prototype → Object.prototype → null</div>
+</div>
+<div class="builtin-item" data-bi="regexp">
+<h4 style="color:#fab387">RegExp</h4>
+<p>test, exec, source, flags, ...</p>
+<div class="bi-chain">/./ → RegExp.prototype → Object.prototype → null</div>
+</div>
+<div class="builtin-item" data-bi="map">
+<h4 style="color:#a6e3a1">Map</h4>
+<p>set, get, has, delete, size, ...</p>
+<div class="bi-chain">new Map() → Map.prototype → Object.prototype → null</div>
+</div>
+</div>
+
+<div style="margin-top:.8rem;background:#181825;border-radius:8px;padding:1rem">
+<h4 style="font-size:.9rem;margin-bottom:.6rem" id="biDetailTitle">📋 Full Prototype Chain for <span style="color:#a6e3a1">Array</span></h4>
+<div class="chain-viz" id="biChainViz">
+<div class="chain-link" style="border-color:#a6e3a1">
+<span class="prop" style="color:#a6e3a1">[] (instance)</span>
+<span class="val" style="font-size:.72rem">[1, 2, 3]</span>
+</div>
+<div class="chain-arrow">⬇ __proto__</div>
+<div class="chain-link" style="border-color:#a6e3a1">
+<span class="prop" style="color:#a6e3a1">Array.prototype</span>
+<span class="val" style="font-size:.72rem">map, filter, reduce, push, pop, ...</span>
+</div>
+<div class="chain-arrow">⬇ __proto__</div>
+<div class="chain-link">
+<span class="prop" style="color:#89b4fa">Object.prototype</span>
+<span class="val" style="font-size:.72rem">toString, hasOwnProperty, valueOf, ...</span>
+</div>
+<div class="chain-arrow">⬇ __proto__</div>
+<div class="chain-link null">
+<span class="prop" style="color:#f38ba8">null</span>
+<span class="val" style="color:#6c7086;font-size:.72rem">— end —</span>
+</div>
+</div>
+</div>
+</div>
+
+<!-- SECTION 9: OBJECT.CREATE -->
+<h2><code>Object.create()</code></h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem"><code>Object.create(proto)</code> creates a new object with its <code>[[Prototype]]</code> set to <code>proto</code> directly — no constructor, no <code>new</code>. It's the <span class="highlight">purest form</span> of prototypal inheritance.</p>
+
+<div class="grid-2">
+<pre style="margin:0;font-size:.78rem">
+<span class="kw">const</span> animal = {
+  speak() {
+    console.log(<span class="str">`${this.name} speaks`</span>);
+  }
+};
+
+<span class="cm">// Create an object that inherits from animal</span>
+<span class="kw">const</span> dog = Object.<span class="fn">create</span>(animal);
+dog.name = <span class="str">'Rex'</span>;
+
+dog.speak(); <span class="cm">// ✅ inherited from animal</span>
+
+<span class="cm">// Check the chain:</span>
+console.log(dog.__proto__ === animal);
+<span class="cm">// true ✅</span>
+
+console.log(animal.isPrototypeOf(dog));
+<span class="cm">// true ✅ (ES5+ method)</span></pre>
+<pre style="margin:0;font-size:.78rem">
+<span class="cm">// Polyfill: what Object.create does</span>
+<span class="kw">function</span> <span class="fn">objectCreate</span>(proto) {
+  <span class="kw">function</span> <span class="fn">F</span>() {}
+  <span class="bl">F.prototype</span> = proto;
+  <span class="kw">return new</span> <span class="fn">F</span>();
+}
+
+<span class="cm">// Object.create(null) → no prototype!</span>
+<span class="kw">const</span> dict = Object.<span class="fn">create</span>(<span class="kw">null</span>);
+dict.x = <span class="num">1</span>;
+console.log(dict.toString);
+<span class="cm">// undefined ❌ (no Object.prototype)</span>
+
+<span class="cm">// Safe for key-value maps</span>
+<span class="cm">// (no inherited keys to worry about)</span></pre>
+</div>
+<div class="lookup-play" style="margin-top:.5rem">
+<button class="btn btn-sm btn-primary" id="createDemoBtn">▶ Run Object.create Demo</button>
+</div>
+<div class="log-box" id="createDemoLog" style="max-height:80px">
+<div class="ll" style="color:#6c7086">Click to see Object.create() in action</div>
+</div>
+</div>
+
+<!-- SECTION 10: CLASSES ARE SYNTACTIC SUGAR -->
+<h2>ES6 Classes — Sugar Over Prototypes</h2>
+<div class="card">
+<p style="margin-bottom:.8rem;font-size:.9rem">ES6 <code>class</code> syntax is <span class="highlight">syntactic sugar</span> over JavaScript's existing prototype system. The prototype chain looks identical whether you use <code>class</code> or a constructor function.</p>
+
+<div class="dual-col">
+<div class="dual-card">
+<h4 style="color:#89b4fa">class Syntax</h4>
+<pre style="font-size:.75rem;margin:.4rem 0">
+<span class="kw">class</span> <span class="fn">Animal</span> {
+  constructor(name) {
+    <span class="kw">this</span>.name = name;
+  }
+  speak() {
+    console.log(<span class="str">`${this.name} speaks`</span>);
+  }
+}
+
+<span class="kw">class</span> <span class="fn">Dog</span> <span class="kw">extends</span> <span class="fn">Animal</span> {
+  bark() { console.log(<span class="str">'Woof'</span>); }
+}
+</pre>
+</div>
+<div class="dual-card">
+<h4 style="color:#fab387">Same Thing with Prototypes</h4>
+<pre style="font-size:.75rem;margin:.4rem 0">
+<span class="kw">function</span> <span class="fn">Animal</span>(name) {
+  <span class="kw">this</span>.name = name;
+}
+<span class="bl">Animal.prototype</span>.speak = <span class="kw">function</span>() {
+  console.log(<span class="str">`${this.name} speaks`</span>);
+};
+
+<span class="kw">function</span> <span class="fn">Dog</span>(name) {
+  <span class="fn">Animal.call</span>(<span class="kw">this</span>, name);
+}
+<span class="bl">Dog.prototype</span> = Object.<span class="fn">create</span>(Animal.prototype);
+<span class="bl">Dog.prototype</span>.constructor = Dog;
+<span class="bl">Dog.prototype</span>.bark = <span class="kw">function</span>() {
+  console.log(<span class="str">'Woof'</span>);
+};</pre>
+</div>
+</div>
+
+<div style="margin-top:1rem">
+<h4 style="font-size:.9rem;margin-bottom:.4rem">Both produce the same chain:</h4>
+<div class="chain-viz" style="flex-direction:row;align-items:center;justify-content:center;flex-wrap:wrap;gap:.3rem;padding:.7rem">
+<div class="chain-link" style="border-color:#fab387;padding:.4rem .7rem"><span class="prop" style="color:#fab387;font-size:.78rem">rex</span></div>
+<div class="chain-arrow" style="font-size:.7rem">⬇ proto</div>
+<div class="chain-link" style="border-color:#89b4fa;padding:.4rem .7rem"><span class="prop" style="color:#89b4fa;font-size:.78rem">Dog.prototype</span><span class="val" style="font-size:.68rem">bark, constructor</span></div>
+<div class="chain-arrow" style="font-size:.7rem">⬇ proto</div>
+<div class="chain-link" style="border-color:#89b4fa;padding:.4rem .7rem"><span class="prop" style="color:#89b4fa;font-size:.78rem">Animal.prototype</span><span class="val" style="font-size:.68rem">speak, constructor</span></div>
+<div class="chain-arrow" style="font-size:.7rem">⬇ proto</div>
+<div class="chain-link" style="border-color:#a6e3a1;padding:.4rem .7rem"><span class="prop" style="color:#a6e3a1;font-size:.78rem">Object.prototype</span><span class="val" style="font-size:.68rem">toString, hasOwnProp</span></div>
+<div class="chain-arrow" style="font-size:.7rem">⬇ proto</div>
+<div class="chain-link null" style="padding:.4rem .7rem"><span class="prop" style="color:#f38ba8;font-size:.78rem">null</span></div>
+</div>
+</div>
+<div class="info-box warn" style="margin-top:.5rem">
+<div class="icon">⚠️</div>
+<div><strong>Key difference:</strong> <code>class</code> methods are non-enumerable. Constructor function methods assigned to <code>.prototype</code> are enumerable by default. Also, <code>class</code> cannot be called without <code>new</code> (throws TypeError).</div>
+</div>
+</div>
+
+<!-- SECTION 11: REFERENCE TABLE -->
+<h2>Quick Reference</h2>
+<div class="card" style="overflow-x:auto">
+<table>
+<thead><tr><th>Concept</th><th>Description</th><th>Code</th></tr></thead>
+<tbody>
+<tr><td style="color:#fab387">[[Prototype]]</td><td>Internal link to parent object</td><td style="font-family:monospace;font-size:.78rem">Object.getPrototypeOf(obj)</td></tr>
+<tr><td style="color:#fab387">__proto__</td><td>Getter/setter for [[Prototype]] (on instances)</td><td style="font-family:monospace;font-size:.78rem">obj.__proto__</td></tr>
+<tr><td style="color:#89b4fa">prototype</td><td>Property on constructor functions / classes</td><td style="font-family:monospace;font-size:.78rem">Constructor.prototype</td></tr>
+<tr><td style="color:#a6e3a1">Object.create()</td><td>Create object with specific prototype</td><td style="font-family:monospace;font-size:.78rem">Object.create(proto)</td></tr>
+<tr><td style="color:#a6e3a1">Object.setPrototypeOf()</td><td>Set prototype after creation (slow, avoid)</td><td style="font-family:monospace;font-size:.78rem">Object.setPrototypeOf(obj, proto)</td></tr>
+<tr><td style="color:#cba6f7">instanceof</td><td>Check if prototype appears in chain</td><td style="font-family:monospace;font-size:.78rem">obj instanceof Constructor</td></tr>
+<tr><td style="color:#cba6f7">isPrototypeOf</td><td>Check if object is in another's chain</td><td style="font-family:monospace;font-size:.78rem">proto.isPrototypeOf(obj)</td></tr>
+<tr><td style="color:#fab387">hasOwnProperty</td><td>Check property is own (not inherited)</td><td style="font-family:monospace;font-size:.78rem">obj.hasOwnProperty('prop')</td></tr>
+<tr><td style="color:#a6e3a1">Object.hasOwn()</td><td>ES2022 safer version of hasOwnProperty</td><td style="font-family:monospace;font-size:.78rem">Object.hasOwn(obj, 'prop')</td></tr>
+<tr><td style="color:#f38ba8">in operator</td><td>Check property exists anywhere in chain</td><td style="font-family:monospace;font-size:.78rem">'prop' in obj</td></tr>
+</tbody>
+</table>
+</div>
+
+</div>
+
+<script>
+// ==================== PROPERTY LOOKUP ====================
+const lookupInput = document.getElementById('propLookupInput');
+const lookupBtn = document.getElementById('lookupBtn');
+const lookupResult = document.getElementById('lookupResult');
+
+// Mock object with prototype chain for demo
+const mockProto = {
+  greet() { return 'Hello!'; },
+  toString() { return '[object Mock]'; },
+  valueOf() { return 42; }
+};
+
+const mockOwn = {
+  name: 'Alice',
+  age: 25,
+  __proto__: mockProto
+};
+
+function traceProperty(prop) {
+  const searchIn = obj => {
+    if (obj === null) return null;
+    if (Object.hasOwn(obj, prop)) return obj;
+    return searchIn(Object.getPrototypeOf(obj));
+  };
+  const found = searchIn(mockOwn);
+  return found;
+}
+
+lookupBtn.addEventListener('click', () => {
+  const prop = lookupInput.value.trim();
+  if (!prop) return;
+
+  lookupResult.innerHTML = '';
+  addLookupStep('l-info', `🔍 Looking up "${prop}" on myObj...`);
+
+  if (Object.hasOwn(mockOwn, prop)) {
+    addLookupStep('l-pass', `  ✅ Found as OWN property: myObj.${prop} = ${JSON.stringify(mockOwn[prop])}`);
+    addLookupStep('l-pass', `  ✅ Resolution stops here (own properties win).`);
+  } else if (mockProto.hasOwnProperty(prop)) {
+    addLookupStep('l-skip', `  ❌ Not found on myObj (own)`);
+    addLookupStep('l-pass', `  ✅ Found on myObj's [[Prototype]]: ${prop} = ${JSON.stringify(mockProto[prop])}`);
+    addLookupStep('l-pass', `  ⬆ Resolution continues up the chain`);
+  } else if (Object.prototype.hasOwnProperty(prop)) {
+    addLookupStep('l-skip', `  ❌ Not found on myObj (own)`);
+    addLookupStep('l-skip', `  ❌ Not found on proto (greet, toString, valueOf)`);
+    addLookupStep('l-pass', `  ✅ Found on Object.prototype: ${prop} = ${typeof Object.prototype[prop] === 'function' ? 'ƒ' : Object.prototype[prop]}`);
+  } else {
+    addLookupStep('l-skip', `  ❌ Not found on myObj (own)`);
+    addLookupStep('l-skip', `  ❌ Not found on proto (greet, toString, valueOf)`);
+    addLookupStep('l-skip', `  ❌ Not found on Object.prototype`);
+    addLookupStep('l-block', `  ⛔ Reached null — "${prop}" is undefined.`);
+  }
+});
+
+document.getElementById('resetLookupBtn').addEventListener('click', () => {
+  lookupResult.innerHTML = '<div class="lr-step" style="color:#6c7086">Type a property name and click Lookup to trace the prototype chain</div>';
+});
+
+function addLookupStep(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'lr-step';
+  const clsMap = { 'l-pass': 'l-pass', 'l-skip': 'l-skip', 'l-block': 'l-block', 'l-info': 'l-info' };
+  div.innerHTML = `<span class="${cls}">${text}</span>`;
+  lookupResult.appendChild(div);
+  lookupResult.scrollTop = lookupResult.scrollHeight;
+}
+
+// ==================== NEW OPERATOR STEP THROUGH ====================
+const newSteps = document.querySelectorAll('.new-step');
+const newLog = document.getElementById('newLog');
+const newStepBtn = document.getElementById('newStepBtn');
+let newStepIdx = 0;
+let newRunning = false;
+
+document.getElementById('resetNewBtn').addEventListener('click', () => {
+  newSteps.forEach(s => { s.className = 'new-step'; });
+  newStepIdx = 0;
+  newRunning = false;
+  newStepBtn.textContent = '▶ Step Through new';
+  newStepBtn.disabled = false;
+  newLog.innerHTML = '<div class="ll" style="color:#6c7086">Click "Step Through" to see what <code>new Animal(\'Rex\')</code> does step by step</div>';
+});
+
+newStepBtn.addEventListener('click', () => {
+  if (newRunning) return;
+  if (newStepIdx >= newSteps.length) {
+    resetNewSteps();
+    return;
+  }
+
+  const step = newSteps[newStepIdx];
+  newRunning = true;
+  step.className = 'new-step current';
+
+  const stepNum = step.dataset.ns;
+  const stepLabels = [
+    '🟢 Step 1: Creates empty object {}',
+    '🔗 Step 2: Links __proto__ → Constructor.prototype',
+    '🎯 Step 3: Binds this, runs constructor function',
+    '📦 Step 4: Returns new object (or constructor\'s return)'
+  ];
+  const stepDetails = [
+    `const rex = {};  // brand new empty object`,
+    `Object.setPrototypeOf(rex, Animal.prototype);  // rex.__proto__ === Animal.prototype`,
+    `Animal.call(rex, 'Rex');  // rex.name = 'Rex'`,
+    `return rex;  // (unless constructor returns an object)`
+  ];
+
+  addNewLog('l-info', stepLabels[stepNum]);
+  addNewLog('l-pass', `  ${stepDetails[stepNum]}`);
+
+  setTimeout(() => {
+    step.className = 'new-step done';
+    newStepIdx++;
+    newRunning = false;
+    if (newStepIdx >= newSteps.length) {
+      newStepBtn.textContent = '🔄 Reset';
+      addNewLog('l-pass', '✅ new Animal("Rex") complete! rex is ready.');
+    }
+  }, 500);
+});
+
+function addNewLog(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'll';
+  div.innerHTML = `<span class="${cls}">${text}</span>`;
+  newLog.appendChild(div);
+  newLog.scrollTop = newLog.scrollHeight;
+}
+
+function resetNewSteps() {
+  newSteps.forEach(s => { s.className = 'new-step'; });
+  newStepIdx = 0;
+  newRunning = false;
+  newStepBtn.textContent = '▶ Step Through new';
+  newLog.innerHTML = '<div class="ll" style="color:#6c7086">Click "Step Through" to see what <code>new Animal(\'Rex\')</code> does step by step</div>';
+}
+
+// ==================== PROTOTYPE CHAIN WALKTHROUGH ====================
+const walkNodes = document.querySelectorAll('[data-cw]');
+const walkLog = document.getElementById('walkLog');
+
+function resetWalk() {
+  walkNodes.forEach(n => n.style.opacity = '1');
+  walkLog.innerHTML = '<div class="ll" style="color:#6c7086">Click a button to see how JS resolves each type of property access</div>';
+}
+
+document.getElementById('resetWalkBtn').addEventListener('click', resetWalk);
+
+document.getElementById('walkOwnBtn').addEventListener('click', () => {
+  resetWalk();
+  addWalkLog('l-info', '📍 Accessing own property: rex.name');
+  setTimeout(() => { walkNodes[0].style.opacity = '1'; walkNodes[0].classList.add('found'); addWalkLog('l-pass', '  ✅ Found on rex (own property). name = "Rex"'); }, 300);
+});
+
+document.getElementById('walkProtoBtn').addEventListener('click', () => {
+  resetWalk();
+  addWalkLog('l-info', '📎 Accessing inherited method: rex.speak()');
+  setTimeout(() => {
+    walkNodes[0].classList.add('active'); addWalkLog('l-skip', '  ❌ Not found on rex (own)...');
+  }, 300);
+  setTimeout(() => {
+    walkNodes[0].classList.remove('active');
+    walkNodes[1].classList.add('found');
+    addWalkLog('l-pass', '  ✅ Found on Animal.prototype! speak = ƒ');
+  }, 700);
+});
+
+document.getElementById('walkMissingBtn').addEventListener('click', () => {
+  resetWalk();
+  addWalkLog('l-info', '❌ Accessing missing property: rex.xyz');
+  setTimeout(() => { walkNodes[0].classList.add('active'); addWalkLog('l-skip', '  ❌ Not found on rex (own)...'); }, 200);
+  setTimeout(() => { walkNodes[0].classList.remove('active'); walkNodes[1].classList.add('active'); addWalkLog('l-skip', '  ❌ Not found on Animal.prototype...'); }, 500);
+  setTimeout(() => { walkNodes[1].classList.remove('active'); walkNodes[2].classList.add('active'); addWalkLog('l-skip', '  ❌ Not found on Object.prototype...'); }, 800);
+  setTimeout(() => { walkNodes[2].classList.remove('active'); walkNodes[3].classList.add('found'); addWalkLog('l-block', '  ⛔ Reached null. xyz is undefined.'); }, 1100);
+});
+
+function addWalkLog(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'll';
+  div.innerHTML = `<span class="${cls}">${text}</span>`;
+  walkLog.appendChild(div);
+  walkLog.scrollTop = walkLog.scrollHeight;
+}
+
+// ==================== INHERITANCE LOOKUP ====================
+const inhNodes = document.querySelectorAll('[data-inh]');
+const inhLookupInput = document.getElementById('inhLookupInput');
+const inhLookupBtn = document.getElementById('inhLookupBtn');
+const inhLookupResult = document.getElementById('inhLookupResult');
+
+const inhData = {
+  rex: { name: 'Rex', bark: undefined },
+  animalProto: { speak: 'ƒ speak()', constructor: 'ƒ Animal' },
+  objectProto: { toString: 'ƒ toString()', hasOwnProperty: 'ƒ hasOwnProperty()', valueOf: 'ƒ valueOf()' },
+  null: null
+};
+
+inhLookupBtn.addEventListener('click', () => {
+  const prop = inhLookupInput.value.trim();
+  if (!prop) return;
+
+  inhNodes.forEach(n => n.className = 'inh-node');
+  inhLookupResult.innerHTML = '';
+
+  addInhLookup('l-info', `🔍 Looking up "${prop}" on rex...`);
+
+  if (prop === 'name') {
+    inhNodes[0].classList.add('found');
+    addInhLookup('l-pass', `  ✅ Found on rex (own property): name = "Rex"`);
+  } else if (['speak', 'constructor'].includes(prop)) {
+    inhNodes[0].classList.add('active');
+    addInhLookup('l-skip', `  ❌ Not found on rex (own)...`);
+    setTimeout(() => {
+      inhNodes[0].classList.remove('active');
+      inhNodes[1].classList.add('found');
+      addInhLookup('l-pass', `  ✅ Found on Animal.prototype: ${prop} = ${inhData.animalProto[prop]}`);
+    }, 300);
+  } else if (['toString', 'hasOwnProperty', 'valueOf'].includes(prop)) {
+    inhNodes[0].classList.add('active');
+    addInhLookup('l-skip', `  ❌ Not found on rex (own)...`);
+    setTimeout(() => {
+      inhNodes[0].classList.remove('active');
+      inhNodes[1].classList.add('active');
+      addInhLookup('l-skip', `  ❌ Not found on Animal.prototype...`);
+    }, 300);
+    setTimeout(() => {
+      inhNodes[1].classList.remove('active');
+      inhNodes[2].classList.add('found');
+      addInhLookup('l-pass', `  ✅ Found on Object.prototype: ${inhData.objectProto[prop]}`);
+    }, 600);
+  } else {
+    inhNodes[0].classList.add('active');
+    addInhLookup('l-skip', `  ❌ Not found on rex (own)...`);
+    setTimeout(() => {
+      inhNodes[0].classList.remove('active');
+      inhNodes[1].classList.add('active');
+      addInhLookup('l-skip', `  ❌ Not found on Animal.prototype...`);
+    }, 300);
+    setTimeout(() => {
+      inhNodes[1].classList.remove('active');
+      inhNodes[2].classList.add('active');
+      addInhLookup('l-skip', `  ❌ Not found on Object.prototype...`);
+    }, 600);
+    setTimeout(() => {
+      inhNodes[2].classList.remove('active');
+      inhNodes[3].classList.add('found');
+      addInhLookup('l-block', `  ⛔ "${prop}" not found. Reached null. Result: undefined`);
+    }, 900);
+  }
+});
+
+function addInhLookup(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'lr-step';
+  div.innerHTML = `<span class="${cls}">${text}</span>`;
+  inhLookupResult.appendChild(div);
+  inhLookupResult.scrollTop = inhLookupResult.scrollHeight;
+}
+
+// ==================== OWN PROPERTY DEMO ====================
+const ownDemoBtn = document.getElementById('ownDemoBtn');
+const ownDemoLog = document.getElementById('ownDemoLog');
+
+ownDemoBtn.addEventListener('click', () => {
+  ownDemoLog.innerHTML = '';
+  addOwnLog('l-info', '// Creating: function Animal(name) { this.name = name; }');
+  addOwnLog('l-info', '// Adding: Animal.prototype.speak = function() {};');
+  addOwnLog('l-info', '// const a = new Animal("Rex");');
+  setTimeout(() => {
+    addOwnLog('l-pass', 'a.hasOwnProperty("name")  → true ✅  (name is own)');
+  }, 400);
+  setTimeout(() => {
+    addOwnLog('l-skip', 'a.hasOwnProperty("speak") → false ❌ (speak is inherited)');
+  }, 700);
+  setTimeout(() => {
+    addOwnLog('l-pass', '"speak" in a              → true ✅  (in prototype chain)');
+  }, 1000);
+  setTimeout(() => {
+    addOwnLog('l-pass', 'Object.hasOwn(a, "name")   → true ✅  (ES2022 style)');
+  }, 1300);
+});
+
+function addOwnLog(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'll';
+  div.innerHTML = `<span class="${cls}">${text}</span>`;
+  ownDemoLog.appendChild(div);
+}
+
+// ==================== OBJECT.CREATE DEMO ====================
+const createDemoBtn = document.getElementById('createDemoBtn');
+const createDemoLog = document.getElementById('createDemoLog');
+
+createDemoBtn.addEventListener('click', () => {
+  createDemoLog.innerHTML = '';
+  addCreateLog('l-info', '// const animal = { speak() { ... } }');
+  addCreateLog('l-info', '// const dog = Object.create(animal)');
+  setTimeout(() => {
+    addCreateLog('l-pass', 'dog.__proto__ === animal → true ✅');
+  }, 400);
+  setTimeout(() => {
+    addCreateLog('l-pass', 'animal.isPrototypeOf(dog) → true ✅');
+  }, 700);
+  setTimeout(() => {
+    addCreateLog('l-pass', 'dog.speak() → "Rex speaks" ✅ (inherited)');
+  }, 1000);
+});
+
+function addCreateLog(cls, text) {
+  const div = document.createElement('div');
+  div.className = 'll';
+  div.innerHTML = `<span class="${cls}">${text}</span>`;
+  createDemoLog.appendChild(div);
+}
+
+// ==================== BUILT-IN PROTOTYPES ====================
+const builtinItems = document.querySelectorAll('.builtin-item');
+const biDetailTitle = document.getElementById('biDetailTitle');
+const biChainViz = document.getElementById('biChainViz');
+
+const biDetails = {
+  array: {
+    name: 'Array',
+    color: '#a6e3a1',
+    chain: ['[] (instance)', 'Array.prototype', 'Object.prototype', 'null'],
+    chainLabels: ['[1, 2, 3]', 'map, filter, reduce, push, pop, ...', 'toString, hasOwnProperty, valueOf, ...', '— end —'],
+    chainColors: ['#a6e3a1', '#a6e3a1', '#89b4fa', '#f38ba8']
+  },
+  function: {
+    name: 'Function',
+    color: '#fab387',
+    chain: ['ƒ (instance)', 'Function.prototype', 'Object.prototype', 'null'],
+    chainLabels: ['function() {}', 'call, apply, bind, ...', 'toString, hasOwnProperty, ...', '— end —'],
+    chainColors: ['#fab387', '#fab387', '#89b4fa', '#f38ba8']
+  },
+  string: {
+    name: 'String',
+    color: '#f38ba8',
+    chain: ['"" (instance)', 'String.prototype', 'Object.prototype', 'null'],
+    chainLabels: ['"hello"', 'toUpperCase, trim, slice, ...', 'toString, hasOwnProperty, ...', '— end —'],
+    chainColors: ['#f38ba8', '#f38ba8', '#89b4fa', '#f38ba8']
+  },
+  number: {
+    name: 'Number',
+    color: '#cba6f7',
+    chain: ['42 (instance)', 'Number.prototype', 'Object.prototype', 'null'],
+    chainLabels: ['42', 'toFixed, toPrecision, ...', 'toString, hasOwnProperty, ...', '— end —'],
+    chainColors: ['#cba6f7', '#cba6f7', '#89b4fa', '#f38ba8']
+  },
+  boolean: {
+    name: 'Boolean',
+    color: '#89b4fa',
+    chain: ['true (instance)', 'Boolean.prototype', 'Object.prototype', 'null'],
+    chainLabels: ['true', 'toString, valueOf', 'toString, hasOwnProperty, ...', '— end —'],
+    chainColors: ['#89b4fa', '#89b4fa', '#89b4fa', '#f38ba8']
+  },
+  date: {
+    name: 'Date',
+    color: '#94e2d5',
+    chain: ['new Date() (instance)', 'Date.prototype', 'Object.prototype', 'null'],
+    chainLabels: ['2024-01-01T00:00:00.000Z', 'getTime, toISOString, ...', 'toString, hasOwnProperty, ...', '— end —'],
+    chainColors: ['#94e2d5', '#94e2d5', '#89b4fa', '#f38ba8']
+  },
+  regexp: {
+    name: 'RegExp',
+    color: '#fab387',
+    chain: ['/./ (instance)', 'RegExp.prototype', 'Object.prototype', 'null'],
+    chainLabels: ['/./', 'test, exec, source, flags, ...', 'toString, hasOwnProperty, ...', '— end —'],
+    chainColors: ['#fab387', '#fab387', '#89b4fa', '#f38ba8']
+  },
+  map: {
+    name: 'Map',
+    color: '#a6e3a1',
+    chain: ['new Map() (instance)', 'Map.prototype', 'Object.prototype', 'null'],
+    chainLabels: ['Map(0)', 'set, get, has, delete, ...', 'toString, hasOwnProperty, ...', '— end —'],
+    chainColors: ['#a6e3a1', '#a6e3a1', '#89b4fa', '#f38ba8']
+  }
+};
+
+builtinItems.forEach(item => {
+  item.addEventListener('click', () => {
+    const type = item.dataset.bi;
+    const det = biDetails[type];
+    if (!det) return;
+
+    biDetailTitle.innerHTML = `📋 Full Prototype Chain for <span style="color:${det.color}">${det.name}</span>`;
+    biChainViz.innerHTML = det.chain.map((name, idx) => {
+      const isNull = name === 'null';
+      return `<div class="chain-link" style="${isNull ? '' : `border-color:${det.chainColors[idx]}`};${isNull ? 'border-color:#f38ba8' : ''}">
+<span class="prop" style="color:${det.chainColors[idx]}">${name}</span>
+<span class="val" style="font-size:.72rem;color:${isNull ? '#6c7086' : '#a6adc8'}">${det.chainLabels[idx]}</span>
+</div>${idx < det.chain.length - 1 ? '<div class="chain-arrow">⬇ __proto__</div>' : ''}`;
+    }).join('');
+  });
+});
+
+// Initial: click array card to show
+builtinItems[0].click();
+
+// ==================== INSTANCEOF ====================
+document.querySelectorAll('[data-inst]').forEach(card => {
+  card.addEventListener('click', () => {
+    card.classList.toggle('active');
+  });
+});
+</script>
+</body>
+</html>

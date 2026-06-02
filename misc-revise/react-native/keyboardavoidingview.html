@@ -1,0 +1,319 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KeyboardAvoidingView - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:10px 12px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #f38ba8, #89b4fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:6px; padding:5px 10px; font-size:10px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#89b4fa; color:#1e1e2e; }
+    .btn-p:hover { background:#74c7ec; }
+    .btn-s { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+    .btn-s:hover { background:#45475a; }
+
+    .prop-chip { display:inline-flex; align-items:center; gap:4px; background:#313244; border-radius:4px; padding:3px 8px; font-size:10px; font-family:monospace; cursor:pointer; transition:all 0.2s; border:1px solid transparent; }
+    .prop-chip:hover { background:#45475a; }
+    .prop-chip.active { background:#89b4fa30; border-color:#89b4fa; }
+
+    .input-field { background:#11111b; border:1px solid #45475a; border-radius:8px; padding:10px 12px; color:#cdd6f4; font-size:13px; width:100%; outline:none; }
+    .input-field:focus { border-color:#89b4fa; }
+
+    .keyboard-overlay {
+      position:absolute; bottom:0; left:0; right:0;
+      background:#11111b; border-top:2px solid #45475a;
+      display:flex; align-items:center; justify-content:center;
+      transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);
+      z-index:20;
+    }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      Core Components
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">KeyboardAvoidingView</span>
+    </h1>
+    <p class="text-[#a6adc8">Keeps inputs visible when the keyboard opens.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone" id="phoneEl">
+        <div class="phone-notch"></div>
+        <div class="screen" style="position:relative;">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">Keyboard Lab</span>
+            <span id="statusBadge" class="text-xs bg-[#f38ba8]/20 text-[#f38ba8] px-2 py-0.5 rounded-full">keyboard: hidden</span>
+          </div>
+
+          <!-- The content area (simulates KeyboardAvoidingView) -->
+          <div id="contentArea" style="flex:1;display:flex;flex-direction:column;padding:10px 12px;transition:all 0.35s cubic-bezier(0.4,0,0.2,1);overflow-y:auto;">
+
+            <!-- Controls -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4 mb-3">
+              <div class="text-xs text-[#6c7086] mb-2">Settings</div>
+              <div class="flex items-center gap-2 mb-2">
+                <span class="text-xs text-[#6c7086]">KeyboardAvoidingView:</span>
+                <button id="toggleKavBtn" class="btn btn-p">ON ✅</button>
+              </div>
+              <div class="flex items-center gap-2">
+                <span class="text-xs text-[#6c7086]">behavior:</span>
+                <span id="behaviorChips" class="flex gap-1"></span>
+              </div>
+              <div class="flex items-center gap-2 mt-2">
+                <span class="text-xs text-[#6c7086]">offset:</span>
+                <button id="offsetDec" class="btn btn-s" style="padding:2px 8px;"><i class="fas fa-minus"></i></button>
+                <span id="offsetVal" class="font-mono text-sm w-6 text-center text-[#f9e2af]">0</span>
+                <button id="offsetInc" class="btn btn-s" style="padding:2px 8px;"><i class="fas fa-plus"></i></button>
+              </div>
+            </div>
+
+            <!-- Form -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4 mb-3" style="flex:1;">
+              <div class="text-sm font-semibold mb-3">Login Form</div>
+              <div class="space-y-3">
+                <div>
+                  <div class="text-xs text-[#585b70] mb-1">Email</div>
+                  <input class="input-field" placeholder="Enter email..." value="user@example.com">
+                </div>
+                <div>
+                  <div class="text-xs text-[#585b70] mb-1">Password</div>
+                  <input class="input-field" type="password" placeholder="Enter password..." value="123456">
+                </div>
+                <div>
+                  <div class="text-xs text-[#585b70] mb-1">Bio</div>
+                  <textarea class="input-field" placeholder="Tell us about yourself..." rows="2" style="resize:none;font-family:inherit;">Learning React Native!</textarea>
+                </div>
+                <div>
+                  <div class="text-xs text-[#585b70] mb-1">Phone</div>
+                  <input class="input-field" placeholder="+1 555-0000" value="+1 555-1234">
+                </div>
+              </div>
+              <button class="btn btn-p w-full mt-4 py-2" id="focusBtn"><i class="fas fa-keyboard mr-1"></i> Open Keyboard</button>
+            </div>
+
+            <!-- How it works note -->
+            <div id="kavNote" class="bg-[#1e1e2e] border border-[#89b4fa] rounded-xl p-3 text-xs text-[#a6adc8]">
+              <span class="text-[#89b4fa] font-semibold">⬆️ KeyboardAvoidingView</span> is active. When the keyboard opens, the content slides up to keep inputs visible.
+            </div>
+          </div>
+
+          <!-- Simulated keyboard -->
+          <div id="keyboard" class="keyboard-overlay" style="height:200px;transform:translateY(100%);">
+            <div class="w-full p-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs text-[#6c7086]"><i class="fas fa-keyboard mr-1"></i> Keyboard</span>
+                <button id="hideKbBtn" class="btn btn-s" style="padding:2px 10px;font-size:10px;"><i class="fas fa-chevron-down mr-1"></i> Hide</button>
+              </div>
+              <div class="grid grid-cols-10 gap-1">
+                ${'QWERTYUIOPASDFGHJKLZXCVBNM'.split('').map(l => `<div style="background:#313244;border-radius:4px;padding:6px 0;text-align:center;font-size:11px;font-weight:600;">${l}</div>`).join('')}
+              </div>
+            </div>
+          </div>
+
+          <!-- Bottom bar -->
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Syntax</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed">
+<span class="text-[#cba6f7">import</span> { KeyboardAvoidingView }
+  <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'react-native'</span>;
+
+<span class="text-[#cdd6f4]">&lt;KeyboardAvoidingView</span>
+  <span class="text-[#89b4fa]">behavior</span>=<span class="text-[#a6e3a1]">"padding"</span>
+  <span class="text-[#89b4fa]">keyboardVerticalOffset</span>={<span class="text-[#cdd6f4]">100</span>}
+  <span class="text-[#89b4fa]">style</span>={{ <span class="text-[#89b4fa]">flex</span>: <span class="text-[#cdd6f4]">1</span> }}
+<span class="text-[#cdd6f4]">&gt;</span>
+  <span class="text-[#cdd6f4]">&lt;ScrollView&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;TextInput /&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;TextInput /&gt;</span>
+  <span class="text-[#cdd6f4]">&lt;/ScrollView&gt;</span>
+<span class="text-[#cdd6f4]">&lt;/KeyboardAvoidingView&gt;</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">behavior values</h3>
+          <div class="space-y-1 text-xs">
+            <div class="bg-[#11111b] rounded-lg p-2">
+              <span class="text-[#89b4fa] font-semibold">padding</span><br>
+              <span class="text-[#6c7086]">Adds bottom padding = keyboard height. Works on both platforms.</span>
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-2">
+              <span class="text-[#a6e3a1] font-semibold">height</span><br>
+              <span class="text-[#6c7086]">Shrinks the view height by keyboard height. Android only.</span>
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-2">
+              <span class="text-[#f9e2af] font-semibold">position</span><br>
+              <span class="text-[#6c7086]">Adjusts position like a CSS fixed element. iOS only.</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Tip:</span> <code>keyboardVerticalOffset</code> is crucial. Set it to the height of any header (e.g., navigation bar) above the avoiding view. Without it, the content may jump too high or not enough.
+        </div>
+      </div>
+    </section>
+
+    <!-- === CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#89b4fa]"></i> Complete Example
+      </h2>
+      <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+        <div class="px-5 py-2.5 bg-[#181825] border-b border-[#313244] flex items-center gap-2 text-sm text-[#6c7086]">
+          <i class="fas fa-file-alt"></i> LoginScreen.tsx
+        </div>
+        <pre class="p-5 text-sm font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#cba6f7">import</span> React <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'react'</span>;
+<span class="text-[#cba6f7">import</span> {
+  View, TextInput, Text, TouchableOpacity,
+  KeyboardAvoidingView,
+  Platform, ScrollView
+} <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'react-native'</span>;
+
+<span class="text-[#cba6f7">function</span> <span class="text-[#89b4fa]">LoginScreen</span>() {
+  <span class="text-[#cba6f7">return</span> (
+    <span class="text-[#cdd6f4]">&lt;KeyboardAvoidingView</span>
+      <span class="text-[#89b4fa]">behavior</span>={Platform.OS === <span class="text-[#a6e3a1]">'ios'</span> ? <span class="text-[#a6e3a1]">'padding'</span> : <span class="text-[#a6e3a1]">'height'</span>}
+      <span class="text-[#89b4fa]">keyboardVerticalOffset</span>={Platform.OS === <span class="text-[#a6e3a1]">'ios'</span> ? <span class="text-[#cdd6f4]">90</span> : <span class="text-[#cdd6f4]">0</span>}
+      <span class="text-[#89b4fa]">style</span>={{ <span class="text-[#89b4fa]">flex</span>: <span class="text-[#cdd6f4]">1</span> }}
+    <span class="text-[#cdd6f4]">&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;ScrollView</span>
+        <span class="text-[#89b4fa]">contentContainerStyle</span>={{ <span class="text-[#89b4fa]">flexGrow</span>: <span class="text-[#cdd6f4]">1</span>, <span class="text-[#89b4fa]">padding</span>: <span class="text-[#cdd6f4]">20</span> }}
+      <span class="text-[#cdd6f4]">&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Text&gt;Login&lt;/Text&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;TextInput placeholder="Email" /&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;TextInput placeholder="Password" /&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;TouchableOpacity&gt;</span>
+          <span class="text-[#cdd6f4]">&lt;Text&gt;Submit&lt;/Text&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;/TouchableOpacity&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;/ScrollView&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/KeyboardAvoidingView&gt;</span>
+  );
+}</pre>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70">
+      <a href="https://reactnative.dev/docs/keyboardavoidingview" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> RN Docs: KeyboardAvoidingView</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      let kavOn = true;
+      let behavior = 'padding';
+      let offset = 0;
+      let kbVisible = false;
+
+      const contentArea = document.getElementById('contentArea');
+      const keyboard = document.getElementById('keyboard');
+      const statusBadge = document.getElementById('statusBadge');
+      const toggleKavBtn = document.getElementById('toggleKavBtn');
+      const offsetVal = document.getElementById('offsetVal');
+      const kavNote = document.getElementById('kavNote');
+      const behaviorChips = document.getElementById('behaviorChips');
+
+      function updateKav() {
+        if (!kbVisible) {
+          contentArea.style.transform = 'translateY(0)';
+          contentArea.style.paddingBottom = '0px';
+          return;
+        }
+
+        if (kavOn) {
+          const shift = 200 - offset;
+          contentArea.style.transform = `translateY(-${Math.max(0, shift)}px)`;
+          contentArea.style.paddingBottom = '0px';
+          kavNote.innerHTML = `<span class="text-[#89b4fa] font-semibold">⬆️ KeyboardAvoidingView</span> is active. Content slides up by <strong>${Math.max(0, shift)}px</strong> to keep inputs visible.`;
+          kavNote.className = 'bg-[#1e1e2e] border border-[#89b4fa] rounded-xl p-3 text-xs text-[#a6adc8]';
+        } else {
+          contentArea.style.transform = 'translateY(0)';
+          contentArea.style.paddingBottom = '0px';
+          kavNote.innerHTML = `<span class="text-[#f38ba8] font-semibold">❌ No KeyboardAvoidingView</span> — the keyboard covers the bottom inputs. User can't see what they're typing.`;
+          kavNote.className = 'bg-[#1e1e2e] border border-[#f38ba8] rounded-xl p-3 text-xs text-[#a6adc8]';
+        }
+      }
+
+      function toggleKeyboard(show) {
+        kbVisible = show;
+        keyboard.style.transform = show ? 'translateY(0)' : 'translateY(100%)';
+        statusBadge.textContent = 'keyboard: ' + (show ? 'visible' : 'hidden');
+        statusBadge.className = 'text-xs px-2 py-0.5 rounded-full ' + (show ? 'bg-[#89b4fa]/20 text-[#89b4fa]' : 'bg-[#f38ba8]/20 text-[#f38ba8]');
+        updateKav();
+      }
+
+      document.getElementById('focusBtn').addEventListener('click', () => toggleKeyboard(true));
+      document.getElementById('hideKbBtn').addEventListener('click', () => toggleKeyboard(false));
+
+      // Toggle KAV
+      toggleKavBtn.addEventListener('click', () => {
+        kavOn = !kavOn;
+        toggleKavBtn.textContent = kavOn ? 'ON ✅' : 'OFF ❌';
+        toggleKavBtn.className = kavOn ? 'btn btn-p' : 'btn btn-s';
+        updateKav();
+      });
+
+      // Behavior chips
+      ['padding', 'height', 'position'].forEach(b => {
+        const chip = document.createElement('span');
+        chip.className = 'prop-chip' + (b === behavior ? ' active' : '');
+        chip.textContent = b;
+        chip.addEventListener('click', () => {
+          behavior = b;
+          behaviorChips.querySelectorAll('.prop-chip').forEach(c => c.classList.remove('active'));
+          chip.classList.add('active');
+        });
+        behaviorChips.appendChild(chip);
+      });
+
+      // Offset
+      document.getElementById('offsetDec').addEventListener('click', () => {
+        offset = Math.max(0, offset - 10);
+        offsetVal.textContent = offset;
+        updateKav();
+      });
+      document.getElementById('offsetInc').addEventListener('click', () => {
+        offset = Math.min(200, offset + 10);
+        offsetVal.textContent = offset;
+        updateKav();
+      });
+    })();
+  </script>
+</body>
+</html>

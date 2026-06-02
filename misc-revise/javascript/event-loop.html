@@ -1,0 +1,828 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Event Loop — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#11111b;color:#cdd6f4;padding:20px}
+h1{font-size:2.5rem;margin-bottom:.3rem}
+h2{font-size:1.35rem;margin:2rem 0 .8rem;color:#89b4fa;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.7rem;background:#313244;color:#a6adc8;padding:2px 8px;border-radius:999px;font-weight:400}
+h3{font-size:1.05rem;margin:1.2rem 0 .5rem;color:#a6e3a1}
+p,li{color:#bac2de;line-height:1.7}
+code{background:#181825;padding:2px 6px;border-radius:4px;font-size:.85em;color:#fab387;font-family:'JetBrains Mono',monospace}
+pre{background:#181825;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0;border:1px solid #313244;line-height:1.7}
+pre code{background:none;padding:0;color:#a6e3a1}
+.wrapper{max-width:1000px;margin:0 auto}
+.gradient-text{background:linear-gradient(135deg,#89b4fa,#a6e3a1,#f9e2af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#6c7086;margin-bottom:2rem}
+.demo-panel{background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:20px;margin:20px 0}
+.demo-panel .label{font-size:.75rem;color:#6c7086;margin-bottom:8px;font-family:monospace}
+.demo-panel .label span{color:#89b4fa}
+.tip{background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.85rem;color:#a6adc8}
+.tip strong{color:#f9e2af}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.84rem;border-left:4px solid #89b4fa;background:rgba(137,180,250,.04)}
+.callout.danger{border-color:#f38ba8;background:rgba(243,139,168,.06)}
+.callout.warn{border-color:#f9e2af;background:rgba(249,226,175,.06)}
+.callout .tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:.7rem;font-weight:600;font-family:monospace;margin-right:4px}
+.callout .tag.good{background:#a6e3a120;color:#a6e3a1;border:1px solid #a6e3a1}
+.callout .tag.bad{background:#f38ba820;color:#f38ba8;border:1px solid #f38ba8}
+.callout .tag.warn{background:#f9e2af20;color:#f9e2af;border:1px solid #f9e2af}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;font-size:.85rem}
+.info-card .prop{color:#89b4fa;font-family:monospace;font-weight:600}
+.info-card .val{color:#a6e3a1}
+.info-card .desc{color:#6c7086;font-size:.8rem;margin-top:4px}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.controls button,.btn{background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:monospace;transition:.2s}
+.controls button:hover,.btn:hover{background:#45475a}
+.controls button.active,.btn.active{background:#89b4fa30;border-color:#89b4fa;color:#89b4fa}
+.controls button:disabled,.btn:disabled{opacity:.4;cursor:not-allowed}
+.slider-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.slider-group label{font-size:.78rem;color:#a6adc8}
+.slider-group input[type=range]{accent-color:#89b4fa;width:140px}
+.slider-group .value{font-family:monospace;font-size:.8rem;color:#fab387;min-width:40px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{background:#181825;color:#89b4fa;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid #313244}
+td{padding:10px 14px;border-bottom:1px solid #313244;color:#a6adc8}
+tr:hover td{background:#1e1e2e50}
+td:first-child{font-family:monospace;color:#fab387}
+::selection{background:#89b4fa40}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#11111b}
+::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+
+.el-diagram{display:flex;gap:16px;margin:20px 0;align-items:flex-start;flex-wrap:wrap;justify-content:center}
+.el-col{flex:1;min-width:180px;background:#181825;border:1px solid #313244;border-radius:10px;padding:14px}
+.el-col .el-title{font-size:.7rem;text-align:center;font-family:monospace;margin-bottom:8px;padding:4px;border-radius:4px}
+.el-col .el-title.stack{background:#fab38720;color:#fab387}
+.el-col .el-title.webapi{background:#89b4fa20;color:#89b4fa}
+.el-col .el-title.micro{background:#a6e3a120;color:#a6e3a1}
+.el-col .el-title.macro{background:#f38ba820;color:#f38ba8}
+.el-col .el-title.render{background:#f9e2af20;color:#f9e2af}
+.el-stack{display:flex;flex-direction:column-reverse;gap:3px;min-height:120px;padding:4px;background:#0f0f17;border-radius:6px;border:1px solid #313244}
+.el-stack-item{padding:5px 10px;border-radius:4px;font-family:monospace;font-size:.65rem;border:1px solid;text-align:center;animation:pushIn .2s;position:relative}
+.el-stack-item.fn{background:#fab38720;border-color:#fab387;color:#fab387}
+.el-stack-item.anon{background:#585b7030;border-color:#585b70;color:#6c7086;font-style:italic}
+.el-stack-item.global{background:#89b4fa20;border-color:#89b4fa;color:#89b4fa}
+.el-stack-item.popout{animation:popOut .2s forwards}
+@keyframes pushIn{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+@keyframes popOut{from{opacity:1;transform:scale(1)}to{opacity:0;transform:scale(.8)}}
+.el-queue{display:flex;flex-direction:column-reverse;gap:3px;min-height:80px;padding:4px;background:#0f0f17;border-radius:6px;border:1px solid #313244}
+.el-queue-item{padding:5px 10px;border-radius:4px;font-family:monospace;font-size:.65rem;border:1px solid;text-align:center;animation:pushIn .2s}
+.el-queue-item.micro{background:#a6e3a120;border-color:#a6e3a1;color:#a6e3a1}
+.el-queue-item.macro{background:#f38ba820;border-color:#f38ba8;color:#f38ba8}
+.el-queue-item.render{background:#f9e2af20;border-color:#f9e2af;color:#f9e2af}
+.el-queue-item.done{opacity:.4;text-decoration:line-through}
+.el-arrow{display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:1.2rem;color:#585b70;min-width:30px;padding:0 4px}
+.el-arrow .el-alabel{font-size:.5rem;color:#6c7086;text-align:center;line-height:1.2}
+
+.exec-log{background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:10px 14px;font-family:monospace;font-size:.75rem;max-height:180px;overflow-y:auto;line-height:1.8;margin:8px 0}
+.exec-log div{padding:1px 0}
+.exec-log .sync{color:#fab387}
+.exec-log .micro{color:#a6e3a1}
+.exec-log .macro{color:#89b4fa}
+.exec-log .render{color:#f9e2af}
+.exec-log .info{color:#585b70}
+.exec-log .err{color:#f38ba8}
+.exec-log .highlight{background:#fab38710;border-radius:2px}
+
+.step-controls{display:flex;gap:8px;flex-wrap:wrap;margin:12px 0}
+.step-controls button{min-width:80px}
+
+.el-timer{font-family:monospace;font-size:.8rem;color:#6c7086;text-align:center;padding:6px;background:#0f0f17;border-radius:6px;margin:8px 0}
+.el-timer span{color:#f9e2af}
+
+.compare-queue{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:600px){.compare-queue{grid-template-columns:1fr}}
+.queue-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:14px;min-height:100px}
+.queue-card .qc-title{font-size:.75rem;font-family:monospace;margin-bottom:8px}
+.queue-card .qc-title.micro{color:#a6e3a1}
+.queue-card .qc-title.macro{color:#89b4fa}
+.queue-line{display:flex;gap:4px;flex-wrap:wrap;min-height:28px;align-items:center}
+.queue-item{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.7rem;font-family:monospace;margin:2px;animation:fadeIn .3s}
+.queue-item.micro{background:#a6e3a120;border:1px solid #a6e3a1;color:#a6e3a1}
+.queue-item.macro{background:#89b4fa20;border:1px solid #89b4fa;color:#89b4fa}
+.queue-item.executing{background:#fab38730;border-color:#fab387;color:#fab387}
+.queue-item.done{opacity:.3;text-decoration:line-through}
+@keyframes fadeIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+
+.running-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px;animation:blink .8s infinite}
+.running-dot.green{background:#a6e3a1}
+.running-dot.yellow{background:#f9e2af}
+.running-dot.red{background:#f38ba8}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+
+.block-bar{height:24px;background:#313244;border-radius:4px;overflow:hidden;margin:8px 0;position:relative}
+.block-bar .fill{height:100%;background:linear-gradient(90deg,#a6e3a1,#f9e2af,#f38ba8);border-radius:4px;transition:width .1s;width:0}
+.block-bar .fill.danger{background:linear-gradient(90deg,#f9e2af,#f38ba8,#f38ba8)}
+.block-bar .marker{position:absolute;top:-2px;font-size:.6rem;color:#6c7086;transform:translateX(-50%)}
+.block-label{display:flex;justify-content:space-between;font-size:.7rem;color:#6c7086;font-family:monospace}
+
+.raf-line{position:relative;height:30px;background:#0f0f17;border:1px solid #313244;border-radius:6px;margin:12px 0;overflow:hidden}
+.raf-segment{position:absolute;top:0;height:100%;display:flex;align-items:center;justify-content:center;font-size:.6rem;font-family:monospace;color:#11111b;font-weight:600}
+.raf-segment.task{background:#89b4fa;left:0;width:40%}
+.raf-segment.render{background:#f9e2af;left:40%;width:25% }
+.raf-segment.raf{background:#a6e3a1;left:65%;width:20%}
+.raf-segment.idle{background:#313244;left:85%;width:15%}
+
+.playground-edit{width:100%;background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#cdd6f4;min-height:120px;resize:vertical;margin:8px 0;outline:none;tab-size:2;line-height:1.6}
+.playground-edit:focus{border-color:#89b4fa}
+.playground-output{background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:14px;font-family:monospace;font-size:.82rem;min-height:60px;max-height:200px;overflow-y:auto;line-height:1.8;margin:8px 0}
+.playground-output .log{color:#bac2de}
+.playground-output .log.sync{color:#fab387}
+.playground-output .log.micro{color:#a6e3a1}
+.playground-output .log.macro{color:#89b4fa}
+.playground-output .log.err{color:#f38ba8}
+.playground-output .log.info{color:#6c7086}
+
+.cycle-vis{display:flex;align-items:center;justify-content:center;gap:4px;margin:16px 0;flex-wrap:wrap;font-family:monospace;font-size:.7rem}
+.cycle-step{padding:8px 14px;border-radius:6px;border:1px solid #45475a;background:#1e1e2e;min-width:70px;text-align:center;transition:.3s}
+.cycle-step.active{transform:scale(1.05);box-shadow:0 0 15px rgba(137,180,250,.2)}
+.cycle-step.s1{color:#fab387;border-color:#fab387}
+.cycle-step.s1.active{background:#fab38720}
+.cycle-step.s2{color:#a6e3a1;border-color:#a6e3a1}
+.cycle-step.s2.active{background:#a6e3a120}
+.cycle-step.s3{color:#89b4fa;border-color:#89b4fa}
+.cycle-step.s3.active{background:#89b4fa20}
+.cycle-step.s4{color:#f9e2af;border-color:#f9e2af}
+.cycle-step.s4.active{background:#f9e2af20}
+.cycle-arr{color:#585b70;font-size:1rem}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1 class="gradient-text">Event Loop</h1>
+<p class="subtitle">How JavaScript's single thread handles async — call stack, queues, and the eternal cycle</p>
+
+<h2><span>1. The Big Picture</span><span class="badge">single thread, async magic</span></h2>
+<p>JavaScript is <strong>single-threaded</strong> — one call stack, one thing at a time. The <strong>event loop</strong> is what makes async possible. It constantly checks: <em>"is the stack empty? if so, push the next waiting task."</em></p>
+
+<div class="el-diagram">
+  <div class="el-col">
+    <div class="el-title stack">Call Stack</div>
+    <div class="el-stack" id="overviewStack">
+      <div style="color:#585b70;font-size:.6rem;text-align:center;padding:10px">(empty)</div>
+    </div>
+    <div class="el-timer" id="overviewTimer"><span class="running-dot green"></span> Stack: <span id="overviewStackCount">0</span> frames</div>
+  </div>
+  <div class="el-arrow">→<span class="el-alabel">stack<br>empty?</span></div>
+  <div class="el-col">
+    <div class="el-title micro">Microtask Queue</div>
+    <div class="el-queue" id="overviewMicro">
+      <div style="color:#585b70;font-size:.6rem;text-align:center;padding:10px">(empty)</div>
+    </div>
+  </div>
+  <div class="el-arrow">→<span class="el-alabel">drain<br>all</span></div>
+  <div class="el-col">
+    <div class="el-title macro">Macrotask Queue</div>
+    <div class="el-queue" id="overviewMacro">
+      <div style="color:#585b70;font-size:.6rem;text-align:center;padding:10px">(empty)</div>
+    </div>
+  </div>
+  <div class="el-arrow">→<span class="el-alabel">pick<br>one</span></div>
+  <div class="el-col">
+    <div class="el-title render">Render</div>
+    <div class="el-queue" id="overviewRender">
+      <div style="color:#585b70;font-size:.6rem;text-align:center;padding:10px">(paint)</div>
+    </div>
+  </div>
+</div>
+
+<p>The event loop has one simple job: <strong>monitor the call stack and the task queues</strong>. When the stack is empty, it takes the oldest task from a queue and pushes it onto the stack.</p>
+
+<div class="callout">
+  <strong>The Golden Rule:</strong> Microtasks are drained <strong>completely</strong> after every macrotask, before rendering. A macrotask queue iteration picks <strong>one</strong> task. The microtask queue is drained until <strong>empty</strong>.
+</div>
+
+<h2><span>2. The Cycle — Step by Step</span><span class="badge">1 macrotask → all micro → render</span></h2>
+
+<div class="demo-panel">
+  <div class="label">🔄 <span>Click through the event loop cycle</span></div>
+  <div class="controls" id="cycleControls">
+    <button data-cycle="step">⏭️ Step</button>
+    <button data-cycle="auto">▶️ Auto</button>
+    <button data-cycle="reset">↺ Reset</button>
+  </div>
+  <div class="cycle-vis" id="cycleVis">
+    <div class="cycle-step s1" data-step="0">⏳ Wait</div>
+    <div class="cycle-arr">→</div>
+    <div class="cycle-step s2" data-step="1">📦 Pick macro</div>
+    <div class="cycle-arr">→</div>
+    <div class="cycle-step s3" data-step="2">🔬 Drain micro</div>
+    <div class="cycle-arr">→</div>
+    <div class="cycle-step s4" data-step="3">🎨 Render</div>
+    <div class="cycle-arr">→</div>
+    <div class="cycle-step s1" data-step="0">⏳ Wait</div>
+  </div>
+  <div id="cycleDescription" style="font-size:.82rem;color:#bac2de;margin-top:8px;padding:10px;background:#181825;border-radius:6px;border:1px solid #313244">Press "Step" to advance through the event loop cycle.</div>
+</div>
+
+<h2><span>3. Call Stack in Action</span><span class="badge">LIFO · stack frames · overflow</span></h2>
+<p>The call stack is a LIFO (Last In, First Out) data structure. Each function call creates a <strong>stack frame</strong>. When a function returns, its frame is popped. The stack has a finite size (~10k frames) — exceeding it causes a <strong>stack overflow</strong>.</p>
+
+<div class="demo-panel">
+  <div class="label">📚 <span>Call stack visualizer — watch frames push and pop</span></div>
+  <div class="controls" id="stackControls">
+    <button data-stack="normal">Run normal calls</button>
+    <button data-stack="nested">Run nested calls</button>
+    <button data-stack="overflow">💥 Trigger overflow</button>
+    <button data-stack="clear">🧹 Clear</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:8px 0">
+    <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;min-height:200px">
+      <div style="font-size:.7rem;color:#6c7086;font-family:monospace;margin-bottom:6px">Call Stack</div>
+      <div class="el-stack" id="liveStack" style="min-height:160px"></div>
+    </div>
+    <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;min-height:200px">
+      <div style="font-size:.7rem;color:#6c7086;font-family:monospace;margin-bottom:6px">Execution Log</div>
+      <div class="exec-log" id="stackLog"></div>
+    </div>
+  </div>
+</div>
+
+<h2><span>4. Microtasks vs Macrotasks</span><span class="badge">the key to understanding async</span></h2>
+
+<div class="info-grid">
+  <div class="info-card">
+    <div class="prop">Microtasks</div>
+    <div class="val">Promise.then / catch / finally, queueMicrotask, MutationObserver</div>
+    <div class="desc">Drained <strong>completely</strong> after each macrotask, before rendering. Can starve the macrotask queue if they keep adding more microtasks.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">Macrotasks</div>
+    <div class="val">setTimeout, setInterval, I/O, UI events, postMessage, setImmediate</div>
+    <div class="desc">Picked <strong>one at a time</strong> per event loop iteration. The browser may group rendering between macrotasks.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">requestAnimationFrame</div>
+    <div class="val">runs before the next paint, after microtasks, before render</div>
+    <div class="desc">Scheduled by the browser at ~60fps. Not a task queue — runs in the render phase.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">Rendering</div>
+    <div class="val">style recalc → layout → paint → compositing</div>
+    <div class="desc">Happens after all microtasks are drained. Not guaranteed between every macrotask — the browser optimizes.</div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">⏱️ <span>See the ordering — microtasks always win over macrotasks</span></div>
+  <div class="controls" id="orderingControls">
+    <button data-ordering="run">▶️ Run</button>
+    <button data-ordering="clear">🧹 Clear</button>
+  </div>
+  <div class="compare-queue">
+    <div class="queue-card">
+      <div class="qc-title micro">📥 Microtask Queue <span style="color:#6c7086;font-weight:400">(Promise.then)</span></div>
+      <div class="queue-line" id="microLine"></div>
+    </div>
+    <div class="queue-card">
+      <div class="qc-title macro">📤 Macrotask Queue <span style="color:#6c7086;font-weight:400">(setTimeout)</span></div>
+      <div class="queue-line" id="macroLine"></div>
+    </div>
+  </div>
+  <div class="exec-log" id="orderingLog"></div>
+</div>
+
+<div class="tip">
+  <strong>Key insight:</strong> <code>Promise.resolve().then(() =&gt; ...)</code> runs <strong>before</strong> <code>setTimeout(() =&gt; ..., 0)</code> — even though both are queued at the same time. Microtasks interrupt macrotasks.
+</div>
+
+<h2><span>5. Blocking the Event Loop</span><span class="badge">long tasks · UI freeze · 50ms</span></h2>
+<p>A task that takes too long (>50ms) is a <strong>Long Task</strong> — it blocks rendering, freezes the UI, and degrades user experience. The browser's <strong>Interation to Next Paint (INP)</strong> metric tracks this.</p>
+
+<div class="demo-panel">
+  <div class="label">🧱 <span>Blocking simulator — drag the slider to block the thread</span></div>
+  <div class="slider-group">
+    <label>Block duration:</label>
+    <input type="range" id="blockSlider" min="0" max="2000" value="0" step="50">
+    <span class="value" id="blockValue">0ms</span>
+    <button class="btn" id="blockBtn">🧱 Block!</button>
+  </div>
+  <div class="block-label">
+    <span>0ms</span>
+    <span style="color:#a6e3a1" id="blockStatus">Ready</span>
+    <span>2000ms</span>
+  </div>
+  <div class="block-bar">
+    <div class="fill" id="blockFill" style="width:0%"></div>
+  </div>
+  <div style="margin-top:8px;padding:8px;background:#181825;border-radius:6px;font-size:.78rem;color:#6c7086;text-align:center">
+    ⏱️ <span id="blockActual">0</span>ms elapsed
+    <span style="margin-left:12px" id="blockWarning"></span>
+  </div>
+</div>
+
+<h2><span>6. requestAnimationFrame &amp; Render Pipeline</span><span class="badge">rAF · style · layout · paint</span></h2>
+<p><code>requestAnimationFrame</code> schedules a callback before the next browser paint. It's ideal for animations — the browser coordinates it with the display refresh rate.</p>
+
+<pre><code><span style="color:#6c7086">// Render pipeline order (one frame):</span>
+Tasks → Microtasks → <span style="color:#a6e3a1;font-weight:600">requestAnimationFrame</span> → <span style="color:#f9e2af">Style + Layout + Paint</span>
+<span style="color:#6c7086">// rAF runs AFTER microtasks but BEFORE the actual paint</span></code></pre>
+
+<div class="info-grid">
+  <div class="info-card">
+    <div class="prop">requestAnimationFrame(fn)</div>
+    <div class="desc">Schedules <code>fn</code> to run before the next paint. Passes a high-precision timestamp. Automatically pauses in background tabs.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">vs setTimeout(fn, 16)</div>
+    <div class="desc">setTimeout may jitter, throttle in background, or miss frames. rAF synchronizes with the display refresh cycle.</div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">🎬 <span>Frame pipeline visualizer</span></div>
+  <div class="raf-line">
+    <div class="raf-segment task">Macrotask</div>
+    <div class="raf-segment render" style="background:#a6e3a1;width:20%">Microtasks</div>
+    <div class="raf-segment raf">requestAnimationFrame</div>
+    <div class="raf-segment render">Style + Layout + Paint</div>
+    <div class="raf-segment idle">Idle</div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">
+    <button class="btn" id="rafBtn">▶️ Start rAF demo</button>
+    <button class="btn" id="rafStop">⏹️ Stop</button>
+  </div>
+  <div class="exec-log" id="rafLog"></div>
+</div>
+
+<h2><span>7. Common Pitfalls</span><span class="badge">starvation · blocking · deadlocks</span></h2>
+
+<div class="info-grid">
+  <div class="info-card">
+    <div class="prop" style="color:#f38ba8">Microtask Starvation</div>
+    <div class="desc">A microtask that keeps queueing more microtasks prevents macrotasks and rendering from ever running. Example: <code>Promise.resolve().then(() =&gt; Promise.resolve().then(...))</code> recursively.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#f38ba8">Long Tasks</div>
+    <div class="desc">Sync <code>while</code> loops or heavy computation blocks the stack. No microtasks, no rendering — the page freezes.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#f38ba8">setTimeout(fn, 0) delay</div>
+    <div class="desc">Not actually 0ms. Minimum delay is 4ms after nesting level 5 (HTML spec). Plus, all pending microtasks run first.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#f38ba8">Zalgo</div>
+    <div class="desc">A function that's sometimes sync, sometimes async. Bad practice — always use <code>Promise.resolve().then()</code> or <code>queueMicrotask</code> for consistent async.</div>
+  </div>
+</div>
+
+<h2><span>8. Interactive Playground</span><span class="badge">write code · watch the loop</span></h2>
+<p>Edit code and run. Use the <code>log(msg, type)</code> helper where type is <code>"sync"</code>, <code>"micro"</code>, <code>"macro"</code>, or <code>"info"</code>. The <code>wait(ms)</code> helper returns a promise.</p>
+
+<div class="demo-panel">
+  <div class="label">💻 <span>Live event loop playground</span></div>
+  <textarea class="playground-edit" id="playgroundEdit" spellcheck="false">log("1: sync start", "sync");
+
+setTimeout(() => log("6: setTimeout(0)", "macro"), 0);
+
+Promise.resolve().then(() => {
+  log("3: micro 1", "micro");
+  queueMicrotask(() => log("4: micro 2 (nested)", "micro"));
+});
+
+queueMicrotask(() => log("5: queueMicrotask", "micro"));
+
+log("2: sync end", "sync");
+
+// After this code finishes, the event loop:
+// 1. drains microtask queue (3 → 4 → 5)
+// 2. picks the next macrotask (6)</textarea>
+  <div class="controls" style="margin-top:6px">
+    <button class="btn" id="runPlayground">▶️ Run</button>
+    <button class="btn" id="clearPlayground">🧹 Clear</button>
+  </div>
+  <div class="playground-output" id="playgroundOutput"></div>
+</div>
+
+<h2>Comparison Table</h2>
+<table>
+  <tr><th>Queue Type</th><th>Contains</th><th>Order</th><th>Can starve?</th></tr>
+  <tr><td>Macrotask</td><td>setTimeout, setInterval, I/O, events, postMessage</td><td>One per loop iteration</td><td>Yes (if microtasks keep coming)</td></tr>
+  <tr><td>Microtask</td><td>Promise.then/catch/finally, queueMicrotask, MutationObserver</td><td>Drained completely before render</td><td>Can starve macrotasks + render</td></tr>
+  <tr><td>requestAnimationFrame</td><td>Animation callbacks</td><td>Before each paint, after microtasks</td><td>No (browser throttles)</td></tr>
+  <tr><td>Render</td><td>Style recalc, layout, paint, compositing</td><td>After all microtasks, ~60fps</td><td>Yes (blocked by long tasks)</td></tr>
+</table>
+
+</div><!-- /wrapper -->
+
+<script>
+(function(){
+"use strict";
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// ===== 3. Call Stack Visualizer =====
+(function(){
+  const stackEl = $('#liveStack');
+  const logEl = $('#stackLog');
+
+  function log(msg, cls) {
+    const d = document.createElement('div');
+    d.className = cls || '';
+    d.textContent = msg;
+    logEl.appendChild(d);
+    logEl.scrollTop = logEl.scrollHeight;
+  }
+
+  function pushFrame(name, cls) {
+    const d = document.createElement('div');
+    d.className = 'el-stack-item ' + cls;
+    d.textContent = name;
+    d.dataset.frame = name;
+    stackEl.appendChild(d);
+    stackEl.scrollTop = stackEl.scrollHeight;
+  }
+
+  function popFrame() {
+    const last = stackEl.lastElementChild;
+    if (last && last.dataset.frame) {
+      last.classList.add('popout');
+      setTimeout(() => last.remove(), 200);
+    }
+  }
+
+  function clearStack() {
+    stackEl.innerHTML = '<div style="color:#585b70;font-size:.6rem;text-align:center;padding:10px">(empty)</div>';
+    logEl.innerHTML = '';
+  }
+
+  async function runNormal() {
+    clearStack();
+    pushFrame('global', 'global');
+    log('▶️ global execution context', 'sync');
+    await sleep(300);
+
+    log('📞 calling one()', 'info');
+    pushFrame('one()', 'fn');
+    await sleep(300);
+
+    log('📞 calling two()', 'info');
+    pushFrame('two()', 'fn');
+    await sleep(300);
+
+    log('↩️ two() returns', 'info');
+    popFrame();
+    await sleep(200);
+
+    log('↩️ one() returns', 'info');
+    popFrame();
+    await sleep(200);
+
+    log('✅ done', 'info');
+    popFrame();
+  }
+
+  async function runNested() {
+    clearStack();
+    pushFrame('global', 'global');
+    await sleep(200);
+
+    pushFrame('outer()', 'fn');
+    log('📞 outer() called', 'sync');
+    await sleep(200);
+
+    pushFrame('inner()', 'fn');
+    log('📞 inner() called', 'sync');
+    await sleep(200);
+
+    pushFrame('deepest()', 'fn');
+    log('📞 deepest() called', 'sync');
+    await sleep(300);
+
+    log('↩️ deepest() returns', 'info');
+    popFrame();
+    await sleep(200);
+    log('↩️ inner() returns', 'info');
+    popFrame();
+    await sleep(200);
+    log('↩️ outer() returns', 'info');
+    popFrame();
+    await sleep(200);
+    log('✅ done', 'info');
+    popFrame();
+  }
+
+  async function runOverflow() {
+    clearStack();
+    pushFrame('global', 'global');
+    log('💥 Starting recursive overflow...', 'err');
+    await sleep(100);
+
+    let count = 0;
+    function recurse() {
+      count++;
+      pushFrame('recurse(' + count + ')', 'fn');
+      if (count % 100 === 0) {
+        log('📊 frame #' + count, 'info');
+      }
+      recurse();
+    }
+
+    try {
+      recurse();
+    } catch(e) {
+      log('❌ Stack Overflow at frame #' + count + ': ' + e.message, 'err');
+    }
+    // clear stack visual
+    stackEl.innerHTML = '<div style="color:#585b70;font-size:.6rem;text-align:center;padding:10px;color:#f38ba8">💥 OVERFLOW (~' + count + ' frames)</div>';
+  }
+
+  function sleep(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  // Override pushFrame to remove empty state
+  const origPush = pushFrame;
+  pushFrame = function(name, cls) {
+    const empty = stackEl.querySelector('div[style*="empty"]');
+    if (empty) empty.remove();
+    origPush(name, cls);
+  };
+
+  $$('#stackControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.stack;
+      if (action === 'clear') {
+        clearStack();
+        pushFrame('global', 'global');
+        setTimeout(() => popFrame(), 300);
+        return;
+      }
+      if (action === 'normal') runNormal();
+      else if (action === 'nested') runNested();
+      else if (action === 'overflow') runOverflow();
+    });
+  });
+})();
+
+// ===== 4. Ordering Demo =====
+(function(){
+  const microLine = $('#microLine');
+  const macroLine = $('#macroLine');
+  const log = $('#orderingLog');
+
+  function addItem(el, text, cls) {
+    const d = document.createElement('span');
+    d.className = 'queue-item ' + cls;
+    d.textContent = text;
+    el.appendChild(d);
+  }
+
+  function clearAll() {
+    microLine.innerHTML = '';
+    macroLine.innerHTML = '';
+    log.innerHTML = '';
+    logMsg('🧹 Cleared', 'info');
+  }
+
+  function logMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = cls || '';
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  $('#orderingControls button[data-ordering="clear"]').addEventListener('click', clearAll);
+  $('#orderingControls button[data-ordering="run"]').addEventListener('click', () => {
+    clearAll();
+
+    // Queue both at the same time
+    logMsg('⏳ Queuing setTimeout(0) + Promise.resolve().then()', 'info');
+    addItem(macroLine, 'setTimeout(0)', 'macro');
+    addItem(microLine, 'Promise.then(1)', 'micro');
+    addItem(microLine, 'Promise.then(2)', 'micro');
+
+    setTimeout(() => {
+      logMsg('✅ Macrotask: setTimeout(0) executed', 'macro');
+      addItem(macroLine, '✅ executed', 'done');
+    }, 100);
+
+    // micro executes first
+    Promise.resolve().then(() => {
+      logMsg('✅ Microtask 1: Promise.then executed FIRST', 'micro');
+      // highlight first micro
+      const items = microLine.querySelectorAll('.queue-item');
+      if (items.length > 0) items[0].className = 'queue-item micro executing';
+    });
+
+    queueMicrotask(() => {
+      logMsg('✅ Microtask 2: queueMicrotask executed', 'micro');
+      const items = microLine.querySelectorAll('.queue-item');
+      if (items.length > 1) items[1].className = 'queue-item micro executing';
+      logMsg('📌 Both microtasks ran before the setTimeout!', 'info');
+    });
+  });
+})();
+
+// ===== 5. Blocking =====
+(function(){
+  const slider = $('#blockSlider');
+  const value = $('#blockValue');
+  const btn = $('#blockBtn');
+  const fill = $('#blockFill');
+  const status = $('#blockStatus');
+  const actual = $('#blockActual');
+  const warning = $('#blockWarning');
+
+  slider.addEventListener('input', () => {
+    value.textContent = slider.value + 'ms';
+    fill.style.width = (slider.value / 2000 * 100) + '%';
+    if (slider.value > 500) {
+      fill.classList.add('danger');
+      status.style.color = '#f38ba8';
+      status.textContent = '⚠️ Long Task!';
+    } else {
+      fill.classList.remove('danger');
+      status.style.color = '#a6e3a1';
+      status.textContent = 'OK';
+    }
+  });
+
+  btn.addEventListener('click', () => {
+    const ms = parseInt(slider.value);
+    if (ms === 0) return;
+
+    const start = performance.now();
+    status.textContent = '🧱 Blocking...';
+    status.style.color = '#f38ba8';
+    btn.disabled = true;
+    warning.textContent = '⚠️ UI frozen during block!';
+
+    // Busy-wait — blocks the event loop
+    const startT = performance.now() + ms;
+    let now;
+    while((now = performance.now()) < startT) {
+      // burn CPU
+      const _ = Math.sqrt(Math.random());
+    }
+
+    const elapsed = Math.round(performance.now() - start);
+    actual.textContent = elapsed;
+    warning.textContent = '';
+    status.textContent = '✅ Released (' + elapsed + 'ms)';
+    status.style.color = '#a6e3a1';
+    btn.disabled = false;
+  });
+})();
+
+// ===== 6. rAF Demo =====
+(function(){
+  const log = $('#rafLog');
+  let running = false;
+  let frameId = null;
+  let count = 0;
+
+  function logMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = cls || '';
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function frame(timestamp) {
+    if (!running) return;
+    count++;
+    logMsg('🎬 rAF #' + count + ' @ ' + timestamp.toFixed(1) + 'ms', 'render');
+    frameId = requestAnimationFrame(frame);
+  }
+
+  $('#rafBtn').addEventListener('click', () => {
+    if (running) return;
+    running = true;
+    count = 0;
+    log.innerHTML = '';
+    logMsg('▶️ requestAnimationFrame started', 'info');
+    frameId = requestAnimationFrame(frame);
+  });
+
+  $('#rafStop').addEventListener('click', () => {
+    if (frameId) cancelAnimationFrame(frameId);
+    running = false;
+    logMsg('⏹️ Stopped (' + count + ' frames)', 'info');
+  });
+})();
+
+// ===== 2. Cycle Step =====
+(function(){
+  const steps = document.querySelectorAll('.cycle-step');
+  const desc = $('#cycleDescription');
+  let currentStep = -1;
+  let autoTimer = null;
+
+  const descriptions = [
+    '⏳ <strong>Wait</strong>: The event loop waits until the call stack is empty and there are pending tasks in any queue.',
+    '📦 <strong>Pick one macrotask</strong>: The oldest macrotask (e.g., setTimeout callback, click handler) is dequeued and pushed onto the call stack. It runs to completion.',
+    '🔬 <strong>Drain all microtasks</strong>: After the macrotask finishes, ALL pending microtasks (Promise.then, queueMicrotask) run. If more microtasks are added during this phase, they run too — until the queue is empty.',
+    '🎨 <strong>Render</strong>: Style recalc, layout, and paint. The browser may skip this if no updates are pending. Then the cycle repeats.'
+  ];
+
+  function setStep(idx) {
+    steps.forEach(s => s.classList.remove('active'));
+    // Find the step div with matching data-step
+    steps.forEach(s => {
+      if (parseInt(s.dataset.step) === idx) s.classList.add('active');
+    });
+    currentStep = idx;
+    desc.innerHTML = descriptions[idx];
+  }
+
+  function nextStep() {
+    const next = (currentStep + 1) % 4;
+    setStep(next);
+  }
+
+  function reset() {
+    if (autoTimer) clearInterval(autoTimer);
+    autoTimer = null;
+    steps.forEach(s => s.classList.remove('active'));
+    desc.innerHTML = 'Press "Step" to advance through the event loop cycle.';
+    currentStep = -1;
+  }
+
+  $$('#cycleControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const action = btn.dataset.cycle;
+      if (action === 'step') {
+        if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+        if (currentStep === -1) setStep(0);
+        else nextStep();
+      } else if (action === 'auto') {
+        if (autoTimer) {
+          clearInterval(autoTimer);
+          autoTimer = null;
+          btn.textContent = '▶️ Auto';
+          return;
+        }
+        btn.textContent = '⏸️ Pause';
+        if (currentStep === -1) setStep(0);
+        autoTimer = setInterval(() => {
+          nextStep();
+        }, 1500);
+      } else if (action === 'reset') {
+        reset();
+        btn.parentElement.querySelector('[data-cycle="auto"]').textContent = '▶️ Auto';
+      }
+    });
+  });
+})();
+
+// ===== 8. Playground =====
+(function(){
+  const edit = $('#playgroundEdit');
+  const output = $('#playgroundOutput');
+  const runBtn = $('#runPlayground');
+  const clearBtn = $('#clearPlayground');
+
+  clearBtn.addEventListener('click', () => { output.innerHTML = ''; });
+
+  runBtn.addEventListener('click', () => {
+    output.innerHTML = '';
+    const code = edit.value;
+
+    const helpers = `
+      window.__pgLogs = [];
+      function log(msg, type) {
+        window.__pgLogs.push({msg: String(msg), type: type || ''});
+      }
+      function wait(ms) {
+        return new Promise(function(resolve) {
+          setTimeout(function() { resolve(ms); }, ms);
+        });
+      }
+    `;
+
+    try {
+      const fullCode = helpers + '\n' + code;
+      eval(fullCode);
+
+      const logs = window.__pgLogs || [];
+      logs.forEach(l => {
+        const d = document.createElement('div');
+        d.className = 'log ' + (l.type || '');
+        d.textContent = l.msg;
+        output.appendChild(d);
+      });
+      window.__pgLogs = [];
+    } catch(e) {
+      const d = document.createElement('div');
+      d.className = 'log err';
+      d.textContent = '❌ ' + e.message;
+      output.appendChild(d);
+    }
+  });
+})();
+
+})();
+</script>
+</body>
+</html>

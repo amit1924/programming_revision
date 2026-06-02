@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expo Router Notation - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:8px 10px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #f9e2af, #89b4fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:6px; padding:5px 10px; font-size:10px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#89b4fa; color:#1e1e2e; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+
+    .notation-tab { cursor:pointer; transition:all 0.2s; border-radius:6px; padding:4px 10px; font-size:10px; font-family:monospace; font-weight:600; border:1px solid transparent; }
+    .notation-tab:hover { background:#45475a; }
+    .notation-tab.active { background:#89b4fa30; border-color:#89b4fa; }
+
+    .notation-icon-simple { color:#a6e3a1; }
+    .notation-icon-dynamic { color:#f9e2af; }
+    .notation-icon-group { color:#89b4fa; }
+    .notation-icon-index { color:#f5c2e7; }
+    .notation-icon-layout { color:#cba6f7; }
+    .notation-icon-plus { color:#f38ba8; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      Expo Router
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">Router Notation</span>
+    </h1>
+    <p class="text-[#a6adc8">Every bracket, parenthesis, and plus sign has a meaning.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <div class="phone">
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">📁 Notation Lab</span>
+            <span id="notationBadge" class="text-[10px] bg-[#181825] border border-[#313244] px-2 py-0.5 rounded-full font-mono text-[#6c7086]">/</span>
+          </div>
+
+          <!-- Tabs -->
+          <div class="flex gap-1 px-3 py-2 border-b border-[#313244] flex-wrap" id="notationTabs">
+            <!-- filled by JS -->
+          </div>
+
+          <div class="body-scroll" id="phoneBody">
+            <!-- Explanation -->
+            <div id="notationDetail" class="bg-[#181825] rounded-xl p-3 border border-[#313244] mb-2">
+              <!-- filled by JS -->
+            </div>
+
+            <!-- example tree for this notation type -->
+            <div id="exampleTree" class="bg-[#181825] rounded-xl p-3 border border-[#313244]">
+              <div class="text-[10px] text-[#585b70] mb-2 font-semibold">Example Structure</div>
+              <div id="treeContent" class="text-xs font-mono leading-relaxed"></div>
+            </div>
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Notation Reference</h3>
+          <div class="space-y-1 text-xs" id="notationList">
+            <!-- filled by JS -->
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">useLocalSearchParams</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed">
+<span class="text-[#cba6f7">import</span> { useLocalSearchParams }
+  <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+
+<span class="text-[#cba6f7">function</span> <span class="text-[#89b4fa]">UserPage</span>() {
+  <span class="text-[#89b4fa]">const</span> { userId } = useLocalSearchParams();
+  <span class="text-[#6c7086]">// userId = "123" for /users/123</span>
+  <span class="text-[#cba6f7">return</span> <span class="text-[#cdd6f4]">&lt;Text&gt;</span>User {userId}<span class="text-[#cdd6f4]">&lt;/Text&gt;</span>;
+}</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Key insight:</span> The file system IS the navigation tree. Each notation type maps to a navigation pattern — no manual navigator config needed for most cases.
+        </div>
+      </div>
+    </section>
+
+    <!-- === FULL EXAMPLE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#89b4fa]"></i> Applied Example
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold">File Tree</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+src/
+  app/
+    <span class="text-[#cba6f7]">_layout.tsx</span>        <span class="text-[#6c7086]">← root layout (renders first)</span>
+    <span class="text-[#f5c2e7]">index.tsx</span>            <span class="text-[#6c7086]">← / (initial route)</span>
+    <span class="text-[#a6e3a1]">about.tsx</span>            <span class="text-[#6c7086]">← /about (static)</span>
+    <span class="text-[#89b4fa]">(home)/</span>              <span class="text-[#6c7086]">← route group (no URL prefix)</span>
+      <span class="text-[#cba6f7]">_layout.tsx</span>        <span class="text-[#6c7086]">← tab layout for (home)</span>
+      <span class="text-[#f5c2e7]">index.tsx</span>        <span class="text-[#6c7086]">← / (default tab)</span>
+      <span class="text-[#a6e3a1]">feed.tsx</span>         <span class="text-[#6c7086]">← /feed</span>
+      <span class="text-[#a6e3a1]">profile.tsx</span>      <span class="text-[#6c7086]">← /profile</span>
+    <span class="text-[#f9e2af]">[username]/</span>                   <span class="text-[#6c7086]">← dynamic segment</span>
+      <span class="text-[#f5c2e7]">index.tsx</span>        <span class="text-[#6c7086]">← /:username</span>
+      <span class="text-[#f5c2e7]">settings.tsx</span>     <span class="text-[#6c7086]">← /:username/settings</span>
+    <span class="text-[#f38ba8]">+not-found.tsx</span>              <span class="text-[#6c7086]">← 404 catch-all</span></pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold">URL Mapping</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+  /          → (home)/index.tsx
+  /about     → about.tsx
+  /feed      → (home)/feed.tsx
+  /profile   → (home)/profile.tsx
+  /evanbacon → [username]/index.tsx
+              (username="evanbacon")
+  /evanbacon/settings
+             → [username]/settings.tsx
+              (username="evanbacon")
+  /unknown   → +not-found.tsx</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://docs.expo.dev/router/notation/" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> Expo Router Notation Docs</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const notations = [
+        {
+          id: 'simple', label: 'simple', icon: 'fa-file', color: '#a6e3a1',
+          title: 'Simple names — Static routes',
+          desc: 'Regular file/directory names without any notation. URL matches file path exactly.',
+          example: 'home.tsx → /home',
+          code: `<span class="text-[#a6e3a1]">about.tsx</span>  <span class="text-[#6c7086]">← URL: /about</span>`,
+          tree: `app/
+  <span class="text-[#a6e3a1]">home.tsx</span>
+  <span class="text-[#a6e3a1]">about.tsx</span>
+  feed/
+    <span class="text-[#a6e3a1]">favorites.tsx</span>`,
+        },
+        {
+          id: 'dynamic', label: '[param]', icon: 'fa-brackets-curly', color: '#f9e2af',
+          title: 'Square brackets — Dynamic routes',
+          desc: 'Match any value in the URL segment. Access via useLocalSearchParams().',
+          example: '[userName].tsx → /evanbacon (userName="evanbacon")',
+          code: `<span class="text-[#f9e2af]">[userName].tsx</span>  <span class="text-[#6c7086]">← matches any username</span>
+<span class="text-[#f9e2af]">[productId]/</span>      <span class="text-[#6c7086]">← dynamic directory</span>
+  index.tsx         <span class="text-[#6c7086]">← /productId/...</span>`,
+          tree: `app/
+  <span class="text-[#f9e2af]">[userName].tsx</span>
+  products/
+    <span class="text-[#f9e2af]">[productId]/</span>
+      index.tsx`,
+        },
+        {
+          id: 'group', label: '(group)', icon: 'fa-layer-group', color: '#89b4fa',
+          title: 'Parentheses — Route groups',
+          desc: 'Group routes without affecting the URL. the directory name is excluded from the path.',
+          example: '(home)/settings.tsx → /settings (not /home/settings)',
+          code: `<span class="text-[#89b4fa]">(home)/</span>           <span class="text-[#6c7086]">← route group</span>
+  index.tsx         <span class="text-[#6c7086]">← /</span>
+  settings.tsx      <span class="text-[#6c7086]">← /settings</span>`,
+          tree: `app/
+  <span class="text-[#89b4fa]">(home)/</span>
+    index.tsx
+    settings.tsx
+  <span class="text-[#89b4fa]">(auth)/</span>
+    login.tsx
+    signup.tsx`,
+        },
+        {
+          id: 'index', label: 'index', icon: 'fa-house', color: '#f5c2e7',
+          title: 'index.tsx — Default route',
+          desc: 'The default/entry page for its directory. index.tsx in app root = initial route /.',
+          example: 'profile/index.tsx → /profile',
+          code: `<span class="text-[#f5c2e7]">index.tsx</span>         <span class="text-[#6c7086]">← default route for the directory</span>
+profile/
+  <span class="text-[#f5c2e7]">index.tsx</span>         <span class="text-[#6c7086]">← URL: /profile</span>`,
+          tree: `app/
+  <span class="text-[#f5c2e7]">index.tsx</span>         <span class="text-[#6c7086]">← /</span>
+  (home)/
+    <span class="text-[#f5c2e7]">index.tsx</span>      <span class="text-[#6c7086]">← / (from group)</span>
+  profile/
+    <span class="text-[#f5c2e7]">index.tsx</span>      <span class="text-[#6c7086]">← /profile</span>`,
+        },
+        {
+          id: 'layout', label: '_layout', icon: 'fa-layer-group', color: '#cba6f7',
+          title: '_layout.tsx — Layout routes',
+          desc: 'Defines how child routes relate. Not a page. Root _layout replaces App.jsx.',
+          example: 'app/_layout.tsx → root layout (renders before all routes)',
+          code: `<span class="text-[#cba6f7]">_layout.tsx</span>        <span class="text-[#6c7086]">← root layout (Stack/Tabs)</span>
+(home)/
+  <span class="text-[#cba6f7]">_layout.tsx</span>      <span class="text-[#6c7086]">← nested layout for group</span>`,
+          tree: `app/
+  <span class="text-[#cba6f7]">_layout.tsx</span>         <span class="text-[#6c7086]">← root Stack navigator</span>
+  (home)/
+    <span class="text-[#cba6f7]">_layout.tsx</span>      <span class="text-[#6c7086]">← Tab navigator</span>
+    index.tsx
+    feed.tsx`,
+        },
+        {
+          id: 'plus', label: '+special', icon: 'fa-plus-circle', color: '#f38ba8',
+          title: 'Plus sign — Special routes',
+          desc: 'Reserved for special behavior: 404, HTML, deep links, middleware.',
+          example: '+not-found.tsx → catches unmatched routes (404 page)',
+          code: `<span class="text-[#f38ba8]">+not-found.tsx</span>     <span class="text-[#6c7086]">← 404 catch-all</span>
+<span class="text-[#f38ba8]">+html.tsx</span>           <span class="text-[#6c7086]">← custom HTML boilerplate</span>
+<span class="text-[#f38ba8]">+native-intent.tsx</span>   <span class="text-[#6c7086]">← deep link handler</span>
+<span class="text-[#f38ba8]">+middleware.ts</span>       <span class="text-[#6c7086]">← runs before all routes</span>`,
+          tree: `app/
+  <span class="text-[#f38ba8]">+not-found.tsx</span>
+  <span class="text-[#f38ba8]">+html.tsx</span>
+  <span class="text-[#f38ba8]">+native-intent.tsx</span>
+  <span class="text-[#f38ba8]">+middleware.ts</span>`,
+        },
+      ];
+
+      const notationTabs = document.getElementById('notationTabs');
+      const notationDetail = document.getElementById('notationDetail');
+      const treeContent = document.getElementById('treeContent');
+      const notationBadge = document.getElementById('notationBadge');
+      const notationList = document.getElementById('notationList');
+
+      function selectNotation(id) {
+        const n = notations.find(x => x.id === id);
+        if (!n) return;
+
+        // Update tabs
+        document.querySelectorAll('.notation-tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
+
+        // Update detail
+        notationDetail.innerHTML = `
+          <div class="flex items-start gap-2">
+            <span style="color:${n.color};font-size:14px;margin-top:2px;"><i class="fas ${n.icon}"></i></span>
+            <div>
+              <div class="text-xs font-semibold mb-1">${n.title}</div>
+              <div class="text-[11px] text-[#a6adc8] mb-2">${n.desc}</div>
+              <div class="bg-[#11111b] rounded-lg px-3 py-2 font-mono text-[11px] leading-relaxed">${n.code}</div>
+            </div>
+          </div>
+        `;
+
+        // Update tree
+        treeContent.innerHTML = n.tree;
+        notationBadge.textContent = n.label;
+        notationBadge.className = `text-[10px] px-2 py-0.5 rounded-full font-mono bg-[#181825] border border-[${n.color}] text-[${n.color}]`;
+        notationBadge.style.borderColor = n.color;
+        notationBadge.style.color = n.color;
+      }
+
+      // Tabs
+      notations.forEach(n => {
+        const tab = document.createElement('span');
+        tab.className = 'notation-tab' + (n.id === 'simple' ? ' active' : '');
+        tab.dataset.id = n.id;
+        tab.style.setProperty('--tab-color', n.color);
+        tab.innerHTML = `<i class="fas ${n.icon} mr-1" style="color:${n.color}"></i> ${n.label}`;
+        tab.addEventListener('click', () => selectNotation(n.id));
+        notationTabs.appendChild(tab);
+      });
+
+      // Side panel list
+      notations.forEach(n => {
+        const item = document.createElement('div');
+        item.className = 'bg-[#11111b] rounded-lg p-2 flex items-start gap-2 cursor-pointer notation-side-item';
+        item.style.transition = 'all 0.2s';
+        item.innerHTML = `
+          <span style="color:${n.color};font-size:12px;margin-top:1px;"><i class="fas ${n.icon}"></i></span>
+          <div>
+            <div style="color:${n.color};font-weight:600;font-size:11px;">${n.label}</div>
+            <div class="text-[10px] text-[#585b70]">${n.title.split('—')[0].trim()}</div>
+          </div>
+        `;
+        item.addEventListener('click', () => selectNotation(n.id));
+        notationList.appendChild(item);
+      });
+
+      // Default
+      selectNotation('simple');
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,801 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Promises & Async/Await — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#11111b;color:#cdd6f4;padding:20px}
+h1{font-size:2.5rem;margin-bottom:.3rem}
+h2{font-size:1.35rem;margin:2rem 0 .8rem;color:#89b4fa;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.7rem;background:#313244;color:#a6adc8;padding:2px 8px;border-radius:999px;font-weight:400}
+h3{font-size:1.05rem;margin:1.2rem 0 .5rem;color:#a6e3a1}
+p,li{color:#bac2de;line-height:1.7}
+code{background:#181825;padding:2px 6px;border-radius:4px;font-size:.85em;color:#fab387;font-family:'JetBrains Mono',monospace}
+pre{background:#181825;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0;border:1px solid #313244;line-height:1.7}
+pre code{background:none;padding:0;color:#a6e3a1}
+.wrapper{max-width:1000px;margin:0 auto}
+.gradient-text{background:linear-gradient(135deg,#89b4fa,#a6e3a1,#f9e2af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#6c7086;margin-bottom:2rem}
+.demo-panel{background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:20px;margin:20px 0}
+.demo-panel .label{font-size:.75rem;color:#6c7086;margin-bottom:8px;font-family:monospace}
+.demo-panel .label span{color:#89b4fa}
+.tip{background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.85rem;color:#a6adc8}
+.tip strong{color:#f9e2af}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.84rem;border-left:4px solid #89b4fa;background:rgba(137,180,250,.04)}
+.callout.danger{border-color:#f38ba8;background:rgba(243,139,168,.06)}
+.callout.warn{border-color:#f9e2af;background:rgba(249,226,175,.06)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;font-size:.85rem}
+.info-card .prop{color:#89b4fa;font-family:monospace;font-weight:600}
+.info-card .val{color:#a6e3a1}
+.info-card .desc{color:#6c7086;font-size:.8rem;margin-top:4px}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.controls button,.btn{background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:monospace;transition:.2s}
+.controls button:hover,.btn:hover{background:#45475a}
+.controls button.active,.btn.active{background:#89b4fa30;border-color:#89b4fa;color:#89b4fa}
+.slider-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.slider-group label{font-size:.78rem;color:#a6adc8}
+.slider-group input[type=range]{accent-color:#89b4fa;width:140px}
+.slider-group .value{font-family:monospace;font-size:.8rem;color:#fab387;min-width:40px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{background:#181825;color:#89b4fa;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid #313244}
+td{padding:10px 14px;border-bottom:1px solid #313244;color:#a6adc8}
+tr:hover td{background:#1e1e2e50}
+td:first-child{font-family:monospace;color:#fab387}
+::selection{background:#89b4fa40}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#11111b}
+::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+
+.state-machine{display:flex;align-items:center;justify-content:center;gap:0;margin:20px 0;flex-wrap:wrap}
+.state-node{padding:16px 24px;border-radius:10px;font-family:monospace;font-size:.85rem;font-weight:600;text-align:center;min-width:120px;border:2px solid;position:relative;transition:.4s}
+.state-node.pending{background:#1e1e2e;border-color:#6c7086;color:#a6adc8}
+.state-node.fulfilled{background:#1e3a2e;border-color:#a6e3a1;color:#a6e3a1}
+.state-node.rejected{background:#3a1e2e;border-color:#f38ba8;color:#f38ba8}
+.state-arrow{font-size:1.5rem;color:#585b70;padding:0 8px}
+.state-arrow .label-arrow{display:block;font-size:.6rem;color:#6c7086;text-align:center}
+.state-sub{font-size:.65rem;font-weight:400;margin-top:4px;color:inherit;opacity:.7}
+
+.chain-vis{display:flex;align-items:center;gap:4px;padding:14px;background:#181825;border-radius:8px;border:1px solid #313244;flex-wrap:wrap;font-family:monospace;font-size:.78rem;margin:8px 0;overflow-x:auto}
+.chain-step{padding:8px 12px;border-radius:6px;border:1px solid #45475a;background:#1e1e2e;min-width:60px;text-align:center;position:relative}
+.chain-step .step-val{font-size:.65rem;color:#6c7086;margin-top:2px}
+.chain-step .step-label{font-size:.65rem;color:#89b4fa;margin-top:2px}
+.chain-step.current{border-color:#fab387;box-shadow:0 0 12px rgba(250,179,135,.2)}
+.chain-step.fulfilled{border-color:#a6e3a1;background:#1e3a2e20}
+.chain-step.rejected{border-color:#f38ba8;background:#3a1e2e20}
+.chain-arrow{color:#585b70;font-size:1.1rem}
+.chain-return{color:#fab387;font-size:.7rem}
+.chain-result{font-family:monospace;font-size:.82rem;color:#a6e3a1;background:#181825;border-radius:6px;padding:10px 14px;margin:8px 0;border:1px solid #313244;min-height:30px}
+
+.timeline{position:relative;padding:10px 0;margin:12px 0}
+.timeline-bar{height:4px;background:#313244;border-radius:2px;position:relative;margin:20px 0}
+.timeline-point{position:absolute;top:-8px;width:20px;height:20px;border-radius:50%;border:2px solid;transform:translateX(-50%);cursor:pointer;transition:.3s;font-size:.6rem;display:flex;align-items:center;justify-content:center;color:#11111b;font-weight:700}
+.timeline-point:hover{transform:translateX(-50%) scale(1.3)}
+.timeline-point.start{background:#6c7086;border-color:#6c7086;left:5%}
+.timeline-point.resolve1{background:#a6e3a1;border-color:#a6e3a1;left:25%}
+.timeline-point.resolve2{background:#a6e3a1;border-color:#a6e3a1;left:50%}
+.timeline-point.reject1{background:#f38ba8;border-color:#f38ba8;left:75%}
+.timeline-point.end{background:#89b4fa;border-color:#89b4fa;left:95%}
+.timeline-label{position:absolute;transform:translateX(-50%);font-size:.6rem;color:#6c7086;top:16px;white-space:nowrap}
+
+.queue-vis{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:600px){.queue-vis{grid-template-columns:1fr}}
+.queue-panel{background:#181825;border:1px solid #313244;border-radius:8px;padding:14px;min-height:100px}
+.queue-panel .qp-title{font-size:.75rem;font-family:monospace;margin-bottom:8px}
+.queue-panel .qp-title.micro{color:#89b4fa}
+.queue-panel .qp-title.macro{color:#fab387}
+.queue-item{display:inline-block;padding:4px 10px;border-radius:4px;font-size:.7rem;font-family:monospace;margin:3px;animation:fadeIn .3s}
+.queue-item.micro{background:#89b4fa20;border:1px solid #89b4fa;color:#89b4fa}
+.queue-item.macro{background:#fab38720;border:1px solid #fab387;color:#fab387}
+.queue-item.fulfilled{background:#a6e3a120;border-color:#a6e3a1;color:#a6e3a1}
+.queue-item.rejected{background:#f38ba820;border-color:#f38ba8;color:#f38ba8}
+.queue-item.pending{background:#6c708620;border-color:#6c7086;color:#6c7086}
+.queue-line{display:flex;gap:4px;flex-wrap:wrap;min-height:28px;align-items:center}
+.queue-clear{font-size:.7rem;color:#6c7086;cursor:pointer;padding:2px 6px}
+.queue-clear:hover{color:#f38ba8}
+@keyframes fadeIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+
+.playground-output{background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:14px;font-family:monospace;font-size:.82rem;min-height:60px;max-height:200px;overflow-y:auto;line-height:1.8;margin:8px 0}
+.playground-output .log{color:#bac2de}
+.playground-output .log.resolved{color:#a6e3a1}
+.playground-output .log.rejected{color:#f38ba8}
+.playground-output .log.info{color:#89b4fa}
+.playground-output .log.warn{color:#f9e2af}
+.playground-output .log.muted{color:#585b70}
+.playground-edit{width:100%;background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#cdd6f4;min-height:120px;resize:vertical;margin:8px 0;outline:none;tab-size:2;line-height:1.6}
+.playground-edit:focus{border-color:#89b4fa}
+.playground-controls{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0}
+
+.race-track{display:flex;gap:12px;margin:12px 0;flex-wrap:wrap}
+.runner{flex:1;min-width:120px;background:#181825;border:1px solid #313244;border-radius:8px;padding:14px;text-align:center;transition:.3s}
+.runner .runner-name{font-family:monospace;font-size:.8rem;color:#89b4fa}
+.runner .runner-time{font-size:.7rem;color:#6c7086;margin:4px 0}
+.runner .runner-status{font-family:monospace;font-size:.75rem;margin-top:6px;padding:4px 8px;border-radius:4px;display:inline-block}
+.runner.done .runner-status{color:#a6e3a1;border:1px solid #a6e3a1;background:#1e3a2e20}
+.runner.fail .runner-status{color:#f38ba8;border:1px solid #f38ba8;background:#3a1e2e20}
+.runner.pending .runner-status{color:#fab387;border:1px solid #fab387;background:#fab38710}
+.runner.win .runner-status{color:#f9e2af;border:1px solid #f9e2af;background:#f9e2af10}
+.runner-bar{height:4px;border-radius:2px;margin-top:8px;transition:width 2s linear;width:0}
+.runner.done .runner-bar{background:#a6e3a1;width:100%}
+.runner.fail .runner-bar{background:#f38ba8;width:100%}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:600px){.compare-grid{grid-template-columns:1fr}}
+.compare-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:14px}
+.compare-card .cc-title{font-family:monospace;font-size:.78rem;color:#a6e3a1;margin-bottom:8px}
+.compare-card .cc-body{font-size:.82rem;line-height:1.7;color:#bac2de}
+
+.error-badge{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.7rem;font-weight:600;font-family:monospace}
+.error-badge.ok{background:#a6e3a120;color:#a6e3a1;border:1px solid #a6e3a1}
+.error-badge.fail{background:#f38ba820;color:#f38ba8;border:1px solid #f38ba8}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1 class="gradient-text">Promises &amp; Async/Await</h1>
+<p class="subtitle">From callback hell to clean async code — a visual deep dive</p>
+
+<h2><span>1. Promise Lifecycle</span><span class="badge">state machine</span></h2>
+<p>A Promise is an object representing the eventual <strong>completion</strong> (or failure) of an async operation. It starts <strong>pending</strong>, then settles as <strong>fulfilled</strong> (resolved with a value) or <strong>rejected</strong> (with an error). Once settled, a promise is <strong>immutable</strong> — it cannot change state again.</p>
+
+<div class="state-machine" id="stateMachine">
+  <div class="state-node pending" id="statePending">Pending <div class="state-sub">(initial)</div></div>
+  <div class="state-arrow">→<span class="label-arrow">resolve(val)</span></div>
+  <div class="state-node fulfilled" id="stateFulfilled">Fulfilled <div class="state-sub">.then( val =&gt; )</div></div>
+  <div style="margin:0 10px;color:#585b70;font-size:.8rem;font-family:monospace">OR</div>
+  <div class="state-arrow">→<span class="label-arrow">reject(err)</span></div>
+  <div class="state-node rejected" id="stateRejected">Rejected <div class="state-sub">.catch( err =&gt; )</div></div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">🎮 <span>Click a preset to see the lifecycle in action</span></div>
+  <div class="controls" id="lifecycleControls">
+    <button data-action="resolve">✅ Resolve immediately</button>
+    <button data-action="reject">❌ Reject immediately</button>
+    <button data-action="delay">⏳ Resolve after 1.5s</button>
+    <button data-action="throw">💥 Throw in executor</button>
+  </div>
+  <div class="chain-result" id="lifecycleResult">Click a button to see the promise lifecycle</div>
+</div>
+
+<h2><span>2. Creating Promises</span><span class="badge">constructors</span></h2>
+<div class="info-grid">
+  <div class="info-card">
+    <div class="prop">new Promise(executor)</div>
+    <div class="desc">Executor receives <code>resolve</code> &amp; <code>reject</code> callbacks. Runs <strong>synchronously</strong> (the callback runs immediately).</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">Promise.resolve(val)</div>
+    <div class="desc">Returns a promise <strong>already fulfilled</strong> with <code>val</code>. Useful for wrapping sync values.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">Promise.reject(err)</div>
+    <div class="desc">Returns a promise <strong>already rejected</strong> with <code>err</code>.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">Promise.resolve(thenable)</div>
+    <div class="desc">If given a <code>.then()</code> object, follows its <code>then</code> — "thenable" unwrapping.</div>
+  </div>
+</div>
+
+<pre><code>// Executor runs synchronously — "start" logs immediately
+const p = new Promise((resolve, reject) => {
+  console.log("start");  // &lt;-- runs NOW
+  setTimeout(() => resolve("done"), 1000);
+});
+console.log("after");    // runs BEFORE the promise resolves</code></pre>
+
+<h2><span>3. Consuming Promises</span><span class="badge">.then / .catch / .finally</span></h2>
+<div class="info-grid">
+  <div class="info-card">
+    <div class="prop">.then(onFulfilled, onRejected)</div>
+    <div class="desc">Returns a <strong>new</strong> promise. The callback's return becomes the next promise's value.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">.catch(onRejected)</div>
+    <div class="desc">Sugar for <code>.then(null, onRejected)</code>. Catches rejections from <strong>any</strong> previous step.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">.finally(onFinally)</div>
+    <div class="desc">Runs regardless of outcome. No access to value/error. Passes through the settled value.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop">⚠️ .then(a, b) vs .then(a).catch(b)</div>
+    <div class="desc">Two-arg <code>.then</code> catches errors only from the <strong>original</strong> promise. Chained <code>.catch</code> catches from <code>.then(a)</code> too.</div>
+  </div>
+</div>
+
+<h2><span>4. Chaining &amp; Flattening</span><span class="badge">promise chain</span></h2>
+<p>Each <code>.then</code> returns a <strong>new promise</strong>. If the callback returns a <strong>plain value</strong>, it's wrapped in <code>Promise.resolve</code>. If it returns another <strong>promise</strong>, the outer promise "follows" it (flattening).</p>
+
+<div class="demo-panel">
+  <div class="label">🧩 <span>Promise chain visualizer</span></div>
+  <div class="controls" id="chainControls">
+    <button data-action="simple">Simple chain</button>
+    <button data-action="reject">Chain with rejection</button>
+    <button data-action="returnPromise">Return a promise</button>
+  </div>
+  <div class="chain-vis" id="chainVis"></div>
+  <div class="chain-result" id="chainResult"></div>
+</div>
+
+<div class="tip">
+  <strong>Flattening:</strong> Returning a promise from <code>.then()</code> doesn't create nesting — the inner promise is "unwrapped" into the outer chain. This is the superpower that makes chaining clean.
+</div>
+
+<h2><span>5. Error Handling</span><span class="badge">propagation</span></h2>
+<p>Rejections propagate down the chain like thrown exceptions. A <code>.catch()</code> at the end catches <strong>any</strong> rejection in the chain. A <code>.catch()</code> can also return a value to <strong>recover</strong> from an error.</p>
+
+<div class="demo-panel">
+  <div class="label">🛡️ <span>Error handling demo — click to see different strategies</span></div>
+  <div class="controls" id="errorControls">
+    <button data-action="propagate">⬇️ Error propagates</button>
+    <button data-action="recover">🔧 Recover with fallback</button>
+    <button data-action="rethrowing">🔄 Rethrow after logging</button>
+  </div>
+  <div class="chain-result" id="errorResult"></div>
+</div>
+
+<div class="callout danger">
+  <strong>Unhandled Rejections:</strong> In modern Node/browsers, an unhandled rejection (no <code>.catch()</code> handler) triggers a warning and <strong>will crash</strong> future Node versions. Always attach a <code>.catch()</code> or use <code>try/catch</code> with <code>await</code>.
+</div>
+
+<h2><span>6. Static Methods</span><span class="badge">Promise.all / race / any / allSettled</span></h2>
+<div class="compare-grid">
+  <div class="compare-card">
+    <div class="cc-title">Promise.all([...])</div>
+    <div class="cc-body">Resolves when <strong>all</strong> resolve. Rejects immediately if <strong>any</strong> rejects. Returns array of values in input order.</div>
+  </div>
+  <div class="compare-card">
+    <div class="cc-title">Promise.allSettled([...])</div>
+    <div class="cc-body">Resolves when <strong>all</strong> settle (resolve or reject). Returns array of <code>{status, value/reason}</code>. Never rejects.</div>
+  </div>
+  <div class="compare-card">
+    <div class="cc-title">Promise.race([...])</div>
+    <div class="cc-body">Resolves/rejects with the <strong>first</strong> settled promise. If the first to settle rejects, race rejects.</div>
+  </div>
+  <div class="compare-card">
+    <div class="cc-title">Promise.any([...])</div>
+    <div class="cc-body">Resolves with the <strong>first fulfilled</strong>. Ignores rejections unless <strong>all</strong> reject → <code>AggregateError</code>.</div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">🏁 <span>Race track — click to start all runners</span></div>
+  <div class="controls" id="raceControls">
+    <button data-method="all">Promise.all</button>
+    <button data-method="allSettled">Promise.allSettled</button>
+    <button data-method="race">Promise.race</button>
+    <button data-method="any">Promise.any</button>
+  </div>
+  <div class="race-track" id="raceTrack"></div>
+  <div class="chain-result" id="raceResult"></div>
+</div>
+
+<h2><span>7. Async / Await</span><span class="badge">syntactic sugar</span></h2>
+<p><code>async</code> makes a function return a promise. <code>await</code> pauses execution until a promise settles — but only inside an <code>async</code> function (or modules with top-level await).</p>
+
+<pre><code>// Clean sequential async code — no explicit .then chains
+async function fetchUser(id) {
+  const response = await fetch(`/api/users/${id}`);
+  if (!response.ok) throw new Error("Network error");
+  const user = await response.json();
+  return user;
+}</code></pre>
+
+<div class="compare-grid">
+  <div class="compare-card">
+    <div class="cc-title">.then() chain</div>
+    <div class="cc-body"><code>fetch(url)<br>&nbsp;&nbsp;.then(r =&gt; r.json())<br>&nbsp;&nbsp;.then(d =&gt; console.log(d))<br>&nbsp;&nbsp;.catch(e =&gt; console.error(e))</code></div>
+  </div>
+  <div class="compare-card">
+    <div class="cc-title">async/await</div>
+    <div class="cc-body"><code>try {<br>&nbsp;&nbsp;const r = await fetch(url);<br>&nbsp;&nbsp;const d = await r.json();<br>&nbsp;&nbsp;console.log(d);<br>} catch(e) {<br>&nbsp;&nbsp;console.error(e);<br>}</code></div>
+  </div>
+</div>
+
+<h3>Error Handling with try/catch</h3>
+<p>Using <code>try/catch</code> with <code>await</code> is the cleanest way to handle async errors. Without try/catch, an <code>await</code> rejection becomes an unhandled rejection.</p>
+
+<pre><code>async function safeFetch(url) {
+  try {
+    const res = await fetch(url);
+    return await res.json();
+  } catch (err) {
+    console.error("Fetch failed:", err);
+    return { error: true };  // fallback
+  }
+}</code></pre>
+
+<div class="callout">
+  <strong>Top-level await:</strong> Available in ES modules (<code>&lt;script type="module"&gt;</code>). Allows <code>await</code> outside any <code>async</code> function. Modules that depend on it block execution of dependents.
+</div>
+
+<h2><span>8. Microtasks vs Macrotasks</span><span class="badge">event loop</span></h2>
+<p>Promise <code>.then()</code>/<code>.catch()</code>/<code>.finally()</code> callbacks run as <strong>microtasks</strong>. <code>setTimeout</code>, <code>setInterval</code>, DOM events run as <strong>macrotasks</strong>. Microtasks are processed <strong>before</strong> the next macrotask — the "microtask queue is checked after every macrotask."</p>
+
+<div class="demo-panel">
+  <div class="label">⏱️ <span>Event loop queue visualizer</span></div>
+  <div class="controls" id="queueControls">
+    <button data-action="run">▶️ Run code</button>
+    <button data-action="clear">🧹 Clear</button>
+  </div>
+  <div class="queue-vis">
+    <div class="queue-panel">
+      <div class="qp-title micro">Microtask Queue (Promise .then/.catch/.finally)</div>
+      <div class="queue-line" id="microQueue"></div>
+    </div>
+    <div class="queue-panel">
+      <div class="qp-title macro">Macrotask Queue (setTimeout, setInterval, I/O)</div>
+      <div class="queue-line" id="macroQueue"></div>
+    </div>
+  </div>
+  <div class="playground-output" id="eventLog"></div>
+</div>
+
+<div class="tip">
+  <strong>Key insight:</strong> <code>Promise.resolve().then(() =&gt; console.log("micro"))</code> runs <strong>before</strong> <code>setTimeout(() =&gt; console.log("macro"), 0)</code>. Microtasks are processed in FIFO order until the microtask queue is empty, then the next macrotask is picked.
+</div>
+
+<h2><span>9. Common Patterns</span><span class="badge">recipes</span></h2>
+
+<h3>Sequential vs Parallel</h3>
+<div class="compare-grid">
+  <div class="compare-card">
+    <div class="cc-title">Sequential (slow but ordered)</div>
+    <div class="cc-body"><code>for (const id of ids) {<br>&nbsp;&nbsp;const r = await fetch(id);<br>&nbsp;&nbsp;results.push(await r.json());<br>}</code></div>
+  </div>
+  <div class="compare-card">
+    <div class="cc-title">Parallel (fast, unordered)</div>
+    <div class="cc-body"><code>const results = await Promise.all(<br>&nbsp;&nbsp;ids.map(id =&gt; fetch(id).then(r =&gt; r.json()))<br>);</code></div>
+  </div>
+</div>
+
+<h3>Promisify (callback → promise)</h3>
+<pre><code>function promisify(fn) {
+  return (...args) =&gt; new Promise((resolve, reject) =&gt; {
+    fn(...args, (err, result) =&gt; {
+      if (err) reject(err);
+      else resolve(result);
+    });
+  });
+}
+const readFileAsync = promisify(require('fs').readFile);</code></pre>
+
+<h3>Retry Pattern</h3>
+<pre><code>async function fetchWithRetry(url, retries = 3) {
+  for (let i = 0; i &lt; retries; i++) {
+    try {
+      return await fetch(url);
+    } catch (err) {
+      if (i === retries - 1) throw err;
+      await new Promise(r =&gt; setTimeout(r, 1000 * (i + 1)));
+    }
+  }
+}</code></pre>
+
+<h3>Timeout Wrapper</h3>
+<pre><code>function withTimeout(promise, ms) {
+  const timeout = new Promise((_, reject) =&gt;
+    setTimeout(() =&gt; reject(new Error('Timed out')), ms)
+  );
+  return Promise.race([promise, timeout]);
+}
+// Usage: const data = await withTimeout(fetch(url), 5000);</code></pre>
+
+<h2><span>10. Interactive Playground</span><span class="badge">experiment</span></h2>
+<p>Edit the code below and run it. <code>log()</code> prints to the output panel. <code>wait(ms)</code> resolves after <code>ms</code> milliseconds. Promises that settle are tracked live.</p>
+
+<div class="demo-panel">
+  <div class="label">💻 <span>Live code editor</span></div>
+  <textarea class="playground-edit" id="playgroundEdit" spellcheck="false">async function demo() {
+  log("=== Starting async demo ===");
+
+  const syncVal = Promise.resolve("sync value");
+  syncVal.then(v => log("Resolved: " + v, "resolved"));
+
+  const delayed = new Promise(resolve =>
+    setTimeout(() => resolve("after 500ms"), 500)
+  );
+  delayed.then(v => log("Delayed: " + v, "resolved"));
+
+  try {
+    const result = await wait(300).then(() => "awaited!");
+    log("await result: " + result, "resolved");
+  } catch (err) {
+    log("Caught: " + err, "rejected");
+  }
+
+  const results = await Promise.all([
+    wait(100).then(() => "fast"),
+    wait(200).then(() => "medium"),
+    wait(300).then(() => "slow"),
+  ]);
+  log("Promise.all: [" + results.join(", ") + "]", "resolved");
+
+  log("=== Done ===");
+}
+demo();</textarea>
+  <div class="playground-controls">
+    <button class="btn" id="runPlayground">▶️ Run</button>
+    <button class="btn" id="clearPlayground">🧹 Clear</button>
+  </div>
+  <div class="playground-output" id="playgroundOutput"></div>
+</div>
+
+<h2>Comparison Table</h2>
+<table>
+  <tr><th>Feature</th><th>.then()</th><th>async/await</th></tr>
+  <tr><td>Syntax</td><td>Chained callbacks</td><td>Synchronous-looking</td></tr>
+  <tr><td>Error handling</td><td>.catch()</td><td>try/catch</td></tr>
+  <tr><td>Variable scope</td><td>Nested closures</td><td>Same scope</td></tr>
+  <tr><td>Control flow</td><td>Hard to break/continue</td><td>Loops, if/else work naturally</td></tr>
+  <tr><td>Parallel execution</td><td>Promise.all(…)</td><td>Promise.all(…)</td></tr>
+  <tr><td>Execution</td><td>Always async (even if resolved)</td><td>Async after first await</td></tr>
+  <tr><td>Return value</td><td>Always a promise</td><td>Always a promise</td></tr>
+</table>
+
+</div><!-- /wrapper -->
+
+<script>
+(function(){
+"use strict";
+
+// ===== Helpers =====
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+const logPanel = (el, msg, type) => {
+  const d = document.createElement('div');
+  d.className = 'log' + (type ? ' ' + type : '');
+  d.textContent = msg;
+  el.appendChild(d);
+  el.scrollTop = el.scrollHeight;
+};
+
+// ===== 1. Promise Lifecycle =====
+(function(){
+  const result = $('#lifecycleResult');
+  const btns = $$('#lifecycleControls button');
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      result.textContent = '⏳ Pending...';
+      const action = btn.dataset.action;
+      switch(action) {
+        case 'resolve':
+          Promise.resolve('🎉 Resolved!').then(v => result.textContent = '✅ ' + v);
+          break;
+        case 'reject':
+          Promise.reject(new Error('💥 Rejected!')).catch(e => result.textContent = '❌ ' + e.message);
+          break;
+        case 'delay':
+          new Promise(resolve => setTimeout(() => resolve('⏰ after 1.5s'), 1500))
+            .then(v => result.textContent = '✅ ' + v);
+          break;
+        case 'throw':
+          new Promise((_, reject) => { throw new Error('💢 Thrown in executor'); })
+            .catch(e => result.textContent = '❌ ' + e.message);
+          break;
+      }
+    });
+  });
+})();
+
+// ===== 4. Chain Visualizer =====
+(function(){
+  const vis = $('#chainVis');
+  const result = $('#chainResult');
+
+  function runChain(type) {
+    vis.innerHTML = '';
+    result.textContent = '⏳ Running...';
+
+    const addStep = (label, val, cls) => {
+      const s = document.createElement('div');
+      s.className = 'chain-step' + (cls ? ' ' + cls : '');
+      s.innerHTML = label + (val !== undefined ? '<div class="step-val">→ ' + val + '</div>' : '');
+      vis.appendChild(s);
+      const arr = document.createElement('div');
+      arr.className = 'chain-arrow';
+      arr.textContent = '→';
+      vis.appendChild(arr);
+    };
+
+    setTimeout(() => {
+      vis.innerHTML = '';
+      if (type === 'simple') {
+        addStep('Promise.resolve(1)');
+        Promise.resolve(1)
+          .then(v => { addStep('.then', v + 1); return v + 1; })
+          .then(v => { addStep('.then', v + 1); return v + 1; })
+          .then(v => { result.textContent = '✅ Final value: ' + v; return v; });
+      } else if (type === 'reject') {
+        addStep('Promise.resolve(1)');
+        Promise.resolve(1)
+          .then(v => { addStep('.then', v + 1, 'fulfilled'); return v + 1; })
+          .then(v => { addStep('.then: throw!', '', 'rejected'); throw new Error('oops'); })
+          .then(v => { addStep('.then (skipped)', '', ''); })
+          .catch(e => { addStep('.catch', 'fallback', 'fulfilled'); result.textContent = '✅ Recovered: "fallback"'; return 'fallback'; });
+      } else if (type === 'returnPromise') {
+        addStep('Promise.resolve(1)');
+        Promise.resolve(1)
+          .then(v => { addStep('.then', 'Promise(2)', 'fulfilled'); return new Promise(r => setTimeout(() => r(v + 1), 500)); })
+          .then(v => addStep('.then (flattened)', v, 'fulfilled'))
+          .then(v => { result.textContent = '✅ Chained with inner promise, got: ' + v; });
+      }
+      // remove last arrow
+      const lastArr = vis.lastElementChild;
+      if (lastArr && lastArr.className === 'chain-arrow') lastArr.remove();
+    }, 100);
+  }
+
+  $$('#chainControls button').forEach(btn => {
+    btn.addEventListener('click', () => runChain(btn.dataset.action));
+  });
+})();
+
+// ===== 5. Error Handling =====
+(function(){
+  const result = $('#errorResult');
+
+  function demo(mode) {
+    result.textContent = '⏳ Running...';
+    setTimeout(() => {
+      switch(mode) {
+        case 'propagate':
+          Promise.resolve(10)
+            .then(v => { result.textContent = 'Step 1: ' + v; return v; })
+            .then(() => { throw new Error('💥 Step 2 failed'); })
+            .then(() => result.textContent = 'Step 3 (should not run)')
+            .catch(e => result.textContent = '❌ Caught at end: ' + e.message);
+          break;
+        case 'recover':
+          Promise.reject(new Error('API Error'))
+            .catch(e => { result.textContent = '❌ Error: ' + e.message + ' → returning fallback'; return { cached: true, data: [] }; })
+            .then(v => result.textContent += ' | ✅ Recovery: ' + JSON.stringify(v));
+          break;
+        case 'rethrowing':
+          Promise.reject(new Error('DB Error'))
+            .catch(e => { result.textContent = '❌ Logged: ' + e.message + ' (rethrowing...)'; throw e; })
+            .catch(e => result.textContent += ' | ❌ Outer catch: ' + e.message);
+          break;
+      }
+    }, 100);
+  }
+
+  $$('#errorControls button').forEach(btn => {
+    btn.addEventListener('click', () => demo(btn.dataset.action));
+  });
+})();
+
+// ===== 6. Static Methods - Race Track =====
+(function(){
+  const track = $('#raceTrack');
+  const result = $('#raceResult');
+  const runners = [
+    { name: '🐇 Rabbit', time: 800, fail: false },
+    { name: '🐢 Tortoise', time: 2000, fail: false },
+    { name: '🦅 Falcon', time: 1200, fail: false },
+    { name: '🐌 Snail', time: 3000, fail: true },  // Snail fails
+  ];
+
+  function resetTrack() {
+    track.innerHTML = '';
+    runners.forEach(r => {
+      const div = document.createElement('div');
+      div.className = 'runner pending';
+      div.dataset.name = r.name;
+      div.innerHTML = `<div class="runner-name">${r.name}</div>
+        <div class="runner-time">${r.time}ms</div>
+        <div class="runner-status">⏳ waiting</div>
+        <div class="runner-bar"></div>`;
+      track.appendChild(div);
+    });
+    result.textContent = 'Click a method to start the race';
+  }
+  resetTrack();
+
+  function makePromise(r) {
+    return new Promise((resolve, reject) => {
+      setTimeout(() => {
+        if (r.fail) reject(new Error(r.name + ' failed!'));
+        else resolve(r.name + ' finished');
+      }, r.time);
+    });
+  }
+
+  function runRace(method) {
+    resetTrack();
+    result.textContent = '🏁 Race started...';
+    const promises = runners.map(r => makePromise(r));
+    const runnerEls = track.querySelectorAll('.runner');
+
+    promises.forEach((p, i) => {
+      p.then(val => {
+        runnerEls[i].className = 'runner done';
+        runnerEls[i].querySelector('.runner-status').textContent = '✅ ' + val;
+      }).catch(err => {
+        runnerEls[i].className = 'runner fail';
+        runnerEls[i].querySelector('.runner-status').textContent = '❌ ' + err.message;
+      });
+    });
+
+    let target;
+    switch(method) {
+      case 'all': target = Promise.all(promises.map((p, i) => p.catch(e => e))); break;
+      case 'allSettled': target = Promise.allSettled(promises); break;
+      case 'race': target = Promise.race(promises); break;
+      case 'any': target = Promise.any(promises); break;
+    }
+
+    target.then(v => {
+      if (method === 'all') {
+        const vals = v.map(x => x instanceof Error ? '❌' + x.message : x);
+        result.textContent = '✅ Promise.all: [' + vals.join(', ') + ']';
+      } else if (method === 'allSettled') {
+        const counts = v.filter(x => x.status === 'fulfilled').length;
+        result.textContent = '✅ allSettled: ' + counts + ' fulfilled, ' + (v.length - counts) + ' rejected';
+      } else if (method === 'race') {
+        result.textContent = '🏆 Promise.race winner: ' + v;
+        runnerEls.forEach(el => {
+          if (el.querySelector('.runner-status').textContent.includes(v.split(' ')[0])) {
+            el.classList.add('win');
+          }
+        });
+      } else if (method === 'any') {
+        result.textContent = '🏆 Promise.any winner: ' + v;
+        runnerEls.forEach(el => {
+          if (el.querySelector('.runner-status').textContent.includes(v.split(' ')[0])) {
+            el.classList.add('win');
+          }
+        });
+      }
+    }).catch(e => {
+      if (method === 'any') {
+        result.textContent = '❌ Promise.any: all rejected — ' + e.constructor.name;
+      } else if (method === 'race') {
+        result.textContent = '❌ Promise.race first settled was rejection: ' + e.message;
+      } else if (method === 'all') {
+        result.textContent = '❌ Promise.all: fast fail on first rejection';
+      }
+    });
+  }
+
+  $$('#raceControls button').forEach(btn => {
+    btn.addEventListener('click', () => runRace(btn.dataset.method));
+  });
+})();
+
+// ===== 8. Microtask vs Macrotask =====
+(function(){
+  const microQ = $('#microQueue');
+  const macroQ = $('#macroQueue');
+  const log = $('#eventLog');
+
+  const addMicro = (text) => {
+    const d = document.createElement('span');
+    d.className = 'queue-item micro';
+    d.textContent = text;
+    microQ.appendChild(d);
+  };
+  const addMacro = (text) => {
+    const d = document.createElement('span');
+    d.className = 'queue-item macro';
+    d.textContent = text;
+    macroQ.appendChild(d);
+  };
+
+  const clear = () => {
+    microQ.innerHTML = '<div class="queue-line"></div>';
+    macroQ.innerHTML = '<div class="queue-line"></div>';
+    log.innerHTML = '';
+    logPanel(log, 'Queue cleared', 'muted');
+  };
+  clear();
+
+  $('#queueControls button[data-action="clear"]').addEventListener('click', clear);
+  $('#queueControls button[data-action="run"]').addEventListener('click', () => {
+    clear();
+    logPanel(log, '▶️ Code: micro > macro > micro', 'info');
+
+    addMicro('Promise.resolve().then(f1) added');
+    addMacro('setTimeout(f3, 0) added');
+    addMicro('queueMicrotask(f2) added');
+
+    // Order: micro1 → micro2 → macro1
+    setTimeout(() => {
+      logPanel(log, '✅ Macro: setTimeout callback runs AFTER all microtasks', 'resolved');
+      addMacro('setTimeout callback executed');
+    }, 50);
+
+    // Use queueMicrotask for the second microtask
+    queueMicrotask(() => {
+      logPanel(log, '✅ Micro 2: queueMicrotask callback runs', 'resolved');
+      const items = microQ.querySelectorAll('.queue-item');
+      if (items.length > 0) items[items.length - 1].className = 'queue-item micro fulfilled';
+    });
+
+    Promise.resolve().then(() => {
+      logPanel(log, '✅ Micro 1: Promise.then callback runs FIRST', 'resolved');
+      const items = microQ.querySelectorAll('.queue-item');
+      if (items.length > 0) items[0].className = 'queue-item micro fulfilled';
+      logPanel(log, '📌 Note: both microtasks run before the setTimeout', 'info');
+    });
+  });
+})();
+
+// ===== 10. Interactive Playground =====
+(function(){
+  const edit = $('#playgroundEdit');
+  const output = $('#playgroundOutput');
+  const runBtn = $('#runPlayground');
+  const clearBtn = $('#clearPlayground');
+
+  const clearOutput = () => { output.innerHTML = ''; };
+
+  clearBtn.addEventListener('click', clearOutput);
+
+  runBtn.addEventListener('click', () => {
+    clearOutput();
+    const code = edit.value;
+
+    // Provide helpers
+    const helpers = `
+      window.__playgroundLogs = [];
+      function log(msg, type) {
+        window.__playgroundLogs.push({msg, type});
+      }
+      function wait(ms) {
+        return new Promise(function(resolve) { setTimeout(function() { resolve(ms + 'ms elapsed'); }, ms); });
+      }
+    `;
+
+    // Execute, catch sync errors
+    try {
+      // We inject helpers, then eval the user code
+      const fullCode = helpers + '\n' + code;
+      const wrapped = `(function() { "use strict";\n${fullCode}\n})()`;
+
+      // Execute the code - it may return a promise
+      const result = eval(wrapped);
+
+      // If it returns a promise (e.g. user runs async function), wait for it
+      if (result && typeof result.then === 'function') {
+        logPanel(output, '⏳ Async execution in progress...', 'info');
+        result.then(() => {
+          // flush any remaining logs
+          const logs = window.__playgroundLogs || [];
+          logs.forEach(l => {
+            logPanel(output, l.msg, l.type || '');
+          });
+          window.__playgroundLogs = [];
+          logPanel(output, '✅ Done', 'resolved');
+        }).catch(err => {
+          // flush logs before error
+          const logs = window.__playgroundLogs || [];
+          logs.forEach(l => logPanel(output, l.msg, l.type || ''));
+          window.__playgroundLogs = [];
+          logPanel(output, '❌ ' + (err.message || err), 'rejected');
+        });
+      } else {
+        // sync code — flush immediately
+        const logs = window.__playgroundLogs || [];
+        logs.forEach(l => logPanel(output, l.msg, l.type || ''));
+        window.__playgroundLogs = [];
+        if (logs.length === 0 && result !== undefined) {
+          logPanel(output, '→ ' + result, 'info');
+        }
+      }
+    } catch(e) {
+      logPanel(output, '❌ Syntax Error: ' + e.message, 'rejected');
+    }
+  });
+})();
+
+})();
+</script>
+</body>
+</html>

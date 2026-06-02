@@ -1,0 +1,508 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expo Router - Protected Routes - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:8px 10px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #f9e2af, #f38ba8); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:6px; padding:5px 12px; font-size:10px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#89b4fa; color:#1e1e2e; }
+    .btn-s { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+    .btn-success { background:#a6e3a1; color:#1e1e2e; }
+    .btn-danger { background:#f38ba8; color:#1e1e2e; }
+
+    .pat-tab { cursor:pointer; transition:all 0.2s; border-radius:6px; padding:4px 10px; font-size:10px; font-family:monospace; font-weight:600; border:1px solid transparent; }
+    .pat-tab:hover { background:#45475a; }
+    .pat-tab.active { background:#89b4fa30; border-color:#89b4fa; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+
+    .tree { position:relative; }
+    .tree-item { position:relative; padding-left:20px; }
+    .tree-item::before { content:''; position:absolute; left:8px; top:0; bottom:50%; border-left:1px solid #45475a; }
+    .tree-item:last-child::before { bottom:auto; height:10px; }
+    .tree-item::after { content:''; position:absolute; left:8px; top:10px; width:12px; height:0; border-top:1px solid #45475a; }
+    .tree-root::before, .tree-root::after { display:none; }
+
+    .badge-guard { position:absolute; right:4px; top:2px; font-size:8px; padding:0 4px; border-radius:3px; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      Expo Router
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">Protected Routes</span>
+    </h1>
+    <p class="text-[#a6adc8]">Restrict screen access based on authentication state — Stack, Tabs, and Drawer.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <div class="phone">
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold"><i class="fas fa-shield text-[#f9e2af] mr-1"></i> <span id="patTitle">Overview</span></span>
+            <span id="loginBadge" class="text-[10px] px-2 py-0.5 rounded-full font-mono bg-[#f38ba8]/20 text-[#f38ba8]">logged out</span>
+          </div>
+          <div class="flex gap-1 px-3 py-2 border-b border-[#313244] flex-wrap" id="patTabs">
+          </div>
+          <div id="phoneBody" class="body-scroll">
+          </div>
+          <div id="phoneBottom" class="border-t border-[#313244] px-3 py-1.5 text-[10px] font-mono text-[#585b70] leading-relaxed">
+            <span class="text-[#f9e2af]">$</span> <span id="navLog">Ready. Toggle auth to see protected routes redirect.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Patterns</h3>
+          <div class="space-y-1.5 text-xs" id="patList"></div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Key Code</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed overflow-x-auto" id="keyCode">export default function RootLayout() {
+  return &lt;Stack /&gt;;
+}</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f38ba8] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f38ba8] font-semibold">⚠️ Client-side only:</span> Protected routes are evaluated on the client. Not a replacement for server-side auth. During static generation, no HTML is created for protected routes.
+        </div>
+      </div>
+    </section>
+
+    <!-- === ALL CODE EXAMPLES === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#89b4fa]"></i> Protected Route Patterns
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold text-[#f9e2af]">Basic Protected Routes</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7">import</span> { Stack } <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+
+<span class="text-[#cba6f7">const</span> isLoggedIn = <span class="text-[#cba6f7]">false</span>;
+
+<span class="text-[#cba6f7">export default function</span> <span class="text-[#89b4fa]">AppLayout</span>() {
+  <span class="text-[#cba6f7">return</span> (
+    <span class="text-[#cdd6f4]">&lt;Stack&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Stack.Protected</span> <span class="text-[#89b4fa]">guard</span>={!isLoggedIn}<span class="text-[#cdd6f4]">&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"login"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;/Stack.Protected&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Stack.Protected</span> <span class="text-[#89b4fa]">guard</span>={isLoggedIn}<span class="text-[#cdd6f4]">&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"private"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;/Stack.Protected&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/Stack&gt;</span>
+  );
+}</pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold text-[#89b4fa]">Nesting Protected Screens</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7">import</span> { Stack } <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+
+<span class="text-[#cba6f7">const</span> isLoggedIn = <span class="text-[#cba6f7]">true</span>;
+<span class="text-[#cba6f7">const</span> isAdmin = <span class="text-[#cba6f7]">true</span>;
+
+<span class="text-[#cba6f7]">export default function</span> <span class="text-[#89b4fa]">AppLayout</span>() {
+  <span class="text-[#cba6f7]">return</span> (
+    <span class="text-[#cdd6f4]">&lt;Stack&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Stack.Protected</span> <span class="text-[#89b4fa]">guard</span>={isLoggedIn}<span class="text-[#cdd6f4]">&gt;</span>
+
+        <span class="text-[#cdd6f4]">&lt;Stack.Protected</span> <span class="text-[#89b4fa]">guard</span>={isAdmin}<span class="text-[#cdd6f4]">&gt;</span>
+          <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"private"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;/Stack.Protected&gt;</span>
+
+        <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"about"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+
+      <span class="text-[#cdd6f4]">&lt;/Stack.Protected&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/Stack&gt;</span>
+  );
+}</pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold text-[#a6e3a1]">Tabs Protected</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7">import</span> { Tabs } <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+
+<span class="text-[#cba6f7">const</span> isLoggedIn = <span class="text-[#cba6f7]">false</span>;
+
+<span class="text-[#cba6f7]">export default function</span> <span class="text-[#89b4fa]">TabLayout</span>() {
+  <span class="text-[#cba6f7]">return</span> (
+    <span class="text-[#cdd6f4]">&lt;Tabs&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Tabs.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"index"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+
+      <span class="text-[#cdd6f4]">&lt;Tabs.Protected</span> <span class="text-[#89b4fa]">guard</span>={isLoggedIn}<span class="text-[#cdd6f4]">&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Tabs.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"private"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Tabs.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"profile"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;/Tabs.Protected&gt;</span>
+
+      <span class="text-[#cdd6f4]">&lt;Tabs.Protected</span> <span class="text-[#89b4fa]">guard</span>={!isLoggedIn}<span class="text-[#cdd6f4]">&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Tabs.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"login"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;/Tabs.Protected&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/Tabs&gt;</span>
+  );
+}</pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold text-[#cba6f7]">Fallback Screen</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7">import</span> { Stack } <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+
+<span class="text-[#cba6f7]">const</span> isLoggedIn = <span class="text-[#cba6f7]">false</span>;
+
+<span class="text-[#cba6f7]">export default function</span> <span class="text-[#89b4fa]">AppLayout</span>() {
+  <span class="text-[#cba6f7]">return</span> (
+    <span class="text-[#cdd6f4]">&lt;Stack&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Stack.Protected</span> <span class="text-[#89b4fa]">guard</span>={isLoggedIn}<span class="text-[#cdd6f4]">&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"index"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"private"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;/Stack.Protected&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"login"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/Stack&gt;</span>
+  );
+}
+
+<span class="text-[#6c7086]">// index is protected + guard=false → redirects to /login</span>
+<span class="text-[#6c7086]">// (the first available unprotected screen)</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://docs.expo.dev/router/protected-routes/" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> Expo Router Protected Routes Docs</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      let loggedIn = false;
+      let isAdmin = false;
+
+      const patterns = [
+        {
+          id: 'overview', icon: 'fa-shield', color: '#f9e2af',
+          label: 'Overview',
+          phone: () => {
+            const guard = loggedIn;
+            return `
+              <div style="flex:1;display:flex;flex-direction:column;">
+                <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] m-2" style="flex:1;">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] text-[#585b70] font-semibold">File Tree</span>
+                  </div>
+                  <div class="font-mono text-[11px] leading-relaxed space-y-0.5">
+                    <div>app/</div>
+                    <div class="pl-4">_layout.tsx <span class="text-[#f9e2af]">← Stack + Protected</span></div>
+                    <div class="pl-4">index.tsx <span class="text-[#585b70]">← public</span></div>
+                    <div class="pl-4">about.tsx <span class="text-[#585b70]">← public</span></div>
+                    <div class="pl-4 ${guard ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}">login.tsx <span class="text-[#585b70]">← ${guard ? 'hidden' : 'visible'}</span></div>
+                    <div class="pl-4 ${guard ? 'text-[#f38ba8]' : 'text-[#a6e3a1]'}">private/ <span class="text-[#585b70]">← ${guard ? 'visible' : 'hidden'}</span></div>
+                    <div class="pl-8">_layout.tsx</div>
+                    <div class="pl-8">index.tsx</div>
+                    <div class="pl-8">page.tsx</div>
+                  </div>
+                  ${!guard ? `
+                    <div class="mt-3 bg-[#f38ba8]/10 border border-[#f38ba8]/30 rounded-lg p-2 text-[10px] text-center">
+                      <span class="text-[#f38ba8]"><i class="fas fa-lock mr-1"></i> Protected:</span> /private, /private/page → redirect to /
+                    </div>
+                  ` : `
+                    <div class="mt-3 bg-[#a6e3a1]/10 border border-[#a6e3a1]/30 rounded-lg p-2 text-[10px] text-center">
+                      <span class="text-[#a6e3a1]"><i class="fas fa-check-circle mr-1"></i> Access granted:</span> /private, /private/page are accessible
+                    </div>
+                  `}
+                </div>
+                <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] mx-2 mb-2">
+                  <div class="text-[10px] text-[#585b70] mb-1 font-semibold">Guard Logic</div>
+                  <div class="text-[11px] font-mono leading-relaxed">
+                    <span class="text-[#cba6f7]">guard</span>={${guard}}<span class="text-[#585b70]"> → ${guard ? '/private ✓' : '/private ✗ redirect'}</span><br>
+                    <span class="text-[#cba6f7]">guard</span>={${!guard}}<span class="text-[#585b70]"> → ${!guard ? '/login ✓' : '/login ✗ redirect'}</span>
+                  </div>
+                </div>
+                <div class="flex gap-1 mx-2 mb-2">
+                  <button class="btn ${guard ? 'btn-danger' : 'btn-success'} flex-1" onclick="handleAction('toggleAuth')">
+                    ${guard ? 'Log Out' : 'Log In'}
+                  </button>
+                </div>
+              </div>
+            `;
+          },
+          keyCode: `// Basic Stack.Protected pattern
+<Stack>
+  <Stack.Protected guard={!isLoggedIn}>
+    <Stack.Screen name="login" />
+  </Stack.Protected>
+
+  <Stack.Protected guard={isLoggedIn}>
+    <Stack.Screen name="private" />
+  </Stack.Protected>
+</Stack>`,
+        },
+        {
+          id: 'nesting', icon: 'fa-sitemap', color: '#89b4fa',
+          label: 'Nesting',
+          phone: () => {
+            const adminGuard = loggedIn && isAdmin;
+            return `
+              <div style="flex:1;display:flex;flex-direction:column;">
+                <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] m-2" style="flex:1;">
+                  <div class="flex items-center justify-between mb-2">
+                    <span class="text-[10px] text-[#585b70] font-semibold">Nested Guards</span>
+                    <div class="flex gap-1">
+                      <span class="text-[10px] px-2 py-0.5 rounded font-mono ${loggedIn ? 'bg-[#a6e3a1]/20 text-[#a6e3a1]' : 'bg-[#f38ba8]/20 text-[#f38ba8]'}">${loggedIn ? 'logged in' : 'logged out'}</span>
+                      <span class="text-[10px] px-2 py-0.5 rounded font-mono ${isAdmin ? 'bg-[#cba6f7]/20 text-[#cba6f7]' : 'bg-[#585b70]/20 text-[#585b70]'}">${isAdmin ? 'admin' : 'user'}</span>
+                    </div>
+                  </div>
+                  <div class="font-mono text-[11px] leading-relaxed space-y-1 bg-[#11111b] rounded-lg p-3">
+                    <div><span class="${loggedIn ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}"><i class="fas ${loggedIn ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i></span> isLoggedIn=${loggedIn}</div>
+                    <div class="pl-4"><span class="${adminGuard ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}"><i class="fas ${adminGuard ? 'fa-check-circle' : 'fa-times-circle'} mr-1"></i></span> isAdmin=${isAdmin} <span class="text-[#585b70]">→ nested guard</span></div>
+                    <div class="pl-8 border-l border-[#45475a] mt-1 ${adminGuard ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}">
+                      ${adminGuard ? '<i class="fas fa-lock-open mr-1"></i> /private <span class="text-[#585b70]">accessible</span>' : '<i class="fas fa-lock mr-1"></i> /private <span class="text-[#585b70]">blocked</span>'}
+                    </div>
+                    <div class="pl-4 mt-1 ${loggedIn ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}">
+                      ${loggedIn ? '<i class="fas fa-lock-open mr-1"></i> /about <span class="text-[#585b70]">accessible (logged in)</span>' : '<i class="fas fa-lock mr-1"></i> /about <span class="text-[#585b70]">blocked</span>'}
+                    </div>
+                  </div>
+                  <div class="flex gap-1 mt-2">
+                    <button class="btn ${loggedIn ? 'btn-danger' : 'btn-success'} flex-1" onclick="handleAction('toggleAuth')">
+                      ${loggedIn ? 'Log Out' : 'Log In'}
+                    </button>
+                    <button class="btn ${isAdmin ? 'btn-s' : 'btn-p'} flex-1" onclick="handleAction('toggleAdmin')" style="${isAdmin ? '' : 'border-color:#89b4fa;'}">
+                      ${isAdmin ? 'Demote' : 'Make Admin'}
+                    </button>
+                  </div>
+                </div>
+                <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+                  <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+                </div>
+              </div>
+            `;
+          },
+          keyCode: `// Nested protected screens
+<Stack>
+  <Stack.Protected guard={isLoggedIn}>
+
+    <Stack.Protected guard={isAdmin}>
+      <Stack.Screen name="private" />
+    </Stack.Protected>
+
+    <Stack.Screen name="about" />
+
+  </Stack.Protected>
+</Stack>
+
+// /private needs BOTH isLoggedIn AND isAdmin
+// /about only needs isLoggedIn`,
+        },
+        {
+          id: 'fallback', icon: 'fa-arrow-right-to-bracket', color: '#a6e3a1',
+          label: 'Fallback',
+          phone: () => {
+            const guard = loggedIn;
+            return `
+              <div style="flex:1;display:flex;flex-direction:column;">
+                <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] m-2" style="flex:1;">
+                  <div class="text-[10px] text-[#585b70] mb-2 font-semibold">Fallback to Specific Screen</div>
+                  <div class="font-mono text-[11px] leading-relaxed space-y-0.5 bg-[#11111b] rounded-lg p-3 mb-2">
+                    <div>app/</div>
+                    <div class="pl-4">_layout.tsx <span class="text-[#a6e3a1]">← Stack</span></div>
+                    <div class="pl-4 ${guard ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}">index.tsx <span class="text-[#585b70]">← ${guard ? 'visible' : 'protected'}</span></div>
+                    <div class="pl-4 ${guard ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}">private/ <span class="text-[#585b70]">← ${guard ? 'visible' : 'protected'}</span></div>
+                    <div class="pl-8">index.tsx</div>
+                    <div class="pl-8">page.tsx</div>
+                    <div class="pl-4 text-[#a6e3a1]">login.tsx <span class="text-[#585b70]">← always visible</span></div>
+                  </div>
+                  ${!guard ? `
+                    <div class="bg-[#f9e2af]/10 border border-[#f9e2af]/30 rounded-lg p-2 text-[10px] text-center">
+                      <span class="text-[#f9e2af]"><i class="fas fa-arrow-right mr-1"></i> Fallback:</span> index is protected → routing to first available screen: <span class="font-mono text-[#a6e3a1]">/login</span>
+                    </div>
+                  ` : `
+                    <div class="bg-[#a6e3a1]/10 border border-[#a6e3a1]/30 rounded-lg p-2 text-[10px] text-center">
+                      <span class="text-[#a6e3a1]"><i class="fas fa-check-circle mr-1"></i> index is accessible</span>
+                    </div>
+                  `}
+                </div>
+                <div class="flex gap-1 mx-2 mb-2">
+                  <button class="btn ${guard ? 'btn-danger' : 'btn-success'} flex-1" onclick="handleAction('toggleAuth')">
+                    ${guard ? 'Log Out' : 'Log In'}
+                  </button>
+                </div>
+              </div>
+            `;
+          },
+          keyCode: `// Fallback when protected screen has guard=false
+<Stack>
+  <Stack.Protected guard={isLoggedIn}>
+    <Stack.Screen name="index" />
+    <Stack.Screen name="private" />
+  </Stack.Protected>
+
+  <Stack.Screen name="login" />
+</Stack>
+
+// If isLoggedIn=false, router skips index/private
+// and falls back to /login (first available screen)`,
+        },
+        {
+          id: 'tabs', icon: 'fa-table-cells', color: '#cba6f7',
+          label: 'Tabs',
+          phone: () => {
+            const guard = loggedIn;
+            return `
+              <div style="flex:1;display:flex;flex-direction:column;">
+                <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] m-2" style="flex:1;">
+                  <div class="text-[10px] text-[#585b70] mb-2 font-semibold">Tabs with Protected</div>
+                  <div class="space-y-1 mb-2">
+                    <div class="flex items-center gap-2 bg-[#11111b] rounded-lg p-2 text-[10px]">
+                      <span class="text-[#a6e3a1]"><i class="fas fa-house"></i></span> Home <span class="text-[#585b70]">← always visible</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-[#11111b] rounded-lg p-2 text-[10px] ${guard ? 'opacity-100' : 'opacity-40'}">
+                      <span class="${guard ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}"><i class="fas ${guard ? 'fa-lock-open' : 'fa-lock'}"></i></span> Private <span class="text-[#585b70]">← ${guard ? 'visible' : 'hidden'}</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-[#11111b] rounded-lg p-2 text-[10px] ${guard ? 'opacity-100' : 'opacity-40'}">
+                      <span class="${guard ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}"><i class="fas ${guard ? 'fa-lock-open' : 'fa-lock'}"></i></span> Profile <span class="text-[#585b70]">← ${guard ? 'visible' : 'hidden'}</span>
+                    </div>
+                    <div class="flex items-center gap-2 bg-[#11111b] rounded-lg p-2 text-[10px] ${!guard ? 'opacity-100' : 'opacity-40'}">
+                      <span class="${!guard ? 'text-[#a6e3a1]' : 'text-[#f38ba8]'}"><i class="fas ${!guard ? 'fa-lock-open' : 'fa-lock'}"></i></span> Login <span class="text-[#585b70]">← ${!guard ? 'visible' : 'hidden'}</span>
+                    </div>
+                  </div>
+                  <div class="border-t border-[#313244] pt-2 mt-1">
+                    <div class="text-[10px] text-[#585b70] mb-1">Tab bar shows/hides tabs based on guard:</div>
+                    <div class="mock-tab-bar flex" style="border-top:1px solid #313244;">
+                      <div class="flex-1 text-center py-2 text-[10px] text-[#89b4fa]"><i class="fas fa-house"></i><br>Home</div>
+                      <div class="flex-1 text-center py-2 text-[10px] ${guard ? 'text-[#a6e3a1]' : 'text-[#585b70]'}"><i class="fas ${guard ? 'fa-lock-open' : 'fa-ban'}"></i><br>Private</div>
+                      <div class="flex-1 text-center py-2 text-[10px] ${guard ? 'text-[#a6e3a1]' : 'text-[#585b70]'}"><i class="fas ${guard ? 'fa-user' : 'fa-ban'}"></i><br>Profile</div>
+                      <div class="flex-1 text-center py-2 text-[10px] ${!guard ? 'text-[#f38ba8]' : 'text-[#585b70]'}"><i class="fas ${!guard ? 'fa-sign-in-alt' : 'fa-ban'}"></i><br>Login</div>
+                    </div>
+                  </div>
+                </div>
+                <div class="flex gap-1 mx-2 mb-2">
+                  <button class="btn ${guard ? 'btn-danger' : 'btn-success'} flex-1" onclick="handleAction('toggleAuth')">
+                    ${guard ? 'Log Out' : 'Log In'}
+                  </button>
+                </div>
+              </div>
+            `;
+          },
+          keyCode: `// Tabs with Protected
+<Tabs>
+  <Tabs.Screen name="index" />
+
+  <Tabs.Protected guard={isLoggedIn}>
+    <Tabs.Screen name="private" />
+    <Tabs.Screen name="profile" />
+  </Tabs.Protected>
+
+  <Tabs.Protected guard={!isLoggedIn}>
+    <Tabs.Screen name="login" />
+  </Tabs.Protected>
+</Tabs>
+
+// Tab bar dynamically shows/hides tabs`,
+        },
+      ];
+
+      const patTabs = document.getElementById('patTabs');
+      const phoneBody = document.getElementById('phoneBody');
+      const patTitle = document.getElementById('patTitle');
+      const loginBadge = document.getElementById('loginBadge');
+      const patList = document.getElementById('patList');
+      const keyCode = document.getElementById('keyCode');
+      const navLog = document.getElementById('navLog');
+
+      function updateAuthBadge() {
+        loginBadge.textContent = loggedIn ? 'logged in' : 'logged out';
+        loginBadge.className = 'text-[10px] px-2 py-0.5 rounded-full font-mono ' + (loggedIn ? 'bg-[#a6e3a1]/20 text-[#a6e3a1]' : 'bg-[#f38ba8]/20 text-[#f38ba8]');
+      }
+
+      function renderPattern(id) {
+        const p = patterns.find(x => x.id === id);
+        if (!p) return;
+
+        document.querySelectorAll('.pat-tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
+        patTitle.textContent = p.label;
+        keyCode.innerHTML = p.keyCode || '';
+        updateAuthBadge();
+        phoneBody.innerHTML = p.phone();
+      }
+
+      // Global handler
+      window.handleAction = (action) => {
+        if (action === 'toggleAuth') {
+          loggedIn = !loggedIn;
+          if (!loggedIn) isAdmin = false;
+          navLog.textContent = loggedIn ? 'Logged in. Protected routes now accessible.' : 'Logged out. Redirecting to /login.';
+          updateAuthBadge();
+          const active = document.querySelector('.pat-tab.active');
+          if (active) renderPattern(active.dataset.id);
+          return;
+        }
+        if (action === 'toggleAdmin') {
+          isAdmin = !isAdmin;
+          navLog.textContent = isAdmin ? 'Admin mode ON. Nested /private now accessible.' : 'Admin mode OFF. Nested /private blocked.';
+          const active = document.querySelector('.pat-tab.active');
+          if (active) renderPattern(active.dataset.id);
+          return;
+        }
+      };
+
+      // Top tabs
+      patterns.forEach(p => {
+        const t = document.createElement('span');
+        t.className = 'pat-tab' + (p.id === 'overview' ? ' active' : '');
+        t.dataset.id = p.id;
+        t.innerHTML = `<i class="fas ${p.icon}" style="color:${p.color}"></i> ${p.label}`;
+        t.addEventListener('click', () => renderPattern(p.id));
+        patTabs.appendChild(t);
+      });
+
+      // Side panel list
+      patterns.forEach(p => {
+        const item = document.createElement('div');
+        item.className = 'bg-[#11111b] rounded-lg p-2 flex items-start gap-2 cursor-pointer';
+        item.innerHTML = `
+          <span style="color:${p.color};margin-top:1px;"><i class="fas ${p.icon} fa-fw"></i></span>
+          <div>
+            <div style="color:${p.color};font-weight:600;font-size:11px;">${p.label}</div>
+            <div class="text-[10px] text-[#585b70]">Click to demo</div>
+          </div>
+        `;
+        item.addEventListener('click', () => {
+          renderPattern(p.id);
+        });
+        patList.appendChild(item);
+      });
+
+      renderPattern('overview');
+    })();
+  </script>
+</body>
+</html>

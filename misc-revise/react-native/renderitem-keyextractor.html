@@ -1,0 +1,312 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>renderItem + keyExtractor - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px;
+      border-radius: 40px;
+      border: 3px solid #45475a;
+      background: #1e1e2e;
+      position: relative; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+    }
+    .phone-notch { position: absolute; top: 0; left: 50%; transform: translateX(-50%); width: 120px; height: 26px; background: #11111b; border-radius: 0 0 14px 14px; z-index: 20; }
+    .screen { width: 100%; height: 100%; padding-top: 26px; display: flex; flex-direction: column; }
+    .status-bar { padding: 6px 18px 2px; display: flex; justify-content: space-between; font-size: 11px; color: #a6adc8; z-index: 10; }
+    .list-area { flex: 1; overflow-y: auto; padding: 4px 12px; }
+    .list-area::-webkit-scrollbar { display: none; }
+
+    .card {
+      background: #181825;
+      border-radius: 12px;
+      border: 1px solid #313244;
+      padding: 12px;
+      margin-bottom: 8px;
+      display: flex; align-items: center; gap: 10px;
+      transition: all 0.2s;
+      cursor: pointer;
+    }
+    .card.selected { border-color: #89b4fa; box-shadow: 0 0 12px rgba(137,180,250,0.2); }
+    .card .av {
+      width: 40px; height: 40px; border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 16px; font-weight: bold; color: #1e1e2e;
+      flex-shrink: 0;
+    }
+    .card .badge {
+      font-size: 10px; padding: 2px 8px; border-radius: 10px;
+      background: #313244; color: #a6adc8; margin-left: auto;
+    }
+    .card .del {
+      color: #585b70; font-size: 13px; cursor: pointer;
+      transition: color 0.2s;
+    }
+    .card .del:hover { color: #f38ba8; }
+
+    .highlight-line { background: rgba(137,180,250,0.12); border-left: 3px solid #89b4fa; padding-left: 10px; }
+    .gradient-text { background: linear-gradient(135deg, #89b4fa, #cba6f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    pre { white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+
+  <!-- HERO -->
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      FlatList Deep Dive
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">renderItem</span>
+      <span class="text-[#a6adc8]">+</span>
+      <span class="text-[#a6e3a1]">keyExtractor</span>
+    </h1>
+    <p class="text-[#a6adc8]">The two required props that control <span class="text-[#f9e2af]">what</span> renders and <span class="text-[#f9e2af]">how React tracks</span> each item.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">My List</span>
+            <span id="count" class="text-xs text-[#6c7086]">4 items</span>
+          </div>
+          <div class="list-area" id="listArea">
+            <!-- injected by JS -->
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home text-[#89b4fa]"></i>
+            <i class="fas fa-search"></i>
+            <i class="fas fa-plus-circle"></i>
+            <i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Info panel -->
+      <div class="flex-1 max-w-sm space-y-3">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <div class="flex items-center gap-2 text-sm font-semibold mb-2">
+            <i class="fas fa-mouse-pointer text-[#89b4fa]"></i> Click any item
+          </div>
+          <p class="text-xs text-[#a6adc8]">Selected: <span id="selectedDisplay" class="text-[#f9e2af] font-mono">none</span></p>
+          <p class="text-xs text-[#a6adc8] mt-1">Each card has a unique <code class="text-[#a6e3a1]">key</code> via <code class="text-[#f9e2af]">keyExtractor</code>.</p>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <div class="flex items-center gap-2 text-sm font-semibold mb-2">
+            <i class="fas fa-trash text-[#f38ba8]"></i> <span class="text-[#f38ba8]">✕</span> to delete
+          </div>
+          <p class="text-xs text-[#a6adc8]">Deletion uses the <code class="text-[#f9e2af]">key</code> to know which item to remove. Without stable keys, React re-renders everything.</p>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <div class="flex items-center gap-2 text-sm font-semibold mb-2">
+            <i class="fas fa-code text-[#cba6f7]"></i> Current renderItem code
+          </div>
+          <pre class="text-xs font-mono bg-[#11111b] p-2 rounded-lg leading-relaxed">
+(item) => (
+  &lt;View&gt;
+    &lt;Text&gt;{item.name}&lt;/Text&gt;
+  &lt;/View&gt;
+)</pre>
+        </div>
+        <button id="addBtn" class="w-full bg-[#313244] hover:bg-[#45475a] border border-[#585b70] rounded-xl py-2.5 text-sm transition-all flex items-center justify-center gap-2">
+          <i class="fas fa-plus"></i> Add Item
+        </button>
+      </div>
+    </section>
+
+    <!-- === SIMPLE CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#f9e2af]"></i> The Code
+      </h2>
+      <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+        <div class="px-5 py-2.5 bg-[#181825] border-b border-[#313244] flex items-center gap-2 text-sm text-[#6c7086]">
+          <i class="fas fa-file-alt"></i> App.tsx
+        </div>
+        <pre class="p-5 text-sm font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#6c7086]">// data — the array</span>
+<span class="text-[#cba6f7">const</span> <span class="text-[#cdd6f4]">data = [</span>
+  <span class="text-[#cdd6f4]">{ id: '1', name: '🍎 Apple' },</span>
+  <span class="text-[#cdd6f4]">{ id: '2', name: '🍌 Banana' },</span>
+<span class="text-[#cdd6f4]">];</span>
+
+<span class="text-[#cdd6f4]">&lt;FlatList</span>
+  <span class="highlight-line text-[#89b4fa]">data</span>=<span class="highlight-line text-[#cdd6f4]">{data}</span>
+
+  <span class="text-[#6c7086]">// ✅ renderItem — what each card looks like</span>
+  <span class="text-[#89b4fa]">renderItem</span>=<span class="text-[#cdd6f4]">{({ item, index }) => (</span>
+    <span class="text-[#cdd6f4]">&lt;View&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Text&gt;{index + 1}. {item.name}&lt;/Text&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/View&gt;</span>
+  <span class="text-[#cdd6f4]">)}</span>
+
+  <span class="text-[#6c7086]">// ✅ keyExtractor — unique key per item</span>
+  <span class="highlight-line text-[#89b4fa]">keyExtractor</span>=<span class="highlight-line text-[#cdd6f4]">{item => item.id}</span>
+<span class="text-[#cdd6f4]">/&gt;</span></pre>
+      </div>
+    </section>
+
+    <!-- === BREAKDOWN CARDS === -->
+    <section class="fade-in grid md:grid-cols-2 gap-5">
+
+      <!-- renderItem card -->
+      <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl overflow-hidden">
+        <div class="bg-[#89b4fa]/10 px-5 py-3 border-b border-[#313244] flex items-center gap-2">
+          <span class="bg-[#89b4fa] text-[#1e1e2e] text-xs font-bold px-2 py-0.5 rounded">PROP</span>
+          <code class="text-[#f9e2af] font-semibold">renderItem</code>
+        </div>
+        <div class="p-5 space-y-3 text-sm">
+          <p class="text-[#a6adc8]">A function that receives an object with:</p>
+          <div class="bg-[#11111b] rounded-lg p-3 font-mono text-xs space-y-1">
+            <div><span class="text-[#89b4fa]">item</span> <span class="text-[#6c7086]">// the current element from data[]</span></div>
+            <div><span class="text-[#89b4fa]">index</span> <span class="text-[#6c7086]">// position in the array</span></div>
+            <div><span class="text-[#89b4fa]">separators</span> <span class="text-[#6c7086]">// highlight/unhighlight helpers</span></div>
+          </div>
+          <p class="text-[#a6adc8]">Returns a React element (JSX). That's your list item UI.</p>
+        </div>
+      </div>
+
+      <!-- keyExtractor card -->
+      <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl overflow-hidden">
+        <div class="bg-[#a6e3a1]/10 px-5 py-3 border-b border-[#313244] flex items-center gap-2">
+          <span class="bg-[#a6e3a1] text-[#1e1e2e] text-xs font-bold px-2 py-0.5 rounded">PROP</span>
+          <code class="text-[#f9e2af] font-semibold">keyExtractor</code>
+        </div>
+        <div class="p-5 space-y-3 text-sm">
+          <p class="text-[#a6adc8]">Returns a <strong>unique string</strong> for each item. React uses it to track additions, removals, reorders.</p>
+          <div class="bg-[#11111b] rounded-lg p-3 font-mono text-xs space-y-1">
+            <div><span class="text-[#6c7086]">// Default (if you skip it):</span></div>
+            <div>item.key → item.id → index</div>
+            <div class="mt-2"><span class="text-[#6c7086]">// Best practice:</span></div>
+            <div><span class="text-[#89b4fa]">keyExtractor</span>={(item) => item.id}</div>
+          </div>
+          <div class="flex items-start gap-2 text-xs text-[#f9e2af] bg-[#f9e2af]/10 rounded-lg p-2">
+            <i class="fas fa-lightbulb mt-0.5"></i>
+            <span>Bad keys cause all items to re-render on every update. Always use a stable, unique ID.</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- index as key = BAD -->
+      <div class="md:col-span-2 bg-[#1e1e2e] border border-[#f38ba8] rounded-xl p-5">
+        <div class="flex items-start gap-3">
+          <i class="fas fa-exclamation-triangle text-[#f38ba8] mt-1"></i>
+          <div>
+            <p class="font-semibold text-[#f38ba8] text-sm">⚠️ Never use index as key</p>
+            <p class="text-xs text-[#a6adc8] mt-1">If items are reordered, deleted, or filtered, React reuses the same keys and shows wrong data. Always use a unique <code class="text-[#f9e2af]">id</code> from your data.</p>
+          </div>
+        </div>
+      </div>
+
+    </section>
+
+    <!-- === PROP TABLE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-table text-[#cba6f7]"></i> renderItem parameter details
+      </h2>
+      <div class="overflow-x-auto rounded-xl border border-[#313244]">
+        <table class="w-full text-sm">
+          <thead><tr class="bg-[#181825] text-left"><th class="px-5 py-3 text-[#89b4fa]">Param</th><th class="px-5 py-3 text-[#a6e3a1]">Type</th><th class="px-5 py-3">What it is</th></tr></thead>
+          <tbody class="divide-y divide-[#313244]">
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">item</td><td class="px-5 py-3">T</td><td class="text-[#a6adc8]">The current element from your data array</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">index</td><td class="px-5 py-3">number</td><td class="text-[#a6adc8]">Position in the array (0-based)</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">separators.highlight</td><td class="px-5 py-3">()→void</td><td class="text-[#a6adc8]">Call on press-in to highlight separator</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">separators.unhighlight</td><td class="px-5 py-3">()→void</td><td class="text-[#a6adc8]">Call on press-out to unhighlight</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://reactnative.dev/docs/flatlist#required-renderitem" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> Official Docs</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const data = [
+        { id: 'a1', name: '🍎 Apple', color: '#f38ba8' },
+        { id: 'b2', name: '🍌 Banana', color: '#f9e2af' },
+        { id: 'c3', name: '🍒 Cherry', color: '#f38ba8' },
+        { id: 'd4', name: '🍇 Grape', color: '#cba6f7' },
+      ];
+      let items = [...data];
+      let selectedId = null;
+      const area = document.getElementById('listArea');
+      const count = document.getElementById('count');
+      const selectedDisplay = document.getElementById('selectedDisplay');
+
+      function render() {
+        area.innerHTML = items.map(item => {
+          const isSelected = item.id === selectedId;
+          const initial = item.name.charAt(2);
+          return `
+            <div class="card ${isSelected ? 'selected' : ''}" data-id="${item.id}">
+              <div class="av" style="background:${item.color}">${initial}</div>
+              <div class="flex-1 min-w-0">
+                <div class="font-medium text-sm">${item.name}</div>
+                <div class="text-xs text-[#6c7086]">id: <span class="font-mono">${item.id}</span></div>
+              </div>
+              <span class="badge">#${items.indexOf(item)}</span>
+              <span class="del" data-del="${item.id}"><i class="fas fa-times"></i></span>
+            </div>
+          `;
+        }).join('');
+        count.textContent = items.length + ' items';
+
+        // Click to select
+        area.querySelectorAll('.card').forEach(el => {
+          el.addEventListener('click', (e) => {
+            if (e.target.closest('.del')) return;
+            const id = el.dataset.id;
+            selectedId = selectedId === id ? null : id;
+            selectedDisplay.textContent = selectedId || 'none';
+            render();
+          });
+        });
+
+        // Delete
+        area.querySelectorAll('.del').forEach(el => {
+          el.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const id = el.dataset.del;
+            items = items.filter(i => i.id !== id);
+            if (selectedId === id) { selectedId = null; selectedDisplay.textContent = 'none'; }
+            render();
+          });
+        });
+      }
+
+      document.getElementById('addBtn').addEventListener('click', () => {
+        const emojis = ['🥝 Kiwi','🍊 Orange','🍓 Strawberry','🍉 Watermelon','🍍 Pineapple','🥭 Mango','🍑 Peach','🍐 Pear'];
+        const colors = ['#a6e3a1','#89b4fa','#fab387','#f38ba8','#f9e2af','#94e2d5','#b4befe','#f5c2e7'];
+        const pick = () => ({ id: 'k-' + Date.now(), name: emojis[Math.floor(Math.random()*emojis.length)], color: colors[Math.floor(Math.random()*colors.length)] });
+        items.push(pick());
+        render();
+      });
+
+      render();
+    })();
+  </script>
+</body>
+</html>

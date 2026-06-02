@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP Inspector · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--lavender)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;scroll-margin-top:70px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px;animation:fadeSlide .35s ease-out}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .highlight{color:var(--yellow)}
+.code .danger{color:var(--red)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.callout.lavender{border-color:var(--lavender);background:rgba(180,190,254,.04)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}.badge.green{background:rgba(166,227,161,.18);color:var(--green)}.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}.badge.lavender{background:rgba(180,190,254,.18);color:var(--lavender)}.badge.peach{background:rgba(250,179,135,.18);color:var(--peach)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--lavender);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.small{padding:5px 12px;font-size:.72rem}
+.btn.green{background:var(--green);color:#0f0f17}
+.btn.red{background:var(--red);color:white}
+.log-area{font-family:monospace;font-size:.75rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:80px;max-height:260px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.log-area .entry:last-child{border-bottom:none}
+.log-area .t-teal{color:var(--teal)}.log-area .t-blue{color:var(--blue)}.log-area .t-green{color:var(--green)}.log-area .t-peach{color:var(--peach)}.log-area .t-red{color:var(--red)}.log-area .t-yellow{color:var(--yellow)}.log-area .t-muted{color:var(--muted)}.log-area .t-lavender{color:var(--lavender)}.log-area .t-pink{color:var(--pink)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ===== INSPECTOR UI MOCK ===== */
+.inspector-ui{background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);overflow:hidden;margin:12px 0}
+.inspector-ui .topbar{display:flex;align-items:center;gap:8px;padding:8px 12px;background:var(--surface);border-bottom:1px solid var(--surface2)}
+.inspector-ui .topbar .dots{display:flex;gap:4px}
+.inspector-ui .topbar .dot{width:8px;height:8px;border-radius:50%}
+.inspector-ui .topbar .title{font-size:.7rem;color:var(--muted);margin-left:8px}
+.inspector-ui .panels{display:grid;grid-template-columns:1fr 1fr;gap:0}
+@media(max-width:680px){.inspector-ui .panels{grid-template-columns:1fr}}
+.inspector-ui .panel{padding:12px;border-right:1px solid var(--surface2);min-height:200px}
+.inspector-ui .panel:last-child{border-right:none}
+.inspector-ui .panel .label{font-size:.65rem;color:var(--muted);text-transform:uppercase;margin-bottom:8px;font-weight:600}
+.inspector-ui .panel .item{padding:6px 8px;border-radius:4px;font-size:.72rem;margin-bottom:4px;display:flex;align-items:center;gap:8px;transition:.2s;cursor:pointer}
+.inspector-ui .panel .item:hover{background:var(--surface2)}
+
+/* ===== CONNECTION FLOW ===== */
+.flow-anim{display:flex;align-items:center;justify-content:center;gap:12px;padding:20px 10px;flex-wrap:wrap}
+.flow-anim .f-box{width:100px;padding:14px 8px;border-radius:10px;text-align:center;font-size:.72rem;font-weight:600;border:2px solid;transition:.4s;position:relative}
+.flow-anim .f-box .f-icon{font-size:1.3rem;display:block;margin-bottom:4px}
+.flow-anim .f-box.inspector{border-color:var(--lavender);color:var(--lavender);background:rgba(180,190,254,.06)}
+.flow-anim .f-box.server{border-color:var(--green);color:var(--green);background:rgba(166,227,161,.06)}
+.flow-anim .f-box.browser{border-color:var(--blue);color:var(--blue);background:rgba(137,180,250,.06)}
+.flow-anim .f-arrow{color:var(--muted);font-size:.8rem;transition:.3s}
+.flow-anim .f-arrow.pulse{animation:arrowPulse .8s ease}
+@keyframes arrowPulse{0%,100%{transform:scale(1);color:var(--muted)}50%{transform:scale(1.3);color:var(--lavender)}}
+
+/* ===== FEATURE GRID ===== */
+.feat-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.feat-card{padding:16px;border-radius:var(--radius);border:2px solid var(--surface2);text-align:center;transition:.3s;background:var(--surface)}
+.feat-card:hover{transform:translateY(-3px);border-color:var(--lavender);box-shadow:0 6px 20px rgba(180,190,254,.1)}
+.feat-card .f-icon{font-size:1.5rem;margin-bottom:6px}
+.feat-card h4{font-size:.82rem;margin-bottom:4px;color:var(--text)}
+.feat-card p{font-size:.7rem;color:var(--muted);margin:0}
+
+/* ===== TAB INTERFACE ===== */
+.tab-bar{display:flex;gap:2px;border-bottom:2px solid var(--surface2);margin-bottom:12px}
+.tab-item{padding:8px 16px;border-radius:6px 6px 0 0;font-size:.76rem;cursor:pointer;color:var(--muted);border:2px solid transparent;border-bottom:none;transition:.2s;background:transparent}
+.tab-item.active{color:var(--lavender);border-color:var(--surface2);background:var(--surface)}
+.tab-item:hover:not(.active){color:var(--text);background:rgba(255,255,255,.02)}
+.tab-content{min-height:150px}
+.tab-pane{display:none}
+.tab-pane.active{display:block;animation:fadeSlide .3s ease}
+
+/* ===== LIVE REQUEST LOG ===== */
+.req-entry{padding:8px 10px;border-radius:4px;margin-bottom:4px;font-size:.72rem;font-family:monospace;border-left:3px solid;transition:.2s}
+.req-entry.outgoing{border-color:var(--blue);background:rgba(137,180,250,.04)}
+.req-entry.incoming{border-color:var(--green);background:rgba(166,227,161,.04)}
+.req-entry .dir{font-weight:700;margin-right:6px}
+.req-entry.outgoing .dir{color:var(--blue)}
+.req-entry.incoming .dir{color:var(--green)}
+.req-entry .method{color:var(--peach)}
+.req-entry .params-text{color:var(--muted)}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes flash{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>MCP</span> Inspector</div>
+  <div class="crumbs"><a href="index.html">MCP</a> &rsaquo; Inspector</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(180,190,254,.18);color:var(--lavender)">Debug Tool</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. WHAT IS THE MCP INSPECTOR -->
+<div class="section-title"><span class="num">1</span> What Is the MCP Inspector?</div>
+<div class="card">
+  <p><strong>MCP Inspector</strong> is a <strong>web-based UI</strong> for testing and debugging MCP servers. It connects to your server and lets you explore tools, resources, and prompts — all without writing any code.</p>
+
+  <div class="flow-anim" id="mainFlow">
+    <div class="f-box browser">🌐 Browser<br><span style="font-size:.6rem;font-weight:400;opacity:.7">You open the UI</span></div>
+    <span class="f-arrow">←→</span>
+    <div class="f-box inspector">🔍 Inspector<br><span style="font-size:.6rem;font-weight:400;opacity:.7">localhost:5173</span></div>
+    <span class="f-arrow">←→</span>
+    <div class="f-box server">⚡ MCP Server<br><span style="font-size:.6rem;font-weight:400;opacity:.7">Your server process</span></div>
+  </div>
+
+  <div style="display:flex;gap:6px;justify-content:center;margin-bottom:8px">
+    <button class="btn small primary" onclick="animateFlow()">▶ Animate Connection</button>
+  </div>
+
+  <div class="code" style="text-align:center;font-size:.78rem">
+<span class="comment"># Start the inspector (from mcp folder):</span>
+$ <span class="highlight">npx @modelcontextprotocol/inspector</span> node my-server.js
+<span class="comment"># → Opens http://localhost:5173 in your browser</span>
+  </div>
+
+  <div class="callout lavender" style="font-size:.8rem">
+    <strong>Think of it as Postman for MCP.</strong> Just like Postman lets you test REST APIs without writing code, the Inspector lets you test MCP servers — list tools, call them, read resources — all from a visual interface.
+  </div>
+</div>
+
+<!-- 2. THE INSPECTOR INTERFACE -->
+<div class="section-title"><span class="num">2</span> The Inspector Interface</div>
+<div class="card">
+  <p>When you open the Inspector, you see a <strong>2-panel layout</strong>: controls on the left, output on the right.</p>
+
+  <div class="inspector-ui">
+    <div class="topbar">
+      <div class="dots"><span class="dot" style="background:var(--red)"></span><span class="dot" style="background:var(--yellow)"></span><span class="dot" style="background:var(--green)"></span></div>
+      <span class="title">MCP Inspector — localhost:5173</span>
+    </div>
+    <div class="panels">
+      <div class="panel">
+        <div class="label">🔧 Controls</div>
+        <div class="item" style="background:rgba(180,190,254,.08);border-left:3px solid var(--lavender)">
+          <span>📋</span> <span>List Tools</span>
+        </div>
+        <div class="item" style="background:rgba(137,180,250,.06);border-left:3px solid var(--blue)">
+          <span>📄</span> <span>List Resources</span>
+        </div>
+        <div class="item" style="background:rgba(166,227,161,.06);border-left:3px solid var(--green)">
+          <span>📝</span> <span>Get Prompts</span>
+        </div>
+        <div class="item" style="background:rgba(243,139,168,.06);border-left:3px solid var(--red)">
+          <span>🔄</span> <span>Server Info</span>
+        </div>
+        <div style="margin-top:10px;padding:6px 8px;border-radius:4px;font-size:.7rem;color:var(--muted);background:rgba(255,255,255,.02);text-align:center">
+          Click any action → sends JSON-RPC to server
+        </div>
+      </div>
+      <div class="panel">
+        <div class="label">📤 Output</div>
+        <div style="font-family:monospace;font-size:.68rem;color:var(--green);line-height:1.6">
+          {<br>
+          &nbsp;&nbsp;"tools": [<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;{<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"name": "get_weather",<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"description": "Get weather",<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"inputSchema": { ... }<br>
+          &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+          &nbsp;&nbsp;]<br>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:6px">
+    <div style="padding:10px;border-radius:var(--radius);background:rgba(137,180,250,.04);border:1px solid var(--surface2);font-size:.76rem">
+      <strong style="color:var(--blue)">Left panel:</strong> Buttons to list tools, resources, prompts, call tools, view server info.
+    </div>
+    <div style="padding:10px;border-radius:var(--radius);background:rgba(166,227,161,.04);border:1px solid var(--surface2);font-size:.76rem">
+      <strong style="color:var(--green)">Right panel:</strong> Shows the raw server response — the actual JSON returned.
+    </div>
+  </div>
+</div>
+
+<!-- 3. WHAT YOU CAN DO -->
+<div class="section-title"><span class="num">3</span> What You Can Do in the Inspector</div>
+<div class="card">
+  <div class="tab-bar" id="tabBar">
+    <button class="tab-item active" onclick="switchTab('tools',this)">🔧 Tools</button>
+    <button class="tab-item" onclick="switchTab('resources',this)">📄 Resources</button>
+    <button class="tab-item" onclick="switchTab('prompts',this)">📝 Prompts</button>
+    <button class="tab-item" onclick="switchTab('server',this)">⚡ Server</button>
+  </div>
+
+  <div class="tab-content">
+    <div class="tab-pane active" id="tabTools">
+      <p style="font-size:.82rem">Click <strong>List Tools</strong> to see all tools your server exposes. Click a tool to call it with custom arguments.</p>
+      <div class="inspector-ui" style="margin-top:8px">
+        <div class="topbar"><div class="title">🔧 Tool: get_weather</div></div>
+        <div style="padding:12px">
+          <div style="display:flex;gap:8px;margin-bottom:10px;flex-wrap:wrap">
+            <input style="flex:1;padding:6px 10px;border-radius:4px;border:1px solid var(--surface2);background:var(--surface);color:var(--text);font-size:.76rem;font-family:monospace;min-width:120px" value="Mumbai" placeholder="city" id="toolInput">
+            <button class="btn small green" onclick="simulateToolCall()">▶ Call Tool</button>
+          </div>
+          <div class="log-area" id="toolLog" style="min-height:60px;max-height:120px">
+            <div class="entry t-muted">▸ Enter a city and click "Call Tool"</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tabResources">
+      <p style="font-size:.82rem">Click <strong>List Resources</strong> to browse data the server provides. Each resource has a URI and MIME type.</p>
+      <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin-top:8px">
+        <div style="font-size:.76rem;font-family:monospace;line-height:2">
+          <span style="color:var(--blue)">weather://</span>Mumbai <span style="color:var(--muted)">→ application/json</span><br>
+          <span style="color:var(--blue)">weather://</span>London <span style="color:var(--muted)">→ application/json</span><br>
+          <span style="color:var(--blue)">weather://</span>Tokyo <span style="color:var(--muted)">→ application/json</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tabPrompts">
+      <p style="font-size:.82rem">Click <strong>Get Prompts</strong> to see pre-built prompt templates. Select one and fill in arguments.</p>
+      <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin-top:8px">
+        <div style="font-size:.76rem;line-height:1.8">
+          <span class="badge green">summarize_weather</span> "Summarize weather for {city}"<br>
+          <span class="badge teal">compare_cities</span> "Compare weather between {city1} and {city2}"<br>
+          <span class="badge pink">travel_advice</span> "Travel advice based on weather in {city}"<br>
+        </div>
+      </div>
+    </div>
+
+    <div class="tab-pane" id="tabServer">
+      <p style="font-size:.82rem">View server metadata — protocol version, capabilities, server info.</p>
+      <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin-top:8px">
+        <div style="font-size:.74rem;font-family:monospace;line-height:1.8">
+          <span style="color:var(--muted)">Protocol Version:</span> <span style="color:var(--green)">2025-03-26</span><br>
+          <span style="color:var(--muted)">Capabilities:</span> tools, resources, prompts, logging<br>
+          <span style="color:var(--muted)">Server Name:</span> <span style="color:var(--peach)">weather-server</span><br>
+          <span style="color:var(--muted)">Transport:</span> <span style="color:var(--blue)">stdio / streamable-http</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. REQUEST LOG VIEWER -->
+<div class="section-title"><span class="num">4</span> Request Log — See Every Message</div>
+<div class="card">
+  <p>The Inspector <strong>logs every JSON-RPC message</strong> exchanged — both outgoing requests and incoming responses.</p>
+
+  <div class="inspector-ui" style="margin-bottom:8px">
+    <div class="topbar">
+      <div class="title">📋 Request Log</div>
+      <div style="margin-left:auto;display:flex;gap:4px">
+        <span class="badge blue">4 outgoing</span>
+        <span class="badge green">4 incoming</span>
+      </div>
+    </div>
+    <div style="padding:10px;font-size:.7rem;font-family:monospace;max-height:220px;overflow-y:auto">
+      <div class="req-entry outgoing">
+        <span class="dir">→</span> <span class="method">initialize</span> <span class="params-text">protocolVersion: "2025-03-26"</span>
+      </div>
+      <div class="req-entry incoming">
+        <span class="dir">←</span> <span class="method">result</span> <span class="params-text">capabilities: {tools, resources}</span>
+      </div>
+      <div class="req-entry outgoing">
+        <span class="dir">→</span> <span class="method">tools/list</span>
+      </div>
+      <div class="req-entry incoming">
+        <span class="dir">←</span> <span class="method">result</span> <span class="params-text">tools: [get_weather, get_forecast]</span>
+      </div>
+      <div class="req-entry outgoing">
+        <span class="dir">→</span> <span class="method">tools/call</span> <span class="params-text">name: "get_weather", city: "Mumbai"</span>
+      </div>
+      <div class="req-entry incoming">
+        <span class="dir">←</span> <span class="method">result</span> <span class="params-text">"27°C, Sunny in Mumbai"</span>
+      </div>
+      <div class="req-entry outgoing">
+        <span class="dir">→</span> <span class="method">resources/list</span>
+      </div>
+      <div class="req-entry incoming">
+        <span class="dir">←</span> <span class="method">result</span> <span class="params-text">resources: [weather://Mumbai, ...]</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="font-size:.78rem">
+    <strong>Why this matters:</strong> The request log is the <strong>most powerful debugging feature</strong>. You can see <em>exactly</em> what your client sends and what the server responds — no guesswork. Spot malformed JSON-RPC, wrong parameters, or error codes instantly.
+  </div>
+</div>
+
+<!-- 5. LIVE DEBUGGING DEMO -->
+<div class="section-title"><span class="num">5</span> Live Debugging Simulation</div>
+<div class="card">
+  <p>Click buttons below to simulate using the Inspector to debug a server. Watch the request log fill up in real-time.</p>
+
+  <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn small green" onclick="debugStep('init')">1. Initialize</button>
+    <button class="btn small blue" onclick="debugStep('list')">2. List Tools</button>
+    <button class="btn small primary" onclick="debugStep('call')">3. Call Tool</button>
+    <button class="btn small pink" onclick="debugStep('error')">4. Trigger Error</button>
+    <button class="btn small outline" onclick="resetDebug()">Clear</button>
+  </div>
+
+  <div class="log-area" id="debugLog" style="min-height:180px;max-height:300px">
+    <div class="entry t-muted">▸ Click buttons to simulate Inspector interactions.</div>
+  </div>
+</div>
+
+<!-- 6. FEATURES AT A GLANCE -->
+<div class="section-title"><span class="num">6</span> Features at a Glance</div>
+<div class="card">
+  <div class="feat-grid">
+    <div class="feat-card">
+      <div class="f-icon">🔧</div>
+      <h4>Tool Testing</h4>
+      <p>List tools, fill arguments, call them. See raw JSON response.</p>
+    </div>
+    <div class="feat-card">
+      <div class="f-icon">📄</div>
+      <h4>Resource Browser</h4>
+      <p>List and read resources with custom URI templates.</p>
+    </div>
+    <div class="feat-card">
+      <div class="f-icon">📝</div>
+      <h4>Prompt Tester</h4>
+      <p>View prompts, fill arguments, see generated messages.</p>
+    </div>
+    <div class="feat-card">
+      <div class="f-icon">📋</div>
+      <h4>Request Log</h4>
+      <p>Full history of every JSON-RPC message exchanged.</p>
+    </div>
+    <div class="feat-card">
+      <div class="f-icon">⚡</div>
+      <h4>Server Info</h4>
+      <p>View protocol version, capabilities, server metadata.</p>
+    </div>
+    <div class="feat-card">
+      <div class="f-icon">🎨</div>
+      <h4>JSON Viewer</h4>
+      <p>Collapsible tree view for complex JSON responses.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 7. WHY USE THE INSPECTOR -->
+<div class="section-title"><span class="num">7</span> Why Use the Inspector?</div>
+<div class="card">
+  <div class="grid2">
+    <div style="padding:14px;border-radius:var(--radius);background:rgba(243,139,168,.04);border:1px solid rgba(243,139,168,.15)">
+      <h4 style="color:var(--red);font-size:.85rem">❌ Without Inspector</h4>
+      <ul style="list-style:none;padding:0;font-size:.76rem;color:var(--muted);line-height:1.8">
+        <li>✗ Write test scripts to call each tool</li>
+        <li>✗ Manually print and inspect JSON-RPC messages</li>
+        <li>✗ Guess what tools the server exposes</li>
+        <li>✗ Hard to spot malformed schemas</li>
+        <li>✗ No visual feedback for debugging</li>
+      </ul>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);background:rgba(166,227,161,.04);border:1px solid rgba(166,227,161,.15)">
+      <h4 style="color:var(--green);font-size:.85rem">✅ With Inspector</h4>
+      <ul style="list-style:none;padding:0;font-size:.76rem;color:var(--muted);line-height:1.8">
+        <li>✓ Click to list tools instantly</li>
+        <li>✓ See every JSON-RPC in real-time log</li>
+        <li>✓ Visual tool registry at a glance</li>
+        <li>✓ Spot schema errors immediately</li>
+        <li>✓ Test arguments before coding</li>
+      </ul>
+    </div>
+  </div>
+
+  <div class="callout lavender" style="margin-top:10px;font-size:.8rem">
+    <strong>The Inspector is your MCP debugging Swiss Army knife.</strong> Before writing any client code, use the Inspector to verify your server works correctly — tool discovery, parameter schemas, response formats, error handling.
+  </div>
+</div>
+
+<!-- 8. HOW TO START -->
+<div class="section-title"><span class="num">8</span> How to Start the Inspector</div>
+<div class="card">
+  <p>You can start the Inspector from your terminal — it works with any MCP server command.</p>
+
+  <div class="code" style="font-size:.76rem">
+<span class="comment"># Basic usage — pass your server command as argument</span>
+$ <span class="highlight">npx @modelcontextprotocol/inspector</span> node my-server.js
+
+<span class="comment"># With Python server</span>
+$ <span class="highlight">npx @modelcontextprotocol/inspector</span> python weather-server.py
+
+<span class="comment"># With arguments for the server</span>
+$ <span class="highlight">npx @modelcontextprotocol/inspector</span> node server.js --port 3000
+
+<span class="comment"># Opens browser at http://localhost:5173</span>
+  </div>
+
+  <div class="callout" style="font-size:.78rem">
+    <strong>Pro tip:</strong> The Inspector wraps your server command — it launches the server as a subprocess (stdio transport) and connects to it. All traffic between the Inspector UI and your server shows up in the request log.
+  </div>
+</div>
+
+<!-- 9. SUMMARY -->
+<div class="section-title"><span class="num">9</span> One-Sentence Summary</div>
+<div class="card" style="border-left:4px solid var(--lavender);background:rgba(180,190,254,.04)">
+  <p style="font-size:1rem;line-height:1.8;color:var(--text)">
+    The <strong style="color:var(--lavender)">MCP Inspector</strong> is a web-based debugging UI that connects to your MCP server, lets you <strong>browse tools, resources, and prompts</strong>, shows every <strong>JSON-RPC message</strong> in a request log, and lets you <strong>call tools with custom arguments</strong> — all without writing a single line of code.
+  </p>
+  <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;justify-content:center">
+    <span class="badge lavender">🔍 Postman for MCP</span>
+    <span class="badge green">Zero code testing</span>
+    <span class="badge blue">Real-time request log</span>
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+let tabIndex = 0;
+function switchTab(tab, btn) {
+  document.querySelectorAll('.tab-item').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+}
+
+function simulateToolCall() {
+  const input = document.getElementById('toolInput');
+  const city = input.value.trim() || 'Mumbai';
+  const log = document.getElementById('toolLog');
+  log.innerHTML = '';
+  setTimeout(() => add('→ Sending tools/call { name: "get_weather", city: "' + city + '" }', 't-blue', 'toolLog'), 200);
+  setTimeout(() => add('← Server processing...', 't-muted', 'toolLog'), 600);
+  setTimeout(() => add('← Result: "27°C, Sunny in ' + city + '"', 't-green', 'toolLog'), 1100);
+  setTimeout(() => add('✅ Tool call completed successfully', 't-teal', 'toolLog'), 1500);
+}
+
+function add(msg, cls, id) {
+  const el = document.getElementById(id);
+  el.innerHTML += '<div class="entry ' + cls + '">▸ ' + msg + '</div>';
+  el.scrollTop = el.scrollHeight;
+}
+
+// === Debug Simulation ===
+function debugStep(step) {
+  const log = document.getElementById('debugLog');
+  if (log.innerHTML === '<div class="entry t-muted">▸ Click buttons to simulate Inspector interactions.</div>') {
+    log.innerHTML = '';
+  }
+  switch(step) {
+    case 'init':
+      add('→ Sending: initialize (protocolVersion: "2025-03-26")', 't-blue', 'debugLog');
+      setTimeout(() => add('← Received: capabilities (tools, resources, prompts)', 't-green', 'debugLog'), 400);
+      break;
+    case 'list':
+      add('→ Sending: tools/list', 't-blue', 'debugLog');
+      setTimeout(() => add('← Received: [get_weather, get_forecast, get_air_quality]', 't-green', 'debugLog'), 400);
+      break;
+    case 'call':
+      add('→ Sending: tools/call { name: "get_weather", city: "Mumbai" }', 't-blue', 'debugLog');
+      setTimeout(() => add('← Received: {"content":[{"type":"text","text":"27°C, Sunny"}]}', 't-green', 'debugLog'), 500);
+      break;
+    case 'error':
+      add('→ Sending: tools/call { name: "get_weather", city: "" }', 't-blue', 'debugLog');
+      setTimeout(() => add('← ERROR: {"code":-32602,"message":"Invalid params","data":"city is required"}', 't-red', 'debugLog'), 400);
+      setTimeout(() => add('⚠️ Inspector shows the error in red — you know the schema expects a non-empty city!', 't-yellow', 'debugLog'), 800);
+      break;
+  }
+}
+
+function resetDebug() {
+  document.getElementById('debugLog').innerHTML = '<div class="entry t-muted">▸ Click buttons to simulate Inspector interactions.</div>';
+}
+
+// === Flow Animation ===
+function animateFlow() {
+  const arrows = document.querySelectorAll('#mainFlow .f-arrow');
+  arrows.forEach(a => a.classList.add('pulse'));
+  setTimeout(() => arrows.forEach(a => a.classList.remove('pulse')), 800);
+}
+</script>
+</body>
+</html>

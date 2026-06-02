@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Claude Code Plugins — Deep Visual Guide</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--subtext:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--coral:#f28fad;
+  --radius:12px;--transition:0.5s cubic-bezier(0.22,1,0.36,1);
+}
+html{scroll-behavior:smooth;scroll-padding-top:2rem}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#3a3a5c}
+
+/* Particles */
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.particle{position:absolute;border-radius:50%;opacity:0;animation:particleUp linear infinite}
+@keyframes particleUp{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:0.5}90%{opacity:0.5}100%{transform:translateY(-10vh) scale(1);opacity:0}}
+
+/* Glow */
+.glow{position:relative}
+.glow::after{content:'';position:absolute;inset:-2px;border-radius:inherit;background:inherit;filter:blur(20px);opacity:0;z-index:-1;transition:var(--transition)}
+.glow:hover::after{opacity:0.4}
+
+/* Hero */
+.hero{
+  position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:2rem;overflow:hidden;
+}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%, rgba(180,190,254,0.1) 0%, transparent 60%),
+             radial-gradient(ellipse at 80% 100%, rgba(245,194,231,0.06) 0%, transparent 50%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;padding:0.4rem 1rem;
+  background:rgba(180,190,254,0.1);border:1px solid rgba(180,190,254,0.2);
+  border-radius:100px;font-size:0.8rem;color:var(--lavender);margin-bottom:1.5rem;
+  letter-spacing:0.5px;animation:fadeSlideUp 0.8s ease;
+}
+@keyframes fadeSlideUp{0%{opacity:0;transform:translateY(20px)}100%{opacity:1;transform:translateY(0)}}
+.hero h1{
+  font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;
+  background:linear-gradient(135deg,var(--lavender),var(--pink),var(--teal));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:1rem;animation:fadeSlideUp 0.8s ease 0.15s both;
+}
+.hero p{font-size:clamp(1rem,2vw,1.3rem);color:var(--subtext);max-width:600px;margin-bottom:2rem;animation:fadeSlideUp 0.8s ease 0.3s both}
+.hero-arrow{width:32px;height:32px;border-right:2px solid var(--lavender);border-bottom:2px solid var(--lavender);transform:rotate(45deg);animation:bounce 2s infinite;opacity:0.5}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translate(0,0)}50%{transform:rotate(45deg) translate(8px,8px)}}
+
+/* Layout */
+.container{max-width:1050px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:1}
+
+/* Sections */
+.section{opacity:0;transform:translateY(50px);transition:opacity 0.8s ease,transform 0.8s ease;margin-bottom:6rem}
+.section.visible{opacity:1;transform:translateY(0)}
+.section-number{
+  display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;
+  border-radius:10px;font-size:0.85rem;font-weight:700;margin-bottom:1rem;
+}
+.section h2{
+  font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:1.5rem;line-height:1.3;
+  background:linear-gradient(135deg,var(--text),var(--lavender));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.section h3{font-size:1.15rem;font-weight:600;margin-bottom:0.75rem;color:var(--text)}
+.section p{color:var(--subtext);margin-bottom:1rem;font-size:0.95rem}
+
+/* Cards */
+.card{
+  background:var(--surface);border-radius:var(--radius);padding:1.5rem;
+  border:1px solid rgba(255,255,255,0.05);transition:var(--transition);
+}
+.card:hover{border-color:rgba(180,190,254,0.2);transform:translateY(-2px)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1.5rem}
+
+/* Tabs */
+.tabs{display:flex;gap:0;margin-bottom:1.5rem;background:var(--surface);border-radius:var(--radius);padding:4px;border:1px solid rgba(255,255,255,0.05)}
+.tab-btn{
+  flex:1;padding:0.65rem 1rem;border:none;background:transparent;color:var(--subtext);
+  border-radius:8px;cursor:pointer;font-size:0.9rem;font-family:inherit;transition:var(--transition);
+}
+.tab-btn.active{background:var(--surface2);color:var(--text)}
+.tab-btn:hover:not(.active){color:var(--text)}
+.tab-content{display:none}
+.tab-content.active{display:block;animation:fadeSlideUp 0.4s ease}
+
+/* Code blocks */
+.code-block{
+  background:#13132a;border-radius:var(--radius);padding:1.25rem;overflow-x:auto;
+  border:1px solid rgba(255,255,255,0.05);font-family:'JetBrains Mono','Fira Code',monospace;
+  font-size:0.85rem;line-height:1.7;position:relative;
+}
+.code-block .kw{color:var(--lavender)}.code-block .str{color:var(--green)}
+.code-block .cm{color:var(--subtext);font-style:italic}.code-block .num{color:var(--peach)}
+.code-block .fn{color:var(--blue)}.code-block .prop{color:var(--yellow)}
+
+/* Compare layout */
+.compare{display:grid;grid-template-columns:1fr auto 1fr;gap:1rem;align-items:stretch;margin-bottom:1.5rem}
+.compare-card{padding:1.5rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.05);position:relative}
+.compare-card.old{background:linear-gradient(135deg,rgba(243,139,168,0.08),var(--surface))}
+.compare-card.new{background:linear-gradient(135deg,rgba(166,227,161,0.08),var(--surface))}
+.compare-vs{
+  display:flex;align-items:center;justify-content:center;font-size:1.5rem;font-weight:800;
+  color:var(--subtext);position:relative;min-width:60px;
+}
+.compare-vs span{background:var(--surface);width:44px;height:44px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:0.85rem;border:1px solid rgba(255,255,255,0.08)}
+.compare-badge{
+  display:inline-block;padding:0.2rem 0.6rem;border-radius:6px;font-size:0.75rem;font-weight:600;
+  margin-bottom:0.75rem;
+}
+.compare-badge.old{background:rgba(243,139,168,0.15);color:var(--red)}
+.compare-badge.new{background:rgba(166,227,161,0.15);color:var(--green)}
+.compare-card ul{list-style:none;padding:0}
+.compare-card li{padding:0.35rem 0;font-size:0.9rem;color:var(--subtext);position:relative;padding-left:1.2rem}
+.compare-card li::before{content:'→';position:absolute;left:0;color:var(--subtext)}
+
+/* SVG Flow */
+.svg-flow{width:100%;max-width:750px;margin:1.5rem auto;display:block}
+.svg-flow text{font-family:system-ui,sans-serif}
+.pulse-ring{animation:pulseRing 2s ease-in-out infinite;transform-origin:center}
+@keyframes pulseRing{0%{opacity:0.7;r:8}50%{opacity:0.2;r:16}100%{opacity:0.7;r:8}}
+.flow-arrow{stroke-dasharray:8,4;animation:dashMove 0.8s linear infinite}
+@keyframes dashMove{to{stroke-dashoffset:-24}}
+.glow-dot{animation:glowPulse 2s ease-in-out infinite}
+@keyframes glowPulse{0%,100%{opacity:0.6}50%{opacity:1}}
+.pkg-fade{animation:pkgFade 3s ease-in-out infinite}
+@keyframes pkgFade{0%,100%{opacity:1}50%{opacity:0.4}}
+
+/* File Tree */
+.tree-grid{display:grid;grid-template-columns:1fr 1fr;gap:1.5rem;margin-bottom:1.5rem}
+.tree-box{background:var(--surface);border-radius:var(--radius);padding:1.25rem;border:1px solid rgba(255,255,255,0.05);overflow:hidden}
+.tree-item{display:flex;align-items:center;gap:0.4rem;padding:0.3rem 0;cursor:pointer;border-radius:4px;transition:background 0.2s;font-size:0.85rem;font-family:'JetBrains Mono',monospace}
+.tree-item:hover,.tree-item.highlight{background:rgba(180,190,254,0.1)}
+.tree-item .icon{flex-shrink:0;font-size:0.9rem;width:18px;text-align:center}
+.tree-item .name{color:var(--text)}
+.tree-item .type{color:var(--subtext);font-size:0.75rem;margin-left:auto}
+.tree-level-1{padding-left:0}
+.tree-level-2{padding-left:1.4rem}
+.tree-level-3{padding-left:2.8rem}
+.tree-item.active .name{color:var(--lavender)}
+.tree-item.active{background:rgba(180,190,254,0.08)}
+.dot-active{width:6px;height:6px;border-radius:50%;animation:glowPulse 1.5s ease-in-out infinite}
+.dot-blue{background:var(--blue)}.dot-green{background:var(--green)}.dot-peach{background:var(--peach)}
+.dot-yellow{background:var(--yellow)}.dot-red{background:var(--red)}.dot-pink{background:var(--pink)}
+.dot-teal{background:var(--teal)}.dot-lavender{background:var(--lavender)}.dot-orange{background:var(--orange)}
+
+/* Manifest preview */
+.manifest-preview{background:#13132a;border-radius:var(--radius);padding:1.25rem;border:1px solid rgba(255,255,255,0.05);font-family:'JetBrains Mono',monospace;font-size:0.82rem;line-height:1.7;overflow-x:auto;min-height:280px;position:relative}
+.manifest-line{transition:background 0.2s;padding:0 0.5rem;border-radius:3px;cursor:default}
+.manifest-line:hover{background:rgba(180,190,254,0.06)}
+.manifest-line.highlight{background:rgba(180,190,254,0.12);border-left:2px solid var(--lavender)}
+.manifest-line .key{color:var(--yellow)}.manifest-line .val{color:var(--green)}
+.manifest-line .brack{color:var(--subtext)}.manifest-line .str-val{color:var(--green)}
+
+/* Hex Grid */
+.hex-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1rem;margin:2rem 0;max-width:780px;margin-left:auto;margin-right:auto}
+.hex-item{
+  background:var(--surface);border-radius:var(--radius);padding:1.25rem 1rem;text-align:center;
+  border:1px solid rgba(255,255,255,0.05);transition:var(--transition);opacity:0;transform:scale(0.8);
+  position:relative;overflow:hidden;
+}
+.hex-item.visible{opacity:1;transform:scale(1)}
+.hex-item:hover{transform:translateY(-4px) scale(1.02)}
+.hex-icon{font-size:1.6rem;margin-bottom:0.5rem;display:block}
+.hex-item h4{font-size:0.9rem;margin-bottom:0.3rem}
+.hex-item p{font-size:0.78rem;color:var(--subtext);margin:0;line-height:1.4}
+.hex-glow{position:absolute;inset:0;border-radius:inherit;opacity:0;transition:var(--transition);pointer-events:none}
+.hex-item:hover .hex-glow{opacity:0.15}
+.border-blue{border-color:var(--blue)}.border-green{border-color:var(--green)}
+.border-peach{border-color:var(--peach)}.border-yellow{border-color:var(--yellow)}
+.border-red{border-color:var(--red)}.border-pink{border-color:var(--pink)}
+
+/* Migration Table */
+.table-wrap{overflow-x:auto;margin-bottom:1.5rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.05)}
+.mig-table{width:100%;border-collapse:collapse;font-size:0.85rem}
+.mig-table th{background:var(--surface);padding:0.75rem 1rem;text-align:left;font-weight:600;color:var(--subtext);border-bottom:1px solid rgba(255,255,255,0.06)}
+.mig-table td{padding:0.7rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04);font-family:'JetBrains Mono',monospace;font-size:0.82rem}
+.mig-table tr:last-child td{border-bottom:none}
+.mig-table tr{transition:background 0.2s}
+.mig-table tr:hover{background:rgba(180,190,254,0.04)}
+.mig-table .arrow-cell{color:var(--subtext);text-align:center;width:30px;font-size:1rem}
+.mig-table .old-path{color:var(--red)}
+.mig-table .new-path{color:var(--green)}
+
+/* Migration arrow */
+.mig-arrow-wrap{text-align:center;margin:0 0 1.5rem;padding:1rem;position:relative}
+.mig-arrow-wrap svg{display:block;margin:0 auto;max-width:500px;width:100%}
+
+/* Callout */
+.callout{
+  background:rgba(180,190,254,0.06);border-left:3px solid var(--lavender);
+  border-radius:0 var(--radius) var(--radius) 0;padding:1rem 1.25rem;margin-bottom:1.5rem;
+}
+.callout-title{font-weight:600;color:var(--lavender);font-size:0.9rem;margin-bottom:0.3rem}
+.callout p{font-size:0.88rem;margin:0;color:var(--subtext)}
+
+/* Lifecycle */
+.lifecycle-steps{display:flex;flex-direction:column;gap:0.6rem;margin:1.5rem 0;max-width:600px;margin-left:auto;margin-right:auto}
+.lc-step{
+  display:flex;align-items:center;gap:1rem;padding:0.85rem 1.2rem;
+  background:var(--surface);border-radius:var(--radius);border:1px solid rgba(255,255,255,0.05);
+  transition:var(--transition);opacity:0.4;position:relative;overflow:hidden;
+}
+.lc-step.active{opacity:1;border-color:rgba(180,190,254,0.3)}
+.lc-step.done{opacity:1;border-color:rgba(166,227,161,0.3)}
+.lc-num{
+  width:30px;height:30px;border-radius:50%;display:flex;align-items:center;justify-content:center;
+  font-size:0.75rem;font-weight:700;background:var(--surface2);color:var(--subtext);flex-shrink:0;
+  transition:var(--transition);
+}
+.lc-step.active .lc-num{background:rgba(180,190,254,0.2);color:var(--lavender)}
+.lc-step.done .lc-num{background:rgba(166,227,161,0.2);color:var(--green)}
+.lc-label{font-size:0.9rem;color:var(--text)}
+.lc-step.done .lc-label{color:var(--green)}
+.lc-step.active .lc-label{color:var(--lavender)}
+.lc-bar{
+  position:absolute;left:0;bottom:0;height:2px;background:var(--lavender);
+  transition:width 0.3s ease;width:0;
+}
+.lc-step.active .lc-bar{width:100%}
+.lc-step.done .lc-bar{background:var(--green);width:100%}
+.lc-controls{display:flex;gap:0.75rem;justify-content:center;margin-top:1rem}
+.lc-btn{
+  padding:0.6rem 1.5rem;border:none;border-radius:8px;cursor:pointer;font-family:inherit;
+  font-size:0.9rem;font-weight:600;transition:var(--transition);
+}
+.lc-btn.primary{background:var(--lavender);color:#0f0f17}
+.lc-btn.primary:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.lc-btn.primary:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+.lc-btn.secondary{background:var(--surface2);color:var(--text)}
+.lc-btn.secondary:hover{background:#2d2d54;transform:translateY(-1px)}
+
+/* Buttons */
+.btn{display:inline-block;padding:0.6rem 1.4rem;border:none;border-radius:8px;cursor:pointer;font-family:inherit;font-size:0.9rem;font-weight:600;transition:var(--transition);text-decoration:none}
+.btn-lavender{background:var(--lavender);color:#0f0f17}
+.btn-lavender:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-ghost{background:transparent;color:var(--subtext);border:1px solid rgba(255,255,255,0.1)}
+.btn-ghost:hover{color:var(--text);border-color:rgba(255,255,255,0.2)}
+
+/* Status */
+.status-badge{
+  display:inline-flex;align-items:center;gap:0.4rem;padding:0.25rem 0.75rem;
+  border-radius:100px;font-size:0.78rem;font-weight:500;
+}
+.status-badge.beta{background:rgba(180,190,254,0.12);color:var(--lavender);border:1px solid rgba(180,190,254,0.2)}
+
+/* Footer */
+.footer{text-align:center;padding:3rem 0;color:var(--subtext);font-size:0.85rem;position:relative;z-index:1;border-top:1px solid rgba(255,255,255,0.04)}
+
+@media(max-width:768px){
+  .compare{grid-template-columns:1fr}
+  .compare-vs{min-width:auto;padding:0.5rem 0}
+  .compare-vs span{width:36px;height:36px;font-size:0.75rem}
+  .tree-grid{grid-template-columns:1fr}
+  .hex-grid{grid-template-columns:repeat(2,1fr)}
+  .section{margin-bottom:4rem}
+}
+@media(max-width:480px){
+  .hex-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<!-- Hero -->
+<section class="hero">
+  <div class="hero-badge">&#9670; Claude Code Plugins</div>
+  <h1>Extend Everything</h1>
+  <p>Plugins bundle skills, agents, hooks, MCP servers, LSP tools, and monitors into a single distributable package — no more scattered configuration.</p>
+  <div class="hero-arrow"></div>
+</section>
+
+<div class="container">
+
+<!-- Section 1: What are Plugins? -->
+<section class="section" id="s1">
+  <div class="section-number" style="background:rgba(180,190,254,0.12);color:var(--lavender)">01</div>
+  <h2>What are Plugins?</h2>
+  <p>A plugin is a directory with a <code style="color:var(--yellow)">plugin.json</code> manifest that packages all Claude Code extensions into a single, shareable unit. Instead of scattering config across <code style="color:var(--subtext)">.claude/</code> dotfiles, you get one folder you can version, publish, and share.</p>
+
+  <div class="compare">
+    <div class="compare-card old">
+      <span class="compare-badge old">Standalone (.claude/)</span>
+      <ul>
+        <li>Skills in <code style="font-size:0.8rem">.claude/skills/</code></li>
+        <li>Hooks scattered across project root</li>
+        <li>MCP config in <code style="font-size:0.8rem">.claude/mcp.json</code></li>
+        <li>No versioning or packaging</li>
+        <li>Manual setup per project</li>
+      </ul>
+    </div>
+    <div class="compare-vs"><span>vs</span></div>
+    <div class="compare-card new">
+      <span class="compare-badge new">Plugin Distribution</span>
+      <ul>
+        <li>Everything in <code style="font-size:0.8rem">my-plugin/</code> folder</li>
+        <li>Single <code style="font-size:0.8rem">plugin.json</code> manifest</li>
+        <li>Install with <code style="font-size:0.8rem">claude plugin add</code></li>
+        <li>Semantic versioning support</li>
+        <li>Portable across projects</li>
+      </ul>
+    </div>
+  </div>
+
+  <!-- SVG flow: standalone scattered → plugin bundle -->
+  <svg class="svg-flow" viewBox="0 0 700 180" fill="none">
+    <defs>
+      <linearGradient id="gArrow" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="var(--lavender)"/><stop offset="100%" stop-color="var(--pink)"/></linearGradient>
+      <filter id="gGlow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+    </defs>
+
+    <!-- Left: scattered files -->
+    <rect x="30" y="25" width="130" height="36" rx="6" fill="#1a1a2e" stroke="rgba(243,139,168,0.3)"/>
+    <text x="40" y="48" font-size="12" fill="var(--red)">.claude/skills/</text>
+
+    <rect x="30" y="70" width="130" height="36" rx="6" fill="#1a1a2e" stroke="rgba(249,226,175,0.3)"/>
+    <text x="40" y="93" font-size="12" fill="var(--yellow)">.claude/hooks/</text>
+
+    <rect x="30" y="115" width="130" height="36" rx="6" fill="#1a1a2e" stroke="rgba(137,180,250,0.3)"/>
+    <text x="40" y="138" font-size="12" fill="var(--blue)">.claude/mcp.json</text>
+
+    <!-- Arrows converging -->
+    <path d="M165 43 L240 90" stroke="var(--subtext)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>
+    <path d="M165 88 L240 90" stroke="var(--subtext)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>
+    <path d="M165 133 L240 90" stroke="var(--subtext)" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.4"/>
+
+    <!-- Bundle -->
+    <rect x="250" y="55" width="180" height="70" rx="10" fill="#1a1a2e" stroke="var(--lavender)" stroke-width="2" filter="url(#gGlow)"/>
+    <rect x="260" y="65" width="160" height="50" rx="6" fill="#13132a"/>
+    <text x="275" y="88" font-size="13" fill="var(--lavender)" font-weight="600">plugin.json</text>
+    <text x="275" y="106" font-size="11" fill="var(--subtext)">skills + hooks + mcp</text>
+    <rect x="250" y="55" width="180" height="70" rx="10" fill="url(#gArrow)" class="pkg-fade" opacity="0.08"/>
+
+    <!-- Glowing arrow right -->
+    <path d="M435 90 L500 90" stroke="var(--lavender)" stroke-width="2" class="flow-arrow" filter="url(#gGlow)"/>
+    <polygon points="500,84 515,90 500,96" fill="var(--lavender)" filter="url(#gGlow)"/>
+
+    <!-- Claude Code box -->
+    <rect x="520" y="55" width="140" height="70" rx="10" fill="#1a1a2e" stroke="var(--green)" stroke-width="2"/>
+    <text x="540" y="88" font-size="14" fill="var(--green)" font-weight="600">Claude Code</text>
+    <text x="540" y="106" font-size="11" fill="var(--subtext)">plugin load</text>
+
+    <!-- Animated dot on Claude Code -->
+    <circle cx="590" cy="125" r="4" fill="var(--green)" class="pulse-ring" opacity="0.6"/>
+  </svg>
+</section>
+
+<!-- Section 2: Plugin Directory Structure -->
+<section class="section" id="s2">
+  <div class="section-number" style="background:rgba(166,227,161,0.12);color:var(--green)">02</div>
+  <h2>Plugin Directory Structure</h2>
+  <p>Every plugin follows the same skeleton. Hover a directory in the tree to see the corresponding field in the manifest.</p>
+
+  <div class="tree-grid">
+    <div class="tree-box">
+      <div style="margin-bottom:0.75rem;font-size:0.8rem;color:var(--subtext);font-weight:600">&#128193; my-plugin/</div>
+      <div id="fileTree">
+        <div class="tree-item tree-level-1 active" data-target="0" data-highlight="0"><span class="icon" style="color:var(--lavender)">&#128193;</span><span class="name">my-plugin</span><span class="type">dir</span></div>
+        <div class="tree-item tree-level-2" data-target="1" data-highlight="1"><span class="icon" style="color:var(--yellow)">&#9744;</span><span class="name">plugin.json</span><span class="type">json</span><span class="dot-active dot-yellow" style="margin-left:6px"></span></div>
+        <div class="tree-item tree-level-2" data-target="2" data-highlight="2"><span class="icon" style="color:var(--blue)">&#128193;</span><span class="name">skills/</span><span class="type">dir</span></div>
+        <div class="tree-item tree-level-3" data-target="3" data-highlight="3"><span class="icon" style="color:var(--teal)">&#9744;</span><span class="name">*.md</span><span class="type">skill</span></div>
+        <div class="tree-item tree-level-2" data-target="4" data-highlight="4"><span class="icon" style="color:var(--peach)">&#128193;</span><span class="name">agents/</span><span class="type">dir</span></div>
+        <div class="tree-item tree-level-3" data-target="5" data-highlight="5"><span class="icon" style="color:var(--orange)">&#9744;</span><span class="name">*.md</span><span class="type">agent</span></div>
+        <div class="tree-item tree-level-2" data-target="6" data-highlight="6"><span class="icon" style="color:var(--pink)">&#128193;</span><span class="name">hooks/</span><span class="type">dir</span></div>
+        <div class="tree-item tree-level-3" data-target="7" data-highlight="7"><span class="icon" style="color:var(--coral)">&#9744;</span><span class="name">pre-command.sh</span><span class="type">hook</span></div>
+        <div class="tree-item tree-level-3" data-target="8" data-highlight="8"><span class="icon" style="color:var(--coral)">&#9744;</span><span class="name">post-command.sh</span><span class="type">hook</span></div>
+        <div class="tree-item tree-level-2" data-target="9" data-highlight="9"><span class="icon" style="color:var(--blue)">&#9744;</span><span class="name">mcp.json</span><span class="type">json</span></div>
+        <div class="tree-item tree-level-2" data-target="10" data-highlight="10"><span class="icon" style="color:var(--green)">&#128193;</span><span class="name">lsp/</span><span class="type">dir</span></div>
+        <div class="tree-item tree-level-2" data-target="11" data-highlight="11"><span class="icon" style="color:var(--red)">&#128193;</span><span class="name">monitors/</span><span class="type">dir</span></div>
+      </div>
+    </div>
+
+    <div class="manifest-preview" id="manifestPreview">
+      <div style="margin-bottom:0.5rem;color:var(--subtext);font-size:0.75rem;font-weight:600">plugin.json</div>
+      <div class="manifest-line hl-0"><span class="brack">{</span></div>
+      <div class="manifest-line hl-1"><span style="color:var(--yellow)">  "name"</span>: <span class="str-val">"my-plugin"</span>,</div>
+      <div class="manifest-line hl-1"><span style="color:var(--yellow)">  "version"</span>: <span class="str-val">"1.0.0"</span>,</div>
+      <div class="manifest-line hl-1"><span style="color:var(--yellow)">  "description"</span>: <span class="str-val">"My plugin"</span>,</div>
+      <div class="manifest-line hl-2"><span style="color:var(--yellow)">  "skills"</span>: <span class="brack">["skills/*.md"]</span>,</div>
+      <div class="manifest-line hl-4"><span style="color:var(--yellow)">  "agents"</span>: <span class="brack">["agents/*.md"]</span>,</div>
+      <div class="manifest-line hl-6"><span style="color:var(--yellow)">  "hooks"</span>: <span class="brack">{</span></div>
+      <div class="manifest-line hl-7">    <span style="color:var(--yellow)">"pre-command"</span>: <span class="str-val">"hooks/pre-command.sh"</span>,</div>
+      <div class="manifest-line hl-8">    <span style="color:var(--yellow)">"post-command"</span>: <span class="str-val">"hooks/post-command.sh"</span></div>
+      <div class="manifest-line hl-6">  <span class="brack">}</span>,</div>
+      <div class="manifest-line hl-9"><span style="color:var(--yellow)">  "mcp"</span>: <span class="str-val">"mcp.json"</span>,</div>
+      <div class="manifest-line hl-10"><span style="color:var(--yellow)">  "lsp"</span>: <span class="brack">{</span> <span style="color:var(--yellow)">"servers"</span>: <span class="brack">["lsp/*.json"]</span> <span class="brack">}</span>,</div>
+      <div class="manifest-line hl-11"><span style="color:var(--yellow)">  "monitors"</span>: <span class="brack">["monitors/*.json"]</span></div>
+      <div class="manifest-line hl-0"><span class="brack">}</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 3: What Plugins Can Include -->
+<section class="section" id="s3">
+  <div class="section-number" style="background:rgba(249,226,175,0.12);color:var(--yellow)">03</div>
+  <h2>What Plugins Can Include</h2>
+  <p>Six component types a plugin can bundle. Each becomes available to Claude Code on plugin load.</p>
+
+  <div class="hex-grid" id="hexGrid">
+    <div class="hex-item border-blue">
+      <div class="hex-glow" style="background:radial-gradient(circle,var(--blue),transparent)"></div>
+      <span class="hex-icon" style="color:var(--blue)">&#9881;</span>
+      <h4>Skills</h4>
+      <p>Markdown instructions that teach Claude Code new abilities, patterns, and workflows.</p>
+    </div>
+    <div class="hex-item border-green">
+      <div class="hex-glow" style="background:radial-gradient(circle,var(--green),transparent)"></div>
+      <span class="hex-icon" style="color:var(--green)">&#129302;</span>
+      <h4>Agents</h4>
+      <p>Specialized autonomous agents with their own instructions and tool access scopes.</p>
+    </div>
+    <div class="hex-item border-peach">
+      <div class="hex-glow" style="background:radial-gradient(circle,var(--peach),transparent)"></div>
+      <span class="hex-icon" style="color:var(--peach)">&#128279;</span>
+      <h4>Hooks</h4>
+      <p>Shell scripts that run before/after commands — for linting, formatting, and validation.</p>
+    </div>
+    <div class="hex-item border-yellow">
+      <div class="hex-glow" style="background:radial-gradient(circle,var(--yellow),transparent)"></div>
+      <span class="hex-icon" style="color:var(--yellow)">&#127760;</span>
+      <h4>MCP</h4>
+      <p>Model Context Protocol servers exposing external data sources, APIs, and databases.</p>
+    </div>
+    <div class="hex-item border-red">
+      <div class="hex-glow" style="background:radial-gradient(circle,var(--red),transparent)"></div>
+      <span class="hex-icon" style="color:var(--red)">&#9000;</span>
+      <h4>LSP</h4>
+      <p>Language Server Protocol integrations for real-time code intelligence in any language.</p>
+    </div>
+    <div class="hex-item border-pink">
+      <div class="hex-glow" style="background:radial-gradient(circle,var(--pink),transparent)"></div>
+      <span class="hex-icon" style="color:var(--pink)">&#128200;</span>
+      <h4>Monitors</h4>
+      <p>File watchers that trigger actions on file changes — rebuild, restart, notify.</p>
+    </div>
+  </div>
+</section>
+
+<!-- Section 4: Creating a Plugin -->
+<section class="section" id="s4">
+  <div class="section-number" style="background:rgba(137,180,250,0.12);color:var(--blue)">04</div>
+  <h2>Creating a Plugin</h2>
+  <p>Two approaches: use the scaffold command for a quick start, or create everything manually.</p>
+
+  <div class="tabs" id="createTabs">
+    <button class="tab-btn active" data-tab="scaffold" onclick="switchCreateTab('scaffold')">Scaffold</button>
+    <button class="tab-btn" data-tab="manual" onclick="switchCreateTab('manual')">Manual</button>
+  </div>
+
+  <div class="tab-content active" id="tabScaffold">
+    <div class="card" style="border-left:3px solid var(--green)">
+      <h3 style="color:var(--green)">&#9889; claude plugin init</h3>
+      <p>Run the interactive scaffold — it asks for plugin name, description, and which components to include.</p>
+      <div class="code-block">
+        <span class="cm"># Create a new plugin interactively</span>
+        <span style="display:block"><span class="kw">claude</span> plugin init my-plugin</span>
+        <br>
+        <span class="cm"># Move into your new plugin</span>
+        <span style="display:block"><span class="kw">cd</span> my-plugin</span>
+        <br>
+        <span class="cm"># Install it locally</span>
+        <span style="display:block"><span class="kw">claude</span> plugin add .</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="tab-content" id="tabManual">
+    <div class="card" style="border-left:3px solid var(--blue)">
+      <h3 style="color:var(--blue)">&#9998; Manual Creation</h3>
+      <p>Create the directory structure and <code style="color:var(--yellow)">plugin.json</code> yourself.</p>
+      <div class="code-block">
+        <span class="cm"># Create directories</span>
+        <span style="display:block"><span class="kw">mkdir -p</span> my-plugin/{skills,agents,hooks,lsp,monitors}</span>
+        <br>
+        <span class="cm"># Create plugin.json</span>
+        <span style="display:block"><span class="kw">cat</span> <span class="fn">&gt;</span> my-plugin/plugin.json <span class="fn">&lt;&lt;EOF</span></span>
+        <span>{</span>
+        <span>  <span class="prop">"name"</span>: <span class="str">"my-plugin"</span>,</span>
+        <span>  <span class="prop">"version"</span>: <span class="str">"1.0.0"</span>,</span>
+        <span>  <span class="prop">"skills"</span>: [<span class="str">"skills/*.md"</span>]</span>
+        <span>}</span>
+        <span style="display:block"><span class="fn">EOF</span></span>
+        <br>
+        <span class="cm"># Add a skill</span>
+        <span style="display:block"><span class="kw">touch</span> my-plugin/skills/my-skill.md</span>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- Section 5: Migrating Standalone → Plugin -->
+<section class="section" id="s5">
+  <div class="section-number" style="background:rgba(243,139,168,0.12);color:var(--red)">05</div>
+  <h2>Migrating Standalone → Plugin</h2>
+  <p>Moving from <code style="color:var(--red)">.claude/</code> dotfiles to a plugin is straightforward. Here's the mapping:</p>
+
+  <div class="mig-arrow-wrap">
+    <svg viewBox="0 0 460 40" style="max-width:460px">
+      <defs>
+        <linearGradient id="migGrad" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0%" stop-color="var(--red)"/>
+          <stop offset="50%" stop-color="var(--peach)"/>
+          <stop offset="100%" stop-color="var(--green)"/>
+        </linearGradient>
+        <filter id="migGlow"><feGaussianBlur stdDeviation="2"/></filter>
+      </defs>
+      <text x="30" y="24" font-size="13" fill="var(--red)" font-weight="600">.claude/</text>
+      <text x="370" y="24" font-size="13" fill="var(--green)" font-weight="600">plugin/</text>
+      <line x1="105" y1="20" x2="360" y2="20" stroke="url(#migGrad)" stroke-width="2.5" stroke-dasharray="6,3" filter="url(#migGlow)"/>
+      <polygon points="360,14 375,20 360,26" fill="var(--green)"/>
+    </svg>
+  </div>
+
+  <div class="table-wrap">
+    <table class="mig-table">
+      <thead><tr><th>Standalone Path</th><th></th><th>Plugin Path</th></tr></thead>
+      <tbody>
+        <tr><td class="old-path">.claude/skills/*.md</td><td class="arrow-cell">→</td><td class="new-path">my-plugin/skills/*.md</td></tr>
+        <tr><td class="old-path">.claude/agents/*.md</td><td class="arrow-cell">→</td><td class="new-path">my-plugin/agents/*.md</td></tr>
+        <tr><td class="old-path">.claude/hooks/pre-command</td><td class="arrow-cell">→</td><td class="new-path">my-plugin/hooks/pre-command.sh</td></tr>
+        <tr><td class="old-path">.claude/mcp.json</td><td class="arrow-cell">→</td><td class="new-path">my-plugin/mcp.json</td></tr>
+        <tr><td class="old-path">.claude/commands/*</td><td class="arrow-cell">→</td><td class="new-path">my-plugin/hooks/commands/*</td></tr>
+        <tr><td class="old-path">.claude/lsp/*</td><td class="arrow-cell">→</td><td class="new-path">my-plugin/lsp/*</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <div class="callout">
+    <div class="callout-title">&#128161; Migration Tips</div>
+    <p>Copy existing <code>.md</code> files verbatim — skills/agents need no changes. The <code>plugin.json</code> manifest is the only new file. Run <code>claude plugin add ./my-plugin</code> to test, then remove the old <code>.claude/</code> entries once verified.</p>
+  </div>
+</section>
+
+<!-- Section 6: Plugin Lifecycle -->
+<section class="section" id="s6">
+  <div class="section-number" style="background:rgba(148,226,213,0.12);color:var(--teal)">06</div>
+  <h2>Plugin Lifecycle</h2>
+  <p>What happens when Claude Code loads a plugin. Press the button to step through each phase.</p>
+
+  <div class="lifecycle-steps" id="lifecycleSteps">
+    <div class="lc-step" data-step="0">
+      <span class="lc-num">1</span>
+      <span class="lc-label">Discovery — Claude Code scans plugin directories</span>
+      <div class="lc-bar"></div>
+    </div>
+    <div class="lc-step" data-step="1">
+      <span class="lc-num">2</span>
+      <span class="lc-label">Manifest Read — <code style="font-size:0.8rem">plugin.json</code> parsed and validated</span>
+      <div class="lc-bar"></div>
+    </div>
+    <div class="lc-step" data-step="2">
+      <span class="lc-num">3</span>
+      <span class="lc-label">Skills Loaded — Markdown skills registered in memory</span>
+      <div class="lc-bar"></div>
+    </div>
+    <div class="lc-step" data-step="3">
+      <span class="lc-num">4</span>
+      <span class="lc-label">Agents Loaded — Agent definitions registered</span>
+      <div class="lc-bar"></div>
+    </div>
+    <div class="lc-step" data-step="4">
+      <span class="lc-num">5</span>
+      <span class="lc-label">Hooks Loaded — Pre/post command hooks wired</span>
+      <div class="lc-bar"></div>
+    </div>
+    <div class="lc-step" data-step="5">
+      <span class="lc-num">6</span>
+      <span class="lc-label">MCP Loaded — MCP servers connected and ready</span>
+      <div class="lc-bar"></div>
+    </div>
+    <div class="lc-step" data-step="6">
+      <span class="lc-num">7</span>
+      <span class="lc-label">Ready — Plugin fully active and awaiting commands</span>
+      <div class="lc-bar"></div>
+    </div>
+  </div>
+
+  <div class="lc-controls">
+    <button class="lc-btn primary" id="lcLoadBtn" onclick="startLifecycle()">&#9654; Load Plugin</button>
+    <button class="lc-btn secondary" id="lcResetBtn" onclick="resetLifecycle()">&#8635; Reset</button>
+  </div>
+</section>
+
+</div>
+
+<footer class="footer">
+  <p>Claude Code Plugins — Deep Visual Guide</p>
+  <p style="font-size:0.75rem;margin-top:0.3rem">Powered by the Plugin System &#9670; Beta</p>
+</footer>
+
+<script>
+// ===== Particles =====
+(function initParticles() {
+  var c = document.getElementById('particles');
+  var colors = ['#89b4fa','#a6e3a1','#f9e2af','#fab387','#b4befe','#f5c2e7','#94e2d5'];
+  for (var i = 0; i < 35; i++) {
+    var p = document.createElement('div');
+    p.className = 'particle';
+    var size = 2 + Math.random() * 5;
+    p.style.width = size + 'px';
+    p.style.height = size + 'px';
+    p.style.background = colors[Math.floor(Math.random() * colors.length)];
+    p.style.left = Math.random() * 100 + '%';
+    p.style.animationDuration = (12 + Math.random() * 18) + 's';
+    p.style.animationDelay = (Math.random() * 15) + 's';
+    c.appendChild(p);
+  }
+})();
+
+// ===== Intersection Observer for sections =====
+(function observeSections() {
+  var els = document.querySelectorAll('.section');
+  var observer = new IntersectionObserver(function(entries) {
+    entries.forEach(function(e) {
+      if (e.isIntersecting) {
+        e.target.classList.add('visible');
+        // Trigger hex grid animation if section 3
+        if (e.target.id === 's3') animateHexItems();
+      }
+    });
+  }, { threshold: 0.15 });
+  els.forEach(function(el) { observer.observe(el); });
+})();
+
+// ===== Hex Grid Animation =====
+function animateHexItems() {
+  var items = document.querySelectorAll('.hex-item');
+  items.forEach(function(el, i) {
+    setTimeout(function() {
+      el.classList.add('visible');
+    }, i * 120);
+  });
+}
+
+// ===== File Tree Hover =====
+(function initFileTree() {
+  var items = document.querySelectorAll('.tree-item');
+  var lines = document.querySelectorAll('.manifest-line');
+  items.forEach(function(item) {
+    item.addEventListener('mouseenter', function() {
+      var target = parseInt(item.getAttribute('data-highlight'));
+      lines.forEach(function(l) { l.classList.remove('highlight'); });
+      lines.forEach(function(l) {
+        if (l.classList.contains('hl-' + target)) l.classList.add('highlight');
+      });
+    });
+    item.addEventListener('mouseleave', function() {
+      lines.forEach(function(l) { l.classList.remove('highlight'); });
+    });
+  });
+})();
+
+// ===== Create Tabs =====
+function switchCreateTab(tab) {
+  var btns = document.querySelectorAll('#createTabs .tab-btn');
+  btns.forEach(function(b) { b.classList.remove('active'); });
+  document.querySelector('#createTabs .tab-btn[data-tab="' + tab + '"]').classList.add('active');
+  var contents = document.querySelectorAll('#s4 .tab-content');
+  contents.forEach(function(c) { c.classList.remove('active'); });
+  document.getElementById('tab' + tab.charAt(0).toUpperCase() + tab.slice(1)).classList.add('active');
+}
+
+// ===== Lifecycle =====
+var lcInterval = null;
+var lcStep = -1;
+
+function startLifecycle() {
+  if (lcInterval) return;
+  var btn = document.getElementById('lcLoadBtn');
+  btn.disabled = true;
+  btn.textContent = 'Loading...';
+  lcStep = -1;
+  nextLifecycleStep();
+}
+
+function nextLifecycleStep() {
+  lcStep++;
+  var steps = document.querySelectorAll('.lc-step');
+  if (lcStep >= steps.length) {
+    clearInterval(lcInterval);
+    lcInterval = null;
+    var btn = document.getElementById('lcLoadBtn');
+    btn.disabled = false;
+    btn.textContent = '\u25B6 Load Plugin';
+    return;
+  }
+  // Mark current as active
+  var current = steps[lcStep];
+  current.classList.add('active');
+  // Animate bar
+  var bar = current.querySelector('.lc-bar');
+  if (bar) bar.style.width = '100%';
+  // Schedule next step
+  lcInterval = setTimeout(function() {
+    current.classList.remove('active');
+    current.classList.add('done');
+    nextLifecycleStep();
+  }, 800);
+}
+
+function resetLifecycle() {
+  if (lcInterval) {
+    clearTimeout(lcInterval);
+    lcInterval = null;
+  }
+  lcStep = -1;
+  var steps = document.querySelectorAll('.lc-step');
+  steps.forEach(function(s) {
+    s.classList.remove('active', 'done');
+    var bar = s.querySelector('.lc-bar');
+    if (bar) bar.style.width = '0';
+  });
+  var btn = document.getElementById('lcLoadBtn');
+  btn.disabled = false;
+  btn.textContent = '\u25B6 Load Plugin';
+}
+
+// ===== Initial hex check (if visible on load) =====
+(function checkHexVisibility() {
+  var s3 = document.getElementById('s3');
+  if (s3 && s3.classList.contains('visible')) animateHexItems();
+})();
+</script>
+
+</body>
+</html>

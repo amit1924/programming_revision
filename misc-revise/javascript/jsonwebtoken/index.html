@@ -1,0 +1,1180 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JWT · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--radius:8px;--coral:#f28fad;
+  --orange:#f8bd7f;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+a{color:var(--blue)}
+
+/* Nav */
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100;backdrop-filter:blur(6px)}
+nav .logo{font-weight:700;font-size:1.2rem;color:var(--yellow)}
+nav .logo span{color:var(--blue)}
+nav .tag{font-size:.75rem;color:var(--muted);margin-left:auto}
+
+.container{max-width:1100px;margin:0 auto;padding:24px 20px}
+
+/* Section header */
+.section-title{font-size:1.5rem;font-weight:700;margin:40px 0 16px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.8rem;padding:2px 10px;border-radius:20px}
+
+/* Card */
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.card h3{color:var(--blue);margin-bottom:12px;font-size:1.05rem}
+.card p{color:var(--muted);font-size:.92rem;margin-bottom:10px}
+.card p strong{color:var(--text)}
+
+/* Grid */
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+
+/* Token parts */
+.token-display{font-family:'Fira Code','Cascadia Code',monospace;font-size:.82rem;word-break:break-all;padding:16px;background:#0a0a14;border-radius:var(--radius);border:1px solid var(--surface2);line-height:1.8}
+.token-part{padding:2px 6px;border-radius:4px;cursor:pointer;transition:.15s}
+.token-part:hover{opacity:.8}
+.header-part{background:rgba(137,180,250,.18);color:var(--blue)}
+.payload-part{background:rgba(166,227,161,.18);color:var(--green)}
+.sig-part{background:rgba(243,139,168,.18);color:var(--red)}
+.part-label{font-size:.72rem;color:var(--muted);margin-top:6px;display:flex;gap:14px;flex-wrap:wrap}
+.part-label span{display:inline-flex;align-items:center;gap:4px}
+
+/* Decoded sections */
+.decoded-box{background:#0a0a14;border-radius:var(--radius);padding:14px;font-family:monospace;font-size:.85rem;border:1px solid var(--surface2);margin-top:8px;white-space:pre-wrap;word-break:break-all}
+.decoded-header{border-left:3px solid var(--blue);padding-left:10px}
+.decoded-payload{border-left:3px solid var(--green);padding-left:10px}
+.decoded-sig{border-left:3px solid var(--red);padding-left:10px}
+
+/* Interactive form */
+.form-row{display:flex;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.form-row label{min-width:90px;color:var(--muted);font-size:.88rem;display:flex;align-items:center}
+.form-row input,.form-row textarea,.form-row select{
+  flex:1;padding:8px 12px;border-radius:6px;border:1px solid var(--surface2);
+  background:var(--bg);color:var(--text);font-size:.88rem;font-family:monospace;outline:none
+}
+.form-row input:focus,.form-row textarea:focus{border-color:var(--blue)}
+.form-row textarea{min-height:60px;resize:vertical}
+.btn{background:var(--blue);color:#0f0f17;border:none;padding:8px 18px;border-radius:6px;font-weight:600;cursor:pointer;font-size:.85rem;transition:.15s}
+.btn:hover{opacity:.85}
+.btn.green{background:var(--green)}
+.btn.red{background:var(--red);color:white}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}
+.btn.outline:hover{background:var(--surface2)}
+
+/* Flow diagram */
+.flow{display:flex;align-items:center;justify-content:center;gap:6px;flex-wrap:wrap;padding:16px 0}
+.flow-node{background:var(--surface2);padding:10px 16px;border-radius:var(--radius);font-size:.82rem;text-align:center;min-width:80px}
+.flow-node.highlight{background:var(--blue);color:#0f0f17;font-weight:600}
+.flow-node.green{background:var(--green);color:#0f0f17}
+.flow-node.red{background:var(--red);color:#0f0f17}
+.flow-node.orange{background:var(--orange);color:#0f0f17}
+.flow-arrow{color:var(--muted);font-size:1.1rem}
+
+/* Step indicator */
+.steps{display:flex;gap:0;margin:16px 0;overflow-x:auto}
+.step{flex:1;min-width:120px;padding:10px;background:var(--surface2);border-right:2px solid var(--bg);font-size:.78rem;text-align:center;position:relative}
+.step:last-child{border-right:none}
+.step .num{display:block;font-weight:700;font-size:1rem;color:var(--muted)}
+.step.active{background:var(--blue);color:#0f0f17}
+.step.active .num{color:#0f0f17}
+.step.done{background:var(--green);color:#0f0f17}
+.step.done .num{color:#0f0f17}
+.step.fail{background:var(--red)}
+
+/* Comparison table */
+table{width:100%;border-collapse:collapse;font-size:.85rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.78rem;text-transform:uppercase;letter-spacing:.5px}
+td{color:var(--text)}
+tr:hover td{background:rgba(255,255,255,.02)}
+.badge{display:inline-block;padding:2px 8px;border-radius:12px;font-size:.72rem;font-weight:600}
+.badge.green{background:rgba(166,227,161,.2);color:var(--green)}
+.badge.red{background:rgba(243,139,168,.2);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.2);color:var(--blue)}
+.badge.yellow{background:rgba(249,226,175,.2);color:var(--yellow)}
+
+/* Storage cards */
+.storage-card{border:2px solid var(--surface2);border-radius:var(--radius);padding:16px;transition:.2s;cursor:pointer}
+.storage-card.selected{border-color:var(--blue);background:rgba(137,180,250,.06)}
+.storage-card h4{color:var(--text);margin-bottom:4px;font-size:.92rem}
+.storage-card .risk{font-size:.78rem;margin-top:6px}
+.storage-card .risk.high{color:var(--red)}
+.storage-card .risk.medium{color:var(--yellow)}
+.storage-card .risk.low{color:var(--green)}
+
+/* Middleware flow */
+.mw-flow{display:flex;flex-direction:column;gap:4px;padding:8px 0}
+.mw-step{display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;background:var(--bg);border:1px solid var(--surface2);transition:.15s}
+.mw-step .step-icon{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:700;flex-shrink:0}
+.mw-step .step-icon.check{background:rgba(166,227,161,.2);color:var(--green)}
+.mw-step .step-icon.x{background:rgba(243,139,168,.2);color:var(--red)}
+.mw-step .step-icon.lock{background:rgba(249,226,175,.2);color:var(--yellow)}
+.mw-step .step-icon.key{background:rgba(137,180,250,.2);color:var(--blue)}
+.mw-step .step-desc{flex:1;font-size:.85rem}
+.mw-step .step-status{font-size:.75rem;font-weight:600}
+.mw-step.pass{border-left:3px solid var(--green)}
+.mw-step.fail{border-left:3px solid var(--red)}
+.mw-step.current{background:rgba(137,180,250,.08);border-color:var(--blue)}
+
+/* Arrow connector */
+.mw-arrow{text-align:center;color:var(--muted);font-size:.7rem;padding:2px 0}
+
+/* Verification animation */
+.verify-step{padding:14px;border-radius:var(--radius);margin-bottom:8px;background:var(--bg);border:1px solid var(--surface2);transition:.3s}
+.verify-step.verify-ok{border-left:4px solid var(--green);background:rgba(166,227,161,.04)}
+.verify-step.verify-fail{border-left:4px solid var(--red);background:rgba(243,139,168,.04)}
+.verify-step.verify-current{border-left:4px solid var(--blue);background:rgba(137,180,250,.06)}
+.verify-step h4{font-size:.88rem;margin-bottom:4px}
+.verify-step p{font-size:.8rem;color:var(--muted)}
+
+/* Code blocks */
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.8rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .fn{color:var(--yellow)}
+
+/* Toggle */
+.toggle-group{display:flex;gap:6px;margin:10px 0;flex-wrap:wrap}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.78rem;transition:.15s}
+.toggle-btn.active{background:var(--blue);color:#0f0f17;border-color:var(--blue);font-weight:600}
+
+/* Secret reveal */
+.secret-box{display:flex;align-items:center;gap:10px;padding:10px 14px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin:8px 0}
+.secret-box input{flex:1;background:transparent;border:none;color:var(--text);font-family:monospace;font-size:.85rem;outline:none}
+
+/* Highlight box */
+.highlight-box{background:rgba(249,226,175,.06);border:1px solid rgba(249,226,175,.2);border-radius:var(--radius);padding:14px;margin:12px 0}
+.highlight-box h4{color:var(--yellow);font-size:.9rem;margin-bottom:6px}
+
+/* Status indicator */
+.status-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:6px}
+.status-dot.green{background:var(--green)}
+.status-dot.red{background:var(--red)}
+.status-dot.yellow{background:var(--yellow)}
+
+/* Responsive slider */
+.slider-group{display:flex;align-items:center;gap:12px;margin:10px 0}
+.slider-group input[type=range]{flex:1;accent-color:var(--blue)}
+.slider-group .val{font-family:monospace;font-size:.82rem;color:var(--blue);min-width:30px;text-align:right}
+
+/* Cookie jar visual */
+.cookie-jar{display:flex;gap:8px;flex-wrap:wrap;padding:10px 0}
+.cookie{display:inline-flex;align-items:center;gap:6px;padding:6px 12px;background:rgba(249,226,175,.1);border:1px solid rgba(249,226,175,.2);border-radius:20px;font-size:.78rem}
+.cookie .icon{font-size:1rem}
+
+/* Info callout */
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.85rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.04)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.04)}
+
+/* Tag */
+.tag{font-size:.7rem;padding:2px 8px;border-radius:12px;background:var(--surface2);color:var(--muted)}
+.tag.secure{background:rgba(166,227,161,.15);color:var(--green)}
+.tag.vuln{background:rgba(243,139,168,.15);color:var(--red)}
+
+/* Interaction area */
+.interact-area{min-height:60px;padding:12px;background:var(--bg);border-radius:6px;border:1px dashed var(--surface2);margin:8px 0;font-size:.85rem}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>JWT</span>·deep</div>
+  <div style="font-size:.78rem;color:var(--muted)">JSON Web Token · interactive visual guide</div>
+  <div class="tag">v1.0</div>
+</nav>
+
+<div class="container">
+
+<!-- ============= INTRO ============= -->
+<div class="section-title"><span class="num">0</span> What is a JWT?</div>
+<div class="card">
+  <p>A <strong>JSON Web Token (JWT)</strong> is a compact, URL-safe string that carries claims between parties. It is <em>self-contained</em> — the server does not need a database session lookup because all the info is <em>inside</em> the token. The server only needs to <strong>verify the signature</strong>.</p>
+  <div class="grid2" style="margin-top:12px">
+    <div>
+      <p><strong>Anatomy</strong></p>
+      <div class="token-display" id="introToken">
+        <span class="token-part header-part" title="Header: algorithm & type">eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9</span>.<span class="token-part payload-part" title="Payload: your data">eyJzdWIiOiIxMjM0NTYiLCJuYW1lIjoiQWxpY2UiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MTcwMDAwMzYwMH0</span>.<span class="token-part sig-part" title="Signature: verifies integrity">dGhpcyBpcyBhIHNpZ25hdHVyZQ</span>
+      </div>
+      <div class="part-label">
+        <span style="color:var(--blue)">&#9679; Header</span>
+        <span style="color:var(--green)">&#9679; Payload</span>
+        <span style="color:var(--red)">&#9679; Signature</span>
+      </div>
+    </div>
+    <div>
+      <p><strong>Key properties</strong></p>
+      <div style="font-size:.88rem;line-height:2">
+        <div>&#10003; <strong>Stateless</strong> — no server-side session</div>
+        <div>&#10003; <strong>Compact</strong> — URL-safe, works in HTTP headers</div>
+        <div>&#10003; <strong>Self-contained</strong> — carries user data</div>
+        <div>&#10007; <strong>Not encrypted</strong> — just Base64-encoded!</div>
+        <div>&#9888; <strong>Must verify</strong> — trust only the signature</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= 1. STRUCTURE ============= -->
+<div class="section-title"><span class="num">1</span> JWT Structure · Three Parts</div>
+
+<div class="grid3">
+  <div class="card" style="border-top:3px solid var(--blue)">
+    <h3>Header <span class="tag" style="float:right">Algorithm</span></h3>
+    <p>Contains the signing algorithm and token type.</p>
+    <div class="code" style="font-size:.78rem">{
+  "alg": "HS256",
+  "typ": "JWT"
+}</div>
+    <div style="margin-top:8px;font-size:.82rem">
+      <strong>Common algorithms:</strong><br>
+      <span class="badge blue">HS256</span> HMAC + SHA-256 (symmetric)<br>
+      <span class="badge blue">RS256</span> RSA + SHA-256 (asymmetric)<br>
+      <span class="badge blue">ES256</span> ECDSA + SHA-256
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>Payload <span class="tag" style="float:right">Claims</span></h3>
+    <p>The data you want to transmit — NEVER put secrets here.</p>
+    <div class="code" style="font-size:.78rem">{
+  "sub": "123456",
+  "name": "Alice",
+  "iat": 1700000000,
+  "exp": 1700003600
+}</div>
+    <div style="margin-top:8px;font-size:.82rem">
+      <strong>Registered claims:</strong><br>
+      <span class="badge yellow">iss</span> issuer &nbsp;
+      <span class="badge yellow">sub</span> subject &nbsp;
+      <span class="badge yellow">iat</span> issued at &nbsp;
+      <span class="badge yellow">exp</span> expiration &nbsp;
+      <span class="badge yellow">aud</span> audience
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>Signature <span class="tag" style="float:right">Verification</span></h3>
+    <p>Cryptographic proof — prevents tampering.</p>
+    <div class="code" style="font-size:.78rem">HMACSHA256(
+  base64Url(header) + "." +
+  base64Url(payload),
+  secret
+)</div>
+    <div style="margin-top:8px;font-size:.82rem">
+      <span class="badge green">&#10003; If signature matches → token is valid</span><br>
+      <span class="badge red">&#10007; If not → token was tampered with</span>
+    </div>
+  </div>
+</div>
+
+<!-- Live Decode -->
+<div class="card">
+  <h3>&#9654; Live Token Decoder</h3>
+  <p>Paste a JWT or use the example — see each part decoded in real time.</p>
+  <div class="form-row">
+    <label>JWT</label>
+    <input type="text" id="decoderInput" value="eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTYiLCJuYW1lIjoiQWxpY2UiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MTcwMDAwMzYwMH0.XdummySignature" style="font-family:monospace">
+  </div>
+  <div class="grid3" id="decodedParts">
+    <div>
+      <div style="font-size:.78rem;color:var(--blue);font-weight:600;margin-bottom:4px">HEADER</div>
+      <div class="decoded-box decoded-header" id="decodedHeader">Click "Decode"</div>
+    </div>
+    <div>
+      <div style="font-size:.78rem;color:var(--green);font-weight:600;margin-bottom:4px">PAYLOAD</div>
+      <div class="decoded-box decoded-payload" id="decodedPayload">Click "Decode"</div>
+    </div>
+    <div>
+      <div style="font-size:.78rem;color:var(--red);font-weight:600;margin-bottom:4px">SIGNATURE <span style="color:var(--muted);font-weight:400">(raw)</span></div>
+      <div class="decoded-box decoded-sig" id="decodedSig">Click "Decode"</div>
+    </div>
+  </div>
+  <div style="display:flex;gap:8px;margin-top:10px">
+    <button class="btn" id="decodeBtn">Decode</button>
+    <button class="btn outline" id="decodeResetBtn">Reset</button>
+  </div>
+</div>
+
+<div class="callout danger">
+  <strong>&#9888; Critical:</strong> Anyone can read the payload! JWT is <em>signed, not encrypted</em>. Base64Url decode is trivial (done in the browser). Never store passwords, tokens, or secrets in the payload.
+</div>
+
+<!-- ============= 2. GENERATION ============= -->
+<div class="section-title"><span class="num">2</span> Token Generation · Interactive</div>
+
+<div class="card">
+  <h3>&#9654; Build Your Own Token</h3>
+  <p>Fill in the fields and watch the JWT get constructed piece by piece.</p>
+
+  <div class="form-row">
+    <label>Algorithm</label>
+    <select id="genAlg">
+      <option value="HS256">HS256 (HMAC + SHA-256)</option>
+      <option value="HS384">HS384</option>
+      <option value="HS512">HS512</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label>Subject (sub)</label>
+    <input type="text" id="genSub" value="user_42">
+  </div>
+  <div class="form-row">
+    <label>Name</label>
+    <input type="text" id="genName" value="Alice">
+  </div>
+  <div class="form-row">
+    <label>Role</label>
+    <select id="genRole">
+      <option value="admin">admin</option>
+      <option value="user" selected>user</option>
+      <option value="moderator">moderator</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label>Expires in</label>
+    <select id="genExp">
+      <option value="3600">1 hour</option>
+      <option value="86400" selected>24 hours</option>
+      <option value="604800">7 days</option>
+      <option value="2592000">30 days</option>
+    </select>
+  </div>
+  <div class="form-row">
+    <label>Secret</label>
+    <input type="text" id="genSecret" value="my-secret-key-change-me" style="font-family:monospace">
+  </div>
+
+  <div style="margin-top:16px">
+    <div style="font-size:.78rem;color:var(--muted);margin-bottom:6px">Generated Token:</div>
+    <div class="token-display" id="genOutput">
+      <span class="token-part header-part" id="genHeader">eyJ...</span>.<span class="token-part payload-part" id="genPayload">eyJ...</span>.<span class="token-part sig-part" id="genSignature">xxxx</span>
+    </div>
+    <div class="part-label" style="margin-top:8px">
+      <span style="color:var(--blue)">&#9679; Header (Base64url of <code>{"alg":"HS256","typ":"JWT"}</code>)</span>
+      <span style="color:var(--green)">&#9679; Payload (Base64url of your data)</span>
+      <span style="color:var(--red)">&#9679; Signature (HMAC of header + "." + payload)</span>
+    </div>
+  </div>
+
+  <div class="grid2" style="margin-top:14px">
+    <div>
+      <div style="font-size:.78rem;color:var(--blue);font-weight:600">Raw Header (JSON)</div>
+      <div class="code" id="genRawHeader" style="font-size:.75rem;margin-top:4px">{"alg":"HS256","typ":"JWT"}</div>
+    </div>
+    <div>
+      <div style="font-size:.78rem;color:var(--green);font-weight:600">Raw Payload (JSON)</div>
+      <div class="code" id="genRawPayload" style="font-size:.75rem;margin-top:4px">{ ... }</div>
+    </div>
+  </div>
+</div>
+
+<div class="callout">
+  <strong>&#9432; How generation works:</strong>
+  <ol style="margin-top:6px;padding-left:20px;font-size:.82rem">
+    <li>Create header JSON <code>{"alg":"HS256","typ":"JWT"}</code></li>
+    <li>Create payload JSON with your claims + <code>iat</code> + <code>exp</code></li>
+    <li>Base64url-encode both separately</li>
+    <li>Concatenate as <code>base64Header.base64Payload</code></li>
+    <li>Sign the string with HMAC using your secret</li>
+    <li>Base64url-encode the signature and append as third part</li>
+  </ol>
+</div>
+
+<!-- ============= 3. SENDING TO FRONTEND ============= -->
+<div class="section-title"><span class="num">3</span> Sending Token to Frontend</div>
+
+<div class="card">
+  <h3>&#9654; The Login Flow</h3>
+  <p>When a user logs in, the server generates a JWT and sends it back. Here are the three common strategies:</p>
+
+  <div class="grid3" style="margin-top:12px">
+    <div class="storage-card" data-storage="json" onclick="selectStorage('json')">
+      <h4>JSON Response</h4>
+      <div class="code" style="font-size:.72rem;margin:6px 0">{
+  "token": "eyJ..."
+}</div>
+      <div><span class="badge green">Simple</span> <span class="badge yellow">Manual</span></div>
+      <div class="risk high">&#9888; XSS vulnerable</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Frontend stores in localStorage</div>
+    </div>
+    <div class="storage-card" data-storage="cookie" onclick="selectStorage('cookie')">
+      <h4>HTTP-Only Cookie</h4>
+      <div class="code" style="font-size:.72rem;margin:6px 0">Set-Cookie: token=eyJ...; HttpOnly; Secure; SameSite=Strict</div>
+      <div><span class="badge green">Secure</span> <span class="badge green">Auto-sent</span></div>
+      <div class="risk low">&#10003; XSS immune</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Browser handles automatically</div>
+    </div>
+    <div class="storage-card" data-storage="both" onclick="selectStorage('both')">
+      <h4>Both (Hybrid)</h4>
+      <div style="font-size:.82rem;margin:6px 0">Token in cookie + payload in response</div>
+      <div><span class="badge yellow">Complex</span> <span class="badge green">Best</span></div>
+      <div class="risk low">&#10003; CSRF protection needed</div>
+      <div style="font-size:.78rem;color:var(--muted);margin-top:4px">Cookie for auth, JSON for UX</div>
+    </div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>&#9654; Flow: Login → Token → Frontend</h3>
+    <div class="flow">
+      <div class="flow-node" style="background:var(--green);color:#0f0f17">&#128273; Login</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="background:var(--blue);color:#0f0f17">Server</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node highlight">JWT</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="background:var(--green);color:#0f0f17">Frontend</div>
+    </div>
+    <div class="code" style="font-size:.78rem">
+<span class="comment">// Server-side (Node.js example)</span>
+<span class="keyword">const</span> token = jwt.sign(
+  { sub: user.id, name: user.name, role: user.role },
+  secret,
+  { expiresIn: <span class="string">'24h'</span> }
+);
+res.json({ token });
+    </div>
+  </div>
+  <div class="card">
+    <h3>&#9654; Flow: Login → Cookie → Frontend</h3>
+    <div class="flow">
+      <div class="flow-node" style="background:var(--green);color:#0f0f17">&#128273; Login</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="background:var(--blue);color:#0f0f17">Server</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node highlight">Cookie</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="background:var(--green);color:#0f0f17">Browser</div>
+    </div>
+    <div class="code" style="font-size:.78rem">
+<span class="comment">// Server-side with cookie</span>
+res.cookie(<span class="string">'token'</span>, token, {
+  httpOnly: <span class="keyword">true</span>,
+  secure: <span class="keyword">true</span>,
+  sameSite: <span class="string">'strict'</span>,
+  maxAge: <span class="number">86400000</span>
+});
+res.json({ message: <span class="string">'Logged in'</span> });
+    </div>
+  </div>
+</div>
+
+<!-- ============= 4. STORAGE ============= -->
+<div class="section-title"><span class="num">4</span> Where to Store? · Cookies vs localStorage</div>
+
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>localStorage <span class="tag vuln" style="float:right">XSS vulnerable</span></h3>
+    <p>Simple but dangerous. Any injected script can steal your token.</p>
+    <div class="code" style="font-size:.78rem">
+<span class="comment">// Save</span>
+localStorage.setItem(<span class="string">'token'</span>, token);
+<span class="comment">// Send (manual)</span>
+fetch(url, {
+  headers: {
+    <span class="string">'Authorization'</span>:
+      <span class="string">'Bearer '</span> + localStorage.getItem(<span class="string">'token'</span>)
+  }
+});
+    </div>
+    <div style="margin-top:8px">
+      <div><span class="status-dot red"></span> XSS: <strong>any script</strong> reads it</div>
+      <div><span class="status-dot yellow"></span> CSRF: <strong>not vulnerable</strong> (manual send)</div>
+      <div><span class="status-dot red"></span> Must send <strong>manually</strong> every request</div>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>HTTP-Only Cookie <span class="tag secure" style="float:right">XSS immune</span></h3>
+    <p>Browser sends automatically. Cannot be read by JavaScript.</p>
+    <div class="code" style="font-size:.78rem">
+<span class="comment">// Cookie set by server:</span>
+Set-Cookie: token=eyJ...;
+  HttpOnly; Secure; SameSite=Strict
+
+<span class="comment">// Frontend: nothing to do!</span>
+<span class="comment">// Browser auto-sends on every request</span>
+fetch(url); <span class="comment">// cookie goes with it</span>
+    </div>
+    <div style="margin-top:8px">
+      <div><span class="status-dot green"></span> XSS: <strong>immune</strong> (JS cannot access)</div>
+      <div><span class="status-dot yellow"></span> CSRF: <strong>mitigate with SameSite</strong></div>
+      <div><span class="status-dot green"></span> Auto-sent by browser</div>
+    </div>
+  </div>
+</div>
+
+<div class="highlight-box">
+  <h4>&#9888; The Golden Rule</h4>
+  <p style="font-size:.85rem;margin:0">If you must store the token in the browser, use <strong>HTTP-Only cookies</strong>. localStorage is convenient but one XSS bug = all tokens stolen. If you use cookies, set <code>SameSite=Strict</code> to prevent CSRF and use CSRF tokens for extra safety.</p>
+</div>
+
+<!-- ============= 5. SENDING TO SERVER ============= -->
+<div class="section-title"><span class="num">5</span> Sending Token to Server · Bearer vs Cookie</div>
+
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--blue)">
+    <h3>Bearer Token <span class="tag" style="float:right">Authorization header</span></h3>
+    <div class="code" style="font-size:.78rem">
+<span class="comment">// Request</span>
+GET /api/protected HTTP/1.1
+Host: example.com
+<span style="color:var(--yellow);font-weight:600">Authorization: Bearer eyJhbGciOiJIUzI1NiIs...</span>
+    </div>
+    <div style="margin-top:8px;font-size:.82rem">
+      <strong>How it works:</strong>
+      <ol style="padding-left:18px;margin-top:4px;font-size:.8rem">
+        <li>Frontend manually reads token from storage</li>
+        <li>Attaches as <code>Authorization: Bearer &lt;token&gt;</code></li>
+        <li>Server extracts and verifies</li>
+      </ol>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>Cookie Token <span class="tag" style="float:right">Automatic</span></h3>
+    <div class="code" style="font-size:.78rem">
+<span class="comment">// Request (cookie auto-sent)</span>
+GET /api/protected HTTP/1.1
+Host: example.com
+<span style="color:var(--green);font-weight:600">Cookie: token=eyJhbGciOiJIUzI1NiIs...</span>
+    </div>
+    <div style="margin-top:8px;font-size:.82rem">
+      <strong>How it works:</strong>
+      <ol style="padding-left:18px;margin-top:4px;font-size:.8rem">
+        <li>Browser automatically attaches cookie</li>
+        <li>Server reads from <code>req.cookies.token</code></li>
+        <li>No frontend code needed</li>
+      </ol>
+    </div>
+  </div>
+</div>
+
+<!-- Comparison Table -->
+<div class="card">
+  <h3>&#9654; Bearer vs Cookie · Side by Side</h3>
+  <table>
+    <tr><th>Feature</th><th>Bearer (Authorization header)</th><th>HTTP-Only Cookie</th></tr>
+    <tr><td>XSS protection</td><td><span class="badge red">Vulnerable</span> (token in JS memory)</td><td><span class="badge green">Immune</span> (JS cannot read)</td></tr>
+    <tr><td>CSRF protection</td><td><span class="badge green">Built-in</span> (not auto-sent)</td><td><span class="badge yellow">Need SameSite</span> or CSRF token</td></tr>
+    <tr><td>Mobile/API clients</td><td><span class="badge green">Easy</span> (just set header)</td><td><span class="badge red">Hard</span> (cookies need special handling)</td></tr>
+    <tr><td>Auto-send</td><td><span class="badge red">No</span> (manual each request)</td><td><span class="badge green">Yes</span> (browser does it)</td></tr>
+    <tr><td>Logout (server-side)</td><td><span class="badge red">Hard</span> (need blacklist/RT)</td><td><span class="badge green">Easy</span> (clear cookie)</td></tr>
+    <tr><td>Cross-origin requests</td><td><span class="badge green">Works</span> (with CORS header)</td><td><span class="badge yellow">Complex</span> (SameSite + credentials)</td></tr>
+  </table>
+</div>
+
+<!-- ============= 6. MIDDLEWARE ============= -->
+<div class="section-title"><span class="num">6</span> Middleware Verification · Step by Step</div>
+
+<div class="card">
+  <h3>&#9654; The Middleware Pipeline</h3>
+  <p>When a request arrives, the auth middleware runs through these checks in order. One fail = immediate rejection.</p>
+
+  <div class="mw-flow" id="middlewareFlow">
+    <div class="mw-step current" data-mw="1">
+      <div class="step-icon key">1</div>
+      <div class="step-desc"><strong>Extract token</strong><br><span style="font-size:.75rem;color:var(--muted)">From <code>Authorization: Bearer ...</code> or <code>Cookie</code></span></div>
+      <div class="step-status" style="color:var(--blue)">&#8987; waiting</div>
+    </div>
+    <div class="mw-arrow">&#8595;</div>
+    <div class="mw-step" data-mw="2">
+      <div class="step-icon check">2</div>
+      <div class="step-desc"><strong>Check token exists</strong><br><span style="font-size:.75rem;color:var(--muted)">Reject if missing or empty</span></div>
+      <div class="step-status" style="color:var(--muted)">&#8722;</div>
+    </div>
+    <div class="mw-arrow">&#8595;</div>
+    <div class="mw-step" data-mw="3">
+      <div class="step-icon check">3</div>
+      <div class="step-desc"><strong>Verify signature</strong><br><span style="font-size:.75rem;color:var(--muted)">Re-compute HMAC and compare</span></div>
+      <div class="step-status" style="color:var(--muted)">&#8722;</div>
+    </div>
+    <div class="mw-arrow">&#8595;</div>
+    <div class="mw-step" data-mw="4">
+      <div class="step-icon check">4</div>
+      <div class="step-desc"><strong>Check expiration (exp)</strong><br><span style="font-size:.75rem;color:var(--muted)">Reject if <code>exp &lt; now</code></span></div>
+      <div class="step-status" style="color:var(--muted)">&#8722;</div>
+    </div>
+    <div class="mw-arrow">&#8595;</div>
+    <div class="mw-step" data-mw="5">
+      <div class="step-icon check">5</div>
+      <div class="step-desc"><strong>Attach user to request</strong><br><span style="font-size:.75rem;color:var(--muted)"><code>req.user = decodedPayload</code></span></div>
+      <div class="step-status" style="color:var(--muted)">&#8722;</div>
+    </div>
+    <div class="mw-arrow">&#8595;</div>
+    <div class="mw-step" data-mw="6">
+      <div class="step-icon lock">6</div>
+      <div class="step-desc"><strong>Route handler executes</strong><br><span style="font-size:.75rem;color:var(--muted)">Request is authenticated</span></div>
+      <div class="step-status" style="color:var(--muted)">&#8722;</div>
+    </div>
+  </div>
+
+  <div class="toggle-group" style="margin-top:10px">
+    <button class="toggle-btn" onclick="playMiddleware()">&#9654; Play All</button>
+    <button class="toggle-btn" onclick="resetMiddleware()">Reset</button>
+    <button class="toggle-btn" onclick="failMiddleware(3)">Fail at Signature</button>
+    <button class="toggle-btn" onclick="failMiddleware(4)">Fail at Expiry</button>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>&#9654; Middleware Code (Node.js + Express)</h3>
+    <div class="code" style="font-size:.74rem;line-height:1.6">
+<span class="keyword">const</span> jwt = <span class="fn">require</span>(<span class="string">'jsonwebtoken'</span>);
+
+<span class="keyword">function</span> <span class="fn">authMiddleware</span>(req, res, next) {
+  <span class="comment">// 1. Extract token</span>
+  <span class="keyword">const</span> header = req.headers.authorization;
+  <span class="keyword">const</span> token = header?.<span class="fn">startsWith</span>(<span class="string">'Bearer '</span>)
+    ? header.<span class="fn">slice</span>(<span class="number">7</span>)
+    : req.cookies?.token;
+
+  <span class="comment">// 2. Check exists</span>
+  <span class="keyword">if</span> (!token) {
+    <span class="keyword">return</span> res.status(<span class="number">401</span>).json({ error: <span class="string">'No token'</span> });
+  }
+
+  <span class="comment">// 3. Verify signature + 4. Check exp</span>
+  <span class="keyword">try</span> {
+    <span class="keyword">const</span> decoded = jwt.verify(token, SECRET);
+    <span class="comment">// 5. Attach user</span>
+    req.user = decoded;
+    <span class="comment">// 6. Proceed</span>
+    next();
+  } <span class="keyword">catch</span> (err) {
+    res.status(<span class="number">401</span>).json({ error: <span class="string">'Invalid token'</span> });
+  }
+}
+    </div>
+  </div>
+  <div class="card">
+    <h3>&#9654; What the Server Sees</h3>
+    <div id="mwDebug" style="font-size:.82rem;font-family:monospace;line-height:1.8;padding:8px;background:var(--bg);border-radius:6px;min-height:120px">
+      <span style="color:var(--muted)">// Click "Play All" or "Fail at..." to see debug output</span>
+    </div>
+    <div style="margin-top:8px">
+      <div id="mwResult" style="font-size:.88rem;font-weight:600"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============= 7. VERIFICATION DEEP DIVE ============= -->
+<div class="section-title"><span class="num">7</span> Verification Deep Dive · How JWT.verify() Works</div>
+
+<div class="card">
+  <h3>&#9654; Step-by-Step Verification</h3>
+  <p>What actually happens when you call <code>jwt.verify(token, secret)</code>?</p>
+
+  <div id="verifySteps">
+    <div class="verify-step verify-current" data-v="1">
+      <h4>1. Split the token</h4>
+      <p>Split by <code>.</code> into 3 parts: header, payload, signature.</p>
+      <div class="code" style="font-size:.75rem">
+<span class="keyword">const</span> parts = token.<span class="fn">split</span>(<span class="string">'.'</span>);
+<span class="comment">// parts[0] = base64Header</span>
+<span class="comment">// parts[1] = base64Payload</span>
+<span class="comment">// parts[2] = base64Signature</span>
+      </div>
+    </div>
+    <div class="verify-step" data-v="2">
+      <h4>2. Base64url-decode header</h4>
+      <p>Read the algorithm from the header (e.g., <code>"alg": "HS256"</code>). <strong>Security:</strong> you must validate the algorithm — never accept <code>"none"</code>!</p>
+      <div class="callout danger" style="margin:6px 0;padding:8px 12px;font-size:.78rem">
+        <strong>&#9888; Algorithm confusion attack:</strong> If attacker changes <code>alg</code> from <code>HS256</code> to <code>none</code>, some libraries skip verification! Always check the algorithm server-side.
+      </div>
+    </div>
+    <div class="verify-step" data-v="3">
+      <h4>3. Recompute the signature</h4>
+      <p>Take <code>parts[0] + "." + parts[1]</code> and sign it with your secret using the algorithm from the header.</p>
+      <div class="code" style="font-size:.75rem">
+<span class="keyword">const</span> data = parts[<span class="number">0</span>] + <span class="string">'.'</span> + parts[<span class="number">1</span>];
+<span class="keyword">const</span> expectedSig = <span class="fn">HMAC</span>(data, secret);
+<span class="comment">// expectedSig must === parts[2]</span>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin-top:6px;font-size:.82rem">
+        <div style="flex:1;padding:8px;background:var(--bg);border-radius:4px;font-family:monospace;font-size:.72rem;word-break:break-all">
+          <span style="color:var(--blue)">HEADER</span>.<span style="color:var(--green)">PAYLOAD</span>
+        </div>
+        <div style="color:var(--muted)">+</div>
+        <div style="padding:6px 10px;background:rgba(249,226,175,.1);border-radius:4px;font-size:.72rem">SECRET</div>
+        <div style="color:var(--muted)">&#8594;</div>
+        <div style="padding:6px 10px;background:var(--surface2);border-radius:4px;font-size:.72rem;font-family:monospace">HMAC</div>
+        <div style="color:var(--muted)">&#8594;</div>
+        <div style="padding:6px 10px;background:rgba(166,227,161,.15);border-radius:4px;font-size:.72rem;font-family:monospace;color:var(--green)">SIGNATURE</div>
+      </div>
+    </div>
+    <div class="verify-step" data-v="4">
+      <h4>4. Compare signatures</h4>
+      <p>If the recomputed signature matches the token's signature, the token is authentic — it was signed by someone who knows the secret. If they differ, the token was <strong>tampered with</strong>.</p>
+      <div style="display:flex;gap:16px;margin-top:8px;font-size:.82rem">
+        <div style="flex:1;padding:10px;border-radius:6px;background:rgba(166,227,161,.08);border:1px solid rgba(166,227,161,.2)">
+          <span style="color:var(--green)">&#10003; Match</span> &#8594; Valid token
+        </div>
+        <div style="flex:1;padding:10px;border-radius:6px;background:rgba(243,139,168,.08);border:1px solid rgba(243,139,168,.2)">
+          <span style="color:var(--red)">&#10007; Mismatch</span> &#8594; Reject (401)
+        </div>
+      </div>
+    </div>
+    <div class="verify-step" data-v="5">
+      <h4>5. Validate claims</h4>
+      <p>Check <code>exp</code> (expiration), <code>nbf</code> (not before), <code>iss</code> (issuer), <code>aud</code> (audience) if configured.</p>
+      <div class="code" style="font-size:.75rem">
+<span class="comment">// Automatic in jwt.verify():</span>
+<span class="keyword">if</span> (decoded.exp && decoded.exp &lt; <span class="fn">Math.floor</span>(Date.now()/<span class="number">1000</span>)) {
+  <span class="keyword">throw</span> <span class="keyword">new</span> <span class="fn">Error</span>(<span class="string">'Token expired'</span>);
+}
+      </div>
+    </div>
+    <div class="verify-step" data-v="6">
+      <h4>6. Return decoded payload</h4>
+      <p>Everything passes. Return the payload (not the whole token) — now you know who the user is.</p>
+      <div class="code" style="font-size:.75rem">
+<span class="comment">// jwt.verify() returns:</span>
+{
+  sub: <span class="string">'user_42'</span>,
+  name: <span class="string">'Alice'</span>,
+  role: <span class="string">'user'</span>,
+  iat: <span class="number">1700000000</span>,
+  exp: <span class="number">1700086400</span>
+}
+      </div>
+    </div>
+  </div>
+
+  <div class="toggle-group" style="margin-top:12px">
+    <button class="toggle-btn" onclick="playVerification()">&#9654; Walk Through Steps</button>
+    <button class="toggle-btn" onclick="resetVerification()">Reset</button>
+  </div>
+</div>
+
+<!-- ============= 8. SIGNATURE VISUAL ============= -->
+<div class="section-title"><span class="num">8</span> Signature Visualization</div>
+
+<div class="card">
+  <h3>&#9654; Same Input → Same Signature</h3>
+  <p>HMAC is <strong>deterministic</strong>: same header + payload + secret always produces the same signature. If even one character changes, the signature becomes completely different.</p>
+
+  <div class="grid2">
+    <div>
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:6px">Tamper with the payload:</div>
+      <div class="form-row">
+        <label>Payload</label>
+        <input type="text" id="sigPayload" value='{"sub":"user_42","name":"Alice","role":"user","iat":1700000000,"exp":1700086400}'>
+      </div>
+      <div class="form-row">
+        <label>Secret</label>
+        <input type="text" id="sigSecret" value="my-secret-key">
+      </div>
+      <button class="btn" id="sigComputeBtn">Compute Signature</button>
+    </div>
+    <div>
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:6px">Result:</div>
+      <div class="code" id="sigResult" style="font-size:.78rem;word-break:break-all;min-height:60px">Click "Compute Signature"</div>
+      <div style="margin-top:8px;font-size:.78rem;color:var(--muted)" id="sigComparison"></div>
+    </div>
+  </div>
+
+  <div class="callout" style="margin-top:12px">
+    <strong>&#9432; How HMAC works:</strong> The data and secret are:
+    <ol style="padding-left:18px;margin-top:4px;font-size:.82rem">
+      <li>XORed with padded keys</li>
+      <li>Hashed with SHA-256 (or chosen algorithm)</li>
+      <li>Result is Base64url-encoded to form the JWT signature</li>
+    </ol>
+    Even changing <strong>one bit</strong> in the input produces a completely different hash (avalanche effect).
+  </div>
+</div>
+
+<!-- ============= 9. BEARER IN DEPTH ============= -->
+<div class="section-title"><span class="num">9</span> Bearer Authorization · In Depth</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>&#9654; The Bearer Scheme</h3>
+    <p>The <code>Authorization: Bearer &lt;token&gt;</code> header is defined in <strong>RFC 6750</strong>. "Bearer" means "bearer of this token gets access."</p>
+    <div class="code" style="font-size:.78rem">
+<span class="comment">// Request with Bearer token</span>
+GET /api/users HTTP/1.1
+Host: example.com
+<span style="color:var(--yellow)">Authorization: Bearer eyJhbGciOiJIUzI1NiJ9.eyJzdWI...</span>
+
+<span class="comment">// How Express reads it:</span>
+<span class="keyword">const</span> auth = req.headers.authorization;
+<span class="keyword">const</span> token = auth && auth.<span class="fn">startsWith</span>(<span class="string">'Bearer '</span>)
+  ? auth.<span class="fn">slice</span>(<span class="number">7</span>)  <span class="comment">// Remove "Bearer "</span>
+  : <span class="keyword">null</span>;
+    </div>
+  </div>
+  <div class="card">
+    <h3>&#9654; Why "Bearer"?</h3>
+    <p>Anyone who <em>bears</em> (possesses) the token can use it. It's like a key — whoever holds it gets access. This is why <strong>protecting the token</strong> is critical.</p>
+    <div style="background:var(--bg);border-radius:6px;padding:12px;margin-top:8px;font-size:.82rem">
+      <div style="display:flex;gap:10px;align-items:flex-start">
+        <div style="font-size:1.5rem">&#128273;</div>
+        <div>
+          <strong>Bearer token = physical key</strong><br>
+          <span style="color:var(--muted)">If someone steals your key, they can open the door. Same with a Bearer token — anyone with the string can access the API.</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>&#9654; Bearer vs Cookie — When to Use Which</h3>
+  <table>
+    <tr><th>Scenario</th><th>Best choice</th><th>Why</th></tr>
+    <tr>
+      <td>Browser web app (React/Vue)</td>
+      <td><span class="badge green">HTTP-Only Cookie</span></td>
+      <td>XSS immune, auto-sent</td>
+    </tr>
+    <tr>
+      <td>Mobile app (iOS/Android)</td>
+      <td><span class="badge blue">Bearer header</span></td>
+      <td>Easy to implement, cookies are awkward</td>
+    </tr>
+    <tr>
+      <td>Third-party API</td>
+      <td><span class="badge blue">Bearer header</span></td>
+      <td>Standard, works across origins</td>
+    </tr>
+    <tr>
+      <td>Server-to-server</td>
+      <td><span class="badge blue">Bearer header</span></td>
+      <td>No browser involved</td>
+    </tr>
+    <tr>
+      <td>Legacy enterprise app</td>
+      <td><span class="badge green">Cookie</span></td>
+      <td>Existing session infrastructure</td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============= 10. SECURITY ============= -->
+<div class="section-title"><span class="num">10</span> Security Checklist</div>
+
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>&#10003; Do</h3>
+    <ul style="padding-left:18px;font-size:.85rem;line-height:2.2">
+      <li>Use <strong>HTTP-Only + Secure + SameSite=Strict</strong> cookies</li>
+      <li>Set short <strong>expiration</strong> (15min–24h)</li>
+      <li>Use <strong>refresh tokens</strong> for long-lived access</li>
+      <li>Validate <strong>algorithm</strong> server-side (never trust header)</li>
+      <li>Use <strong>RS256</strong> for third-party verification</li>
+      <li>Use <strong>CSRF tokens</strong> alongside cookies</li>
+      <li>Validate <code>aud</code> (audience) and <code>iss</code> (issuer)</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>&#10007; Don't</h3>
+    <ul style="padding-left:18px;font-size:.85rem;line-height:2.2">
+      <li>Store secrets in the payload (it's just Base64!)</li>
+      <li>Accept <code>alg: "none"</code> (algorithm confusion)</li>
+      <li>Store JWT in localStorage without XSS protection</li>
+      <li>Use the same secret for signing and encryption</li>
+      <li>Ignore the <code>exp</code> claim</li>
+      <li>Log or expose tokens in URLs/error messages</li>
+      <li>Use tokens without HTTPS transmission</li>
+    </ul>
+  </div>
+</div>
+
+<!-- ============= REFERENCE ============= -->
+<div class="section-title"><span class="num">R</span> Quick Reference</div>
+
+<div class="card">
+  <table>
+    <tr><th>Concept</th><th>Summary</th><th>Key takeaway</th></tr>
+    <tr><td>JWT</td><td>JSON Web Token — self-contained auth string</td><td><span class="badge yellow">Signed, not encrypted</span></td></tr>
+    <tr><td>Header</td><td>Algorithm + token type</td><td><span class="badge blue">Always validate alg server-side</span></td></tr>
+    <tr><td>Payload</td><td>Claims (data) — visible to anyone</td><td><span class="badge red">Never put secrets here</span></td></tr>
+    <tr><td>Signature</td><td>HMAC(RSA/ECDSA) of header.payload</td><td><span class="badge green">Proves integrity</span></td></tr>
+    <tr><td>Bearer</td><td>Authorization: Bearer &lt;token&gt;</td><td><span class="badge blue">Manual send, XSS vulnerable</span></td></tr>
+    <tr><td>Cookie</td><td>Set-Cookie with HttpOnly + Secure</td><td><span class="badge green">Auto-send, XSS immune</span></td></tr>
+    <tr><td>jwt.verify()</td><td>Splits, decodes header, recomputes HMAC, compares, validates claims</td><td><span class="badge green">Do this, not jwt.decode()</span></td></tr>
+    <tr><td>jwt.decode()</td><td>Just Base64-decodes — NO signature check!</td><td><span class="badge red">Never use for auth!</span></td></tr>
+    <tr><td>exp</td><td>Expiration timestamp (Unix seconds)</td><td><span class="badge yellow">Always set this</span></td></tr>
+    <tr><td>iat</td><td>Issued-at timestamp</td><td><span class="badge yellow">Standard claim</span></td></tr>
+    <tr><td>RS256</td><td>RSA-based (asymmetric: private sign, public verify)</td><td><span class="badge blue">For third-party verifiers</span></td></tr>
+    <tr><td>HS256</td><td>HMAC-based (symmetric: same secret for both)</td><td><span class="badge blue">Simple, single-server</span></td></tr>
+  </table>
+</div>
+
+<div class="callout success" style="text-align:center;padding:20px">
+  <strong>&#10003; You now understand JWT from generation to verification.</strong><br>
+  <span style="color:var(--muted)">The key insight: JWT is signed, not encrypted. Verify the signature, validate claims, protect the token.</span>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// =====================================================
+// UTILITY: Base64url encode/decode
+// =====================================================
+function b64urlEncode(str) {
+  try{return btoa(str).replace(/=/g,'').replace(/\+/g,'-').replace(/\//g,'_')}catch(e){return'[invalid]'}
+}
+function b64urlDecode(str) {
+  try{
+    str=str.replace(/-/g,'+').replace(/_/g,'/');
+    while(str.length%4)str+='=';
+    return atob(str);
+  }catch(e){return'[invalid base64]'}
+}
+
+// Simple HMAC simulation (for demo only — uses a basic hash-like transform)
+// NOTE: This is NOT real HMAC. Real HMAC-SHA256 is done server-side.
+// This demo produces visually consistent signatures for illustration.
+function demoHMAC(data, secret) {
+  let combined = data + '|' + secret;
+  let hash = 0;
+  for(let i=0;i<combined.length;i++){
+    let c=combined.charCodeAt(i);
+    hash=((hash<<5)-hash)+c;
+    hash|=0;
+  }
+  // produce a hex-like string
+  let s=Math.abs(hash).toString(16).padStart(8,'0');
+  // pad to look like a real signature
+  while(s.length<43)s+=s;
+  return s.slice(0,43);
+}
+
+// =====================================================
+// 1. TOKEN DECODER
+// =====================================================
+const decoderInput=document.getElementById('decoderInput');
+const decodedHeader=document.getElementById('decodedHeader');
+const decodedPayload=document.getElementById('decodedPayload');
+const decodedSig=document.getElementById('decodedSig');
+
+function decodeToken(){
+  const token=decoderInput.value.trim();
+  const parts=token.split('.');
+  if(parts.length!==3){
+    decodedHeader.textContent='[Invalid JWT: need 3 parts separated by dots]';
+    decodedPayload.textContent='';
+    decodedSig.textContent='';
+    return;
+  }
+  let h=p='',s='';
+  try{
+    h=JSON.stringify(JSON.parse(b64urlDecode(parts[0])),null,2);
+  }catch(e){h='[invalid header]'}
+  try{
+    p=JSON.stringify(JSON.parse(b64urlDecode(parts[1])),null,2);
+  }catch(e){p='[invalid payload]'}
+  s=parts[2];
+  decodedHeader.textContent=h;
+  decodedPayload.textContent=p;
+  decodedSig.textContent=s;
+}
+document.getElementById('decodeBtn').addEventListener('click',decodeToken);
+document.getElementById('decodeResetBtn').addEventListener('click',()=>{
+  decoderInput.value='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTYiLCJuYW1lIjoiQWxpY2UiLCJpYXQiOjE3MDAwMDAwMDAsImV4cCI6MTcwMDAwMzYwMH0.XdummySignature';
+  decodedHeader.textContent='Click "Decode"';
+  decodedPayload.textContent='Click "Decode"';
+  decodedSig.textContent='Click "Decode"';
+});
+decodeToken();
+
+// =====================================================
+// 2. TOKEN GENERATOR
+// =====================================================
+const genAlg=document.getElementById('genAlg');
+const genSub=document.getElementById('genSub');
+const genName=document.getElementById('genName');
+const genRole=document.getElementById('genRole');
+const genExp=document.getElementById('genExp');
+const genSecret=document.getElementById('genSecret');
+const genHeader=document.getElementById('genHeader');
+const genPayload=document.getElementById('genPayload');
+const genSignature=document.getElementById('genSignature');
+const genRawHeader=document.getElementById('genRawHeader');
+const genRawPayload=document.getElementById('genRawPayload');
+
+function generateToken(){
+  const alg=genAlg.value;
+  const sub=genSub.value||'anonymous';
+  const name=genName.value||'User';
+  const role=genRole.value;
+  const expSec=parseInt(genExp.value)||3600;
+  const secret=genSecret.value||'default-secret';
+  const now=Math.floor(Date.now()/1000);
+
+  const header={alg:alg,typ:'JWT'};
+  const payload={sub:sub,name:name,role:role,iat:now,exp:now+expSec};
+
+  const hB64=b64urlEncode(JSON.stringify(header));
+  const pB64=b64urlEncode(JSON.stringify(payload));
+  const sigInput=hB64+'.'+pB64;
+  const sig=demoHMAC(sigInput,secret);
+  const sigB64=b64urlEncode(sig);
+
+  genHeader.textContent=hB64;
+  genPayload.textContent=pB64;
+  genSignature.textContent=sigB64;
+  genRawHeader.textContent=JSON.stringify(header,null,2);
+  genRawPayload.textContent=JSON.stringify(payload,null,2);
+}
+
+[genAlg,genSub,genName,genRole,genExp,genSecret].forEach(el=>{
+  el.addEventListener('input',generateToken);
+  el.addEventListener('change',generateToken);
+});
+generateToken();
+
+// =====================================================
+// 3. STORAGE SELECTOR
+// =====================================================
+function selectStorage(id){
+  document.querySelectorAll('.storage-card').forEach(c=>c.classList.remove('selected'));
+  document.querySelector(`[data-storage="${id}"]`).classList.add('selected');
+}
+
+// =====================================================
+// 4. MIDDLEWARE WALKTHROUGH
+// =====================================================
+let mwTimer=null;
+const mwSteps=document.querySelectorAll('#middlewareFlow .mw-step');
+const mwDebug=document.getElementById('mwDebug');
+const mwResult=document.getElementById('mwResult');
+
+function resetMiddleware(){
+  clearInterval(mwTimer);
+  mwSteps.forEach(s=>{s.className='mw-step';});
+  mwDebug.innerHTML='<span style="color:var(--muted)">// Ready. Click "Play All" or "Fail at..."</span>';
+  mwResult.textContent='';
+}
+
+function failMiddleware(stepAt){
+  clearInterval(mwTimer);
+  mwSteps.forEach(s=>s.className='mw-step');
+  mwDebug.innerHTML='';
+  let allOk=true;
+  mwSteps.forEach((s,i)=>{
+    const idx=i+1;
+    if(idx<stepAt){
+      s.className='mw-step pass';
+      addMwLog(idx,'&#10003; Passed','green');
+    }else if(idx===stepAt){
+      s.className='mw-step fail';
+      addMwLog(idx,'&#10007; FAILED','red');
+      allOk=false;
+    }else{
+      s.className='mw-step';
+    }
+  });
+  mwResult.innerHTML=allOk
+    ? '<span style="color:var(--green)">&#10003; All checks passed. Route handler executes.</span>'
+    : '<span style="color:var(--red)">&#10007; Request rejected (401 Unauthorized)</span>';
+}
+
+function addMwLog(idx,msg,color){
+  const names=['','Extract token','Check token exists','Verify signature','Check expiration','Attach user to request','Route handler executes'];
+  mwDebug.innerHTML+=`<div><span style="color:${color}">${msg}</span> <span style="color:var(--muted)">Step ${idx}: ${names[idx]}</span></div>\n`;
+}
+
+function playMiddleware(){
+  clearInterval(mwTimer);
+  mwSteps.forEach(s=>s.className='mw-step');
+  mwDebug.innerHTML='';
+  mwResult.textContent='';
+  let step=1;
+  addMwLog(1,'&#8987; Running...','var(--blue)');
+  mwSteps[0].className='mw-step current';
+  mwTimer=setInterval(()=>{
+    step++;
+    if(step>6){
+      clearInterval(mwTimer);
+      mwSteps.forEach(s=>s.className='mw-step pass');
+      addMwLog(6,'&#10003; Passed','green');
+      mwResult.innerHTML='<span style="color:var(--green)">&#10003; All checks passed. Route handler executes.</span>';
+      return;
+    }
+    // mark previous as pass
+    mwSteps[step-2].className='mw-step pass';
+    addMwLog(step-1,'&#10003; Passed','green');
+    // mark current
+    mwSteps[step-1].className='mw-step current';
+    addMwLog(step,'&#8987; Running...','var(--blue)');
+  },800);
+}
+
+// =====================================================
+// 5. VERIFICATION WALKTHROUGH
+// =====================================================
+let vTimer=null;
+const vSteps=document.querySelectorAll('.verify-step');
+
+function resetVerification(){
+  clearInterval(vTimer);
+  vSteps.forEach(s=>{s.className='verify-step';});
+  vSteps[0].className='verify-step verify-current';
+}
+
+function playVerification(){
+  clearInterval(vTimer);
+  vSteps.forEach(s=>s.className='verify-step');
+  let step=0;
+  vSteps[0].className='verify-step verify-current';
+  vTimer=setInterval(()=>{
+    step++;
+    if(step>=vSteps.length){
+      clearInterval(vTimer);
+      vSteps.forEach(s=>s.className='verify-step verify-ok');
+      return;
+    }
+    vSteps[step-1].className='verify-step verify-ok';
+    vSteps[step].className='verify-step verify-current';
+  },1000);
+}
+
+// =====================================================
+// 6. SIGNATURE COMPUTATION (DEMO)
+// =====================================================
+document.getElementById('sigComputeBtn').addEventListener('click',()=>{
+  const payload=document.getElementById('sigPayload').value;
+  const secret=document.getElementById('sigSecret').value;
+  const sig=demoHMAC(payload,secret);
+  const sigB64=b64urlEncode(sig);
+  document.getElementById('sigResult').innerHTML=
+    `<span style="color:var(--muted)">HMAC result:</span> ${sig}<br>`+
+    `<span style="color:var(--muted)">Base64url:</span> <span style="color:var(--green)">${sigB64}</span>`;
+
+  // Also compute with a different payload to show avalanche
+  const altPayload=payload.replace('"Alice"','"Bob"');
+  if(altPayload!==payload){
+    const altSig=demoHMAC(altPayload,secret);
+    const altB64=b64urlEncode(altSig);
+    document.getElementById('sigComparison').innerHTML=
+      `<strong>Try this:</strong> Change "Alice" to "Bob" and click "Compute Signature" &#8594; see how the result completely changes!<br>`+
+      `<span style="color:var(--muted)">With "Bob":</span> ${altB64}`;
+  }
+});
+
+// =====================================================
+// INIT
+// =====================================================
+selectStorage('cookie');
+</script>
+</body>
+</html>

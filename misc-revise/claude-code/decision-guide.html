@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Claude Code Extension Decision Guide</title>
+<style>
+:root {
+  --bg:#0f0f17; --surface:#1a1a2e; --surface2:#23234a; --text:#cdd6f4;
+  --blue:#89b4fa; --green:#a6e3a1; --red:#f38ba8; --yellow:#f9e2af;
+  --peach:#fab387; --teal:#94e2d5; --pink:#f5c2e7; --lavender:#b4befe;
+  --orange:#f8bd7f; --coral:#f28fad;
+  --glow-blue:0 0 20px rgba(137,180,250,0.4); --glow-green:0 0 20px rgba(166,227,161,0.4);
+  --glow-red:0 0 20px rgba(243,139,168,0.4); --glow-peach:0 0 20px rgba(250,179,135,0.4);
+  --glow-pink:0 0 20px rgba(245,194,231,0.4); --glow-yellow:0 0 20px rgba(249,226,175,0.4);
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:system-ui,-apple-system,sans-serif;background:var(--bg);color:var(--text);line-height:1.5;overflow-x:hidden}
+.container{max-width:1100px;margin:0 auto;padding:20px}
+.section{margin-bottom:60px}
+.section-title{font-size:clamp(1.3rem,2.5vw,1.8rem);text-align:center;margin-bottom:8px;font-weight:700;letter-spacing:-0.02em}
+.section-sub{text-align:center;color:rgba(205,214,244,0.6);font-size:0.9rem;margin-bottom:24px}
+/* ── SPECTRUM ── */
+.spectrum-wrap{background:linear-gradient(135deg,var(--surface),var(--surface2));border-radius:12px;padding:24px;position:relative;overflow:hidden}
+.spectrum-wrap::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,var(--blue),var(--green),var(--yellow),var(--peach),var(--pink),var(--red))}
+.golden-rule{text-align:center;font-size:clamp(1rem,2vw,1.3rem);margin-bottom:20px;padding:12px;background:rgba(180,190,254,0.1);border-radius:8px;border:1px solid rgba(180,190,254,0.2);font-weight:600;color:var(--lavender)}
+.spectrum{display:flex;gap:10px;justify-content:center;flex-wrap:wrap}
+.spectrum-card{flex:1;min-width:130px;max-width:170px;background:var(--surface);border-radius:10px;padding:14px 10px;text-align:center;border:1px solid rgba(255,255,255,0.06);transition:transform 0.3s,box-shadow 0.3s;cursor:default;opacity:0;transform:translateX(-40px);position:relative;overflow:hidden}
+.spectrum-card.show{opacity:1;transform:translateX(0)}
+.spectrum-card:hover{transform:translateY(-4px) scale(1.03)}
+.spectrum-card::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.s-card-0::after{background:var(--blue)}.s-card-1::after{background:var(--green)}.s-card-2::after{background:var(--yellow)}.s-card-3::after{background:var(--peach)}.s-card-4::after{background:var(--pink)}.s-card-5::after{background:var(--red)}
+.spectrum-card:nth-child(1):hover{box-shadow:var(--glow-blue)}.spectrum-card:nth-child(2):hover{box-shadow:var(--glow-green)}
+.spectrum-card:nth-child(3):hover{box-shadow:var(--glow-yellow)}.spectrum-card:nth-child(4):hover{box-shadow:var(--glow-peach)}
+.spectrum-card:nth-child(5):hover{box-shadow:var(--glow-pink)}.spectrum-card:nth-child(6):hover{box-shadow:var(--glow-red)}
+.s-card-icon{font-size:1.6rem;margin-bottom:4px}
+.s-card-name{font-weight:700;font-size:0.85rem;margin-bottom:2px}
+.s-card-weight{font-size:0.7rem;opacity:0.5;margin-bottom:4px}
+.s-card-desc{font-size:0.7rem;opacity:0.7;line-height:1.3}
+.weight-bar{height:4px;border-radius:2px;margin:6px auto 0;width:80%;background:linear-gradient(90deg,var(--blue),var(--red));opacity:0.3;position:relative}
+.weight-fill{height:100%;border-radius:2px;transition:width 0.6s ease}
+/* ── DECISION TREE ── */
+.tree-container{display:flex;flex-direction:column;align-items:center}
+.tree-q-node{background:var(--surface2);border:2px solid var(--lavender);border-radius:12px;padding:14px 28px;font-size:1.1rem;font-weight:700;color:var(--lavender);box-shadow:0 0 25px rgba(180,190,254,0.15);margin-bottom:4px;position:relative;z-index:2}
+.tree-svg-wrap{width:100%;max-width:800px;margin:0 auto;position:relative}
+.tree-svg{width:100%;height:auto;display:block}
+.tree-path{fill:none;stroke:rgba(255,255,255,0.08);stroke-width:2.5;stroke-linejoin:round;transition:stroke 0.5s,filter 0.5s;cursor:pointer}
+.tree-path.active{stroke-width:3.5}
+.tree-path:hover{stroke:rgba(255,255,255,0.2)}
+.tree-path.active[data-color="claude"]{stroke:var(--blue);filter:drop-shadow(0 0 8px rgba(137,180,250,0.7))}
+.tree-path.active[data-color="skills"]{stroke:var(--green);filter:drop-shadow(0 0 8px rgba(166,227,161,0.7))}
+.tree-path.active[data-color="hooks"]{stroke:var(--yellow);filter:drop-shadow(0 0 8px rgba(249,226,175,0.7))}
+.tree-path.active[data-color="mcp"]{stroke:var(--peach);filter:drop-shadow(0 0 8px rgba(250,179,135,0.7))}
+.tree-path.active[data-color="subagents"]{stroke:var(--pink);filter:drop-shadow(0 0 8px rgba(245,194,231,0.7))}
+.tree-path.active[data-color="plugins"]{stroke:var(--red);filter:drop-shadow(0 0 8px rgba(243,139,168,0.7))}
+.tree-q-circle{fill:var(--lavender);opacity:0.9}
+.tree-a-circle{fill:rgba(255,255,255,0.06);stroke:rgba(255,255,255,0.12);stroke-width:1.5;transition:fill 0.4s,stroke 0.4s;cursor:pointer}
+.tree-a-circle.active{fill:rgba(255,255,255,0.12);stroke-width:2.5}
+.tree-a-text{font-size:9px;fill:var(--text);text-anchor:middle;cursor:pointer;user-select:none;font-weight:600}
+.tree-a-text.active{fill:#fff}
+.tree-answers{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;width:100%;max-width:800px;margin-top:16px}
+.tree-answer{background:var(--surface);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 8px;text-align:center;cursor:pointer;transition:all 0.3s;font-size:0.8rem;position:relative}
+.tree-answer:hover{transform:translateY(-2px)}
+.tree-answer .ans-mech{font-weight:700;font-size:0.75rem;opacity:0.5;display:block;margin-top:2px}
+.tree-answer.active{transform:translateY(-3px) scale(1.02)}
+.tree-answer.active[data-mech="claude"]{border-color:var(--blue);background:rgba(137,180,250,0.1);box-shadow:var(--glow-blue)}
+.tree-answer.active[data-mech="skills"]{border-color:var(--green);background:rgba(166,227,161,0.1);box-shadow:var(--glow-green)}
+.tree-answer.active[data-mech="hooks"]{border-color:var(--yellow);background:rgba(249,226,175,0.1);box-shadow:var(--glow-yellow)}
+.tree-answer.active[data-mech="mcp"]{border-color:var(--peach);background:rgba(250,179,135,0.1);box-shadow:var(--glow-peach)}
+.tree-answer.active[data-mech="subagents"]{border-color:var(--pink);background:rgba(245,194,231,0.1);box-shadow:var(--glow-pink)}
+.tree-answer.active[data-mech="plugins"]{border-color:var(--red);background:rgba(243,139,168,0.1);box-shadow:var(--glow-red)}
+.tree-info{width:100%;max-width:800px;margin-top:16px;padding:16px;background:var(--surface);border-radius:10px;border:1px solid rgba(255,255,255,0.06);min-height:60px;transition:all 0.4s;display:none}
+.tree-info.show{display:block;}
+.tree-info .ti-mech{font-weight:700;font-size:1.1rem;margin-bottom:6px}
+.tree-info .ti-desc{opacity:0.8;font-size:0.9rem;line-height:1.6}
+.tree-info .ti-tip{margin-top:8px;padding:8px 12px;background:rgba(255,255,255,0.04);border-radius:6px;font-size:0.8rem;border-left:3px solid}
+/* ── COMPARISON MATRIX ── */
+.matrix-wrap{overflow-x:auto;background:var(--surface);border-radius:12px;border:1px solid rgba(255,255,255,0.06)}
+.matrix-table{width:100%;border-collapse:collapse;font-size:0.85rem}
+.matrix-table th{padding:12px 10px;text-align:left;font-weight:700;background:var(--surface2);border-bottom:2px solid rgba(255,255,255,0.08);position:sticky;top:0}
+.matrix-table td{padding:10px;border-bottom:1px solid rgba(255,255,255,0.04);vertical-align:top}
+.matrix-row{cursor:default;transition:all 0.3s}
+.matrix-row:hover{background:rgba(255,255,255,0.03)}
+.matrix-row td:first-child{border-left:3px solid transparent;border-radius:0}
+.matrix-row[data-mech="claude"]:hover td:first-child{border-left-color:var(--blue)}
+.matrix-row[data-mech="skills"]:hover td:first-child{border-left-color:var(--green)}
+.matrix-row[data-mech="hooks"]:hover td:first-child{border-left-color:var(--yellow)}
+.matrix-row[data-mech="mcp"]:hover td:first-child{border-left-color:var(--peach)}
+.matrix-row[data-mech="subagents"]:hover td:first-child{border-left-color:var(--pink)}
+.matrix-row[data-mech="plugins"]:hover td:first-child{border-left-color:var(--red)}
+.matrix-mech{font-weight:700;font-size:0.85rem}
+.matrix-mech small{font-weight:400;opacity:0.5;font-size:0.7rem;display:block}
+/* ── QUIZ ── */
+.quiz-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;flex-wrap:wrap;gap:8px}
+.quiz-score{font-size:0.9rem;padding:6px 14px;background:var(--surface);border-radius:20px;border:1px solid rgba(255,255,255,0.08)}
+.quiz-progress{display:flex;gap:6px;margin-bottom:16px;justify-content:center}
+.quiz-dot{width:28px;height:28px;border-radius:50%;background:var(--surface);border:2px solid rgba(255,255,255,0.1);display:flex;align-items:center;justify-content:center;font-size:0.7rem;font-weight:700;transition:all 0.4s}
+.quiz-dot.current{border-color:var(--lavender);background:rgba(180,190,254,0.15)}
+.quiz-dot.done{background:var(--green);border-color:var(--green);color:var(--bg)}
+.quiz-dot.wrong{background:var(--red);border-color:var(--red);color:var(--bg)}
+.quiz-card{background:var(--surface);border-radius:12px;padding:20px;border:1px solid rgba(255,255,255,0.06)}
+.quiz-scenario{margin-bottom:16px}
+.quiz-scenario .qs-label{font-size:0.75rem;opacity:0.4;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;margin-bottom:4px}
+.quiz-scenario .qs-text{font-size:1rem;font-weight:600;line-height:1.5}
+.quiz-options{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+.quiz-opt{padding:10px;border-radius:8px;border:2px solid rgba(255,255,255,0.08);background:var(--surface2);cursor:pointer;text-align:center;font-size:0.8rem;font-weight:600;transition:all 0.3s}
+.quiz-opt:hover{transform:translateY(-2px);border-color:rgba(255,255,255,0.2)}
+.quiz-opt.selected-correct{border-color:var(--green);background:rgba(166,227,161,0.15);box-shadow:var(--glow-green)}
+.quiz-opt.selected-wrong{border-color:var(--red);background:rgba(243,139,168,0.15);box-shadow:var(--glow-red)}
+.quiz-opt.reveal-correct{border-color:var(--green);background:rgba(166,227,161,0.08)}
+.quiz-opt.disabled{cursor:default;opacity:0.5}
+.quiz-feedback{margin-top:16px;padding:14px;border-radius:8px;display:none;align-items:flex-start;gap:10px}
+.quiz-feedback.show{display:flex}
+.quiz-feedback.correct{background:rgba(166,227,161,0.1);border:1px solid rgba(166,227,161,0.2)}
+.quiz-feedback.wrong{background:rgba(243,139,168,0.1);border:1px solid rgba(243,139,168,0.2)}
+.qf-icon{font-size:1.5rem;flex-shrink:0}
+.qf-text{font-size:0.9rem;line-height:1.5}
+.qf-text strong{display:block;margin-bottom:4px}
+.quiz-next{margin-top:12px;padding:8px 24px;border:none;border-radius:6px;background:var(--lavender);color:var(--bg);font-weight:700;cursor:pointer;transition:all 0.3s;display:none}
+.quiz-next.show{display:inline-block}
+.quiz-next:hover{transform:translateY(-2px);box-shadow:0 0 20px rgba(180,190,254,0.3)}
+.quiz-results{display:none;text-align:center;padding:30px}
+.quiz-results.show{display:block}
+.quiz-results .qr-score{font-size:3rem;font-weight:800;margin:10px 0}
+.quiz-results .qr-label{font-size:1rem;opacity:0.6}
+.quiz-results .qr-msg{font-size:1.1rem;margin-bottom:16px}
+/* ── QUICK REFERENCE ── */
+.ref-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}
+@media(max-width:640px){.ref-grid{grid-template-columns:1fr 1fr}}
+@media(max-width:420px){.ref-grid{grid-template-columns:1fr}}
+.ref-card{background:var(--surface);border-radius:10px;padding:14px;border:1px solid rgba(255,255,255,0.05);transition:all 0.4s;opacity:0;transform:translateY(20px);cursor:default}
+.ref-card.show{opacity:1;transform:translateY(0)}
+.ref-card:hover{transform:translateY(-3px)}
+.ref-card[data-mech="claude"]:hover{border-color:var(--blue);box-shadow:var(--glow-blue)}
+.ref-card[data-mech="skills"]:hover{border-color:var(--green);box-shadow:var(--glow-green)}
+.ref-card[data-mech="hooks"]:hover{border-color:var(--yellow);box-shadow:var(--glow-yellow)}
+.ref-card[data-mech="mcp"]:hover{border-color:var(--peach);box-shadow:var(--glow-peach)}
+.ref-card[data-mech="subagents"]:hover{border-color:var(--pink);box-shadow:var(--glow-pink)}
+.ref-card[data-mech="plugins"]:hover{border-color:var(--red);box-shadow:var(--glow-red)}
+.ref-card .rc-header{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.ref-card .rc-icon{font-size:1.2rem}
+.ref-card .rc-name{font-weight:700;font-size:0.9rem}
+.ref-card .rc-desc{font-size:0.8rem;opacity:0.7;line-height:1.4}
+.ref-card .rc-color{display:inline-block;width:8px;height:8px;border-radius:50%;flex-shrink:0}
+/* ── GENERAL ── */
+.fade-in{opacity:0;transform:translateY(20px);transition:opacity 0.6s,transform 0.6s}
+.fade-in.visible{opacity:1;transform:translateY(0)}
+.header{text-align:center;padding:40px 0 20px}
+.header h1{font-size:clamp(1.6rem,4vw,2.5rem);font-weight:800;background:linear-gradient(135deg,var(--blue),var(--green),var(--yellow),var(--peach),var(--pink),var(--red));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header p{color:rgba(205,214,244,0.5);margin-top:6px;font-size:0.95rem}
+nav{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;margin-bottom:30px}
+nav a{padding:6px 14px;border-radius:20px;background:var(--surface);color:var(--text);text-decoration:none;font-size:0.8rem;transition:all 0.3s;border:1px solid rgba(255,255,255,0.05)}
+nav a:hover{background:var(--surface2);transform:translateY(-1px)}
+/* ── TOOLTIP ── */
+[data-tip]{position:relative}
+[data-tip]:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:var(--surface2);color:var(--text);padding:4px 10px;border-radius:4px;font-size:0.7rem;white-space:nowrap;z-index:10;border:1px solid rgba(255,255,255,0.1)}
+</style>
+</head>
+<body>
+
+<div class="container">
+
+<header class="header">
+  <h1>Claude Code Extension Decision Guide</h1>
+  <p>Choose the right mechanism for every task</p>
+</header>
+
+<nav>
+  <a href="#spectrum">Spectrum</a>
+  <a href="#tree">Decision Tree</a>
+  <a href="#matrix">Comparison</a>
+  <a href="#quiz">Quiz</a>
+  <a href="#ref">Quick Ref</a>
+</nav>
+
+<!-- ═══════════ SECTION 1: SPECTRUM ═══════════ -->
+<section class="section" id="spectrum">
+  <h2 class="section-title">The Extension Spectrum</h2>
+  <p class="section-sub">Lightest → Heaviest — always pick the simplest tool that works</p>
+  <div class="spectrum-wrap">
+    <div class="golden-rule">⚡ Golden Rule: Use the simplest mechanism that meets your needs</div>
+    <div class="spectrum" id="spectrumContainer">
+      <div class="spectrum-card s-card-0" data-color="blue">
+        <div class="s-card-icon">📄</div>
+        <div class="s-card-name">CLAUDE.md</div>
+        <div class="s-card-weight">🪶 featherweight</div>
+        <div class="s-card-desc">Persistent project-level notes &amp; conventions</div>
+        <div class="weight-bar"><div class="weight-fill" style="width:10%;background:var(--blue)"></div></div>
+      </div>
+      <div class="spectrum-card s-card-1" data-color="green">
+        <div class="s-card-icon">🧠</div>
+        <div class="s-card-name">Skills</div>
+        <div class="s-card-weight">🪶 lightweight</div>
+        <div class="s-card-desc">Reusable multi-project instruction sets</div>
+        <div class="weight-bar"><div class="weight-fill" style="width:25%;background:var(--green)"></div></div>
+      </div>
+      <div class="spectrum-card s-card-2" data-color="yellow">
+        <div class="s-card-icon">⚡</div>
+        <div class="s-card-name">Hooks</div>
+        <div class="s-card-weight">⛓️ moderate</div>
+        <div class="s-card-desc">Automatic triggers on lifecycle events</div>
+        <div class="weight-bar"><div class="weight-fill" style="width:40%;background:var(--yellow)"></div></div>
+      </div>
+      <div class="spectrum-card s-card-3" data-color="peach">
+        <div class="s-card-icon">🔌</div>
+        <div class="s-card-name">MCP</div>
+        <div class="s-card-weight">⚙️ substantial</div>
+        <div class="s-card-desc">External API &amp; system integrations</div>
+        <div class="weight-bar"><div class="weight-fill" style="width:60%;background:var(--peach)"></div></div>
+      </div>
+      <div class="spectrum-card s-card-4" data-color="pink">
+        <div class="s-card-icon">🧩</div>
+        <div class="s-card-name">Subagents</div>
+        <div class="s-card-weight">⚖️ heavy</div>
+        <div class="s-card-desc">Isolated parallel task execution</div>
+        <div class="weight-bar"><div class="weight-fill" style="width:80%;background:var(--pink)"></div></div>
+      </div>
+      <div class="spectrum-card s-card-5" data-color="red">
+        <div class="s-card-icon">📦</div>
+        <div class="s-card-name">Plugins</div>
+        <div class="s-card-weight">🔨 anvil</div>
+        <div class="s-card-desc">Packaged MCP servers for sharing</div>
+        <div class="weight-bar"><div class="weight-fill" style="width:95%;background:var(--red)"></div></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 2: DECISION TREE ═══════════ -->
+<section class="section" id="tree">
+  <h2 class="section-title">What Do You Need?</h2>
+  <p class="section-sub">Click a path to see if it fits your use case</p>
+  <div class="tree-container">
+    <div class="tree-q-node">🤔 What do you need?</div>
+    <div class="tree-svg-wrap">
+      <svg class="tree-svg" viewBox="0 0 800 280" preserveAspectRatio="xMidYMid meet">
+        <defs>
+          <filter id="glow-blue"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-green"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-yellow"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-peach"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-pink"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+          <filter id="glow-red"><feGaussianBlur stdDeviation="3" result="blur"/><feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge></filter>
+        </defs>
+        <!-- paths from question (400,48) to answers -->
+        <path class="tree-path" id="tp-claude"      data-color="claude"    d="M400,55 L400,95 L125,95 L125,170" />
+        <path class="tree-path" id="tp-skills"      data-color="skills"    d="M400,55 L400,170" />
+        <path class="tree-path" id="tp-hooks"       data-color="hooks"     d="M400,55 L400,95 L675,95 L675,170" />
+        <path class="tree-path" id="tp-mcp"         data-color="mcp"       d="M400,55 L400,95 L125,95 L125,260" />
+        <path class="tree-path" id="tp-subagents"   data-color="subagents" d="M400,55 L400,260" />
+        <path class="tree-path" id="tp-plugins"     data-color="plugins"   d="M400,55 L400,95 L675,95 L675,260" />
+        <!-- question node -->
+        <circle cx="400" cy="48" r="8" class="tree-q-circle"/>
+        <!-- answer node circles -->
+        <circle class="tree-a-circle" id="tc-claude"    cx="125" cy="170" r="5" />
+        <circle class="tree-a-circle" id="tc-skills"    cx="400" cy="170" r="5" />
+        <circle class="tree-a-circle" id="tc-hooks"     cx="675" cy="170" r="5" />
+        <circle class="tree-a-circle" id="tc-mcp"       cx="125" cy="260" r="5" />
+        <circle class="tree-a-circle" id="tc-subagents" cx="400" cy="260" r="5" />
+        <circle class="tree-a-circle" id="tc-plugins"   cx="675" cy="260" r="5" />
+      </svg>
+    </div>
+    <div class="tree-answers" id="treeAnswers">
+      <div class="tree-answer" data-mech="claude"    onclick="treeSelect('claude')">📄 Persistent project notes<span class="ans-mech">→ CLAUDE.md</span></div>
+      <div class="tree-answer" data-mech="skills"    onclick="treeSelect('skills')">🧠 Repeated instructions<span class="ans-mech">→ Skills</span></div>
+      <div class="tree-answer" data-mech="hooks"     onclick="treeSelect('hooks')">⚡ Must always happen<span class="ans-mech">→ Hooks</span></div>
+      <div class="tree-answer" data-mech="mcp"       onclick="treeSelect('mcp')">🔌 External system access<span class="ans-mech">→ MCP</span></div>
+      <div class="tree-answer" data-mech="subagents" onclick="treeSelect('subagents')">🧩 Isolate side tasks<span class="ans-mech">→ Subagents</span></div>
+      <div class="tree-answer" data-mech="plugins"   onclick="treeSelect('plugins')">📦 Share with team<span class="ans-mech">→ Plugins</span></div>
+    </div>
+    <div class="tree-info" id="treeInfo">
+      <div class="ti-mech" id="tiMech"></div>
+      <div class="ti-desc" id="tiDesc"></div>
+      <div class="ti-tip" id="tiTip"></div>
+    </div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 3: COMPARISON MATRIX ═══════════ -->
+<section class="section" id="matrix">
+  <h2 class="section-title">Comparison Matrix</h2>
+  <p class="section-sub">Side-by-side across key dimensions</p>
+  <div class="matrix-wrap">
+    <table class="matrix-table">
+      <thead>
+        <tr>
+          <th>Mechanism</th>
+          <th>Determinism</th>
+          <th>Trigger</th>
+          <th>Best For</th>
+          <th>Failure Mode</th>
+          <th>Location</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr class="matrix-row" data-mech="claude">
+          <td><div class="matrix-mech" style="color:var(--blue)">CLAUDE.md <small>lightest</small></div></td>
+          <td>✅ High</td>
+          <td>Session start</td>
+          <td>Project conventions, always-on rules</td>
+          <td>Forgotten to update</td>
+          <td>Project root</td>
+        </tr>
+        <tr class="matrix-row" data-mech="skills">
+          <td><div class="matrix-mech" style="color:var(--green)">Skills <small>light</small></div></td>
+          <td>✅ High</td>
+          <td>On demand (load)</td>
+          <td>Cross-project workflows, review prompts</td>
+          <td>Outdated instructions</td>
+          <td>Config directory</td>
+        </tr>
+        <tr class="matrix-row" data-mech="hooks">
+          <td><div class="matrix-mech" style="color:var(--yellow)">Hooks <small>moderate</small></div></td>
+          <td>⚠️ Medium</td>
+          <td>Lifecycle events</td>
+          <td>Auto-lint, pre-commit, security checks</td>
+          <td>Unhandled errors block workflow</td>
+          <td>Config directory</td>
+        </tr>
+        <tr class="matrix-row" data-mech="mcp">
+          <td><div class="matrix-mech" style="color:var(--peach)">MCP <small>substantial</small></div></td>
+          <td>⚠️ Medium</td>
+          <td>User request / tool call</td>
+          <td>API access, databases, live data</td>
+          <td>Network failure, auth expiry</td>
+          <td>MCP server (remote)</td>
+        </tr>
+        <tr class="matrix-row" data-mech="subagents">
+          <td><div class="matrix-mech" style="color:var(--pink)">Subagents <small>heavy</small></div></td>
+          <td>🔀 Variable</td>
+          <td>Delegation in task</td>
+          <td>Multi-file refactors, parallel work</td>
+          <td>Context fragmentation</td>
+          <td>Separate sessions</td>
+        </tr>
+        <tr class="matrix-row" data-mech="plugins">
+          <td><div class="matrix-mech" style="color:var(--red)">Plugins <small>heaviest</small></div></td>
+          <td>🔀 Variable</td>
+          <td>Install / enable</td>
+          <td>Sharing integrations with team/community</td>
+          <td>Version drift, maintenance burden</td>
+          <td>Package registry</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 4: QUIZ ═══════════ -->
+<section class="section" id="quiz">
+  <h2 class="section-title">Scenario Quiz</h2>
+  <p class="section-sub">Test your intuition — pick the right mechanism for each situation</p>
+  <div class="quiz-header">
+    <div class="quiz-score" id="quizScore">Score: 0 / 0</div>
+    <button onclick="quizReset()" style="padding:6px 16px;border:none;border-radius:6px;background:var(--surface2);color:var(--text);cursor:pointer;font-size:0.8rem;border:1px solid rgba(255,255,255,0.08)">🔄 Reset</button>
+  </div>
+  <div class="quiz-progress" id="quizProgress"></div>
+  <div class="quiz-card" id="quizCard">
+    <div id="quizContent"></div>
+  </div>
+</section>
+
+<!-- ═══════════ SECTION 5: QUICK REFERENCE ═══════════ -->
+<section class="section" id="ref">
+  <h2 class="section-title">Quick Reference</h2>
+  <p class="section-sub">Six mechanisms at a glance</p>
+  <div class="ref-grid" id="refGrid">
+    <div class="ref-card" data-mech="claude">
+      <div class="rc-header"><span class="rc-color" style="background:var(--blue)"></span><span class="rc-icon">📄</span><span class="rc-name" style="color:var(--blue)">CLAUDE.md</span></div>
+      <div class="rc-desc">Drop a <code>CLAUDE.md</code> in your project root. Claude reads it every session for persistent instructions and conventions.</div>
+    </div>
+    <div class="ref-card" data-mech="skills">
+      <div class="rc-header"><span class="rc-color" style="background:var(--green)"></span><span class="rc-icon">🧠</span><span class="rc-name" style="color:var(--green)">Skills</span></div>
+      <div class="rc-desc">Save reusable instruction sets (skills) and load them on demand across different projects.</div>
+    </div>
+    <div class="ref-card" data-mech="hooks">
+      <div class="rc-header"><span class="rc-color" style="background:var(--yellow)"></span><span class="rc-icon">⚡</span><span class="rc-name" style="color:var(--yellow)">Hooks</span></div>
+      <div class="rc-desc">Attach actions to lifecycle events (file change, pre-command, post-command) for automation.</div>
+    </div>
+    <div class="ref-card" data-mech="mcp">
+      <div class="rc-header"><span class="rc-color" style="background:var(--peach)"></span><span class="rc-icon">🔌</span><span class="rc-name" style="color:var(--peach)">MCP</span></div>
+      <div class="rc-desc">Connect Claude to external APIs, databases, and services through the Model Context Protocol.</div>
+    </div>
+    <div class="ref-card" data-mech="subagents">
+      <div class="rc-header"><span class="rc-color" style="background:var(--pink)"></span><span class="rc-icon">🧩</span><span class="rc-name" style="color:var(--pink)">Subagents</span></div>
+      <div class="rc-desc">Delegate complex subtasks to independent sessions for parallel or isolated execution.</div>
+    </div>
+    <div class="ref-card" data-mech="plugins">
+      <div class="rc-header"><span class="rc-color" style="background:var(--red)"></span><span class="rc-icon">📦</span><span class="rc-name" style="color:var(--red)">Plugins</span></div>
+      <div class="rc-desc">Package MCP servers, skills, and hooks into shareable plugins for team or community distribution.</div>
+    </div>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+// ── QUIZ DATA ──
+const quizData = [
+  { scenario: "You want Claude to always respect your project's Prettier config, ESLint rules, and import conventions — every session, without being reminded.",
+    answer: "claude", explanation: "CLAUDE.md lives in the project root and is read every session. It's the right place for persistent project conventions." },
+  { scenario: "You frequently ask Claude to \"review this PR for security issues, check error handling, and suggest tests\" in a specific format. You want this available across all your projects.",
+    answer: "skills", explanation: "Skills are reusable instruction sets you load on demand. Perfect for cross-project workflows like PR review templates." },
+  { scenario: "You want Claude to automatically run `npm run lint` and fix formatting every time you save a file, without you asking.",
+    answer: "hooks", explanation: "Hooks trigger on lifecycle events like file changes. Use them for auto-linting, formatting, or pre-commit checks." },
+  { scenario: "You need Claude to look up real-time stock prices from a financial API and summarize the data during a conversation.",
+    answer: "mcp", explanation: "MCP (Model Context Protocol) connects Claude to external APIs and services. It's designed for live data access." },
+  { scenario: "You're refactoring a large codebase and want to offload updating import paths across 50 files to run independently while you work on the main logic.",
+    answer: "subagents", explanation: "Subagents run isolated subtasks in separate sessions. Perfect for delegating large-scale refactors without blocking your main workflow." }
+];
+
+let quizIdx = 0;
+let quizCorrect = 0;
+let quizAnswered = 0;
+let quizDone = false;
+
+const quizColors = { claude:'var(--blue)', skills:'var(--green)', hooks:'var(--yellow)', mcp:'var(--peach)', subagents:'var(--pink)', plugins:'var(--red)' };
+const quizLabels = { claude:'CLAUDE.md', skills:'Skills', hooks:'Hooks', mcp:'MCP', subagents:'Subagents', plugins:'Plugins' };
+
+function quizRender() {
+  const progress = document.getElementById('quizProgress');
+  progress.innerHTML = '';
+  for (let i = 0; i < quizData.length; i++) {
+    const dot = document.createElement('div');
+    dot.className = 'quiz-dot';
+    dot.textContent = i + 1;
+    if (i === quizIdx && !quizDone) dot.classList.add('current');
+    progress.appendChild(dot);
+  }
+  const content = document.getElementById('quizContent');
+  if (quizDone) {
+    const pct = quizData.length > 0 ? Math.round((quizCorrect / quizData.length) * 100) : 0;
+    content.innerHTML = `<div class="quiz-results show">
+      <div style="font-size:3rem;margin-bottom:8px">${pct >= 80 ? '🎉' : pct >= 50 ? '👍' : '💪'}</div>
+      <div class="qr-label">Your Score</div>
+      <div class="qr-score" style="color:${pct >= 80 ? 'var(--green)' : pct >= 50 ? 'var(--yellow)' : 'var(--red)'}">${quizCorrect}/${quizData.length}</div>
+      <div class="qr-msg">${pct === 100 ? 'Perfect! You know your extensions.' : pct >= 80 ? 'Great job! Almost there.' : pct >= 50 ? 'Getting there — review the decision tree above.' : 'Take another look at the decision tree and try again.'}</div>
+      <button onclick="quizReset()" style="padding:10px 28px;border:none;border-radius:8px;background:var(--lavender);color:var(--bg);font-weight:700;cursor:pointer">Try Again</button>
+    </div>`;
+    document.getElementById('quizScore').textContent = `Final: ${quizCorrect} / ${quizData.length}`;
+    return;
+  }
+  const q = quizData[quizIdx];
+  const mechs = ['claude','skills','hooks','mcp','subagents','plugins'];
+  content.innerHTML = `<div class="quiz-scenario">
+    <div class="qs-label">Scenario ${quizIdx + 1} of ${quizData.length}</div>
+    <div class="qs-text">${q.scenario}</div>
+  </div>
+  <div class="quiz-options" id="quizOpts">
+    ${mechs.map(m => `<div class="quiz-opt" id="qopt-${m}" onclick="quizAnswer('${m}')">${quizLabels[m]}</div>`).join('')}
+  </div>
+  <div class="quiz-feedback" id="quizFeedback">
+    <div class="qf-icon" id="qfIcon"></div>
+    <div class="qf-text" id="qfText"></div>
+  </div>
+  <button class="quiz-next" id="quizNext" onclick="quizNext()">Next →</button>`;
+  document.getElementById('quizScore').textContent = `Score: ${quizCorrect} / ${quizAnswered}`;
+}
+
+function quizAnswer(selected) {
+  if (quizDone) return;
+  const q = quizData[quizIdx];
+  const opts = document.querySelectorAll('.quiz-opt');
+  opts.forEach(o => o.classList.add('disabled'));
+  // disable click on selected option via onclick removal
+  opts.forEach(o => { o.onclick = null; });
+  const fb = document.getElementById('quizFeedback');
+  const icon = document.getElementById('qfIcon');
+  const text = document.getElementById('qfText');
+  const mech = document.getElementById('qopt-' + selected);
+  const correct = document.getElementById('qopt-' + q.answer);
+  if (selected === q.answer) {
+    mech.classList.add('selected-correct');
+    fb.className = 'quiz-feedback show correct';
+    icon.textContent = '✅';
+    text.innerHTML = `<strong>Correct!</strong> ${q.explanation}`;
+    quizCorrect++;
+  } else {
+    mech.classList.add('selected-wrong');
+    correct.classList.add('reveal-correct');
+    fb.className = 'quiz-feedback show wrong';
+    icon.textContent = '❌';
+    const correctLabel = quizLabels[q.answer];
+    text.innerHTML = `<strong>Not quite.</strong> The best choice is <strong>${correctLabel}</strong>. ${q.explanation}`;
+  }
+  quizAnswered++;
+  document.getElementById('quizScore').textContent = `Score: ${quizCorrect} / ${quizAnswered}`;
+  // mark dot
+  const dots = document.querySelectorAll('.quiz-dot');
+  const isCorrect = selected === q.answer;
+  if (dots[quizIdx]) {
+    dots[quizIdx].classList.remove('current');
+    dots[quizIdx].classList.add(isCorrect ? 'done' : 'wrong');
+  }
+  if (quizIdx < quizData.length - 1) {
+    document.getElementById('quizNext').classList.add('show');
+  } else {
+    setTimeout(() => { quizDone = true; quizRender(); }, 1200);
+  }
+}
+
+function quizNext() {
+  quizIdx++;
+  if (quizIdx >= quizData.length) {
+    quizDone = true;
+  }
+  quizRender();
+}
+
+function quizReset() {
+  quizIdx = 0;
+  quizCorrect = 0;
+  quizAnswered = 0;
+  quizDone = false;
+  quizRender();
+}
+
+// ── DECISION TREE ──
+const treeInfo = {
+  claude:    { mech:'📄 CLAUDE.md',      desc:'Persistent project-level notes. Place a <strong>CLAUDE.md</strong> in your project root with conventions Claude reads every single session. No need to repeat yourself.',          tip:'Best for: project conventions, coding standards, critical always-on rules that never change between sessions.', color:'var(--blue)' },
+  skills:    { mech:'🧠 Skills',          desc:'Reusable instruction sets saved by name. Load them on demand across any project. Think of them as your personal prompt library.',                                               tip:'Best for: cross-project workflows, code review templates, multi-step prompting sequences you reuse often.', color:'var(--green)' },
+  hooks:     { mech:'⚡ Hooks',            desc:'Automatic actions triggered by lifecycle events (file save, command start/end, etc.). Set &mdash; and they fire without asking.',                                                    tip:'Best for: auto-linting, pre-commit checks, formatting on save, security scanning on file changes.', color:'var(--yellow)' },
+  mcp:       { mech:'🔌 MCP',             desc:'Model Context Protocol connects Claude to external systems &mdash; APIs, databases, filesystems. Claude calls your MCP server as a tool.',                                          tip:'Best for: fetching live data, querying databases, any interaction with systems outside the conversation.', color:'var(--peach)' },
+  subagents: { mech:'🧩 Subagents',       desc:'Delegate complex subtasks to run in independent sessions. Subagents work in parallel while you continue the main conversation.',                                                    tip:'Best for: large refactors, multi-file operations, long-running jobs you want to fire-and-forget.', color:'var(--pink)' },
+  plugins:   { mech:'📦 Plugins',         desc:'Package MCP servers, skills, hooks into a shareable bundle. Distribute to your team or the community via a registry.',                                                              tip:'Best for: sharing integrations, team standardization, publishing useful tools for others.' , color:'var(--red)' }
+};
+
+function treeSelect(mech) {
+  // deactivate all
+  document.querySelectorAll('.tree-path').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.tree-a-circle').forEach(c => c.classList.remove('active'));
+  document.querySelectorAll('.tree-answer').forEach(a => a.classList.remove('active'));
+  // activate selected
+  const path = document.getElementById('tp-' + mech);
+  const circle = document.getElementById('tc-' + mech);
+  const answer = document.querySelector(`.tree-answer[data-mech="${mech}"]`);
+  if (path) path.classList.add('active');
+  if (circle) circle.classList.add('active');
+  if (answer) answer.classList.add('active');
+  // info
+  const info = treeInfo[mech];
+  if (info) {
+    document.getElementById('tiMech').textContent = info.mech;
+    document.getElementById('tiDesc').innerHTML = info.desc;
+    document.getElementById('tiTip').innerHTML = info.tip;
+    document.getElementById('tiTip').style.borderLeftColor = info.color;
+    document.getElementById('treeInfo').classList.add('show');
+  }
+}
+
+// ── ANIMATIONS ──
+function animateSpectrum() {
+  const cards = document.querySelectorAll('.spectrum-card');
+  cards.forEach((card, i) => {
+    setTimeout(() => card.classList.add('show'), 80 * i + 100);
+  });
+}
+function animateRef() {
+  const cards = document.querySelectorAll('.ref-card');
+  cards.forEach((card, i) => {
+    setTimeout(() => card.classList.add('show'), 100 * i + 50);
+  });
+}
+function observeFadeIn() {
+  const els = document.querySelectorAll('.fade-in');
+  const obs = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); obs.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  els.forEach(el => obs.observe(el));
+}
+
+// ── SMOOTH SCROLL ──
+document.querySelectorAll('nav a').forEach(a => {
+  a.addEventListener('click', e => {
+    e.preventDefault();
+    const id = a.getAttribute('href').slice(1);
+    document.getElementById(id).scrollIntoView({ behavior: 'smooth' });
+  });
+});
+
+// ── INIT ──
+function init() {
+  animateSpectrum();
+  setTimeout(animateRef, 300);
+  quizRender();
+  observeFadeIn();
+}
+document.addEventListener('DOMContentLoaded', init);
+</script>
+
+</body>
+</html>

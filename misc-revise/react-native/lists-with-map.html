@@ -1,0 +1,284 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>.map() vs FlatList - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px;
+      border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+    }
+    .phone-notch { position: absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .list-area { flex:1; overflow-y:auto; padding:4px 12px; }
+    .list-area::-webkit-scrollbar { display:none; }
+
+    .row {
+      background: #181825; border-radius: 10px; border: 1px solid #313244;
+      padding: 12px; margin-bottom: 6px; display: flex; align-items: center; gap: 10px;
+    }
+    .row .dot { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 14px; flex-shrink: 0; }
+    .row .idx { font-size: 10px; color: #585b70; font-family: monospace; margin-left: auto; }
+
+    .badge-map { background: #f9e2af20; color: #f9e2af; border: 1px solid #f9e2af40; }
+    .badge-flatlist { background: #89b4fa20; color: #89b4fa; border: 1px solid #89b4fa40; }
+
+    .gradient-text { background: linear-gradient(135deg, #f9e2af, #89b4fa); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .comparison { display: grid; grid-template-columns: 1fr 1fr; gap: 0; }
+    @media (max-width: 640px) { .comparison { grid-template-columns: 1fr; } }
+    .comp-card { padding: 16px; }
+    .comp-card.map { background: #1e1e2e; border: 1px solid #313244; border-radius: 12px 0 0 12px; }
+    .comp-card.flat { background: #1e1e2e; border: 1px solid #313244; border-radius: 0 12px 12px 0; }
+    @media (max-width: 640px) { .comp-card.map { border-radius: 12px 12px 0 0; } .comp-card.flat { border-radius: 0 0 12px 12px; } }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      Rendering Lists
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <code class="gradient-text">.map()</code>
+      <span class="text-[#a6adc8]">vs</span>
+      <span class="text-[#89b4fa]">FlatList</span>
+    </h1>
+    <p class="text-[#a6adc8]">Two ways to render a list. One is simple but <span class="text-[#f38ba8]">bad for lots of data</span>.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === TWO PHONES === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-6 justify-center">
+
+      <!-- Phone 1: .map() -->
+      <div class="text-center">
+        <div class="flex items-center justify-center gap-2 mb-3">
+          <span class="text-xs font-bold px-3 py-1 rounded-full badge-map"><i class="fas fa-code mr-1"></i> .map()</span>
+          <span class="text-xs text-[#6c7086]">in ScrollView</span>
+        </div>
+        <div class="phone" id="phoneMap">
+          <div class="phone-notch"></div>
+          <div class="screen">
+            <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+            <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+              <span class="font-bold">ScrollView + .map()</span>
+            </div>
+            <div class="list-area" id="mapArea">
+              <!-- injected -->
+            </div>
+            <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+              <i class="fas fa-home text-[#f9e2af]"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Phone 2: FlatList -->
+      <div class="text-center">
+        <div class="flex items-center justify-center gap-2 mb-3">
+          <span class="text-xs font-bold px-3 py-1 rounded-full badge-flatlist"><i class="fab fa-react mr-1"></i> FlatList</span>
+          <span class="text-xs text-[#6c7086]">lazy-loaded</span>
+        </div>
+        <div class="phone" id="phoneFlat">
+          <div class="phone-notch"></div>
+          <div class="screen">
+            <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+            <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+              <span class="font-bold">FlatList</span>
+              <span class="text-xs text-[#6c7086]"><span id="flatCount">50</span> items</span>
+            </div>
+            <div class="list-area" id="flatArea">
+              <!-- injected -->
+            </div>
+            <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+              <i class="fas fa-home text-[#89b4fa]"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- Info bar -->
+    <div class="fade-in flex flex-wrap gap-3 justify-center text-sm">
+      <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl px-4 py-3 flex items-center gap-2">
+        <i class="fas fa-database text-[#f9e2af]"></i> Both show <strong id="totalItems">50</strong> items
+      </div>
+      <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl px-4 py-3 flex items-center gap-2">
+        <i class="fas fa-tachometer-alt text-[#89b4fa]"></i> FlatList only renders <span class="text-[#a6e3a1]">what's on screen</span>
+      </div>
+      <div class="bg-[#1e1e2e] border border-[#f38ba8] rounded-xl px-4 py-3 flex items-center gap-2">
+        <i class="fas fa-exclamation-triangle text-[#f38ba8]"></i> .map() renders <span class="text-[#f38ba8]">everything</span> at once
+      </div>
+    </div>
+
+    <!-- === COMPARISON SIDE BY SIDE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-balance-scale text-[#cba6f7]"></i> Side by Side
+      </h2>
+      <div class="comparison">
+        <div class="comp-card map">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="bg-[#f9e2af] text-[#1e1e2e] text-xs font-bold px-2 py-0.5 rounded">.map()</span>
+            <span class="text-sm font-semibold">ScrollView</span>
+          </div>
+          <pre class="text-xs font-mono leading-relaxed bg-[#11111b] p-3 rounded-lg overflow-x-auto">
+<span class="text-[#cba6f7]">import</span> { ScrollView } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'react-native'</span>;
+
+<span class="text-[#cdd6f4]">&lt;ScrollView&gt;</span>
+  <span class="text-[#cdd6f4]">{data.map(item => (</span>
+    <span class="text-[#cdd6f4]">&lt;View key={item.id}&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Text&gt;{item.name}&lt;/Text&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/View&gt;</span>
+  <span class="text-[#cdd6f4]">))}</span>
+<span class="text-[#cdd6f4]">&lt;/ScrollView&gt;</span></pre>
+          <div class="mt-3 space-y-1 text-xs text-[#a6adc8]">
+            <p class="text-[#f38ba8]">⚠️ Renders ALL items upfront</p>
+            <p>❌ No lazy loading</p>
+            <p>❌ No pull-to-refresh built-in</p>
+            <p>❌ No scroll-to-index</p>
+            <p>❌ Bad for 100+ items</p>
+            <p>✅ Simple & familiar</p>
+          </div>
+        </div>
+        <div class="comp-card flat">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="bg-[#89b4fa] text-[#1e1e2e] text-xs font-bold px-2 py-0.5 rounded">FlatList</span>
+            <span class="text-sm font-semibold">Virtualized</span>
+          </div>
+          <pre class="text-xs font-mono leading-relaxed bg-[#11111b] p-3 rounded-lg overflow-x-auto">
+<span class="text-[#cba6f7]">import</span> { FlatList } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'react-native'</span>;
+
+<span class="text-[#cdd6f4]">&lt;FlatList</span>
+  <span class="text-[#89b4fa]">data</span>=<span class="text-[#cdd6f4]">{data}</span>
+  <span class="text-[#89b4fa]">renderItem</span>=<span class="text-[#cdd6f4]">{({item}) => (</span>
+    <span class="text-[#cdd6f4]">&lt;View&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Text&gt;{item.name}&lt;/Text&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/View&gt;</span>
+  <span class="text-[#cdd6f4]">)}</span>
+  <span class="text-[#89b4fa]">keyExtractor</span>=<span class="text-[#cdd6f4]">{item => item.id}</span>
+<span class="text-[#cdd6f4]">/&gt;</span></pre>
+          <div class="mt-3 space-y-1 text-xs text-[#a6adc8]">
+            <p class="text-[#a6e3a1]">✅ Renders only visible items (lazy)</p>
+            <p>✅ Built-in pull-to-refresh</p>
+            <p>✅ scrollToIndex / scrollToOffset</p>
+            <p>✅ Header / Footer / Separator</p>
+            <p>✅ Handles 10,000+ items</p>
+            <p>⚠️ More props to learn</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- === WHEN TO USE WHAT === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-arrow-right text-[#a6e3a1]"></i> When to use which
+      </h2>
+      <div class="grid sm:grid-cols-2 gap-3">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-1">
+            <i class="fas fa-check-circle text-[#f9e2af]"></i>
+            <span class="font-semibold text-sm">Use <code>.map()</code> when</span>
+          </div>
+          <ul class="text-xs text-[#a6adc8] space-y-1 ml-5 list-disc">
+            <li>You have < 20 items</li>
+            <li>The list never changes size</li>
+            <li>You need a simple layout inside a ScrollView</li>
+          </ul>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-1">
+            <i class="fas fa-check-circle text-[#89b4fa]"></i>
+            <span class="font-semibold text-sm">Use <code>FlatList</code> when</span>
+          </div>
+          <ul class="text-xs text-[#a6adc8] space-y-1 ml-5 list-disc">
+            <li>You have 20+ items</li>
+            <li>Data comes from an API</li>
+            <li>You need pull-to-refresh</li>
+            <li>You need performance</li>
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://reactnative.dev/docs/using-a-listview" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> RN Docs: Using Lists</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const EMOJIS = ['🍎','🍌','🍒','🍇','🥝','🍊','🍓','🍉','🍍','🥭','🍑','🍐','🍋','🍈','🫐','🥥','🍅','🍆','🥑','🌽','🥕','🥦','🍄','🌰','🍞','🧀','🥚','🍳','🥞','🧇','🥓','🍔','🌭','🍕','🥪','🌮','🌯','🥗','🍿','🍩','🍪','🍫','🍬','🍭','🍮','🍯','🍰','🧁','🥧','🍦'];
+      const COUNT = 50;
+
+      // Build 50 items
+      const items = Array.from({ length: COUNT }, (_, i) => ({
+        id: 'item-' + i,
+        name: EMOJIS[i % EMOJIS.length] + ' Item ' + (i + 1),
+        idx: i
+      }));
+
+      // .map() phone — renders ALL 50
+      const mapArea = document.getElementById('mapArea');
+      mapArea.innerHTML = items.map(item => `
+        <div class="row">
+          <div class="dot" style="background:${['#f38ba8','#f9e2af','#a6e3a1','#89b4fa','#cba6f7'][item.idx % 5]}">${item.name.charAt(0)}</div>
+          <div class="flex-1 min-w-0">
+            <div class="text-sm font-medium">${item.name}</div>
+            <div class="text-xs text-[#6c7086]">rendered at mount</div>
+          </div>
+          <span class="idx">#${item.idx + 1}</span>
+        </div>
+      `).join('');
+
+      // FlatList phone — renders only "visible" (first 10, and more on scroll)
+      const flatArea = document.getElementById('flatArea');
+      let visibleEnd = 10;
+      let flatItems = [];
+
+      function renderFlat() {
+        flatItems = items.slice(0, visibleEnd);
+        flatArea.innerHTML = flatItems.map(item => `
+          <div class="row">
+            <div class="dot" style="background:${['#f38ba8','#f9e2af','#a6e3a1','#89b4fa','#cba6f7'][item.idx % 5]}">${item.name.charAt(0)}</div>
+            <div class="flex-1 min-w-0">
+              <div class="text-sm font-medium">${item.name}</div>
+              <div class="text-xs text-[#a6e3a1]">lazy-loaded</div>
+            </div>
+            <span class="idx">#${item.idx + 1}</span>
+          </div>
+        `).join('');
+        document.getElementById('flatCount').textContent = flatItems.length;
+      }
+
+      renderFlat();
+
+      // Scroll to load more
+      flatArea.addEventListener('scroll', () => {
+        const { scrollTop, scrollHeight, clientHeight } = flatArea;
+        if (scrollTop + clientHeight >= scrollHeight - 10 && visibleEnd < items.length) {
+          visibleEnd = Math.min(visibleEnd + 5, items.length);
+          renderFlat();
+        }
+      });
+
+      document.getElementById('totalItems').textContent = COUNT;
+    })();
+  </script>
+</body>
+</html>

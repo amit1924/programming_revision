@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Expo Router - Layout - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:8px 10px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #cba6f7, #89b4fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:6px; padding:4px 10px; font-size:10px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#89b4fa; color:#1e1e2e; }
+    .btn-s { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+
+    .layout-tab { cursor:pointer; transition:all 0.2s; border-radius:6px; padding:4px 10px; font-size:10px; font-family:monospace; font-weight:600; border:1px solid transparent; }
+    .layout-tab:hover { background:#45475a; }
+    .layout-tab.active { background:#89b4fa30; border-color:#89b4fa; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+
+    .mock-stack { display:flex; flex-direction:column; gap:2px; }
+    .mock-stack-page { border-radius:6px; padding:8px 10px; font-size:10px; border:1px solid #45475a; }
+    .mock-stack-page.active { border-color:#89b4fa; background:#89b4fa10; }
+
+    .mock-tab-bar { display:flex; border-top:1px solid #313244; }
+    .mock-tab-item { flex:1; text-align:center; padding:6px 0; font-size:9px; color:#585b70; }
+    .mock-tab-item.active { color:#89b4fa; }
+
+    .layout-icon-root { color:#cba6f7; }
+    .layout-icon-stack { color:#89b4fa; }
+    .layout-icon-tabs { color:#a6e3a1; }
+    .layout-icon-slot { color:#f9e2af; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      Expo Router
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">Layout</span>
+    </h1>
+    <p class="text-[#a6adc8]">_layout.tsx files define how pages relate — Stack, Tabs, Slot, and more.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <div class="phone">
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">📐 <span id="layoutTitle">_layout.tsx</span></span>
+            <span id="layoutTypeBadge" class="text-[10px] px-2 py-0.5 rounded-full font-mono bg-[#cba6f7]/20 text-[#cba6f7]">root</span>
+          </div>
+
+          <!-- Tabs -->
+          <div class="flex gap-1 px-3 py-2 border-b border-[#313244] flex-wrap" id="layoutTabs">
+          </div>
+
+          <!-- Phone content area -->
+          <div id="phoneBody" class="body-scroll">
+          </div>
+
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Layout Types</h3>
+          <div class="space-y-1.5 text-xs" id="layoutList"></div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">File Structure</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed" id="structureCode">
+src/app/
+  <span class="text-[#cba6f7]">_layout.tsx</span>    <span class="text-[#585b70]">← root layout</span>
+  index.tsx
+  (tabs)/
+    <span class="text-[#a6e3a1]">_layout.tsx</span> <span class="text-[#585b70]">← tab layout</span>
+    index.tsx
+    feed.tsx
+  products/
+    <span class="text-[#89b4fa]">_layout.tsx</span> <span class="text-[#585b70]">← stack layout</span>
+    index.tsx
+    [id].tsx</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Rule:</span> Every directory <em>can</em> have a _layout.tsx. The file structure + layout files = complete navigation tree. No manual <code>NavigationContainer</code> needed.
+        </div>
+      </div>
+    </section>
+
+    <!-- === CODE EXAMPLES === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#89b4fa]"></i> Layout Code Examples
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold text-[#cba6f7]">Root Layout — src/app/_layout.tsx</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7]">import</span> { Stack } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+<span class="text-[#cba6f7]">import</span> { useFonts } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'expo-font'</span>;
+
+<span class="text-[#cba6f7]">export default function</span> <span class="text-[#89b4fa]">RootLayout</span>() {
+  <span class="text-[#cba6f7]">const</span> [loaded] = useFonts({
+    SpaceMono: <span class="text-[#cba6f7]">require</span>(<span class="text-[#a6e3a1]">'@/assets/fonts/SpaceMono-Regular.ttf'</span>),
+  });
+  <span class="text-[#cba6f7]">if</span> (!loaded) <span class="text-[#cba6f7]">return</span> <span class="text-[#cba6f7]">null</span>;
+
+  <span class="text-[#cba6f7]">return</span> <span class="text-[#cdd6f4]">&lt;Stack /&gt;</span>;
+}</pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold text-[#89b4fa]">Stack Layout — app/products/_layout.tsx</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7]">import</span> { Stack } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+
+<span class="text-[#cba6f7]">export default function</span> <span class="text-[#89b4fa]">StackLayout</span>() {
+  <span class="text-[#cba6f7]">return</span> (
+    <span class="text-[#cdd6f4]">&lt;Stack&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Stack.Screen</span>
+        <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"[id]"</span>
+        <span class="text-[#89b4fa]">options</span>={{ <span class="text-[#89b4fa]">headerShown</span>: <span class="text-[#cba6f7]">false</span> }}
+      <span class="text-[#cdd6f4]">/&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/Stack&gt;</span>
+  );
+}</pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold text-[#a6e3a1]">Tabs Layout — app/(tabs)/_layout.tsx</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7]">import</span> { Tabs } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+<span class="text-[#cba6f7]">import</span> { Ionicons } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'@expo/vector-icons'</span>;
+
+<span class="text-[#cba6f7]">export default function</span> <span class="text-[#89b4fa]">TabLayout</span>() {
+  <span class="text-[#cba6f7]">return</span> (
+    <span class="text-[#cdd6f4]">&lt;Tabs&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Tabs.Screen</span>
+        <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"index"</span>
+        <span class="text-[#89b4fa]">options</span>={{
+          <span class="text-[#89b4fa]">title</span>: <span class="text-[#a6e3a1]">"Home"</span>,
+          <span class="text-[#89b4fa]">tabBarIcon</span>: ({ <span class="text-[#cdd6f4]">color</span> }) <span class="text-[#cba6f7]">=&gt;</span>
+            <span class="text-[#cdd6f4]">&lt;Ionicons</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"home"</span> <span class="text-[#89b4fa]">size</span>={<span class="text-[#cdd6f4]">24</span>} <span class="text-[#89b4fa]">color</span>={color} <span class="text-[#cdd6f4]">/&gt;</span>,
+        }}
+      <span class="text-[#cdd6f4]">/&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Tabs.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"feed"</span> <span class="text-[#cdd6f4]">/&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/Tabs&gt;</span>
+  );
+}</pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold text-[#f9e2af]">Slot Layout — app/social/_layout.tsx</div>
+          <pre class="p-4 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7]">import</span> { Slot } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'expo-router'</span>;
+
+<span class="text-[#cba6f7]">export default function</span> <span class="text-[#89b4fa]">Layout</span>() {
+  <span class="text-[#cba6f7]">return</span> (
+    <span class="text-[#cdd6f4]">&lt;&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Header /&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Slot /&gt;</span>  <span class="text-[#585b70]">← child route renders here</span>
+      <span class="text-[#cdd6f4]">&lt;Footer /&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/&gt;</span>
+  );
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://docs.expo.dev/router/layout/" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> Expo Router Layout Docs</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const layouts = [
+        {
+          id: 'root', icon: 'fa-star', color: '#cba6f7',
+          label: '_layout (root)',
+          title: 'Root Layout',
+          desc: 'Every app needs a root _layout.tsx directly in src/app/. It renders before all routes — put font loading, splash screen, providers here.',
+          badge: 'root',
+          structure: `src/app/
+  <span style="color:#cba6f7">_layout.tsx</span>    <span style="color:#585b70">← root layout</span>
+  index.tsx
+  home.tsx`,
+          phone: `
+            <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] mb-2">
+              <div class="text-xs font-semibold text-[#cba6f7] mb-2"><i class="fas fa-star mr-1"></i> Root Layout (_layout.tsx)</div>
+              <div class="space-y-2 text-xs text-[#a6adc8]">
+                <div class="flex items-center gap-2"><span class="text-[#a6e3a1]">✅</span> Fonts loaded here</div>
+                <div class="flex items-center gap-2"><span class="text-[#a6e3a1]">✅</span> SplashScreen controlled here</div>
+                <div class="flex items-center gap-2"><span class="text-[#a6e3a1]">✅</span> ThemeProvider wraps children</div>
+                <div class="flex items-center gap-2"><span class="text-[#a6e3a1]">✅</span> Stack navigator defined here</div>
+              </div>
+            </div>
+            <div class="bg-[#181825] rounded-xl p-3 border border-[#313244]">
+              <div class="text-[10px] text-[#585b70] mb-1">Replaces App.jsx</div>
+              <div class="text-[11px] bg-[#11111b] rounded-lg p-2 font-mono"><span class="text-[#cba6f7]">export default</span> <span class="text-[#cba6f7]">function</span> <span class="text-[#cdd6f4]">RootLayout</span>() {<br>  <span class="text-[#cba6f7]">return</span> <span class="text-[#cdd6f4]">&lt;Stack /&gt;</span>;<br>}</div>
+            </div>
+          `
+        },
+        {
+          id: 'stack', icon: 'fa-layer-group', color: '#89b4fa',
+          label: 'Stack',
+          title: 'Stack Navigator',
+          desc: 'Push/pop pages on top of each other. Back button appears automatically. Pages remain mounted when hidden.',
+          badge: 'stack',
+          structure: `app/products/
+  <span style="color:#89b4fa">_layout.tsx</span>  <span style="color:#585b70">← Stack navigator</span>
+  index.tsx
+  [id].tsx`,
+          phone: `
+            <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] mb-2">
+              <div class="text-xs font-semibold text-[#89b4fa] mb-2"><i class="fas fa-layer-group mr-1"></i> Stack</div>
+              <div class="mock-stack">
+                <div class="mock-stack-page" style="margin-left:0;">Products <span class="text-[#585b70]">← index</span></div>
+                <div class="mock-stack-page active" style="margin-left:4px;border-color:#89b4fa;">Product #123 <span class="text-[#585b70]">← pushed</span></div>
+                <div class="mock-stack-page" style="margin-left:8px;opacity:0.5;">Accessories <span class="text-[#585b70]">← pushed</span></div>
+              </div>
+            </div>
+            <div class="bg-[#181825] rounded-xl p-3 border border-[#313244]">
+              <div class="flex items-center gap-2 text-xs">
+                <button class="btn btn-s" onclick="document.querySelector('.layout-tab.active')?.click()"><i class="fas fa-arrow-left"></i> Go Back</button>
+                <span class="text-[10px] text-[#585b70]">pops current page</span>
+              </div>
+            </div>
+          `
+        },
+        {
+          id: 'tabs', icon: 'fa-table-cells', color: '#a6e3a1',
+          label: 'Tabs',
+          title: 'Tabs Navigator',
+          desc: 'Bottom tab bar. Routes rendered as tabs. Tab order, title, and icons set in _layout.tsx.',
+          badge: 'tabs',
+          structure: `app/(tabs)/
+  <span style="color:#a6e3a1">_layout.tsx</span>  <span style="color:#585b70">← Tab navigator</span>
+  index.tsx
+  feed.tsx
+  profile.tsx`,
+          phone: `
+            <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] mb-2">
+              <div class="text-xs font-semibold text-[#a6e3a1] mb-2"><i class="fas fa-table-cells mr-1"></i> JavaScript Tabs</div>
+              <div style="flex:1;display:flex;flex-direction:column;justify-content:center;align-items:center;min-height:80px;background:#11111b;border-radius:8px;">
+                <span class="text-sm font-semibold text-[#a6e3a1]">Home</span>
+                <span class="text-[10px] text-[#585b70]">Current tab content</span>
+              </div>
+              <div class="mock-tab-bar mt-2">
+                <div class="mock-tab-item active"><i class="fas fa-house"></i><br>Home</div>
+                <div class="mock-tab-item"><i class="fas fa-rss"></i><br>Feed</div>
+                <div class="mock-tab-item"><i class="fas fa-user"></i><br>Profile</div>
+              </div>
+            </div>
+            <div class="bg-[#181825] rounded-xl p-3 border border-[#313244]">
+              <div class="text-[10px] text-[#a6e3a1]"><i class="fas fa-info-circle mr-1"></i> Also: NativeTabs for platform-native tab bar (Android/iOS), custom Tabs for web.</div>
+            </div>
+          `
+        },
+        {
+          id: 'slot', icon: 'fa-square', color: '#f9e2af',
+          label: 'Slot',
+          title: 'Slot Layout',
+          desc: 'A placeholder for the current child route. No navigator — just wraps children with custom UI (header/footer).',
+          badge: 'slot',
+          structure: `app/social/
+  <span style="color:#f9e2af">_layout.tsx</span>  <span style="color:#585b70">← Slot</span>
+  index.tsx
+  feed.tsx
+  profile.tsx`,
+          phone: `
+            <div class="bg-[#181825] rounded-xl p-3 border border-[#313244] mb-2">
+              <div class="text-xs font-semibold text-[#f9e2af] mb-2"><i class="fas fa-square mr-1"></i> Slot Layout</div>
+              <div style="border:1px solid #45475a;border-radius:8px;overflow:hidden;">
+                <div style="background:#313244;padding:6px 10px;font-size:10px;font-weight:600;"><i class="fas fa-arrow-up mr-1"></i> Header (always visible)</div>
+                <div style="padding:20px 10px;text-align:center;background:#11111b;min-height:50px;display:flex;align-items:center;justify-content:center;">
+                  <span class="text-xs text-[#f9e2af]">&lt;Slot /&gt; → current route renders here</span>
+                </div>
+                <div style="background:#313244;padding:6px 10px;font-size:10px;font-weight:600;"><i class="fas fa-arrow-down mr-1"></i> Footer (always visible)</div>
+              </div>
+            </div>
+            <div class="bg-[#181825] rounded-xl p-3 border border-[#313244]">
+              <div class="text-[10px] text-[#585b70]">Navigating between pages REPLACES content in Slot — no back stack. Good for simple layouts without navigation history.</div>
+            </div>
+          `
+        },
+      ];
+
+      const layoutTabs = document.getElementById('layoutTabs');
+      const phoneBody = document.getElementById('phoneBody');
+      const layoutTitle = document.getElementById('layoutTitle');
+      const layoutTypeBadge = document.getElementById('layoutTypeBadge');
+      const layoutList = document.getElementById('layoutList');
+      const structureCode = document.getElementById('structureCode');
+
+      function selectLayout(id) {
+        const l = layouts.find(x => x.id === id);
+        if (!l) return;
+
+        document.querySelectorAll('.layout-tab').forEach(t => t.classList.toggle('active', t.dataset.id === id));
+        layoutTitle.textContent = l.title;
+        layoutTypeBadge.textContent = l.badge;
+        layoutTypeBadge.style.background = l.color + '20';
+        layoutTypeBadge.style.color = l.color;
+
+        phoneBody.innerHTML = l.phone;
+        structureCode.innerHTML = l.structure;
+      }
+
+      // Top tabs
+      layouts.forEach(l => {
+        const t = document.createElement('span');
+        t.className = 'layout-tab' + (l.id === 'root' ? ' active' : '');
+        t.dataset.id = l.id;
+        t.innerHTML = `<i class="fas ${l.icon}" style="color:${l.color}"></i> ${l.label}`;
+        t.addEventListener('click', () => selectLayout(l.id));
+        layoutTabs.appendChild(t);
+      });
+
+      // Side panel list
+      layouts.forEach(l => {
+        const item = document.createElement('div');
+        item.className = 'bg-[#11111b] rounded-lg p-2 flex items-start gap-2 cursor-pointer';
+        item.style.transition = 'all 0.2s';
+        item.innerHTML = `
+          <span style="color:${l.color};margin-top:1px;"><i class="fas ${l.icon} fa-fw"></i></span>
+          <div>
+            <div style="color:${l.color};font-weight:600;font-size:11px;">${l.label}</div>
+            <div class="text-[10px] text-[#585b70]">${l.desc.split('.')[0]}.</div>
+          </div>
+        `;
+        item.addEventListener('click', () => selectLayout(l.id));
+        layoutList.appendChild(item);
+      });
+
+      selectLayout('root');
+    })();
+  </script>
+</body>
+</html>

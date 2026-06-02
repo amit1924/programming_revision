@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Events · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--radius:8px;--orange:#f8bd7f;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--teal)}.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}.code .keyword{color:var(--blue)}.code .string{color:var(--green)}.code .danger{color:var(--red)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--teal);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.danger{background:var(--red);color:white}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+.demo-box{padding:14px;min-height:60px;border-radius:6px;background:var(--bg);border:1px dashed var(--surface2);margin:8px 0}
+.click-area{padding:30px;border-radius:var(--radius);text-align:center;cursor:pointer;transition:.15s;user-select:none}
+.click-area:active{transform:scale(.97)}
+.click-area.blue{background:rgba(137,180,250,.12);border:2px solid var(--blue)}
+.click-area.green{background:rgba(166,227,161,.12);border:2px solid var(--green)}
+.click-area.red{background:rgba(243,139,168,.12);border:2px solid var(--red)}
+
+.propagation-stage{position:relative;margin:16px 0;user-select:none}
+.prop-layer{border-radius:var(--radius);padding:30px;margin:0;position:relative;transition:.15s;cursor:pointer}
+.prop-layer.inner{background:rgba(166,227,161,.1);border:2px solid var(--green);padding:20px}
+.prop-layer.middle{background:rgba(249,226,175,.08);border:2px solid var(--yellow);padding:25px}
+.prop-layer.outer{background:rgba(137,180,250,.06);border:2px solid var(--blue);padding:30px}
+.prop-layer .layer-label{position:absolute;font-size:.68rem;color:var(--muted)}
+.prop-layer .layer-hit{position:absolute;top:4px;right:8px;font-size:.7rem;font-weight:600}
+.prop-layer.inner{z-index:3}.prop-layer.middle{z-index:2}.prop-layer.outer{z-index:1}
+
+.log-area{font-family:monospace;font-size:.76rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:80px;max-height:200px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0}
+.log-area .entry.capture{color:var(--blue)}
+.log-area .entry.target{color:var(--green);font-weight:600}
+.log-area .entry.bubble{color:var(--peach)}
+
+.click-counter{display:flex;align-items:center;gap:16px;padding:16px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin:8px 0}
+.click-counter .count{font-size:2rem;font-weight:700;color:var(--teal);font-family:monospace;min-width:60px;text-align:center}
+.click-counter .label{flex:1;font-size:.84rem;color:var(--muted)}
+
+.delegation-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin:10px 0}
+.delegation-item{padding:20px 10px;border-radius:6px;background:var(--surface2);text-align:center;cursor:pointer;font-size:.82rem;transition:.15s}
+.delegation-item:hover{background:var(--blue);color:#0f0f17;transform:scale(1.05)}
+.delegation-item.selected{background:var(--green);color:#0f0f17}
+
+.event-type-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.event-type-card{padding:12px;border-radius:6px;background:var(--bg);border:1px solid var(--surface2);cursor:pointer;transition:.15s;text-align:center}
+.event-type-card:hover{border-color:var(--teal);background:rgba(148,226,213,.04)}
+.event-type-card .ev-icon{font-size:1.3rem;margin-bottom:4px}
+.event-type-card .ev-name{font-family:monospace;font-size:.8rem;color:var(--teal);font-weight:600}
+.event-type-card .ev-desc{font-size:.72rem;color:var(--muted);margin-top:2px}
+.event-type-card.fired{background:rgba(148,226,213,.1);border-color:var(--teal)}
+.event-type-card.fired .ev-desc{color:var(--teal)}
+
+.toggle-group{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--teal);color:#0f0f17;border-color:var(--teal)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>JS</span> Events</div>
+  <div class="crumbs">JavaScript &rsaquo; Events</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(148,226,213,.18);color:var(--teal)">Interactive</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. WHAT ARE EVENTS -->
+<div class="section-title"><span class="num">1</span> What Are Events?</div>
+<div class="card">
+  <p>The DOM is <strong>event-driven</strong>. Events are signals fired when something happens — a click, a keystroke, a form submit, a page load. JavaScript <strong>listens</strong> for these events and <strong>responds</strong> with handler functions.</p>
+  <div class="grid2">
+    <div style="padding:14px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);text-align:center">
+      <div style="font-size:2rem;margin-bottom:6px">&#128264;</div>
+      <div style="font-size:.84rem">User clicks a button</div>
+      <div class="flow-arrow" style="display:block;padding:4px">&#8595;</div>
+      <div style="font-size:2rem;margin-bottom:6px">&#128752;</div>
+      <div style="font-size:.84rem">Browser fires a <code style="color:var(--teal)">click</code> event</div>
+      <div class="flow-arrow" style="display:block;padding:4px">&#8595;</div>
+      <div style="font-size:2rem;margin-bottom:6px">&#128190;</div>
+      <div style="font-size:.84rem">Event handler runs</div>
+    </div>
+    <div>
+      <div class="code" style="font-size:.76rem">
+<span class="comment">// The event pattern:</span>
+<span class="keyword">const</span> btn = document.querySelector(<span class="string">'button'</span>);
+
+<span class="comment">// 1. Something happens (user clicks)</span>
+<span class="comment">// 2. Browser creates Event object</span>
+<span class="comment">// 3. Event propagates through DOM</span>
+<span class="comment">// 4. Registered handlers execute</span>
+
+btn.addEventListener(<span class="string">'click'</span>, (event) => {
+  console.log(<span class="string">'Button was clicked!'</span>);
+  <span class="comment">// 'event' contains details:</span>
+  <span class="comment">//   event.target — what was clicked</span>
+  <span class="comment">//   event.type   — "click"</span>
+  <span class="comment">//   event.clientX/Y — mouse position</span>
+});
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. EVENT TYPES -->
+<div class="section-title"><span class="num">2</span> Event Types · Live Dashboard</div>
+<div class="card">
+  <p>Click or type in the area below to see different event types fire in real time.</p>
+  <div class="event-type-grid" id="eventDashboard">
+    <div class="event-type-card" data-ev="click"><div class="ev-icon">&#128069;</div><div class="ev-name">click</div><div class="ev-desc">Waiting...</div></div>
+    <div class="event-type-card" data-ev="dblclick"><div class="ev-icon">&#128070;</div><div class="ev-name">dblclick</div><div class="ev-desc">Waiting...</div></div>
+    <div class="event-type-card" data-ev="mousedown"><div class="ev-icon">&#128073;</div><div class="ev-name">mousedown</div><div class="ev-desc">Waiting...</div></div>
+    <div class="event-type-card" data-ev="mouseup"><div class="ev-icon">&#128072;</div><div class="ev-name">mouseup</div><div class="ev-desc">Waiting...</div></div>
+    <div class="event-type-card" data-ev="mouseenter"><div class="ev-icon">&#128299;</div><div class="ev-name">mouseenter</div><div class="ev-desc">Waiting...</div></div>
+    <div class="event-type-card" data-ev="mouseleave"><div class="ev-icon">&#128300;</div><div class="ev-name">mouseleave</div><div class="ev-desc">Waiting...</div></div>
+    <div class="event-type-card" data-ev="keydown"><div class="ev-icon">&#9000;</div><div class="ev-name">keydown</div><div class="ev-desc">Waiting...</div></div>
+    <div class="event-type-card" data-ev="keyup"><div class="ev-icon">&#9000;</div><div class="ev-name">keyup</div><div class="ev-desc">Waiting...</div></div>
+  </div>
+  <div class="click-area blue" id="eventDemoArea" tabindex="0" style="outline:none">
+    &#128073; Click, double-click, or hover here<br><span style="font-size:.72rem;color:var(--muted)">(focus then type to see keyboard events)</span>
+  </div>
+  <div class="log-area" id="eventDashLog" style="min-height:50px;max-height:100px">// Events will appear here</div>
+</div>
+
+<!-- 3. ADDING LISTENERS -->
+<div class="section-title"><span class="num">3</span> Adding Event Listeners</div>
+<div class="grid2">
+  <div class="card">
+    <h3>&#9654; addEventListener()</h3>
+    <p>The modern, preferred way. Attach <strong>multiple handlers</strong> to the same event, control <strong>capturing/bubbling</strong>, and remove them cleanly.</p>
+    <div class="code" style="font-size:.73rem">
+<span class="comment">// Multiple handlers — all run:</span>
+btn.addEventListener(<span class="string">'click'</span>, handler1);
+btn.addEventListener(<span class="string">'click'</span>, handler2);
+<span class="comment">// Both fire! Order is preserved.</span>
+
+<span class="comment">// Capture phase (third param):</span>
+el.addEventListener(<span class="string">'click'</span>, handler, <span class="keyword">true</span>);
+
+<span class="comment">// Remove specific handler:</span>
+btn.removeEventListener(<span class="string">'click'</span>, handler1);
+
+<span class="comment">// One-time only:</span>
+btn.addEventListener(<span class="string">'click'</span>, handler, { once: <span class="keyword">true</span> });
+    </div>
+  </div>
+  <div class="card">
+    <h3>&#10007; onclick / HTML Attributes</h3>
+    <p>The old way. Only <strong>one handler per event</strong> — setting a second one overwrites the first.</p>
+    <div class="code" style="font-size:.73rem">
+<span class="comment">// HTML attribute (avoid):</span>
+&lt;button <span class="danger">onclick="doStuff()"</span>&gt;
+
+<span class="comment">// Property assignment:</span>
+btn.onclick = <span class="keyword">function</span>() { ... };
+<span class="comment">// This OVERWRITES any previous onclick</span>
+btn.onclick = <span class="keyword">function</span>() { ... };
+<span class="comment">// Only the LAST one runs!</span>
+
+<span class="comment">// Cannot use capture phase</span>
+<span class="comment">// Cannot use { once } option</span>
+    </div>
+    <div class="callout danger" style="font-size:.76rem;padding:8px 12px">
+      <strong>Use addEventListener()</strong> — it's more flexible and doesn't overwrite other handlers.
+    </div>
+  </div>
+</div>
+
+<!-- LIVE: Click Counter -->
+<div class="card" style="border:2px solid var(--teal)">
+  <h3>&#9654; Live Demo: Adding vs Overwriting</h3>
+  <div class="grid2">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)"><strong>addEventListener</strong> — both counters increment:</p>
+      <div class="click-area green" id="addListenerDemo" style="padding:20px">Click me!</div>
+      <div class="click-counter" style="margin:0"><div class="count" id="addCount1">0</div><div class="label">Handler 1 (addEventListener)</div></div>
+      <div class="click-counter" style="margin:0"><div class="count" id="addCount2">0</div><div class="label">Handler 2 (addEventListener)</div></div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)"><strong>onclick</strong> — second overwrites first:</p>
+      <div class="click-area red" id="onclickDemo" style="padding:20px">Click me!</div>
+      <div class="click-counter" style="margin:0"><div class="count" id="onclickCount1">0</div><div class="label">Handler 1 (overwritten)</div></div>
+      <div class="click-counter" style="margin:0"><div class="count" id="onclickCount2">0</div><div class="label">Handler 2 (the only one)</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. EVENT PROPAGATION -->
+<div class="section-title"><span class="num">4</span> Event Propagation · Capturing vs Bubbling</div>
+<div class="card">
+  <p>When you click a nested element, the event doesn't just fire on that one element — it <strong>travels through the DOM tree</strong> in three phases.</p>
+  <div class="grid3" style="text-align:center;font-size:.82rem">
+    <div style="padding:12px;border-radius:6px;background:rgba(137,180,250,.08);border:1px solid var(--blue)">
+      <div style="font-size:1.2rem">&#8595;</div>
+      <strong style="color:var(--blue)">1. Capturing</strong><br>
+      <span style="font-size:.72rem;color:var(--muted)">Event travels DOWN from document to target</span>
+    </div>
+    <div style="padding:12px;border-radius:6px;background:rgba(166,227,161,.08);border:1px solid var(--green)">
+      <div style="font-size:1.2rem">&#9679;</div>
+      <strong style="color:var(--green)">2. Target</strong><br>
+      <span style="font-size:.72rem;color:var(--muted)">Event reaches the clicked element</span>
+    </div>
+    <div style="padding:12px;border-radius:6px;background:rgba(250,179,135,.08);border:1px solid var(--peach)">
+      <div style="font-size:1.2rem">&#8593;</div>
+      <strong style="color:var(--peach)">3. Bubbling</strong><br>
+      <span style="font-size:.72rem;color:var(--muted)">Event travels UP from target to document</span>
+    </div>
+  </div>
+</div>
+
+<!-- Interactive Propagation Demo -->
+<div class="card">
+  <h3>&#9654; Interactive: Click the nested boxes</h3>
+  <p>Each layer has a capturing handler (&#8595;) and a bubbling handler (&#8593;). Watch the order they fire.</p>
+  <div class="propagation-stage" id="propStage">
+    <div class="prop-layer outer" id="propOuter">
+      <span class="layer-label" style="top:4px;left:8px;color:var(--blue)">document</span>
+      <span class="layer-hit" id="hitOuter"></span>
+      <div class="prop-layer middle" id="propMiddle">
+        <span class="layer-label" style="top:4px;left:8px;color:var(--yellow)">section</span>
+        <span class="layer-hit" id="hitMiddle"></span>
+        <div class="prop-layer inner" id="propInner">
+          <span class="layer-label" style="top:4px;left:8px;color:var(--green)">button</span>
+          <span class="layer-hit" id="hitInner"></span>
+          <div style="text-align:center;font-size:.82rem;color:var(--muted)">&#128073; Click me</div>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="toggle-group">
+    <button class="btn primary" onclick="resetPropagationLog()">Reset</button>
+    <span style="font-size:.74rem;color:var(--muted)">&#8595; = capturing phase &nbsp;&#8593; = bubbling phase</span>
+  </div>
+  <div class="log-area" id="propLog" style="min-height:60px;max-height:150px">// Click any box to see propagation order</div>
+</div>
+
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--blue)">
+    <h3 style="color:var(--blue)">&#8595; Capture phase (event.capturing = true)</h3>
+    <p>Event listeners registered with <code>{ capture: true }</code> (or <code>true</code> as third arg) fire during the <strong>capturing phase</strong> — before the event reaches the target.</p>
+    <div class="code" style="font-size:.72rem">
+<span class="comment">// Fire during CAPTURE (top-down):</span>
+document.addEventListener(<span class="string">'click'</span>, handler, <span class="keyword">true</span>);
+<span class="comment">// or:</span>
+document.addEventListener(<span class="string">'click'</span>, handler, { capture: <span class="keyword">true</span> });
+    </div>
+    <p style="font-size:.78rem;color:var(--muted)">Use case: Global event interceptors, analytics, before child handlers run.</p>
+  </div>
+  <div class="card" style="border-top:3px solid var(--peach)">
+    <h3 style="color:var(--peach)">&#8593; Bubble phase (default)</h3>
+    <p>Most event listeners fire during the <strong>bubbling phase</strong> (bottom-up). This is the default behavior — no special flag needed.</p>
+    <div class="code" style="font-size:.72rem">
+<span class="comment">// Fires during BUBBLE (bottom-up):</span>
+el.addEventListener(<span class="string">'click'</span>, handler);
+<span class="comment">// (third param defaults to false)</span>
+    </div>
+    <p style="font-size:.78rem;color:var(--muted)">Use case: Most handlers. Also enables <strong>event delegation</strong>.</p>
+  </div>
+</div>
+
+<!-- 5. stopPropagation vs preventDefault -->
+<div class="section-title"><span class="num">5</span> Event Methods · Stop &amp; Prevent</div>
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>&#10071; stopPropagation()</h3>
+    <p>Stops the event from <strong>traveling further</strong> — neither up (bubbling) nor down (capturing).</p>
+    <div class="click-area green" id="stopPropDemo" style="padding:16px">
+      Click me &#8594; parent also has a handler
+      <div style="margin-top:8px;padding:12px;background:rgba(243,139,168,.1);border-radius:4px;border:1px solid var(--red);font-size:.78rem" id="stopPropChild">
+        Child with <code>stopPropagation()</code>
+      </div>
+    </div>
+    <div class="log-area" id="stopPropLog" style="min-height:40px;font-size:.74rem">// Click the child or the parent</div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--yellow)">
+    <h3>&#10071; preventDefault()</h3>
+    <p>Prevents the browser's <strong>default behavior</strong> for that event (e.g., link navigation, form submit, checkbox toggle). The event still propagates normally.</p>
+    <div class="code" style="font-size:.73rem">
+<span class="comment">// Link won't navigate:</span>
+link.addEventListener(<span class="string">'click'</span>, (e) => {
+  <span class="keyword">e.preventDefault</span>();
+  <span class="comment">// Now I handle navigation myself</span>
+});
+
+<span class="comment">// Form won't submit:</span>
+form.addEventListener(<span class="string">'submit'</span>, (e) => {
+  <span class="keyword">e.preventDefault</span>();
+  <span class="comment">// Validate first, then fetch()</span>
+});
+    </div>
+    <div style="padding:12px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin-top:6px;text-align:center">
+      <a href="#" id="preventDefaultLink" style="color:var(--blue)">&#128279; Click me — I won't navigate</a>
+      <div class="log-area" id="preventLog" style="min-height:30px;font-size:.74rem;margin-top:6px">// Click the link</div>
+    </div>
+    <div class="callout" style="font-size:.76rem;padding:8px;margin-top:6px">
+      <strong>Note:</strong> <code>preventDefault()</code> does NOT stop propagation. The event still bubbles.
+    </div>
+  </div>
+</div>
+
+<!-- 6. EVENT DELEGATION -->
+<div class="section-title"><span class="num">6</span> Event Delegation</div>
+<div class="card">
+  <p><strong>Delegation</strong> uses bubbling to handle events for <strong>many elements</strong> with a <strong>single listener</strong> on a parent. This works for dynamic elements too (added after page load).</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">// BAD: 1 listener per item</span>
+items.forEach(item => {
+  item.addEventListener(<span class="string">'click'</span>, handler);
+  <span class="comment">// Doesn't work for new items!</span>
+});
+
+<span class="comment">// GOOD: 1 listener on parent</span>
+list.addEventListener(<span class="string">'click'</span>, (e) => {
+  <span class="keyword">const</span> item = e.target.closest(<span class="string">'.item'</span>);
+  <span class="keyword">if</span> (!item) <span class="keyword">return</span>;
+  <span class="comment">// Works for ALL items,</span>
+  <span class="comment">// even ones added later!</span>
+  handleItem(item.dataset.id);
+});
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Click any cell below. All handled by <strong>one</strong> listener on the grid.</p>
+      <div class="delegation-grid" id="delegationGrid">
+        <div class="delegation-item" data-id="1">Item 1</div>
+        <div class="delegation-item" data-id="2">Item 2</div>
+        <div class="delegation-item" data-id="3">Item 3</div>
+        <div class="delegation-item" data-id="4">Item 4</div>
+        <div class="delegation-item" data-id="5">Item 5</div>
+        <div class="delegation-item" data-id="6">Item 6</div>
+        <div class="delegation-item" data-id="7">Item 7</div>
+        <div class="delegation-item" data-id="8">Item 8</div>
+      </div>
+      <button class="btn outline" onclick="addDelegationItem()" style="margin-top:6px;width:100%">+ Add Item 9 (dynamically)</button>
+      <div class="log-area" id="delegationLog" style="min-height:40px;font-size:.74rem">// Click any item</div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. EVENT OBJECT -->
+<div class="section-title"><span class="num">7</span> The Event Object</div>
+<div class="card">
+  <p>Every event handler receives an <strong>Event object</strong> with properties about what happened.</p>
+  <div class="grid2">
+    <div>
+      <table style="font-size:.78rem">
+        <tr><th>Property</th><th>What it reveals</th></tr>
+        <tr><td><code>event.type</code></td><td>The event name (<code>"click"</code>, <code>"keydown"</code>, etc.)</td></tr>
+        <tr><td><code>event.target</code></td><td>The element that triggered the event (the actual clicked element)</td></tr>
+        <tr><td><code>event.currentTarget</code></td><td>The element the listener was attached to (different from target in delegation!)</td></tr>
+        <tr><td><code>event.clientX / clientY</code></td><td>Mouse position relative to viewport (px)</td></tr>
+        <tr><td><code>event.key</code></td><td>Key pressed (<code>"Enter"</code>, <code>"Escape"</code>, <code>"a"</code>)</td></tr>
+        <tr><td><code>event.ctrlKey / shiftKey / altKey</code></td><td>Modifier keys held during event</td></tr>
+        <tr><td><code>event.preventDefault()</code></td><td>Cancel default behavior</td></tr>
+        <tr><td><code>event.stopPropagation()</code></td><td>Stop event from traveling further</td></tr>
+        <tr><td><code>event.eventPhase</code></td><td>Current phase: 1=capture, 2=target, 3=bubble</td></tr>
+      </table>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Live inspector — click anywhere in this card:</p>
+      <div class="demo-box" id="eventObjectDemo" style="cursor:crosshair">
+        <div style="font-size:.78rem;color:var(--muted)">Click, press a key, or move mouse here</div>
+      </div>
+      <div class="log-area" id="eventObjectLog" style="min-height:80px;font-size:.72rem">// Event details appear here</div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. CUSTOM EVENTS -->
+<div class="section-title"><span class="num">8</span> Custom Events</div>
+<div class="card">
+  <p>You can create and dispatch your <strong>own events</strong> — useful for decoupled components, pub/sub patterns, and frameworks.</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">// 1. Create a custom event</span>
+<span class="keyword">const</span> event = <span class="keyword">new</span> CustomEvent(<span class="string">'user-login'</span>, {
+  detail: { userId: <span class="number">42</span>, name: <span class="string">'Alice'</span> },
+  bubbles: <span class="keyword">true</span>,
+  cancelable: <span class="keyword">true</span>
+});
+
+<span class="comment">// 2. Dispatch it</span>
+document.dispatchEvent(event);
+
+<span class="comment">// 3. Listen for it anywhere</span>
+document.addEventListener(<span class="string">'user-login'</span>, (e) => {
+  console.log(<span class="string">'User logged in:'</span>, e.detail.name);
+  <span class="comment">// &#8594; Alice</span>
+});
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Click the button below. It dispatches a custom event — the log listens for it.</p>
+      <button class="btn primary" onclick="fireCustomEvent()">&#9654; Fire Custom Event</button>
+      <div class="log-area" id="customEventLog" style="min-height:50px;font-size:.74rem">// Custom events appear here</div>
+      <div class="callout" style="font-size:.76rem;padding:8px;margin-top:6px">
+        <strong>Use cases:</strong> Component communication, state changes, third-party library integration.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 9. EVENT BUBBLING REFERENCE -->
+<div class="section-title"><span class="num">9</span> Do All Events Bubble?</div>
+<div class="card">
+  <p>Most events bubble — but some <strong>don't</strong>.</p>
+  <table>
+    <tr><th>Bubble</th><th>Do NOT bubble</th><th>Notes</th></tr>
+    <tr>
+      <td><span class="badge green">click, mousedown, mouseup</span></td>
+      <td><span class="badge red">focus, blur</span></td>
+      <td>Use <code>focusin</code>/<code>focusout</code> instead</td>
+    </tr>
+    <tr>
+      <td><span class="badge green">keydown, keyup, keypress</span></td>
+      <td><span class="badge red">mouseenter, mouseleave</span></td>
+      <td>These fire on the element only, not children</td>
+    </tr>
+    <tr>
+      <td><span class="badge green">submit, change, input</span></td>
+      <td><span class="badge red">load, unload, beforeunload</span></td>
+      <td>Window-level events</td>
+    </tr>
+    <tr>
+      <td><span class="badge green">scroll, wheel, resize (in some cases)</span></td>
+      <td><span class="badge red">error (on media elements)</span></td>
+      <td>Some are non-bubbling for performance</td>
+    </tr>
+  </table>
+  <div class="callout" style="font-size:.8rem;margin-top:8px">
+    <strong>&#9432;</strong> Non-bubbling events <strong>cannot</strong> be used with event delegation. If you need delegation for <code>focus</code>, use <code>focusin</code> (which bubbles).
+  </div>
+</div>
+
+<!-- R. REFERENCE -->
+<div class="section-title"><span class="num">R</span> Quick Reference</div>
+<div class="card">
+  <table>
+    <tr><th>Concept</th><th>Summary</th><th>Key takeaway</th></tr>
+    <tr><td>addEventListener</td><td>Attach multiple handlers, control phase, remove cleanly</td><td><span class="badge green">Always use this</span></td></tr>
+    <tr><td>onclick / on*</td><td>Property assignment — ONE handler only, overwrites</td><td><span class="badge red">Avoid</span></td></tr>
+    <tr><td>Capturing phase</td><td>Event travels document &#8594; target (top-down)</td><td><span class="badge blue">{ capture: true }</span></td></tr>
+    <tr><td>Target phase</td><td>Event reaches the actual element</td><td><span class="badge green">event.target</span></td></tr>
+    <tr><td>Bubbling phase</td><td>Event travels target &#8594; document (bottom-up)</td><td><span class="badge yellow">Default behavior</span></td></tr>
+    <tr><td>stopPropagation()</td><td>Stop event from traveling further</td><td><span class="badge red">Use sparingly</span></td></tr>
+    <tr><td>preventDefault()</td><td>Cancel browser default action</td><td><span class="badge yellow">Does not stop propagation</span></td></tr>
+    <tr><td>Event Delegation</td><td>One parent listener handles many children via bubbling</td><td><span class="badge green">e.target.closest()</span></td></tr>
+    <tr><td>CustomEvent</td><td>Create and dispatch your own events</td><td><span class="badge pink">new CustomEvent()</span></td></tr>
+    <tr><td>event.target</td><td>The element that triggered the event</td><td><span class="badge green">Actual clicked element</span></td></tr>
+    <tr><td>event.currentTarget</td><td>The element the listener is attached to</td><td><span class="badge yellow">Can differ from target</span></td></tr>
+  </table>
+</div>
+
+</div>
+
+<script>
+// =====================================================
+// 2. EVENT DASHBOARD
+// =====================================================
+const dashArea = document.getElementById('eventDemoArea');
+const dashLog = document.getElementById('eventDashLog');
+const dashCards = {};
+document.querySelectorAll('.event-type-card').forEach(c => {
+  dashCards[c.dataset.ev] = c;
+});
+
+const dashEvents = ['click','dblclick','mousedown','mouseup','mouseenter','mouseleave','keydown','keyup'];
+dashEvents.forEach(ev => {
+  dashArea.addEventListener(ev, (e) => {
+    const card = dashCards[ev];
+    if (!card) return;
+    card.classList.add('fired');
+    card.querySelector('.ev-desc').textContent = 'Fired!';
+    dashLog.innerHTML = `<div class="entry target">&#9654; "${ev}" event fired</div>` + dashLog.innerHTML;
+    if (dashLog.children.length > 5) dashLog.removeChild(dashLog.lastChild);
+    setTimeout(() => {
+      card.classList.remove('fired');
+      card.querySelector('.ev-desc').textContent = 'Waiting...';
+    }, 800);
+  });
+});
+
+// =====================================================
+// 3. ADD vs ONCLICK
+// =====================================================
+let c1 = 0, c2 = 0;
+const addBtn = document.getElementById('addListenerDemo');
+addBtn.addEventListener('click', () => {
+  c1++;
+  document.getElementById('addCount1').textContent = c1;
+});
+addBtn.addEventListener('click', () => {
+  c2++;
+  document.getElementById('addCount2').textContent = c2;
+});
+
+let oc1 = 0, oc2 = 0;
+const onclickBtn = document.getElementById('onclickDemo');
+onclickBtn.onclick = () => {
+  oc1++;
+  document.getElementById('onclickCount1').textContent = oc1;
+};
+onclickBtn.onclick = () => {
+  oc2++;
+  document.getElementById('onclickCount2').textContent = oc2;
+  // Also overwrite the display: show only this one increments
+  document.getElementById('onclickCount1').textContent = oc1; // only if we happen to call it
+};
+
+// =====================================================
+// 4. PROPAGATION
+// =====================================================
+function setupPropagation() {
+  const outer = document.getElementById('propOuter');
+  const middle = document.getElementById('propMiddle');
+  const inner = document.getElementById('propInner');
+  const log = document.getElementById('propLog');
+
+  function logMsg(msg, phase) {
+    const cls = phase === 'capture' ? 'capture' : phase === 'bubble' ? 'bubble' : 'target';
+    log.innerHTML = `<div class="entry ${cls}">${msg}</div>` + log.innerHTML;
+  }
+
+  // Capture handlers (top-down)
+  outer.addEventListener('click', () => {
+    logMsg('&#8595; CAPTURE: document', 'capture');
+    document.getElementById('hitOuter').textContent = '&#8595;';
+    setTimeout(() => document.getElementById('hitOuter').textContent = '', 400);
+  }, true);
+
+  middle.addEventListener('click', () => {
+    logMsg('&#8595; CAPTURE: section', 'capture');
+    document.getElementById('hitMiddle').textContent = '&#8595;';
+    setTimeout(() => document.getElementById('hitMiddle').textContent = '', 400);
+  }, true);
+
+  inner.addEventListener('click', () => {
+    logMsg('&#8595; CAPTURE: button', 'capture');
+    document.getElementById('hitInner').textContent = '&#8595;';
+    setTimeout(() => document.getElementById('hitInner').textContent = '', 400);
+  }, true);
+
+  // Target + Bubble handlers (bottom-up)
+  inner.addEventListener('click', (e) => {
+    logMsg('&#9679; TARGET: button (also bubbles)', 'target');
+    document.getElementById('hitInner').textContent = '&#9679;';
+    setTimeout(() => document.getElementById('hitInner').textContent = '', 400);
+  });
+
+  middle.addEventListener('click', () => {
+    logMsg('&#8593; BUBBLE: section', 'bubble');
+    document.getElementById('hitMiddle').textContent = '&#8593;';
+    setTimeout(() => document.getElementById('hitMiddle').textContent = '', 400);
+  });
+
+  outer.addEventListener('click', () => {
+    logMsg('&#8593; BUBBLE: document', 'bubble');
+    document.getElementById('hitOuter').textContent = '&#8593;';
+    setTimeout(() => document.getElementById('hitOuter').textContent = '', 400);
+  });
+}
+
+function resetPropagationLog() {
+  document.getElementById('propLog').innerHTML = '// Click any box to see propagation order';
+  ['hitOuter','hitMiddle','hitInner'].forEach(id => document.getElementById(id).textContent = '');
+}
+
+// =====================================================
+// 5. STOP PROPAGATION
+// =====================================================
+document.getElementById('stopPropChild').addEventListener('click', (e) => {
+  e.stopPropagation();
+  document.getElementById('stopPropLog').innerHTML =
+    '<div class="entry target">&#10071; Child clicked — propagation STOPPED</div>' +
+    document.getElementById('stopPropLog').innerHTML;
+});
+document.getElementById('stopPropDemo').addEventListener('click', () => {
+  document.getElementById('stopPropLog').innerHTML =
+    '<div class="entry bubble">&#8593; Parent handler fired (you won\'t see this if child fires)</div>' +
+    document.getElementById('stopPropLog').innerHTML;
+});
+
+// =====================================================
+// 5. PREVENT DEFAULT
+// =====================================================
+document.getElementById('preventDefaultLink').addEventListener('click', (e) => {
+  e.preventDefault();
+  document.getElementById('preventLog').innerHTML =
+    '<div class="entry target">&#10071; preventDefault() called — link did NOT navigate</div>' +
+    document.getElementById('preventLog').innerHTML;
+});
+
+// =====================================================
+// 6. DELEGATION
+// =====================================================
+let itemId = 9;
+document.getElementById('delegationGrid').addEventListener('click', (e) => {
+  const item = e.target.closest('.delegation-item');
+  if (!item) return;
+  const id = item.dataset.id;
+  document.querySelectorAll('.delegation-item').forEach(el => el.classList.remove('selected'));
+  item.classList.add('selected');
+  document.getElementById('delegationLog').innerHTML =
+    `<div class="entry target">&#9654; Item ${id} clicked (via delegation)</div>` +
+    document.getElementById('delegationLog').innerHTML;
+});
+
+function addDelegationItem() {
+  const grid = document.getElementById('delegationGrid');
+  const div = document.createElement('div');
+  div.className = 'delegation-item';
+  div.dataset.id = itemId;
+  div.textContent = 'Item ' + itemId;
+  grid.appendChild(div);
+  document.getElementById('delegationLog').innerHTML =
+    `<div class="entry">&#9654; Item ${itemId} added dynamically — works with delegation!</div>` +
+    document.getElementById('delegationLog').innerHTML;
+  itemId++;
+}
+
+// =====================================================
+// 7. EVENT OBJECT INSPECTOR
+// =====================================================
+const objDemo = document.getElementById('eventObjectDemo');
+const objLog = document.getElementById('eventObjectLog');
+
+objDemo.addEventListener('click', (e) => {
+  objLog.innerHTML = `<div class="entry target">&#9654; click event</div>
+<div>  type: ${e.type}</div>
+<div>  target: ${e.target.tagName.toLowerCase()}.${e.target.className.split(' ')[0] || ''}</div>
+<div>  clientX: ${e.clientX}, clientY: ${e.clientY}</div>
+<div>  button: ${e.button} (0=left)</div>
+<div>  <span class="comment">eventPhase: ${e.eventPhase === 1 ? 'CAPTURE' : e.eventPhase === 2 ? 'TARGET' : 'BUBBLE'}</span></div>` + objLog.innerHTML;
+});
+objDemo.addEventListener('keydown', (e) => {
+  objLog.innerHTML = `<div class="entry target">&#9654; keydown event</div>
+<div>  key: "${e.key}"</div>
+<div>  code: "${e.code}"</div>
+<div>  ctrlKey: ${e.ctrlKey}, shiftKey: ${e.shiftKey}</div>
+<div>  repeat: ${e.repeat}</div>` + objLog.innerHTML;
+});
+
+// =====================================================
+// 8. CUSTOM EVENTS
+// =====================================================
+document.addEventListener('demo-login', (e) => {
+  const log = document.getElementById('customEventLog');
+  log.innerHTML = `<div class="entry target">&#9654; Custom "demo-login" event received</div>
+<div>  detail: ${JSON.stringify(e.detail)}</div>
+<div>  bubbles: ${e.bubbles}, cancelable: ${e.cancelable}</div>` + log.innerHTML;
+});
+
+function fireCustomEvent() {
+  const ev = new CustomEvent('demo-login', {
+    detail: { userId: Math.floor(Math.random() * 100), name: 'Alice', timestamp: Date.now() },
+    bubbles: true,
+    cancelable: true
+  });
+  document.dispatchEvent(ev);
+}
+
+// =====================================================
+// INIT
+// =====================================================
+setupPropagation();
+</script>
+</body>
+</html>

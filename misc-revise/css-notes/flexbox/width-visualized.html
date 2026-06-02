@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Width — Visualized</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f17; color: #cdd6f4; padding: 0; }
+    .page { max-width: 1060px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    h1 { font-size: 2.6rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    h1 .glyph { background: linear-gradient(135deg, #89b4fa, #a6e3a1, #f9e2af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { font-size: 1.4rem; margin: 2.5rem 0 0.8rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .sub { font-size: 0.7rem; color: #6c7086; font-weight: 400; }
+    h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p { color: #a6adc8; line-height: 1.7; margin-bottom: 10px; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid #2a2a3c; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+    .subtitle { color: #6c7086; font-size: 1.05rem; margin-bottom: 2rem; }
+
+    .card { background: #1a1a2a; border: 1px solid #2a2a3c; border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .card-label { font-size: 0.7rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; letter-spacing: 0.3px; }
+    .card-label .hl { color: #89b4fa; }
+
+    .compare-row { display: flex; gap: 16px; margin: 12px 0; }
+    @media (max-width: 700px) { .compare-row { flex-direction: column; } }
+    .compare-side { flex: 1; background: #1a1a2a; border-radius: 10px; border: 1px solid #2a2a3c; overflow: hidden; }
+    .compare-side .cs-head { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .compare-side .cs-head.bad { background: #f38ba815; color: #f38ba8; }
+    .compare-side .cs-head.good { background: #a6e3a115; color: #a6e3a1; }
+    .compare-side .cs-head.info { background: #89b4fa15; color: #89b4fa; }
+    .compare-side .cs-body { padding: 12px; }
+
+    .demo-box { background: #181825; border: 1px dashed #3a3a50; border-radius: 6px; padding: 6px; transition: all 0.3s; position: relative; }
+
+    .fi { border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.78rem; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); padding: 8px 12px; position: relative; overflow: hidden; }
+    .fi::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%); pointer-events: none; }
+    .c0 { background: #89b4fa; color: #0f0f17; }
+    .c1 { background: #a6e3a1; color: #0f0f17; }
+    .c2 { background: #f9e2af; color: #0f0f17; }
+    .c3 { background: #f38ba8; color: #0f0f17; }
+    .c4 { background: #cba6f7; color: #0f0f17; }
+    .c5 { background: #fab387; color: #0f0f17; }
+
+    .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.7rem; font-family: monospace; border-radius: 4px; }
+    .tag-blue { background: #89b4fa20; color: #89b4fa; }
+    .tag-green { background: #a6e3a120; color: #a6e3a1; }
+    .tag-red { background: #f38ba820; color: #f38ba8; }
+    .tag-yellow { background: #f9e2af20; color: #f9e2af; }
+    .tag-purple { background: #cba6f720; color: #cba6f7; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { background: #181825; color: #89b4fa; padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 2px solid #2a2a3c; }
+    td { padding: 10px 14px; border-bottom: 1px solid #2a2a3c; color: #a6adc8; }
+    tr:hover td { background: #1a1a2a; }
+    td:first-child { font-family: monospace; color: #fab387; }
+
+    .tip { background: #1a1a2a; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+
+    input[type="range"] { accent-color: #89b4fa; width: 100%; }
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .toggle-group button { background: #2a2a3c; color: #a6adc8; border: 1px solid #3a3a50; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-family: monospace; transition: all 0.2s; }
+    .toggle-group button:hover { background: #3a3a50; }
+    .toggle-group button.on { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+
+    .dimension-line { position: relative; height: 20px; margin: 4px 0; }
+    .dimension-line .line { position: absolute; height: 1px; background: #585b70; top: 50%; left: 0; right: 0; }
+    .dimension-line .label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #1a1a2a; padding: 0 6px; font-size: 0.6rem; color: #585b70; white-space: nowrap; }
+
+    .big-number { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .big-number .unit { font-size: 0.85rem; font-weight: 400; color: #6c7086; }
+
+    .flow-chart { display: flex; align-items: center; gap: 4px; padding: 12px; background: #181825; border-radius: 8px; border: 1px solid #2a2a3c; flex-wrap: wrap; justify-content: center; }
+    .flow-chart .fc-box { background: #2a2a3c; border-radius: 6px; padding: 6px 12px; font-size: 0.7rem; text-align: center; min-width: 60px; }
+    .flow-chart .fc-arrow { color: #585b70; font-size: 1.1rem; }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f17; }
+    ::-webkit-scrollbar-thumb { background: #3a3a50; border-radius: 3px; }
+
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .text-center { text-align: center; }
+    .w-full { width: 100%; }
+
+    .parent-box { background: #2a2a3c; border-radius: 6px; padding: 12px; border: 2px solid #3a3a50; position: relative; }
+    .parent-box .parent-label { font-size: 0.55rem; color: #6c7086; position: absolute; top: 2px; left: 6px; }
+    .child-box { border-radius: 4px; padding: 10px 12px; font-size: 0.7rem; font-weight: 600; text-align: center; transition: all 0.4s; }
+
+    .width-bar-container { background: #2a2a3c; border-radius: 4px; height: 24px; position: relative; margin: 4px 0; }
+    .width-bar { border-radius: 4px; height: 100%; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 600; transition: all 0.4s; }
+
+    .inline-demo { background: #181825; border-radius: 6px; border: 1px solid #2a2a3c; padding: 12px; font-size: 0.85rem; line-height: 2; }
+
+    .resize-handle { resize: horizontal; overflow: hidden; min-width: 200px; max-width: 100%; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1><span class="glyph">CSS Width</span> <span style="font-size:1.4rem;color:#6c7086;font-weight:400;">— Visualized</span></h1>
+  <p class="subtitle">
+    <code>width: auto</code>, <code>100%</code>, <code>100vw</code>, <code>min-width</code>, <code>max-width</code>, <code>margin: auto</code> — when each applies, how they behave, and whether width is inherited.
+  </p>
+
+  <!-- ===== 1. WIDTH AUTO — THE DEFAULT ===== -->
+  <section>
+    <h2>1. The Default: <code>width: auto</code> <span class="sub">— Not the same for block vs inline</span></h2>
+    <p><code>width: auto</code> is the default for every element, but it behaves <strong>differently</strong> for block vs inline elements:</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
+      <div class="card" style="margin:0;">
+        <div class="card-label">block <span class="hl">width: auto</span></div>
+        <div class="parent-box" style="background:#2a2a3c;">
+          <span class="parent-label">parent</span>
+          <div class="child-box c0" style="width:auto;margin-top:10px;">
+            Fills parent width (100% of available)
+          </div>
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>div { } /* width: auto → fills parent */</code></pre>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label">inline <span class="hl">width: auto</span></div>
+        <div class="inline-demo">
+          This is a sentence with
+          <span class="child-box c1" style="display:inline;width:auto;padding:2px 4px;">inline span</span>
+          that shrink-wraps its content
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>span { } /* width: auto → shrink-wraps */</code></pre>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Block auto = fill parent, Inline auto = shrink-wrap</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:0.75rem;color:#89b4fa;margin-bottom:6px;">block — fills available</div>
+          <div style="background:#2a2a3c;border-radius:4px;padding:8px;">
+            <div class="fi c0" style="display:block;width:auto;padding:8px;font-size:0.65rem;">block auto → 100%</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-size:0.75rem;color:#a6e3a1;margin-bottom:6px;">inline — shrink-wraps</div>
+          <div style="background:#2a2a3c;border-radius:4px;padding:8px;">
+            <div class="fi c1" style="display:inline;width:auto;padding:2px 6px;font-size:0.65rem;">inline auto → content width</div>
+          </div>
+        </div>
+      </div>
+      <div class="tip" style="margin:10px 0 0;">
+        <strong>Critical:</strong> A block element with <code>width: auto</code> fills its parent's content area. This is NOT the same as <code>width: 100%</code> — auto accounts for margins/padding/borders without overflowing.
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2. WIDTH: 100% vs AUTO vs 100vw ===== -->
+  <section>
+    <h2>2. <code>width: auto</code> vs <code>100%</code> vs <code>100vw</code> <span class="sub">— Critical differences</span></h2>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head info">width: auto</div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:16px;margin-top:4px;">
+            <span class="parent-label">parent</span>
+            <div class="child-box c0" style="width:auto;margin:16px 20px;padding:8px;margin-top:20px;">
+              auto with margin 20px
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.auto { width: auto; margin: 0 20px; }
+/* FITS inside parent — no overflow */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head bad">width: 100% (⚠ overflows)</div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:16px;margin-top:4px;overflow:visible;">
+            <span class="parent-label">parent</span>
+            <div class="child-box c3" style="width:100%;margin:16px 20px;padding:8px;margin-top:20px;">
+              100% overflows!
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.pct { width: 100%; margin: 0 20px; }
+/* 100% + 20px+20px = OVERFLOW! */</code></pre>
+          <p style="font-size:0.65rem;color:#f38ba8;margin-top:4px;"><code>width: 100%</code> is 100% of parent content box. Any margin/border/padding <strong>adds on top</strong>.</p>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head info">100vw</div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:16px;margin-top:4px;overflow:hidden;">
+            <span class="parent-label">parent</span>
+            <div class="child-box c4" style="width:100vw;padding:8px;margin-top:20px;">
+              100vw = viewport width
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.vw { width: 100vw; }
+/* viewport width — can overflow parent */</code></pre>
+          <p style="font-size:0.65rem;color:#6c7086;margin-top:4px;">Ignores parent, scrollbar width can cause horizontal scroll.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Live comparison — <span class="hl">drag the slider to see behavior</span></div>
+      <div style="margin-bottom:8px;">
+        <div class="toggle-group" id="widthTypeToggle">
+          <button class="on" data-t="auto">width: auto</button>
+          <button data-t="100">width: 100%</button>
+          <button data-t="80">width: 80%</button>
+          <button data-t="300">width: 300px</button>
+        </div>
+      </div>
+      <div class="parent-box" style="padding:20px;padding-top:24px;" id="widthDemoParent">
+        <span class="parent-label">parent (has 20px padding)</span>
+        <div class="child-box c0" id="widthDemoChild" style="width:auto;margin-top:8px;">
+          This is the child element
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:0.7rem;color:#6c7086;flex-wrap:wrap;">
+        <span>Parent width: <span id="parentWidthDisplay">—</span></span>
+        <span>Child width: <span id="childWidthDisplay">—</span></span>
+        <span>Child computed: <span id="childComputedDisplay" style="color:#fab387;">—</span></span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3. WIDTH IS NOT INHERITED ===== -->
+  <section>
+    <h2>3. Width is <span style="color:#f38ba8;">NOT</span> Inherited <span class="sub">— auto != inherited</span></h2>
+    <p>A child does <strong>not</strong> get its parent's explicit width. It defaults to <code>width: auto</code>, which <em>fills the parent</em> — but that's auto behavior, not inheritance.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">What inheritance is NOT</div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:12px;">
+            <span class="parent-label">parent: width: 300px</span>
+            <div style="background:#a6e3a120;border-radius:4px;padding:8px;margin-top:6px;">
+              <div style="font-size:0.65rem;color:#a6e3a1;margin-bottom:4px;">Child — no width set</div>
+              <div style="background:#a6e3a1;border-radius:4px;color:#0f0f17;padding:6px;font-size:0.65rem;font-weight:600;text-align:center;">
+                This is NOT 300px
+              </div>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>/* Width is NEVER inherited */
+.parent { width: 300px; }
+.child { } /* width: auto (NOT 300px!) */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">What actually happens</div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:12px;">
+            <span class="parent-label">parent: width: 300px</span>
+            <div style="background:#a6e3a120;border-radius:4px;padding:8px;margin-top:6px;display:flex;flex-direction:column;gap:4px;">
+              <div style="font-size:0.65rem;color:#a6e3a1;">Child — auto fills parent</div>
+              <div class="fi c1" style="display:block;padding:6px;font-size:0.65rem;">auto → fills parent's width</div>
+              <div style="font-size:0.65rem;color:#89b4fa;margin-top:2px;">Child — explicit width: 60%</div>
+              <div class="fi c0" style="display:block;width:60%;padding:6px;font-size:0.65rem;">60% of parent</div>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.parent { width: 300px; }
+.child1 { }           /* auto: fills parent */
+.child2 { width: 60%; } /* 180px */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Why this matters:</strong> <code>width: auto</code> on a block child <em>looks like</em> inheritance because it fills the parent. But it's not — it's the default block behavior. The child always starts from <code>auto</code>, not from the parent's value. Use <code>width: inherit</code> if you truly need inheritance (rare).
+    </div>
+  </section>
+
+  <!-- ===== 4. MIN-WIDTH ===== -->
+  <section>
+    <h2>4. <code>min-width</code> — "Never Narrower Than This"</h2>
+    <p>Sets a <strong>minimum</strong> width. The element can grow wider but never shrink below this value. Essential for responsive layouts.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">Without <code>min-width</code></div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;padding:8px;">
+            <div class="fi c3" style="display:block;width:100%;padding:12px;font-size:0.7rem;">
+              Text can get squished to one letter per line
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.box { width: 100%; }
+/* on narrow parent → text crushed */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">With <code>min-width</code></div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;padding:8px;">
+            <div class="fi c1" style="display:block;width:100%;min-width:200px;padding:12px;font-size:0.7rem;">
+              Text stops shrinking at 200px, then scrolls
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.box { min-width: 200px; }
+/* never narrower than 200px */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>Where min-width shines</h3>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">📱 Responsive flex cards</span></div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div style="display:flex;flex-wrap:wrap;gap:8px;">
+            <div style="flex:1;min-width:160px;background:#89b4fa20;border-radius:4px;padding:12px;text-align:center;">
+              <div style="font-size:0.65rem;">Card</div>
+              <div style="font-size:0.55rem;color:#585b70;">min-width: 160px</div>
+            </div>
+            <div style="flex:1;min-width:160px;background:#a6e3a120;border-radius:4px;padding:12px;text-align:center;">
+              <div style="font-size:0.65rem;">Card</div>
+              <div style="font-size:0.55rem;color:#585b70;">min-width: 160px</div>
+            </div>
+            <div style="flex:1;min-width:160px;background:#f9e2af20;border-radius:4px;padding:12px;text-align:center;">
+              <div style="font-size:0.65rem;">Card</div>
+              <div style="font-size:0.55rem;color:#585b70;">min-width: 160px</div>
+            </div>
+          </div>
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.card { flex: 1; min-width: 200px; }</code></pre>
+      </div>
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">📐 Sidebar minimum</span></div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div style="display:flex;gap:8px;">
+            <div style="flex:0 0 auto;min-width:80px;background:#89b4fa20;border-radius:4px;padding:12px;">
+              <div style="font-size:0.65rem;">Sidebar</div>
+              <div style="font-size:0.55rem;color:#585b70;">min-w: 80px</div>
+            </div>
+            <div style="flex:1;background:#a6e3a120;border-radius:4px;padding:12px;">
+              <div style="font-size:0.65rem;">Main</div>
+            </div>
+          </div>
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.sidebar { min-width: 80px; }</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. MAX-WIDTH ===== -->
+  <section>
+    <h2>5. <code>max-width</code> — "Never Wider Than This"</h2>
+    <p>Sets a <strong>maximum</strong> width. The element can shrink but never grow beyond this. <strong>Essential for readable layouts on large screens.</strong></p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">Without <code>max-width</code></div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;overflow:hidden;">
+            <div style="background:#f38ba815;padding:6px 10px;font-size:0.65rem;color:#f38ba8;">Full width on giant screen</div>
+            <div class="fi c3" style="display:block;width:100%;padding:16px 12px;font-size:0.7rem;white-space:nowrap;">
+              This text stretches across the entire screen — very hard to read!
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.text { width: 100%; }
+/* on 2560px monitor → 2560px wide text */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">With <code>max-width</code></div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;overflow:hidden;">
+            <div style="background:#a6e3a115;padding:6px 10px;font-size:0.65rem;color:#a6e3a1;">Capped at 600px + centered</div>
+            <div style="max-width:600px;margin:0 auto;background:#a6e3a120;border-radius:4px;margin-top:8px;margin-bottom:8px;">
+              <div class="fi c1" style="display:block;padding:16px 12px;font-size:0.7rem;white-space:nowrap;">
+                This text is capped at 600px — readable!
+              </div>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.text { max-width: 600px;
+        margin: 0 auto; }
+/* comfortable reading width */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>The classic: max-width + margin: auto</h3>
+    <div class="card">
+      <div class="card-label">The universal centered-container pattern — <span class="hl">drag to resize</span></div>
+      <div class="resize-handle" style="background:#181825;border:2px solid #3a3a50;border-radius:8px;padding:4px;margin-top:8px;">
+        <div style="background:#2a2a3c;border-radius:4px;padding:8px;">
+          <div style="display:flex;justify-content:space-between;font-size:0.55rem;color:#585b70;">
+            <span>parent (resize me →)</span>
+            <span id="maxWidthParentSize">—</span>
+          </div>
+          <div id="maxWidthDemo" style="max-width:400px;margin:12px auto;background:#89b4fa20;border:2px solid #89b4fa50;border-radius:6px;padding:16px;text-align:center;">
+            <div style="font-size:0.75rem;font-weight:600;color:#89b4fa;">This is the container</div>
+            <div style="font-size:0.6rem;color:#6c7086;margin-top:4px;">
+              <code>max-width: 400px; margin: 0 auto;</code>
+            </div>
+            <div style="font-size:0.55rem;color:#585b70;margin-top:2px;" id="maxWidthCurrentSize">current: —</div>
+          </div>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <span class="tag tag-blue">max-width: 400px</span>
+        <span class="tag tag-green">margin: 0 auto</span>
+        <span class="tag tag-yellow">centers the box</span>
+      </div>
+      <pre style="margin-top:8px;"><code>.container {
+  max-width: 1200px;  /* never wider than 1200px */
+  margin: 0 auto;     /* center horizontally */
+  width: 100%;        /* fill on small screens */
+}</code></pre>
+    </div>
+
+    <div class="tip">
+      <strong>This is THE responsive pattern:</strong> <code>width: 100%; max-width: 1200px; margin: 0 auto;</code> — fills the screen on mobile, caps at 1200px on desktop, always centered. The entire web uses this.
+    </div>
+  </section>
+
+  <!-- ===== 6. MARGIN: AUTO ===== -->
+  <section>
+    <h2>6. <code>margin: auto</code> — "Center Me"</h2>
+    <p><code>margin: auto</code> tells the browser to <strong>automatically calculate</strong> the margin, pushing the element to the center. Only works on the horizontal axis by default.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">Without <code>margin: auto</code></div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:12px;">
+            <span class="parent-label">parent</span>
+            <div class="child-box c3" style="width:200px;margin-top:20px;">
+              fixed 200px, not centered
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.box { width: 200px; }
+/* stuck to the left */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">With <code>margin: 0 auto</code></div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:12px;">
+            <span class="parent-label">parent</span>
+            <div class="child-box c1" style="width:200px;margin:20px auto 0;">
+              fixed 200px, centered
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.box { width: 200px;
+       margin: 0 auto; }
+/* centered! */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>How margin: auto distributes space</h3>
+    <div class="card">
+      <div class="card-label">Visual — <span class="hl">auto margins eat extra space equally</span></div>
+      <div style="background:#181825;border-radius:6px;padding:8px;border:1px solid #2a2a3c;">
+        <div style="display:flex;align-items:center;gap:0;margin-bottom:4px;">
+          <div style="flex:1;background:#f38ba830;height:20px;border-radius:4px 0 0 4px;display:flex;align-items:center;justify-content:center;font-size:0.5rem;color:#f38ba8;">auto margin</div>
+          <div class="c1" style="flex:0 0 160px;padding:12px;font-size:0.65rem;text-align:center;">element (160px)</div>
+          <div style="flex:1;background:#f38ba830;height:20px;border-radius:0 4px 4px 0;display:flex;align-items:center;justify-content:center;font-size:0.5rem;color:#f38ba8;">auto margin</div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.55rem;color:#585b70;">
+          <span>0px</span>
+          <span id="autoMarginParentWidth">parent: 100%</span>
+        </div>
+      </div>
+      <pre style="margin-top:8px;"><code>/* margin: auto works ONLY when the element has a width */
+.element { width: 300px; margin: 0 auto; } /* ✅ */
+.element { margin: 0 auto; } /* ❌ width: auto fills parent, nothing to center */</code></pre>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0;">
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.8rem;font-weight:600;color:#a6e3a1;margin-bottom:6px;">✅ margin: auto — block elements</div>
+        <div class="fi c1" style="display:block;width:200px;margin:0 auto;padding:8px;font-size:0.65rem;">centered block</div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>display: block;
+width: 200px;         /* required! */
+margin: 0 auto;</code></pre>
+      </div>
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.8rem;font-weight:600;color:#f38ba8;margin-bottom:6px;">✕ margin: auto — inline elements</div>
+        <div class="inline-demo">
+          <span class="fi c3" style="display:inline;margin:0 auto;padding:2px 6px;font-size:0.65rem;">inline ignores auto margin</span>
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>display: inline;
+margin: 0 auto;        /* ignored! */
+/* use text-align: center on parent */</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7. BOX-SIZING EFFECT ===== -->
+  <section>
+    <h2>7. <code>box-sizing</code> — Affects How Width Is Calculated</h2>
+    <p><code>box-sizing</code> changes whether <code>width</code> includes padding and border or not. This is critical when using percentage widths.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">content-box (default)</div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:8px;">
+            <span class="parent-label">parent</span>
+            <div style="width:100%;padding:12px;background:#f38ba830;border:4px solid #f38ba8;border-radius:4px;margin-top:6px;font-size:0.65rem;color:#f38ba8;text-align:center;">
+              width: 100% → overflows!
+              <span style="display:block;font-size:0.55rem;color:#585b70;">actual width: 100% + 12px*2 + 4px*2</span>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>/* box-sizing: content-box (default) */
+.child { width: 100%; padding: 12px;
+         border: 4px solid; }
+/* OVERFLOWS parent! */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">border-box (fixed)</div>
+        <div class="cs-body">
+          <div class="parent-box" style="padding:8px;">
+            <span class="parent-label">parent</span>
+            <div style="box-sizing:border-box;width:100%;padding:12px;background:#a6e3a130;border:4px solid #a6e3a1;border-radius:4px;margin-top:6px;font-size:0.65rem;color:#a6e3a1;text-align:center;">
+              width: 100% → fits perfectly!
+              <span style="display:block;font-size:0.55rem;color:#585b70;">padding & border included in width</span>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>/* box-sizing: border-box */
+.child { width: 100%; padding: 12px;
+         border: 4px solid; }
+/* FITS inside parent! */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Always use border-box:</strong> The universal reset <code>* { box-sizing: border-box; }</code> prevents the most common width bug on the web. Percentage widths with padding no longer overflow.
+    </div>
+  </section>
+
+  <!-- ===== 8. MIN-WIDTH vs MAX-WIDTH vs WIDTH ===== -->
+  <section>
+    <h2>8. Priority: <code>min-width</code> vs <code>width</code> vs <code>max-width</code></h2>
+    <p>When multiple width properties conflict, the browser resolves them in this order:</p>
+
+    <div class="flow-chart">
+      <div class="fc-box"><span style="color:#89b4fa;">min-width</span><br><span style="font-size:0.5rem;color:#585b70;">lower bound</span></div>
+      <div class="fc-arrow">↓</div>
+      <div class="fc-box"><span style="color:#a6e3a1;">width</span><br><span style="font-size:0.5rem;color:#585b70;">explicit value</span></div>
+      <div class="fc-arrow">↓</div>
+      <div class="fc-box"><span style="color:#f38ba8;">max-width</span><br><span style="font-size:0.5rem;color:#585b70;">upper bound</span></div>
+      <div class="fc-arrow">=</div>
+      <div class="fc-box" style="min-width:100px;"><span style="color:#cba6f7;">Final width</span><br><span style="font-size:0.5rem;color:#585b70;">clamped</span></div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Interactive — <span class="hl">drag each to see which wins</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label>min-width</label>
+          <input type="range" id="wMinSlider" min="0" max="500" value="80">
+          <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span id="wMinSliderVal">80</span>px</div>
+        </div>
+        <div>
+          <label>width</label>
+          <input type="range" id="wSlider" min="0" max="500" value="250">
+          <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span id="wSliderVal">250</span>px</div>
+        </div>
+        <div>
+          <label>max-width</label>
+          <input type="range" id="wMaxSlider" min="50" max="500" value="400">
+          <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span id="wMaxSliderVal">400</span>px</div>
+        </div>
+      </div>
+      <div class="parent-box" style="padding:12px;">
+        <span class="parent-label">parent</span>
+        <div id="priorityWidthDemo" style="background:linear-gradient(90deg,#89b4fa,#a6e3a1);border-radius:6px;padding:16px;margin-top:6px;text-align:center;font-weight:700;color:#0f0f17;transition:all 0.3s;font-size:0.85rem;">
+          width: 250px
+        </div>
+      </div>
+      <div style="display:flex;gap:12px;margin-top:8px;font-size:0.7rem;flex-wrap:wrap;">
+        <span>min: <span id="wMinShow" style="color:#89b4fa;">80px</span></span>
+        <span>width: <span id="wShow" style="color:#a6e3a1;">250px</span></span>
+        <span>max: <span id="wMaxShow" style="color:#f38ba8;">400px</span></span>
+        <span style="margin-left:auto;">Result: <span id="wResult" style="font-weight:700;font-size:1.1rem;color:#cba6f7;">250px</span></span>
+      </div>
+    </div>
+
+    <pre><code>/* Resolution order:
+   if width &lt; min-width → min-width wins
+   if width &gt; max-width → max-width wins
+   otherwise → width wins
+
+   Example: min:200, width:100, max:300 → final: 200 (min wins) */</code></pre>
+  </section>
+
+  <!-- ===== 9. CHEAT SHEET ===== -->
+  <section>
+    <h2>9. Quick Decision Guide</h2>
+
+    <div class="card" style="background:#181825;">
+      <table>
+        <thead><tr><th>You want...</th><th>Use</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Block fills parent</td><td><span class="tag tag-green">auto (default)</span></td><td><code>div { } /* width: auto */</code></td></tr>
+          <tr><td>Exact fixed width</td><td><span class="tag tag-blue">width: Xpx</span></td><td><code>.box { width: 300px; }</code></td></tr>
+          <tr><td>Fill parent with padding safe</td><td><span class="tag tag-green">width: 100% + border-box</span></td><td><code>* { box-sizing: border-box; }</code></td></tr>
+          <tr><td>Responsive full-width container</td><td><span class="tag tag-green">width: 100% + max-width + margin: auto</span></td><td><code>.container { width: 100%; max-width: 1200px; margin: 0 auto; }</code></td></tr>
+          <tr><td>Centered box with fixed width</td><td><span class="tag tag-blue">width + margin: auto</span></td><td><code>.box { width: 400px; margin: 0 auto; }</code></td></tr>
+          <tr><td>Never narrower than X</td><td><span class="tag tag-purple">min-width</span></td><td><code>.sidebar { min-width: 200px; }</code></td></tr>
+          <tr><td>Never wider than X</td><td><span class="tag tag-yellow">max-width</span></td><td><code>.content { max-width: 800px; }</code></td></tr>
+          <tr><td>Responsive flex items</td><td><span class="tag tag-green">flex: 1 + min-width</span></td><td><code>.card { flex: 1; min-width: 250px; }</code></td></tr>
+          <tr><td>Inline element width</td><td><span class="tag tag-red">(use inline-block)</span></td><td><code>span { display: inline-block; width: 80px; }</code></td></tr>
+          <tr><td>Viewport-wide section</td><td><span class="tag tag-purple">width: 100vw</span></td><td><code>.hero { width: 100vw; }</code> (⚠ watch for scrollbar)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip" style="border-left-color:#89b4fa;">
+      <strong>The one pattern to rule them all:</strong> <code style="font-size:1rem;">width: 100%; max-width: 1200px; margin: 0 auto;</code> — use this for every page-level container. It's responsive, centered, and never too wide.
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #2a2a3c;padding-top:24px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    CSS Width — Visualized &bull; css-notes/flexbox
+  </footer>
+</div>
+
+<script>
+// ===== 2. Width type toggle =====
+(function() {
+  const child = document.getElementById('widthDemoChild');
+  const parentW = document.getElementById('parentWidthDisplay');
+  const childW = document.getElementById('childWidthDisplay');
+  const childC = document.getElementById('childComputedDisplay');
+  const parent = document.getElementById('widthDemoParent');
+
+  function updateDisplay() {
+    parentW.textContent = parent.offsetWidth + 'px';
+    childW.textContent = child.offsetWidth + 'px';
+    childC.textContent = getComputedStyle(child).width;
+  }
+
+  document.querySelectorAll('#widthTypeToggle button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#widthTypeToggle button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      const t = btn.dataset.t;
+      if (t === 'auto') { child.style.width = 'auto'; child.className = 'child-box c0'; }
+      else if (t === '100') { child.style.width = '100%'; child.className = 'child-box c3'; }
+      else if (t === '80') { child.style.width = '80%'; child.className = 'child-box c2'; }
+      else if (t === '300') { child.style.width = '300px'; child.className = 'child-box c4'; }
+      updateDisplay();
+    });
+  });
+
+  new ResizeObserver(updateDisplay).observe(parent);
+  updateDisplay();
+})();
+
+// ===== 5. max-width demo =====
+(function() {
+  const demo = document.getElementById('maxWidthDemo');
+  const sizeLabel = document.getElementById('maxWidthCurrentSize');
+  const parentSize = document.getElementById('maxWidthParentSize');
+  const parent = demo.parentElement.parentElement;
+
+  function update() {
+    sizeLabel.textContent = 'current: ' + demo.offsetWidth + 'px (capped at 400px)';
+    parentSize.textContent = 'parent: ' + parent.offsetWidth + 'px';
+  }
+
+  new ResizeObserver(update).observe(parent);
+  update();
+})();
+
+// ===== 8. Priority sliders =====
+(function() {
+  const wMin = document.getElementById('wMinSlider');
+  const w = document.getElementById('wSlider');
+  const wMax = document.getElementById('wMaxSlider');
+  const demo = document.getElementById('priorityWidthDemo');
+
+  const wMinVal = document.getElementById('wMinSliderVal');
+  const wVal = document.getElementById('wSliderVal');
+  const wMaxVal = document.getElementById('wMaxSliderVal');
+  const wMinShow = document.getElementById('wMinShow');
+  const wShow = document.getElementById('wShow');
+  const wMaxShow = document.getElementById('wMaxShow');
+  const wResult = document.getElementById('wResult');
+
+  function update() {
+    const min = parseInt(wMin.value);
+    const val = parseInt(w.value);
+    const max = parseInt(wMax.value);
+    let final = val;
+    if (val < min) final = min;
+    if (val > max) final = max;
+
+    wMinVal.textContent = min;
+    wVal.textContent = val;
+    wMaxVal.textContent = max;
+    wMinShow.textContent = min + 'px';
+    wShow.textContent = val + 'px';
+    wMaxShow.textContent = max + 'px';
+    wResult.textContent = final + 'px';
+    demo.style.width = final + 'px';
+    demo.style.minWidth = '';
+    demo.style.maxWidth = '';
+    demo.textContent = 'width: ' + final + 'px';
+    demo.style.background = 'linear-gradient(90deg, #89b4fa, #a6e3a1)';
+
+    if (final === min && final !== val) {
+      wResult.style.color = '#89b4fa';
+      demo.style.background = 'linear-gradient(90deg, #89b4fa, #74c7ec)';
+      demo.textContent += ' (min-width clamped ↑)';
+    } else if (final === max && final !== val) {
+      wResult.style.color = '#f38ba8';
+      demo.style.background = 'linear-gradient(90deg, #f38ba8, #fab387)';
+      demo.textContent += ' (max-width clamped ↓)';
+    } else {
+      wResult.style.color = '#a6e3a1';
+      demo.style.background = 'linear-gradient(90deg, #a6e3a1, #94e2d5)';
+    }
+  }
+
+  [wMin, w, wMax].forEach(slider => {
+    slider.addEventListener('input', update);
+  });
+  update();
+})();
+</script>
+</body>
+</html>

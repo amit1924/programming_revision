@@ -1,0 +1,345 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Render, Re-Render, Mount, Unmount - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px;
+      border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:12px 14px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #89b4fa, #f9e2af); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .flash { animation: flash 0.4s ease-out; }
+    @keyframes flash { 0% { background: rgba(137,180,250,0.3); } 100% { background: transparent; } }
+
+    .box { border-radius: 12px; border: 1px solid #313244; padding: 14px; margin-bottom: 10px; transition: all 0.3s; background: #181825; }
+    .box.mounted { border-color: #a6e3a1; }
+    .box.unmounted { opacity: 0.3; border-color: #f38ba8; }
+
+    .counter-btn { width:36px; height:36px; border-radius:10px; background:#313244; border:1px solid #45475a; display:flex; align-items:center; justify-content:center; cursor:pointer; transition:all 0.2s; font-size:14px; }
+    .counter-btn:hover { background:#45475a; }
+
+    .trace { display:flex; align-items:center; gap:8px; padding:6px 10px; border-radius:8px; font-size:11px; font-family:monospace; margin-bottom:4px; animation: traceIn 0.25s ease-out; }
+    @keyframes traceIn { from { opacity:0; transform:translateX(-12px); } to { opacity:1; transform:translateX(0); } }
+    .trace .tag { font-size:9px; font-weight:700; padding:1px 6px; border-radius:4px; }
+    .tag-render { background:#89b4fa30; color:#89b4fa; }
+    .tag-mount { background:#a6e3a130; color:#a6e3a1; }
+    .tag-unmount { background:#f38ba830; color:#f38ba8; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+    .hl { border-left:3px solid #89b4fa; padding-left:10px; background:rgba(137,180,250,0.08); }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      React Lifecycle
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">Render ↔ Re-Render</span>
+      <span class="text-[#a6adc8]">&</span>
+      <span class="text-[#a6e3a1]">Mount ↔ Unmount</span>
+    </h1>
+    <p class="text-[#a6adc8]">See exactly when React creates, updates, and destroys components.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone" id="phoneEl">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">Lifecycle Lab</span>
+            <span id="renderBadge" class="text-xs bg-[#89b4fa]/20 text-[#89b4fa] px-2 py-0.5 rounded-full font-mono">renders: 1</span>
+          </div>
+          <div class="body-scroll" id="phoneBody">
+            <!-- Counter (stays mounted) -->
+            <div class="box" id="mainBox">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold flex items-center gap-2">
+                  <span id="mainDot" class="inline-block w-2 h-2 rounded-full bg-[#a6e3a1]"></span>
+                  Main Component
+                  <span id="mainStatus" class="text-xs font-mono text-[#a6e3a1]">mounted</span>
+                </span>
+              </div>
+              <div class="flex items-center gap-3">
+                <span class="text-xs text-[#6c7086]">Count:</span>
+                <button class="counter-btn" id="decBtn"><i class="fas fa-minus"></i></button>
+                <span id="countDisplay" class="text-xl font-bold font-mono text-[#f9e2af] w-8 text-center">0</span>
+                <button class="counter-btn" id="incBtn"><i class="fas fa-plus"></i></button>
+              </div>
+              <div class="text-xs text-[#6c7086] mt-2">Change state → triggers a <span class="text-[#89b4fa]">re-render</span></div>
+            </div>
+
+            <!-- Child (toggle on/off = mount/unmount) -->
+            <div class="box" id="childBox" style="display:none;">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="inline-block w-2 h-2 rounded-full bg-[#a6e3a1]" id="childDot"></span>
+                <span class="text-sm font-semibold">Child Component</span>
+                <span class="text-xs font-mono text-[#a6e3a1]" id="childStatus">mounted</span>
+              </div>
+              <div class="text-xs text-[#a6adc8]">
+                I <span class="text-[#f38ba8]">mount</span> when added.<br>
+                I <span class="text-[#f38ba8]">unmount</span> when removed.<br>
+                My parent's re-render <span class="text-[#89b4fa]">does not</span> remount me.
+              </div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex gap-2">
+              <button id="toggleChildBtn" class="flex-1 bg-[#313244] hover:bg-[#45475a] border border-[#585b70] rounded-xl py-2.5 text-sm transition-all">
+                <i class="fas fa-plus-circle mr-1"></i> <span id="toggleChildLabel">Mount Child</span>
+              </button>
+              <button id="forceRenderBtn" class="flex-1 bg-[#313244] hover:bg-[#45475a] border border-[#585b70] rounded-xl py-2.5 text-sm transition-all">
+                <i class="fas fa-sync-alt mr-1"></i> Force Re-render
+              </button>
+            </div>
+
+            <!-- Trace log -->
+            <div class="box mt-1">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-sm font-semibold">Lifecycle Trace</span>
+                <span id="traceCount" class="text-xs text-[#585b70]">0 events</span>
+              </div>
+              <div id="traceArea" style="max-height:160px;overflow-y:auto;scrollbar-width:thin;scrollbar-color:#313244 transparent;"></div>
+            </div>
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-3 flex items-center gap-2"><i class="fas fa-book text-[#89b4fa]"></i> What's happening?</h3>
+          <div id="whatsHappening" class="text-xs text-[#a6adc8] leading-relaxed">
+            <p><strong class="text-[#f9e2af]">Mount:</strong> React creates the component, runs it, renders JSX to the screen. <span class="text-[#a6e3a1]">useEffect([])</span> fires.</p>
+            <p class="mt-2"><strong class="text-[#89b4fa]">Re-render:</strong> State changes → React re-runs the component, compares new vs old JSX, updates only what changed (diffing).</p>
+            <p class="mt-2"><strong class="text-[#f38ba8]">Unmount:</strong> Component is removed from the tree. <span class="text-[#f38ba8]">Cleanup</span> functions fire.</p>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2 flex items-center gap-2"><i class="fas fa-code text-[#cba6f7]"></i> The Diagram</h3>
+          <div class="bg-[#11111b] rounded-lg p-3 text-xs font-mono leading-relaxed">
+            <div class="text-[#a6e3a1]">1. App()            ← mount</div>
+            <div class="text-[#a6adc8]">   ├─ Header        ← mount</div>
+            <div class="text-[#a6adc8]">   ├─ Counter       ← mount</div>
+            <div class="text-[#89b4fa]">   │   └─ count=0   ← render</div>
+            <div class="text-[#89b4fa]">   │   └─ count=1   ← re-render</div>
+            <div class="text-[#a6adc8]">   ├─ {child}?      ← mount / unmount</div>
+            <div class="text-[#a6adc8]">   └─ Footer        ← mount</div>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Key insight:</span> A re-render of the parent does NOT remount the child. Only adding/removing the child from JSX causes mount/unmount.
+        </div>
+      </div>
+    </section>
+
+    <!-- === SIMPLE CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#f9e2af]"></i> The Code
+      </h2>
+      <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+        <div class="px-5 py-2.5 bg-[#181825] border-b border-[#313244] flex items-center gap-2 text-sm text-[#6c7086]">
+          <i class="fas fa-file-alt"></i> App.tsx
+        </div>
+        <pre class="p-5 text-sm font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#cba6f7]">function</span> <span class="text-[#89b4fa]">App</span>() {
+  <span class="text-[#cba6f7]">const</span> [count, setCount] = useState(0);
+  <span class="text-[#cba6f7]">const</span> [show, setShow] = useState(false);
+
+  <span class="text-[#6c7086]">// 🔵 Runs on mount + every re-render</span>
+  <span class="text-[#89b4fa]">console</span>.log(<span class="text-[#a6e3a1]">'App rendered'</span>);
+
+  <span class="text-[#6c7086]">// 🟢 Runs once on mount</span>
+  <span class="text-[#cba6f7]">useEffect</span>(() => {
+    <span class="text-[#89b4fa]">console</span>.log(<span class="text-[#a6e3a1]">'Mounted'</span>);
+  }, []);
+
+  <span class="text-[#cba6f7]">return</span> (
+    <span class="text-[#cdd6f4]">&lt;View&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Text&gt;{count}&lt;/Text&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Button title="+"</span> <span class="text-[#89b4fa]">onPress</span>={<span class="text-[#cdd6f4]">() => setCount(c => c + 1)} /&gt;</span>
+
+      <span class="text-[#6c7086]">// 🔴 Toggle = mount/unmount</span>
+      {show && <span class="text-[#cdd6f4]">&lt;Child /&gt;}</span>
+      <span class="text-[#cdd6f4]">&lt;Button title="toggle"</span> <span class="text-[#89b4fa]">onPress</span>={<span class="text-[#cdd6f4]">() => setShow(s => !s)} /&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/View&gt;</span>
+  );
+}
+
+<span class="text-[#6c7086]">// Each time Child is conditionally rendered:</span>
+<span class="text-[#6c7086]">//   show=true  → Child mounts  (useEffect runs)</span>
+<span class="text-[#6c7086]">//   show=false → Child unmounts (cleanup runs)</span>
+<span class="text-[#cba6f7]">function</span> <span class="text-[#89b4fa]">Child</span>() {
+  <span class="text-[#cba6f7]">useEffect</span>(() => {
+    <span class="text-[#89b4fa]">console</span>.log(<span class="text-[#a6e3a1]">'Child mounted'</span>);
+    <span class="text-[#cba6f7]">return</span> () => <span class="text-[#89b4fa]">console</span>.log(<span class="text-[#a6e3a1]">'Child unmounted'</span>);
+  }, []);
+  <span class="text-[#cba6f7]">return</span> <span class="text-[#cdd6f4]">&lt;Text&gt;I'm a child&lt;/Text&gt;;</span>
+}</pre>
+      </div>
+    </section>
+
+    <!-- === LIFE CYCLE TABLE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-table text-[#cba6f7]"></i> Lifecycle Reference
+      </h2>
+      <div class="overflow-x-auto rounded-xl border border-[#313244]">
+        <table class="w-full text-sm">
+          <thead><tr class="bg-[#181825] text-left"><th class="px-5 py-3 text-[#89b4fa]">Concept</th><th class="px-5 py-3 text-[#a6e3a1]">What happens</th><th class="px-5 py-3">Triggers</th></tr></thead>
+          <tbody class="divide-y divide-[#313244]">
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono text-[#a6e3a1]">Mount</td><td class="text-[#a6adc8]">Component is created, added to DOM, runs for first time</td><td class="text-[#a6adc8]">First render, conditional `{show && <Cmp />}` becomes true</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono text-[#89b4fa]">Re-render</td><td class="text-[#a6adc8]">Component re-executes, React diffs & patches changes</td><td class="text-[#a6adc8]">setState, prop change, parent re-render</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono text-[#f38ba8]">Unmount</td><td class="text-[#a6adc8]">Component removed from tree, cleanup runs</td><td class="text-[#a6adc8]">Conditional becomes false, navigating away</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- === KEY RULE === -->
+    <section class="fade-in">
+      <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-5">
+        <div class="flex items-start gap-3">
+          <i class="fas fa-lightbulb text-[#f9e2af] mt-1"></i>
+          <div class="text-sm">
+            <p class="font-semibold text-[#f9e2af] mb-1">The Golden Rule</p>
+            <ul class="text-[#a6adc8] space-y-1 list-disc ml-4">
+              <li><span class="text-[#89b4fa]">setState</span> → <span class="text-[#89b4fa]">re-render</span> that component (and children)</li>
+              <li><span class="text-[#a6e3a1]">Conditional rendering</span> <code>{flag && <Cmp />}</code> → <span class="text-[#a6e3a1]">mount</span> when true, <span class="text-[#f38ba8]">unmount</span> when false</li>
+              <li><span class="text-[#89b4fa]">Re-render</span> parent ≠ <span class="text-[#a6e3a1]">re-mount</span> child. Child's <code>useEffect([])</code> does NOT re-run on parent re-render.</li>
+              <li><span class="text-[#f38ba8]">Unmount</span> always fires cleanup from <code>useEffect</code> return.</li>
+            </ul>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://react.dev/learn/render-and-commit" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> React Docs: Render & Commit</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      let count = 0;
+      let childMounted = false;
+      let renderCount = 1;
+      const traces = [];
+
+      const countDisplay = document.getElementById('countDisplay');
+      const renderBadge = document.getElementById('renderBadge');
+      const traceArea = document.getElementById('traceArea');
+      const traceCount = document.getElementById('traceCount');
+      const childBox = document.getElementById('childBox');
+      const toggleChildLabel = document.getElementById('toggleChildLabel');
+      const childDot = document.getElementById('childDot');
+      const childStatus = document.getElementById('childStatus');
+
+      function addTrace(type) {
+        const labels = {
+          render: ['render', 'Component function ran', '#89b4fa'],
+          mount: ['mount', 'Component added to tree', '#a6e3a1'],
+          unmount: ['unmount', 'Component removed from tree', '#f38ba8']
+        };
+        const [tag, msg, color] = labels[type] || [type, type, '#585b70'];
+        traces.push({ tag, msg, color });
+        renderTraces();
+      }
+
+      function renderTraces() {
+        traceArea.innerHTML = traces.slice(-20).reverse().map(t =>
+          `<div class="trace"><span class="tag tag-${t.tag}" style="background:${t.color}20;color:${t.color}">${t.tag}</span> ${t.msg}</div>`
+        ).join('');
+        traceCount.textContent = traces.length + ' events';
+      }
+
+      function updateRenderBadge() {
+        renderBadge.textContent = 'renders: ' + renderCount;
+      }
+
+      function incrementRender() {
+        renderCount++;
+        updateRenderBadge();
+        addTrace('render');
+      }
+
+      // Count change → re-render
+      document.getElementById('incBtn').addEventListener('click', () => {
+        count++;
+        countDisplay.textContent = count;
+        incrementRender();
+      });
+      document.getElementById('decBtn').addEventListener('click', () => {
+        count--;
+        countDisplay.textContent = count;
+        incrementRender();
+      });
+
+      // Force re-render (no state change, but this simulates parent re-render)
+      document.getElementById('forceRenderBtn').addEventListener('click', () => {
+        // Flash the main box
+        const mainBox = document.getElementById('mainBox');
+        mainBox.style.transition = 'none';
+        mainBox.style.background = 'rgba(137,180,250,0.15)';
+        setTimeout(() => {
+          mainBox.style.background = '';
+          mainBox.style.transition = '';
+        }, 300);
+        incrementRender();
+      });
+
+      // Toggle child mount/unmount
+      document.getElementById('toggleChildBtn').addEventListener('click', () => {
+        childMounted = !childMounted;
+        childBox.style.display = childMounted ? 'block' : 'none';
+        toggleChildLabel.textContent = childMounted ? 'Unmount Child' : 'Mount Child';
+
+        if (childMounted) {
+          childDot.className = 'inline-block w-2 h-2 rounded-full bg-[#a6e3a1]';
+          childStatus.textContent = 'mounted';
+          childStatus.className = 'text-xs font-mono text-[#a6e3a1]';
+          addTrace('mount');
+        } else {
+          childDot.className = 'inline-block w-2 h-2 rounded-full bg-[#f38ba8]';
+          childStatus.textContent = 'unmounted';
+          childStatus.className = 'text-xs font-mono text-[#f38ba8]';
+          addTrace('unmount');
+        }
+      });
+
+      // Init
+      addTrace('mount');
+      updateRenderBadge();
+    })();
+  </script>
+</body>
+</html>

@@ -1,0 +1,339 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navigation Lifecycle - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; position:relative; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .nav-header { display:flex; align-items:center; padding:6px 12px; border-bottom:1px solid #313244; background:#181825; z-index:10; min-height:44px; }
+    .screen-area { flex:1; overflow-y:auto; position:relative; }
+    .screen-area::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #a6e3a1, #89b4fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:8px; padding:7px 14px; font-size:12px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#89b4fa; color:#1e1e2e; }
+    .btn-p:hover { background:#74c7ec; }
+    .btn-s { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+    .btn-s:hover { background:#45475a; }
+    .btn-back { background:transparent; color:#89b4fa; padding:4px 8px; font-size:13px; }
+    .btn-back:hover { color:#74c7ec; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+
+    .life-badge { font-size:9px; font-weight:700; padding:2px 8px; border-radius:4px; display:inline-block; }
+    .badge-focus { background:#89b4fa30; color:#89b4fa; }
+    .badge-blur { background:#f38ba830; color:#f38ba8; }
+    .badge-mount { background:#a6e3a130; color:#a6e3a1; }
+    .badge-unmount { background:#585b7030; color:#585b70; }
+
+    .screen-card {
+      background:#181825; border:1px solid #313244; border-radius:12px; padding:20px 16px; text-align:center;
+      position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center;
+      transition:all 0.4s cubic-bezier(0.4,0,0.2,1);
+    }
+    .screen-card.hidden { transform:translateX(100%); opacity:0; pointer-events:none; }
+    .screen-card.active { transform:translateX(0); opacity:1; }
+
+    .life-row { display:flex; align-items:center; gap:8px; padding:5px 8px; border-radius:6px; font-size:11px; font-family:monospace; background:#11111b; margin-bottom:3px; border-left:3px solid #585b70; animation:logIn 0.2s ease-out; }
+    @keyframes logIn { from{opacity:0;transform:translateX(-8px)} to{opacity:1;transform:translateX(0)} }
+    .life-row.focus { border-color:#89b4fa; }
+    .life-row.blur { border-color:#f38ba8; }
+    .life-row.mount { border-color:#a6e3a1; }
+    .life-row.unmount { border-color:#585b70; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      React Navigation
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">Navigation Lifecycle</span>
+    </h1>
+    <p class="text-[#a6adc8]"><span class="text-[#89b4fa]">Focus</span> · <span class="text-[#f38ba8]">Blur</span> · <span class="text-[#a6e3a1]">Mount</span> · <span class="text-[#585b70]">Unmount</span> — how screens behave in a navigator.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="nav-header">
+            <button id="backBtn" class="btn-back" style="visibility:hidden"><i class="fas fa-chevron-left mr-1"></i> Back</button>
+            <span id="screenTitle" class="flex-1 text-center font-semibold text-sm">Home</span>
+            <span id="focusBadge" class="life-badge badge-focus text-[10px]">focused</span>
+          </div>
+          <div class="screen-area" id="screenArea">
+            <!-- Screen A: Home -->
+            <div class="screen-card active" id="screenHome">
+              <div class="w-12 h-12 rounded-2xl bg-[#89b4fa]/20 flex items-center justify-center text-2xl mb-3">🏠</div>
+              <h2 class="text-lg font-bold mb-1">Home Screen</h2>
+              <p class="text-xs text-[#6c7086] mb-1">I stay <span class="text-[#a6e3a1]">mounted</span> even when you leave</p>
+              <p class="text-xs text-[#6c7086] mb-5">I <span class="text-[#89b4fa]">focus</span> when you come back</p>
+              <button class="btn btn-p" onclick="window.navTo('Details')"><i class="fas fa-arrow-right mr-1"></i> Go to Details</button>
+              <div class="text-xs text-[#6c7086] mt-4">useFocusEffect → runs on focus ✅<br>useIsFocused → <span id="homeFocused" class="text-[#89b4fa]">true</span></div>
+            </div>
+            <!-- Screen B: Details -->
+            <div class="screen-card hidden" id="screenDetails">
+              <div class="w-12 h-12 rounded-2xl bg-[#a6e3a1]/20 flex items-center justify-center text-2xl mb-3">📄</div>
+              <h2 class="text-lg font-bold mb-1">Details Screen</h2>
+              <p class="text-xs text-[#6c7086] mb-1">Pushed on top of Home</p>
+              <p class="text-xs text-[#6c7086] mb-5">Home is still <span class="text-[#585b70]">mounted</span> but <span class="text-[#f38ba8]">blurred</span></p>
+              <button class="btn btn-p" onclick="window.navTo('Profile')"><i class="fas fa-arrow-right mr-1"></i> Go to Profile</button>
+              <button class="btn btn-s" onclick="window.goBack()"><i class="fas fa-arrow-left mr-1"></i> Go Back</button>
+              <div class="text-xs text-[#6c7086] mt-4">useFocusEffect → runs on focus ✅<br>useIsFocused → <span id="detailFocused" class="text-[#89b4fa]">true</span></div>
+            </div>
+            <!-- Screen C: Profile -->
+            <div class="screen-card hidden" id="screenProfile">
+              <div class="w-12 h-12 rounded-2xl bg-[#f9e2af]/20 flex items-center justify-center text-2xl mb-3">👤</div>
+              <h2 class="text-lg font-bold mb-1">Profile Screen</h2>
+              <p class="text-xs text-[#6c7086] mb-1">Top of the stack now</p>
+              <p class="text-xs text-[#6c7086] mb-5">Details & Home are blurred below</p>
+              <button class="btn btn-s" onclick="window.goBack()"><i class="fas fa-arrow-left mr-1"></i> Go Back</button>
+              <button class="btn btn-s" onclick="window.popToTop()"><i class="fas fa-fast-backward mr-1"></i> Pop to Home</button>
+              <div class="text-xs text-[#6c7086] mt-4">useFocusEffect → runs on focus ✅<br>useIsFocused → <span id="profileFocused" class="text-[#89b4fa]">true</span></div>
+            </div>
+          </div>
+          <!-- Log -->
+          <div class="border-t border-[#313244] px-4 py-2 bg-[#181825]" style="max-height:130px;overflow-y:auto;" id="logArea">
+            <div class="text-xs text-[#585b70] mb-1">Lifecycle Events</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Key Concepts</h3>
+          <div class="space-y-2 text-xs text-[#a6adc8]">
+            <div class="bg-[#11111b] rounded-lg p-3">
+              <span class="text-[#a6e3a1] font-semibold">✅ Mount</span> — Screen added to the navigator (first visit). Runs <code>useEffect([],[])</code>.
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-3">
+              <span class="text-[#89b4fa] font-semibold">🔵 Focus</span> — Screen is visible to the user. Runs <code>useFocusEffect</code>.
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-3">
+              <span class="text-[#f38ba8] font-semibold">🔴 Blur</span> — Screen is covered by another screen. Still mounted, but not visible.
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-3">
+              <span class="text-[#585b70] font-semibold">⚫ Unmount</span> — Screen removed from navigator (e.g., popToTop from deep stack).
+            </div>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Hooks</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed">
+<span class="text-[#6c708c]">// Runs on focus AND on blur (cleanup)</span>
+<span class="text-[#cba6f7">import</span> { useFocusEffect } <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'@react-navigation/native'</span>;
+
+<span class="text-[#89b4fa]">useFocusEffect</span>(<span class="text-[#89b4fa]">useCallback</span>(() => {
+  <span class="text-[#6c7086]">// Runs when screen comes into focus</span>
+  <span class="text-[#89b4fa]">refreshData</span>();
+  <span class="text-[#cba6f7">return</span> () => {
+    <span class="text-[#6c7086]">// Runs when screen loses focus</span>
+    <span class="text-[#89b4fa]">stopPolling</span>();
+  };
+}, []));
+
+<span class="text-[#6c7086]">// OR: simple boolean</span>
+<span class="text-[#cba6f7">import</span> { useIsFocused } <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'@react-navigation/native'</span>;
+<span class="text-[#cba6f7">const</span> isFocused = <span class="text-[#89b4fa]">useIsFocused</span>(); <span class="text-[#6c708c]">// true/false</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Key difference:</span> <code>useEffect([],[])</code> runs once on mount. <code>useFocusEffect</code> runs every time the screen becomes visible. A screen stays mounted when you push another on top — but it loses focus.
+        </div>
+      </div>
+    </section>
+
+    <!-- === CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#89b4fa]"></i> Lifecycle Hooks in Action
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#89b4fa] text-[#1e1e2e]">useFocusEffect</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7">import</span> { useFocusEffect }
+  <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'@react-navigation/native'</span>;
+
+<span class="text-[#cba6f7">function</span> <span class="text-[#89b4fa]">HomeScreen</span>() {
+  <span class="text-[#89b4fa]">useFocusEffect</span>(
+    <span class="text-[#89b4fa]">useCallback</span>(() => {
+      <span class="text-[#6c7086]">// Screen came into focus</span>
+      <span class="text-[#89b4fa]">fetchData</span>();
+
+      <span class="text-[#cba6f7">return</span> () => {
+        <span class="text-[#6c7086]">// Screen left focus</span>
+        <span class="text-[#89b4fa]">cleanup</span>();
+      };
+    }, [])
+  );
+  <span class="text-[#cba6f7">return</span> <span class="text-[#cdd6f4]">&lt;View&gt;...&lt;/View&gt;</span>;
+}</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#a6e3a1] text-[#1e1e2e]">useIsFocused</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7">import</span> { useIsFocused }
+  <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'@react-navigation/native'</span>;
+
+<span class="text-[#cba6f7">function</span> <span class="text-[#89b4fa]">HomeScreen</span>() {
+  <span class="text-[#cba6f7">const</span> isFocused = <span class="text-[#89b4fa]">useIsFocused</span>();
+
+  <span class="text-[#6c7086]">// Simple conditional rendering</span>
+  <span class="text-[#cba6f7">if</span> (!isFocused) {
+    <span class="text-[#cba6f7">return</span> <span class="text-[#cdd6f4]">&lt;Text&gt;Not focused&lt;/Text&gt;</span>;
+  }
+
+  <span class="text-[#6c7086]">// Real-time data polling only when focused</span>
+  <span class="text-[#cba6f7">return</span> <span class="text-[#cdd6f4]">&lt;Text&gt;Focused!&lt;/Text&gt;</span>;
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- === LIFECYCLE TABLE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-table text-[#cba6f7]"></i> Lifecycle by Navigator Type
+      </h2>
+      <div class="overflow-x-auto rounded-xl border border-[#313244]">
+        <table class="w-full text-sm">
+          <thead><tr class="bg-[#181825] text-left"><th class="px-5 py-3">Event</th><th class="px-5 py-3 text-[#89b4fa]">Stack</th><th class="px-5 py-3 text-[#a6e3a1]">Tab</th><th class="px-5 py-3 text-[#f9e2af]">Drawer</th></tr></thead>
+          <tbody class="divide-y divide-[#313244]">
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">Mount</td><td class="text-[#a6adc8]">When first navigated to</td><td class="text-[#a6adc8]">When first navigated to</td><td class="text-[#a6adc8]">When first navigated to</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">Focus</td><td class="text-[#a6adc8]">Screen is on top</td><td class="text-[#a6adc8]">Tab is selected</td><td class="text-[#a6adc8]">Drawer screen is active</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">Blur</td><td class="text-[#a6adc8]">Another screen pushed on top</td><td class="text-[#a6adc8]">Another tab selected</td><td class="text-[#a6adc8]">Another drawer item selected</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">Unmount</td><td class="text-[#a6adc8]">Pop off the stack</td><td class="text-[#a6adc8]">Rarely (unmountInactiveScreens)</td><td class="text-[#a6adc8]">Rarely</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70">
+      <a href="https://reactnavigation.org/docs/navigation-lifecycle" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> React Navigation: Lifecycle Docs</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      let stack = ['Home'];
+      let logEntries = [];
+
+      const screenArea = document.getElementById('screenArea');
+      const screenTitle = document.getElementById('screenTitle');
+      const backBtn = document.getElementById('backBtn');
+      const focusBadge = document.getElementById('focusBadge');
+      const logArea = document.getElementById('logArea');
+
+      const screens = { Home: 'screenHome', Details: 'screenDetails', Profile: 'screenProfile' };
+      const homeFocused = document.getElementById('homeFocused');
+      const detailFocused = document.getElementById('detailFocused');
+      const profileFocused = document.getElementById('profileFocused');
+
+      function addLog(type, msg) {
+        const cls = type === 'focus' ? 'focus' : type === 'blur' ? 'blur' : type === 'mount' ? 'mount' : 'unmount';
+        logEntries.push({ type: cls, msg });
+        renderLog();
+      }
+
+      function renderLog() {
+        logArea.innerHTML = '<div class="text-xs text-[#585b70] mb-1">Lifecycle Events</div>' +
+          logEntries.slice(-6).map(e =>
+            `<div class="life-row ${e.type}">${e.msg}</div>`
+          ).join('');
+        logArea.scrollTop = logArea.scrollHeight;
+      }
+
+      function updateScreens() {
+        const current = stack[stack.length - 1];
+
+        // Hide all, show current
+        Object.values(screens).forEach(id => {
+          const el = document.getElementById(id);
+          if (!el) return;
+          el.classList.remove('active');
+          el.classList.add('hidden');
+        });
+        const activeEl = document.getElementById(screens[current]);
+        if (activeEl) {
+          activeEl.classList.remove('hidden');
+          activeEl.classList.add('active');
+        }
+
+        screenTitle.textContent = current;
+        backBtn.style.visibility = stack.length > 1 ? 'visible' : 'hidden';
+
+        // Focus badge
+        focusBadge.textContent = 'focused';
+        focusBadge.className = 'life-badge badge-focus text-[10px]';
+
+        // Update isFocused indicators for all screens
+        homeFocused.textContent = current === 'Home' ? 'true' : 'false';
+        homeFocused.style.color = current === 'Home' ? '#89b4fa' : '#f38ba8';
+        detailFocused.textContent = current === 'Details' ? 'true' : 'false';
+        detailFocused.style.color = current === 'Details' ? '#89b4fa' : '#f38ba8';
+        profileFocused.textContent = current === 'Profile' ? 'true' : 'false';
+        profileFocused.style.color = current === 'Profile' ? '#89b4fa' : '#f38ba8';
+      }
+
+      window.navTo = function(name) {
+        const prev = stack[stack.length - 1];
+        stack.push(name);
+        addLog('blur', '🔴 ' + prev + ' blurred');
+        addLog('focus', '🔵 ' + name + ' focused');
+        if (stack.length === 2) addLog('mount', '🟢 ' + name + ' mounted (first visit)');
+        updateScreens();
+      };
+
+      window.goBack = function() {
+        if (stack.length <= 1) return;
+        const popped = stack.pop();
+        const current = stack[stack.length - 1];
+        addLog('blur', '🔴 ' + popped + ' blurred');
+        addLog('focus', '🔵 ' + current + ' refocused');
+        updateScreens();
+      };
+
+      window.popToTop = function() {
+        while (stack.length > 1) {
+          const popped = stack.pop();
+          addLog('unmount', '⚫ ' + popped + ' unmounted');
+        }
+        const current = stack[0];
+        addLog('focus', '🔵 ' + current + ' refocused');
+        updateScreens();
+      };
+
+      backBtn.addEventListener('click', window.goBack);
+
+      // Init
+      addLog('mount', '🟢 Home mounted');
+      addLog('focus', '🔵 Home focused');
+      updateScreens();
+    })();
+  </script>
+</body>
+</html>

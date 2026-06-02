@@ -1,0 +1,958 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Objects — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#11111b;color:#cdd6f4;padding:20px}
+h1{font-size:2.5rem;margin-bottom:.3rem}
+h2{font-size:1.35rem;margin:2rem 0 .8rem;color:#89b4fa;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.7rem;background:#313244;color:#a6adc8;padding:2px 8px;border-radius:999px;font-weight:400}
+h3{font-size:1.05rem;margin:1.2rem 0 .5rem;color:#a6e3a1}
+p,li{color:#bac2de;line-height:1.7}
+code{background:#181825;padding:2px 6px;border-radius:4px;font-size:.85em;color:#fab387;font-family:'JetBrains Mono',monospace}
+pre{background:#181825;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0;border:1px solid #313244;line-height:1.7}
+pre code{background:none;padding:0;color:#a6e3a1}
+.wrapper{max-width:1000px;margin:0 auto}
+.gradient-text{background:linear-gradient(135deg,#89b4fa,#a6e3a1,#f9e2af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#6c7086;margin-bottom:2rem}
+.demo-panel{background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:20px;margin:20px 0}
+.demo-panel .label{font-size:.75rem;color:#6c7086;margin-bottom:8px;font-family:monospace}
+.demo-panel .label span{color:#89b4fa}
+.tip{background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.85rem;color:#a6adc8}
+.tip strong{color:#f9e2af}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.84rem;border-left:4px solid #89b4fa;background:rgba(137,180,250,.04)}
+.callout.danger{border-color:#f38ba8;background:rgba(243,139,168,.06)}
+.callout.warn{border-color:#f9e2af;background:rgba(249,226,175,.06)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;font-size:.85rem}
+.info-card .prop{color:#89b4fa;font-family:monospace;font-weight:600}
+.info-card .val{color:#a6e3a1}
+.info-card .desc{color:#6c7086;font-size:.8rem;margin-top:4px}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.controls button,.btn{background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:monospace;transition:.2s}
+.controls button:hover,.btn:hover{background:#45475a}
+.controls button.active,.btn.active{background:#89b4fa30;border-color:#89b4fa;color:#89b4fa}
+.slider-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.slider-group label{font-size:.78rem;color:#a6adc8}
+.slider-group input[type=range]{accent-color:#89b4fa;width:140px}
+.slider-group .value{font-family:monospace;font-size:.8rem;color:#fab387;min-width:40px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{background:#181825;color:#89b4fa;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid #313244}
+td{padding:10px 14px;border-bottom:1px solid #313244;color:#a6adc8}
+tr:hover td{background:#1e1e2e50}
+td:first-child{font-family:monospace;color:#fab387}
+::selection{background:#89b4fa40}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#11111b}
+::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+.obj-card{background:#181825;border:1px solid #313244;border-radius:8px;overflow:hidden;margin:10px 0}
+.obj-card .oc-header{display:flex;align-items:center;gap:8px;padding:10px 14px;background:#31324440;font-size:.82rem;font-weight:600;font-family:monospace}
+.obj-card .oc-body{padding:14px;font-family:monospace;font-size:.82rem;line-height:1.8}
+.obj-card .oc-body .key{color:#89b4fa}
+.obj-card .oc-body .str{color:#a6e3a1}
+.obj-card .oc-body .num{color:#fab387}
+.obj-card .oc-body .bool{color:#f9e2af}
+.obj-card .oc-body .null{color:#6c7086}
+.obj-card .oc-body .undef{color:#f38ba8}
+.object-vis{display:flex;flex-direction:column;gap:2px;padding:12px;background:#181825;border-radius:6px;border:1px solid #313244;font-family:monospace;font-size:.85rem;margin:8px 0;min-height:40px}
+.object-vis .ov-row{display:flex;align-items:center;gap:6px;padding:4px 8px;border-radius:4px;transition:.2s}
+.object-vis .ov-row:hover{background:#31324440}
+.object-vis .ov-row .ov-key{color:#89b4fa;min-width:80px}
+.object-vis .ov-row .ov-colon{color:#585b70}
+.object-vis .ov-row .ov-val{color:#a6e3a1}
+.object-vis .ov-row .ov-val.num{color:#fab387}
+.object-vis .ov-row .ov-val.bool{color:#f9e2af}
+.object-vis .ov-row .ov-val.null{color:#6c7086}
+.object-vis .ov-row .ov-val.undef{color:#f38ba8}
+.object-vis .ov-row .ov-del{color:#585b70;cursor:pointer;font-size:.7rem;padding:2px 6px;border-radius:3px;transition:.2s}
+.object-vis .ov-row .ov-del:hover{background:#f38ba830;color:#f38ba8}
+.object-vis .ov-row .ov-add{color:#6c7086;cursor:pointer;font-size:.7rem;padding:2px 6px;border-radius:3px}
+.object-vis .ov-row .ov-add:hover{background:#a6e3a120;color:#a6e3a1}
+.obj-bracket{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:8px 0}
+@media(max-width:600px){.obj-bracket{grid-template-columns:1fr}}
+.obj-bracket .ob-card{background:#181825;border:1px solid #313244;border-radius:6px;padding:12px}
+.obj-bracket .ob-title{font-size:.75rem;color:#6c7086;margin-bottom:6px;font-family:monospace}
+.obj-bracket .ob-demo{font-size:.82rem;line-height:1.8;font-family:monospace}
+.chain-vis{display:flex;align-items:center;gap:6px;padding:10px;background:#181825;border-radius:6px;border:1px solid #313244;flex-wrap:wrap;font-family:monospace;font-size:.78rem;margin:8px 0}
+.chain-link{background:#313244;border-radius:4px;padding:4px 10px;color:#cdd6f4}
+.chain-arrow{color:#585b70}
+.chain-link.found{background:#a6e3a130;border:1px solid #a6e3a1;color:#a6e3a1}
+.chain-link.not-found{background:#f38ba830;border:1px solid #f38ba8;color:#f38ba8}
+.playground-row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.playground-row input,.playground-row select{background:#313244;color:#cdd6f4;border:1px solid #45475a;border-radius:4px;padding:4px 8px;font-family:monospace;font-size:.8rem}
+.playground-row input{width:160px}
+.playground-row .pg-label{font-size:.75rem;color:#6c7086;font-family:monospace}
+.console-box{background:#0a0a14;border:1px solid #313244;border-radius:8px;padding:14px;font-family:monospace;font-size:.82rem;line-height:1.9;min-height:40px;margin:8px 0}
+.console-box .prompt{color:#6c7086}
+.console-box .result{color:#a6e3a1}
+.console-box .error{color:#f38ba8}
+.console-box .key{color:#89b4fa}
+.console-box .str{color:#a6e3a1}
+.console-box .num{color:#fab387}
+.console-box .bool{color:#f9e2af}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1><span class="gradient-text">JS Objects</span> — Deep Visual Guide</h1>
+<p class="subtitle">Creation, access, mutation, iteration, prototypes, destructuring, methods — all visualized.</p>
+
+<!-- ===== 0. What Is an Object ===== -->
+<section>
+<h2><span>0. What Is an Object?</span> <span class="badge">Key-Value Pairs</span></h2>
+<p>An object is a collection of <strong>key-value pairs</strong>. Keys are strings (or Symbols), values can be any type — including other objects and functions (methods). Objects are <strong>reference types</strong>: variables hold a reference, not the value itself.</p>
+
+<div class="demo-panel">
+  <div class="label">A simple object visualized — each row is a key → value pair</div>
+  <div class="object-vis" id="simpleObjVis">
+    <div class="ov-row"><span class="ov-key">name</span><span class="ov-colon">:</span><span class="ov-val str">"Alice"</span></div>
+    <div class="ov-row"><span class="ov-key">age</span><span class="ov-colon">:</span><span class="ov-val num">30</span></div>
+    <div class="ov-row"><span class="ov-key">isAdmin</span><span class="ov-colon">:</span><span class="ov-val bool">true</span></div>
+    <div class="ov-row"><span class="ov-key">greet</span><span class="ov-colon">:</span><span class="ov-val" style="color:#6c7086">ƒ ()</span></div>
+  </div>
+</div>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop">Keys</div><div class="desc">Always strings (or Symbols). Even with quotes omitted, they become strings. <code>obj[1]</code> → key is <code>"1"</code>.</div></div>
+  <div class="info-card"><div class="prop">Values</div><div class="desc">Any type: primitive, object, array, function, Date, etc.</div></div>
+  <div class="info-card"><div class="prop">Reference type</div><div class="desc"><code>const a = {x:1}; const b = a; b.x = 2; // a.x is now 2</code> — they point to the same object.</div></div>
+  <div class="info-card"><div class="prop">Mutable by default</div><div class="desc">You can always add, update, or delete properties unless frozen/sealed.</div></div>
+</div>
+</section>
+
+<!-- ===== 1. Creating Objects ===== -->
+<section>
+<h2><span>1. Creating Objects</span> <span class="badge">5 Ways</span></h2>
+
+<div class="demo-panel">
+  <div class="controls" id="createObjControls">
+    <button class="active" data-v="literal">{ } literal</button>
+    <button data-v="new">new Object()</button>
+    <button data-v="create">Object.create()</button>
+    <button data-v="constructor">Constructor fn</button>
+    <button data-v="class">ES6 class</button>
+  </div>
+  <div class="obj-card">
+    <div class="oc-header">Result</div>
+    <div class="oc-body" id="createObjResult"></div>
+  </div>
+  <div class="console-box" id="createObjConsole"></div>
+</div>
+
+<pre><code><span style="color:#6c708c">// 5 ways to create objects:</span>
+<span style="color:#89b4fa">const</span> a = { x: <span class="num">1</span>, y: <span class="num">2</span> };        <span style="color:#6c708c">// → literal (most common)</span>
+<span style="color:#89b4fa">const</span> b = <span style="color:#89b4fa">new</span> Object({ x: <span class="num">1</span> });  <span style="color:#6c708c">// → constructor (rare)</span>
+<span style="color:#89b4fa">const</span> c = Object.create(proto);   <span style="color:#6c708c">// → with specific prototype</span>
+<span style="color:#89b4fa">function</span> F(x) { <span style="color:#89b4fa">this</span>.x = x; }      <span style="color:#6c708c">// → constructor function</span>
+<span style="color:#89b4fa">class</span> C { constructor(x) { <span style="color:#89b4fa">this</span>.x = x; } } <span style="color:#6c708c">// → ES6 class</span></code></pre>
+</section>
+
+<!-- ===== 2. Accessing Properties ===== -->
+<section>
+<h2><span>2. Accessing Properties</span> <span class="badge">dot · bracket · optional chaining</span></h2>
+
+<div class="obj-bracket">
+  <div class="ob-card">
+    <div class="ob-title">Dot notation — static key</div>
+    <div style="font-size:.9rem;font-family:monospace;padding:8px 0;text-align:center">
+      <span style="color:#89b4fa;">user</span>.<span style="color:#a6e3a1;">name</span>
+    </div>
+    <div class="ob-demo">
+      <div>✔ Clean, readable</div>
+      <div>✔ <code><span style="color:#89b4fa;">user</span>.name</code></div>
+      <div>✘ Can't use dynamic keys</div>
+      <div>✘ Can't use keys with hyphens/spaces</div>
+    </div>
+  </div>
+  <div class="ob-card">
+    <div class="ob-title">Bracket notation — dynamic key</div>
+    <div style="font-size:.9rem;font-family:monospace;padding:8px 0;text-align:center">
+      <span style="color:#89b4fa;">user</span>[<span style="color:#a6e3a1;">"name"</span>]
+    </div>
+    <div class="ob-demo">
+      <div>✔ Dynamic keys: <code><span style="color:#89b4fa;">user</span>[key]</code></div>
+      <div>✔ Keys with spaces: <code><span style="color:#89b4fa;">user</span>[<span class="str">"my key"</span>]</code></div>
+      <div>✔ Computed: <code><span style="color:#89b4fa;">user</span>[<span class="str">"age"</span> + <span class="num">1</span>]</code></div>
+      <div>✘ Slightly more verbose</div>
+    </div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">Interactive — click to access different properties</div>
+  <div class="object-vis" id="accessObjVis"></div>
+  <div class="playground-row">
+    <span class="pg-label">Access:</span>
+    <select id="accessMethod" style="width:140px">
+      <option value="dot">user.name</option>
+      <option value="bracket">user["name"]</option>
+      <option value="dynamic">user[key] where key="age"</option>
+      <option value="chain">user?.address?.city</option>
+      <option value="missing">user.phone (missing)</option>
+    </select>
+    <button id="accessRun" class="btn active">Get</button>
+  </div>
+  <div class="console-box" id="accessConsole"></div>
+</div>
+
+<pre><code><span style="color:#6c708c">// Optional chaining — safe access through null/undefined</span>
+user?.address?.city          <span style="color:#6c708c">// → undefined if address is null/undefined (no error!)</span>
+user?.address?.city ?? <span class="str">"N/A"</span> <span style="color:#6c708c">// → "N/A" with nullish coalescing</span>
+
+<span style="color:#6c708c">// Nullish coalescing — only for null/undefined (not for 0, "", false)</span>
+<span style="color:#89b4fa">const</span> x = value ?? <span class="str">"default"</span>;  <span style="color:#6c708c">// → "default" only if value is null/undefined</span></code></pre>
+
+<div class="callout warn">
+  <strong>&#9888; vs ||:</strong> <code>||</code> treats <code>0</code>, <code>""</code>, <code>false</code> as falsy. <code>??</code> only treats <code>null</code>/<code>undefined</code> as nullish. Prefer <code>??</code> for defaults.
+</div>
+</section>
+
+<!-- ===== 3. Modifying Properties ===== -->
+<section>
+<h2><span>3. Modifying Properties</span> <span class="badge">Add · Update · Delete</span></h2>
+
+<div class="demo-panel">
+  <div class="label">Click buttons to modify the object — see it change live</div>
+  <div class="object-vis" id="mutateObjVis"></div>
+  <div class="controls" id="mutateObjControls">
+    <button data-v='{"op":"add","k":"email","v":"alice@ex.com"}'>add email</button>
+    <button data-v='{"op":"update","k":"age","v":31}'>update age → 31</button>
+    <button data-v='{"op":"delete","k":"isAdmin"}'>delete isAdmin</button>
+    <button data-v='{"op":"reset"}'>reset</button>
+  </div>
+  <div class="console-box" id="mutateObjConsole"></div>
+</div>
+
+<pre><code><span style="color:#6c708c">// Mutation operations</span>
+obj.key = value;                <span style="color:#6c708c">// → add or update</span>
+obj[<span class="str">"key"</span>] = value;            <span style="color:#6c708c">// → same via bracket</span>
+<span style="color:#89b4fa">delete</span> obj.key;                 <span style="color:#6c708c">// → removes property entirely</span>
+<span class="str">"key"</span> <span style="color:#89b4fa">in</span> obj;                  <span style="color:#6c708c">// → true/false (checks own + inherited)</span>
+obj.hasOwnProperty(<span class="str">"key"</span>);   <span style="color:#6c708c">// → true only if own property</span>
+Object.hasOwn(obj, <span class="str">"key"</span>);   <span style="color:#6c708c">// → ES2022, recommended</span></code></pre>
+
+<div class="tip">
+  <strong>delete removes the key entirely</strong> — not just sets it to <code>undefined</code>. After <code>delete obj.x</code>, <code>"x" in obj</code> is <code>false</code>. Setting <code>obj.x = undefined</code> keeps the key with value <code>undefined</code>.
+</div>
+</section>
+
+<!-- ===== 4. Object Static Methods ===== -->
+<section>
+<h2><span>4. Static Methods</span> <span class="badge">keys · values · entries · assign · freeze · seal</span></h2>
+
+<div class="demo-panel">
+  <div class="controls" id="staticObjControls">
+    <button class="active" data-v="keys">Object.keys()</button>
+    <button data-v="values">Object.values()</button>
+    <button data-v="entries">Object.entries()</button>
+    <button data-v="assign">Object.assign({}, src)</button>
+    <button data-v="freeze">Object.freeze()</button>
+  </div>
+  <div class="object-vis" id="staticSrcVis"></div>
+  <div class="console-box" id="staticObjConsole"></div>
+</div>
+
+<pre><code><span style="color:#6c708c">// Static methods — called on Object itself</span>
+Object.keys(obj)      <span style="color:#6c708c">// → ["name", "age"]  (own enumerable keys)</span>
+Object.values(obj)    <span style="color:#6c708c">// → ["Alice", 30]    (own enumerable values)</span>
+Object.entries(obj)   <span style="color:#6c708c">// → [["name","Alice"], ["age",30]]</span>
+Object.assign(target, src) <span style="color:#6c708c">// → merges src into target, mutates target</span>
+Object.freeze(obj)    <span style="color:#6c708c">// → makes object immutable (shallow)</span>
+Object.seal(obj)      <span style="color:#6c708c">// → prevents add/delete, but allows value changes</span>
+Object.hasOwn(obj, key) <span style="color:#6c708c">// → ES2022, checks own property</span></code></pre>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop">Object.freeze()</div><div class="desc">Cannot add, delete, or change values. <strong>Shallow</strong> — nested objects are still mutable.</div></div>
+  <div class="info-card"><div class="prop">Object.seal()</div><div class="desc">Cannot add or delete properties, but <strong>can change existing values</strong>.</div></div>
+  <div class="info-card"><div class="prop">Object.assign()</div><div class="desc">Copies own enumerable properties. Shallow. Mutates the target. <code>Object.assign({}, src)</code> = shallow clone.</div></div>
+  <div class="info-card"><div class="prop">Spread clone: {...src}</div><div class="desc">Same as <code>Object.assign({}, src)</code>. More concise. Also shallow.</div></div>
+</div>
+</section>
+
+<!-- ===== 5. Spread & Destructuring ===== -->
+<section>
+<h2><span>5. Spread &amp; Destructuring</span> <span class="badge">Modern Patterns</span></h2>
+
+<div class="obj-bracket">
+  <div class="ob-card">
+    <div class="ob-title">Destructuring — extract keys to variables</div>
+    <div class="ob-demo">
+      <code><span style="color:#89b4fa;">const</span> { name, age } = user;</code><br>
+      <code><span style="color:#89b4fa;">const</span> { name: userName } = user; <span style="color:#6c7086">// rename</span></code><br>
+      <code><span style="color:#89b4fa;">const</span> { email = <span class="str">"default"</span> } = user; <span style="color:#6c708c">// default</span></code><br>
+      <code><span style="color:#89b4fa;">const</span> { ...rest } = user; <span style="color:#6c708c">// rest pattern</span></code>
+    </div>
+  </div>
+  <div class="ob-card">
+    <div class="ob-title">Spread — copy/merge objects</div>
+    <div class="ob-demo">
+      <code><span style="color:#89b4fa;">const</span> clone = { ...user };</code><br>
+      <code><span style="color:#89b4fa;">const</span> merged = { ...a, ...b };</code><br>
+      <code><span style="color:#89b4fa;">const</span> updated = { ...user, age: <span class="num">31</span> };</code><br>
+      <code><span style="color:#6c708c;">// later keys override earlier ones</span></code>
+    </div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">Interactive destructuring demo:</div>
+  <div class="playground-row">
+    <span class="pg-label">Destructure:</span>
+    <select id="destrMode" style="width:180px">
+      <option value="basic">{ name, age }</option>
+      <option value="rename">{ name → userName }</option>
+      <option value="default">{ email = "N/A" }</option>
+      <option value="rest">{ name, ...rest }</option>
+      <option value="nested">{ address.city }</option>
+    </select>
+    <button id="destrRun" class="btn active">Destructure</button>
+  </div>
+  <div class="console-box" id="destrConsole"></div>
+</div>
+</section>
+
+<!-- ===== 6. Prototypes & Inheritance ===== -->
+<section>
+<h2><span>6. Prototypes &amp; Inheritance</span> <span class="badge">The Prototype Chain</span></h2>
+<p>Every object has an internal <code>[[Prototype]]</code> link to another object (or null). When you access a property, JS walks the <strong>chain</strong> until it finds it or reaches <code>null</code>.</p>
+
+<div class="demo-panel">
+  <div class="label">The prototype chain — click to see property lookup in action:</div>
+  <div class="chain-vis" id="chainVis"></div>
+  <div class="playground-row">
+    <span class="pg-label">Access:</span>
+    <select id="chainProp" style="width:120px">
+      <option value="name">obj.name</option>
+      <option value="age">obj.age</option>
+      <option value="greet">obj.greet()</option>
+      <option value="toString">obj.toString</option>
+      <option value="nonexistent">obj.nonexistent</option>
+    </select>
+    <button id="chainRun" class="btn active">Lookup</button>
+  </div>
+  <div class="console-box" id="chainConsole"></div>
+</div>
+
+<pre><code><span style="color:#6c708c">// Prototype chain walk:</span>
+obj.name          <span style="color:#6c708c">// → 1. Check obj own props → found! stop.</span>
+obj.greet()       <span style="color:#6c708c">// → 1. obj own? No. 2. obj.__proto__? Yes → found!</span>
+obj.toString      <span style="color:#6c708c">// → 1-2-3... walks up to Object.prototype → found!</span>
+obj.nonexistent   <span style="color:#6c708c">// → walks entire chain → null → returns undefined</span>
+
+<span style="color:#6c708c">// Setting up inheritance</span>
+childObj = Object.create(parentObj);  <span style="color:#6c708c">// child's prototype = parent</span>
+<span style="color:#89b4fa">class</span> Child <span style="color:#89b4fa">extends</span> Parent { }        <span style="color:#6c708c">// class inheritance</span></code></pre>
+
+<div class="callout danger">
+  <strong>&#9888; hasOwnProperty is critical:</strong> <code>for (let key in obj)</code> iterates <strong>own + inherited</strong> properties. Always use <code>hasOwnProperty</code> or <code>Object.hasOwn()</code> to filter.
+</div>
+</section>
+
+<!-- ===== 7. The 'this' Keyword ===== -->
+<section>
+<h2><span>7. The <code>this</code> Keyword</span> <span class="badge">Depends on Call Context</span></h2>
+
+<div class="demo-panel">
+  <div class="controls" id="thisControls">
+    <button class="active" data-v="method">obj.method()</button>
+    <button data-v="function">regular fn()</button>
+    <button data-v="arrow">arrow fn</button>
+    <button data-v="event">event listener</button>
+  </div>
+  <div class="console-box" id="thisConsole"></div>
+</div>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop">Method call: obj.fn()</div><div class="desc"><code>this</code> = the object before the dot (<code>obj</code>). Most intuitive.</div></div>
+  <div class="info-card"><div class="prop">Regular fn: fn()</div><div class="desc"><code>this</code> = global (window) or <code>undefined</code> in strict mode.</div></div>
+  <div class="info-card"><div class="prop">Arrow fn: () => {}</div><div class="desc"><code>this</code> = <strong>lexical</strong> (inherits from surrounding scope). Can't be rebound.</div></div>
+  <div class="info-card"><div class="prop">Event listener</div><div class="desc"><code>this</code> = the element that received the event.</div></div>
+</div>
+
+<pre><code><span style="color:#89b4fa">const</span> obj = {
+  name: <span class="str">"Alice"</span>,
+  greet() { <span style="color:#89b4fa">return</span> <span style="color:#89b4fa">this</span>.name; },
+  greetArrow: <span style="color:#89b4fa">()</span> => <span style="color:#89b4fa">this</span>.name,  <span style="color:#6c708c">// → undefined (lexical this = global)</span>
+};
+obj.greet();       <span style="color:#6c708c">// → "Alice"  (this = obj)</span>
+<span style="color:#89b4fa">const</span> fn = obj.greet;
+fn();              <span style="color:#6c708c">// → undefined  (this = global, no .name)</span></code></pre>
+
+<div class="tip">
+  <strong>The "this" rule of thumb:</strong> Look at the <strong>call site</strong> — how is the function called? <code>obj.fn()</code> → this = obj. <code>fn()</code> → this = global/undefined. Arrow functions don't care — they use the surrounding <code>this</code>.
+</div>
+</section>
+
+<!-- ===== 8. Getters & Setters ===== -->
+<section>
+<h2><span>8. Getters &amp; Setters</span> <span class="badge">Computed Properties</span></h2>
+
+<div class="demo-panel">
+  <div class="label">Getters compute a value. Setters run logic on assignment.</div>
+  <div class="object-vis" id="getSetVis"></div>
+  <div class="console-box" id="getSetConsole"></div>
+</div>
+
+<pre><code><span style="color:#89b4fa">const</span> user = {
+  firstName: <span class="str">"Alice"</span>,
+  lastName: <span class="str">"Smith"</span>,
+  <span style="color:#89b4fa">get</span> fullName() { <span style="color:#89b4fa">return</span> <span style="color:#89b4fa">this</span>.firstName + <span class="str">" "</span> + <span style="color:#89b4fa">this</span>.lastName; },
+  <span style="color:#89b4fa">set</span> fullName(val) { [<span style="color:#89b4fa">this</span>.firstName, <span style="color:#89b4fa">this</span>.lastName] = val.split(<span class="str">" "</span>); }
+};
+user.fullName;       <span style="color:#6c708c">// → "Alice Smith"  (getter, no () needed)</span>
+user.fullName = <span class="str">"Bob Jones"</span>;  <span style="color:#6c708c">// → setter runs, updates both fields</span></code></pre>
+</section>
+
+<!-- ===== 9. Interactive Playground ===== -->
+<section>
+<h2><span>9. Interactive Playground</span> <span class="badge">Experiment</span></h2>
+
+<div class="demo-panel">
+  <div class="playground-row">
+    <span class="pg-label">Object</span>
+    <input id="pgObj" value='{ "name": "Alice", "age": 30 }' style="width:240px;font-size:.8rem">
+  </div>
+  <div class="playground-row">
+    <span class="pg-label">Operation</span>
+    <select id="pgOp" style="width:180px">
+      <option value="keys">Object.keys()</option>
+      <option value="values">Object.values()</option>
+      <option value="entries">Object.entries()</option>
+      <option value="has">"name" in obj?</option>
+      <option value="addProp">add property</option>
+      <option value="deleteProp">delete property</option>
+      <option value="freeze">Object.freeze() then try add</option>
+      <option value="spread">{...obj, newProp: "x"}</option>
+    </select>
+    <span class="pg-label" id="pgExtraLabel" style="display:none">Key</span>
+    <input id="pgExtra" value='"email"' style="width:100px;display:none">
+    <span class="pg-label" id="pgExtraLabel2" style="display:none">Value</span>
+    <input id="pgExtra2" value='"alice@ex.com"' style="width:100px;display:none">
+    <button id="pgRun" class="btn active">Run</button>
+  </div>
+  <div class="object-vis" id="pgObjVis"></div>
+  <div class="console-box" id="pgConsole"></div>
+</div>
+</section>
+
+<!-- ===== 10. Quick Reference ===== -->
+<section>
+<h2><span>Quick Reference</span> <span class="badge">All Methods</span></h2>
+<table>
+  <thead><tr><th>Method / Pattern</th><th>Returns</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>Object.keys(obj)</td><td>array</td><td>Own enumerable keys</td></tr>
+    <tr><td>Object.values(obj)</td><td>array</td><td>Own enumerable values</td></tr>
+    <tr><td>Object.entries(obj)</td><td>array</td><td>Own [key, value] pairs</td></tr>
+    <tr><td>Object.assign(t, s)</td><td>target obj</td><td>Copies properties (shallow)</td></tr>
+    <tr><td>Object.freeze(obj)</td><td>same obj</td><td>Makes immutable (shallow)</td></tr>
+    <tr><td>Object.seal(obj)</td><td>same obj</td><td>Prevents add/delete</td></tr>
+    <tr><td>Object.hasOwn(obj, k)</td><td>boolean</td><td>ES2022 own property check</td></tr>
+    <tr><td>obj.hasOwnProperty(k)</td><td>boolean</td><td>Older own property check</td></tr>
+    <tr><td>"k" in obj</td><td>boolean</td><td>Checks own + inherited</td></tr>
+    <tr><td>delete obj.k</td><td>boolean</td><td>Removes property</td></tr>
+    <tr><td>Object.create(p)</td><td>new obj</td><td>Create with prototype p</td></tr>
+    <tr><td>{ ...obj }</td><td>new obj</td><td>Spread — shallow clone</td></tr>
+    <tr><td>{ key } = obj</td><td>variables</td><td>Destructuring</td></tr>
+    <tr><td>obj?.prop</td><td>any</td><td>Optional chaining</td></tr>
+    <tr><td>val ?? default</td><td>any</td><td>Nullish coalescing</td></tr>
+  </tbody>
+</table>
+</section>
+
+<footer style="border-top:1px solid #313244;padding-top:20px;margin-top:40px;text-align:center;font-size:.85rem;color:#585b70;">
+  JS Objects · Deep Visual Guide
+</footer>
+</div>
+
+<script>
+// ===== Shared helpers =====
+function renderObjVis(containerId, obj) {
+  const container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
+  container.innerHTML = '';
+  const keys = Object.keys(obj);
+  if (keys.length === 0) {
+    container.innerHTML = '<div style="color:#6c7086;font-size:.8rem;padding:8px;text-align:center;">{ } (empty object)</div>';
+    return;
+  }
+  keys.forEach(k => {
+    const row = document.createElement('div');
+    row.className = 'ov-row';
+    let val = obj[k];
+    let valClass = '';
+    let valStr;
+    if (val === null) { valClass = 'null'; valStr = 'null'; }
+    else if (val === undefined) { valClass = 'undef'; valStr = 'undefined'; }
+    else if (typeof val === 'string') { valClass = 'str'; valStr = '"' + val + '"'; }
+    else if (typeof val === 'number') { valClass = 'num'; valStr = val; }
+    else if (typeof val === 'boolean') { valClass = 'bool'; valStr = val; }
+    else if (typeof val === 'function') { valStr = '\u0192 ' + (val.name || 'anonymous'); }
+    else if (Array.isArray(val)) { valStr = '[' + val.join(', ') + ']'; }
+    else if (typeof val === 'object') { valStr = '{ ... }'; }
+    else { valStr = String(val); }
+    row.innerHTML = '<span class="ov-key">' + k + '</span><span class="ov-colon">:</span><span class="ov-val ' + valClass + '">' + valStr + '</span>';
+    container.appendChild(row);
+  });
+}
+
+const baseUser = { name: 'Alice', age: 30, isAdmin: true, greet() { return 'Hi!'; } };
+
+// ===== 1. Creating Objects =====
+(function(){
+  const resultEl = document.getElementById('createObjResult');
+  const consoleEl = document.getElementById('createObjConsole');
+
+  document.querySelectorAll('#createObjControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#createObjControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const mode = btn.dataset.v;
+      let obj, expr;
+      switch(mode) {
+        case 'literal':
+          obj = { x: 1, y: 2 };
+          expr = 'const obj = { x: 1, y: 2 };';
+          break;
+        case 'new':
+          obj = new Object({ x: 1, y: 2 });
+          expr = 'const obj = new Object({ x: 1, y: 2 });';
+          break;
+        case 'create':
+          const proto = { greet() { return "hello"; } };
+          obj = Object.create(proto);
+          obj.x = 1;
+          expr = 'const obj = Object.create(proto); obj.x = 1;';
+          break;
+        case 'constructor':
+          function Obj(x, y) { this.x = x; this.y = y; }
+          obj = new Obj(1, 2);
+          expr = 'function Obj(x, y) { this.x = x; this.y = y; }\nconst obj = new Obj(1, 2);';
+          break;
+        case 'class':
+          class ObjC { constructor(x, y) { this.x = x; this.y = y; } }
+          obj = new ObjC(1, 2);
+          expr = 'class ObjC { constructor(x, y) { this.x = x; this.y = y; } }\nconst obj = new ObjC(1, 2);';
+          break;
+      }
+      resultEl.innerHTML = '';
+      const keys = Object.keys(obj);
+      keys.forEach(k => {
+        const d = document.createElement('div');
+        const v = obj[k];
+        d.innerHTML = '<span class="key">' + k + '</span>: <span class="' + (typeof v === 'number' ? 'num' : typeof v === 'string' ? 'str' : '') + '">' + (typeof v === 'string' ? '"' + v + '"' : v) + '</span>';
+        resultEl.appendChild(d);
+      });
+      if (mode === 'create') {
+        resultEl.innerHTML += '<div style="color:#6c7086;font-size:.7rem;margin-top:8px">prototype: { greet: \u0192 }</div>';
+      }
+      consoleEl.innerHTML = '<div class="prompt">&gt; ' + expr.replace(/\n/g, '<br>&gt; ') + '</div><div class="result">&lArr; Object with ' + keys.length + ' own propert' + (keys.length === 1 ? 'y' : 'ies') + '</div>';
+    });
+  });
+  document.querySelector('#createObjControls .active').click();
+})();
+
+// ===== 2. Accessing =====
+(function(){
+  const user = { name: 'Alice', age: 30, isAdmin: true, address: null };
+  renderObjVis('accessObjVis', user);
+  const method = document.getElementById('accessMethod');
+  const runBtn = document.getElementById('accessRun');
+  const consoleEl = document.getElementById('accessConsole');
+
+  function updateAccess() {
+    const m = method.value;
+    let result, expr;
+    switch(m) {
+      case 'dot':
+        result = user.name;
+        expr = 'user.name';
+        break;
+      case 'bracket':
+        result = user['name'];
+        expr = 'user["name"]';
+        break;
+      case 'dynamic':
+        const key = 'age';
+        result = user[key];
+        expr = 'const key = "age"; user[key]';
+        break;
+      case 'chain':
+        result = user?.address?.city;
+        expr = 'user?.address?.city';
+        break;
+      case 'missing':
+        result = user.phone;
+        expr = 'user.phone';
+        break;
+    }
+    consoleEl.innerHTML = '<div class="prompt">&gt; ' + expr + '</div><div class="result">&lArr; <span class="' + (typeof result === 'string' ? 'str' : typeof result === 'number' ? 'num' : typeof result === 'boolean' ? 'bool' : '') + '">' + (result === undefined ? 'undefined' : JSON.stringify(result)) + '</span></div>';
+  }
+
+  runBtn.addEventListener('click', updateAccess);
+  updateAccess();
+})();
+
+// ===== 3. Modifying =====
+(function(){
+  let obj = { name: 'Alice', age: 30, isAdmin: true };
+  const consoleEl = document.getElementById('mutateObjConsole');
+  const vis = document.getElementById('mutateObjVis');
+
+  function render() { renderObjVis(vis, obj); }
+
+  document.querySelectorAll('#mutateObjControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const data = JSON.parse(btn.dataset.v);
+      const op = data.op;
+      switch(op) {
+        case 'add':
+          obj[data.k] = data.v;
+          consoleEl.innerHTML = '<div class="prompt">&gt; obj["' + data.k + '"] = ' + JSON.stringify(data.v) + '</div><div class="result">&lArr; Property added</div>';
+          break;
+        case 'update':
+          obj[data.k] = data.v;
+          consoleEl.innerHTML = '<div class="prompt">&gt; obj.' + data.k + ' = ' + JSON.stringify(data.v) + '</div><div class="result">&lArr; Updated</div>';
+          break;
+        case 'delete':
+          delete obj[data.k];
+          consoleEl.innerHTML = '<div class="prompt">&gt; delete obj.' + data.k + '</div><div class="result">&lArr; ' + (data.k in obj ? 'Still exists' : 'Removed') + '</div>';
+          break;
+        case 'reset':
+          obj = { name: 'Alice', age: 30, isAdmin: true };
+          consoleEl.innerHTML = '<div class="prompt">&gt; // reset to original</div><div class="result">&lArr; Object reset</div>';
+          break;
+      }
+      render();
+    });
+  });
+  render();
+})();
+
+// ===== 4. Static Methods =====
+(function(){
+  const src = { name: 'Alice', age: 30, isAdmin: true };
+  const consoleEl = document.getElementById('staticObjConsole');
+  renderObjVis('staticSrcVis', src);
+
+  document.querySelectorAll('#staticObjControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#staticObjControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const mode = btn.dataset.v;
+      let result, expr;
+      switch(mode) {
+        case 'keys':
+          result = Object.keys(src);
+          expr = 'Object.keys(src)';
+          break;
+        case 'values':
+          result = Object.values(src);
+          expr = 'Object.values(src)';
+          break;
+        case 'entries':
+          result = Object.entries(src);
+          expr = 'Object.entries(src)';
+          break;
+        case 'assign':
+          const target = {};
+          Object.assign(target, src);
+          result = target;
+          expr = 'Object.assign({}, src)';
+          break;
+        case 'freeze':
+          const frozen = Object.freeze({ ...src });
+          let couldAdd = true;
+          try { frozen.newProp = 'test'; } catch(e) { couldAdd = false; }
+          result = frozen;
+          expr = 'Object.freeze(src) &nbsp; // try add → ' + (couldAdd ? 'succeeded' : 'FAILED (silently in sloppy mode)');
+          break;
+      }
+      consoleEl.innerHTML = '<div class="prompt">&gt; ' + expr + '</div><div class="result">&lArr; ' + (Array.isArray(result) ? '[' + result.map(x => Array.isArray(x) ? '[' + x.join(', ') + ']' : (typeof x === 'string' ? '"' + x + '"' : x)).join(', ') + ']' : '{...}') + ' <span style="color:#6c7086">(' + (Array.isArray(result) ? result.length + ' items' : Object.keys(result).length + ' keys') + ')</span></div>';
+    });
+  });
+  document.querySelector('#staticObjControls .active').click();
+})();
+
+// ===== 5. Destructuring =====
+(function(){
+  const user = { name: 'Alice', age: 30, isAdmin: true, address: { city: 'NYC', zip: 10001 } };
+  const mode = document.getElementById('destrMode');
+  const runBtn = document.getElementById('destrRun');
+  const consoleEl = document.getElementById('destrConsole');
+
+  function updateDestr() {
+    const m = mode.value;
+    let result, expr;
+    switch(m) {
+      case 'basic':
+        const { name, age } = user;
+        result = { name, age };
+        expr = 'const { name, age } = user;';
+        break;
+      case 'rename':
+        const { name: userName } = user;
+        result = { userName };
+        expr = 'const { name: userName } = user;';
+        break;
+      case 'default':
+        const { email = 'N/A' } = user;
+        result = { email };
+        expr = 'const { email = "N/A" } = user;';
+        break;
+      case 'rest':
+        const { name: n, ...rest } = user;
+        result = rest;
+        expr = 'const { name, ...rest } = user;';
+        break;
+      case 'nested':
+        const { address: { city } } = user;
+        result = { city };
+        expr = 'const { address: { city } } = user;';
+        break;
+    }
+    consoleEl.innerHTML = '<div class="prompt">&gt; ' + expr + '</div><div class="result">&lArr; ' + JSON.stringify(result) + '</div>';
+  }
+
+  runBtn.addEventListener('click', updateDestr);
+  updateDestr();
+})();
+
+// ===== 6. Prototype Chain =====
+(function(){
+  const parent = { greet() { return 'Hello!'; }, age: 40 };
+  const obj = Object.create(parent);
+  obj.name = 'Alice';
+
+  const vis = document.getElementById('chainVis');
+  const prop = document.getElementById('chainProp');
+  const runBtn = document.getElementById('chainRun');
+  const consoleEl = document.getElementById('chainConsole');
+
+  function buildChain(foundAt) {
+    const chain = [
+      { name: 'obj (own props)', props: ['name'], klass: foundAt === 'own' ? 'found' : '' },
+      { name: 'parent ([[Prototype]])', props: ['age', 'greet'], klass: foundAt === 'proto' ? 'found' : '' },
+      { name: 'Object.prototype', props: ['toString', 'hasOwnProperty', 'valueOf'], klass: foundAt === 'objproto' ? 'found' : '' },
+      { name: 'null', props: [], klass: foundAt === 'null' ? 'not-found' : '' },
+    ];
+    vis.innerHTML = '';
+    chain.forEach((link, i) => {
+      const el = document.createElement('span');
+      el.className = 'chain-link ' + link.klass;
+      el.textContent = link.name + (link.props.length ? ' {' + link.props.join(', ') + '}' : '');
+      vis.appendChild(el);
+      if (i < chain.length - 1) {
+        const arrow = document.createElement('span');
+        arrow.className = 'chain-arrow';
+        arrow.textContent = '\u2192';
+        vis.appendChild(arrow);
+      }
+    });
+  }
+
+  function lookup() {
+    const key = prop.value;
+    let found = false;
+    let foundAt = 'null';
+    let value;
+
+    if (key in obj) {
+      value = obj[key];
+      if (obj.hasOwnProperty(key)) foundAt = 'own';
+      else if (parent.hasOwnProperty(key)) foundAt = 'proto';
+      else foundAt = 'objproto';
+      found = true;
+    }
+
+    buildChain(foundAt);
+    if (found) {
+      consoleEl.innerHTML = '<div class="prompt">&gt; obj.' + key + '</div><div class="result">&lArr; <span class="' + (typeof value === 'string' ? 'str' : typeof value === 'number' ? 'num' : typeof value === 'boolean' ? 'bool' : '') + '">' + JSON.stringify(value) + '</span> <span style="color:#6c7086">(found at: ' + foundAt + ')</span></div>';
+    } else {
+      consoleEl.innerHTML = '<div class="prompt">&gt; obj.' + key + '</div><div class="result">&lArr; <span class="undef">undefined</span> <span style="color:#6c7086">(not found — walked entire chain to null)</span></div>';
+    }
+  }
+
+  runBtn.addEventListener('click', lookup);
+  buildChain('own');
+  lookup();
+})();
+
+// ===== 7. this =====
+(function(){
+  const consoleEl = document.getElementById('thisConsole');
+
+  document.querySelectorAll('#thisControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#thisControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const mode = btn.dataset.v;
+      let output;
+      switch(mode) {
+        case 'method':
+          const obj = {
+            name: 'Alice',
+            greet() { return this.name; }
+          };
+          output = '<div class="prompt">&gt; const obj = { name: "Alice", greet() { return this.name; } };</div>';
+          output += '<div class="prompt">&gt; obj.greet()</div>';
+          output += '<div class="result">&lArr; "' + obj.greet() + '" <span style="color:#6c7086">(this = obj)</span></div>';
+          break;
+        case 'function':
+          function showThis() { return this; }
+          const g = typeof window !== 'undefined' ? 'window' : 'global';
+          output = '<div class="prompt">&gt; function showThis() { return this; }</div>';
+          output += '<div class="prompt">&gt; showThis()</div>';
+          output += '<div class="result">&lArr; ' + g + ' <span style="color:#6c7086">(this = ' + g + ' / undefined in strict)</span></div>';
+          break;
+        case 'arrow':
+          const arrowObj = {
+            name: 'Alice',
+            greet: () => this
+          };
+          output = '<div class="prompt">&gt; const obj = { name: "Alice", greet: () => this };</div>';
+          output += '<div class="prompt">&gt; obj.greet()</div>';
+          output += '<div class="result">&lArr; ' + (typeof window !== 'undefined' ? 'window' : 'global') + ' <span style="color:#6c7086">(arrow fn — this is lexical, not from obj)</span></div>';
+          break;
+        case 'event':
+          output = '<div class="prompt">&gt; button.addEventListener("click", function() {</div>';
+          output += '<div class="prompt">&gt; &nbsp; console.log(this); // the button element</div>';
+          output += '<div class="prompt">&gt; })</div>';
+          output += '<div class="result">&lArr; this = the element that received the event</div>';
+          break;
+      }
+      consoleEl.innerHTML = output;
+    });
+  });
+  document.querySelector('#thisControls .active').click();
+})();
+
+// ===== 8. Getters & Setters =====
+(function(){
+  const user = {
+    firstName: 'Alice',
+    lastName: 'Smith',
+    get fullName() { return this.firstName + ' ' + this.lastName; },
+    set fullName(val) { [this.firstName, this.lastName] = val.split(' '); }
+  };
+  const consoleEl = document.getElementById('getSetConsole');
+  renderObjVis('getSetVis', { firstName: user.firstName, lastName: user.lastName, '(get) fullName': user.fullName });
+
+  consoleEl.innerHTML = '<div class="prompt">&gt; user.fullName</div><div class="result">&lArr; "' + user.fullName + '"</div>';
+  consoleEl.innerHTML += '<div class="prompt" style="margin-top:6px">&gt; user.fullName = "Bob Jones"</div>';
+  user.fullName = 'Bob Jones';
+  consoleEl.innerHTML += '<div class="result">&lArr; Setter ran → firstName: "' + user.firstName + '", lastName: "' + user.lastName + '"</div>';
+  renderObjVis('getSetVis', { firstName: user.firstName, lastName: user.lastName, '(get) fullName': user.fullName });
+})();
+
+// ===== 9. Interactive Playground =====
+(function(){
+  const objInput = document.getElementById('pgObj');
+  const op = document.getElementById('pgOp');
+  const extra = document.getElementById('pgExtra');
+  const extra2 = document.getElementById('pgExtra2');
+  const extraLabel = document.getElementById('pgExtraLabel');
+  const extraLabel2 = document.getElementById('pgExtraLabel2');
+  const runBtn = document.getElementById('pgRun');
+  const vis = document.getElementById('pgObjVis');
+  const consoleEl = document.getElementById('pgConsole');
+
+  function updateExtras() {
+    const o = op.value;
+    const show = o === 'addProp' || o === 'deleteProp';
+    extra.style.display = show ? '' : 'none';
+    extraLabel.style.display = show ? '' : 'none';
+    extra2.style.display = o === 'addProp' ? '' : 'none';
+    extraLabel2.style.display = o === 'addProp' ? '' : 'none';
+    if (o === 'deleteProp') extra.placeholder = 'key to delete';
+  }
+
+  function update() {
+    let obj;
+    try { obj = JSON.parse(objInput.value); }
+    catch(e) { obj = { error: 'Invalid JSON' }; }
+
+    const o = op.value;
+    const e1 = extra.value;
+    const e2 = extra2.value;
+    let result, expr;
+
+    try {
+      switch(o) {
+        case 'keys':
+          result = Object.keys(obj);
+          expr = 'Object.keys(obj)';
+          renderObjVis(vis, {});
+          break;
+        case 'values':
+          result = Object.values(obj);
+          expr = 'Object.values(obj)';
+          renderObjVis(vis, {});
+          break;
+        case 'entries':
+          result = Object.entries(obj);
+          expr = 'Object.entries(obj)';
+          renderObjVis(vis, {});
+          break;
+        case 'has':
+          result = e1 in obj;
+          expr = '"' + e1 + '" in obj';
+          renderObjVis(vis, obj);
+          break;
+        case 'addProp':
+          let parsedKey, parsedVal;
+          try { parsedKey = JSON.parse(e1); } catch(e) { parsedKey = e1; }
+          try { parsedVal = JSON.parse(e2); } catch(e) { parsedVal = e2; }
+          obj[parsedKey] = parsedVal;
+          result = obj;
+          expr = 'obj[' + JSON.stringify(parsedKey) + '] = ' + JSON.stringify(parsedVal);
+          renderObjVis(vis, obj);
+          break;
+        case 'deleteProp':
+          let delKey;
+          try { delKey = JSON.parse(e1); } catch(e) { delKey = e1; }
+          delete obj[delKey];
+          result = obj;
+          expr = 'delete obj[' + JSON.stringify(delKey) + ']';
+          renderObjVis(vis, obj);
+          break;
+        case 'freeze':
+          const frozen = Object.freeze({...obj});
+          try { frozen.newProp = 'x'; } catch(e) {}
+          result = frozen;
+          expr = 'Object.freeze(obj) &nbsp; // add = silently ignored';
+          renderObjVis(vis, frozen);
+          break;
+        case 'spread':
+          result = { ...obj, newProp: 'x' };
+          expr = '{ ...obj, newProp: "x" }';
+          renderObjVis(vis, result);
+          break;
+        default:
+          result = obj;
+      }
+
+      if (o === 'keys' || o === 'values' || o === 'entries') {
+        consoleEl.innerHTML = '<div class="prompt">&gt; ' + expr + '</div><div class="result">&lArr; ' + JSON.stringify(result) + ' <span style="color:#6c7086">(' + result.length + ' items)</span></div>';
+      } else if (o === 'has') {
+        consoleEl.innerHTML = '<div class="prompt">&gt; ' + expr + '</div><div class="result">&lArr; <span class="bool">' + result + '</span></div>';
+      } else {
+        consoleEl.innerHTML = '<div class="prompt">&gt; ' + expr + '</div><div class="result">&lArr; ' + JSON.stringify(result) + '</div>';
+      }
+    } catch(err) {
+      consoleEl.innerHTML = '<div class="error">⚠ Error: ' + err.message + '</div>';
+    }
+  }
+
+  op.addEventListener('change', updateExtras);
+  runBtn.addEventListener('click', update);
+  updateExtras();
+  update();
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Virtual DOM - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:12px 14px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #89b4fa, #cba6f7, #f9e2af); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .vnode {
+      background: #181825; border: 1px solid #313244; border-radius: 10px; padding: 10px 12px; margin-bottom: 6px;
+      display: flex; align-items: center; gap: 8px; font-family: monospace; font-size: 12px; transition: all 0.3s;
+    }
+    .vnode .icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; flex-shrink: 0; }
+    .vnode .tag-name { color: #89b4fa; }
+    .vnode .props { color: #f9e2af; }
+    .vnode .children { color: #a6adc8; }
+
+    .vnode.changed { border-color: #f38ba8; background: #f38ba810; }
+    .vnode.changed .icon { background: #f38ba8; color: #1e1e2e; }
+    .vnode.new { border-color: #a6e3a1; background: #a6e3a110; }
+    .vnode.new .icon { background: #a6e3a1; color: #1e1e2e; }
+    .vnode.same { border-color: #585b70; }
+    .vnode.same .icon { background: #585b70; color: #cdd6f4; }
+
+    .arrow-v { display: flex; align-items: center; justify-content: center; padding: 4px 0; color: #585b70; font-size: 18px; }
+    .arrow-v.diff { color: #f38ba8; }
+    .arrow-v.same { color: #a6e3a1; }
+
+    .tree-line { border-left: 2px solid #313244; padding-left: 16px; margin-left: 8px; }
+
+    .step-dot { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 6px; }
+    .step-dot.r { background: #f38ba8; }
+    .step-dot.g { background: #a6e3a1; }
+    .step-dot.b { background: #89b4fa; }
+
+    pre { white-space: pre-wrap; word-break: break-word; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      React Internals
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">Virtual DOM</span>
+    </h1>
+    <p class="text-[#a6adc8]">The <span class="text-[#89b4fa]">virtual representation</span> of the UI. React compares old vs new to update only what changed.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">Virtual DOM Visualizer</span>
+            <span id="stepLabel" class="text-xs text-[#6c7086]">Step: 1</span>
+          </div>
+          <div class="body-scroll" id="phoneBody">
+            <!-- What user sees -->
+            <div class="bg-[#181825] rounded-xl border border-[#313244] p-4 mb-3">
+              <div class="text-xs text-[#6c7086] mb-2">🖥️ What the user sees (Real DOM)</div>
+              <div id="realDom" class="text-sm space-y-2">
+                <div class="flex items-center gap-2 bg-[#11111b] rounded-lg p-3 border border-[#313244]">
+                  <div class="w-8 h-8 rounded-full bg-[#89b4fa] flex items-center justify-center text-sm font-bold text-[#1e1e2e]">A</div>
+                  <div><div class="font-medium">Alice</div><div class="text-xs text-[#6c7086]">Online</div></div>
+                  <span class="ml-auto w-2 h-2 rounded-full bg-[#a6e3a1]"></span>
+                </div>
+                <div class="flex items-center gap-2 bg-[#11111b] rounded-lg p-3 border border-[#313244]">
+                  <div class="w-8 h-8 rounded-full bg-[#f9e2af] flex items-center justify-center text-sm font-bold text-[#1e1e2e]">B</div>
+                  <div><div class="font-medium">Bob</div><div class="text-xs text-[#6c7086]">Away</div></div>
+                  <span class="ml-auto w-2 h-2 rounded-full bg-[#f9e2af]"></span>
+                </div>
+              </div>
+            </div>
+
+            <!-- VDOM tree -->
+            <div class="bg-[#181825] rounded-xl border border-[#313244] p-4 mb-3">
+              <div class="text-xs text-[#6c7086] mb-2">🧬 Virtual DOM Tree</div>
+              <div id="vdomTree">
+                <div class="vnode same"><div class="icon bg-[#585b70]">A</div><div><span class="tag-name">View</span> <span class="props">{style}</span> <span class="children">→ View, Text, ...</span></div></div>
+                <div class="tree-line">
+                  <div class="vnode same"><div class="icon bg-[#585b70]">T</div><div><span class="tag-name">Text</span> <span class="props">{color: '#fff'}</span> <span class="children">"Contacts (2)"</span></div></div>
+                  <div class="vnode same" id="vnode0"><div class="icon bg-[#585b70]">👤</div><div><span class="tag-name">UserCard</span> <span class="props">{name: "Alice", status: "Online"}</span></div></div>
+                  <div class="vnode same" id="vnode1"><div class="icon bg-[#585b70]">👤</div><div><span class="tag-name">UserCard</span> <span class="props">{name: "Bob", status: "Away"}</span></div></div>
+                </div>
+              </div>
+            </div>
+
+            <!-- Diff result -->
+            <div class="bg-[#181825] rounded-xl border border-[#313244] p-4">
+              <div class="text-xs text-[#6c7086] mb-2">⚡ Diffing Result</div>
+              <div id="diffResult" class="text-xs text-[#a6adc8]">No changes yet. Click a button below.</div>
+            </div>
+
+            <!-- Controls -->
+            <div class="flex gap-2 mt-2">
+              <button id="changeStatusBtn" class="flex-1 bg-[#313244] hover:bg-[#45475a] border border-[#585b70] rounded-xl py-2.5 text-sm transition-all"><i class="fas fa-pen mr-1"></i> Change Status</button>
+              <button id="addUserBtn" class="flex-1 bg-[#313244] hover:bg-[#45475a] border border-[#585b70] rounded-xl py-2.5 text-sm transition-all"><i class="fas fa-plus mr-1"></i> Add User</button>
+              <button id="resetBtn" class="flex-1 bg-[#313244] hover:bg-[#45475a] border border-[#585b70] rounded-xl py-2.5 text-sm transition-all"><i class="fas fa-undo mr-1"></i> Reset</button>
+            </div>
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2 flex items-center gap-2"><i class="fas fa-cogs text-[#89b4fa]"></i> How it works</h3>
+          <div class="text-xs text-[#a6adc8] space-y-2">
+            <p><span class="step-dot r"></span><strong class="text-[#f38ba8]">Change happens</strong> — state updates in React</p>
+            <p><span class="step-dot b"></span><strong class="text-[#89b4fa]">New VDOM tree</strong> — React creates a new virtual tree in memory</p>
+            <p><span class="step-dot g"></span><strong class="text-[#a6e3a1]">Diffing</strong> — React compares old vs new tree (not the real DOM)</p>
+            <p><span class="step-dot r"></span><strong class="text-[#f38ba8]">Minimal update</strong> — Only the changed nodes touch the real DOM</p>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2 flex items-center gap-2"><i class="fas fa-code text-[#cba6f7]"></i> What is VDOM?</h3>
+          <div class="bg-[#11111b] rounded-lg p-3 text-xs font-mono leading-relaxed">
+<span class="text-[#6c7086]">// Real DOM — slow to touch</span>
+document.getElementById(<span class="text-[#a6e3a1]">'root'</span>).innerHTML = ...;
+
+<span class="text-[#6c7086]">// Virtual DOM — plain JS object (fast)</span>
+<span class="text-[#cba6f7]">const</span> vdom = {
+  type: <span class="text-[#a6e3a1]">'View'</span>,
+  props: { style: {} },
+  children: [
+    { type: <span class="text-[#a6e3a1]">'Text'</span>, props: {}, children: <span class="text-[#a6e3a1]">'Hello'</span> }
+  ]
+};
+
+<span class="text-[#6c7086]">// React creates VDOM → diffs it → patches real DOM</span>
+<span class="text-[#6c7086]">// Only the minimum necessary DOM operations</span></pre>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Why VDOM?</span> Touching the real DOM is slow (reflow, repaint). VDOM lets React batch changes and update the DOM in the most efficient way.
+        </div>
+      </div>
+    </section>
+
+    <!-- === THE 3 STEPS === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-layer-group text-[#f9e2af]"></i> The 3-Step Process
+      </h2>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-7 h-7 rounded-lg bg-[#89b4fa] text-[#1e1e2e] flex items-center justify-center font-bold text-sm">1</span>
+            <span class="font-semibold text-sm">Render</span>
+          </div>
+          <p class="text-xs text-[#a6adc8]">React calls your component function. It returns a Virtual DOM tree (JS object). No real DOM touched yet.</p>
+          <pre class="text-xs font-mono mt-2 bg-[#11111b] p-2 rounded-lg leading-relaxed">
+<span class="text-[#cba6f7">function</span> App() {
+  <span class="text-[#cba6f7">return</span> <span class="text-[#cdd6f4]">&lt;View&gt;...&lt;/View&gt;</span>;
+}
+<span class="text-[#6c7086]">// VDOM: { type: 'View', props: {}, children: [...] }</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-7 h-7 rounded-lg bg-[#f9e2af] text-[#1e1e2e] flex items-center justify-center font-bold text-sm">2</span>
+            <span class="font-semibold text-sm">Diff / Reconciliation</span>
+          </div>
+          <p class="text-xs text-[#a6adc8]">React compares the new VDOM tree with the previous one. It walks both trees and finds differences (additions, removals, changes).</p>
+          <pre class="text-xs font-mono mt-2 bg-[#11111b] p-2 rounded-lg leading-relaxed">
+<span class="text-[#6c7086]">// Old: &lt;Text&gt;Bob&lt;/Text&gt;</span>
+<span class="text-[#6c7086]">// New: &lt;Text&gt;Bob (away)&lt;/Text&gt;</span>
+<span class="text-[#6c7086]">// Diff: textContent changed!</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-7 h-7 rounded-lg bg-[#a6e3a1] text-[#1e1e2e] flex items-center justify-center font-bold text-sm">3</span>
+            <span class="font-semibold text-sm">Commit / Patch</span>
+          </div>
+          <p class="text-xs text-[#a6adc8]">React updates the real DOM — but <strong>only</strong> the nodes that changed. The rest stays untouched. This is called <span class="text-[#89b4fa]">batching</span>.</p>
+          <pre class="text-xs font-mono mt-2 bg-[#11111b] p-2 rounded-lg leading-relaxed">
+<span class="text-[#6c7086]">// React does this efficiently:</span>
+node.textContent = <span class="text-[#a6e3a1]">'Bob (away)'</span>;
+<span class="text-[#6c7086]">// Only 1 DOM operation instead of rebuilding everything</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- === CODE SNIPPET === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#f9e2af]"></i> Minimal Example
+      </h2>
+      <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+        <div class="px-5 py-2.5 bg-[#181825] border-b border-[#313244] flex items-center gap-2 text-sm text-[#6c7086]">
+          <i class="fas fa-file-alt"></i> App.tsx
+        </div>
+        <pre class="p-5 text-sm font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#cba6f7">function</span> <span class="text-[#89b4fa]">App</span>() {
+  <span class="text-[#cba6f7">const</span> [name, setName] = useState(<span class="text-[#a6e3a1]">'Alice'</span>);
+
+  <span class="text-[#6c7086]">// 1. You call setName('Bob')</span>
+  <span class="text-[#6c7086]">// 2. React creates a new VDOM tree in memory:</span>
+  <span class="text-[#6c7086]">//    { type: 'Text', props: {}, children: 'Bob' }</span>
+  <span class="text-[#6c7086]">// 3. React diffs old VDOM vs new VDOM</span>
+  <span class="text-[#6c7086]">//    Old: 'Alice'  →  New: 'Bob'  →  change detected</span>
+  <span class="text-[#6c7086]">// 4. React patches the real DOM (only this text node)</span>
+
+  <span class="text-[#cba6f7">return</span> <span class="text-[#cdd6f4]">&lt;Text&gt;Hello {name}&lt;/Text&gt;;</span>
+}</pre>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://react.dev/learn/render-and-commit" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> React Docs: Render & Commit</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      let users = [
+        { name: 'Alice', status: 'Online', color: '#89b4fa' },
+        { name: 'Bob', status: 'Away', color: '#f9e2af' }
+      ];
+      let stepCount = 0;
+
+      const realDom = document.getElementById('realDom');
+      const vdomTree = document.getElementById('vdomTree');
+      const diffResult = document.getElementById('diffResult');
+      const stepLabel = document.getElementById('stepLabel');
+
+      function renderUI(changedIndexes = [], newUser = false) {
+        // Real DOM
+        realDom.innerHTML = users.map((u, i) => {
+          const isChanged = changedIndexes.includes(i);
+          const bg = isChanged ? 'rgba(243,139,168,0.15)' : '#11111b';
+          const border = isChanged ? '#f38ba8' : '#313244';
+          return `
+            <div class="flex items-center gap-2 rounded-lg p-3 border" style="background:${bg};border-color:${border};transition:all 0.3s">
+              <div class="w-8 h-8 rounded-full flex items-center justify-center text-sm font-bold text-[#1e1e2e]" style="background:${u.color}">${u.name[0]}</div>
+              <div><div class="font-medium">${u.name}</div><div class="text-xs text-[#6c7086]">${u.status}</div></div>
+              <span class="ml-auto w-2 h-2 rounded-full" style="background:${u.status === 'Online' ? '#a6e3a1' : '#f9e2af'}"></span>
+            </div>
+          `;
+        }).join('');
+
+        // VDOM tree
+        const vnodes = users.map((u, i) => {
+          const isChanged = changedIndexes.includes(i);
+          const cls = isChanged ? 'changed' : 'same';
+          const iconBg = isChanged ? '#f38ba8' : '#585b70';
+          return `<div class="vnode ${cls}"><div class="icon" style="background:${iconBg}">👤</div><div><span class="tag-name">UserCard</span> <span class="props">{name: "${u.name}", status: "${u.status}"}</span></div></div>`;
+        }).join('');
+
+        vdomTree.innerHTML = `
+          <div class="vnode same"><div class="icon" style="background:#585b70">A</div><div><span class="tag-name">View</span> <span class="props">{style}</span> <span class="children">→ ${users.length} children</span></div></div>
+          <div class="tree-line">
+            <div class="vnode same"><div class="icon" style="background:#585b70">T</div><div><span class="tag-name">Text</span> <span class="props">{color: '#fff'}</span> <span class="children">"Contacts (${users.length})"</span></div></div>
+            ${vnodes}
+            ${newUser ? '<div class="vnode new"><div class="icon" style="background:#a6e3a1">➕</div><div><span class="tag-name">UserCard</span> <span class="props">{name: "Charlie", status: "Online"}</span> <span class="children">← NEW node</span></div></div>' : ''}
+          </div>
+        `;
+      }
+
+      function setDiff(text, type = 'default') {
+        diffResult.innerHTML = text;
+        diffResult.className = 'text-xs ' + (type === 'change' ? 'text-[#f38ba8]' : type === 'add' ? 'text-[#a6e3a1]' : 'text-[#a6adc8]');
+      }
+
+      document.getElementById('changeStatusBtn').addEventListener('click', () => {
+        stepCount++;
+        stepLabel.textContent = 'Step: ' + stepCount;
+        users[0].status = users[0].status === 'Online' ? 'Away' : 'Online';
+        renderUI([0], false);
+        setDiff(
+          '<span class="step-dot b"></span> Old VDOM vs New VDOM compared<br>' +
+          '<span class="step-dot r"></span> <strong>Changed:</strong> UserCard Alice — status "' + users[0].status + '"<br>' +
+          '<span class="step-dot g"></span> <strong>Patched:</strong> Only Alice\'s status dot + text in real DOM',
+          'change'
+        );
+      });
+
+      document.getElementById('addUserBtn').addEventListener('click', () => {
+        stepCount++;
+        stepLabel.textContent = 'Step: ' + stepCount;
+        users.push({ name: 'Charlie', status: 'Online', color: '#a6e3a1' });
+        renderUI([], true);
+        setDiff(
+          '<span class="step-dot b"></span> Old VDOM vs New VDOM compared<br>' +
+          '<span class="step-dot g"></span> <strong>Added:</strong> UserCard Charlie — NEW vnode inserted<br>' +
+          '<span class="step-dot r"></span> <strong>Patched:</strong> Real DOM gets 1 new <UserCard> element',
+          'add'
+        );
+      });
+
+      document.getElementById('resetBtn').addEventListener('click', () => {
+        stepCount = 0;
+        stepLabel.textContent = 'Step: ' + stepCount;
+        users = [
+          { name: 'Alice', status: 'Online', color: '#89b4fa' },
+          { name: 'Bob', status: 'Away', color: '#f9e2af' }
+        ];
+        renderUI([], false);
+        setDiff('No changes. All VDOM nodes match the real DOM.');
+      });
+
+      // Init
+      renderUI([], false);
+      setDiff('No changes yet. Click a button above.');
+    })();
+  </script>
+</body>
+</html>

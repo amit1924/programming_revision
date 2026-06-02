@@ -1,0 +1,246 @@
+- generic [ref=e2]:
+  - heading "Node.js Event Loop" [level=1] [ref=e3]
+  - paragraph [ref=e4]: The 6 phases, process.nextTick, Poll, setImmediate — deep visual dive into libuv
+  - heading "1. The 6 Phases libuv · one iteration" [level=2] [ref=e5]:
+    - generic [ref=e6]: 1. The 6 Phases
+    - generic [ref=e7]: libuv · one iteration
+  - paragraph [ref=e8]:
+    - text: Node.js uses
+    - strong [ref=e9]: libuv
+    - text: "'s event loop with six distinct phases. Each phase has a"
+    - strong [ref=e10]: FIFO queue
+    - text: of callbacks. The loop enters each phase, executes all callbacks in that queue (up to a limit), then moves to the next.
+  - generic [ref=e11]:
+    - generic [ref=e12]: ⏰ TimerssetTimeout/setInterval
+    - generic [ref=e13]: →
+    - generic [ref=e14]: 🔄 PendingI/O deferred
+    - generic [ref=e15]: →
+    - generic [ref=e16]: ⚙️ Idle/Prepareinternal
+    - generic [ref=e17]: →
+    - generic [ref=e18]: 📡 PollI/O events
+    - generic [ref=e19]: →
+    - generic [ref=e20]: ✅ ChecksetImmediate
+    - generic [ref=e21]: →
+    - generic [ref=e22]: 🔒 Closeclose events
+    - generic [ref=e23]: →
+  - paragraph [ref=e24]:
+    - text: Between
+    - strong [ref=e25]: every
+    - text: "phase: drain entire"
+    - code [ref=e26]: process.nextTick
+    - text: queue, then drain entire microtask queue (Promise.then).
+  - generic [ref=e27]:
+    - generic [ref=e28]: 🔄 Phase walkthrough — click to step through one iteration
+    - generic [ref=e29]:
+      - button "⏭️ Step" [ref=e30] [cursor=pointer]
+      - button "▶️ Auto" [ref=e31] [cursor=pointer]
+      - button "↺ Reset" [ref=e32] [cursor=pointer]
+  - heading "2. process.nextTick highest priority · deep dive" [level=2] [ref=e34]:
+    - generic [ref=e35]: 2. process.nextTick
+    - generic [ref=e36]: highest priority · deep dive
+  - paragraph [ref=e37]:
+    - code [ref=e38]: process.nextTick
+    - text: is
+    - strong [ref=e39]: not
+    - text: part of the event loop phases. It has its own queue that is drained
+    - strong [ref=e40]: after every single phase
+    - text: — before moving to the next phase, and before microtasks.
+  - generic [ref=e41]:
+    - generic [ref=e42]:
+      - generic [ref=e43]: process.nextTick(fn)
+      - generic [ref=e44]:
+        - text: Schedules
+        - code [ref=e45]: fn
+        - text: to run
+        - strong [ref=e46]: after the current phase
+        - text: ", before any other phase. Higher priority than"
+        - strong [ref=e47]: any
+        - text: other callback.
+    - generic [ref=e48]:
+      - generic [ref=e49]: ⚠️ Starvation risk
+      - generic [ref=e50]:
+        - text: If
+        - code [ref=e51]: nextTick
+        - text: recursively queues more
+        - code [ref=e52]: nextTick
+        - text: callbacks, the event loop will
+        - strong [ref=e53]: never
+        - text: reach the I/O, timers, or check phases. This is why Node docs warn about it.
+    - generic [ref=e54]:
+      - generic [ref=e55]: vs Promise microtasks
+      - generic [ref=e56]:
+        - text: In Node.js,
+        - code [ref=e57]: process.nextTick
+        - text: queue is drained
+        - strong [ref=e58]: before
+        - text: the microtask queue. So
+        - code [ref=e59]: nextTick
+        - text: runs before
+        - code [ref=e60]: Promise.then
+        - text: on the same phase boundary.
+    - generic [ref=e61]:
+      - generic [ref=e62]: vs setImmediate
+      - generic [ref=e63]:
+        - code [ref=e64]: nextTick
+        - text: runs between phases.
+        - code [ref=e65]: setImmediate
+        - text: runs in the Check phase (phase 4). nextTick is always first.
+  - generic [ref=e66]:
+    - generic [ref=e67]: ⚡ process.nextTick ordering — see it beat Promise and setTimeout
+    - generic [ref=e68]:
+      - button "▶️ Run comparison" [ref=e69] [cursor=pointer]
+      - button "💥 Trigger starvation" [ref=e70] [cursor=pointer]
+      - button "🧹 Clear" [ref=e71] [cursor=pointer]
+    - generic [ref=e72]:
+      - generic [ref=e74]: ⚡ nextTick queue
+      - generic [ref=e77]: 🔬 Microtask queue (Promise)
+      - generic [ref=e80]: 📤 Macrotask queue (setTimeout)
+  - generic [ref=e83]:
+    - strong [ref=e84]: "Node.js docs explicitly warn:"
+    - text: "\"process.nextTick is not a simple alias for setTimeout(fn, 0). It is far more efficient, but also far more aggressive.\" Use"
+    - code [ref=e85]: setImmediate
+    - text: for deferring to the next iteration; use
+    - code [ref=e86]: nextTick
+    - text: only when you need to ensure code runs
+    - strong [ref=e87]: before
+    - text: the next phase (e.g., error handling, cleanup).
+  - heading "3. Poll Phase I/O events · blocking · watchers" [level=2] [ref=e88]:
+    - generic [ref=e89]: 3. Poll Phase
+    - generic [ref=e90]: I/O events · blocking · watchers
+  - paragraph [ref=e91]:
+    - text: The
+    - strong [ref=e92]: Poll
+    - text: "phase is the most important: it retrieves new I/O events, executes their callbacks, and decides what to do next. libuv uses platform-specific polling mechanisms (epoll on Linux, kqueue on macOS, IOCP on Windows)."
+  - generic [ref=e93]:
+    - generic [ref=e94]:
+      - generic [ref=e95]: "📥 Poll step 1: Calculate timeout"
+      - generic [ref=e96]:
+        - text: Looks at the earliest timer. If timers are pending, poll timeout = 0 (don't block). If
+        - code [ref=e97]: setImmediate
+        - text: is pending, timeout = 0. Otherwise, no pending timers or check → block indefinitely.
+    - generic [ref=e98]:
+      - generic [ref=e99]: "📡 Poll step 2: Watch for I/O"
+      - generic [ref=e100]: libuv blocks waiting for I/O events (socket data, file reads, etc.) up to the calculated timeout. New events are queued as callbacks in the poll queue.
+    - generic [ref=e101]:
+      - generic [ref=e102]: "⚡ Poll step 3: Execute callbacks"
+      - generic [ref=e103]:
+        - text: Runs all I/O callbacks in the poll queue (up to a system limit). After each callback, the
+        - code [ref=e104]: process.nextTick
+        - text: + microtask queues are drained.
+    - generic [ref=e105]:
+      - generic [ref=e106]: "🔀 Poll step 4: Check for next phase"
+      - generic [ref=e107]:
+        - text: After the poll queue is empty (or hits the limit), if
+        - code [ref=e108]: setImmediate
+        - text: callbacks are pending → proceeds to Check phase. If timers are due → loops back to Timers.
+  - code [ref=e110]: "// Pseudocode: Poll phase decision if (pendingTimers.length > 0 || pendingImmediates.length > 0) { timeout = 0; // don't block, check immediately } else if (no I/O watchers) { timeout = 0; // nothing to wait for } else { timeout = nextTimer - now; // block until next timer } events = poll(timeout); // blocking call (epoll/kqueue/IOCP) runCallbacks(events); // execute I/O callbacks // After each callback: drain nextTick, drain microtasks"
+  - generic [ref=e111]:
+    - generic [ref=e112]: 📡 Poll phase simulator — see how timeout is calculated
+    - generic [ref=e113]:
+      - button "⏰ With pending timer" [ref=e114] [cursor=pointer]
+      - button "✅ With pending setImmediate" [ref=e115] [cursor=pointer]
+      - button "📡 Only I/O (block)" [ref=e116] [cursor=pointer]
+      - button "💤 Nothing pending (idle)" [ref=e117] [cursor=pointer]
+    - generic [ref=e119]:
+      - generic [ref=e120]: 0ms (no block)
+      - generic [ref=e121]: "Poll timeout: ?ms"
+  - heading "4. setImmediate vs setTimeout the classic Node.js question" [level=2] [ref=e123]:
+    - generic [ref=e124]: 4. setImmediate vs setTimeout
+    - generic [ref=e125]: the classic Node.js question
+  - generic [ref=e126]:
+    - generic [ref=e127]:
+      - generic [ref=e128]: Outside I/O (main module)
+      - generic [ref=e129]:
+        - code [ref=e130]: setTimeout(fn, 0)
+        - text: and
+        - code [ref=e131]: setImmediate(fn)
+        - text: have
+        - strong [ref=e132]: unpredictable
+        - text: order. Timer phase runs first, but the 0ms timer may not have expired yet depending on system load.
+        - strong [ref=e133]: Neither is guaranteed to win.
+    - generic [ref=e134]:
+      - generic [ref=e135]: Inside I/O callback (e.g., fs.readFile)
+      - generic [ref=e136]:
+        - code [ref=e137]: setImmediate(fn)
+        - strong [ref=e138]: always
+        - text: wins. The Poll phase (phase 3) queues the I/O callback. After it runs, the Check phase (phase 4) comes next —
+        - code [ref=e139]: setImmediate
+        - text: fires before the next Timer phase.
+  - code [ref=e141]: "// In I/O callback — setImmediate ALWAYS wins fs.readFile('file.txt', () => { setTimeout(() => console.log('timer'), 0); // 2nd setImmediate(() => console.log('immediate')); // 1st ✅ });"
+  - heading "5. nextTick vs setImmediate vs setTimeout — Comparison" [level=2] [ref=e142]:
+    - generic [ref=e143]: 5. nextTick vs setImmediate vs setTimeout — Comparison
+  - table [ref=e144]:
+    - rowgroup [ref=e145]:
+      - row "Feature process.nextTick setImmediate setTimeout(fn, 0)" [ref=e146]:
+        - columnheader "Feature" [ref=e147]
+        - columnheader "process.nextTick" [ref=e148]
+        - columnheader "setImmediate" [ref=e149]
+        - columnheader "setTimeout(fn, 0)" [ref=e150]
+      - row "Phase Between every phase Check phase (4) Timers phase (0)" [ref=e151]:
+        - cell "Phase" [ref=e152]
+        - cell "Between every phase" [ref=e153]:
+          - text: Between
+          - strong [ref=e154]: every
+          - text: phase
+        - cell "Check phase (4)" [ref=e155]
+        - cell "Timers phase (0)" [ref=e156]
+      - row "Priority 🥇 Highest 🥈 Medium 🥉 Lowest (among these)" [ref=e157]:
+        - cell "Priority" [ref=e158]
+        - cell "🥇 Highest" [ref=e159]
+        - cell "🥈 Medium" [ref=e160]
+        - cell "🥉 Lowest (among these)" [ref=e161]
+      - row "Min delay 0 (runs immediately after phase) ~1ms (next Check phase) 1ms (minimum, clamped)" [ref=e162]:
+        - cell "Min delay" [ref=e163]
+        - cell "0 (runs immediately after phase)" [ref=e164]
+        - cell "~1ms (next Check phase)" [ref=e165]
+        - cell "1ms (minimum, clamped)" [ref=e166]
+      - row "Starvation risk ⚠️ High Low Low" [ref=e167]:
+        - cell "Starvation risk" [ref=e168]
+        - cell "⚠️ High" [ref=e169]
+        - cell "Low" [ref=e170]
+        - cell "Low" [ref=e171]
+      - row "Use case Cleanup, error propagation Defer work to next iteration Basic delay, throttling" [ref=e172]:
+        - cell "Use case" [ref=e173]
+        - cell "Cleanup, error propagation" [ref=e174]
+        - cell "Defer work to next iteration" [ref=e175]
+        - cell "Basic delay, throttling" [ref=e176]
+  - heading "6. Full Loop Walkthrough trace execution" [level=2] [ref=e177]:
+    - generic [ref=e178]: 6. Full Loop Walkthrough
+    - generic [ref=e179]: trace execution
+  - paragraph [ref=e180]: Follow the execution flow of a real program through every phase and queue.
+  - generic [ref=e181]:
+    - generic [ref=e182]: 🔍 Click to trace — see each phase light up as code executes
+    - generic [ref=e183]:
+      - button "▶️ Run trace" [ref=e184] [cursor=pointer]
+      - button "🧹 Clear" [ref=e185] [cursor=pointer]
+    - generic [ref=e188]:
+      - generic [ref=e189]: Current Phase
+      - generic [ref=e190]: —
+      - generic [ref=e191]: "Tick queue: 0 | Micro: 0"
+  - heading "7. Interactive Playground simulate Node.js behavior" [level=2] [ref=e192]:
+    - generic [ref=e193]: 7. Interactive Playground
+    - generic [ref=e194]: simulate Node.js behavior
+  - paragraph [ref=e195]:
+    - text: Use
+    - code [ref=e196]: log(msg, type)
+    - text: where type is
+    - code [ref=e197]: "\"sync\""
+    - text: ","
+    - code [ref=e198]: "\"tick\""
+    - text: ","
+    - code [ref=e199]: "\"micro\""
+    - text: ", or"
+    - code [ref=e200]: "\"macro\""
+    - text: .
+    - code [ref=e201]: wait(ms)
+    - text: "returns a promise. Queue helpers:"
+    - code [ref=e202]: nextTick(fn)
+    - text: ","
+    - code [ref=e203]: immediate(fn)
+    - text: are predefined.
+  - generic [ref=e204]:
+    - generic [ref=e205]: 💻 Live playground — see the Node.js event loop in action
+    - textbox [ref=e206]: "log(\"1: sync start\", \"sync\"); process.nextTick(() => { log(\"3: nextTick runs\", \"tick\"); }); Promise.resolve().then(() => { log(\"4: Promise.then (microtask)\", \"micro\"); }); setTimeout(() => { log(\"6: setTimeout(0) — timer phase\", \"macro\"); }, 0); setImmediate(() => { log(\"7: setImmediate — check phase\", \"macro\"); }); log(\"2: sync end\", \"sync\"); // Order: 1 → 2 → 3 → 4 → 5(nextTick) → 6 → 7 // Between phases: nextTick drains (3), then microtasks (4) // Timer phase (6), Check phase (7)"
+    - generic [ref=e207]:
+      - button "▶️ Run" [ref=e208] [cursor=pointer]
+      - button "🧹 Clear" [ref=e209] [cursor=pointer]

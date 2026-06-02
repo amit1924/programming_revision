@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Z-Index · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--coral:#f28fad;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--orange)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;scroll-margin-top:70px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}.code .keyword{color:var(--blue)}.code .string{color:var(--green)}.code .danger{color:var(--red)}.code .highlight{color:var(--orange)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.orange{background:rgba(248,189,127,.18);color:var(--orange)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--orange);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.danger{background:var(--red);color:white}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+.demo-stage{position:relative;background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);margin:10px 0;min-height:200px;overflow:hidden;padding:12px}
+.layer-box{position:absolute;width:160px;height:100px;border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:.78rem;font-weight:600;transition:z-index .2s,box-shadow .2s}
+.layer-box .zi{font-size:.7rem;font-weight:400;opacity:.7;margin-top:2px}
+
+.z-stack{position:relative;height:220px;margin:12px 0}
+.z-stack .bar{position:absolute;width:180px;height:50px;border-radius:6px;display:flex;align-items:center;justify-content:center;font-size:.82rem;font-weight:600;transition:.3s}
+.z-stack .bar .zlabel{font-size:.65rem;font-weight:400;opacity:.7;margin-left:8px}
+
+.context-viz{position:relative;margin:12px 0;min-height:260px;background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);padding:12px}
+.context-group{border:2px solid;border-radius:var(--radius);padding:10px;margin:6px 0;position:relative}
+.context-group .group-label{font-size:.68rem;position:absolute;top:-10px;left:10px;padding:2px 8px;border-radius:4px;color:#0f0f17}
+.context-group .ctx-item{position:absolute;width:140px;height:60px;border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:600;font-family:monospace}
+
+.slider-group{display:flex;align-items:center;gap:10px;margin:6px 0}
+.slider-group input[type=range]{flex:1;accent-color:var(--orange)}
+.slider-group .val{font-family:monospace;font-size:.8rem;color:var(--orange);min-width:30px}
+
+.toggle-group{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--orange);color:#0f0f17;border-color:var(--orange)}
+
+.flow-box{display:flex;flex-direction:column;gap:4px;padding:8px}
+.flow-row{display:flex;align-items:center;gap:8px;padding:8px 12px;border-radius:6px;font-size:.18rem}
+.flow-row .index{font-size:.7rem;color:var(--muted);min-width:60px;text-align:right;font-family:monospace}
+
+.stack-vis{display:flex;gap:8px;align-items:flex-end;padding:16px 0;justify-content:center}
+.stack-layer-v{width:60px;border-radius:4px 4px 0 0;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;padding-top:8px;font-size:.7rem;font-weight:600;transition:.3s}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>Z-Index</span> · Stacking Context</div>
+  <div class="crumbs"><a href="index.html" style="color:var(--blue);text-decoration:none">Position</a> &rsaquo; Z-Index</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(248,189,127,.18);color:var(--orange)">Depth</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. WHAT IS Z-INDEX -->
+<div class="section-title"><span class="num">1</span> What Is Z-Index?</div>
+<div class="card">
+  <p><code>z-index</code> controls the <strong>stacking order</strong> of positioned elements along the <strong>z-axis</strong> (the axis coming toward you). Higher values appear <strong>closer to the user</strong> (on top).</p>
+  <div class="grid2">
+    <div style="text-align:center">
+      <div style="display:flex;justify-content:center;gap:4px;margin:16px 0">
+        <div style="width:60px;height:100px;background:var(--blue);border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0f0f17;font-size:.8rem">1</div>
+        <div style="width:60px;height:80px;background:var(--green);border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:700;color:#0f0f17;font-size:.8rem;margin-top:-10px">2</div>
+        <div style="width:60px;height:60px;background:var(--red);border-radius:4px;display:flex;align-items:center;justify-content:center;font-weight:700;color:white;font-size:.8rem;margin-top:-20px">3</div>
+      </div>
+      <div style="font-size:.72rem;color:var(--muted)">z-index: 3 is on top</div>
+    </div>
+    <div>
+      <div class="code" style="font-size:.74rem">
+<span class="comment">/* Higher value = closer to user (on top) */</span>
+.box1 { position: relative; z-index: 1; }
+.box2 { position: relative; z-index: 2; <span class="comment">/* on top of box1 */</span> }
+.box3 { position: relative; z-index: 3; <span class="comment">/* on top of both */</span> }
+      </div>
+      <p style="font-size:.82rem;color:var(--muted);margin-top:4px"><code>z-index</code> only works on <strong>positioned</strong> elements (<code>relative</code>, <code>absolute</code>, <code>fixed</code>, <code>sticky</code>). It is <strong>ignored</strong> on <code>static</code> elements.</p>
+    </div>
+  </div>
+</div>
+
+<!-- 2. LIFE WITHOUT Z-INDEX -->
+<div class="section-title"><span class="num">2</span> What Happens Without Z-Index?</div>
+<div class="card">
+  <p>Even without any <code>z-index</code>, elements stack in a <strong>natural order</strong>. When elements overlap, the browser decides who's on top based on these rules:</p>
+  <div class="grid2">
+    <div>
+      <div class="flow-box" style="background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius)">
+        <div style="padding:8px;font-weight:600;font-size:.82rem">Natural stacking order (bottom to top):</div>
+        <div class="flow-row" style="background:rgba(108,112,134,.08);border-left:3px solid var(--muted)">
+          <span class="index">1 (bottom)</span>
+          <span>Background + border of root element</span>
+        </div>
+        <div class="flow-row" style="background:rgba(137,180,250,.08);border-left:3px solid var(--blue)">
+          <span class="index">2</span>
+          <span>Block-level elements in normal flow (in DOM order)</span>
+        </div>
+        <div class="flow-row" style="background:rgba(148,226,213,.08);border-left:3px solid var(--teal)">
+          <span class="index">3</span>
+          <span>Floated elements</span>
+        </div>
+        <div class="flow-row" style="background:rgba(166,227,161,.08);border-left:3px solid var(--green)">
+          <span class="index">4</span>
+          <span>Inline elements (text, spans)</span>
+        </div>
+        <div class="flow-row" style="background:rgba(243,139,168,.08);border-left:3px solid var(--red)">
+          <span class="index">5 (top)</span>
+          <span>Positioned elements (<span style="color:var(--red)">in DOM order</span>)</span>
+        </div>
+      </div>
+    </div>
+    <div>
+      <div class="demo-stage" id="noZStage" style="min-height:200px">
+        <div style="position:relative;background:rgba(137,180,250,.12);border:2px solid var(--blue);border-radius:6px;padding:20px;margin-bottom:8px;font-size:.82rem">Block in normal flow <span style="color:var(--muted)">(at bottom of stack)</span></div>
+        <div style="float:left;padding:8px 16px;background:rgba(148,226,213,.12);border:1px solid var(--teal);border-radius:4px;margin-right:8px;font-size:.78rem">Float</div>
+        <span style="padding:4px 8px;background:rgba(166,227,161,.12);border:1px solid var(--green);border-radius:4px;font-size:.78rem">Inline</span>
+        <div class="pos-card" style="position:relative;display:inline-block;padding:8px 16px;background:rgba(243,139,168,.12);border:2px solid var(--red);border-radius:4px;font-size:.78rem;margin-top:40px">Positioned element <span style="color:var(--muted)">(always on top of non-positioned)</span></div>
+      </div>
+      <div class="callout" style="font-size:.76rem;padding:8px">
+        <strong>&#9432; Without z-index, DOM order wins.</strong> The last positioned element in the HTML appears on top. This is the default stacking order.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- INTERACTIVE: DOM ORDER vs Z-INDEX -->
+<div class="section-title"><span class="num">3</span> Interactive: DOM Order vs Z-Index</div>
+<div class="card">
+  <p>Three overlapping boxes. Toggle between "no z-index" (DOM order decides) and "z-index applied" (you decide the order).</p>
+  <div class="demo-stage" id="domVsZStage" style="min-height:200px;overflow:visible">
+    <div class="layer-box" id="dzBox1" style="background:rgba(137,180,250,.15);border:2px solid var(--blue);top:30px;left:20px;z-index:auto;"><span>Box 1</span><span class="zi" id="dz1zi">no z-index</span></div>
+    <div class="layer-box" id="dzBox2" style="background:rgba(166,227,161,.15);border:2px solid var(--green);top:60px;left:100px;z-index:auto;"><span>Box 2</span><span class="zi" id="dz2zi">no z-index</span></div>
+    <div class="layer-box" id="dzBox3" style="background:rgba(243,139,168,.15);border:2px solid var(--red);top:90px;left:180px;z-index:auto;"><span>Box 3</span><span class="zi" id="dz3zi">no z-index</span></div>
+  </div>
+  <div class="toggle-group">
+    <button class="toggle-btn active" onclick="setDomVsZ('none')">No z-index (DOM order)</button>
+    <button class="toggle-btn" onclick="setDomVsZ('applied')">Apply z-index (reversed)</button>
+    <button class="toggle-btn" onclick="setDomVsZ('same')">Same z-index (again DOM order)</button>
+  </div>
+  <div class="pos-info" id="domVsZInfo" style="font-size:.78rem;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin-top:6px">Currently: <strong>No z-index</strong> — Box 3 appears on top because it's last in DOM</div>
+</div>
+
+<!-- 4. THE STACKING CONTEXT -->
+<div class="section-title"><span class="num">4</span> The Stacking Context · The Real Key</div>
+<div class="card">
+  <p>A <strong>stacking context</strong> is an isolated group where <code>z-index</code> values are <strong>relative to each other</strong> within that group. Elements in one stacking context cannot interleave with elements in another.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">/* THESE CREATE A NEW STACKING CONTEXT: */</span>
+
+<span class="comment">// 1. Positioned + z-index (NOT auto)</span>
+el { position: relative; z-index: 1; }
+
+<span class="comment">// 2. Opacity less than 1</span>
+el { opacity: 0.9; }
+
+<span class="comment">// 3. Transform</span>
+el { transform: scale(1); }
+
+<span class="comment">// 4. Filter</span>
+el { filter: blur(1px); }
+
+<span class="comment">// 5. will-change</span>
+el { will-change: transform; }
+
+<span class="comment">// 6. isolation: isolate</span>
+el { isolation: isolate; }
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Interactive: which properties create a stacking context?</p>
+      <div style="display:flex;flex-direction:column;gap:6px;margin-top:6px">
+        <div style="display:flex;align-items:center;gap:8px;font-size:.82rem">
+          <span>position:relative + z-index:1</span>
+          <span class="badge green">Context</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.82rem">
+          <span>opacity: 0.9</span>
+          <span class="badge green">Context</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.82rem">
+          <span>transform: translateX(10px)</span>
+          <span class="badge green">Context</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.82rem">
+          <span>filter: blur(2px)</span>
+          <span class="badge green">Context</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.82rem">
+          <span>isolation: isolate</span>
+          <span class="badge green">Context</span>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;font-size:.82rem">
+          <span>position:static + z-index:1</span>
+          <span class="badge red">No context</span>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. THE TRAP: STACKING CONTEXT BOUNDARIES -->
+<div class="section-title"><span class="num">5</span> The Trap: Why Z-Index "Doesn't Work"</div>
+<div class="card">
+  <p>This is the #1 reason developers say "z-index isn't working." The element has a high <code>z-index</code> but is trapped inside a parent's stacking context.</p>
+  <div class="grid2">
+    <div>
+      <h3>&#128520; The Bug</h3>
+      <div class="code" style="font-size:.72rem">
+<span class="comment">// Parent creates a stacking context</span>
+.parent {
+  position: relative;
+  z-index: 1; <span class="comment">// &#9888; Creates a stacking context!</span>
+  background: rgba(0,0,0,.5);
+}
+
+.child {
+  position: absolute;
+  <span class="highlight">z-index: 9999;</span> <span class="comment">// Intended to be on top</span>
+  <span class="comment">// &#9888; But trapped inside parent's context!</span>
+  <span class="comment">// Parent's z-index is 1, sibling has 2</span>
+  <span class="comment">// Child's 9999 is ONLY relative within parent</span>
+}
+      </div>
+    </div>
+    <div>
+      <h3>&#9654; See it in action</h3>
+      <div class="context-viz" id="trapViz" style="min-height:180px">
+        <div style="position:relative;background:rgba(137,180,250,.04);border:1px dashed var(--blue);border-radius:4px;padding:14px;min-height:140px">
+          <span style="font-size:.7rem;color:var(--blue)">Sibling A (z-index: 1)</span>
+          <div style="position:absolute;bottom:4px;right:4px;background:rgba(166,227,161,.15);border:2px solid var(--green);border-radius:4px;padding:8px 12px;font-size:.72rem;font-weight:600;color:var(--green)">
+            Child of A · z-index: 9999
+            <div style="font-weight:400;font-size:.65rem;color:var(--muted)">Still BEHIND Sibling B!</div>
+          </div>
+        </div>
+        <div style="position:relative;background:rgba(243,139,168,.04);border:1px dashed var(--red);border-radius:4px;padding:14px;margin-top:8px">
+          <span style="font-size:.7rem;color:var(--red)">Sibling B (z-index: 2)</span>
+          <div style="font-size:.78rem;color:var(--muted);margin-top:4px">I'm on top because my parent (Sibling B) has higher z-index than Sibling A</div>
+        </div>
+      </div>
+      <div class="callout danger" style="font-size:.76rem;padding:8px">
+        <strong>&#9888; z-index: 9999 doesn't help</strong> if the parent is trapped in a lower stacking context. The child's z-index is relative to the parent's context, not the root.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 6. LIVE: STACKING CONTEXT BOUNDARIES -->
+<div class="section-title"><span class="num">6</span> Live Demo: Stacking Context Boundaries</div>
+<div class="card">
+  <p>Two boxes, each containing a child with <code>z-index: 999</code>. The parent's z-index determines which child wins — not the child's individual z-index.</p>
+  <div class="context-viz" id="ctxBoundaryDemo" style="min-height:280px;position:relative">
+    <div id="ctxParent1" style="position:relative;z-index:2;background:rgba(137,180,250,.06);border:2px solid var(--blue);border-radius:var(--radius);padding:16px;width:45%;float:left;min-height:160px;transition:.3s">
+      <div style="font-size:.7rem;color:var(--blue)">Parent A <span style="color:var(--muted)">z-index: <span id="ctxP1z">2</span></span></div>
+      <div id="ctxChild1" style="position:absolute;bottom:10px;right:10px;background:rgba(166,227,161,.2);border:2px solid var(--green);border-radius:4px;padding:8px 14px;font-size:.72rem;font-weight:600;color:var(--green);z-index:999">
+        Child A · z-index: 999
+      </div>
+    </div>
+    <div id="ctxParent2" style="position:relative;z-index:1;background:rgba(243,139,168,.06);border:2px solid var(--red);border-radius:var(--radius);padding:16px;width:45%;float:right;min-height:160px;transition:.3s">
+      <div style="font-size:.7rem;color:var(--red)">Parent B <span style="color:var(--muted)">z-index: <span id="ctxP2z">1</span></span></div>
+      <div id="ctxChild2" style="position:absolute;bottom:10px;right:10px;background:rgba(166,227,161,.2);border:2px solid var(--green);border-radius:4px;padding:8px 14px;font-size:.72rem;font-weight:600;color:var(--green);z-index:999">
+        Child B · z-index: 999
+      </div>
+    </div>
+    <div style="clear:both"></div>
+    <div style="margin-top:10px;font-size:.78rem;color:var(--muted)">Both children have <code>z-index: 999</code> — but Parent A (z-index: 2) wins because its <strong>stacking context</strong> is higher.</div>
+  </div>
+  <div style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap">
+    <div class="slider-group" style="flex:1">
+      <span style="font-size:.76rem;color:var(--blue)">Parent A z-index:</span>
+      <input type="range" min="0" max="5" value="2" oninput="document.getElementById('ctxParent1').style.zIndex=this.value;document.getElementById('ctxP1z').textContent=this.value;updateCtxInfo()">
+      <span class="val" id="ctxP1val">2</span>
+    </div>
+    <div class="slider-group" style="flex:1">
+      <span style="font-size:.76rem;color:var(--red)">Parent B z-index:</span>
+      <input type="range" min="0" max="5" value="1" oninput="document.getElementById('ctxParent2').style.zIndex=this.value;document.getElementById('ctxP2z').textContent=this.value;updateCtxInfo()">
+      <span class="val" id="ctxP2val">1</span>
+    </div>
+  </div>
+  <div class="pos-info" id="ctxInfo" style="font-size:.78rem;margin-top:4px">Parent A z-index: 2 &gt; Parent B z-index: 1 &#8594; <strong style="color:var(--green)">Child A appears on top</strong> (even though both children have z-index: 999)</div>
+</div>
+
+<!-- 7. WHEN DOES Z-INDEX NOT WORK -->
+<div class="section-title"><span class="num">7</span> When Z-Index "Doesn't Work"</div>
+<div class="card">
+  <p>Here are the 4 most common reasons z-index seems broken — with live demos.</p>
+
+  <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+    <div style="padding:14px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--surface2)">
+      <h4 style="color:var(--red)">&#9888; 1. Element is not positioned</h4>
+      <p style="font-size:.78rem;color:var(--muted)"><code>z-index</code> is ignored on <code>position: static</code>. The element must be <code>relative</code>, <code>absolute</code>, <code>fixed</code>, or <code>sticky</code>.</p>
+      <div class="code" style="font-size:.7rem;margin-top:4px">
+<span class="comment">// WON'T WORK:</span>
+div { position: static; z-index: 999; }
+
+<span class="comment">// WILL WORK:</span>
+div { position: relative; z-index: 999; }
+      </div>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--surface2)">
+      <h4 style="color:var(--red)">&#9888; 2. Trapped in a parent's stacking context</h4>
+      <p style="font-size:.78rem;color:var(--muted)">Parent has <code>opacity &lt; 1</code>, <code>transform</code>, or <code>position + z-index</code> — child can't escape.</p>
+      <div class="code" style="font-size:.7rem;margin-top:4px">
+<span class="comment">// Parent creates context:</span>
+.parent { position: relative; z-index: 1; }
+.child { z-index: 9999; <span class="comment">// Still inside parent!</span> }
+      </div>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--surface2)">
+      <h4 style="color:var(--red)">&#9888; 3. Sibling with higher z-index</h4>
+      <p style="font-size:.78rem;color:var(--muted)">Another element at the same stacking context level has a higher z-index and overlaps.</p>
+      <div class="code" style="font-size:.7rem;margin-top:4px">
+.box1 { position: relative; z-index: 2; }
+.box2 { position: relative; z-index: 3; }
+<span class="comment">// box2 is on top of box1</span>
+      </div>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--surface2)">
+      <h4 style="color:var(--red)">&#9888; 4. Overflow: hidden clipping</h4>
+      <p style="font-size:.78rem;color:var(--muted)">A parent with <code>overflow: hidden</code> clips positioned children even if they have higher z-index.</p>
+      <div class="code" style="font-size:.7rem;margin-top:4px">
+.parent { overflow: hidden; position: relative; }
+.child { position: absolute; z-index: 999; }
+<span class="comment">// Child is CLIPPED by parent's overflow!</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. DEBUGGING Z-INDEX -->
+<div class="section-title"><span class="num">8</span> Debugging Checklist</div>
+<div class="card">
+  <p>When z-index "doesn't work", check these in order:</p>
+  <div style="display:flex;flex-direction:column;gap:8px;padding:8px 0">
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;background:var(--bg);border-left:3px solid var(--blue);font-size:.82rem">
+      <span style="font-weight:700;color:var(--blue)">&#9744; 1</span>
+      <span>Is the element <strong>positioned</strong>? (<code>position: relative/absolute/fixed/sticky</code>)</span>
+      <span class="badge red">Static ignores z-index</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;background:var(--bg);border-left:3px solid var(--blue);font-size:.82rem">
+      <span style="font-weight:700;color:var(--blue)">&#9744; 2</span>
+      <span>Are there <strong>parent stacking contexts</strong> trapping the element?</span>
+      <span class="badge orange">Check opacity, transform, filter</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;background:var(--bg);border-left:3px solid var(--blue);font-size:.82rem">
+      <span style="font-weight:700;color:var(--blue)">&#9744; 3</span>
+      <span>Is a <strong>sibling</strong> at the same level with a higher z-index?</span>
+      <span class="badge yellow">Check siblings, not cousins</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;background:var(--bg);border-left:3px solid var(--blue);font-size:.82rem">
+      <span style="font-weight:700;color:var(--blue)">&#9744; 4</span>
+      <span>Is <code>overflow: hidden</code> on a parent clipping the element?</span>
+      <span class="badge red">Overflow clips positioned children</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;background:var(--bg);border-left:3px solid var(--blue);font-size:.82rem">
+      <span style="font-weight:700;color:var(--blue)">&#9744; 5</span>
+      <span>Is there a <code>transform</code> or <code>will-change</code> on an ancestor?</span>
+      <span class="badge orange">Both create stacking contexts</span>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:6px;background:var(--bg);border-left:3px solid var(--blue);font-size:.82rem">
+      <span style="font-weight:700;color:var(--blue)">&#9744; 6</span>
+      <span>Use DevTools — check the "layers" tab or inspect computed z-index</span>
+      <span class="badge green">Visual debugging</span>
+    </div>
+  </div>
+</div>
+
+<!-- 9. WHEN TO APPLY Z-INDEX -->
+<div class="section-title"><span class="num">9</span> When to Apply Z-Index</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <h3 style="color:var(--green)">&#10003; Good uses</h3>
+      <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+        <li><strong>Modals / Overlays</strong> — highest z-index</li>
+        <li><strong>Tooltips &amp; popovers</strong> — above UI elements</li>
+        <li><strong>Dropdown menus</strong> — above content below</li>
+        <li><strong>Fixed headers</strong> — above page content</li>
+        <li><strong>Toast notifications</strong> — above everything</li>
+        <li><strong>Drag &amp; drop</strong> — active item on top</li>
+      </ul>
+    </div>
+    <div>
+      <h3 style="color:var(--red)">&#10007; Overused / wrong</h3>
+      <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+        <li><strong>Fighting layout bugs</strong> — z-index hides layout issues</li>
+        <li><strong>Using 99999</strong> — creates maintenance nightmares</li>
+        <li><strong>Every element positioned</strong> — unnecessary stacking contexts</li>
+        <li><strong>Without understanding stacking context</strong> — won't work anyway</li>
+      </ul>
+    </div>
+  </div>
+  <div class="callout success" style="font-size:.8rem;padding:8px;margin-top:8px">
+    <strong>&#10003; Best practice:</strong> Use small z-index values (1–10) and organize them. Reserve <code>z-index: 1000+</code> for modals and toasts. Use <code>isolation: isolate</code> to create clean stacking context boundaries.
+  </div>
+</div>
+
+<!-- 10. Z-INDEX ORGANIZATION SYSTEM -->
+<div class="section-title"><span class="num">10</span> Z-Index Organization System</div>
+<div class="card">
+  <p>Instead of guessing, use a predictable z-index scale:</p>
+  <div class="stack-vis" id="zScale">
+    <div class="stack-layer-v" style="height:30px;background:var(--muted);color:var(--bg)">0</div>
+    <div class="stack-layer-v" style="height:40px;background:var(--blue);color:white">1</div>
+    <div class="stack-layer-v" style="height:50px;background:var(--green);color:#0f0f17">2</div>
+    <div class="stack-layer-v" style="height:60px;background:var(--yellow);color:#0f0f17">3</div>
+    <div class="stack-layer-v" style="height:70px;background:var(--orange);color:#0f0f17">10</div>
+    <div class="stack-layer-v" style="height:90px;background:var(--red);color:white">100</div>
+    <div class="stack-layer-v" style="height:110px;background:var(--pink);color:#0f0f17">1000</div>
+  </div>
+  <table>
+    <tr><th>Layer</th><th>Z-Index</th><th>Elements</th></tr>
+    <tr><td>Base</td><td><code>auto / 0</code></td><td>Normal flow, backgrounds</td></tr>
+    <tr><td>Default</td><td><code>1</code></td><td>Positioned UI elements, cards</td></tr>
+    <tr><td>Dropdown</td><td><code>2</code></td><td>Dropdown menus, tooltips</td></tr>
+    <tr><td>Navigation</td><td><code>3</code></td><td>Fixed headers, sidebars</td></tr>
+    <tr><td>Overlay</td><td><code>10</code></td><td>Overlay backgrounds</td></tr>
+    <tr><td>Modal</td><td><code>100</code></td><td>Modal dialogs, popups</td></tr>
+    <tr><td>Toast</td><td><code>1000</code></td><td>Notifications, alerts</td></tr>
+  </table>
+</div>
+
+<!-- R. REFERENCE -->
+<div class="section-title"><span class="num">R</span> Quick Reference</div>
+<div class="card">
+  <table>
+    <tr><th>Concept</th><th>Summary</th><th>Key takeaway</th></tr>
+    <tr><td>z-index</td><td>Controls stacking order on z-axis</td><td><span class="badge orange">Higher = closer = on top</span></td></tr>
+    <tr><td>Without z-index</td><td>DOM order decides: last positioned element wins</td><td><span class="badge">Default stacking</span></td></tr>
+    <tr><td>Positioned</td><td>z-index only works on non-static elements</td><td><span class="badge red">Static ignores z-index</span></td></tr>
+    <tr><td>Stacking context</td><td>Isolated group where z-index is relative</td><td><span class="badge blue">Elements can't cross contexts</span></td></tr>
+    <tr><td>Created by</td><td>position+z-index, opacity, transform, filter, isolation</td><td><span class="badge yellow">Many properties create contexts</span></td></tr>
+    <tr><td>Parent trap</td><td>Child with high z-index inside low parent is still behind</td><td><span class="badge red">#1 z-index bug</span></td></tr>
+    <tr><td>isolation: isolate</td><td>Creates a stacking context without z-index side effects</td><td><span class="badge green">Clean boundary</span></td></tr>
+    <tr><td>Debugging</td><td>Check: positioned? parent context? sibling? overflow?</td><td><span class="badge orange">6-step checklist</span></td></tr>
+  </table>
+</div>
+
+<div class="callout success" style="text-align:center;padding:16px">
+  <strong>&#10003; z-index is not a global "who's on top" — it's relative to each stacking context.</strong><br>
+  <span style="color:var(--muted);font-size:.85rem">Learn the stacking context, and z-index becomes predictable.</span>
+</div>
+
+</div>
+
+<script>
+// =====================================================
+// 3. DOM ORDER vs Z-INDEX
+// =====================================================
+function setDomVsZ(mode) {
+  const b1 = document.getElementById('dzBox1');
+  const b2 = document.getElementById('dzBox2');
+  const b3 = document.getElementById('dzBox3');
+  const l1 = document.getElementById('dz1zi');
+  const l2 = document.getElementById('dz2zi');
+  const l3 = document.getElementById('dz3zi');
+  const info = document.getElementById('domVsZInfo');
+  const btns = document.querySelectorAll('.toggle-btn');
+
+  btns.forEach(b => b.classList.remove('active'));
+
+  if (mode === 'none') {
+    b1.style.zIndex = 'auto';
+    b2.style.zIndex = 'auto';
+    b3.style.zIndex = 'auto';
+    l1.textContent = 'no z-index';
+    l2.textContent = 'no z-index';
+    l3.textContent = 'no z-index';
+    info.innerHTML = 'Currently: <strong>No z-index</strong> — Box 3 appears on top (last in DOM)';
+    btns[0].classList.add('active');
+  } else if (mode === 'applied') {
+    b1.style.zIndex = '3';
+    b2.style.zIndex = '2';
+    b3.style.zIndex = '1';
+    l1.textContent = 'z-index: 3';
+    l2.textContent = 'z-index: 2';
+    l3.textContent = 'z-index: 1';
+    info.innerHTML = 'Currently: <strong>Z-index applied</strong> — Box 1 appears on top (z-index: 3)';
+    btns[1].classList.add('active');
+  } else if (mode === 'same') {
+    b1.style.zIndex = '0';
+    b2.style.zIndex = '0';
+    b3.style.zIndex = '0';
+    l1.textContent = 'z-index: 0';
+    l2.textContent = 'z-index: 0';
+    l3.textContent = 'z-index: 0';
+    info.innerHTML = 'Currently: <strong>Same z-index</strong> — DOM order wins again (Box 3 on top)';
+    btns[2].classList.add('active');
+  }
+}
+
+// =====================================================
+// 6. STACKING CONTEXT BOUNDARIES
+// =====================================================
+function updateCtxInfo() {
+  const p1z = parseInt(document.getElementById('ctxP1z').textContent);
+  const p2z = parseInt(document.getElementById('ctxP2z').textContent);
+  const info = document.getElementById('ctxInfo');
+  if (p1z > p2z) {
+    info.innerHTML = `Parent A z-index: ${p1z} &gt; Parent B z-index: ${p2z} &#8594; <strong style="color:var(--green)">Child A appears on top</strong> (even though both children have z-index: 999)`;
+  } else if (p2z > p1z) {
+    info.innerHTML = `Parent B z-index: ${p2z} &gt; Parent A z-index: ${p1z} &#8594; <strong style="color:var(--green)">Child B appears on top</strong> (even though both children have z-index: 999)`;
+  } else {
+    info.innerHTML = `Both parents have same z-index: ${p1z} &#8594; DOM order decides (Parent A appears on top because it's first)`;
+  }
+}
+</script>
+</body>
+</html>

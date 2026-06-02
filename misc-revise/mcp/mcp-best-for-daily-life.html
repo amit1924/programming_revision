@@ -1,0 +1,805 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP for Daily Life · Best Picks Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--radius:8px;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--teal)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+.grid4{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px}
+@media(max-width:680px){.grid2,.grid3,.grid4{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .highlight{color:var(--yellow)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.callout.teal{border-color:var(--teal);background:rgba(148,226,213,.06)}
+.callout.pink{border-color:var(--pink);background:rgba(245,194,231,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.badge.orange{background:rgba(248,189,127,.18);color:var(--orange)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--teal);color:#0f0f17}
+.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}
+.btn.outline:hover{background:var(--surface2)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+.demo-box{padding:14px;min-height:60px;border-radius:6px;background:var(--bg);border:1px dashed var(--surface2);margin:8px 0}
+.log-area{font-family:monospace;font-size:.76rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:60px;max-height:200px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0}
+.toggle-group{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--teal);color:#0f0f17;border-color:var(--teal)}
+
+/* Pick cards */
+.pick-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:14px;margin:14px 0}
+.pick-card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:18px;transition:.2s;position:relative;overflow:hidden}
+.pick-card:hover{transform:translateY(-2px);border-color:var(--accent,var(--blue))}
+.pick-card .icon{font-size:1.6rem;margin-bottom:6px}
+.pick-card h4{font-size:.92rem;margin-bottom:4px;color:var(--accent)}
+.pick-card .tagline{font-size:.78rem;color:var(--muted);margin-bottom:6px;line-height:1.5}
+.pick-card .why{font-size:.74rem;color:var(--muted);margin-top:6px;border-top:1px solid var(--surface2);padding-top:6px}
+.pick-card .meta{display:flex;gap:4px;flex-wrap:wrap;margin:6px 0}
+.pick-card .bar{height:12px;border-radius:3px;margin:4px 0;position:relative}
+.pick-card .bar-label{font-size:.65rem;color:var(--muted);display:flex;justify-content:space-between}
+.pick-card .must-have{position:absolute;top:10px;right:10px;font-size:.6rem;background:var(--red);color:white;padding:1px 8px;border-radius:10px;font-weight:700}
+
+/* Role tabs */
+.role-bar{display:flex;gap:6px;flex-wrap:wrap;margin:14px 0}
+.role-tab{padding:8px 18px;border-radius:20px;border:2px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.82rem;font-weight:600;transition:.2s}
+.role-tab.active{background:var(--teal);color:#0f0f17;border-color:var(--teal)}
+.role-tab:hover:not(.active){border-color:var(--muted);color:var(--text)}
+
+/* Comparison table custom */
+.comp-row{display:flex;align-items:center;gap:10px;padding:10px 14px;margin:3px 0;border-radius:6px;background:var(--bg);transition:.15s}
+.comp-row:hover{background:var(--surface2)}
+.comp-row .name{width:150px;font-size:.8rem;font-weight:600;flex-shrink:0}
+.comp-row .stars{width:80px;font-size:.7rem;color:var(--yellow);flex-shrink:0}
+.comp-row .install{width:80px;font-size:.68rem;flex-shrink:0;text-align:center}
+.comp-row .cost{width:60px;font-size:.7rem;text-align:right;flex-shrink:0}
+
+/* Day-in-life */
+.day-scene{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:16px;margin:10px 0;position:relative}
+.day-scene .time{font-size:.72rem;color:var(--muted);font-weight:600}
+.day-scene .action{font-size:.85rem;margin:4px 0}
+.day-scene .mcp-used{display:flex;gap:4px;flex-wrap:wrap;margin-top:4px}
+
+/* Timeline */
+.day-line{position:relative;padding-left:32px;margin:10px 0}
+.day-line::before{content:'';position:absolute;left:12px;top:0;bottom:0;width:2px;background:var(--surface2)}
+.day-item{position:relative;padding:10px 0 10px 16px}
+.day-item::before{content:'';position:absolute;left:-28px;top:16px;width:10px;height:10px;border-radius:50%}
+.day-item.morning::before{background:var(--peach)}
+.day-item.afternoon::before{background:var(--blue)}
+.day-item.evening::before{background:var(--lavender)}
+.day-item .time{font-size:.7rem;color:var(--muted);font-weight:600}
+.day-item .emoji{font-size:1rem;margin-right:4px}
+.day-item .desc{font-size:.84rem;margin:2px 0;line-height:1.5}
+.day-item .pill{display:inline-block;padding:1px 8px;border-radius:10px;font-size:.65rem;margin:1px;font-weight:600}
+.day-item .pill.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.day-item .pill.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.day-item .pill.green{background:rgba(166,227,161,.18);color:var(--green)}
+.day-item .pill.peach{background:rgba(250,179,135,.18);color:var(--peach)}
+.day-item .pill.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.day-item .pill.orange{background:rgba(248,189,127,.18);color:var(--orange)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>MCP</span> Daily Life</div>
+  <div class="crumbs"><a href="index.html" style="color:var(--muted);text-decoration:none">MCP</a> <span style="color:var(--muted)">›</span> Best Picks</div>
+</nav>
+
+<div class="container">
+
+<!-- Hero -->
+<div style="text-align:center;padding:30px 0 20px">
+  <div style="font-size:2.5rem;margin-bottom:6px">🏆</div>
+  <h1 style="font-size:clamp(1.3rem,3vw,2rem);font-weight:800;background:linear-gradient(135deg,var(--blue),var(--teal),var(--green));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text">MCP for Daily Life</h1>
+  <p style="color:var(--muted);font-size:.9rem;margin-top:6px">Which MCP servers should you actually install? Hand-picked for developers and students — with reasoning</p>
+</div>
+
+<div class="callout teal" style="font-size:.82rem;padding:14px 18px">
+  <strong>🚀 16,000+ servers exist.</strong> You need <strong>3–5</strong>. This guide cuts through the noise — picks the servers that deliver the most value per minute of setup for <strong>developers</strong> and <strong>students</strong>.
+</div>
+
+<!-- ===== INTERACTIVE QUIZ ===== -->
+<div class="section-title" style="margin-top:16px">
+  <span class="num">⚡</span> What Should I Install?
+</div>
+<p style="color:var(--muted);font-size:.86rem;margin-bottom:6px">Answer 3 quick questions → get your personal MCP stack.</p>
+
+<div class="card" style="padding:20px">
+  <div id="quizView">
+    <!-- Q1 -->
+    <div id="q1">
+      <h3 style="font-size:.95rem;margin-bottom:10px">1. Who are you?</h3>
+      <div class="toggle-group">
+        <button class="toggle-btn quiz-btn" data-answer="dev">💻 Developer</button>
+        <button class="toggle-btn quiz-btn" data-answer="student">🎓 Student</button>
+        <button class="toggle-btn quiz-btn" data-answer="both">🔀 Both / In-between</button>
+      </div>
+    </div>
+    <!-- Q2 -->
+    <div id="q2" style="display:none">
+      <h3 style="font-size:.95rem;margin-bottom:10px">2. What's your main need?</h3>
+      <div class="toggle-group">
+        <button class="toggle-btn quiz-btn" data-answer="coding">⌨️ Coding & debugging</button>
+        <button class="toggle-btn quiz-btn" data-answer="research">🔍 Research & learning</button>
+        <button class="toggle-btn quiz-btn" data-answer="writing">✍️ Writing & docs</button>
+        <button class="toggle-btn quiz-btn" data-answer="all">🎯 Everything</button>
+      </div>
+    </div>
+    <!-- Q3 -->
+    <div id="q3" style="display:none">
+      <h3 style="font-size:.95rem;margin-bottom:10px">3. How much setup are you willing to do?</h3>
+      <div class="toggle-group">
+        <button class="toggle-btn quiz-btn" data-answer="zero">⚡ Zero — one-click only</button>
+        <button class="toggle-btn quiz-btn" data-answer="low">🔧 Minimal — npm install + config</button>
+        <button class="toggle-btn quiz-btn" data-answer="any">🏗️ Any — I'll set up anything useful</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="quizResult" style="display:none">
+    <h3 style="font-size:.95rem;color:var(--teal);margin-bottom:10px">🎯 Your Personal MCP Stack</h3>
+    <div id="quizResultContent" style="font-size:.85rem;line-height:1.8"></div>
+    <button class="btn outline" onclick="resetQuiz()" style="margin-top:10px">← Retake quiz</button>
+  </div>
+</div>
+
+<!-- ===== PICKED STACKS BY ROLE ===== -->
+<div class="section-title">
+  <span class="num">01</span> The Stacks
+</div>
+
+<div class="role-bar" id="roleBar">
+  <button class="role-tab active" data-role="dev">💻 Developer</button>
+  <button class="role-tab" data-role="student">🎓 Student</button>
+  <button class="role-tab" data-role="everyone">👤 Everyone</button>
+</div>
+
+<!-- DEV STACK -->
+<div class="role-content" data-role="dev">
+  <p style="color:var(--muted);font-size:.86rem;margin-bottom:8px">You write code every day. These 5 servers cover the full loop: <strong>code → docs → debug → test → deploy</strong>.</p>
+
+  <div class="pick-grid">
+    <div class="pick-card" style="--accent:var(--blue);border-left:3px solid var(--blue)">
+      <span class="must-have">MUST</span>
+      <div class="icon">🐙</div>
+      <h4>GitHub MCP</h4>
+      <div class="tagline">Browse repos, create issues, review PRs, search code — all from your AI chat. Replaces manual tab-switching to GitHub.</div>
+      <div class="meta">
+        <span class="badge blue">Code</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+        <span class="badge orange">PAT needed</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:90%;background:var(--green);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:100%;background:var(--blue);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: Saves 15–30 tab switches/day. PR reviews, issue triage, code search — all inline.</div>
+    </div>
+
+    <div class="pick-card" style="--accent:var(--green);border-left:3px solid var(--green)">
+      <span class="must-have">MUST</span>
+      <div class="icon">📄</div>
+      <h4>Context7</h4>
+      <div class="tagline">Fetches version-accurate docs for React, Next.js, Tailwind, and 50+ libraries. Never get outdated AI advice again.</div>
+      <div class="meta">
+        <span class="badge blue">Docs</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:95%;background:var(--green);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:100%;background:var(--green);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: 54K ★ GitHub. 890K weekly npm downloads. The #1 most popular MCP for a reason — eliminates stale docs from AI context.</div>
+    </div>
+
+    <div class="pick-card" style="--accent:var(--peach);border-left:3px solid var(--peach)">
+      <div class="icon">🎭</div>
+      <h4>Playwright MCP</h4>
+      <div class="tagline">Browser automation: test UI, take screenshots, extract data. 22 tools. Works across Chromium, Firefox, WebKit.</div>
+      <div class="meta">
+        <span class="badge blue">Testing</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐☆☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:60%;background:var(--peach);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:80%;background:var(--peach);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: The #1 most-searched MCP (82K/mo). Microsoft-maintained. Accessibility snapshots > screenshots.</div>
+    </div>
+
+    <div class="pick-card" style="--accent:var(--lavender);border-left:3px solid var(--lavender)">
+      <div class="icon">🐛</div>
+      <h4>Sentry MCP</h4>
+      <div class="tagline">Pull error reports, stack traces, and performance data from Sentry. Debug without opening the dashboard.</div>
+      <div class="meta">
+        <span class="badge red">Debug</span>
+        <span class="badge orange">API Key</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:75%;background:var(--lavender);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:70%;background:var(--lavender);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: Vendor-maintained. Lets AI read stack traces + suggest fixes in one step. Debug faster.</div>
+    </div>
+
+    <div class="pick-card" style="--accent:var(--orange);border-left:3px solid var(--orange)">
+      <div class="icon">✈️</div>
+      <h4>Vercel MCP</h4>
+      <div class="tagline">Deploy, inspect logs, manage environments, check analytics — all from your AI. No dashboard needed.</div>
+      <div class="meta">
+        <span class="badge yellow">DevOps</span>
+        <span class="badge orange">API Key</span>
+        <span class="badge teal">Streamable HTTP</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:70%;background:var(--orange);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐☆☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:55%;background:var(--orange);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: Only if you deploy on Vercel. Otherwise skip → replace with Docker MCP if you use containers.</div>
+    </div>
+  </div>
+
+  <div class="callout success" style="margin-top:6px">
+    <strong>💡 Developer's essential trio:</strong> GitHub MCP + Context7 + Sentry MCP. Install these first. They cover code, docs, and debugging — the three things you do every single day.
+  </div>
+</div>
+
+<!-- STUDENT STACK -->
+<div class="role-content" data-role="student" style="display:none">
+  <p style="color:var(--muted);font-size:.86rem;margin-bottom:8px">You learn, research, and write. These 5 servers help you <strong>find → understand → organize → apply</strong> knowledge faster.</p>
+
+  <div class="pick-grid">
+    <div class="pick-card" style="--accent:var(--green);border-left:3px solid var(--green)">
+      <span class="must-have">MUST</span>
+      <div class="icon">📄</div>
+      <h4>Context7</h4>
+      <div class="tagline">Always get version-accurate docs for any library or framework you're learning. No more outdated tutorial advice.</div>
+      <div class="meta">
+        <span class="badge blue">Learning</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:95%;background:var(--green);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:100%;background:var(--green);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: 54K ★. Free. Zero config. Every student learning web dev needs this — it's like having the official docs in your AI's brain.</div>
+    </div>
+
+    <div class="pick-card" style="--accent:var(--blue);border-left:3px solid var(--blue)">
+      <span class="must-have">MUST</span>
+      <div class="icon">🌐</div>
+      <h4>Brave Search MCP</h4>
+      <div class="tagline">Real web search from your AI. Uses Brave's independent index — no ad bias. Web, local, image, video, news.</div>
+      <div class="meta">
+        <span class="badge blue">Research</span>
+        <span class="badge yellow">API Key</span>
+        <span class="badge teal">stdio</span>
+        <span class="badge orange">$5/1K queries</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:80%;background:var(--blue);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:90%;background:var(--blue);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: Best search MCP. v2.x cut tools from 36→7, reducing token waste. Independent index = unbiased results.</div>
+    </div>
+
+    <div class="pick-card" style="--accent:var(--peach);border-left:3px solid var(--peach)">
+      <div class="icon">🧠</div>
+      <h4>Sequential Thinking</h4>
+      <div class="tagline">Structured reasoning: break problems into steps, revise, branch. Like a whiteboard for your AI's thought process.</div>
+      <div class="meta">
+        <span class="badge pink">Thinking</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:90%;background:var(--peach);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:85%;background:var(--peach);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: #10 most searched MCP (13K/mo). No substitute. Helps break down complex assignments and debug logic step by step.</div>
+    </div>
+
+    <div class="pick-card" style="--accent:var(--teal);border-left:3px solid var(--teal)">
+      <div class="icon">📝</div>
+      <h4>Notion MCP</h4>
+      <div class="tagline">Read/write pages, databases, blocks. Turn your AI chat into a research notebook that saves to your real notes.</div>
+      <div class="meta">
+        <span class="badge blue">Notes</span>
+        <span class="badge" style="background:rgba(180,190,254,.18);color:var(--lavender)">OAuth 2.1</span>
+        <span class="badge teal">Streamable HTTP</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:85%;background:var(--teal);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:75%;background:var(--teal);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: Vendor-operated, OAuth 2.1, zero CLI install. One-click auth in Claude Desktop. Research notes go directly into Notion.</div>
+    </div>
+
+    <div class="pick-card" style="--accent:var(--orange);border-left:3px solid var(--orange)">
+      <div class="icon">📁</div>
+      <h4>Filesystem MCP</h4>
+      <div class="tagline">Read, write, edit, search files on your computer. Let AI manage your notes, assignments, and code files directly.</div>
+      <div class="meta">
+        <span class="badge blue">Utility</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="bar-label">Setup ease <span>⭐⭐⭐⭐⭐</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:95%;background:var(--orange);height:100%;border-radius:3px"></div></div>
+      <div class="bar-label">Daily value <span>⭐⭐⭐⭐☆</span></div>
+      <div class="bar" style="background:var(--surface2);width:100%"><div class="bar-fill" style="width:70%;background:var(--orange);height:100%;border-radius:3px"></div></div>
+      <div class="why">Why: Zero setup. Reference implementation. Lowest token cost of any MCP. AI reads/writes your actual files — no copy-paste.</div>
+    </div>
+  </div>
+
+  <div class="callout success" style="margin-top:6px">
+    <strong>💡 Student's essential trio:</strong> Brave Search MCP + Context7 + Sequential Thinking. These cover research, learning, and structured problem-solving — the core of any study workflow.
+  </div>
+</div>
+
+<!-- EVERYONE STACK -->
+<div class="role-content" data-role="everyone" style="display:none">
+  <p style="color:var(--muted);font-size:.86rem;margin-bottom:8px">Universal productivity servers that benefit <strong>anyone</strong> using AI daily — regardless of your field.</p>
+
+  <div class="pick-grid">
+    <div class="pick-card" style="--accent:var(--green);border-left:3px solid var(--green)">
+      <span class="must-have">MUST</span>
+      <div class="icon">📄</div>
+      <h4>Context7</h4>
+      <div class="tagline">The only universal MCP. Whether you're coding, writing, or learning — accurate, versioned docs for anything.</div>
+      <div class="meta">
+        <span class="badge blue">Universal</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="why">Why: 890K weekly npm downloads. Free. Zero config. Works for any tech stack. Install it first, before anything else.</div>
+    </div>
+    <div class="pick-card" style="--accent:var(--peach);border-left:3px solid var(--peach)">
+      <div class="icon">🧠</div>
+      <h4>Sequential Thinking</h4>
+      <div class="tagline">Better reasoning for every task. Break problems down, revise, explore alternatives. Your AI thinks more clearly.</div>
+      <div class="meta">
+        <span class="badge pink">Thinking</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="why">Why: No substitute. Works for every use case — coding, writing, planning, studying. Makes AI output more structured and reliable.</div>
+    </div>
+    <div class="pick-card" style="--accent:var(--blue);border-left:3px solid var(--blue)">
+      <div class="icon">🌐</div>
+      <h4>Brave Search MCP</h4>
+      <div class="tagline">Real-time web search from your AI. Research, fact-check, find sources — without leaving your chat.</div>
+      <div class="meta">
+        <span class="badge blue">Research</span>
+        <span class="badge yellow">API Key</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="why">Why: The best search MCP. $5/1K queries is cheap. Saves hours of manual searching. Independent index = no ad bias.</div>
+    </div>
+    <div class="pick-card" style="--accent:var(--teal);border-left:3px solid var(--teal)">
+      <div class="icon">📁</div>
+      <h4>Filesystem MCP</h4>
+      <div class="tagline">Your AI reads and writes files directly. Save chats, edit documents, organize projects — all without copy-paste.</div>
+      <div class="meta">
+        <span class="badge blue">Utility</span>
+        <span class="badge green">Free</span>
+        <span class="badge teal">stdio</span>
+      </div>
+      <div class="why">Why: Lowest token cost. Simplest setup. Changes how you interact with AI — from "copy-paste output" to "AI edits my files."</div>
+    </div>
+  </div>
+</div>
+
+<!-- ===== TOKEN COST COMPARISON ===== -->
+<div class="section-title">
+  <span class="num">02</span> Token Cost Comparison
+</div>
+<p style="color:var(--muted);font-size:.86rem;margin-bottom:10px">MCP servers consume tokens — and not all are equal. Servers that inject large schemas (PostgreSQL, Snowflake) cost <strong>10–32x more</strong> per call than lightweight ones (Filesystem, Brave Search).</p>
+
+<div style="margin:14px 0">
+  <div class="comp-row" style="border-left:3px solid var(--green)">
+    <div class="name" style="color:var(--green)">📁 Filesystem</div>
+    <div class="stars">Very Low</div>
+    <div style="flex:1;font-size:.72rem;color:var(--muted)">~100–500 tokens/call. Best efficiency of any MCP.</div>
+  </div>
+  <div class="comp-row" style="border-left:3px solid var(--green)">
+    <div class="name" style="color:var(--green)">📄 Context7</div>
+    <div class="stars">Low</div>
+    <div style="flex:1;font-size:.72rem;color:var(--muted)">~1K–5K tokens/query. Docs fetched on demand.</div>
+  </div>
+  <div class="comp-row" style="border-left:3px solid var(--green)">
+    <div class="name" style="color:var(--green)">🌐 Brave Search</div>
+    <div class="stars">Low–Med</div>
+    <div style="flex:1;font-size:.72rem;color:var(--muted)">~1K–3K tokens/search. v2.x streamlined to 7 tools.</div>
+  </div>
+  <div class="comp-row" style="border-left:3px solid var(--peach)">
+    <div class="name" style="color:var(--peach)">🐙 GitHub</div>
+    <div class="stars">Medium</div>
+    <div style="flex:1;font-size:.72rem;color:var(--muted)">~3K–10K tokens/call. 7–32× CLI equivalent.</div>
+  </div>
+  <div class="comp-row" style="border-left:3px solid var(--peach)">
+    <div class="name" style="color:var(--peach)">🎭 Playwright</div>
+    <div class="stars">Medium</div>
+    <div style="flex:1;font-size:.72rem;color:var(--muted)">~3K–15K tokens/call. Page snapshots are large.</div>
+  </div>
+  <div class="comp-row" style="border-left:3px solid var(--orange)">
+    <div class="name" style="color:var(--orange)">🔍 Firecrawl</div>
+    <div class="stars">Medium</div>
+    <div style="flex:1;font-size:.72rem;color:var(--muted)">~2K–10K tokens/scrape. Depends on page size.</div>
+  </div>
+  <div class="comp-row" style="border-left:3px solid var(--red)">
+    <div class="name" style="color:var(--red)">🐘 PostgreSQL</div>
+    <div class="stars">High</div>
+    <div style="flex:1;font-size:.72rem;color:var(--muted)">~10K–50K+ tokens/call. Schema injection explodes context.</div>
+  </div>
+  <div class="comp-row" style="border-left:3px solid var(--red)">
+    <div class="name" style="color:var(--red)">❄️ Snowflake</div>
+    <div class="stars">Very High</div>
+    <div style="flex:1;font-size:.72rem;color:var(--muted)">~20K–100K+ tokens/call. Large schema + warehouse metadata.</div>
+  </div>
+</div>
+
+<div class="callout warn">
+  <strong>💰 Token tip:</strong> If you use database MCPs daily, the token cost can exceed your AI subscription. For frequent SQL queries, use <code>psql</code> CLI directly and reserve the MCP for ad-hoc schema exploration.
+</div>
+
+<!-- ===== DAY IN THE LIFE ===== -->
+<div class="section-title">
+  <span class="num">03</span> A Day in the Life with MCP
+</div>
+<p style="color:var(--muted);font-size:.86rem;margin-bottom:10px">What does daily work actually look like with these servers installed? Click each tab.</p>
+
+<div class="role-bar" id="dayRoleBar">
+  <button class="role-tab active" data-day="dev">💻 Developer Day</button>
+  <button class="role-tab" data-day="student">🎓 Student Day</button>
+</div>
+
+<div class="day-line" id="devDay">
+  <div class="day-item morning">
+    <div class="time">☀️ 9:00 AM — Morning standup</div>
+    <div class="desc">AI pulls all open PRs assigned to you via <strong>GitHub MCP</strong>. Summarizes what needs review, what's blocked, and what CI failed overnight. You plan your day in 30 seconds.</div>
+    <div class="mcp-used"><span class="pill blue">GitHub MCP</span></div>
+  </div>
+  <div class="day-item morning">
+    <div class="time">☀️ 9:30 AM — Debugging a production error</div>
+    <div class="desc">AI fetches the latest error from <strong>Sentry MCP</strong>, reads the stack trace, then pulls the relevant source code. It suggests a fix and you approve it. From error → fix in 2 minutes instead of 15.</div>
+    <div class="mcp-used"><span class="pill blue">Sentry MCP</span> <span class="pill teal">Filesystem MCP</span></div>
+  </div>
+  <div class="day-item afternoon">
+    <div class="time">🌤️ 1:00 PM — Writing a new API endpoint</div>
+    <div class="desc">You describe the endpoint. AI fetches <strong>Context7</strong> docs for your framework (Next.js 15), checks your existing API patterns via <strong>GitHub MCP</strong>, then writes the code. What used to take 45 minutes takes 10.</div>
+    <div class="mcp-used"><span class="pill green">Context7</span> <span class="pill blue">GitHub MCP</span></div>
+  </div>
+  <div class="day-item afternoon">
+    <div class="time">🌤️ 3:00 PM — UI bug fix</div>
+    <div class="desc">A button doesn't work in Safari. AI uses <strong>Playwright MCP</strong> to open the page, take a snapshot, test interactions across browsers, and identify the WebKit-specific CSS issue. Fix + test in one shot.</div>
+    <div class="mcp-used"><span class="pill peach">Playwright MCP</span></div>
+  </div>
+  <div class="day-item evening">
+    <div class="time">🌙 5:30 PM — Deploy & review</div>
+    <div class="desc">AI deploys to staging via <strong>Vercel MCP</strong>, runs the preview URL through Playwright for smoke tests, then creates a PR with the summary. You review and merge.</div>
+    <div class="mcp-used"><span class="pill orange">Vercel MCP</span> <span class="pill peach">Playwright MCP</span> <span class="pill blue">GitHub MCP</span></div>
+  </div>
+</div>
+
+<div class="day-line" id="studentDay" style="display:none">
+  <div class="day-item morning">
+    <div class="time">☀️ 9:00 AM — Research paper</div>
+    <div class="desc">You ask AI to research "attention mechanisms in transformers." It uses <strong>Brave Search MCP</strong> to find recent papers, <strong>Firecrawl MCP</strong> (if installed) to extract full content, then saves a structured summary to your <strong>Notion</strong> research database.</div>
+    <div class="mcp-used"><span class="pill blue">Brave Search</span> <span class="pill orange">Firecrawl</span> <span class="pill teal">Notion MCP</span></div>
+  </div>
+  <div class="day-item morning">
+    <div class="time">☀️ 11:00 AM — Debugging a coding assignment</div>
+    <div class="desc">Your React app crashes. AI uses <strong>Context7</strong> to check the exact React 19 docs, reads your code via <strong>Filesystem MCP</strong>, and uses <strong>Sequential Thinking</strong> to step through the bug. It finds the stale closure in 2 iterations.</div>
+    <div class="mcp-used"><span class="pill green">Context7</span> <span class="pill teal">Filesystem MCP</span> <span class="pill pink">Seq. Thinking</span></div>
+  </div>
+  <div class="day-item afternoon">
+    <div class="time">🌤️ 2:00 PM — Writing an essay</div>
+    <div class="desc">AI researches the topic via <strong>Brave Search</strong>, structures the argument using <strong>Sequential Thinking</strong>, drafts the essay, and saves it to your <strong>Filesystem</strong> in the right folder. You edit the draft instead of writing from scratch.</div>
+    <div class="mcp-used"><span class="pill blue">Brave Search</span> <span class="pill pink">Seq. Thinking</span> <span class="pill teal">Filesystem MCP</span></div>
+  </div>
+  <div class="day-item evening">
+    <div class="time">🌙 6:00 PM — Study review</div>
+    <div class="desc">AI reads your Notion study notes, quizzes you with flashcards generated from your class materials, and identifies weak areas based on your answers. You study smarter, not harder.</div>
+    <div class="mcp-used"><span class="pill teal">Notion MCP</span> <span class="pill blue">Brave Search</span></div>
+  </div>
+</div>
+
+<!-- ===== QUICK INSTALL REFERENCE ===== -->
+<div class="section-title">
+  <span class="num">04</span> One-Line Install Reference
+</div>
+
+<table>
+  <tr><th>Server</th><th>Install Command</th><th>Auth</th><th>Config</th></tr>
+  <tr>
+    <td><strong>Context7</strong></td>
+    <td><code style="font-size:.73rem">npx -y @context7/mcp-server</code></td>
+    <td><span class="badge green">None</span></td>
+    <td>Zero config</td>
+  </tr>
+  <tr>
+    <td><strong>GitHub</strong></td>
+    <td><code style="font-size:.73rem">npx -y @modelcontextprotocol/server-github</code></td>
+    <td><span class="badge orange">PAT</span></td>
+    <td>Set <code>GITHUB_TOKEN</code> env</td>
+  </tr>
+  <tr>
+    <td><strong>Playwright</strong></td>
+    <td><code style="font-size:.73rem">npx -y @playwright/mcp</code></td>
+    <td><span class="badge green">None</span></td>
+    <td>Needs Playwright browsers installed</td>
+  </tr>
+  <tr>
+    <td><strong>Sentry</strong></td>
+    <td><code style="font-size:.73rem">npx -y @getsentry/mcp-server</code></td>
+    <td><span class="badge orange">API Key</span></td>
+    <td>Set <code>SENTRY_TOKEN</code> env</td>
+  </tr>
+  <tr>
+    <td><strong>Brave Search</strong></td>
+    <td><code style="font-size:.73rem">npx -y @anthropic/mcp-server-brave-search</code></td>
+    <td><span class="badge orange">API Key</span></td>
+    <td>Set <code>BRAVE_API_KEY</code> env</td>
+  </tr>
+  <tr>
+    <td><strong>Sequential Thinking</strong></td>
+    <td><code style="font-size:.73rem">npx -y @anthropic/mcp-server-sequential-thinking</code></td>
+    <td><span class="badge green">None</span></td>
+    <td>Zero config</td>
+  </tr>
+  <tr>
+    <td><strong>Filesystem</strong></td>
+    <td><code style="font-size:.73rem">npx -y @modelcontextprotocol/server-filesystem /path/to/dir</code></td>
+    <td><span class="badge green">None</span></td>
+    <td>Pass directory path as argument</td>
+  </tr>
+  <tr>
+    <td><strong>Notion</strong></td>
+    <td style="font-size:.78rem">Remote — no CLI install. One-click via Claude Desktop Custom Connectors</td>
+    <td><span class="badge" style="background:rgba(180,190,254,.18);color:var(--lavender)">OAuth 2.1</span></td>
+    <td>Browser OAuth flow</td>
+  </tr>
+  <tr>
+    <td><strong>Vercel</strong></td>
+    <td><code style="font-size:.73rem">npx -y @anthropic/mcp-server-vercel</code></td>
+    <td><span class="badge orange">API Key</span></td>
+    <td>Set <code>VERCEL_TOKEN</code> env</td>
+  </tr>
+  <tr>
+    <td><strong>Firecrawl</strong></td>
+    <td><code style="font-size:.73rem">npx -y @anthropic/mcp-server-firecrawl</code></td>
+    <td><span class="badge orange">API Key</span></td>
+    <td>Set <code>FIRECRAWL_API_KEY</code> env</td>
+  </tr>
+</table>
+
+<div class="callout" style="margin-top:14px">
+  <strong>📌 Claude Desktop config example</strong> — add to <code>~/.config/Claude/claude_desktop_config.json</code>:
+  <div class="code" style="font-size:.72rem;margin:6px 0">
+    {<br>
+    &nbsp;&nbsp;"mcpServers": {<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"context7": { "command": "npx", "args": ["-y", "@context7/mcp-server"] },<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"github": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-github"] },<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"sentry": { "command": "npx", "args": ["-y", "@getsentry/mcp-server"] },<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"brave-search": { "command": "npx", "args": ["-y", "@anthropic/mcp-server-brave-search"] },<br>
+    &nbsp;&nbsp;&nbsp;&nbsp;"filesystem": { "command": "npx", "args": ["-y", "@modelcontextprotocol/server-filesystem", "/home/you/projects"] }<br>
+    &nbsp;&nbsp;}<br>
+    }
+  </div>
+</div>
+
+<!-- ===== COMPARISON TABLE ===== -->
+<div class="section-title">
+  <span class="num">05</span> All Servers at a Glance
+</div>
+
+<table>
+  <tr><th>Server</th><th>Best For</th><th>Setup</th><th>Free?</th><th>Token Cost</th><th>Verdict</th></tr>
+  <tr>
+    <td>📄 Context7</td><td>Everyone</td><td>⭐⭐⭐⭐⭐</td><td>✅ Free</td><td>Low</td><td style="color:var(--green);font-weight:600">Install first</td>
+  </tr>
+  <tr>
+    <td>🐙 GitHub</td><td>Developers</td><td>⭐⭐⭐⭐</td><td>✅ Free</td><td>Medium</td><td style="color:var(--green);font-weight:600">Essential</td>
+  </tr>
+  <tr>
+    <td>🎭 Playwright</td><td>Web Devs</td><td>⭐⭐⭐</td><td>✅ Free</td><td>Medium</td><td style="color:var(--blue)">If you test UIs</td>
+  </tr>
+  <tr>
+    <td>🐛 Sentry</td><td>Devs with Sentry</td><td>⭐⭐⭐⭐</td><td>✅ Free tier</td><td>Medium</td><td style="color:var(--blue)">If you use Sentry</td>
+  </tr>
+  <tr>
+    <td>🌐 Brave Search</td><td>Everyone</td><td>⭐⭐⭐⭐</td><td>💰 $5/1K</td><td>Low</td><td style="color:var(--green);font-weight:600">Best search MCP</td>
+  </tr>
+  <tr>
+    <td>🧠 Sequential Thinking</td><td>Everyone</td><td>⭐⭐⭐⭐⭐</td><td>✅ Free</td><td>Low</td><td style="color:var(--green);font-weight:600">Essential</td>
+  </tr>
+  <tr>
+    <td>📁 Filesystem</td><td>Everyone</td><td>⭐⭐⭐⭐⭐</td><td>✅ Free</td><td>Lowest</td><td style="color:var(--green);font-weight:600">Essential</td>
+  </tr>
+  <tr>
+    <td>📝 Notion</td><td>Notion users</td><td>⭐⭐⭐⭐⭐</td><td>✅ Free</td><td>Low</td><td style="color:var(--blue)">If you use Notion</td>
+  </tr>
+  <tr>
+    <td>✈️ Vercel</td><td>Vercel users</td><td>⭐⭐⭐⭐</td><td>✅ Free</td><td>Low</td><td style="color:var(--muted)">Niche</td>
+  </tr>
+  <tr>
+    <td>🔥 Firecrawl</td><td>Researchers</td><td>⭐⭐⭐⭐</td><td>💰 $16/mo</td><td>Medium</td><td style="color:var(--blue)">Power users</td>
+  </tr>
+  <tr>
+    <td>🐘 PostgreSQL</td><td>DB devs</td><td>⭐⭐⭐</td><td>✅ OSS</td><td>High</td><td style="color:var(--orange)">⚠️ Token cost</td>
+  </tr>
+</table>
+
+<!-- ===== FINAL VERDICT ===== -->
+<div class="section-title">
+  <span class="num">🏁</span> Final Verdict
+</div>
+
+<div class="grid3" style="margin:14px 0">
+  <div class="card" style="padding:18px;border-top:3px solid var(--green);text-align:center">
+    <div style="font-size:1.6rem;margin-bottom:6px">🥇</div>
+    <h3 style="font-size:.95rem;color:var(--green)">Universal Trio</h3>
+    <p style="font-size:.82rem;line-height:1.7">Context7<br>+ Sequential Thinking<br>+ Filesystem MCP</p>
+    <div class="why" style="font-size:.72rem;color:var(--muted);margin-top:6px;border-top:1px solid var(--surface2);padding-top:6px">Zero config. Zero cost. Every user benefits. Install these first.</div>
+  </div>
+  <div class="card" style="padding:18px;border-top:3px solid var(--blue);text-align:center">
+    <div style="font-size:1.6rem;margin-bottom:6px">🥈</div>
+    <h3 style="font-size:.95rem;color:var(--blue)">Developer Add-ons</h3>
+    <p style="font-size:.82rem;line-height:1.7">GitHub MCP<br>+ Sentry MCP<br>+ Playwright MCP</p>
+    <div class="why" style="font-size:.72rem;color:var(--muted);margin-top:6px;border-top:1px solid var(--surface2);padding-top:6px">Add after universal trio. GitHub first, Sentry if you use it, Playwright if you test UIs.</div>
+  </div>
+  <div class="card" style="padding:18px;border-top:3px solid var(--peach);text-align:center">
+    <div style="font-size:1.6rem;margin-bottom:6px">🥉</div>
+    <h3 style="font-size:.95rem;color:var(--peach)">Student Add-ons</h3>
+    <p style="font-size:.82rem;line-height:1.7">Brave Search MCP<br>+ Notion MCP<br>+ Firecrawl MCP</p>
+    <div class="why" style="font-size:.72rem;color:var(--muted);margin-top:6px;border-top:1px solid var(--surface2);padding-top:6px">Brave Search for research, Notion for notes, Firecrawl for deep web research.</div>
+  </div>
+</div>
+
+<div class="callout teal" style="text-align:center;font-size:.9rem;padding:18px">
+  <strong>🎯 Bottom line:</strong> Install <strong>Context7 + Sequential Thinking + Filesystem MCP</strong> today (5 minutes). If you're a developer, add <strong>GitHub MCP</strong>. If you're a student, add <strong>Brave Search MCP</strong>. That's it — you now have 80% of the value with 20% of the servers.
+</div>
+
+</div><!-- /container -->
+
+<script>
+// Quiz logic
+let quizAnswers = {};
+document.querySelectorAll('.quiz-btn').forEach(btn => {
+  btn.addEventListener('click', () => {
+    const parent = btn.closest('[id^="q"]');
+    parent.querySelectorAll('.quiz-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+
+    const qId = parent.id;
+    quizAnswers[qId] = btn.dataset.answer;
+
+    if (qId === 'q1') { document.getElementById('q2').style.display = 'block'; }
+    else if (qId === 'q2') { document.getElementById('q3').style.display = 'block'; }
+    else if (qId === 'q3') { showQuizResult(); }
+  });
+});
+
+function showQuizResult() {
+  document.getElementById('quizView').style.display = 'none';
+  document.getElementById('quizResult').style.display = 'block';
+
+  const role = quizAnswers.q1 || 'both';
+  const need = quizAnswers.q2 || 'all';
+  const setup = quizAnswers.q3 || 'any';
+
+  let servers = [];
+  if (role === 'dev' || role === 'both') {
+    servers.push('🐙 GitHub MCP — code management');
+    servers.push('📄 Context7 — versioned docs');
+    if (need === 'coding' || need === 'all')
+      servers.push('🐛 Sentry MCP — error debugging');
+    if (setup !== 'zero')
+      servers.push('🎭 Playwright MCP — browser testing');
+  }
+  if (role === 'student' || role === 'both') {
+    servers.push('🌐 Brave Search MCP — web research');
+    servers.push('🧠 Sequential Thinking — structured reasoning');
+    if (setup !== 'zero') {
+      servers.push('📝 Notion MCP — save research to your notes');
+    }
+  }
+  servers.push('📁 Filesystem MCP — AI reads/writes your files');
+
+  // Deduplicate
+  servers = [...new Set(servers)];
+
+  let effortNote = '';
+  if (setup === 'zero') {
+    effortNote = 'You wanted zero setup — sticking to remote MCPs and zero-config servers. ✅';
+  } else if (setup === 'low') {
+    effortNote = 'Minimal setup — npm/npx installs only. 🔧';
+  } else {
+    effortNote = 'Full setup — all the good stuff. 🏗️';
+  }
+
+  let html = `<p><strong>👤 ${role === 'dev' ? 'Developer' : role === 'student' ? 'Student' : 'Developer + Student'}</strong> · <strong>🎯 ${need === 'coding' ? 'Coding' : need === 'research' ? 'Research' : need === 'writing' ? 'Writing' : 'Everything'}</strong> · ${effortNote}</p><br>`;
+  html += `<strong>Your ${servers.length}-server stack:</strong><br>`;
+  servers.forEach(s => { html += `  → ${s}<br>`; });
+  html += `<br><em style="color:var(--muted);font-size:.78rem">Install the first 3 now (15 min). Add the rest as you need them.</em>`;
+
+  document.getElementById('quizResultContent').innerHTML = html;
+}
+
+function resetQuiz() {
+  quizAnswers = {};
+  document.getElementById('quizView').style.display = 'block';
+  document.querySelectorAll('[id^="q"]').forEach(q => q.style.display = 'none');
+  document.getElementById('q1').style.display = 'block';
+  document.querySelectorAll('.quiz-btn').forEach(b => b.classList.remove('active'));
+  document.getElementById('quizResult').style.display = 'none';
+}
+
+// Role tabs
+document.querySelectorAll('#roleBar .role-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('#roleBar .role-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const role = tab.dataset.role;
+    document.querySelectorAll('.role-content').forEach(c => {
+      c.style.display = c.dataset.role === role ? '' : 'none';
+    });
+  });
+});
+
+// Day tabs
+document.querySelectorAll('#dayRoleBar .role-tab').forEach(tab => {
+  tab.addEventListener('click', () => {
+    document.querySelectorAll('#dayRoleBar .role-tab').forEach(t => t.classList.remove('active'));
+    tab.classList.add('active');
+    const day = tab.dataset.day;
+    document.getElementById('devDay').style.display = day === 'dev' ? '' : 'none';
+    document.getElementById('studentDay').style.display = day === 'student' ? '' : 'none';
+  });
+});
+</script>
+
+</body>
+</html>

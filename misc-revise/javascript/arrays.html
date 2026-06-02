@@ -1,0 +1,998 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Array Methods — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#11111b;color:#cdd6f4;padding:20px}
+h1{font-size:2.5rem;margin-bottom:.3rem}
+h2{font-size:1.3rem;margin:2rem 0 .8rem;color:#89b4fa;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.7rem;background:#313244;color:#a6adc8;padding:2px 8px;border-radius:999px;font-weight:400}
+h3{font-size:1rem;margin:1.2rem 0 .5rem;color:#a6e3a1}
+p,li{color:#bac2de;line-height:1.7}
+code{background:#181825;padding:2px 6px;border-radius:4px;font-size:.85em;color:#fab387;font-family:'JetBrains Mono',monospace}
+pre{background:#181825;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0;border:1px solid #313244;line-height:1.7}
+pre code{background:none;padding:0;color:#a6e3a1}
+.wrapper{max-width:1000px;margin:0 auto}
+.gradient-text{background:linear-gradient(135deg,#89b4fa,#a6e3a1,#f9e2af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#6c7086;margin-bottom:2rem}
+.demo-panel{background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:20px;margin:20px 0}
+.demo-panel .label{font-size:.75rem;color:#6c7086;margin-bottom:8px;font-family:monospace}
+.demo-panel .label span{color:#89b4fa}
+.tip{background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.85rem;color:#a6adc8}
+.tip strong{color:#f9e2af}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.84rem;border-left:4px solid #89b4fa;background:rgba(137,180,250,.04)}
+.callout.danger{border-color:#f38ba8;background:rgba(243,139,168,.06)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;font-size:.85rem}
+.info-card .prop{color:#89b4fa;font-family:monospace;font-weight:600}
+.info-card .val{color:#a6e3a1}
+.info-card .desc{color:#6c7086;font-size:.8rem;margin-top:4px}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.controls button,.btn{background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:monospace;transition:.2s}
+.controls button:hover,.btn:hover{background:#45475a}
+.controls button.active,.btn.active{background:#89b4fa30;border-color:#89b4fa;color:#89b4fa}
+.slider-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.slider-group label{font-size:.78rem;color:#a6adc8}
+.slider-group input[type=range]{accent-color:#89b4fa;width:140px}
+.slider-group .value{font-family:monospace;font-size:.8rem;color:#fab387;min-width:40px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{background:#181825;color:#89b4fa;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid #313244}
+td{padding:10px 14px;border-bottom:1px solid #313244;color:#a6adc8}
+tr:hover td{background:#1e1e2e50}
+td:first-child{font-family:monospace;color:#fab387}
+::selection{background:#89b4fa40}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#11111b}
+::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+.colors{display:flex;gap:2px;align-items:stretch;flex-wrap:wrap;padding:8px;background:#181825;border-radius:6px;border:1px solid #313244;min-height:40px;margin:8px 0}
+.colors .item{display:inline-flex;align-items:center;justify-content:center;min-width:32px;padding:6px 10px;border-radius:4px;font-size:.82rem;font-weight:600;position:relative;transition:.2s;font-family:monospace}
+.colors .item .aidx{position:absolute;bottom:-13px;font-size:.52rem;font-weight:400;color:#585b70}
+.colors .item.highlight{border:2px solid #f9e2af;transform:scale(1.1);z-index:2;box-shadow:0 0 12px rgba(249,226,175,.3)}
+.colors .item.selected{background:#f38ba8!important;color:#1e1e2e;border:2px solid #f38ba8}
+.colors .item.result-item{background:#a6e3a1!important;color:#1e1e2e;transform:scale(1.05)}
+.console-box{background:#0a0a14;border:1px solid #313244;border-radius:8px;padding:14px;font-family:monospace;font-size:.82rem;line-height:1.9;min-height:40px;margin:8px 0}
+.console-box .prompt{color:#6c7086}
+.console-box .result{color:#a6e3a1}
+.console-box .error{color:#f38ba8}
+.console-box .val{color:#fab387}
+.console-box .str{color:#a6e3a1}
+.console-box .num{color:#89b4fa}
+.console-box .bool{color:#f9e2af}
+.playground-row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.playground-row input,.playground-row select{background:#313244;color:#cdd6f4;border:1px solid #45475a;border-radius:4px;padding:4px 8px;font-family:monospace;font-size:.8rem}
+.playground-row input{width:160px}
+.playground-row .pg-label{font-size:.75rem;color:#6c7086;font-family:monospace}
+.arrow{color:#585b70;font-size:1.2rem;padding:0 4px}
+.c0{background:#89b4fa;color:#1e1e2e}
+.c1{background:#a6e3a1;color:#1e1e2e}
+.c2{background:#f9e2af;color:#1e1e2e}
+.c3{background:#f38ba8;color:#1e1e2e}
+.c4{background:#cba6f7;color:#1e1e2e}
+.c5{background:#fab387;color:#1e1e2e}
+.c6{background:#94e2d5;color:#1e1e2e}
+.c7{background:#74c7ec;color:#1e1e2e}
+.c8{background:#f5c2e7;color:#1e1e2e}
+.c9{background:#b4befe;color:#1e1e2e}
+.c10{background:#f8bd7f;color:#1e1e2e}
+.c11{background:#f28fad;color:#1e1e2e}
+.before-after{display:grid;grid-template-columns:1fr auto 1fr;gap:10px;align-items:center;margin:8px 0}
+@media(max-width:600px){.before-after{grid-template-columns:1fr}}
+.before-after .ba-label{font-size:.7rem;color:#6c7086;text-align:center;font-family:monospace}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1><span class="gradient-text">JS Array Methods</span> — Deep Visual Guide</h1>
+<p class="subtitle">Every array method visualized. See elements change, move, transform in real time. Click, slide, and explore.</p>
+
+<!-- ===== 0. Arrays Are Indexed ===== -->
+<section>
+<h2><span>0. Arrays Are Indexed</span> <span class="badge">Foundation</span></h2>
+<p>Arrays are <strong>zero-indexed</strong> ordered lists. Each element has an index. <strong>Mutable</strong> methods modify the array; <strong>immutable</strong> methods return a new array.</p>
+
+<div class="demo-panel">
+  <div class="label">Visual index — each colored block = one element</div>
+  <div class="playground-row">
+    <input id="arrSrc" value='["🍎","🍊","🍋","🍇","🍓"]' style="width:240px;font-size:.8rem">
+    <button id="arrUpdate" class="btn active">Update</button>
+  </div>
+  <div id="arrIndexVis" class="colors"></div>
+  <div class="label" id="arrIndexInfo">Length: 5 elements</div>
+</div>
+
+<div class="tip">
+  <strong>Mutating vs Non-mutating:</strong> <code>push()</code>, <code>pop()</code>, <code>splice()</code>, <code>sort()</code>, <code>reverse()</code> modify the original. <code>map()</code>, <code>filter()</code>, <code>slice()</code>, <code>concat()</code>, <code>toSorted()</code>, <code>toReversed()</code>, <code>toSpliced()</code> return a new array.
+</div>
+</section>
+
+<!-- ===== 1. Add & Remove ===== -->
+<section>
+<h2><span>1. Add &amp; Remove</span> <span class="badge">push · pop · shift · unshift · splice</span></h2>
+
+<div class="demo-panel">
+  <div class="controls" id="mutateControls">
+    <button class="active" data-v="push">push("🥝")</button>
+    <button data-v="pop">pop()</button>
+    <button data-v="unshift">unshift("🥝")</button>
+    <button data-v="shift">shift()</button>
+    <button data-v="splice">splice(2, 1, "🥝")</button>
+  </div>
+  <div class="before-after">
+    <div><div class="ba-label">Before</div><div id="mutateBefore" class="colors"></div></div>
+    <div class="arrow" style="font-size:1.5rem;">→</div>
+    <div><div class="ba-label">After</div><div id="mutateAfter" class="colors"></div></div>
+  </div>
+  <div class="console-box" id="mutateConsole">
+    <div class="prompt">&gt; arr.push("🥝")</div>
+    <div class="result">&lArr; 6 (new length)</div>
+  </div>
+</div>
+
+<pre><code><span style="color:#6c7086">// Mutable — modifies the original array</span>
+arr.push(item)     <span style="color:#6c7086">// → adds to END, returns new length</span>
+arr.pop()          <span style="color:#6c7086">// → removes LAST, returns removed item</span>
+arr.unshift(item)  <span style="color:#6c7086">// → adds to START, returns new length</span>
+arr.shift()        <span style="color:#6c7086">// → removes FIRST, returns removed item</span>
+arr.splice(i, n, ...items) <span style="color:#6c7086">// → removes n at index i, inserts items</span>
+
+<span style="color:#6c7086">// Immutable alternatives (ES2023+)</span>
+arr.toSpliced(i, n, ...items) <span style="color:#6c7086">// → new array, doesn't modify original</span></code></pre>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop">push() / pop()</div><div class="desc">Stack operations — add/remove from the <strong>end</strong>. Fast (O(1)).</div></div>
+  <div class="info-card"><div class="prop">unshift() / shift()</div><div class="desc">Queue operations — add/remove from the <strong>start</strong>. Slow (O(n)), reindexes everything.</div></div>
+  <div class="info-card"><div class="prop">splice(i, n, ...items)</div><div class="desc">Swiss Army knife. Remove, replace, insert at any index. Returns removed items.</div></div>
+  <div class="info-card"><div class="prop">toSpliced(i, n, ...items)</div><div class="desc">Immutable splice. ES2023. Returns a new array, original untouched.</div></div>
+</div>
+</section>
+
+<!-- ===== 2. Access & Search ===== -->
+<section>
+<h2><span>2. Access &amp; Search</span> <span class="badge">at · indexOf · includes · find · findIndex · filter</span></h2>
+
+<div class="demo-panel">
+  <div class="label">Search within: <span id="searchArrDisplay">[10, 20, 30, 40, 50, 30, 60]</span></div>
+  <div class="playground-row">
+    <span class="pg-label">Find:</span>
+    <input id="searchArrQuery" value="30" style="width:80px">
+    <span class="pg-label">Callback:</span>
+    <select id="searchArrCb" style="width:160px">
+      <option value="val">value === 30</option>
+      <option value="gt">value &gt; 25</option>
+      <option value="mod">value % 20 === 0</option>
+    </select>
+    <button id="searchArrRun" class="btn active">Search</button>
+  </div>
+  <div id="searchArrVis" class="colors"></div>
+  <div class="info-grid" id="searchArrResults">
+    <div class="info-card"><div class="prop">indexOf(30)</div><div class="val" id="saIndexOf">—</div></div>
+    <div class="info-card"><div class="prop">lastIndexOf(30)</div><div class="val" id="saLastIndexOf">—</div></div>
+    <div class="info-card"><div class="prop">includes(30)</div><div class="val" id="saIncludes">—</div></div>
+    <div class="info-card"><div class="prop">find(x &gt; 25)</div><div class="val" id="saFind">—</div></div>
+    <div class="info-card"><div class="prop">findIndex(x &gt; 25)</div><div class="val" id="saFindIndex">—</div></div>
+    <div class="info-card"><div class="prop">filter(x &gt; 25)</div><div class="val" id="saFilter">—</div></div>
+  </div>
+</div>
+
+<pre><code><span style="color:#6c708c">// Search methods</span>
+arr.indexOf(item)      <span style="color:#6c708c">// → first index or -1</span>
+arr.lastIndexOf(item)  <span style="color:#6c708c">// → last index or -1</span>
+arr.includes(item)     <span style="color:#6c708c">// → boolean</span>
+arr.find(fn)           <span style="color:#6c708c">// → first element matching, or undefined</span>
+arr.findIndex(fn)      <span style="color:#6c708c">// → first index matching, or -1</span>
+arr.findLast(fn)       <span style="color:#6c708c">// → last element matching (ES2023)</span>
+arr.filter(fn)         <span style="color:#6c708c">// → new array of ALL matching</span></code></pre>
+</section>
+
+<!-- ===== 3. Iterate & Transform ===== -->
+<section>
+<h2><span>3. Iterate &amp; Transform</span> <span class="badge">map · forEach · flatMap · reduce</span></h2>
+
+<div class="demo-panel">
+  <div class="controls" id="transformControls">
+    <button class="active" data-v="map">map(x → x * 2)</button>
+    <button data-v="filterEven">filter(x → x % 2 === 0)</button>
+    <button data-v="flatMap">flatMap(x → [x, x * 2])</button>
+  </div>
+  <div class="before-after">
+    <div><div class="ba-label">Original</div><div id="transformBefore" class="colors"></div></div>
+    <div class="arrow">→</div>
+    <div><div class="ba-label">Result</div><div id="transformAfter" class="colors"></div></div>
+  </div>
+  <div class="console-box" id="transformConsole">
+    <div class="result">Click a preset to transform</div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label"><code>reduce()</code> — step through the accumulator visually:</div>
+  <div class="playground-row">
+    <span class="pg-label">Array:</span>
+    <span style="font-family:monospace;color:#a6e3a1;">[1, 2, 3, 4, 5]</span>
+    <span class="pg-label">Operation:</span>
+    <select id="reduceOp" style="width:100px">
+      <option value="sum">sum</option>
+      <option value="product">product</option>
+      <option value="max">max</option>
+    </select>
+    <button id="reduceRun" class="btn active">Reduce</button>
+  </div>
+  <div id="reduceVis" class="colors"></div>
+  <div id="reduceSteps" style="display:flex;flex-wrap:wrap;gap:4px;margin:8px 0;"></div>
+  <div class="console-box" id="reduceConsole">
+    <div class="result">Click Reduce</div>
+  </div>
+</div>
+
+<pre><code><span style="color:#6c708c">// Transform — always returns a NEW array (immutable)</span>
+arr.map(x =&gt; x * 2)         <span style="color:#6c708c">// → [2, 4, 6, ...]  (1:1 mapping)</span>
+arr.filter(x =&gt; x &gt; 2)      <span style="color:#6c708c">// → [3, 4, 5]  (keeps matches)</span>
+arr.flatMap(x =&gt; [x, x*2])  <span style="color:#6c708c">// → flattens one level</span>
+arr.reduce((acc, x) =&gt; acc + x, 0) <span style="color:#6c708c">// → single value</span>
+arr.forEach(x =&gt; console.log(x))    <span style="color:#6c708c">// → undefined (side effects)</span></code></pre>
+
+<div class="tip">
+  <strong>map vs forEach:</strong> <code>map</code> returns a <strong>new array</strong> (use for transformation). <code>forEach</code> returns <strong>undefined</strong> (use for side effects like logging or DOM updates). Don't use forEach when you mean map.
+</div>
+</section>
+
+<!-- ===== 4. Slice, Concat, Join ===== -->
+<section>
+<h2><span>4. Slice, Concat, Join</span> <span class="badge">slice · concat · join · flat</span></h2>
+
+<div class="demo-panel">
+  <div class="playground-row">
+    <span class="pg-label">Array:</span>
+    <span style="font-family:monospace;color:#a6e3a1;" id="scjSrc">[1, 2, 3, 4, 5]</span>
+    <span class="pg-label">Method:</span>
+    <select id="scjMethod" style="width:130px">
+      <option value="slice">slice(1, 4)</option>
+      <option value="concat">concat([6, 7])</option>
+      <option value="join">join(" - ")</option>
+      <option value="flat">flat()</option>
+    </select>
+    <button id="scjRun" class="btn active">Run</button>
+  </div>
+  <div class="before-after">
+    <div><div class="ba-label">Before</div><div id="scjBefore" class="colors"></div></div>
+    <div class="arrow">→</div>
+    <div><div class="ba-label">After</div><div id="scjAfter" class="colors"></div></div>
+  </div>
+  <div class="console-box" id="scjConsole"></div>
+</div>
+
+<pre><code>arr.slice(start, end)        <span style="color:#6c708c">// → new array, start→end (end exclusive)</span>
+arr.concat(arr2)             <span style="color:#6c708c">// → new merged array (use spread instead)</span>
+arr.join(separator)          <span style="color:#6c708c">// → string</span>
+arr.flat(depth)              <span style="color:#6c708c">// → flattens nested arrays (depth=1 default)</span>
+[...arr1, ...arr2]           <span style="color:#6c708c">// → spread: modern concat alternative</span></code></pre>
+</section>
+
+<!-- ===== 5. Sort & Reverse ===== -->
+<section>
+<h2><span>5. Sort &amp; Reverse</span> <span class="badge">sort · toSorted · reverse · toReversed</span></h2>
+
+<div class="demo-panel">
+  <div class="label"><code>sort()</code> — watch elements rearrange:</div>
+  <div class="playground-row">
+    <span class="pg-label">Input:</span>
+    <input id="sortInput" value='[3, 1, 4, 1, 5, 9, 2, 6]' style="width:180px;font-size:.8rem">
+    <span class="pg-label">Sort:</span>
+    <select id="sortType" style="width:120px">
+      <option value="asc">ascending</option>
+      <option value="desc">descending</option>
+      <option value="alpha">alphabetic</option>
+      <option value="len">by length</option>
+    </select>
+    <button id="sortRun" class="btn active">Sort</button>
+  </div>
+  <div class="before-after">
+    <div><div class="ba-label">Before</div><div id="sortBefore" class="colors"></div></div>
+    <div class="arrow">→</div>
+    <div><div class="ba-label">After (sorted)</div><div id="sortAfter" class="colors"></div></div>
+  </div>
+  <div class="console-box" id="sortConsole"></div>
+  <div class="tip">
+    <strong>sort() mutates! Use toSorted() (ES2023) for a copy.</strong><br>
+    <code>arr.sort()</code> sorts as <strong>strings by default</strong>: <code>[1, 10, 2]</code> → <code>[1, 10, 2]</code>. Always pass a compare function: <code>arr.sort((a, b) => a - b)</code>.
+  </div>
+</div>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop">sort(fn)</div><div class="desc">Mutable. Sorts in place. Default: string sort. Compare fn: <code>(a, b) => a - b</code> for numbers.</div></div>
+  <div class="info-card"><div class="prop">toSorted(fn)</div><div class="desc">ES2023. Returns a new sorted array. Original unchanged.</div></div>
+  <div class="info-card"><div class="prop">reverse()</div><div class="desc">Mutable. Reverses in place.</div></div>
+  <div class="info-card"><div class="prop">toReversed()</div><div class="desc">ES2023. Returns new reversed array. Original unchanged.</div></div>
+</div>
+</section>
+
+<!-- ===== 6. Fill & From & Of ===== -->
+<section>
+<h2><span>6. Create &amp; Fill</span> <span class="badge">Array.from · Array.of · fill · isArray</span></h2>
+
+<div class="demo-panel">
+  <div class="controls" id="createControls">
+    <button class="active" data-v='{"m":"from","a":"hello"}'>Array.from("hello")</button>
+    <button data-v='{"m":"from","a":"5"}'>Array.from({length:5}, (_,i) => i)</button>
+    <button data-v='{"m":"of","a":"1,2,3"}'>Array.of(1, 2, 3)</button>
+    <button data-v='{"m":"fill","a":"0,5"}'>[1,2,3].fill(0)</button>
+    <button data-v='{"m":"fillRange","a":"0,1,3"}'>[1,2,3,4,5].fill(0,1,3)</button>
+  </div>
+  <div class="colors" id="createVis"></div>
+  <div class="console-box" id="createConsole"></div>
+</div>
+
+<pre><code><span style="color:#6c708c">// Static methods (on Array, not on instances)</span>
+Array.from(<span class="str">"hello"</span>)               <span style="color:#6c708c">// → ["h","e","l","l","o"] (iterable → array)</span>
+Array.from({length:3}, (_,i) => i) <span style="color:#6c708c">// → [0,1,2]  (map callback)</span>
+Array.of(1, 2, 3)                    <span style="color:#6c708c">// → [1,2,3]  (like [1,2,3] but safe)</span>
+Array.isArray([])                    <span style="color:#6c708c">// → true  (best way to check)</span>
+
+<span style="color:#6c708c">// Instance methods</span>
+arr.fill(value, start, end)         <span style="color:#6c708c">// → mutates, fills with value</span></code></pre>
+</section>
+
+<!-- ===== 7. Some, Every, Flat ===== -->
+<section>
+<h2><span>7. Some, Every, Flat</span> <span class="badge">some · every · flat · flatMap</span></h2>
+
+<div class="demo-panel">
+  <div class="controls" id="logicControls">
+    <button class="active" data-v='{"arr":[1,2,3,4,5],"fn":"x > 3"}'>some(x > 3)</button>
+    <button data-v='{"arr":[1,2,3,4,5],"fn":"x > 3"}'>every(x > 3)</button>
+    <button data-v='{"arr":[1,10,2,20],"fn":"x > 5"}'>filter(x > 5)</button>
+  </div>
+  <div class="colors" id="logicVis"></div>
+  <div class="console-box" id="logicConsole"></div>
+</div>
+
+<pre><code>arr.some(x =&gt; x &gt; 3)   <span style="color:#6c708c">// → true  (at least one matches)</span>
+arr.every(x =&gt; x &gt; 3)  <span style="color:#6c708c">// → false (all must match)</span>
+arr.flat()              <span style="color:#6c708c">// → [1,2,3,4,5]  (from [[1,2],[3,4,5]])</span>
+arr.flatMap(x =&gt; [x])  <span style="color:#6c708c">// → map + flat in one pass</span></code></pre>
+
+<div class="tip">
+  <strong>some stops early:</strong> If any element matches, iteration stops immediately (short-circuit). Same with <code>every</code> — returns <code>false</code> as soon as one fails. This makes them efficient for large arrays.
+</div>
+</section>
+
+<!-- ===== 8. Interactive Playground ===== -->
+<section>
+<h2><span>8. Interactive Playground</span> <span class="badge">Try Any Method</span></h2>
+
+<div class="demo-panel">
+  <div class="playground-row">
+    <span class="pg-label">Array</span>
+    <input id="pgArr" value='[5, 10, 15, 20, 25]' style="width:180px;font-size:.8rem">
+  </div>
+  <div class="playground-row">
+    <span class="pg-label">Method</span>
+    <select id="pgMethod" style="width:160px;">
+      <optgroup label="Transform">
+        <option value="map">map</option>
+        <option value="filter">filter</option>
+        <option value="flatMap">flatMap</option>
+      </optgroup>
+      <optgroup label="Search">
+        <option value="find">find</option>
+        <option value="findIndex">findIndex</option>
+        <option value="includes">includes</option>
+      </optgroup>
+      <optgroup label="Aggregate">
+        <option value="some">some</option>
+        <option value="every">every</option>
+        <option value="reduce">reduce</option>
+      </optgroup>
+      <optgroup label="Transform (ES2023)">
+        <option value="toSorted">toSorted</option>
+        <option value="toReversed">toReversed</option>
+      </optgroup>
+      <optgroup label="Other">
+        <option value="join" selected>join</option>
+        <option value="slice">slice</option>
+        <option value="at">at</option>
+        <option value="fill">fill</option>
+      </optgroup>
+    </select>
+    <span class="pg-label">Arg</span>
+    <input id="pgArg" value=" - " style="width:80px" placeholder="arg">
+    <span class="pg-label">Arg 2</span>
+    <input id="pgArg2" value="" style="width:80px" placeholder="arg 2">
+    <button id="pgRun" class="btn active">Run</button>
+  </div>
+  <div class="before-after">
+    <div><div class="ba-label">Original</div><div id="pgBefore" class="colors"></div></div>
+    <div class="arrow">→</div>
+    <div><div class="ba-label">Result</div><div id="pgAfter" class="colors"></div></div>
+  </div>
+  <div class="console-box" id="pgConsole">
+    <div class="result">Click Run</div>
+  </div>
+</div>
+</section>
+
+<!-- ===== 9. Quick Reference ===== -->
+<section>
+<h2><span>Quick Reference</span> <span class="badge">All Methods</span></h2>
+<table>
+  <thead><tr><th>Method</th><th>Returns</th><th>Mutable?</th><th>Description</th></tr></thead>
+  <tbody>
+    <tr><td>push(item)</td><td>number</td><td>Yes</td><td>Adds to end, returns new length</td></tr>
+    <tr><td>pop()</td><td>item</td><td>Yes</td><td>Removes from end, returns it</td></tr>
+    <tr><td>unshift(item)</td><td>number</td><td>Yes</td><td>Adds to start, returns new length</td></tr>
+    <tr><td>shift()</td><td>item</td><td>Yes</td><td>Removes from start, returns it</td></tr>
+    <tr><td>splice(i, n, ...)</td><td>array</td><td>Yes</td><td>Remove/replace at index</td></tr>
+    <tr><td>toSpliced(i, n, ...)</td><td>array</td><td>No</td><td>Immutable splice (ES2023)</td></tr>
+    <tr><td>slice(start, end)</td><td>array</td><td>No</td><td>Extracts portion</td></tr>
+    <tr><td>concat(arr)</td><td>array</td><td>No</td><td>Merges arrays</td></tr>
+    <tr><td>indexOf(item)</td><td>number</td><td>No</td><td>First index of item, or -1</td></tr>
+    <tr><td>lastIndexOf(item)</td><td>number</td><td>No</td><td>Last index of item, or -1</td></tr>
+    <tr><td>includes(item)</td><td>boolean</td><td>No</td><td>True if item exists</td></tr>
+    <tr><td>find(fn)</td><td>item|undefined</td><td>No</td><td>First element matching fn</td></tr>
+    <tr><td>findIndex(fn)</td><td>number</td><td>No</td><td>Index of first match, or -1</td></tr>
+    <tr><td>findLast(fn)</td><td>item|undefined</td><td>No</td><td>Last match (ES2023)</td></tr>
+    <tr><td>filter(fn)</td><td>array</td><td>No</td><td>All matching elements</td></tr>
+    <tr><td>map(fn)</td><td>array</td><td>No</td><td>Transform each element</td></tr>
+    <tr><td>flatMap(fn)</td><td>array</td><td>No</td><td>Map then flatten 1 level</td></tr>
+    <tr><td>flat(depth)</td><td>array</td><td>No</td><td>Flattens nested arrays</td></tr>
+    <tr><td>reduce(fn, init)</td><td>any</td><td>No</td><td>Accumulate to single value</td></tr>
+    <tr><td>reduceRight(fn, init)</td><td>any</td><td>No</td><td>Reduce from right to left</td></tr>
+    <tr><td>forEach(fn)</td><td>undefined</td><td>No</td><td>Side-effect iteration</td></tr>
+    <tr><td>some(fn)</td><td>boolean</td><td>No</td><td>Some element matches?</td></tr>
+    <tr><td>every(fn)</td><td>boolean</td><td>No</td><td>All elements match?</td></tr>
+    <tr><td>sort(fn)</td><td>array</td><td>Yes</td><td>Sorts in place</td></tr>
+    <tr><td>toSorted(fn)</td><td>array</td><td>No</td><td>Returns sorted copy (ES2023)</td></tr>
+    <tr><td>reverse()</td><td>array</td><td>Yes</td><td>Reverses in place</td></tr>
+    <tr><td>toReversed()</td><td>array</td><td>No</td><td>Returns reversed copy (ES2023)</td></tr>
+    <tr><td>fill(v, s, e)</td><td>array</td><td>Yes</td><td>Fills with value</td></tr>
+    <tr><td>join(sep)</td><td>string</td><td>No</td><td>Joins into string</td></tr>
+    <tr><td>toString()</td><td>string</td><td>No</td><td>Comma-separated string</td></tr>
+    <tr><td>at(i)</td><td>item|undefined</td><td>No</td><td>Element at index (supports -)</td></tr>
+    <tr><td>Array.from(iter)</td><td>array</td><td>—</td><td>Static: iterable → array</td></tr>
+    <tr><td>Array.of(...items)</td><td>array</td><td>—</td><td>Static: items → array</td></tr>
+    <tr><td>Array.isArray(v)</td><td>boolean</td><td>—</td><td>Static: check if array</td></tr>
+  </tbody>
+</table>
+</section>
+
+<footer style="border-top:1px solid #313244;padding-top:20px;margin-top:40px;text-align:center;font-size:.85rem;color:#585b70;">
+  JS Array Methods · Deep Visual Guide
+</footer>
+</div>
+
+<script>
+const colArr = ['c0','c1','c2','c3','c4','c5','c6','c7','c8','c9','c10','c11'];
+
+function renderArrVis(containerId, arr, highlights = [], selectedIndices = []) {
+  const container = typeof containerId === 'string' ? document.getElementById(containerId) : containerId;
+  container.innerHTML = '';
+  arr.forEach((item, i) => {
+    const el = document.createElement('span');
+    el.className = 'item ' + colArr[i % colArr.length];
+    el.textContent = String(item);
+    const idx = document.createElement('span');
+    idx.className = 'aidx';
+    idx.textContent = i;
+    el.appendChild(idx);
+    if (highlights.includes(i)) el.classList.add('highlight');
+    if (selectedIndices.includes(i)) el.classList.add('selected');
+    container.appendChild(el);
+  });
+}
+
+function safeParse(str) {
+  try { return JSON.parse(str); }
+  catch(e) { return str.split(',').map(s => s.trim()).filter(Boolean); }
+}
+
+// ===== 0. Index Visual =====
+(function(){
+  const input = document.getElementById('arrSrc');
+  const btn = document.getElementById('arrUpdate');
+  const info = document.getElementById('arrIndexInfo');
+  function update() {
+    let arr;
+    try { arr = JSON.parse(input.value); }
+    catch(e) { arr = input.value.split(',').map(s => s.trim()).filter(Boolean); }
+    renderArrVis('arrIndexVis', arr);
+    info.textContent = 'Length: ' + arr.length + ' element' + (arr.length !== 1 ? 's' : '');
+  }
+  btn.addEventListener('click', update);
+  update();
+})();
+
+// ===== 1. Add/Remove =====
+(function(){
+  let baseArr = ['🍎','🍊','🍋','🍇','🍓'];
+  let currentArr = [...baseArr];
+  const before = document.getElementById('mutateBefore');
+  const after = document.getElementById('mutateAfter');
+  const consoleEl = document.getElementById('mutateConsole');
+
+  function render() {
+    renderArrVis(before, baseArr);
+    renderArrVis(after, currentArr);
+  }
+
+  document.querySelectorAll('#mutateControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#mutateControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      currentArr = [...baseArr];
+      let result;
+      const method = btn.dataset.v;
+      switch(method) {
+        case 'push':
+          result = currentArr.push('🥝');
+          consoleEl.innerHTML = '<div class="prompt">&gt; arr.push("🥝")</div><div class="result">&lArr; ' + result + ' <span style="color:#6c7086">(new length)</span></div>';
+          break;
+        case 'pop':
+          result = currentArr.pop();
+          consoleEl.innerHTML = '<div class="prompt">&gt; arr.pop()</div><div class="result">&lArr; ' + JSON.stringify(result) + ' <span style="color:#6c7086">(removed item)</span></div>';
+          break;
+        case 'unshift':
+          result = currentArr.unshift('🥝');
+          consoleEl.innerHTML = '<div class="prompt">&gt; arr.unshift("🥝")</div><div class="result">&lArr; ' + result + ' <span style="color:#6c7086">(new length)</span></div>';
+          break;
+        case 'shift':
+          result = currentArr.shift();
+          consoleEl.innerHTML = '<div class="prompt">&gt; arr.shift()</div><div class="result">&lArr; ' + JSON.stringify(result) + ' <span style="color:#6c7086">(removed item)</span></div>';
+          break;
+        case 'splice':
+          const removed = currentArr.splice(2, 1, '🥝');
+          consoleEl.innerHTML = '<div class="prompt">&gt; arr.splice(2, 1, "🥝")</div><div class="result">&lArr; ' + JSON.stringify(removed) + ' <span style="color:#6c7086">(removed)</span></div>';
+          break;
+      }
+      render();
+    });
+  });
+  render();
+})();
+
+// ===== 2. Search =====
+(function(){
+  const searchArr = [10, 20, 30, 40, 50, 30, 60];
+  const query = document.getElementById('searchArrQuery');
+  const cb = document.getElementById('searchArrCb');
+  const runBtn = document.getElementById('searchArrRun');
+
+  function updateSearch() {
+    const q = Number(query.value);
+    const cbVal = cb.value;
+    const vis = document.getElementById('searchArrVis');
+    renderArrVis('searchArrVis', searchArr);
+
+    const idx = searchArr.indexOf(q);
+    const lastIdx = searchArr.lastIndexOf(q);
+    const inc = searchArr.includes(q);
+
+    let fn;
+    if (cbVal === 'val') fn = x => x === q;
+    else if (cbVal === 'gt') fn = x => x > q;
+    else fn = x => x % (q || 20) === 0;
+
+    const findRes = searchArr.find(fn);
+    const findIdxRes = searchArr.findIndex(fn);
+    const filterRes = searchArr.filter(fn);
+
+    document.getElementById('saIndexOf').innerHTML = '<span class="num">' + idx + '</span>';
+    document.getElementById('saLastIndexOf').innerHTML = '<span class="num">' + lastIdx + '</span>';
+    document.getElementById('saIncludes').innerHTML = '<span class="bool">' + inc + '</span>';
+    document.getElementById('saFind').innerHTML = '<span class="val">' + (findRes !== undefined ? JSON.stringify(findRes) : 'undefined') + '</span>';
+    document.getElementById('saFindIndex').innerHTML = '<span class="num">' + findIdxRes + '</span>';
+    document.getElementById('saFilter').innerHTML = '<span class="val">' + (filterRes.length ? '[' + filterRes.join(', ') + ']' : '[]') + '</span>';
+
+    const chars = vis.querySelectorAll('.item');
+    if (cbVal === 'val' && idx !== -1) {
+      for (let i = 0; i < searchArr.length; i++) {
+        if (searchArr[i] === q) chars[i].classList.add('highlight');
+      }
+    } else {
+      searchArr.forEach((v, i) => {
+        if (fn(v)) chars[i].classList.add('highlight');
+      });
+    }
+  }
+
+  runBtn.addEventListener('click', updateSearch);
+  updateSearch();
+})();
+
+// ===== 3. Transform (map/filter/flatMap) =====
+(function(){
+  const srcArr = [1, 2, 3, 4, 5, 6];
+  const before = document.getElementById('transformBefore');
+  const after = document.getElementById('transformAfter');
+  const consoleEl = document.getElementById('transformConsole');
+
+  function updateTransform(method) {
+    let result;
+    switch(method) {
+      case 'map':
+        result = srcArr.map(x => x * 2);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + srcArr.join(', ') + '].map(x =&gt; x * 2)</div><div class="result">&lArr; [' + result.join(', ') + ']</div>';
+        break;
+      case 'filterEven':
+        result = srcArr.filter(x => x % 2 === 0);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + srcArr.join(', ') + '].filter(x =&gt; x % 2 === 0)</div><div class="result">&lArr; [' + result.join(', ') + ']</div>';
+        break;
+      case 'flatMap':
+        result = srcArr.flatMap(x => [x, x * 2]);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + srcArr.join(', ') + '].flatMap(x =&gt; [x, x * 2])</div><div class="result">&lArr; [' + result.join(', ') + ']</div>';
+        break;
+    }
+    renderArrVis(before, srcArr);
+    renderArrVis(after, result);
+  }
+
+  document.querySelectorAll('#transformControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#transformControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      updateTransform(btn.dataset.v);
+    });
+  });
+  updateTransform('map');
+})();
+
+// ===== 3b. Reduce =====
+(function(){
+  const reduceArr = [1, 2, 3, 4, 5];
+  const op = document.getElementById('reduceOp');
+  const runBtn = document.getElementById('reduceRun');
+  const steps = document.getElementById('reduceSteps');
+  const consoleEl = document.getElementById('reduceConsole');
+
+  function updateReduce() {
+    const operation = op.value;
+    const vis = document.getElementById('reduceVis');
+    renderArrVis('reduceVis', reduceArr);
+
+    let accStart, fn;
+    switch(operation) {
+      case 'sum':
+        accStart = 0;
+        fn = (acc, x) => acc + x;
+        break;
+      case 'product':
+        accStart = 1;
+        fn = (acc, x) => acc * x;
+        break;
+      case 'max':
+        accStart = -Infinity;
+        fn = (acc, x) => Math.max(acc, x);
+        break;
+    }
+
+    steps.innerHTML = '';
+    let acc = accStart;
+    reduceArr.forEach((x, i) => {
+      const prevAcc = acc;
+      acc = fn(acc, x);
+      const el = document.createElement('span');
+      el.style.cssText = 'background:#313244;border-radius:4px;padding:4px 8px;font-size:.7rem;font-family:monospace;color:#cdd6f4;';
+      el.textContent = 'step ' + i + ': ' + prevAcc + ' → ' + acc;
+      steps.appendChild(el);
+    });
+
+    const final = reduceArr.reduce(fn, accStart);
+    consoleEl.innerHTML = '<div class="prompt">&gt; [' + reduceArr.join(', ') + '].reduce(' + operation + ')</div><div class="result">&lArr; <span class="num">' + final + '</span></div>';
+  }
+
+  runBtn.addEventListener('click', updateReduce);
+  updateReduce();
+})();
+
+// ===== 4. Slice/Concat/Join/Flat =====
+(function(){
+  const method = document.getElementById('scjMethod');
+  const runBtn = document.getElementById('scjRun');
+  const before = document.getElementById('scjBefore');
+  const after = document.getElementById('scjAfter');
+  const consoleEl = document.getElementById('scjConsole');
+
+  const srcArr = [1, 2, 3, 4, 5];
+  function update() {
+    const m = method.value;
+    renderArrVis(before, srcArr);
+    let result, expr;
+    switch(m) {
+      case 'slice':
+        result = srcArr.slice(1, 4);
+        expr = '.slice(1, 4)';
+        break;
+      case 'concat':
+        result = srcArr.concat([6, 7]);
+        expr = '.concat([6, 7])';
+        break;
+      case 'join':
+        result = srcArr.join(' - ');
+        renderArrVis(after, [result]);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + srcArr.join(', ') + '].join(" - ")</div><div class="result">&lArr; <span class="str">"' + result + '"</span></div>';
+        return;
+      case 'flat':
+        const flatSrc = [1, [2, 3], [4, [5]]];
+        result = flatSrc.flat();
+        renderArrVis(before, flatSrc);
+        renderArrVis(after, result);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [1, [2, 3], [4, [5]]].flat()</div><div class="result">&lArr; [' + result.join(', ') + ']</div>';
+        return;
+    }
+    renderArrVis(after, result);
+    consoleEl.innerHTML = '<div class="prompt">&gt; [' + srcArr.join(', ') + ']' + expr + '</div><div class="result">&lArr; [' + result.join(', ') + ']</div>';
+  }
+
+  runBtn.addEventListener('click', update);
+  update();
+})();
+
+// ===== 5. Sort =====
+(function(){
+  const input = document.getElementById('sortInput');
+  const type = document.getElementById('sortType');
+  const runBtn = document.getElementById('sortRun');
+  const before = document.getElementById('sortBefore');
+  const after = document.getElementById('sortAfter');
+  const consoleEl = document.getElementById('sortConsole');
+
+  function updateSort() {
+    let arr;
+    try { arr = JSON.parse(input.value); }
+    catch(e) { arr = input.value.split(',').map(s => s.trim()).filter(Boolean); }
+
+    renderArrVis(before, arr);
+
+    let sorted = [...arr];
+    const t = type.value;
+    switch(t) {
+      case 'asc':
+        sorted.sort((a, b) => Number(a) - Number(b));
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + '].sort((a,b) => a - b)</div><div class="result">&lArr; [' + sorted.join(', ') + ']</div>';
+        break;
+      case 'desc':
+        sorted.sort((a, b) => Number(b) - Number(a));
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + '].sort((a,b) => b - a)</div><div class="result">&lArr; [' + sorted.join(', ') + ']</div>';
+        break;
+      case 'alpha':
+        sorted.sort();
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.map(x => typeof x === 'string' ? '"' + x + '"' : x).join(', ') + '].sort()</div><div class="result">&lArr; [' + sorted.join(', ') + ']</div>';
+        break;
+      case 'len':
+        sorted.sort((a, b) => String(a).length - String(b).length);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + '].sort((a,b) => a.length - b.length)</div><div class="result">&lArr; [' + sorted.join(', ') + ']</div>';
+        break;
+    }
+    renderArrVis(after, sorted);
+  }
+
+  runBtn.addEventListener('click', updateSort);
+  updateSort();
+})();
+
+// ===== 6. Create =====
+(function(){
+  const vis = document.getElementById('createVis');
+  const consoleEl = document.getElementById('createConsole');
+
+  document.querySelectorAll('#createControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#createControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const data = JSON.parse(btn.dataset.v);
+      const method = data.m;
+      let result, expr;
+
+      switch(method) {
+        case 'from':
+          if (data.a === 'hello') {
+            result = Array.from("hello");
+            expr = 'Array.from("hello")';
+          } else {
+            result = Array.from({length: 5}, (_, i) => i);
+            expr = 'Array.from({length:5}, (_,i) => i)';
+          }
+          break;
+        case 'of':
+          result = Array.of(...data.a.split(',').map(s => s.trim()).map(Number));
+          expr = 'Array.of(1, 2, 3)';
+          break;
+        case 'fill':
+          const fillArr = [1, 2, 3];
+          result = [...fillArr].fill(0);
+          expr = '[1, 2, 3].fill(0)';
+          break;
+        case 'fillRange':
+          const fillArr2 = [1, 2, 3, 4, 5];
+          result = [...fillArr2].fill(0, 1, 3);
+          expr = '[1, 2, 3, 4, 5].fill(0, 1, 3)';
+          break;
+      }
+
+      renderArrVis(vis, result);
+      consoleEl.innerHTML = '<div class="prompt">&gt; ' + expr + '</div><div class="result">&lArr; [' + result.map(x => typeof x === 'string' ? '"' + x + '"' : x).join(', ') + '] <span style="color:#6c7086">(length: ' + result.length + ')</span></div>';
+    });
+  });
+  document.querySelector('#createControls .active').click();
+})();
+
+// ===== 7. Some/Every =====
+(function(){
+  const vis = document.getElementById('logicVis');
+  const consoleEl = document.getElementById('logicConsole');
+
+  document.querySelectorAll('#logicControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#logicControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const data = JSON.parse(btn.dataset.v);
+      const arr = data.arr;
+      const fnStr = data.fn;
+
+      renderArrVis('logicVis', arr);
+
+      let fn;
+      if (fnStr === 'x > 3') fn = x => x > 3;
+      else if (fnStr === 'x > 5') fn = x => x > 5;
+      else fn = x => x > 3;
+
+      const buttonText = btn.textContent.trim();
+      let result;
+      if (buttonText.startsWith('some')) {
+        result = arr.some(fn);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + '].some(x => ' + fnStr + ')</div><div class="result">&lArr; <span class="bool">' + result + '</span>';
+      } else if (buttonText.startsWith('every')) {
+        result = arr.every(fn);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + '].every(x => ' + fnStr + ')</div><div class="result">&lArr; <span class="bool">' + result + '</span>';
+      } else {
+        result = arr.filter(fn);
+        consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + '].filter(x => ' + fnStr + ')</div><div class="result">&lArr; [' + result.join(', ') + ']</div>';
+      }
+
+      const chars = vis.querySelectorAll('.item');
+      arr.forEach((v, i) => {
+        if (fn(v) && chars[i]) chars[i].classList.add('highlight');
+      });
+    });
+  });
+  document.querySelector('#logicControls .active').click();
+})();
+
+// ===== 8. Interactive Playground =====
+(function(){
+  const arrInput = document.getElementById('pgArr');
+  const method = document.getElementById('pgMethod');
+  const arg = document.getElementById('pgArg');
+  const arg2 = document.getElementById('pgArg2');
+  const runBtn = document.getElementById('pgRun');
+  const before = document.getElementById('pgBefore');
+  const after = document.getElementById('pgAfter');
+  const consoleEl = document.getElementById('pgConsole');
+
+  function updatePlayground() {
+    let arr;
+    try { arr = JSON.parse(arrInput.value); }
+    catch(e) { arr = arrInput.value.split(',').map(s => s.trim()).filter(Boolean); }
+
+    renderArrVis(before, arr);
+
+    const m = method.value;
+    const a1 = arg.value;
+    const a2 = arg2.value;
+    let result, expr;
+
+    try {
+      switch(m) {
+        case 'map':
+          const mapFn = a1 ? new Function('x', 'return ' + a1) : (x => x * 2);
+          result = arr.map(mapFn);
+          expr = '.map(x => ' + (a1 || 'x * 2') + ')';
+          break;
+        case 'filter':
+          const filterFn = a1 ? new Function('x', 'return ' + a1) : (x => x > 10);
+          result = arr.filter(filterFn);
+          expr = '.filter(x => ' + (a1 || 'x > 10') + ')';
+          break;
+        case 'flatMap':
+          const fmFn = a1 ? new Function('x', 'return ' + a1) : (x => [x, x * 2]);
+          try { result = arr.flatMap(fmFn); } catch(e) { result = '⚠ Error'; }
+          expr = '.flatMap(x => ' + (a1 || '[x, x*2]') + ')';
+          break;
+        case 'find':
+          const findFn = a1 ? new Function('x', 'return ' + a1) : (x => x > 10);
+          result = arr.find(findFn);
+          expr = '.find(x => ' + (a1 || 'x > 10') + ')';
+          if (result === undefined) result = 'undefined';
+          renderArrVis(after, [result]);
+          consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + ']' + expr + '</div><div class="result">&lArr; <span class="val">' + JSON.stringify(result) + '</span></div>';
+          return;
+        case 'findIndex':
+          const fiFn = a1 ? new Function('x', 'return ' + a1) : (x => x > 10);
+          result = arr.findIndex(fiFn);
+          expr = '.findIndex(x => ' + (a1 || 'x > 10') + ')';
+          renderArrVis(after, [result]);
+          consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + ']' + expr + '</div><div class="result">&lArr; <span class="num">' + result + '</span></div>';
+          return;
+        case 'includes':
+          result = arr.includes(a1);
+          expr = '.includes("' + a1 + '")';
+          renderArrVis(after, [result]);
+          consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + ']' + expr + '</div><div class="result">&lArr; <span class="bool">' + result + '</span></div>';
+          return;
+        case 'some':
+          const someFn = a1 ? new Function('x', 'return ' + a1) : (x => x > 10);
+          result = arr.some(someFn);
+          expr = '.some(x => ' + (a1 || 'x > 10') + ')';
+          renderArrVis(after, [result]);
+          consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + ']' + expr + '</div><div class="result">&lArr; <span class="bool">' + result + '</span></div>';
+          return;
+        case 'every':
+          const everyFn = a1 ? new Function('x', 'return ' + a1) : (x => x > 0);
+          result = arr.every(everyFn);
+          expr = '.every(x => ' + (a1 || 'x > 0') + ')';
+          renderArrVis(after, [result]);
+          consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + ']' + expr + '</div><div class="result">&lArr; <span class="bool">' + result + '</span></div>';
+          return;
+        case 'reduce':
+          const reduceFn = a1 ? new Function('acc, x', 'return ' + a1) : ((acc, x) => acc + x);
+          const init = a2 !== '' ? Number(a2) : 0;
+          result = arr.reduce(reduceFn, init);
+          expr = '.reduce((acc, x) => ' + (a1 || 'acc + x') + ', ' + init + ')';
+          renderArrVis(after, [result]);
+          consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + ']' + expr + '</div><div class="result">&lArr; <span class="num">' + result + '</span></div>';
+          return;
+        case 'toSorted':
+          const sortFn = a1 ? new Function('a, b', 'return ' + a1) : ((a, b) => Number(a) - Number(b));
+          try { result = arr.toSorted(sortFn); } catch(e) { result = arr.sort(sortFn); }
+          expr = '.toSorted((a,b) => ' + (a1 || 'a - b') + ')';
+          break;
+        case 'toReversed':
+          try { result = arr.toReversed(); } catch(e) { result = [...arr].reverse(); }
+          expr = '.toReversed()';
+          break;
+        case 'join':
+          result = arr.join(a1 || ',');
+          renderArrVis(after, [result]);
+          consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + '].join("' + (a1 || ',') + '")</div><div class="result">&lArr; <span class="str">"' + result + '"</span></div>';
+          return;
+        case 'slice':
+          const s = Number(a1) || 0;
+          const e = a2 !== '' ? Number(a2) : undefined;
+          result = arr.slice(s, e);
+          expr = '.slice(' + s + (e !== undefined ? ', ' + e : '') + ')';
+          break;
+        case 'at':
+          const idx = Number(a1) || 0;
+          result = arr.at(idx);
+          expr = '.at(' + idx + ')';
+          if (result === undefined) result = 'undefined';
+          renderArrVis(after, [result]);
+          consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + ']' + expr + '</div><div class="result">&lArr; <span class="val">' + JSON.stringify(result) + '</span></div>';
+          return;
+        case 'fill':
+          const fillVal = isNaN(Number(a1)) ? a1 : Number(a1);
+          const sIdx = a2 !== '' ? Number(a2) : 0;
+          result = [...arr].fill(fillVal, sIdx);
+          expr = '.fill(' + JSON.stringify(fillVal) + (sIdx ? ', ' + sIdx : '') + ')';
+          break;
+        default:
+          result = arr;
+      }
+
+      renderArrVis(after, result);
+      consoleEl.innerHTML = '<div class="prompt">&gt; [' + arr.join(', ') + ']' + expr + '</div><div class="result">&lArr; [' + (Array.isArray(result) ? result.map(x => typeof x === 'string' ? '"' + x + '"' : x).join(', ') : result) + ']</div>';
+    } catch(e) {
+      consoleEl.innerHTML = '<div class="error">⚠ Error: ' + e.message + '</div>';
+    }
+  }
+
+  runBtn.addEventListener('click', updatePlayground);
+  updatePlayground();
+})();
+</script>
+</body>
+</html>

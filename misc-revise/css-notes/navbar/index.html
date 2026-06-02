@@ -1,0 +1,867 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Navbar CSS — Visualized</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f17; color: #cdd6f4; padding: 0; }
+    .page { max-width: 1060px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    h1 { font-size: 2.6rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    h1 .glyph { background: linear-gradient(135deg, #89b4fa, #a6e3a1, #f9e2af, #f38ba8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { font-size: 1.4rem; margin: 2.5rem 0 0.8rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .sub { font-size: 0.7rem; color: #6c7086; font-weight: 400; }
+    h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p { color: #a6adc8; line-height: 1.7; margin-bottom: 10px; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid #2a2a3c; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+    .subtitle { color: #6c7086; font-size: 1.05rem; margin-bottom: 2rem; }
+
+    .card { background: #1a1a2a; border: 1px solid #2a2a3c; border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .card-label { font-size: 0.7rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; letter-spacing: 0.3px; }
+    .card-label .hl { color: #89b4fa; }
+
+    .compare-row { display: flex; gap: 16px; margin: 12px 0; }
+    @media (max-width: 700px) { .compare-row { flex-direction: column; } }
+    .compare-side { flex: 1; background: #1a1a2a; border-radius: 10px; border: 1px solid #2a2a3c; overflow: hidden; }
+    .compare-side .cs-head { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .compare-side .cs-head.bad { background: #f38ba815; color: #f38ba8; }
+    .compare-side .cs-head.good { background: #a6e3a115; color: #a6e3a1; }
+    .compare-side .cs-body { padding: 0; }
+
+    .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.7rem; font-family: monospace; border-radius: 4px; }
+    .tag-blue { background: #89b4fa20; color: #89b4fa; }
+    .tag-green { background: #a6e3a120; color: #a6e3a1; }
+    .tag-red { background: #f38ba820; color: #f38ba8; }
+    .tag-yellow { background: #f9e2af20; color: #f9e2af; }
+    .tag-purple { background: #cba6f720; color: #cba6f7; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { background: #181825; color: #89b4fa; padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 2px solid #2a2a3c; }
+    td { padding: 10px 14px; border-bottom: 1px solid #2a2a3c; color: #a6adc8; }
+    tr:hover td { background: #1a1a2a; }
+    td:first-child { font-family: monospace; color: #fab387; }
+
+    .tip { background: #1a1a2a; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f17; }
+    ::-webkit-scrollbar-thumb { background: #3a3a50; border-radius: 3px; }
+
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .text-center { text-align: center; }
+
+    /* ===== UNIVERSAL NAVBAR STYLES ===== */
+    .navbar { display: flex; align-items: center; justify-content: space-between; padding: 0 20px; background: #1e1e30; min-height: 56px; gap: 16px; }
+    .navbar .logo { font-weight: 700; font-size: 1.05rem; color: #89b4fa; white-space: nowrap; }
+    .navbar .nav-links { display: flex; align-items: center; gap: 8px; list-style: none; margin: 0; padding: 0; }
+    .navbar .nav-links a { text-decoration: none; color: #a6adc8; padding: 8px 14px; border-radius: 6px; font-size: 0.85rem; transition: all 0.2s; font-weight: 500; }
+    .navbar .nav-links a:hover { background: #2a2a40; color: #cdd6f4; }
+    .navbar .nav-links a.cta { background: #89b4fa; color: #0f0f17; font-weight: 600; }
+    .navbar .nav-links a.cta:hover { background: #74c7ec; }
+    .navbar .hamburger { display: none; flex-direction: column; gap: 4px; background: none; border: none; cursor: pointer; padding: 4px; }
+    .navbar .hamburger span { display: block; width: 22px; height: 2px; background: #cdd6f4; border-radius: 2px; transition: all 0.2s; }
+
+    @media (max-width: 640px) {
+      .navbar .nav-links { display: none; position: absolute; top: 56px; left: 0; right: 0; background: #1e1e30; flex-direction: column; padding: 12px; border-top: 1px solid #2a2a3c; }
+      .navbar .nav-links.open { display: flex; }
+      .navbar .hamburger { display: flex; }
+      .navbar { position: relative; }
+    }
+
+    .navbar.bad { background: #1e1e30; }
+
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .toggle-group button { background: #2a2a3c; color: #a6adc8; border: 1px solid #3a3a50; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-family: monospace; transition: all 0.2s; }
+    .toggle-group button:hover { background: #3a3a50; }
+    .toggle-group button.on { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
+    .badge-req { background: #f38ba820; color: #f38ba8; border: 1px solid #f38ba850; }
+    .badge-opt { background: #a6e3a120; color: #a6e3a1; border: 1px solid #a6e3a150; }
+    .badge-rec { background: #f9e2af20; color: #f9e2af; border: 1px solid #f9e2af50; }
+
+    .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .prop-grid { grid-template-columns: 1fr; } }
+    .prop-card { background: #181825; border: 1px solid #2a2a3c; border-radius: 8px; overflow: hidden; transition: all 0.2s; }
+    .prop-card:hover { border-color: #3a3a50; }
+    .prop-card .pc-head { padding: 10px 14px; display: flex; align-items: center; justify-content: space-between; font-size: 0.8rem; font-weight: 600; }
+    .prop-card .pc-body { padding: 10px 14px; font-size: 0.75rem; color: #a6adc8; }
+    .prop-card .pc-body ul { padding-left: 16px; line-height: 1.8; }
+    .prop-card .pc-demo { padding: 0; border-top: 1px solid #2a2a3c; }
+
+    .nav-preview { padding: 4px; background: #11111b; }
+    .nav-preview .mini-nav { display: flex; align-items: center; justify-content: space-between; padding: 0 12px; background: #1e1e30; min-height: 40px; border-radius: 4px; gap: 8px; }
+    .nav-preview .mini-nav .m-logo { font-weight: 700; font-size: 0.75rem; color: #89b4fa; white-space: nowrap; }
+    .nav-preview .mini-nav .m-links { display: flex; align-items: center; gap: 4px; list-style: none; }
+    .nav-preview .mini-nav .m-links a { text-decoration: none; color: #a6adc8; padding: 4px 8px; border-radius: 4px; font-size: 0.65rem; }
+    .nav-preview .mini-nav .m-links a:hover { background: #2a2a40; }
+
+    .dimension-line { position: relative; height: 18px; margin: 2px 0; }
+    .dimension-line .line { position: absolute; height: 1px; background: #585b70; top: 50%; left: 0; right: 0; }
+    .dimension-line .label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #1a1a2a; padding: 0 6px; font-size: 0.6rem; color: #585b70; white-space: nowrap; }
+
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .nav-preview, .nav-demo-full { animation: fadeSlide 0.4s ease-out; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1><span class="glyph">Navbar CSS</span> <span style="font-size:1.4rem;color:#6c7086;font-weight:400;">— Visualized</span></h1>
+  <p class="subtitle">
+    Every CSS property you need for a navbar, why each matters, what breaks without it, and the universal pattern that works everywhere.
+  </p>
+
+  <!-- ===== 1. THE UNIVERSAL NAVBAR ===== -->
+  <section>
+    <h2>1. The Universal Navbar <span class="sub">— Properties you ALWAYS need</span></h2>
+    <p>This is the baseline navbar. Every property below is <strong>required</strong> for a properly working navbar. Toggle each off to see what breaks.</p>
+
+    <div class="card">
+      <div class="card-label">Live navbar — <span class="hl">toggle each property on/off</span></div>
+
+      <div class="navbar" id="universalNav" style="border-radius:8px;margin-bottom:6px;">
+        <div class="logo">Brand</div>
+        <ul class="nav-links">
+          <li><a href="#">Home</a></li>
+          <li><a href="#">About</a></li>
+          <li><a href="#">Services</a></li>
+          <li><a href="#" class="cta">Contact</a></li>
+        </ul>
+        <button class="hamburger"><span></span><span></span><span></span></button>
+      </div>
+
+      <div class="prop-grid">
+        <div class="prop-card" data-prop="display-flex">
+          <div class="pc-head">
+            <span><span class="badge badge-req">REQ</span> display: flex</span>
+            <span class="tag tag-blue" id="dspState">on</span>
+          </div>
+          <div class="pc-body">
+            Makes navbar items sit side-by-side horizontally. Without it, logo and links <strong>stack vertically</strong> (block default).
+            <div class="nav-preview" style="margin-top:6px;">
+              <div class="mini-nav" id="dspPreview" style="display:flex;">
+                <div class="m-logo">Brand</div>
+                <ul class="m-links"><li><a href="#">Link</a></li><li><a href="#">Link</a></li></ul>
+              </div>
+            </div>
+          </div>
+          <div class="pc-demo">
+            <div class="toggle-group" style="margin:6px;flex-wrap:nowrap;">
+              <button class="on" data-target="display-flex" data-v="flex">flex: ON</button>
+              <button data-target="display-flex" data-v="block">flex: OFF</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-card" data-prop="align-items">
+          <div class="pc-head">
+            <span><span class="badge badge-req">REQ</span> align-items: center</span>
+            <span class="tag tag-blue" id="aiState">on</span>
+          </div>
+          <div class="pc-body">
+            Vertically centers all items in the navbar. Without it, items <strong>stretch to full height</strong> (flex default is stretch).
+            <div class="nav-preview" style="margin-top:6px;">
+              <div class="mini-nav" id="aiPreview" style="display:flex;align-items:center;">
+                <div class="m-logo">Brand</div>
+                <ul class="m-links"><li><a href="#">Link</a></li><li><a href="#">Link</a></li></ul>
+              </div>
+            </div>
+          </div>
+          <div class="pc-demo">
+            <div class="toggle-group" style="margin:6px;flex-wrap:nowrap;">
+              <button class="on" data-target="align-items" data-v="center">center: ON</button>
+              <button data-target="align-items" data-v="stretch">center: OFF</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-card" data-prop="justify-content">
+          <div class="pc-head">
+            <span><span class="badge badge-req">REQ</span> justify-content: space-between</span>
+            <span class="tag tag-blue" id="jcState">on</span>
+          </div>
+          <div class="pc-body">
+            Pushes logo to left, nav links to right. Without it, logo and links <strong>sit next to each other</strong> at the start.
+            <div class="nav-preview" style="margin-top:6px;">
+              <div class="mini-nav" id="jcPreview" style="display:flex;align-items:center;justify-content:space-between;">
+                <div class="m-logo">Brand</div>
+                <ul class="m-links"><li><a href="#">Link</a></li></ul>
+              </div>
+            </div>
+          </div>
+          <div class="pc-demo">
+            <div class="toggle-group" style="margin:6px;flex-wrap:nowrap;">
+              <button class="on" data-target="justify-content" data-v="space-between">space-between: ON</button>
+              <button data-target="justify-content" data-v="flex-start">space-between: OFF</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-card" data-prop="padding">
+          <div class="pc-head">
+            <span><span class="badge badge-req">REQ</span> padding: 0 20px</span>
+            <span class="tag tag-blue" id="padState">on</span>
+          </div>
+          <div class="pc-body">
+            Adds breathing room on left/right edges. Without it, content <strong>touches the screen edge</strong> — looks broken.
+            <div class="nav-preview" style="margin-top:6px;">
+              <div class="mini-nav" id="padPreview" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;">
+                <div class="m-logo">Brand</div>
+                <ul class="m-links"><li><a href="#">Link</a></li></ul>
+              </div>
+            </div>
+          </div>
+          <div class="pc-demo">
+            <div class="toggle-group" style="margin:6px;flex-wrap:nowrap;">
+              <button class="on" data-target="padding" data-v="pad">padding: ON</button>
+              <button data-target="padding" data-v="nopad">padding: OFF</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-card" data-prop="list-style">
+          <div class="pc-head">
+            <span><span class="badge badge-rec">REC</span> list-style: none</span>
+            <span class="tag tag-blue" id="lsState">on</span>
+          </div>
+          <div class="pc-body">
+            Removes default bullets from <code>&lt;ul&gt;</code>. Without it, <strong>bullets appear</strong> before each link.
+            <div class="nav-preview" style="margin-top:6px;">
+              <div class="mini-nav" id="lsPreview" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;">
+                <div class="m-logo">Brand</div>
+                <ul class="m-links" style="list-style:none;">
+                  <li><a href="#">Home</a></li><li><a href="#">About</a></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+          <div class="pc-demo">
+            <div class="toggle-group" style="margin:6px;flex-wrap:nowrap;">
+              <button class="on" data-target="list-style" data-v="none">list-style: OFF</button>
+              <button data-target="list-style" data-v="disc">list-style: ON</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="prop-card" data-prop="text-decoration">
+          <div class="pc-head">
+            <span><span class="badge badge-rec">REC</span> text-decoration: none</span>
+            <span class="tag tag-blue" id="tdState">on</span>
+          </div>
+          <div class="pc-body">
+            Removes underlines from nav links. Without it, links are <strong>underlined by default</strong> (ugly in navbars).
+            <div class="nav-preview" style="margin-top:6px;">
+              <div class="mini-nav" id="tdPreview" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;">
+                <div class="m-logo">Brand</div>
+                <ul class="m-links" style="list-style:none;"><li><a href="#" style="text-decoration:none;">Home</a></li><li><a href="#" style="text-decoration:none;">About</a></li></ul>
+              </div>
+            </div>
+          </div>
+          <div class="pc-demo">
+            <div class="toggle-group" style="margin:6px;flex-wrap:nowrap;">
+              <button class="on" data-target="text-decoration" data-v="none">underline: OFF</button>
+              <button data-target="text-decoration" data-v="underline">underline: ON</button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2. WHAT HAPPENS WITHOUT EACH PROPERTY ===== -->
+  <section>
+    <h2>2. Before & After <span class="sub">— Each property visualized</span></h2>
+
+    <!-- display: flex -->
+    <h3>A. Without <code>display: flex</code></h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without flex — items stack</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div style="background:#1e1e30;border-radius:4px;padding:10px;">
+              <div style="font-weight:700;font-size:0.85rem;color:#89b4fa;margin-bottom:4px;">Brand</div>
+              <div style="display:block;">
+                <a href="#" style="display:block;color:#a6adc8;padding:4px 0;font-size:0.75rem;">Home</a>
+                <a href="#" style="display:block;color:#a6adc8;padding:4px 0;font-size:0.75rem;">About</a>
+                <a href="#" style="display:block;color:#a6adc8;padding:4px 0;font-size:0.75rem;">Contact</a>
+              </div>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>/* display: block (default) */
+/* Logo on top, links below — not a navbar */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With flex — items in a row</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div class="mini-nav" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;">
+              <div class="m-logo">Brand</div>
+              <ul class="m-links" style="list-style:none;display:flex;gap:4px;">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+          <pre style="margin:6px 8px;padding:6px;font-size:0.6rem;"><code>.navbar { display: flex;
+  align-items: center;
+  justify-content: space-between; }</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- align-items -->
+    <h3>B. Without <code>align-items: center</code></h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without center — items stretch</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div class="mini-nav" style="display:flex;align-items:stretch;padding:0 12px;min-height:50px;">
+              <div class="m-logo" style="display:flex;align-items:center;">Brand</div>
+              <ul class="m-links" style="list-style:none;display:flex;align-items:stretch;gap:4px;">
+                <li><a href="#" style="display:flex;align-items:center;">Home</a></li>
+                <li><a href="#" style="display:flex;align-items:center;">About</a></li>
+              </ul>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#f38ba8;padding:4px 8px;">Items stretch full height — ugly, hard to click precisely</div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With center — items centered</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div class="mini-nav" style="display:flex;align-items:center;padding:0 12px;min-height:50px;">
+              <div class="m-logo">Brand</div>
+              <ul class="m-links" style="list-style:none;display:flex;gap:4px;">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+              </ul>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#a6e3a1;padding:4px 8px;">Items naturally centered — clean, clickable</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- justify-content -->
+    <h3>C. Without <code>justify-content: space-between</code></h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without — everything clumps left</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div class="mini-nav" style="display:flex;align-items:center;justify-content:flex-start;padding:0 12px;">
+              <div class="m-logo">Brand</div>
+              <ul class="m-links" style="list-style:none;display:flex;gap:4px;margin-left:12px;">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+              </ul>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#f38ba8;padding:4px 8px;">Logo and links all at left — no visual structure</div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With space-between — logo left, links right</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div class="mini-nav" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;">
+              <div class="m-logo">Brand</div>
+              <ul class="m-links" style="list-style:none;display:flex;gap:4px;">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+              </ul>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#a6e3a1;padding:4px 8px;">Logo left, links right — proper navbar layout</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- gap -->
+    <h3>D. Without <code>gap</code> (or margin on links)</h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without gap — links touch</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div class="mini-nav" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;">
+              <div class="m-logo">Brand</div>
+              <ul class="m-links" style="list-style:none;display:flex;gap:0;">
+                <li><a href="#" style="padding:4px;">Home</a></li>
+                <li><a href="#" style="padding:4px;">About</a></li>
+                <li><a href="#" style="padding:4px;">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#f38ba8;padding:4px 8px;">Links cramped together — hard to read, easy to mis-click</div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With gap — links breathe</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div class="mini-nav" style="display:flex;align-items:center;justify-content:space-between;padding:0 12px;">
+              <div class="m-logo">Brand</div>
+              <ul class="m-links" style="list-style:none;display:flex;gap:8px;">
+                <li><a href="#">Home</a></li>
+                <li><a href="#">About</a></li>
+                <li><a href="#">Contact</a></li>
+              </ul>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#a6e3a1;padding:4px 8px;">Pleasant spacing — easy to scan and click</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- list-style -->
+    <h3>E. Without <code>list-style: none</code></h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without — bullets visible</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div style="background:#1e1e30;border-radius:4px;padding:10px;">
+              <ul style="display:flex;gap:12px;padding-left:20px;">
+                <li style="color:#a6adc8;font-size:0.75rem;">Home</li>
+                <li style="color:#a6adc8;font-size:0.75rem;">About</li>
+              </ul>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#f38ba8;padding:4px 8px;">Bullet points in navbar = unprofessional</div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With list-style: none — clean</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div style="background:#1e1e30;border-radius:4px;padding:10px;">
+              <ul style="display:flex;gap:12px;list-style:none;">
+                <li><a href="#" style="color:#a6adc8;font-size:0.75rem;text-decoration:none;">Home</a></li>
+                <li><a href="#" style="color:#a6adc8;font-size:0.75rem;text-decoration:none;">About</a></li>
+              </ul>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#a6e3a1;padding:4px 8px;">Clean, professional — no visual clutter</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- text-decoration -->
+    <h3>F. Without <code>text-decoration: none</code></h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without — links underlined</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div style="background:#1e1e30;border-radius:4px;padding:10px;">
+              <a href="#" style="color:#a6adc8;font-size:0.8rem;margin-right:12px;">Home</a>
+              <a href="#" style="color:#a6adc8;font-size:0.8rem;margin-right:12px;">About</a>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#f38ba8;padding:4px 8px;">Underlines in navbar = dated, visually noisy</div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With text-decoration: none — clean</div>
+        <div class="cs-body">
+          <div class="nav-preview">
+            <div style="background:#1e1e30;border-radius:4px;padding:10px;">
+              <a href="#" style="color:#a6adc8;font-size:0.8rem;margin-right:12px;text-decoration:none;">Home</a>
+              <a href="#" style="color:#a6adc8;font-size:0.8rem;margin-right:12px;text-decoration:none;">About</a>
+            </div>
+          </div>
+          <div style="font-size:0.6rem;color:#a6e3a1;padding:4px 8px;">Clean, modern — underline reserved for hover</div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 3. RESPONSIVE BEHAVIOR ===== -->
+  <section>
+    <h2>3. Responsive Navbar <span class="sub">— Desktop → Mobile</span></h2>
+    <p>A navbar must work on all screen sizes. The universal pattern: <strong>flex row on desktop, hamburger + column on mobile</strong>.</p>
+
+    <div class="card">
+      <div class="card-label">Resize your browser — <span class="hl">or drag the slider below</span></div>
+      <input type="range" id="navResizeSlider" min="300" max="900" value="700" style="width:100%;margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:0.6rem;color:#585b70;">
+        <span>mobile 300px</span><span>desktop 900px</span>
+      </div>
+
+      <div id="responsiveNavContainer" style="overflow:hidden;border-radius:8px;border:1px solid #2a2a3c;margin-top:6px;">
+        <nav class="navbar" id="responsiveNav" style="border-radius:0;">
+          <div class="logo">MyApp</div>
+          <ul class="nav-links">
+            <li><a href="#">Dashboard</a></li>
+            <li><a href="#">Projects</a></li>
+            <li><a href="#">Settings</a></li>
+            <li><a href="#" class="cta">Sign Up</a></li>
+          </ul>
+          <button class="hamburger" id="hamburgerBtn"><span></span><span></span><span></span></button>
+        </nav>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap;">
+        <span class="tag tag-blue" id="navScreenSize">width: 700px</span>
+        <span class="tag tag-green" id="navLayoutMode">mode: desktop</span>
+      </div>
+
+      <pre style="margin-top:8px;"><code>/* The responsive navbar pattern */
+.navbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 20px;
+}
+
+.nav-links {
+  display: flex;      /* horizontal on desktop */
+  gap: 8px;
+  list-style: none;
+}
+
+/* Mobile: stack vertically, hidden until hamburger clicked */
+@media (max-width: 640px) {
+  .nav-links {
+    display: none;             /* hidden */
+    flex-direction: column;    /* stacked */
+    position: absolute;
+    top: 56px; left: 0; right: 0;
+  }
+  .nav-links.open { display: flex; }
+  .hamburger { display: flex; }  /* show hamburger */
+}</code></pre>
+    </div>
+
+    <div class="tip">
+      <strong>Universal breakpoint:</strong> <code>640px</code> or <code>768px</code> is where most navbars switch from horizontal to hamburger. The key CSS: <code>flex-direction: column</code> on mobile + <code>display: none</code> / <code>display: flex</code> toggle with JS.
+    </div>
+  </section>
+
+  <!-- ===== 4. THE UNIVERSAL TEMPLATE ===== -->
+  <section>
+    <h2>4. The Universal Navbar Template <span class="sub">— Copy-paste ready</span></h2>
+    <p>This is the minimal navbar that works on every site. Every property is here for a reason.</p>
+
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div>
+          <div style="font-size:0.7rem;color:#89b4fa;margin-bottom:4px;">✅ Complete navbar</div>
+          <div class="nav-preview" style="border-radius:8px;border:1px solid #2a2a3c;">
+            <nav style="display:flex;align-items:center;justify-content:space-between;padding:0 16px;background:#1e1e30;min-height:48px;">
+              <div style="font-weight:700;color:#89b4fa;font-size:0.85rem;">Brand</div>
+              <ul style="display:flex;gap:6px;list-style:none;">
+                <li><a href="#" style="text-decoration:none;color:#a6adc8;padding:6px 12px;border-radius:4px;font-size:0.75rem;">Home</a></li>
+                <li><a href="#" style="text-decoration:none;color:#a6adc8;padding:6px 12px;border-radius:4px;font-size:0.75rem;">About</a></li>
+                <li><a href="#" style="text-decoration:none;background:#89b4fa;color:#0f0f17;padding:6px 14px;border-radius:4px;font-size:0.75rem;font-weight:600;">CTA</a></li>
+              </ul>
+            </nav>
+          </div>
+        </div>
+        <div>
+          <pre style="margin:0;font-size:0.6rem;height:100%;"><code>&lt;nav class="navbar"&gt;
+  &lt;div class="logo"&gt;Brand&lt;/div&gt;
+  &lt;ul class="nav-links"&gt;
+    &lt;li&gt;&lt;a href="#"&gt;Home&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="#"&gt;About&lt;/a&gt;&lt;/li&gt;
+    &lt;li&gt;&lt;a href="#" class="cta"&gt;CTA&lt;/a&gt;&lt;/li&gt;
+  &lt;/ul&gt;
+  &lt;button class="hamburger"&gt;
+    &lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;&lt;span&gt;&lt;/span&gt;
+  &lt;/button&gt;
+&lt;/nav&gt;</code></pre>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;">
+        <pre style="font-size:0.7rem;"><code>/* === UNIVERSAL NAVBAR CSS — copy this === */
+.navbar {
+  display: flex;                /* 1. items in a row */
+  align-items: center;          /* 2. vertically centered */
+  justify-content: space-between; /* 3. logo left, links right */
+  padding: 0 20px;              /* 4. edge breathing room */
+  background: #1e1e30;          /* 5. background color */
+  min-height: 56px;             /* 6. minimum tap target */
+  gap: 16px;                    /* 7. spacing */
+}
+
+.nav-links {
+  display: flex;                /* 8. links in a row */
+  align-items: center;          /* 9. vertically center links */
+  gap: 8px;                     /* 10. space between links */
+  list-style: none;             /* 11. remove bullets */
+  margin: 0;                    /* 12. reset default ul margin */
+  padding: 0;                   /* 13. reset default ul padding */
+}
+
+.nav-links a {
+  text-decoration: none;        /* 14. remove underline */
+  color: #a6adc8;               /* 15. link color */
+  padding: 8px 14px;            /* 16. clickable area */
+  border-radius: 6px;           /* 17. hover shape */
+  font-size: 0.9rem;            /* 18. readable size */
+  font-weight: 500;             /* 19. medium weight */
+  transition: all 0.2s;         /* 20. smooth hover */
+}
+
+.nav-links a:hover {
+  background: #2a2a40;          /* 21. hover feedback */
+  color: #cdd6f4;
+}
+
+.nav-links a.cta {
+  background: #89b4fa;          /* 22. call-to-action */
+  color: #0f0f17;
+  font-weight: 600;
+}
+
+/* Mobile */
+@media (max-width: 640px) {
+  .nav-links {
+    display: none;              /* 23. hide on mobile */
+    flex-direction: column;     /* 24. stack vertically */
+    position: absolute;         /* 25. dropdown from navbar */
+    top: 56px; left: 0; right: 0;
+    background: #1e1e30;
+    padding: 12px;
+    border-top: 1px solid #2a2a3c;
+  }
+  .nav-links.open { display: flex; } /* 26. toggle with JS */
+  .hamburger { display: flex; }      /* 27. show hamburger */
+  .navbar { position: relative; }    /* 28. anchor for absolute menu */
+}</code></pre>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Count them:</strong> 28 CSS properties/declarations make a complete, responsive, production navbar. Every single one has a purpose. Remove any → something breaks.
+    </div>
+  </section>
+
+  <!-- ===== 5. CHEAT SHEET ===== -->
+  <section>
+    <h2>5. Quick Reference</h2>
+
+    <table>
+      <thead><tr><th>Category</th><th>Property</th><th>Why Required</th><th>Without it</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><span class="badge badge-req">REQ</span> Layout</td>
+          <td><code>display: flex</code></td>
+          <td>Items sit in a horizontal row</td>
+          <td style="color:#f38ba8;">Items stack vertically</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-req">REQ</span> Layout</td>
+          <td><code>align-items: center</code></td>
+          <td>Vertically center all navbar items</td>
+          <td style="color:#f38ba8;">Items stretch full height</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-req">REQ</span> Layout</td>
+          <td><code>justify-content: space-between</code></td>
+          <td>Logo left, nav links right</td>
+          <td style="color:#f38ba8;">Everything clumps left</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-req">REQ</span> Spacing</td>
+          <td><code>padding: 0 20px</code></td>
+          <td>Content doesn't touch screen edge</td>
+          <td style="color:#f38ba8;">Text hits the edge</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rec">REC</span> List</td>
+          <td><code>list-style: none</code></td>
+          <td>Remove bullet points from &lt;ul&gt;</td>
+          <td style="color:#f38ba8;">Bullets before each link</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rec">REC</span> Links</td>
+          <td><code>text-decoration: none</code></td>
+          <td>Remove underlines from nav links</td>
+          <td style="color:#f38ba8;">Links are underlined</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rec">REC</span> Links</td>
+          <td><code>padding: 8px 14px</code></td>
+          <td>Creates clickable area around links</td>
+          <td style="color:#f38ba8;">Hard to click precisely</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-rec">REC</span> Links</td>
+          <td><code>border-radius: 6px</code></td>
+          <td>Smooth hover shape</td>
+          <td style="color:#f38ba8;">Sharp hover edges</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-opt">OPT</span> Spacing</td>
+          <td><code>gap</code> (or margins)</td>
+          <td>Space between nav links</td>
+          <td style="color:#f38ba8;">Links cramped together</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-opt">OPT</span> Height</td>
+          <td><code>min-height: 56px</code></td>
+          <td>Minimum tap target size</td>
+          <td style="color:#f38ba8;">Navbar may be too short</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-opt">OPT</span> Hover</td>
+          <td><code>transition: all 0.2s</code></td>
+          <td>Smooth hover animation</td>
+          <td style="color:#f38ba8;">Abrupt hover changes</td>
+        </tr>
+        <tr>
+          <td><span class="badge badge-opt">OPT</span> Mobile</td>
+          <td><code>@media (max-width: 640px)</code></td>
+          <td>Responsive hamburger menu</td>
+          <td style="color:#f38ba8;">Broken on mobile</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="tip" style="border-left-color:#89b4fa;margin-top:20px;">
+      <strong>The universal navbar rule:</strong> Every navbar needs <code>display: flex</code> + <code>align-items: center</code> + <code>justify-content: space-between</code> + <code>padding</code>. That's the minimum. Add <code>list-style: none</code>, <code>text-decoration: none</code>, <code>gap</code>, a hover state, and a mobile breakpoint. <strong>13 properties</strong> = a complete navbar.
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #2a2a3c;padding-top:24px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    Navbar CSS — Visualized &bull; css-notes/navbar
+  </footer>
+</div>
+
+<script>
+// ===== 1. Universal Navbar — Toggle props =====
+(function() {
+  const nav = document.getElementById('universalNav');
+  const state = {
+    'display-flex': 'flex',
+    'align-items': 'center',
+    'justify-content': 'space-between',
+    'padding': 'pad',
+    'list-style': 'none',
+    'text-decoration': 'none'
+  };
+  const orig = {
+    'display-flex': 'flex',
+    'align-items': 'center',
+    'justify-content': 'space-between'
+  };
+
+  function updateNav() {
+    // display
+    nav.style.display = state['display-flex'];
+    document.getElementById('dspState').textContent = state['display-flex'];
+    document.getElementById('dspPreview').style.display = state['display-flex'];
+    document.querySelectorAll('[data-target="display-flex"]').forEach(b => {
+      b.classList.toggle('on', b.dataset.v === state['display-flex']);
+    });
+
+    // align-items
+    nav.style.alignItems = state['align-items'];
+    document.getElementById('aiState').textContent = state['align-items'] === 'center' ? 'on' : 'off';
+    document.getElementById('aiPreview').style.alignItems = state['align-items'];
+    document.querySelectorAll('[data-target="align-items"]').forEach(b => {
+      b.classList.toggle('on', b.dataset.v === state['align-items']);
+    });
+
+    // justify-content
+    nav.style.justifyContent = state['justify-content'];
+    document.getElementById('jcState').textContent = state['justify-content'] === 'space-between' ? 'on' : 'off';
+    document.getElementById('jcPreview').style.justifyContent = state['justify-content'];
+    document.querySelectorAll('[data-target="justify-content"]').forEach(b => {
+      b.classList.toggle('on', b.dataset.v === state['justify-content']);
+    });
+
+    // padding
+    const pad = state['padding'] === 'pad' ? '0 20px' : '0';
+    nav.style.padding = pad;
+    document.getElementById('padState').textContent = state['padding'] === 'pad' ? 'on' : 'off';
+    document.getElementById('padPreview').style.padding = pad;
+    document.querySelectorAll('[data-target="padding"]').forEach(b => {
+      b.classList.toggle('on', b.dataset.v === state['padding']);
+    });
+
+    // list-style
+    const ls = state['list-style'];
+    nav.querySelectorAll('.nav-links').forEach(el => el.style.listStyle = ls);
+    document.getElementById('lsState').textContent = ls === 'none' ? 'on' : 'off';
+    document.getElementById('lsPreview').querySelector('.m-links').style.listStyle = ls;
+    document.querySelectorAll('[data-target="list-style"]').forEach(b => {
+      b.classList.toggle('on', b.dataset.v === state['list-style']);
+    });
+
+    // text-decoration
+    const td = state['text-decoration'];
+    nav.querySelectorAll('.nav-links a').forEach(el => el.style.textDecoration = td);
+    document.getElementById('tdState').textContent = td === 'none' ? 'on' : 'off';
+    document.getElementById('tdPreview').querySelectorAll('a').forEach(el => el.style.textDecoration = td);
+    document.querySelectorAll('[data-target="text-decoration"]').forEach(b => {
+      b.classList.toggle('on', b.dataset.v === state['text-decoration']);
+    });
+  }
+
+  // Wire up all toggle buttons
+  document.querySelectorAll('.prop-card .toggle-group button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const target = btn.dataset.target;
+      const val = btn.dataset.v;
+      state[target] = val;
+      updateNav();
+    });
+  });
+
+  // Hamburger toggle
+  document.getElementById('hamburgerBtn').addEventListener('click', () => {
+    document.querySelector('#responsiveNav .nav-links').classList.toggle('open');
+  });
+})();
+
+// ===== 3. Responsive slider =====
+(function() {
+  const container = document.getElementById('responsiveNavContainer');
+  const slider = document.getElementById('navResizeSlider');
+  const sizeLabel = document.getElementById('navScreenSize');
+  const modeLabel = document.getElementById('navLayoutMode');
+  const nav = document.getElementById('responsiveNav');
+
+  function updateNavWidth(v) {
+    container.style.width = v + 'px';
+    sizeLabel.textContent = 'width: ' + v + 'px';
+    modeLabel.textContent = parseInt(v) <= 640 ? 'mode: mobile (hamburger)' : 'mode: desktop (horizontal)';
+    modeLabel.style.background = parseInt(v) <= 640 ? '#f9e2af20' : '#a6e3a120';
+    modeLabel.style.color = parseInt(v) <= 640 ? '#f9e2af' : '#a6e3a1';
+  }
+
+  slider.addEventListener('input', () => {
+    updateNavWidth(slider.value);
+    // Close hamburger on resize
+    nav.querySelector('.nav-links').classList.remove('open');
+  });
+  updateNavWidth(slider.value);
+})();
+</script>
+</body>
+</html>

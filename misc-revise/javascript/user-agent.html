@@ -1,0 +1,605 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>User-Agent · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--radius:8px;--orange:#f8bd7f;--coral:#f28fad;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--lavender)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .tag{font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(180,190,254,.18);color:var(--lavender);margin-left:auto}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .danger{color:var(--red)}
+.code .highlight{color:var(--yellow)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.badge.peach{background:rgba(250,179,135,.18);color:var(--peach)}
+.badge.lavender{background:rgba(180,190,254,.18);color:var(--lavender)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--lavender);color:#0f0f17}
+.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}
+.btn.outline:hover{background:var(--surface2)}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 0}
+.flow-node{background:var(--surface2);padding:8px 14px;border-radius:var(--radius);font-size:.8rem;text-align:center}
+.flow-node.browser{background:var(--blue);color:white}
+.flow-node.server{background:var(--green);color:#0f0f17}
+.flow-node.attacker{background:var(--red);color:white}
+.flow-arrow{color:var(--muted);font-size:1rem}
+
+.ua-string{font-family:monospace;font-size:.76rem;word-break:break-all;padding:14px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);line-height:1.8;margin:10px 0}
+.ua-part{display:inline;padding:1px 5px;border-radius:3px;cursor:help;border-bottom:2px solid transparent;transition:.15s}
+.ua-part:hover{opacity:.8}
+.ua-part.product{color:var(--blue);border-color:var(--blue)}
+.ua-part.version{color:var(--green);border-color:var(--green)}
+.ua-part.platform{color:var(--yellow);border-color:var(--yellow)}
+.ua-part.os{color:var(--peach);border-color:var(--peach)}
+.ua-part.engine{color:var(--pink);border-color:var(--pink)}
+.ua-part.other{color:var(--muted);border-color:var(--muted)}
+
+.legend{display:flex;gap:12px;flex-wrap:wrap;font-size:.76rem;margin:6px 0}
+.legend span{display:inline-flex;align-items:center;gap:4px}
+.legend .dot{display:inline-block;width:10px;height:10px;border-radius:2px}
+
+.decoder-input{width:100%;padding:10px 14px;border-radius:6px;border:1px solid var(--surface2);background:var(--bg);color:var(--text);font-family:monospace;font-size:.78rem;outline:none;margin:8px 0}
+.decoder-input:focus{border-color:var(--lavender)}
+
+.result-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:10px 0}
+.result-item{padding:12px;border-radius:6px;background:var(--bg);border:1px solid var(--surface2)}
+.result-item .label{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.result-item .value{font-size:.9rem;font-weight:600;margin-top:2px;font-family:monospace}
+
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+.toggle-group{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--lavender);color:#0f0f17;border-color:var(--lavender)}
+
+.history-line{display:flex;align-items:center;gap:12px;padding:8px 12px;margin:4px 0;border-radius:4px;font-size:.8rem;background:var(--bg);border-left:3px solid var(--surface2)}
+.history-line .year{color:var(--muted);min-width:50px;font-weight:700}
+.history-line .event{flex:1}
+.history-line .icon{font-size:1rem}
+
+.ua-browser-select{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}
+.ua-browser-select button{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.ua-browser-select button.active{background:var(--lavender);color:#0f0f17;border-color:var(--lavender)}
+
+.feature-card{padding:14px;border-radius:6px;margin:6px 0;background:var(--bg);border:1px solid var(--surface2);display:flex;gap:12px;align-items:flex-start}
+.feature-card .icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.feature-card .desc{flex:1;font-size:.82rem}
+.feature-card .desc code{font-family:monospace;font-size:.76rem;color:var(--yellow);background:rgba(255,255,255,.05);padding:1px 5px;border-radius:3px}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>UA</span> · User-Agent</div>
+  <div class="crumbs">HTTP headers &rsaquo; User-Agent</div>
+  <div class="tag">Browser identification</div>
+</nav>
+
+<div class="container">
+
+<!-- INTRO -->
+<div class="section-title"><span class="num">1</span> What Is the User-Agent?</div>
+<div class="card">
+  <p>The <strong>User-Agent</strong> is an HTTP header that tells the server what browser, operating system, and device is making the request. It's sent with <strong>every HTTP request</strong> from a browser.</p>
+
+  <div class="flow">
+    <div class="flow-node browser">&#128187; Your Browser</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node" style="background:var(--lavender);color:#0f0f17;font-size:.7rem;max-width:450px;word-break:break-all">User-Agent: Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ...</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node server">&#127974; Server</div>
+  </div>
+
+  <div class="grid2">
+    <div>
+      <p><strong>What the server sees:</strong></p>
+      <div class="code" style="font-size:.74rem">
+GET /page HTTP/1.1
+Host: example.com
+<span style="color:var(--yellow)">User-Agent: Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+  AppleWebKit/537.36 (KHTML, like Gecko)
+  Chrome/125.0.0.0 Safari/537.36</span>
+Accept: text/html
+      </div>
+    </div>
+    <div>
+      <p><strong>What it's used for:</strong></p>
+      <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+        <li>Serving different content to mobile vs desktop</li>
+        <li>Browser-specific CSS/JS workarounds</li>
+        <li>Analytics (browser/OS market share)</li>
+        <li>Bot detection &amp; content negotiation</li>
+        <li>Download links (correct binary for your OS)</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<!-- YOUR UA -->
+<div class="section-title"><span class="num">2</span> Your Actual User-Agent</div>
+<div class="card" style="text-align:center">
+  <p style="font-size:.84rem">Your browser is currently sending this User-Agent string to every website you visit:</p>
+  <div class="ua-string" id="yourUA" style="font-size:.82rem;padding:16px;margin:12px 0">Detecting...</div>
+  <div style="display:flex;gap:8px;justify-content:center">
+    <button class="btn primary" onclick="navigator.mediaDevices?.'':'';copyYourUA()">&#128203; Copy to Clipboard</button>
+    <button class="btn outline" onclick="decodeCurrentUA()">&#128269; Decode Mine</button>
+  </div>
+  <div id="yourDecoded" style="display:none;margin-top:12px" class="result-grid"></div>
+</div>
+
+<!-- HISTORY -->
+<div class="section-title"><span class="num">3</span> The History · Why UAs Are a Mess</div>
+<div class="card">
+  <p>The User-Agent string is <strong>notoriously convoluted</strong> because of a decades-long arms race between browsers pretending to be each other.</p>
+  <div id="uaHistory">
+    <div class="history-line"><span class="year">1993</span><span class="icon">&#127760;</span><span class="event"><strong>Mosaic</strong> — the first graphical browser. UA: <code>NCSA Mosaic/1.0</code></span></div>
+    <div class="history-line"><span class="year">1994</span><span class="icon">&#129302;</span><span class="event"><strong>Netscape</strong> — UA: <code>Mozilla/1.0 (X11; ...)</code> — "Mozilla" = "Mosaic killer"</span></div>
+    <div class="history-line" style="border-left-color:var(--blue)"><span class="year">1995</span><span class="icon">&#128187;</span><span class="event"><strong>IE</strong> enters. To get frames, IE pretends to be Netscape: <code>Mozilla/1.0 (compatible; MSIE 2.0; ...)</code></span></div>
+    <div class="history-line" style="border-left-color:var(--green)"><span class="year">2003</span><span class="icon">&#128049;</span><span class="event"><strong>Safari</strong> — built on KHTML, pretends to be Mozilla: <code>Mozilla/5.0 (Macintosh; ...) AppleWebKit/... (KHTML, like Gecko) Safari/...</code></span></div>
+    <div class="history-line" style="border-left-color:var(--red)"><span class="year">2008</span><span class="icon">&#9889;</span><span class="event"><strong>Chrome</strong> — built on WebKit (forked from Safari), pretends to be Safari, which pretends to be Mozilla: <code>Mozilla/5.0 ... AppleWebKit/... (KHTML, like Gecko) Chrome/... Safari/...</code></span></div>
+    <div class="history-line" style="border-left-color:var(--orange)"><span class="year">2013</span><span class="icon">&#129412;</span><span class="event"><strong>Edge</strong> — originally EdgeHTML, then 2018 rebuild on Chromium. Now pretends to be Chrome, which pretends to be Safari, which pretends to be Mozilla.</span></div>
+  </div>
+  <div class="callout warn" style="font-size:.8rem;margin-top:8px">
+    <strong>&#9888; Every modern browser says "Mozilla/5.0" at the start.</strong> None of them are actually Mozilla. It's pure historical baggage. The UA string is a lie we all inherited.
+  </div>
+</div>
+
+<!-- ANATOMY -->
+<div class="section-title"><span class="num">4</span> Anatomy of a User-Agent String</div>
+<div class="card">
+  <p>Let's break down a Chrome UA string piece by piece:</p>
+  <div class="ua-string" id="anatomyUA" style="font-size:.74rem">
+    <span class="ua-part product" title="Product token — every browser starts with Mozilla/5.0">Mozilla/5.0</span>
+    <span class="ua-part platform" title="Platform & OS details">(Windows NT 10.0; Win64; x64)</span>
+    <span class="ua-part engine" title="Rendering engine">AppleWebKit/537.36</span>
+    <span class="ua-part other" title="KHTML compatibility claim">(KHTML, like Gecko)</span>
+    <span class="ua-part product" title="Browser name & version">Chrome/125.0.0.0</span>
+    <span class="ua-part engine" title="Safari compatibility tail">Safari/537.36</span>
+  </div>
+
+  <div class="legend" style="margin-top:10px">
+    <span><span class="dot" style="background:var(--blue)"></span> Product</span>
+    <span><span class="dot" style="background:var(--green)"></span> Version</span>
+    <span><span class="dot" style="background:var(--yellow)"></span> Platform</span>
+    <span><span class="dot" style="background:var(--peach)"></span> OS</span>
+    <span><span class="dot" style="background:var(--pink)"></span> Engine</span>
+    <span><span class="dot" style="background:var(--muted)"></span> Legacy</span>
+  </div>
+
+  <div class="grid2" style="margin-top:12px">
+    <div>
+      <div class="result-item"><div class="label">Product</div><div class="value" style="color:var(--blue)">Mozilla/5.0</div><div style="font-size:.72rem;color:var(--muted)">Historical — all browsers claim this</div></div>
+      <div class="result-item"><div class="label">Platform</div><div class="value" style="color:var(--yellow)">Windows NT 10.0; Win64; x64</div><div style="font-size:.72rem;color:var(--muted)">OS + architecture + bitness</div></div>
+      <div class="result-item"><div class="label">Rendering Engine</div><div class="value" style="color:var(--pink)">AppleWebKit/537.36</div><div style="font-size:.72rem;color:var(--muted)">Chrome, Safari, Edge all use WebKit/Blink</div></div>
+    </div>
+    <div>
+      <div class="result-item"><div class="label">KHTML Legacy</div><div class="value" style="color:var(--muted)">(KHTML, like Gecko)</div><div style="font-size:.72rem;color:var(--muted)">Leftover from Safari's KHTML origins</div></div>
+      <div class="result-item"><div class="label">Browser</div><div class="value" style="color:var(--blue)">Chrome/125.0.0.0</div><div style="font-size:.72rem;color:var(--muted)">Actual browser name + version</div></div>
+      <div class="result-item"><div class="label">Tail</div><div class="value" style="color:var(--green)">Safari/537.36</div><div style="font-size:.72rem;color:var(--muted)">Safari version for compatibility checks</div></div>
+    </div>
+  </div>
+</div>
+
+<!-- INTERACTIVE UA DECODER -->
+<div class="section-title"><span class="num">5</span> Interactive UA Decoder</div>
+<div class="card">
+  <p>Select a browser preset or paste any UA string to decode it.</p>
+
+  <div class="ua-browser-select" id="uaPresets">
+    <button class="active" onclick="selectUAPreset('chrome',this)">Chrome 125</button>
+    <button onclick="selectUAPreset('firefox',this)">Firefox 126</button>
+    <button onclick="selectUAPreset('safari',this)">Safari 17</button>
+    <button onclick="selectUAPreset('edge',this)">Edge 125</button>
+    <button onclick="selectUAPreset('iphone',this)">iPhone Safari</button>
+    <button onclick="selectUAPreset('android',this)">Android Chrome</button>
+    <button onclick="selectUAPreset('bot',this)">Google Bot</button>
+    <button onclick="selectUAPreset('curl',this)">curl</button>
+  </div>
+
+  <input type="text" class="decoder-input" id="uaDecoderInput" value="Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36">
+
+  <div class="result-grid" id="uaDecodedResults">
+    <div class="result-item"><div class="label">Browser</div><div class="value" style="color:var(--blue)" id="decBrowser">Chrome 125</div></div>
+    <div class="result-item"><div class="label">Engine</div><div class="value" style="color:var(--pink)" id="decEngine">Blink</div></div>
+    <div class="result-item"><div class="label">Operating System</div><div class="value" style="color:var(--peach)" id="decOS">Windows 10</div></div>
+    <div class="result-item"><div class="label">Platform</div><div class="value" style="color:var(--yellow)" id="decPlatform">x86-64</div></div>
+    <div class="result-item"><div class="label">Is Mobile?</div><div class="value" id="decMobile">&#10007; No</div></div>
+    <div class="result-item"><div class="label">Is Bot?</div><div class="value" id="decBot">&#10007; No</div></div>
+  </div>
+
+  <div style="display:flex;gap:6px;margin-top:8px">
+    <button class="btn primary" onclick="decodeUA()">Decode</button>
+    <button class="btn outline" onclick="document.getElementById('uaDecoderInput').value=navigator.userAgent;decodeUA()">Use My UA</button>
+  </div>
+</div>
+
+<!-- SPOOFING -->
+<div class="section-title"><span class="num">6</span> UA Spoofing &amp; Why It Matters</div>
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>&#128520; How UA spoofing works</h3>
+    <p>The User-Agent header is <strong>client-controlled</strong>. Anyone can change it. Browsers let you override it in DevTools, extensions exist to change it, and <code>curl</code> can set any UA.</p>
+    <div class="code" style="font-size:.74rem">
+<span class="comment">// curl pretending to be Chrome:</span>
+curl -A <span class="string">"Mozilla/5.0 (Windows NT 10.0; Win64; x64)
+  AppleWebKit/537.36 (KHTML, like Gecko)
+  Chrome/125.0.0.0 Safari/537.36"</span>
+  https://example.com
+<span class="comment">// Server thinks it's Chrome on Windows</span>
+
+<span class="comment">// Node.js fetch with fake UA:</span>
+fetch(url, {
+  headers: { <span class="string">'User-Agent'</span>: <span class="string">'Mozilla/5.0 ...'</span> }
+});
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>&#10003; Good uses of spoofing</h3>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+      <li>Testing mobile layouts on desktop</li>
+      <li>Accessibility tools behaving as different devices</li>
+      <li>Web scraping with appropriate UA</li>
+      <li>Debugging server-side logic</li>
+    </ul>
+    <h3 style="color:var(--red);margin-top:14px">&#10007; Bad uses</h3>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+      <li>Bypassing browser-specific blocks</li>
+      <li>Faking analytics data</li>
+      <li>Pretending to be a search bot to access restricted content</li>
+    </ul>
+  </div>
+</div>
+
+<!-- BROWSER DETECTION vs FEATURE DETECTION -->
+<div class="section-title"><span class="num">7</span> Browser Detection vs Feature Detection</div>
+<div class="card">
+  <p><strong>Never rely on User-Agent for critical decisions.</strong> Feature detection is the standard approach.</p>
+  <div class="grid2">
+    <div class="feature-card" style="border-left:3px solid var(--red)">
+      <div class="icon">&#9888;</div>
+      <div class="desc">
+        <strong style="color:var(--red)">Bad: UA sniffing</strong>
+        <div class="code" style="font-size:.72rem;margin-top:4px">
+<span class="comment">// Fragile — breaks when UA changes</span>
+<span class="keyword">const</span> ua = navigator.userAgent;
+<span class="keyword">if</span> (ua.includes(<span class="string">'Chrome'</span>)) {
+  <span class="comment">// Assume modern features exist</span>
+  <span class="danger">// What about Edge? Opera? Brave?</span>
+}
+        </div>
+      </div>
+    </div>
+    <div class="feature-card" style="border-left:3px solid var(--green)">
+      <div class="icon">&#10003;</div>
+      <div class="desc">
+        <strong style="color:var(--green)">Good: Feature detection</strong>
+        <div class="code" style="font-size:.72rem;margin-top:4px">
+<span class="comment">// Check the feature directly</span>
+<span class="keyword">if</span> (<span class="string">'geolocation'</span> <span class="keyword">in</span> navigator) {
+  <span class="comment">// Feature exists — use it</span>
+  navigator.geolocation.getCurrentPosition(...);
+} <span class="keyword">else</span> {
+  <span class="comment">// Graceful fallback</span>
+  showManualLocationPicker();
+}
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="callout success" style="font-size:.8rem">
+    <strong>&#10003; The golden rule:</strong> Check for the <em>feature</em>, not the <em>browser name</em>. UA sniffing is fragile and breaks when new browsers appear or existing ones update their UA strings.
+  </div>
+</div>
+
+<!-- BOTS & CRAWLERS -->
+<div class="section-title"><span class="num">8</span> Bot &amp; Crawler User-Agents</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <p><strong>Common bot UAs:</strong></p>
+      <table style="font-size:.74rem">
+        <tr><th>Bot</th><th>UA snippet</th></tr>
+        <tr><td>Googlebot</td><td><code>Mozilla/5.0 ... Googlebot/2.1 ...</code></td></tr>
+        <tr><td>Bingbot</td><td><code>Mozilla/5.0 ... bingbot/2.0 ...</code></td></tr>
+        <tr><td>Slurp (Yahoo)</td><td><code>Mozilla/5.0 ... Slurp ...</code></td></tr>
+        <tr><td>DuckDuckBot</td><td><code>DuckDuckBot/1.0 ...</code></td></tr>
+        <tr><td>Baiduspider</td><td><code>Mozilla/5.0 ... Baiduspider ...</code></td></tr>
+        <tr><td>Facebook</td><td><code>facebookexternalhit/1.1 ...</code></td></tr>
+        <tr><td>GPTBot (OpenAI)</td><td><code>Mozilla/5.0 ... GPTBot/1.0 ...</code></td></tr>
+      </table>
+    </div>
+    <div>
+      <p><strong>Why bots matter:</strong></p>
+      <ul style="padding-left:18px;font-size:.82rem;line-height:2.2">
+        <li>SEO — search bots index your content</li>
+        <li>Rate limiting — detect and manage bots</li>
+        <li>Content blocking — some bots scrape AI training data</li>
+        <li><code>robots.txt</code> — instructions for well-behaved bots</li>
+      </ul>
+      <div class="code" style="font-size:.72rem;margin-top:8px">
+<span class="comment">// Simple bot detection</span>
+<span class="keyword">const</span> ua = req.headers['user-agent'] || <span class="string">''</span>;
+<span class="keyword">const</span> isBot = <span class="string">/bot|crawl|spider|scrape/i</span>.test(ua);
+<span class="keyword">if</span> (isBot) {
+  <span class="comment">// Serve static cached version</span>
+}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- PRIVACY & FINGERPRINTING -->
+<div class="section-title"><span class="num">9</span> Privacy &amp; Fingerprinting</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <h3>&#128064; How UAs contribute to fingerprinting</h3>
+      <p>The UA string is one of many signals used to <strong>uniquely identify</strong> your browser. Combined with other headers, it can be surprisingly specific.</p>
+      <div class="code" style="font-size:.72rem">
+<span class="comment">// Signals used for fingerprinting:</span>
+- User-Agent (browser + version + OS)
+- Accept-Language (locale)
+- Accept-Encoding
+- Timezone (via JS)
+- Screen resolution
+- Installed fonts
+- Canvas fingerprint
+- WebGL renderer
+- Touch/Mouse support
+      </div>
+    </div>
+    <div>
+      <h3>&#128274; How to reduce fingerprinting</h3>
+      <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+        <li><strong>Firefox</strong> — has "resist fingerprinting" mode</li>
+        <li><strong>Brave</strong> — spoofs UA to generic Chrome version</li>
+        <li><strong>Tor Browser</strong> — all users have identical UA</li>
+        <li><strong>UA-CH</strong> — Client Hints reduce UA entropy</li>
+        <li><strong>Extensions</strong> — User-Agent switchers</li>
+      </ul>
+      <div class="callout" style="font-size:.76rem;padding:8px 12px;margin-top:6px">
+        <strong>&#9432;</strong> The combination of User-Agent + Accept-Language + screen resolution alone can uniquely identify ~1 in 10,000 browsers.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- FUTURE: UA-CH -->
+<div class="section-title"><span class="num">10</span> The Future · User-Agent Client Hints</div>
+<div class="card">
+  <p><strong>User-Agent Client Hints (UA-CH)</strong> is the modern replacement. Instead of sending one big string, the server <strong>requests specific pieces</strong> of info it needs.</p>
+  <div class="grid2">
+    <div>
+      <h3>Old way (User-Agent header)</h3>
+      <div class="code" style="font-size:.7rem">
+<span class="comment">// Bloated, spoofable, one-size-fits-all:</span>
+User-Agent: Mozilla/5.0 (Windows NT 10.0;
+  Win64; x64) AppleWebKit/537.36 ...
+      </div>
+      <div style="font-size:.78rem;color:var(--muted)">Sent with EVERY request. Can't opt out.</div>
+    </div>
+    <div>
+      <h3>New way (Client Hints)</h3>
+      <div class="code" style="font-size:.7rem">
+<span class="comment">// Server asks for specific hints:</span>
+Accept-CH: Sec-CH-UA, Sec-CH-UA-Platform
+
+<span class="comment">// Browser responds with ONLY what's asked:</span>
+Sec-CH-UA: "Google Chrome";v="125"
+Sec-CH-UA-Platform: "Windows"
+      </div>
+      <div style="font-size:.78rem;color:var(--muted)">Opt-in. Granular. Less entropy for fingerprinting.</div>
+    </div>
+  </div>
+  <table style="margin-top:10px">
+    <tr><th>Header</th><th>Example value</th><th>What it reveals</th></tr>
+    <tr><td><code>Sec-CH-UA</code></td><td><code>"Chrome";v="125"</code></td><td>Browser brand &amp; major version</td></tr>
+    <tr><td><code>Sec-CH-UA-Platform</code></td><td><code>"Windows"</code></td><td>Operating system</td></tr>
+    <tr><td><code>Sec-CH-UA-Platform-Version</code></td><td><code>"15.0.0"</code></td><td>OS version</td></tr>
+    <tr><td><code>Sec-CH-UA-Mobile</code></td><td><code>?0</code></td><td>Whether it's a mobile device</td></tr>
+    <tr><td><code>Sec-CH-UA-Model</code></td><td><code>"Pixel 7"</code></td><td>Device model (mobile only)</td></tr>
+    <tr><td><code>Sec-CH-UA-Arch</code></td><td><code>"x86"</code></td><td>CPU architecture</td></tr>
+    <tr><td><code>Sec-CH-UA-Bitness</code></td><td><code>"64"</code></td><td>32-bit vs 64-bit</td></tr>
+  </table>
+</div>
+
+<!-- REFERENCE -->
+<div class="section-title"><span class="num">R</span> Quick Reference</div>
+<div class="card">
+  <table>
+    <tr><th>Concept</th><th>Summary</th><th>Key Takeaway</th></tr>
+    <tr><td>User-Agent</td><td>HTTP header identifying browser, OS, device</td><td><span class="badge yellow">Sent with every request</span></td></tr>
+    <tr><td>Mozilla/5.0</td><td>Legacy prefix — all browsers claim this</td><td><span class="badge blue">Historical baggage</span></td></tr>
+    <tr><td>Platform section</td><td><code>(Windows NT 10.0; Win64; x64)</code></td><td><span class="badge yellow">OS + architecture</span></td></tr>
+    <tr><td>AppleWebKit</td><td>Rendering engine (Chrome, Safari, Edge)</td><td><span class="badge pink">WebKit/Blink family</span></td></tr>
+    <tr><td>Spoofing</td><td>UA is client-controlled and easily faked</td><td><span class="badge red">Never trust UA for security</span></td></tr>
+    <tr><td>Feature Detection</td><td>Check feature existence, not browser name</td><td><span class="badge green">Best practice</span></td></tr>
+    <tr><td>Bot Detection</td><td>UA used to identify crawlers &amp; scrapers</td><td><span class="badge yellow">Can be spoofed</span></td></tr>
+    <tr><td>UA-CH</td><td>Modern opt-in replacement for User-Agent</td><td><span class="badge green">More private</span></td></tr>
+    <tr><td>Fingerprinting</td><td>UA is one signal in browser identification</td><td><span class="badge yellow">Combine with others</span></td></tr>
+  </table>
+</div>
+
+<div class="callout success" style="text-align:center;padding:16px">
+  <strong>&#10003; The User-Agent header is one of the oldest HTTP headers (1993) — and it shows.</strong><br>
+  <span style="color:var(--muted);font-size:.85rem">Every browser pretends to be every other browser. Use feature detection. Never trust the UA for security.</span>
+</div>
+
+</div>
+
+<script>
+// Show user's UA
+document.getElementById('yourUA').textContent = navigator.userAgent;
+
+function copyYourUA() {
+  navigator.clipboard.writeText(navigator.userAgent).then(() => {
+    alert('User-Agent copied to clipboard!');
+  }).catch(() => {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = navigator.userAgent;
+    document.body.appendChild(ta);
+    ta.select();
+    document.execCommand('copy');
+    document.body.removeChild(ta);
+    alert('User-Agent copied!');
+  });
+}
+
+function decodeCurrentUA() {
+  document.getElementById('uaDecoderInput').value = navigator.userAgent;
+  decodeUA();
+}
+
+// UA Presets
+const uaPresets = {
+  chrome: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36',
+  firefox: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:126.0) Gecko/20100101 Firefox/126.0',
+  safari: 'Mozilla/5.0 (Macintosh; Intel Mac OS X 14_5) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Safari/605.1.15',
+  edge: 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Safari/537.36 Edg/125.0.0.0',
+  iphone: 'Mozilla/5.0 (iPhone; CPU iPhone OS 17_5 like Mac OS X) AppleWebKit/605.1.15 (KHTML, like Gecko) Version/17.5 Mobile/15E148 Safari/604.1',
+  android: 'Mozilla/5.0 (Linux; Android 14; Pixel 8) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36',
+  bot: 'Mozilla/5.0 (Linux; Android 6.0.1; Nexus 5X Build/MMB29P) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/125.0.0.0 Mobile Safari/537.36 (compatible; Googlebot/2.1; +http://www.google.com/bot.html)',
+  curl: 'curl/8.4.0',
+};
+
+function selectUAPreset(name, btn) {
+  document.querySelectorAll('.ua-browser-select button').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('uaDecoderInput').value = uaPresets[name];
+  decodeUA();
+}
+
+// UA Decoder
+function decodeUA() {
+  const ua = document.getElementById('uaDecoderInput').value;
+  const lower = ua.toLowerCase();
+
+  // Browser detection
+  let browser = 'Unknown', engine = 'Unknown', os = 'Unknown', platform = 'Unknown';
+  let isMobile = false, isBot = false;
+
+  // Bot detection
+  if (/bot|crawl|spider|scrape|googlebot|bingbot|slurp|duckduckbot|baiduspider/i.test(ua)) {
+    isBot = true;
+  }
+
+  // Browser
+  if (lower.includes('firefox/')) {
+    const m = ua.match(/Firefox\/([\d.]+)/);
+    browser = 'Firefox ' + (m ? m[1] : '?');
+    engine = 'Gecko';
+  } else if (lower.includes('edge/') || lower.includes('edg/')) {
+    const m = ua.match(/Edg[e]?\/([\d.]+)/);
+    browser = 'Edge ' + (m ? m[1] : '?');
+    engine = 'Blink';
+  } else if (lower.includes('chrome/') && !lower.includes('chromium')) {
+    const m = ua.match(/Chrome\/([\d.]+)/);
+    browser = 'Chrome ' + (m ? m[1] : '?');
+    engine = 'Blink';
+  } else if (lower.includes('safari/') && !lower.includes('chrome')) {
+    const m = ua.match(/Version\/([\d.]+)/);
+    browser = 'Safari ' + (m ? m[1] : '?');
+    engine = 'WebKit';
+  } else if (lower.includes('curl/')) {
+    const m = ua.match(/curl\/([\d.]+)/);
+    browser = 'curl ' + (m ? m[1] : '?');
+    engine = 'N/A';
+  } else {
+    browser = ua.split('/')[0] || 'Unknown';
+  }
+
+  // OS
+  if (lower.includes('windows nt 10')) os = 'Windows 10';
+  else if (lower.includes('windows nt 11')) os = 'Windows 11';
+  else if (lower.includes('windows nt 6.3')) os = 'Windows 8.1';
+  else if (lower.includes('windows nt 6.1')) os = 'Windows 7';
+  else if (lower.includes('mac os x')) {
+    const m = ua.match(/Mac OS X ([\d_]+)/);
+    os = 'macOS ' + (m ? m[1].replace(/_/g,'.') : '?');
+  } else if (lower.includes('android')) {
+    const m = ua.match(/Android ([\d.]+)/);
+    os = 'Android ' + (m ? m[1] : '?');
+    isMobile = true;
+  } else if (lower.includes('iphone') || lower.includes('ipad')) {
+    const m = ua.match(/iPhone OS ([\d_]+)/);
+    os = 'iOS ' + (m ? m[1].replace(/_/g,'.') : '?');
+    isMobile = true;
+  } else if (lower.includes('linux')) {
+    os = 'Linux';
+  }
+
+  // Platform
+  if (lower.includes('x86_64') || lower.includes('x64;') || lower.includes('win64')) platform = 'x86-64';
+  else if (lower.includes('i686') || lower.includes('i386')) platform = 'x86';
+  else if (lower.includes('arm64') || lower.includes('aarch64')) platform = 'ARM64';
+  else if (lower.includes('arm')) platform = 'ARM';
+  else platform = 'Unknown';
+
+  // Mobile check
+  if (lower.includes('mobile')) isMobile = true;
+
+  // Bot name
+  if (isBot) {
+    if (lower.includes('googlebot')) browser = 'Googlebot';
+    else if (lower.includes('bingbot')) browser = 'Bingbot';
+    else if (lower.includes('duckduckbot')) browser = 'DuckDuckBot';
+    else if (lower.includes('baiduspider')) browser = 'Baiduspider';
+    else if (lower.includes('slurp')) browser = 'Yahoo Slurp';
+    else browser = 'Bot';
+    engine = 'N/A';
+    os = 'Various';
+    platform = 'Various';
+  }
+
+  // Update DOM
+  document.getElementById('decBrowser').textContent = browser;
+  document.getElementById('decEngine').textContent = engine;
+  document.getElementById('decOS').textContent = os;
+  document.getElementById('decPlatform').textContent = platform;
+  document.getElementById('decMobile').textContent = isMobile ? '&#10003; Yes' : '&#10007; No';
+  document.getElementById('decMobile').style.color = isMobile ? 'var(--green)' : 'var(--muted)';
+  document.getElementById('decBot').textContent = isBot ? '&#10003; Yes' : '&#10007; No';
+  document.getElementById('decBot').style.color = isBot ? 'var(--red)' : 'var(--muted)';
+}
+
+// Init
+decodeUA();
+</script>
+</body>
+</html>

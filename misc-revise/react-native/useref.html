@@ -1,0 +1,305 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>useRef - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:12px 14px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #cba6f7, #89b4fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .section-title { font-size:13px; font-weight:600; margin-bottom:8px; display:flex; align-items:center; gap:6px; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+    .hl { border-left:3px solid #cba6f7; padding-left:10px; background:rgba(203,166,247,0.08); }
+
+    .val-box { background:#11111b; border-radius:8px; padding:8px 12px; font-family:monospace; font-size:13px; border:1px solid #313244; }
+    .ref-badge { font-size:9px; font-weight:700; padding:1px 6px; border-radius:4px; background:#cba6f720; color:#cba6f7; }
+    .state-badge { font-size:9px; font-weight:700; padding:1px 6px; border-radius:4px; background:#89b4fa20; color:#89b4fa; }
+
+    .input-field { background:#11111b; border:1px solid #45475a; border-radius:8px; padding:8px 12px; color:#cdd6f4; font-size:13px; width:100%; outline:none; transition:border 0.2s; }
+    .input-field:focus { border-color:#cba6f7; }
+
+    .btn { border-radius:8px; padding:7px 14px; font-size:12px; font-weight:600; transition:all 0.2s; border:none; cursor:pointer; }
+    .btn-primary { background:#cba6f7; color:#1e1e2e; }
+    .btn-primary:hover { background:#b4befe; }
+    .btn-secondary { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+    .btn-secondary:hover { background:#45475a; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      React Hooks
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">useRef</span>
+    </h1>
+    <p class="text-[#a6adc8]"><span class="text-[#cba6f7]">Ref</span> = a mutable value that persists across renders <span class="text-[#f38ba8]">without</span> causing re-renders.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">useRef Playground</span>
+            <span id="renderBadge" class="text-xs bg-[#89b4fa]/20 text-[#89b4fa] px-2 py-0.5 rounded-full font-mono">renders: 1</span>
+          </div>
+          <div class="body-scroll" id="phoneBody">
+
+            <!-- 1. DOM ref -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4 mb-3">
+              <div class="section-title"><span class="ref-badge">useRef</span> Access DOM element</div>
+              <input id="nameInput" class="input-field mb-2" placeholder="Type something..." value="Hello">
+              <button id="focusBtn" class="btn btn-primary w-full"><i class="fas fa-arrow-pointer mr-1"></i> Focus Input</button>
+              <div class="text-xs text-[#6c7086] mt-2"><code class="text-[#cba6f7]">inputRef.current.focus()</code> — no re-render needed</div>
+            </div>
+
+            <!-- 2. Mutable value (counts without re-render) -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4 mb-3">
+              <div class="section-title"><span class="ref-badge">useRef</span> Mutable value (no re-render)</div>
+              <div class="flex items-center gap-2">
+                <button id="refIncBtn" class="btn btn-secondary"><i class="fas fa-plus"></i></button>
+                <span class="val-box flex-1">ref count: <span id="refCount" class="text-[#cba6f7]">0</span></span>
+              </div>
+              <div class="flex items-center gap-2 mt-2">
+                <button id="stateIncBtn" class="btn btn-secondary"><i class="fas fa-plus"></i></button>
+                <span class="val-box flex-1">state count: <span id="stateCount" class="text-[#89b4fa]">0</span></span>
+              </div>
+              <div class="text-xs text-[#6c7086] mt-2">
+                <span class="text-[#cba6f7]">ref</span> updates silently · <span class="text-[#89b4fa]">state</span> triggers re-render
+              </div>
+            </div>
+
+            <!-- 3. Track previous value -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4 mb-3">
+              <div class="section-title"><span class="ref-badge">useRef</span> Track previous value</div>
+              <div class="flex items-center gap-2">
+                <button id="prevDecBtn" class="btn btn-secondary"><i class="fas fa-minus"></i></button>
+                <span class="val-box flex-1">current: <span id="currentVal" class="text-[#f9e2af]">0</span></span>
+                <button id="prevIncBtn" class="btn btn-secondary"><i class="fas fa-plus"></i></button>
+              </div>
+              <div class="val-box mt-2">previous: <span id="prevVal" class="text-[#6c7086]">—</span></div>
+              <div class="text-xs text-[#6c7086] mt-2">Ref holds the previous value across renders</div>
+            </div>
+
+            <!-- 4. Timer with cleanup -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4">
+              <div class="section-title"><span class="ref-badge">useRef</span> Timer (ref stores interval ID)</div>
+              <div class="flex items-center gap-2">
+                <span class="val-box flex-1">elapsed: <span id="timerDisplay" class="text-[#a6e3a1]">0</span>s</span>
+                <button id="timerBtn" class="btn btn-primary"><i id="timerIcon" class="fas fa-play mr-1"></i><span id="timerLabel">Start</span></button>
+              </div>
+              <div class="text-xs text-[#6c7086] mt-2">Ref stores the interval ID so cleanup works without re-render</div>
+            </div>
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Syntax</h3>
+          <div class="bg-[#11111b] rounded-lg p-3 text-xs font-mono leading-relaxed">
+<span class="text-[#cba6f7]">import</span> { useRef } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'react'</span>;
+
+<span class="text-[#cba6f7">const</span> myRef = <span class="text-[#89b4fa]">useRef</span>(initialValue);
+<span class="text-[#6c7086]">// { current: initialValue }</span>
+
+<span class="text-[#6c7086]">// Read:  myRef.current</span>
+<span class="text-[#6c7086]">// Write: myRef.current = newValue</span>
+<span class="text-[#6c7086]">// ⚠️ Writing does NOT trigger a re-render</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">useRef vs useState</h3>
+          <div class="overflow-hidden rounded-lg border border-[#313244] text-xs">
+            <table class="w-full">
+              <thead><tr class="bg-[#181825]"><th class="px-3 py-2 text-left text-[#cba6f7]">useRef</th><th class="px-3 py-2 text-left text-[#89b4fa]">useState</th></tr></thead>
+              <tbody><tr class="border-t border-[#313244]"><td class="px-3 py-2 text-[#a6adc8]">Mutates <code>.current</code></td><td class="px-3 py-2 text-[#a6adc8]">Returns setter</td></tr>
+              <tr class="border-t border-[#313244]"><td class="px-3 py-2 text-[#a6adc8]">No re-render</td><td class="px-3 py-2 text-[#a6adc8]">Triggers re-render</td></tr>
+              <tr class="border-t border-[#313244]"><td class="px-3 py-2 text-[#a6adc8]">Persists across renders</td><td class="px-3 py-2 text-[#a6adc8]">Persists across renders</td></tr>
+              <tr class="border-t border-[#313244]"><td class="px-3 py-2 text-[#a6adc8]">For DOM refs, values, intervals</td><td class="px-3 py-2 text-[#a6adc8]">For UI data</td></tr></tbody>
+            </table>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Rule of thumb:</span> If changing it should show something new on screen → <span class="text-[#89b4fa]">useState</span>. If changing it should NOT show anything new → <span class="text-[#cba6f7]">useRef</span>.
+        </div>
+      </div>
+    </section>
+
+    <!-- === ALL USE CASES CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#cba6f7]"></i> All 4 Use Cases in Code
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#cba6f7] text-[#1e1e2e]">1. DOM Element</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7">const</span> inputRef = <span class="text-[#89b4fa]">useRef</span>(null);
+
+<span class="text-[#6c7086]">// Attach to JSX</span>
+<span class="text-[#cdd6f4]">&lt;input ref={inputRef} /&gt;</span>
+
+<span class="text-[#6c7086]">// Access DOM node directly</span>
+inputRef.current.focus();
+inputRef.current.value;</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#cba6f7] text-[#1e1e2e]">2. Mutable Value</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7">const</span> countRef = <span class="text-[#89b4fa]">useRef</span>(0);
+
+<span class="text-[#6c7086]">// Update without re-render</span>
+countRef.current += 1;
+<span class="text-[#89b4fa]">console</span>.log(countRef.current);
+
+<span class="text-[#6c7086]">// vs useState — would re-render</span>
+<span class="text-[#cba6f7">const</span> [count, setCount] = useState(0);</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#cba6f7] text-[#1e1e2e]">3. Previous Value</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7">const</span> [val, setVal] = useState(0);
+<span class="text-[#cba6f7">const</span> prevRef = <span class="text-[#89b4fa]">useRef</span>(null);
+
+<span class="text-[#6c7086]">// After render, store current value</span>
+<span class="text-[#cba6f7]">useEffect</span>(() => {
+  prevRef.current = val;
+}, [val]);
+
+<span class="text-[#6c7086]">// prevRef.current always has the old value</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#cba6f7] text-[#1e1e2e]">4. Interval / Timer ID</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7">const</span> timerRef = <span class="text-[#89b4fa]">useRef</span>(null);
+
+<span class="text-[#cba6f7">const</span> start = () => {
+  timerRef.current = <span class="text-[#89b4fa]">setInterval</span>(tick, 1000);
+};
+<span class="text-[#cba6f7">const</span> stop = () => {
+  <span class="text-[#89b4fa]">clearInterval</span>(timerRef.current);
+};
+
+<span class="text-[#6c7086]">// Cleanup on unmount</span>
+<span class="text-[#cba6f7]">useEffect</span>(() => {
+  <span class="text-[#cba6f7]">return</span> () => <span class="text-[#89b4fa]">clearInterval</span>(timerRef.current);
+}, []);</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70">
+      <a href="https://react.dev/reference/react/useRef" target="_blank" class="hover:text-[#cba6f7] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> React Docs: useRef</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      let renders = 1;
+      const renderBadge = document.getElementById('renderBadge');
+      function incRender() { renders++; renderBadge.textContent = 'renders: ' + renders; }
+
+      // 1. DOM ref — focus input
+      const nameInput = document.getElementById('nameInput');
+      document.getElementById('focusBtn').addEventListener('click', () => {
+        nameInput.focus();
+        nameInput.style.borderColor = '#cba6f7';
+        setTimeout(() => nameInput.style.borderColor = '', 600);
+      });
+
+      // 2. Ref vs State
+      let refVal = 0;
+      let stateVal = 0;
+      const refCount = document.getElementById('refCount');
+      const stateCount = document.getElementById('stateCount');
+
+      document.getElementById('refIncBtn').addEventListener('click', () => {
+        refVal++;
+        refCount.textContent = refVal;
+        // No re-render
+      });
+
+      document.getElementById('stateIncBtn').addEventListener('click', () => {
+        stateVal++;
+        stateCount.textContent = stateVal;
+        incRender();
+      });
+
+      // 3. Previous value
+      let cur = 0;
+      let prev = null;
+      const currentVal = document.getElementById('currentVal');
+      const prevVal = document.getElementById('prevVal');
+
+      function updatePrev(next) {
+        prev = cur;
+        cur = next;
+        currentVal.textContent = cur;
+        prevVal.textContent = prev !== null ? prev : '—';
+        prevVal.style.color = prev !== null ? '#6c7086' : '#6c7086';
+        incRender();
+      }
+
+      document.getElementById('prevIncBtn').addEventListener('click', () => updatePrev(cur + 1));
+      document.getElementById('prevDecBtn').addEventListener('click', () => updatePrev(cur - 1));
+
+      // 4. Timer
+      let timerRunning = false;
+      let elapsed = 0;
+      let intervalId = null;
+      const timerDisplay = document.getElementById('timerDisplay');
+      const timerBtn = document.getElementById('timerBtn');
+      const timerLabel = document.getElementById('timerLabel');
+      const timerIcon = document.getElementById('timerIcon');
+
+      timerBtn.addEventListener('click', () => {
+        if (timerRunning) {
+          clearInterval(intervalId);
+          intervalId = null;
+          timerRunning = false;
+          timerLabel.textContent = 'Start';
+          timerIcon.className = 'fas fa-play mr-1';
+        } else {
+          intervalId = setInterval(() => {
+            elapsed++;
+            timerDisplay.textContent = elapsed;
+          }, 1000);
+          timerRunning = true;
+          timerLabel.textContent = 'Stop';
+          timerIcon.className = 'fas fa-stop mr-1';
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

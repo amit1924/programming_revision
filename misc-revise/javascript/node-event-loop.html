@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Node.js Event Loop — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#11111b;color:#cdd6f4;padding:20px}
+h1{font-size:2.5rem;margin-bottom:.3rem}
+h2{font-size:1.35rem;margin:2rem 0 .8rem;color:#89b4fa;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.7rem;background:#313244;color:#a6adc8;padding:2px 8px;border-radius:999px;font-weight:400}
+h3{font-size:1.05rem;margin:1.2rem 0 .5rem;color:#a6e3a1}
+p,li{color:#bac2de;line-height:1.7}
+code{background:#181825;padding:2px 6px;border-radius:4px;font-size:.85em;color:#fab387;font-family:'JetBrains Mono',monospace}
+pre{background:#181825;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0;border:1px solid #313244;line-height:1.7}
+pre code{background:none;padding:0;color:#a6e3a1}
+.wrapper{max-width:1000px;margin:0 auto}
+.gradient-text{background:linear-gradient(135deg,#89b4fa,#a6e3a1,#f9e2af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#6c7086;margin-bottom:2rem}
+.demo-panel{background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:20px;margin:20px 0}
+.demo-panel .label{font-size:.75rem;color:#6c7086;margin-bottom:8px;font-family:monospace}
+.demo-panel .label span{color:#89b4fa}
+.tip{background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.85rem;color:#a6adc8}
+.tip strong{color:#f9e2af}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.84rem;border-left:4px solid #89b4fa;background:rgba(137,180,250,.04)}
+.callout.danger{border-color:#f38ba8;background:rgba(243,139,168,.06)}
+.callout.warn{border-color:#f9e2af;background:rgba(249,226,175,.06)}
+.callout .tag{display:inline-block;padding:1px 7px;border-radius:4px;font-size:.7rem;font-weight:600;font-family:monospace;margin-right:4px}
+.callout .tag.good{background:#a6e3a120;color:#a6e3a1;border:1px solid #a6e3a1}
+.callout .tag.bad{background:#f38ba820;color:#f38ba8;border:1px solid #f38ba8}
+.callout .tag.warn{background:#f9e2af20;color:#f9e2af;border:1px solid #f9e2af}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;font-size:.85rem}
+.info-card .prop{color:#89b4fa;font-family:monospace;font-weight:600}
+.info-card .val{color:#a6e3a1}
+.info-card .desc{color:#6c7086;font-size:.8rem;margin-top:4px}
+.info-card .desc code{font-size:.75rem}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.controls button,.btn{background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:monospace;transition:.2s}
+.controls button:hover,.btn:hover{background:#45475a}
+.controls button.active,.btn.active{background:#89b4fa30;border-color:#89b4fa;color:#89b4fa}
+.controls button:disabled,.btn:disabled{opacity:.4;cursor:not-allowed}
+.slider-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.slider-group label{font-size:.78rem;color:#a6adc8}
+.slider-group input[type=range]{accent-color:#89b4fa;width:140px}
+.slider-group .value{font-family:monospace;font-size:.8rem;color:#fab387;min-width:40px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{background:#181825;color:#89b4fa;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid #313244}
+td{padding:10px 14px;border-bottom:1px solid #313244;color:#a6adc8}
+tr:hover td{background:#1e1e2e50}
+td:first-child{font-family:monospace;color:#fab387}
+::selection{background:#89b4fa40}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#11111b}
+::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+
+.phase-diagram{display:flex;align-items:center;justify-content:center;gap:0;margin:20px 0;flex-wrap:wrap}
+.phase-box{padding:14px 18px;border-radius:8px;font-family:monospace;font-size:.72rem;font-weight:600;text-align:center;min-width:90px;border:2px solid;position:relative;transition:.3s}
+.phase-box.active{transform:scale(1.08);box-shadow:0 0 20px rgba(137,180,250,.3)}
+.phase-box.timers{background:#fab38715;border-color:#fab387;color:#fab387}
+.phase-box.pending{background:#585b7015;border-color:#585b70;color:#a6adc8}
+.phase-box.idle{background:#31324415;border-color:#313244;color:#585b70}
+.phase-box.poll{background:#a6e3a115;border-color:#a6e3a1;color:#a6e3a1}
+.phase-box.check{background:#89b4fa15;border-color:#89b4fa;color:#89b4fa}
+.phase-box.close{background:#f38ba815;border-color:#f38ba8;color:#f38ba8}
+.phase-arrow{font-size:1.1rem;color:#585b70;padding:0 2px}
+.phase-sub{font-size:.55rem;font-weight:400;opacity:.6;margin-top:2px}
+.phase-title{font-size:.6rem;color:#6c7086;text-align:center;margin:4px 0 2px;font-family:monospace}
+
+.queue-col{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;min-height:80px}
+.queue-col .qc-title{font-size:.7rem;font-family:monospace;margin-bottom:6px}
+.queue-col .qc-title.tick{color:#f9e2af}
+.queue-col .qc-title.micro{color:#a6e3a1}
+.queue-col .qc-title.macro{color:#89b4fa}
+.queue-line{display:flex;gap:4px;flex-wrap:wrap;min-height:28px;align-items:center}
+.queue-item{display:inline-block;padding:3px 8px;border-radius:4px;font-size:.7rem;font-family:monospace;margin:2px;animation:fadeIn .3s}
+.queue-item.tick{background:#f9e2af20;border:1px solid #f9e2af;color:#f9e2af}
+.queue-item.micro{background:#a6e3a120;border:1px solid #a6e3a1;color:#a6e3a1}
+.queue-item.macro{background:#89b4fa20;border:1px solid #89b4fa;color:#89b4fa}
+.queue-item.executing{background:#fab38730;border-color:#fab387;color:#fab387}
+.queue-item.done{opacity:.3;text-decoration:line-through}
+@keyframes fadeIn{from{opacity:0;transform:scale(.8)}to{opacity:1;transform:scale(1)}}
+
+.exec-log{background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:10px 14px;font-family:monospace;font-size:.75rem;max-height:180px;overflow-y:auto;line-height:1.8;margin:8px 0}
+.exec-log div{padding:1px 0}
+.exec-log .phase{color:#89b4fa}
+.exec-log .tick{color:#f9e2af}
+.exec-log .micro{color:#a6e3a1}
+.exec-log .macro{color:#fab387}
+.exec-log .info{color:#585b70}
+.exec-log .err{color:#f38ba8}
+
+.tick-chain{display:flex;gap:6px;flex-wrap:wrap;padding:12px;background:#0f0f17;border-radius:6px;border:1px solid #313244;margin:8px 0;font-family:monospace;font-size:.75rem;align-items:center}
+.tick-link{padding:6px 12px;border-radius:5px;border:1px solid;font-size:.7rem}
+.tick-link.tick{background:#f9e2af20;border-color:#f9e2af;color:#f9e2af}
+.tick-link.micro{background:#a6e3a120;border-color:#a6e3a1;color:#a6e3a1}
+.tick-link.callback{background:#fab38720;border-color:#fab387;color:#fab387}
+.tick-arrow{color:#585b70;font-size:.8rem}
+.tick-note{font-size:.6rem;color:#6c7086}
+
+.block-bar{height:24px;background:#313244;border-radius:4px;overflow:hidden;margin:8px 0;position:relative}
+.block-bar .fill{height:100%;border-radius:4px;transition:width .1s;width:0}
+.block-bar .fill.poll{background:linear-gradient(90deg,#a6e3a1,#89b4fa)}
+.block-label{display:flex;justify-content:space-between;font-size:.7rem;color:#6c7086;font-family:monospace}
+
+.compare-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+@media(max-width:600px){.compare-cols{grid-template-columns:1fr}}
+.compact-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:14px}
+.compact-card .cc-title{font-family:monospace;font-size:.8rem;color:#89b4fa;margin-bottom:4px}
+.compact-card .cc-body{font-size:.78rem;color:#bac2de;line-height:1.6}
+
+.recursion-vis{display:flex;gap:3px;flex-wrap:wrap;padding:10px;background:#0f0f17;border-radius:6px;min-height:30px;margin:8px 0}
+.recursion-item{width:20px;height:20px;border-radius:3px;animation:popIn .2s}
+.recursion-item.tick{background:#f9e2af}
+.recursion-item.micro{background:#a6e3a1}
+.recursion-item.timeout{background:#89b4fa}
+@keyframes popIn{from{transform:scale(0)}to{transform:scale(1)}}
+
+.playground-edit{width:100%;background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#cdd6f4;min-height:120px;resize:vertical;margin:8px 0;outline:none;tab-size:2;line-height:1.6}
+.playground-edit:focus{border-color:#89b4fa}
+.playground-output{background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:14px;font-family:monospace;font-size:.82rem;min-height:60px;max-height:200px;overflow-y:auto;line-height:1.8;margin:8px 0}
+.playground-output .log{color:#bac2de}
+.playground-output .log.sync{color:#fab387}
+.playground-output .log.tick{color:#f9e2af}
+.playground-output .log.micro{color:#a6e3a1}
+.playground-output .log.macro{color:#89b4fa}
+.playground-output .log.err{color:#f38ba8}
+.playground-output .log.info{color:#6c7086}
+
+.running-dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:4px;animation:blink .8s infinite}
+.running-dot.green{background:#a6e3a1}
+.running-dot.yellow{background:#f9e2af}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.3}}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1 class="gradient-text">Node.js Event Loop</h1>
+<p class="subtitle">The 6 phases, process.nextTick, Poll, setImmediate — deep visual dive into libuv</p>
+
+<h2><span>1. The 6 Phases</span><span class="badge">libuv · one iteration</span></h2>
+<p>Node.js uses <strong>libuv</strong>'s event loop with six distinct phases. Each phase has a <strong>FIFO queue</strong> of callbacks. The loop enters each phase, executes all callbacks in that queue (up to a limit), then moves to the next.</p>
+
+<div class="phase-diagram" id="phaseDiagram">
+  <div class="phase-box timers" data-phase="0">⏰ Timers<span class="phase-sub">setTimeout/setInterval</span></div>
+  <div class="phase-arrow">→</div>
+  <div class="phase-box pending" data-phase="1">🔄 Pending<span class="phase-sub">I/O deferred</span></div>
+  <div class="phase-arrow">→</div>
+  <div class="phase-box idle" data-phase="2">⚙️ Idle/Prepare<span class="phase-sub">internal</span></div>
+  <div class="phase-arrow">→</div>
+  <div class="phase-box poll" data-phase="3">📡 Poll<span class="phase-sub">I/O events</span></div>
+  <div class="phase-arrow">→</div>
+  <div class="phase-box check" data-phase="4">✅ Check<span class="phase-sub">setImmediate</span></div>
+  <div class="phase-arrow">→</div>
+  <div class="phase-box close" data-phase="5">🔒 Close<span class="phase-sub">close events</span></div>
+  <div class="phase-arrow">→</div>
+</div>
+
+<p class="phase-title">Between <strong>every</strong> phase: drain entire <code>process.nextTick</code> queue, then drain entire microtask queue (Promise.then).</p>
+
+<div class="demo-panel">
+  <div class="label">🔄 <span>Phase walkthrough — click to step through one iteration</span></div>
+  <div class="controls" id="phaseControls">
+    <button data-phase-action="step">⏭️ Step</button>
+    <button data-phase-action="auto">▶️ Auto</button>
+    <button data-phase-action="reset">↺ Reset</button>
+  </div>
+  <div class="exec-log" id="phaseLog"></div>
+</div>
+
+<h2><span>2. process.nextTick</span><span class="badge">highest priority · deep dive</span></h2>
+<p><code>process.nextTick</code> is <strong>not</strong> part of the event loop phases. It has its own queue that is drained <strong>after every single phase</strong> — before moving to the next phase, and before microtasks.</p>
+
+<div class="info-grid">
+  <div class="info-card">
+    <div class="prop" style="color:#f9e2af">process.nextTick(fn)</div>
+    <div class="desc">Schedules <code>fn</code> to run <strong>after the current phase</strong>, before any other phase. Higher priority than <strong>any</strong> other callback.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#f9e2af">⚠️ Starvation risk</div>
+    <div class="desc">If <code>nextTick</code> recursively queues more <code>nextTick</code> callbacks, the event loop will <strong>never</strong> reach the I/O, timers, or check phases. This is why Node docs warn about it.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#f9e2af">vs Promise microtasks</div>
+    <div class="desc">In Node.js, <code>process.nextTick</code> queue is drained <strong>before</strong> the microtask queue. So <code>nextTick</code> runs before <code>Promise.then</code> on the same phase boundary.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#f9e2af">vs setImmediate</div>
+    <div class="desc"><code>nextTick</code> runs between phases. <code>setImmediate</code> runs in the Check phase (phase 4). nextTick is always first.</div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">⚡ <span>process.nextTick ordering — see it beat Promise and setTimeout</span></div>
+  <div class="controls" id="tickControls">
+    <button data-tick="run">▶️ Run comparison</button>
+    <button data-tick="starvation">💥 Trigger starvation</button>
+    <button data-tick="clear">🧹 Clear</button>
+  </div>
+  <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin:8px 0">
+    <div class="queue-col">
+      <div class="qc-title tick">⚡ nextTick queue</div>
+      <div class="queue-line" id="tickLine"></div>
+    </div>
+    <div class="queue-col">
+      <div class="qc-title micro">🔬 Microtask queue (Promise)</div>
+      <div class="queue-line" id="microLine"></div>
+    </div>
+    <div class="queue-col">
+      <div class="qc-title macro">📤 Macrotask queue (setTimeout)</div>
+      <div class="queue-line" id="macroLine"></div>
+    </div>
+  </div>
+  <div class="exec-log" id="tickLog"></div>
+</div>
+
+<div class="callout danger">
+  <strong>Node.js docs explicitly warn:</strong> "process.nextTick is not a simple alias for setTimeout(fn, 0). It is far more efficient, but also far more aggressive." Use <code>setImmediate</code> for deferring to the next iteration; use <code>nextTick</code> only when you need to ensure code runs <strong>before</strong> the next phase (e.g., error handling, cleanup).
+</div>
+
+<h2><span>3. Poll Phase</span><span class="badge">I/O events · blocking · watchers</span></h2>
+<p>The <strong>Poll</strong> phase is the most important: it retrieves new I/O events, executes their callbacks, and decides what to do next. libuv uses platform-specific polling mechanisms (epoll on Linux, kqueue on macOS, IOCP on Windows).</p>
+
+<div class="compare-cols">
+  <div class="compact-card">
+    <div class="cc-title">📥 Poll step 1: Calculate timeout</div>
+    <div class="cc-body">Looks at the earliest timer. If timers are pending, poll timeout = 0 (don't block). If <code>setImmediate</code> is pending, timeout = 0. Otherwise, no pending timers or check → block indefinitely.</div>
+  </div>
+  <div class="compact-card">
+    <div class="cc-title">📡 Poll step 2: Watch for I/O</div>
+    <div class="cc-body">libuv blocks waiting for I/O events (socket data, file reads, etc.) up to the calculated timeout. New events are queued as callbacks in the poll queue.</div>
+  </div>
+  <div class="compact-card">
+    <div class="cc-title">⚡ Poll step 3: Execute callbacks</div>
+    <div class="cc-body">Runs all I/O callbacks in the poll queue (up to a system limit). After each callback, the <code>process.nextTick</code> + microtask queues are drained.</div>
+  </div>
+  <div class="compact-card">
+    <div class="cc-title">🔀 Poll step 4: Check for next phase</div>
+    <div class="cc-body">After the poll queue is empty (or hits the limit), if <code>setImmediate</code> callbacks are pending → proceeds to Check phase. If timers are due → loops back to Timers.</div>
+  </div>
+</div>
+
+<pre><code><span style="color:#6c7086">// Pseudocode: Poll phase decision</span>
+<span style="color:#89b4fa">if</span> (pendingTimers.length > 0 || pendingImmediates.length > 0) {
+  timeout = 0;  <span style="color:#6c7086">// don't block, check immediately</span>
+} <span style="color:#89b4fa">else if</span> (no I/O watchers) {
+  timeout = 0;  <span style="color:#6c7086">// nothing to wait for</span>
+} <span style="color:#89b4fa">else</span> {
+  timeout = nextTimer - now;  <span style="color:#6c7086">// block until next timer</span>
+}
+events = poll(timeout);  <span style="color:#6c7086">// blocking call (epoll/kqueue/IOCP)</span>
+runCallbacks(events);    <span style="color:#6c7086">// execute I/O callbacks</span>
+<span style="color:#6c7086">// After each callback: drain nextTick, drain microtasks</span></code></pre>
+
+<div class="demo-panel">
+  <div class="label">📡 <span>Poll phase simulator — see how timeout is calculated</span></div>
+  <div class="controls" id="pollControls">
+    <button data-poll="timer">⏰ With pending timer</button>
+    <button data-poll="immediate">✅ With pending setImmediate</button>
+    <button data-poll="io">📡 Only I/O (block)</button>
+    <button data-poll="none">💤 Nothing pending (idle)</button>
+  </div>
+  <div class="block-bar">
+    <div class="fill poll" id="pollFill" style="width:0%"></div>
+  </div>
+  <div class="block-label">
+    <span>0ms (no block)</span>
+    <span id="pollTimeoutDisplay">Poll timeout: ?ms</span>
+  </div>
+  <div style="font-family:monospace;font-size:.78rem;color:#bac2de;padding:10px;background:#181825;border-radius:6px;border:1px solid #313244;margin-top:8px;line-height:1.8" id="pollResult"></div>
+</div>
+
+<h2><span>4. setImmediate vs setTimeout</span><span class="badge">the classic Node.js question</span></h2>
+
+<div class="compare-cols">
+  <div class="compact-card">
+    <div class="cc-title">Outside I/O (main module)</div>
+    <div class="cc-body"><code>setTimeout(fn, 0)</code> and <code>setImmediate(fn)</code> have <strong>unpredictable</strong> order. Timer phase runs first, but the 0ms timer may not have expired yet depending on system load. <strong>Neither is guaranteed to win.</strong></div>
+  </div>
+  <div class="compact-card">
+    <div class="cc-title">Inside I/O callback (e.g., fs.readFile)</div>
+    <div class="cc-body"><code>setImmediate(fn)</code> <strong>always</strong> wins. The Poll phase (phase 3) queues the I/O callback. After it runs, the Check phase (phase 4) comes next — <code>setImmediate</code> fires before the next Timer phase.</div>
+  </div>
+</div>
+
+<pre><code><span style="color:#6c7086">// In I/O callback — setImmediate ALWAYS wins</span>
+fs.readFile(<span class="str">'file.txt'</span>, () => {
+  setTimeout(() => console.log(<span class="str">'timer'</span>), 0);   <span style="color:#6c7086">// 2nd</span>
+  setImmediate(() => console.log(<span class="str">'immediate'</span>));  <span style="color:#6c7086">// 1st ✅</span>
+});</code></pre>
+
+<h2><span>5. nextTick vs setImmediate vs setTimeout — Comparison</span></h2>
+<table>
+  <tr><th>Feature</th><th>process.nextTick</th><th>setImmediate</th><th>setTimeout(fn, 0)</th></tr>
+  <tr><td>Phase</td><td>Between <strong>every</strong> phase</td><td>Check phase (4)</td><td>Timers phase (0)</td></tr>
+  <tr><td>Priority</td><td>🥇 Highest</td><td>🥈 Medium</td><td>🥉 Lowest (among these)</td></tr>
+  <tr><td>Min delay</td><td>0 (runs immediately after phase)</td><td>~1ms (next Check phase)</td><td>1ms (minimum, clamped)</td></tr>
+  <tr><td>Starvation risk</td><td>⚠️ High</td><td>Low</td><td>Low</td></tr>
+  <tr><td>Use case</td><td>Cleanup, error propagation</td><td>Defer work to next iteration</td><td>Basic delay, throttling</td></tr>
+</table>
+
+<h2><span>6. Full Loop Walkthrough</span><span class="badge">trace execution</span></h2>
+<p>Follow the execution flow of a real program through every phase and queue.</p>
+
+<div class="demo-panel">
+  <div class="label">🔍 <span>Click to trace — see each phase light up as code executes</span></div>
+  <div class="controls" id="traceControls">
+    <button data-trace="run">▶️ Run trace</button>
+    <button data-trace="clear">🧹 Clear</button>
+  </div>
+  <div style="display:grid;grid-template-columns:2fr 1fr;gap:12px;margin:8px 0">
+    <div class="exec-log" id="traceLog"></div>
+    <div style="background:#181825;border:1px solid #313244;border-radius:8px;padding:12px">
+      <div style="font-size:.65rem;color:#6c7086;font-family:monospace;margin-bottom:6px">Current Phase</div>
+      <div id="tracePhase" style="font-size:1.2rem;text-align:center;padding:12px;background:#0f0f17;border-radius:6px;font-family:monospace">—</div>
+      <div style="font-size:.7rem;color:#6c7086;margin-top:6px;font-family:monospace;text-align:center">Tick queue: <span id="traceTickCount">0</span> | Micro: <span id="traceMicroCount">0</span></div>
+    </div>
+  </div>
+</div>
+
+<h2><span>7. Interactive Playground</span><span class="badge">simulate Node.js behavior</span></h2>
+<p>Use <code>log(msg, type)</code> where type is <code>"sync"</code>, <code>"tick"</code>, <code>"micro"</code>, or <code>"macro"</code>. <code>wait(ms)</code> returns a promise. Queue helpers: <code>nextTick(fn)</code>, <code>immediate(fn)</code> are predefined.</p>
+
+<div class="demo-panel">
+  <div class="label">💻 <span>Live playground — see the Node.js event loop in action</span></div>
+  <textarea class="playground-edit" id="playgroundEdit" spellcheck="false">log("1: sync start", "sync");
+
+process.nextTick(() => {
+  log("3: nextTick runs", "tick");
+});
+
+Promise.resolve().then(() => {
+  log("4: Promise.then (microtask)", "micro");
+});
+
+setTimeout(() => {
+  log("6: setTimeout(0) — timer phase", "macro");
+}, 0);
+
+setImmediate(() => {
+  log("7: setImmediate — check phase", "macro");
+});
+
+log("2: sync end", "sync");
+
+// Order: 1 → 2 → 3 → 4 → 5(nextTick) → 6 → 7
+// Between phases: nextTick drains (3), then microtasks (4)
+// Timer phase (6), Check phase (7)</textarea>
+  <div class="controls" style="margin-top:6px">
+    <button class="btn" id="runPlayground">▶️ Run</button>
+    <button class="btn" id="clearPlayground">🧹 Clear</button>
+  </div>
+  <div class="playground-output" id="playgroundOutput"></div>
+</div>
+
+</div><!-- /wrapper -->
+
+<script>
+(function(){
+"use strict";
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+// ===== 1. Phase Walkthrough =====
+(function(){
+  const boxes = document.querySelectorAll('.phase-box');
+  const log = $('#phaseLog');
+  let step = -1;
+  let autoTimer = null;
+
+  const phaseNames = [
+    ['⏰ Timers', 'setTimeout/setInterval callbacks fire here. If the timer has expired, its callback runs.'],
+    ['🔄 Pending', 'I/O callbacks deferred from the previous iteration (e.g., TCP errors). Rarely used.'],
+    ['⚙️ Idle/Prepare', 'Internal libuv bookkeeping. Not exposed to JavaScript. Runs every iteration.'],
+    ['📡 Poll', 'The big one. Fetches new I/O events. May block waiting for events if nothing else is pending.'],
+    ['✅ Check', 'setImmediate callbacks fire here. Runs right after Poll finishes.'],
+    ['🔒 Close', 'Close event callbacks (e.g., socket.on("close")). Cleanup handlers.']
+  ];
+
+  function reset() {
+    if (autoTimer) clearInterval(autoTimer);
+    autoTimer = null;
+    boxes.forEach(b => b.classList.remove('active'));
+    log.innerHTML = '';
+    step = -1;
+    logMsg('↺ Reset. Click "Step" to walk through phases.', 'info');
+  }
+
+  function logMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = cls || '';
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function nextPhase() {
+    boxes.forEach(b => b.classList.remove('active'));
+    step = (step + 1) % 6;
+    boxes[step].classList.add('active');
+    const [name, desc] = phaseNames[step];
+    logMsg('➡️ ' + name + ': ' + desc, 'phase');
+    logMsg('   ↳ Draining nextTick queue... then microtask queue...', 'info');
+  }
+
+  $$('#phaseControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const a = btn.dataset.phaseAction;
+      if (a === 'step') {
+        if (autoTimer) { clearInterval(autoTimer); autoTimer = null; }
+        if (step === -1) { log.innerHTML = ''; step = -1; }
+        nextPhase();
+      } else if (a === 'auto') {
+        if (autoTimer) {
+          clearInterval(autoTimer);
+          autoTimer = null;
+          btn.textContent = '▶️ Auto';
+          return;
+        }
+        btn.textContent = '⏸️ Pause';
+        if (step === -1) { log.innerHTML = ''; nextPhase(); }
+        autoTimer = setInterval(nextPhase, 1800);
+      } else if (a === 'reset') {
+        reset();
+        btn.parentElement.querySelector('[data-phase-action="auto"]').textContent = '▶️ Auto';
+      }
+    });
+  });
+})();
+
+// ===== 2. process.nextTick Demo =====
+(function(){
+  const tickLine = $('#tickLine');
+  const microLine = $('#microLine');
+  const macroLine = $('#macroLine');
+  const log = $('#tickLog');
+
+  function addItem(el, text, cls) {
+    const d = document.createElement('span');
+    d.className = 'queue-item ' + cls;
+    d.textContent = text;
+    el.appendChild(d);
+  }
+
+  function logMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = cls || '';
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function clearAll() {
+    tickLine.innerHTML = '';
+    microLine.innerHTML = '';
+    macroLine.innerHTML = '';
+    log.innerHTML = '';
+  }
+
+  $('#tickControls button[data-tick="clear"]').addEventListener('click', clearAll);
+
+  $('#tickControls button[data-tick="run"]').addEventListener('click', () => {
+    clearAll();
+
+    addItem(tickLine, 'nextTick', 'tick');
+    addItem(microLine, 'Promise.then', 'micro');
+    addItem(macroLine, 'setTimeout(0)', 'macro');
+
+    logMsg('⏳ Queued all three — order of execution:', 'info');
+
+    // Schedule setTimeout first (macro — always last)
+    setTimeout(() => {
+      logMsg('✅ 3: setTimeout fires (macrotask — last)', 'macro');
+      addItem(macroLine, '✅ executed', 'done');
+    }, 100);
+
+    // Promise microtask
+    Promise.resolve().then(() => {
+      logMsg('✅ 2: Promise.then fires (microtask — second)', 'micro');
+      addItem(microLine, '✅ executed', 'done');
+    });
+
+    // process.nextTick — runs first
+    process.nextTick(() => {
+      logMsg('✅ 1: nextTick fires FIRST (between phases)', 'tick');
+      addItem(tickLine, '✅ executed', 'done');
+      logMsg('📌 nextTick won! It always beats Promise.then and setTimeout', 'info');
+    });
+  });
+
+  $('#tickControls button[data-tick="starvation"]').addEventListener('click', () => {
+    clearAll();
+    logMsg('💥 Simulating nextTick starvation...', 'err');
+    logMsg('   Each nextTick queues another nextTick — I/O never runs!', 'info');
+
+    let count = 0;
+    const max = 20;
+    function starve() {
+      if (count >= max) {
+        logMsg('⏹️ Stopped after ' + max + ' recursive nextTicks (real Node would hang)', 'info');
+        return;
+      }
+      addItem(tickLine, count, 'tick');
+      count++;
+      process.nextTick(starve);
+    }
+    process.nextTick(starve);
+
+    // Try to run a setTimeout — it will never fire during starvation
+    setTimeout(() => {
+      addItem(macroLine, '⏰ should not appear until after', 'macro');
+      logMsg('❌ setTimeout would NOT fire during real nextTick recursion', 'err');
+    }, 50);
+
+    // Unblock after a short delay
+    setTimeout(() => {
+      logMsg('✅ Starvation released (via a setTimeout that finally ran)', 'macro');
+    }, 500);
+  });
+})();
+
+// ===== 3. Poll Phase Simulator =====
+(function(){
+  const fill = $('#pollFill');
+  const timeoutDisplay = $('#pollTimeoutDisplay');
+  const result = $('#pollResult');
+
+  function simulatePoll(scenario) {
+    const timers = { pending: false, next: null };
+    const immediates = { pending: false };
+    const io = { pending: false };
+
+    let timeout = null;
+    let explanation = '';
+
+    const setTick = (label, state) => {
+      result.innerHTML = `<span style="color:#89b4fa">${label}</span><br>`;
+    };
+
+    switch(scenario) {
+      case 'timer':
+        timers.pending = true;
+        timers.next = Date.now() + 50;
+        timeout = 0;
+        result.innerHTML = `
+          <span style="color:#89b4fa">Scenario: Pending timer</span><br>
+          Timer expires in 50ms → poll timeout = <strong>0ms</strong><br>
+          <span class="tag warn">⏰ Don't block — timer is due soon, check immediately</span><br>
+          <span style="color:#6c7086">→ Poll returns immediately, control goes to Timers phase next</span>
+        `;
+        break;
+      case 'immediate':
+        immediates.pending = true;
+        timeout = 0;
+        result.innerHTML = `
+          <span style="color:#89b4fa">Scenario: Pending setImmediate</span><br>
+          setImmediate callbacks waiting → poll timeout = <strong>0ms</strong><br>
+          <span class="tag warn">✅ Don't block — immediately go to Check phase</span><br>
+          <span style="color:#6c7086">→ Poll returns, control flows to Check phase for setImmediate</span>
+        `;
+        break;
+      case 'io':
+        io.pending = true;
+        timeout = null;
+        result.innerHTML = `
+          <span style="color:#89b4fa">Scenario: I/O watchers, no timers or immediates</span><br>
+          No pending timers or immediates → poll timeout = <strong>block indefinitely</strong><br>
+          <span class="tag good">📡 libuv blocks on epoll/kqueue/IOCP waiting for I/O</span><br>
+          <span style="color:#6c7086">→ Wakes up when a file/socket event arrives</span>
+        `;
+        break;
+      case 'none':
+        timeout = 0;
+        result.innerHTML = `
+          <span style="color:#89b4fa">Scenario: Nothing pending (idle)</span><br>
+          No timers, no immediates, no I/O watchers → poll timeout = <strong>0ms</strong><br>
+          <span class="tag good">💤 Nothing to do — loop continues, no blocking</span><br>
+          <span style="color:#6c7086">→ Node.js process may exit if no active handles remain</span>
+        `;
+        break;
+    }
+
+    const timeoutMs = timeout === null ? '∞ (blocks)' : timeout + 'ms';
+    timeoutDisplay.textContent = 'Poll timeout: ' + timeoutMs;
+
+    if (timeout === 0) {
+      fill.style.width = '5%';
+    } else if (timeout === null) {
+      fill.style.width = '100%';
+      fill.style.background = 'linear-gradient(90deg, #a6e3a1, #89b4fa, #89b4fa)';
+    } else {
+      fill.style.width = '0%';
+    }
+  }
+
+  $$('#pollControls button').forEach(btn => {
+    btn.addEventListener('click', () => simulatePoll(btn.dataset.poll));
+  });
+})();
+
+// ===== 6. Full Trace =====
+(function(){
+  const log = $('#traceLog');
+  const phaseEl = $('#tracePhase');
+  const tickCount = $('#traceTickCount');
+  const microCount = $('#traceMicroCount');
+
+  function logMsg(text, cls) {
+    const d = document.createElement('div');
+    d.className = cls || '';
+    d.textContent = text;
+    log.appendChild(d);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  function setPhase(name, color) {
+    phaseEl.textContent = name;
+    phaseEl.style.color = color;
+  }
+
+  const phases = [
+    { name: '⏰ Timers', color: '#fab387' },
+    { name: '🔄 Pending', color: '#a6adc8' },
+    { name: '⚙️ Idle/Prepare', color: '#585b70' },
+    { name: '📡 Poll', color: '#a6e3a1' },
+    { name: '✅ Check', color: '#89b4fa' },
+    { name: '🔒 Close', color: '#f38ba8' },
+  ];
+
+  let aborted = false;
+
+  function delay(ms) {
+    return new Promise(r => setTimeout(r, ms));
+  }
+
+  async function runTrace() {
+    aborted = false;
+    log.innerHTML = '';
+    setPhase('—', '#6c7086');
+    tickCount.textContent = '0';
+    microCount.textContent = '0';
+
+    logMsg('🚀 Node.js event loop starting...', 'info');
+    await delay(500);
+
+    for (let i = 0; i < phases.length; i++) {
+      if (aborted) return;
+      const p = phases[i];
+      setPhase(p.name, p.color);
+      logMsg('➡️ Entering ' + p.name + ' phase', 'phase');
+
+      if (i === 0) {
+        // Timers — queue a setTimeout callback
+        logMsg('   Checking expired timers...', 'info');
+        await delay(300);
+        logMsg('   → setTimeout(0) callback executed', 'macro');
+      }
+
+      if (i === 3) {
+        // Poll — the interesting one
+        logMsg('   Polling for I/O events...', 'info');
+        await delay(400);
+        logMsg('   → fs.readFile callback received', 'phase');
+        // Simulate nextTick and microtasks being drained
+        tickCount.textContent = '2';
+        logMsg('   ↳ Draining nextTick queue (2 callbacks)...', 'tick');
+        await delay(300);
+        tickCount.textContent = '0';
+        microCount.textContent = '3';
+        logMsg('   ↳ Draining microtask queue (3 promises)...', 'micro');
+        await delay(300);
+        microCount.textContent = '0';
+        logMsg('   ✅ Poll phase complete', 'info');
+        continue;
+      }
+
+      // Generic between-phase tick/micro drainage
+      await delay(200);
+      const tickN = Math.floor(Math.random() * 3);
+      const microN = Math.floor(Math.random() * 2);
+      if (tickN > 0) {
+        tickCount.textContent = String(tickN);
+        logMsg('   ↳ Draining ' + tickN + ' nextTick(s)', 'tick');
+        await delay(200);
+        tickCount.textContent = '0';
+      }
+      if (microN > 0) {
+        microCount.textContent = String(microN);
+        logMsg('   ↳ Draining ' + microN + ' microtask(s)', 'micro');
+        await delay(200);
+        microCount.textContent = '0';
+      }
+    }
+
+    logMsg('🔄 Loop iteration complete — starting next tick', 'info');
+    setPhase('🔄 (repeat)', '#6c7086');
+  }
+
+  $('#traceControls button[data-trace="run"]').addEventListener('click', runTrace);
+  $('#traceControls button[data-trace="clear"]').addEventListener('click', () => {
+    aborted = true;
+    log.innerHTML = '';
+    setPhase('—', '#6c7086');
+    tickCount.textContent = '0';
+    microCount.textContent = '0';
+  });
+})();
+
+// ===== 7. Playground =====
+(function(){
+  const edit = $('#playgroundEdit');
+  const output = $('#playgroundOutput');
+  const runBtn = $('#runPlayground');
+  const clearBtn = $('#clearPlayground');
+
+  clearBtn.addEventListener('click', () => { output.innerHTML = ''; });
+
+  runBtn.addEventListener('click', () => {
+    output.innerHTML = '';
+    const code = edit.value;
+
+    // Provide Node.js-like helpers
+    const helpers = `
+      window.__pgLogs = [];
+      var process = { nextTick: function(fn) { queueMicrotask(fn); } };
+      function setImmediate(fn) { setTimeout(fn, 0); }
+      function log(msg, type) {
+        if (window.__pgLogs) window.__pgLogs.push({msg: String(msg), type: type || ''});
+      }
+      function wait(ms) {
+        return new Promise(function(resolve) {
+          setTimeout(function() { resolve(ms); }, ms);
+        });
+      }
+    `;
+
+    try {
+      const fullCode = helpers + '\n' + code;
+      eval(fullCode);
+
+      const logs = window.__pgLogs || [];
+      logs.forEach(l => {
+        const d = document.createElement('div');
+        d.className = 'log ' + (l.type || '');
+        d.textContent = l.msg;
+        output.appendChild(d);
+      });
+      window.__pgLogs = [];
+    } catch(e) {
+      const logs = window.__pgLogs || [];
+      logs.forEach(l => {
+        const d = document.createElement('div');
+        d.className = 'log ' + (l.type || '');
+        d.textContent = l.msg;
+        output.appendChild(d);
+      });
+      window.__pgLogs = [];
+      const d = document.createElement('div');
+      d.className = 'log err';
+      d.textContent = '❌ ' + e.message;
+      output.appendChild(d);
+    }
+  });
+})();
+
+})();
+</script>
+</body>
+</html>

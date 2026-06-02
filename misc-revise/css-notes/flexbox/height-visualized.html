@@ -1,0 +1,733 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CSS Height — Visualized</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f17; color: #cdd6f4; padding: 0; }
+    .page { max-width: 1060px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    h1 { font-size: 2.6rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    h1 .glyph { background: linear-gradient(135deg, #89b4fa, #a6e3a1, #f9e2af); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { font-size: 1.4rem; margin: 2.5rem 0 0.8rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .sub { font-size: 0.7rem; color: #6c7086; font-weight: 400; }
+    h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p { color: #a6adc8; line-height: 1.7; margin-bottom: 10px; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid #2a2a3c; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+    .subtitle { color: #6c7086; font-size: 1.05rem; margin-bottom: 2rem; }
+
+    .card { background: #1a1a2a; border: 1px solid #2a2a3c; border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .card-label { font-size: 0.7rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; letter-spacing: 0.3px; }
+    .card-label .hl { color: #89b4fa; }
+
+    .compare-row { display: flex; gap: 16px; margin: 12px 0; }
+    @media (max-width: 700px) { .compare-row { flex-direction: column; } }
+    .compare-side { flex: 1; background: #1a1a2a; border-radius: 10px; border: 1px solid #2a2a3c; overflow: hidden; }
+    .compare-side .cs-head { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .compare-side .cs-head.bad { background: #f38ba815; color: #f38ba8; }
+    .compare-side .cs-head.good { background: #a6e3a115; color: #a6e3a1; }
+    .compare-side .cs-head.info { background: #89b4fa15; color: #89b4fa; }
+    .compare-side .cs-body { padding: 12px; }
+
+    .demo-box { background: #181825; border: 1px dashed #3a3a50; border-radius: 6px; padding: 6px; transition: all 0.3s; position: relative; }
+    .demo-box .dim-label { position: absolute; right: 4px; bottom: 4px; font-size: 0.55rem; color: #585b70; background: #181825; padding: 1px 4px; border-radius: 2px; }
+
+    .fi { border-radius: 4px; display: flex; align-items: center; justify-content: center; font-weight: 600; font-size: 0.78rem; transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1); padding: 6px 12px; position: relative; overflow: hidden; }
+    .fi::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%); pointer-events: none; }
+    .c0 { background: #89b4fa; color: #0f0f17; }
+    .c1 { background: #a6e3a1; color: #0f0f17; }
+    .c2 { background: #f9e2af; color: #0f0f17; }
+    .c3 { background: #f38ba8; color: #0f0f17; }
+    .c4 { background: #cba6f7; color: #0f0f17; }
+    .c5 { background: #fab387; color: #0f0f17; }
+    .c6 { background: #94e2d5; color: #0f0f17; }
+    .c7 { background: #74c7ec; color: #0f0f17; }
+
+    .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.7rem; font-family: monospace; border-radius: 4px; }
+    .tag-blue { background: #89b4fa20; color: #89b4fa; }
+    .tag-green { background: #a6e3a120; color: #a6e3a1; }
+    .tag-red { background: #f38ba820; color: #f38ba8; }
+    .tag-yellow { background: #f9e2af20; color: #f9e2af; }
+    .tag-purple { background: #cba6f720; color: #cba6f7; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { background: #181825; color: #89b4fa; padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 2px solid #2a2a3c; }
+    td { padding: 10px 14px; border-bottom: 1px solid #2a2a3c; color: #a6adc8; }
+    tr:hover td { background: #1a1a2a; }
+    td:first-child { font-family: monospace; color: #fab387; }
+
+    .tip { background: #1a1a2a; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+
+    input[type="range"] { accent-color: #89b4fa; width: 100%; }
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .toggle-group button { background: #2a2a3c; color: #a6adc8; border: 1px solid #3a3a50; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-family: monospace; transition: all 0.2s; }
+    .toggle-group button:hover { background: #3a3a50; }
+    .toggle-group button.on { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+
+    .flow-chart { display: flex; align-items: center; gap: 4px; padding: 12px; background: #181825; border-radius: 8px; border: 1px solid #2a2a3c; flex-wrap: wrap; justify-content: center; }
+    .flow-chart .fc-box { background: #2a2a3c; border-radius: 6px; padding: 6px 12px; font-size: 0.7rem; text-align: center; min-width: 60px; }
+    .flow-chart .fc-arrow { color: #585b70; font-size: 1.1rem; }
+
+    .height-bar { display: flex; align-items: flex-end; gap: 4px; }
+    .height-bar .hb { border-radius: 4px 4px 0 0; display: flex; align-items: flex-start; justify-content: center; font-size: 0.55rem; font-weight: 600; padding-top: 4px; transition: all 0.4s; min-width: 50px; }
+
+    .ruler { position: relative; height: 100%; }
+    .ruler-mark { position: absolute; left: 0; right: 0; border-top: 1px dashed #3a3a50; font-size: 0.5rem; color: #585b70; padding-left: 4px; }
+
+    .dimension-line { position: relative; height: 18px; margin: 2px 0; }
+    .dimension-line .line { position: absolute; height: 1px; background: #585b70; top: 50%; left: 0; right: 0; }
+    .dimension-line .label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #1a1a2a; padding: 0 6px; font-size: 0.6rem; color: #585b70; white-space: nowrap; }
+
+    .big-number { font-size: 2rem; font-weight: 800; line-height: 1; }
+    .big-number .unit { font-size: 0.85rem; font-weight: 400; color: #6c7086; }
+
+    @keyframes pulse-glow {
+      0%, 100% { box-shadow: 0 0 0 0 rgba(137,180,250,0); }
+      50% { box-shadow: 0 0 0 3px rgba(137,180,250,0.3); }
+    }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f17; }
+    ::-webkit-scrollbar-thumb { background: #3a3a50; border-radius: 3px; }
+
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .gap-16 { gap: 16px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .mb-8 { margin-bottom: 8px; }
+    .text-center { text-align: center; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1><span class="glyph">CSS Height</span> <span style="font-size:1.4rem;color:#6c7086;font-weight:400;">— Visualized</span></h1>
+  <p class="subtitle">
+    When height is automatic, when it's inherited, how block vs inline differ, and when to use <code>min-height</code> / <code>max-height</code>.
+  </p>
+
+  <!-- ===== 1. THE DEFAULT: height: auto ===== -->
+  <section>
+    <h2>1. The Default: <code>height: auto</code> <span class="sub">— Content Determines Height</span></h2>
+    <p>Every HTML element starts with <code>height: auto</code>. The element's height is determined by its <strong>content</strong> — nothing else.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head info">auto — no fixed height</div>
+        <div class="cs-body">
+          <div class="demo-box" style="background:#181825;">
+            <div class="fi c0" style="display:block;width:100%;padding:14px 16px;border-radius:4px;">
+              This box has <code>height: auto</code>
+              <span style="display:block;font-size:0.7rem;opacity:0.7;margin-top:4px;">Second line — height grows to fit</span>
+              <span style="display:block;font-size:0.7rem;opacity:0.7;">Third line — still fitting</span>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.7rem;"><code>.element { height: auto; } /* default */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head info">Same content, fixed height</div>
+        <div class="cs-body">
+          <div class="demo-box" style="background:#181825;position:relative;">
+            <div class="fi c1" style="display:block;width:100%;padding:14px 16px;border-radius:4px;height:44px;overflow:hidden;">
+              This box has <code>height: 44px</code>
+              <span style="display:block;font-size:0.7rem;opacity:0.7;margin-top:4px;">Second line is clipped!</span>
+              <span style="display:block;font-size:0.7rem;opacity:0.7;">This cannot be seen</span>
+            </div>
+            <div style="position:absolute;bottom:4px;right:6px;font-size:0.55rem;color:#f38ba8;background:#181825;padding:1px 4px;border-radius:2px;">content overflow</div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.7rem;"><code>.element { height: 44px; overflow: hidden; }</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Rule:</strong> With <code>height: auto</code>, the element expands to contain its content. With a fixed <code>height</code>, content can overflow (or you need <code>overflow</code> to handle it). <strong>Auto is usually what you want.</strong>
+    </div>
+  </section>
+
+  <!-- ===== 2. BLOCK vs INLINE vs INLINE-BLOCK ===== -->
+  <section>
+    <h2>2. Block vs Inline vs Inline-Block <span class="sub">— Height behavior differs</span></h2>
+
+    <table>
+      <thead><tr><th>Display</th><th>Height property works?</th><th>Default height</th><th>Width behavior</th></tr></thead>
+      <tbody>
+        <tr><td>block</td><td><span class="tag tag-green">✓ Yes</span></td><td><code>auto</code> (content height)</td><td>Fills parent width</td></tr>
+        <tr><td>inline</td><td><span class="tag tag-red">✕ Ignored</span></td><td><code>auto</code> (content height)</td><td>Shrink-wraps content</td></tr>
+        <tr><td>inline-block</td><td><span class="tag tag-green">✓ Yes</span></td><td><code>auto</code> (content height)</td><td>Shrink-wraps content</td></tr>
+        <tr><td>flex item</td><td><span class="tag tag-yellow">Overridden by align-items</span></td><td><code>auto</code> (or stretch)</td><td>Flex-dependent</td></tr>
+      </tbody>
+    </table>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0;">
+      <div class="card" style="margin:0;">
+        <div class="card-label">block <span class="hl">height: 60px</span></div>
+        <div class="fi c0" style="display:block;width:100%;height:60px;padding:8px;">60px tall</div>
+        <p style="font-size:0.7rem;margin:4px 0 0;color:#6c7086;">Height is respected. Width fills parent.</p>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label">inline <span class="hl">height: 60px</span></div>
+        <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;padding:12px;line-height:1.8;">
+          text <span class="fi c1" style="display:inline;height:60px;padding:4px 6px;">height ignored</span> continues
+        </div>
+        <p style="font-size:0.7rem;margin:4px 0 0;color:#6c7086;"><code>height: 60px</code> is <strong>ignored</strong>. Inline height = line-height.</p>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label">inline-block <span class="hl">height: 60px</span></div>
+        <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;padding:12px;">
+          text <span class="fi c2" style="display:inline-block;height:60px;padding:4px 8px;">60px</span> continues
+        </div>
+        <p style="font-size:0.7rem;margin:4px 0 0;color:#6c7086;"><code>height: 60px</code> works! Stays inline but respects height.</p>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Key insight:</strong> <code>display: inline</code> elements <strong>completely ignore</strong> width and height. They're sized entirely by content and line-height. Use <code>inline-block</code> when you need inline flow but block-like sizing.
+    </div>
+  </section>
+
+  <!-- ===== 3. HEIGHT: NOT INHERITED ===== -->
+  <section>
+    <h2>3. Height is <strong style="color:#f38ba8;">NOT</strong> Inherited <span class="sub">— This confuses everyone</span></h2>
+    <p>Unlike <code>font-size</code> or <code>color</code>, <code>height</code> is <strong>not inherited</strong>. A child doesn't automatically get its parent's height.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad" style="border-bottom:1px solid #2a2a3c;">Common Mistake: expecting inheritance</div>
+        <div class="cs-body">
+          <div class="demo-box" style="height:80px;background:#f38ba810;border-color:#f38ba850;">
+            <div style="font-size:0.65rem;color:#f38ba8;margin-bottom:4px;">Parent: height: 80px</div>
+            <div class="fi c1" style="display:block;padding:6px 8px;font-size:0.7rem;">
+              Child — NOT 80px
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.parent { height: 80px; }
+.child { } /* height is auto (content), NOT 80px */</code></pre>
+          <p style="font-size:0.7rem;color:#6c7086;margin-top:4px;">Despite what many expect, the child doesn't stretch to fill parent height by default.</p>
+        </div>
+      </div>
+
+      <div class="compare-side">
+        <div class="cs-head good">The fix: <code>height: 100%</code></div>
+        <div class="cs-body">
+          <div class="demo-box" style="height:80px;background:#a6e3a110;border-color:#a6e3a150;">
+            <div style="font-size:0.65rem;color:#a6e3a1;margin-bottom:4px;">Parent: height: 80px</div>
+            <div class="fi c1" style="display:block;height:100%;padding:6px 8px;font-size:0.7rem;display:flex;align-items:center;">
+              Child: height: 100% → 80px
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.parent { height: 80px; }
+.child { height: 100%; } /* now matches parent */</code></pre>
+          <p style="font-size:0.7rem;color:#a6e3a1;margin-top:4px;">✅ <code>height: 100%</code> = same as parent's explicit height.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">The 100% trap — <span class="hl">parent needs an explicit height</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #2a2a3c;">
+          <div style="font-size:0.75rem;color:#f38ba8;margin-bottom:6px;">✕ height: 100% fails here</div>
+          <div style="background:#f38ba810;border:1px dashed #f38ba850;border-radius:4px;padding:8px;">
+            <div style="font-size:0.65rem;color:#6c7086;">Parent: auto (no height set)</div>
+            <div style="background:#f38ba830;border-radius:4px;padding:20px;margin-top:4px;">
+              <div style="font-size:0.65rem;color:#f38ba8;">Child: height: 100%</div>
+              <div style="font-size:0.55rem;color:#6c7086;margin-top:2px;">↳ falls back to auto (content height)</div>
+            </div>
+          </div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #2a2a3c;">
+          <div style="font-size:0.75rem;color:#a6e3a1;margin-bottom:6px;">✓ height: 100% works here</div>
+          <div style="background:#a6e3a110;border:1px dashed #a6e3a150;border-radius:4px;padding:8px;">
+            <div style="font-size:0.65rem;color:#6c7086;">Parent: height: 200px</div>
+            <div style="background:#a6e3a130;border-radius:4px;padding:20px;margin-top:4px;height:200px;">
+              <div style="font-size:0.65rem;color:#a6e3a1;">Child: height: 100%</div>
+              <div style="font-size:0.55rem;color:#6c7086;margin-top:2px;">↳ matches parent's 200px</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <pre style="margin-top:10px;"><code>/* For height: 100% to work, the parent chain must have an explicit height */
+html { height: 100%; }
+body { min-height: 100%; }
+.parent { height: 100%; }
+.child { height: 100%; } /* now works */</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 4. HEIGHT UNITS COMPARED ===== -->
+  <section>
+    <h2>4. Height Units Compared <span class="sub">— px, %, vh, auto</span></h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">height: auto</span> (default)</div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div class="fi c0" style="display:block;width:100%;padding:12px;font-size:0.7rem;">grows with content</div>
+        </div>
+        <p style="font-size:0.7rem;color:#6c7086;margin-top:4px;">Content decides the height. Safe, flexible.</p>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">height: 100px</span> (fixed px)</div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div class="fi c1" style="display:block;width:100%;height:60px;padding:8px;font-size:0.7rem;">60px fixed</div>
+        </div>
+        <p style="font-size:0.7rem;color:#6c7086;margin-top:4px;">Precise but rigid. Content can overflow.</p>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">height: 50%</span> (percentage)</div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div style="height:80px;background:#a6e3a110;border-radius:4px;padding:4px;border:1px dashed #a6e3a150;">
+            <span style="font-size:0.55rem;color:#a6e3a1;">parent: 80px</span>
+            <div class="fi c2" style="display:block;height:50%;padding:4px;font-size:0.6rem;">50% = 40px</div>
+          </div>
+        </div>
+        <p style="font-size:0.7rem;color:#6c7086;margin-top:4px;">Relative to parent's explicit height.</p>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">height: 100vh</span> (viewport)</div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div class="fi c3" style="display:block;width:100%;height:40px;padding:4px;font-size:0.6rem;">100vh = full screen</div>
+          <div style="font-size:0.55rem;color:#585b70;margin-top:2px;">(shown at 40px here for demo)</div>
+        </div>
+        <p style="font-size:0.7rem;color:#6c7086;margin-top:4px;">Relative to viewport. Great for full-screen sections.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. MIN-HEIGHT ===== -->
+  <section>
+    <h2>5. <code>min-height</code> — "Never Smaller Than This" <span class="sub">— The safety net</span></h2>
+    <p>Sets a <strong>minimum</strong> height. The element can grow taller but never shorter. This is the <strong>most useful</strong> height property for responsive design.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">Without <code>min-height</code></div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;overflow:hidden;">
+            <div style="border-bottom:1px solid #2a2a3c;padding:6px 10px;font-size:0.65rem;background:#f38ba810;color:#f38ba8;">
+              Empty container collapses to 0
+            </div>
+            <div style="height:0;background:#f38ba820;border-radius:4px;margin:8px;">
+              <!-- empty -->
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.box { } /* height: auto → 0 when empty */</code></pre>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">With <code>min-height</code></div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;overflow:hidden;">
+            <div style="border-bottom:1px solid #2a2a3c;padding:6px 10px;font-size:0.65rem;background:#a6e3a110;color:#a6e3a1;">
+              Empty container stays at 60px
+            </div>
+            <div style="min-height:60px;background:#a6e3a120;border-radius:4px;margin:8px;">
+              <!-- empty but min-height keeps it open -->
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.box { min-height: 60px; } /* never collapses */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>When to use <code>min-height</code></h3>
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;border-left:3px solid #a6e3a1;">
+          <div style="font-weight:600;font-size:0.85rem;color:#a6e3a1;">✅ DO use min-height</div>
+          <ul style="font-size:0.78rem;color:#a6adc8;margin-top:6px;padding-left:16px;line-height:1.8;">
+            <li>Full-page layouts: <code>min-height: 100vh</code></li>
+            <li>Empty states / placeholders</li>
+            <li>Cards with variable content</li>
+            <li>Sidebars (ensure minimum visible area)</li>
+            <li>Panels that load content dynamically</li>
+          </ul>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;border-left:3px solid #f38ba8;">
+          <div style="font-weight:600;font-size:0.85rem;color:#f38ba8;">✕ Don't overuse</div>
+          <ul style="font-size:0.78rem;color:#a6adc8;margin-top:6px;padding-left:16px;line-height:1.8;">
+            <li>When content is predictable (use auto)</li>
+            <li>On inline elements (ignored anyway)</li>
+            <li>As a replacement for fixed height</li>
+            <li>When you need precise control (use height)</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+
+    <div class="flex-demo" style="background:#1a1a2a;border:1px solid #2a2a3c;border-radius:10px;padding:16px;margin:12px 0;">
+      <div class="card-label">Live demo — <span class="hl">min-height</span> with growing content</div>
+      <div class="toggle-group" id="mhToggles">
+        <button class="on" data-v="60">min-height: 60px</button>
+        <button data-v="100">min-height: 100px</button>
+        <button data-v="0">min-height: 0 (none)</button>
+      </div>
+      <div id="mhDemo" style="background:#89b4fa20;border:1px solid #89b4fa50;border-radius:6px;min-height:60px;padding:8px;transition:all 0.3s;">
+        <div style="font-size:0.7rem;color:#89b4fa;margin-bottom:4px;">This container has <code id="mhLabel">min-height: 60px</code></div>
+        <div class="fi c0" style="display:inline-block;font-size:0.7rem;padding:4px 10px;cursor:pointer;margin:2px;" onclick="addContentLine()">+ Add more content</div>
+        <div id="mhContent"></div>
+      </div>
+      <div style="margin-top:6px;font-size:0.65rem;color:#585b70;">
+        <span id="mhCurrentHeight">Current height: 0px</span>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Best practice:</strong> Use <code>min-height: 100vh</code> on your page wrapper and <code>min-height</code> on components that load async content. It's the <strong>safest</strong> height property — it guarantees a minimum without breaking content flow.
+    </div>
+  </section>
+
+  <!-- ===== 6. MAX-HEIGHT ===== -->
+  <section>
+    <h2>6. <code>max-height</code> — "Never Taller Than This" <span class="sub">— The ceiling</span></h2>
+    <p>Sets a <strong>maximum</strong> height. The element can grow up to this limit, then content overflows.</p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">Without <code>max-height</code></div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;">
+            <div style="border-bottom:1px solid #2a2a3c;padding:6px 10px;font-size:0.65rem;">Unlimited growth</div>
+            <div style="padding:8px;">
+              <div style="background:#f38ba820;border-radius:4px;padding:6px;">
+                <div style="font-size:0.65rem;">Line 1</div>
+                <div style="font-size:0.65rem;">Line 2</div>
+                <div style="font-size:0.65rem;">Line 3</div>
+                <div style="font-size:0.65rem;">Line 4</div>
+                <div style="font-size:0.65rem;">Line 5</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head info">With <code>max-height</code></div>
+        <div class="cs-body">
+          <div style="background:#181825;border-radius:6px;border:1px solid #2a2a3c;">
+            <div style="border-bottom:1px solid #2a2a3c;padding:6px 10px;font-size:0.65rem;background:#f38ba810;color:#f38ba8;">
+              max-height: 60px → scroll
+            </div>
+            <div style="padding:8px;">
+              <div style="background:#f38ba820;border-radius:4px;padding:6px;max-height:60px;overflow-y:auto;">
+                <div style="font-size:0.65rem;">Line 1</div>
+                <div style="font-size:0.65rem;">Line 2</div>
+                <div style="font-size:0.65rem;">Line 3</div>
+                <div style="font-size:0.65rem;">Line 4</div>
+                <div style="font-size:0.65rem;">Line 5</div>
+                <div style="font-size:0.65rem;">Line 6</div>
+                <div style="font-size:0.65rem;">Line 7</div>
+                <div style="font-size:0.65rem;">Line 8</div>
+              </div>
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.box { max-height: 60px; overflow-y: auto; }</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <h3>When to use <code>max-height</code></h3>
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;border-left:3px solid #a6e3a1;">
+          <div style="font-weight:600;font-size:0.85rem;color:#a6e3a1;">✅ DO use max-height</div>
+          <ul style="font-size:0.78rem;color:#a6adc8;margin-top:6px;padding-left:16px;line-height:1.8;">
+            <li>Expandable panels / accordions</li>
+            <li>Chat message areas (scrollable)</li>
+            <li>Dropdown menus with scroll</li>
+            <li>Modal bodies (prevent overflow)</li>
+            <li>Code blocks / preformatted text</li>
+          </ul>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;border-left:3px solid #f38ba8;">
+          <div style="font-weight:600;font-size:0.85rem;color:#f38ba8;">✕ Don't use alone</div>
+          <ul style="font-size:0.78rem;color:#a6adc8;margin-top:6px;padding-left:16px;line-height:1.8;">
+            <li>Always pair with <code>overflow</code> (auto/scroll)</li>
+            <li>Don't clip important content without warning</li>
+            <li>Not for page-level layout (use min-height)</li>
+            <li>Avoid on elements with dynamic unknown content</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7. MIN-HEIGHT vs MAX-HEIGHT vs HEIGHT ===== -->
+  <section>
+    <h2>7. <code>min-height</code> vs <code>height</code> vs <code>max-height</code> <span class="sub">— Priority order</span></h2>
+    <p>When multiple height properties are set, the browser resolves them in this order:</p>
+
+    <div class="flow-chart">
+      <div class="fc-box">
+        <span style="color:#89b4fa;">min-height</span><br>
+        <span style="font-size:0.5rem;color:#585b70;">lower bound</span>
+      </div>
+      <div class="fc-arrow">↓</div>
+      <div class="fc-box">
+        <span style="color:#a6e3a1;">height</span><br>
+        <span style="font-size:0.5rem;color:#585b70;">explicit value</span>
+      </div>
+      <div class="fc-arrow">↓</div>
+      <div class="fc-box">
+        <span style="color:#f38ba8;">max-height</span><br>
+        <span style="font-size:0.5rem;color:#585b70;">upper bound</span>
+      </div>
+      <div class="fc-arrow">=</div>
+      <div class="fc-box" style="min-width:100px;">
+        <span style="color:#cba6f7;">Final height</span><br>
+        <span style="font-size:0.5rem;color:#585b70;">clamped value</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Live — <span class="hl">drag to see which property wins</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin-bottom:12px;">
+        <div>
+          <label>min-height</label>
+          <input type="range" id="mhSlider" min="0" max="200" value="40">
+          <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span id="mhSliderVal">40</span>px</div>
+        </div>
+        <div>
+          <label>height</label>
+          <input type="range" id="hSlider" min="0" max="200" value="100">
+          <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span id="hSliderVal">100</span>px</div>
+        </div>
+        <div>
+          <label>max-height</label>
+          <input type="range" id="maxhSlider" min="20" max="200" value="160">
+          <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span id="maxhSliderVal">160</span>px</div>
+        </div>
+      </div>
+      <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #2a2a3c;">
+        <div class="flex items-center gap-8" style="font-size:0.7rem;color:#6c7086;">
+          <span>min: <span id="mhShow" style="color:#89b4fa;">40px</span></span>
+          <span>height: <span id="hShow" style="color:#a6e3a1;">100px</span></span>
+          <span>max: <span id="maxhShow" style="color:#f38ba8;">160px</span></span>
+          <span style="margin-left:auto;">Result: <span id="priorityResult" style="color:#cba6f7;font-weight:700;font-size:1rem;">100px</span></span>
+        </div>
+        <div id="priorityBar" style="margin-top:8px;background:#2a2a3c;border-radius:4px;height:100px;position:relative;overflow:hidden;">
+          <div id="priorityFill" style="position:absolute;bottom:0;left:0;right:0;background:linear-gradient(90deg,#89b4fa,#a6e3a1);border-radius:4px;height:100px;transition:height 0.3s;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:0.85rem;color:#0f0f17;">
+            100px
+          </div>
+        </div>
+      </div>
+      <pre style="margin-top:10px;font-size:0.72rem;"><code>/* Browser logic:
+   final = clamp(min-height, height, max-height)
+   if height &lt; min-height → min-height wins
+   if height &gt; max-height → max-height wins
+   otherwise → height wins */</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 8. COMMON PATTERNS ===== -->
+  <section>
+    <h2>8. Real-World Patterns <span class="sub">— What to use when</span></h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">📄 Full page layout</span></div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div style="background:#89b4fa20;border-radius:4px;padding:6px;min-height:100px;">
+            <div class="fi c0" style="display:block;padding:8px;font-size:0.65rem;">Header</div>
+            <div style="display:flex;flex:1;min-height:60px;">
+              <div class="fi c1" style="flex:0 0 30%;padding:8px;font-size:0.65rem;">Sidebar</div>
+              <div class="fi c2" style="flex:1;padding:8px;font-size:0.65rem;">Main</div>
+            </div>
+            <div class="fi c3" style="display:block;padding:8px;font-size:0.65rem;">Footer</div>
+          </div>
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>body { min-height: 100vh; display: flex;
+       flex-direction: column; }
+main { flex: 1; } /* fills remaining height */</code></pre>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">📋 Scrollable list</span></div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div style="background:#f38ba820;border-radius:4px;padding:6px;max-height:80px;overflow-y:auto;">
+            <div style="font-size:0.65rem;padding:4px;">Item 1</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 2</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 3</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 4</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 5</div>
+            <div style="font-size:0.65rem;padding:4px;">Item 6</div>
+          </div>
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.list { max-height: 300px;
+        overflow-y: auto; }</code></pre>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">📱 Card with min-height</span></div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div style="display:flex;gap:6px;">
+            <div style="flex:1;background:#a6e3a120;border-radius:4px;padding:8px;min-height:60px;">
+              <div style="font-size:0.6rem;color:#a6e3a1;">min-height: 60px</div>
+              <div style="font-size:0.6rem;margin-top:4px;">Short</div>
+            </div>
+            <div style="flex:1;background:#a6e3a120;border-radius:4px;padding:8px;min-height:60px;">
+              <div style="font-size:0.6rem;color:#a6e3a1;">min-height: 60px</div>
+              <div style="font-size:0.6rem;margin-top:4px;">Taller content pushes it down</div>
+            </div>
+          </div>
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.card { min-height: 200px; }
+/* all cards at least 200px */</code></pre>
+      </div>
+
+      <div class="card" style="margin:0;">
+        <div class="card-label"><span class="hl">📐 Perfect centering</span></div>
+        <div style="background:#181825;border-radius:4px;padding:8px;">
+          <div style="display:flex;align-items:center;justify-content:center;min-height:80px;background:#cba6f720;border-radius:4px;">
+            <div class="fi c4" style="padding:10px 20px;font-size:0.7rem;">Centered vertically</div>
+          </div>
+        </div>
+        <pre style="margin:6px 0 0;padding:6px;font-size:0.65rem;"><code>.container { display: flex;
+  align-items: center;
+  min-height: 400px; }</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 9. CHEAT SHEET ===== -->
+  <section>
+    <h2>9. Quick Decision Guide</h2>
+
+    <div class="card" style="background:#181825;">
+      <table>
+        <thead><tr><th>You want...</th><th>Use</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td>Content decides height</td><td><span class="tag tag-green">height: auto</span></td><td><code>div { } /* default */</code></td></tr>
+          <tr><td>Exact fixed height</td><td><span class="tag tag-blue">height: Xpx</span></td><td><code>.header { height: 60px; }</code></td></tr>
+          <tr><td>At least this tall (safe)</td><td><span class="tag tag-green">min-height</span></td><td><code>.page { min-height: 100vh; }</code></td></tr>
+          <tr><td>At most this tall (scroll)</td><td><span class="tag tag-yellow">max-height</span></td><td><code>.panel { max-height: 400px; overflow: auto; }</code></td></tr>
+          <tr><td>Fill parent height</td><td><span class="tag tag-blue">height: 100%</span></td><td><code>.child { height: 100%; }</code> (parent needs height)</td></tr>
+          <tr><td>Fill viewport height</td><td><span class="tag tag-purple">height: 100vh</span></td><td><code>.hero { height: 100vh; }</code></td></tr>
+          <tr><td>Remaining space in flex</td><td><span class="tag tag-green">flex: 1</span></td><td><code>.main { flex: 1; }</code></td></tr>
+          <tr><td>Inline element height</td><td><span class="tag tag-red">(use inline-block)</span></td><td><code>span { display: inline-block; height: 30px; }</code></td></tr>
+          <tr><td>Child same as parent</td><td><span class="tag tag-yellow">height: inherit</span></td><td><code>.child { height: inherit; }</code> (rarely needed)</td></tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip">
+      <strong>Golden rule:</strong> Prefer <code>height: auto</code> (the default) whenever possible. Use <code>min-height</code> for safety nets. Use <code>height: 100vh</code> for full-screen sections. Use <code>max-height + overflow</code> for scrollable containers. <strong>Never</strong> set fixed heights on content that can grow unpredictably.
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #2a2a3c;padding-top:24px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    CSS Height — Visualized
+  </footer>
+</div>
+
+<script>
+// ===== 5. min-height demo =====
+(function() {
+  const demo = document.getElementById('mhDemo');
+  const label = document.getElementById('mhLabel');
+  const heightLabel = document.getElementById('mhCurrentHeight');
+  let lineCount = 0;
+
+  document.querySelectorAll('#mhToggles button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#mhToggles button').forEach(b => b.classList.remove('on'));
+      btn.classList.add('on');
+      const v = btn.dataset.v;
+      demo.style.minHeight = v + 'px';
+      label.textContent = 'min-height: ' + v + 'px';
+      updateHeight();
+    });
+  });
+
+  window.addContentLine = function() {
+    lineCount++;
+    const el = document.createElement('div');
+    el.style.cssText = 'font-size:0.7rem;padding:4px 8px;background:#89b4fa15;border-radius:4px;margin-top:4px;';
+    el.textContent = 'Content line ' + lineCount + ' added dynamically';
+    document.getElementById('mhContent').appendChild(el);
+    updateHeight();
+  };
+
+  function updateHeight() {
+    const h = demo.offsetHeight;
+    heightLabel.textContent = 'Current height: ' + h + 'px';
+  }
+
+  new ResizeObserver(updateHeight).observe(demo);
+  updateHeight();
+})();
+
+// ===== 7. Priority sliders =====
+(function() {
+  const mh = document.getElementById('mhSlider');
+  const h = document.getElementById('hSlider');
+  const maxh = document.getElementById('maxhSlider');
+  const fill = document.getElementById('priorityFill');
+  const result = document.getElementById('priorityResult');
+  const bar = document.getElementById('priorityBar');
+
+  const mhVal = document.getElementById('mhSliderVal');
+  const hVal = document.getElementById('hSliderVal');
+  const maxhVal = document.getElementById('maxhSliderVal');
+  const mhShow = document.getElementById('mhShow');
+  const hShow = document.getElementById('hShow');
+  const maxhShow = document.getElementById('maxhShow');
+
+  function update() {
+    const min = parseInt(mh.value);
+    const val = parseInt(h.value);
+    const max = parseInt(maxh.value);
+    let final = val;
+    if (val < min) final = min;
+    if (val > max) final = max;
+
+    mhVal.textContent = min;
+    hVal.textContent = val;
+    maxhVal.textContent = max;
+    mhShow.textContent = min + 'px';
+    hShow.textContent = val + 'px';
+    maxhShow.textContent = max + 'px';
+    result.textContent = final + 'px';
+
+    const pct = (final / 200) * 100;
+    fill.style.height = pct + '%';
+    fill.textContent = final + 'px';
+
+    // color the result based on which won
+    if (final === min && final !== val) {
+      result.style.color = '#89b4fa';
+      fill.style.background = 'linear-gradient(90deg, #89b4fa, #74c7ec)';
+    } else if (final === max && final !== val) {
+      result.style.color = '#f38ba8';
+      fill.style.background = 'linear-gradient(90deg, #f38ba8, #fab387)';
+    } else {
+      result.style.color = '#a6e3a1';
+      fill.style.background = 'linear-gradient(90deg, #a6e3a1, #94e2d5)';
+    }
+  }
+
+  [mh, h, maxh].forEach(slider => {
+    slider.addEventListener('input', update);
+  });
+  update();
+})();
+</script>
+</body>
+</html>

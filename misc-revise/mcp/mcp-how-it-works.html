@@ -1,0 +1,619 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MCP How It Works · Weather Example</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--teal)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;scroll-margin-top:70px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px;animation:fadeSlide .35s ease-out}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .highlight{color:var(--yellow)}
+.code .danger{color:var(--red)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.callout.teal{border-color:var(--teal);background:rgba(148,226,213,.04)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--teal);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.small{padding:5px 12px;font-size:.72rem}
+.log-area{font-family:monospace;font-size:.75rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:80px;max-height:260px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.log-area .entry:last-child{border-bottom:none}
+.log-area .t-teal{color:var(--teal)}
+.log-area .t-blue{color:var(--blue)}
+.log-area .t-green{color:var(--green)}
+.log-area .t-peach{color:var(--peach)}
+.log-area .t-red{color:var(--red)}
+.log-area .t-yellow{color:var(--yellow)}
+.log-area .t-muted{color:var(--muted)}
+
+/* ===== STEP FLOW ===== */
+.step-flow{display:flex;flex-direction:column;gap:4px;padding:6px 0}
+.step-card{padding:14px 16px;border-radius:var(--radius);border:2px solid;display:flex;align-items:flex-start;gap:14px;transition:.3s;cursor:pointer;background:var(--surface);position:relative}
+.step-card:hover{transform:translateX(6px)}
+.step-card .step-num{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.8rem;flex-shrink:0;border:2px solid}
+.step-card .step-body{flex:1}
+.step-card .step-body h4{font-size:.85rem;margin-bottom:2px}
+.step-card .step-body p{font-size:.74rem;color:var(--muted);margin:0}
+.step-card .step-body .code-snip{font-family:monospace;font-size:.7rem;color:var(--peach);background:var(--bg);padding:2px 8px;border-radius:4px;display:inline-block;margin-top:4px}
+.step-card.s1{border-color:var(--teal)}.step-card.s1 .step-num{border-color:var(--teal);color:var(--teal)}.step-card.s1 h4{color:var(--teal)}
+.step-card.s2{border-color:var(--blue)}.step-card.s2 .step-num{border-color:var(--blue);color:var(--blue)}.step-card.s2 h4{color:var(--blue)}
+.step-card.s3{border-color:var(--green)}.step-card.s3 .step-num{border-color:var(--green);color:var(--green)}.step-card.s3 h4{color:var(--green)}
+.step-card.s4{border-color:var(--peach)}.step-card.s4 .step-num{border-color:var(--peach);color:var(--peach)}.step-card.s4 h4{color:var(--peach)}
+.step-card.active{transform:translateX(8px);box-shadow:0 0 20px rgba(255,255,255,.05)}
+.step-card.s1.active{box-shadow:0 0 20px rgba(148,226,213,.15)}
+.step-card.s2.active{box-shadow:0 0 20px rgba(137,180,250,.15)}
+.step-card.s3.active{box-shadow:0 0 20px rgba(166,227,161,.15)}
+.step-card.s4.active{box-shadow:0 0 20px rgba(250,179,135,.15)}
+
+/* ===== ARCHITECTURE DIAGRAM ===== */
+.arch-viz{display:flex;align-items:center;justify-content:center;gap:14px;padding:20px 10px;flex-wrap:wrap}
+.arch-node{width:120px;padding:16px 10px;border-radius:12px;text-align:center;font-weight:600;font-size:.8rem;border:2px solid;display:flex;flex-direction:column;align-items:center;gap:6px;transition:.4s;position:relative}
+.arch-node .icon{font-size:1.5rem}
+.arch-node .sub{font-size:.6rem;font-weight:400;opacity:.7}
+.arch-node.host{border-color:var(--teal);background:rgba(148,226,213,.06);color:var(--teal)}
+.arch-node.client{border-color:var(--blue);background:rgba(137,180,250,.06);color:var(--blue)}
+.arch-node.server{border-color:var(--green);background:rgba(166,227,161,.06);color:var(--green)}
+.arch-node.api{border-color:var(--peach);background:rgba(250,179,135,.06);color:var(--peach)}
+.arch-conn{display:flex;flex-direction:column;align-items:center;gap:2px}
+.arch-conn .arrow{font-size:.7rem;color:var(--muted)}
+.arch-conn .lbl{font-size:.6rem;color:var(--muted);white-space:nowrap;background:var(--surface);padding:2px 6px;border-radius:4px}
+
+/* ===== LIVE CHAT ===== */
+.chat-sim{background:#0a0a14;border-radius:8px;border:1px solid var(--surface2);overflow:hidden;margin:10px 0}
+.chat-msg{padding:10px 14px;border-bottom:1px solid rgba(255,255,255,.04);font-size:.82rem;display:flex;gap:10px;align-items:flex-start;animation:fadeSlide .3s ease-out}
+.chat-msg:last-child{border-bottom:none}
+.chat-msg .avatar{width:28px;height:28px;border-radius:50%;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:700}
+.chat-msg.user .avatar{background:var(--blue);color:#0f0f17}
+.chat-msg.ai .avatar{background:var(--teal);color:#0f0f17}
+.chat-msg.system .avatar{background:var(--yellow);color:#0f0f17}
+.chat-msg .bubble{flex:1;line-height:1.6}
+.chat-msg .bubble .hl{color:var(--green);font-weight:600}
+.chat-msg .bubble .mcp-badge{display:inline-block;padding:1px 6px;border-radius:4px;font-size:.68rem;background:rgba(148,226,213,.15);color:var(--teal);margin-right:4px}
+.chat-msg .bubble .code-inline{font-family:monospace;font-size:.74rem;color:var(--peach);background:var(--surface);padding:1px 5px;border-radius:3px}
+
+/* ===== CODE + VISUAL SPLIT ===== */
+.vis-row{display:flex;gap:14px;margin:10px 0;flex-wrap:wrap}
+.vis-side{flex:1;min-width:220px}
+.vis-box{background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);padding:14px;position:relative;min-height:100px}
+.vis-box .label{font-size:.65rem;color:var(--muted);margin-bottom:6px;font-family:monospace}
+
+/* ===== BOX ARROW DIAGRAM ===== */
+.box-arrow{display:flex;align-items:center;gap:10px;padding:8px 0;flex-wrap:wrap}
+.box-arrow .b{width:80px;height:50px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;text-align:center;padding:4px;border:2px solid;flex-shrink:0}
+.box-arrow .b.one{border-color:var(--teal);color:var(--teal);background:rgba(148,226,213,.06)}
+.box-arrow .b.two{border-color:var(--blue);color:var(--blue);background:rgba(137,180,250,.06)}
+.box-arrow .b.three{border-color:var(--green);color:var(--green);background:rgba(166,227,161,.06)}
+.box-arrow .b.four{border-color:var(--peach);color:var(--peach);background:rgba(250,179,135,.06)}
+.box-arrow .ar{color:var(--muted);font-size:.7rem}
+
+/* ===== LIVE DEMO AREA ===== */
+.demo-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.demo-city{padding:8px 12px;border-radius:6px;border:1px solid var(--surface2);background:var(--surface);color:var(--text);font-size:.82rem;font-family:monospace;outline:none;transition:.2s;flex:1;max-width:200px}
+.demo-city:focus{border-color:var(--teal);box-shadow:0 0 0 2px rgba(148,226,213,.1)}
+.temp-display{display:flex;align-items:center;gap:16px;padding:16px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--surface2);margin:8px 0}
+.temp-display .temp-val{font-size:2.2rem;font-weight:700;font-family:monospace;min-width:80px;text-align:center;transition:.3s}
+.temp-display .temp-val.hot{color:var(--peach)}
+.temp-display .temp-val.mid{color:var(--yellow)}
+.temp-display .temp-val.cold{color:var(--blue)}
+.temp-display .temp-info{flex:1}
+.temp-display .temp-info .city-name{font-size:.9rem;font-weight:600}
+.temp-display .temp-info .desc{font-size:.75rem;color:var(--muted)}
+
+/* ===== CAPABILITY TABLE ===== */
+.cap-table{width:100%;border-collapse:collapse;font-size:.82rem;margin:8px 0}
+.cap-table th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+.cap-table th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+.cap-table tr:hover td{background:rgba(255,255,255,.02)}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+@keyframes pulse{0%,100%{opacity:.4}50%{opacity:1}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>MCP</span> How It Works</div>
+  <div class="crumbs"><a href="index.html">MCP</a> &rsaquo; How It Works</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(148,226,213,.18);color:var(--teal)">Weather Example</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. THE BIG PICTURE -->
+<div class="section-title"><span class="num">1</span> The Big Picture</div>
+<div class="card">
+  <p>Let's trace what happens when a user asks an AI: <em>"What's the weather in Mumbai?"</em> — and see <strong>every layer</strong> of MCP in action.</p>
+
+  <div class="arch-viz" id="archViz">
+    <div class="arch-node host" id="archHost">
+      <span class="icon">🧑‍💻</span> Host
+      <span class="sub">Your AI App</span>
+    </div>
+    <div class="arch-conn">
+      <span class="arrow">⬇ spawns</span>
+      <span class="lbl">1:1 client</span>
+    </div>
+    <div class="arch-node client" id="archClient">
+      <span class="icon">🔌</span> MCP Client
+      <span class="sub">JSON-RPC messages</span>
+    </div>
+    <div class="arch-conn">
+      <span class="arrow">⬇ connects</span>
+      <span class="lbl">stdio / SSE</span>
+    </div>
+    <div class="arch-node server" id="archServer">
+      <span class="icon">⚡</span> MCP Server
+      <span class="sub">Weather Server</span>
+    </div>
+    <div class="arch-conn">
+      <span class="arrow">⬇ calls</span>
+      <span class="lbl">REST API</span>
+    </div>
+    <div class="arch-node api">
+      <span class="icon">🌤️</span> Weather API
+      <span class="sub">OpenWeather etc.</span>
+    </div>
+  </div>
+
+  <div class="callout teal">
+    <strong>4 actors, 1 question.</strong> The user asks "weather in Mumbai" → Host delegates to Client → Client sends JSON-RPC to Server → Server calls Weather API → Response flows all the way back.
+  </div>
+</div>
+
+<!-- 2. STEP-BY-STEP WALKTHROUGH -->
+<div class="section-title"><span class="num">2</span> Step by Step: "Weather in Mumbai"</div>
+<div class="card">
+  <p>Click each step to see the <strong>exact code and messages</strong> exchanged at that stage.</p>
+
+  <div class="step-flow">
+    <div class="step-card s1" onclick="showStep(1)">
+      <div class="step-num">1</div>
+      <div class="step-body">
+        <h4>User asks the AI</h4>
+        <p>"What's the weather in Mumbai?" — The user types this into the chat app (the Host).</p>
+      </div>
+    </div>
+    <div class="step-card s2" onclick="showStep(2)">
+      <div class="step-num">2</div>
+      <div class="step-body">
+        <h4>AI decides to call a tool</h4>
+        <p>The AI (via Host) determines it needs <code>get_weather</code>. Host tells the MCP Client: call this tool.</p>
+      </div>
+    </div>
+    <div class="step-card s3" onclick="showStep(3)">
+      <div class="step-num">3</div>
+      <div class="step-body">
+        <h4>Client sends JSON-RPC to Server</h4>
+        <p>The Client sends a <code>tools/call</code> request over transport. Server receives and processes it.</p>
+      </div>
+    </div>
+    <div class="step-card s4" onclick="showStep(4)">
+      <div class="step-num">4</div>
+      <div class="step-body">
+        <h4>Server fetches weather & responds</h4>
+        <p>Server calls the real Weather API, formats the response, sends it back through the Client to the AI.</p>
+      </div>
+    </div>
+  </div>
+
+  <div id="stepDetail" class="callout" style="font-size:.82rem;transition:.3s">
+    <strong>Click any step above</strong> to see the detailed code and visualization.
+  </div>
+</div>
+
+<!-- 3. THE CODE BEHIND EACH PIECE -->
+<div class="section-title"><span class="num">3</span> The Code Behind Each Piece</div>
+
+<!-- HOST CODE -->
+<div class="card">
+  <h3 style="color:var(--teal)">🧑‍💻 Step 1: Host — The AI Application</h3>
+  <p>The Host is your app (Claude Desktop, VS Code, custom chatbot). It creates an MCP Client and decides when to call tools. The AI model tells the Host which tool to call based on the user's question.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.72rem">
+<span class="comment">// Host creates a client connected to a weather server</span>
+<span class="keyword">const</span> host = <span class="keyword">new</span> <span class="highlight">McpHost</span>({
+  serverCommand: <span class="string">"node weather-server.js"</span>
+});
+
+<span class="comment">// AI model decides: "I should call get_weather"</span>
+<span class="comment">// Host tells the client to execute it</span>
+<span class="keyword">const</span> result = <span class="keyword">await</span> host.callTool(<span class="string">"get_weather"</span>, {
+  city: <span class="string">"Mumbai"</span>
+});
+      </div>
+    </div>
+    <div>
+      <div class="vis-box" style="min-height:140px">
+        <div class="label">🧑‍💻 Host in action</div>
+        <div style="display:flex;flex-direction:column;gap:6px">
+          <div style="padding:8px;border-radius:4px;background:rgba(148,226,213,.08);border-left:3px solid var(--teal);font-size:.74rem">
+            <strong style="color:var(--teal)">1.</strong> User: "Weather in Mumbai?"
+          </div>
+          <div style="padding:8px;border-radius:4px;background:rgba(148,226,213,.08);border-left:3px solid var(--teal);font-size:.74rem">
+            <strong style="color:var(--teal)">2.</strong> AI: I need get_weather(city="Mumbai")
+          </div>
+          <div style="padding:8px;border-radius:4px;background:rgba(148,226,213,.08);border-left:3px solid var(--teal);font-size:.74rem">
+            <strong style="color:var(--teal)">3.</strong> Host → Client: callTool("get_weather", {city: "Mumbai"})
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CLIENT CODE -->
+<div class="card">
+  <h3 style="color:var(--blue)">🔌 Step 2: MCP Client — The Messenger</h3>
+  <p>The Client is a <strong>1:1 connection</strong> from Host to Server. It takes the Host's intent and serializes it into a JSON-RPC message.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.72rem">
+<span class="comment">// Client receives callTool from Host</span>
+<span class="comment">// It builds a JSON-RPC 2.0 request</span>
+<span class="keyword">const</span> request = {
+  <span class="string">"jsonrpc"</span>: <span class="string">"2.0"</span>,
+  <span class="string">"id"</span>: <span class="n">1</span>,
+  <span class="string">"method"</span>: <span class="string">"tools/call"</span>,
+  <span class="string">"params"</span>: {
+    <span class="string">"name"</span>: <span class="string">"get_weather"</span>,
+    <span class="string">"arguments"</span>: {
+      <span class="string">"city"</span>: <span class="string">"Mumbai"</span>
+    }
+  }
+};
+
+<span class="comment">// Send over transport (stdio/SSE)</span>
+<span class="keyword">await</span> transport.send(request);
+      </div>
+    </div>
+    <div>
+      <div class="vis-box" style="min-height:140px">
+        <div class="label">🔌 Client serializes to JSON-RPC</div>
+        <div class="rpc-preview" style="font-family:monospace;font-size:.68rem;color:var(--text);line-height:1.6;background:#0a0a14;padding:10px;border-radius:4px">
+{<br>
+  &nbsp;&nbsp;<span style="color:var(--blue)">"jsonrpc"</span>: <span style="color:var(--green)">"2.0"</span>,<br>
+  &nbsp;&nbsp;<span style="color:var(--blue)">"id"</span>: <span style="color:var(--peach)">1</span>,<br>
+  &nbsp;&nbsp;<span style="color:var(--blue)">"method"</span>: <span style="color:var(--green)">"tools/call"</span>,<br>
+  &nbsp;&nbsp;<span style="color:var(--blue)">"params"</span>: {<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--blue)">"name"</span>: <span style="color:var(--green)">"get_weather"</span>,<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--blue)">"arguments"</span>: {<br>
+  &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span style="color:var(--blue)">"city"</span>: <span style="color:var(--green)">"Mumbai"</span><br>
+  &nbsp;&nbsp;&nbsp;&nbsp;}<br>
+  &nbsp;&nbsp;}<br>
+}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="font-size:.78rem">
+    <strong>What the Client does:</strong> Takes <em>what</em> to do (call get_weather) and <em>how</em> (city=Mumbai) → wraps in JSON-RPC → sends over transport → waits for response → returns result to Host.
+  </div>
+</div>
+
+<!-- SERVER CODE -->
+<div class="card">
+  <h3 style="color:var(--green)">⚡ Step 3: MCP Server — The Tool Provider</h3>
+  <p>The Server receives the JSON-RPC, finds the matching tool (<code>get_weather</code>), executes it, and returns the result.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.72rem">
+<span class="comment">// Weather MCP Server</span>
+<span class="keyword">const</span> server = <span class="keyword">new</span> <span class="highlight">McpServer</span>({
+  name: <span class="string">"Weather Server"</span>
+});
+
+<span class="comment">// Register the tool</span>
+server.tool(
+  <span class="string">"get_weather"</span>,
+  <span class="string">"Get current weather for a city"</span>,
+  { city: z.string() },
+  <span class="keyword">async</span> ({ city }) =&gt; {
+    <span class="comment">// Call the real Weather API</span>
+    <span class="keyword">const</span> data = <span class="keyword">await</span> fetch(
+      <span class="string">`https://api.weather.com/v1/${city}`</span>
+    );
+    <span class="keyword">return</span> {
+      content: [{ type: <span class="string">"text"</span>,
+        text: <span class="string">`${data.temp}°C, ${data.condition}`</span>
+      }]
+    };
+  }
+);
+      </div>
+    </div>
+    <div>
+      <div class="vis-box" style="min-height:140px">
+        <div class="label">⚡ Server processes the request</div>
+        <div style="display:flex;flex-direction:column;gap:4px">
+          <div style="padding:6px 8px;border-radius:4px;background:rgba(166,227,161,.08);font-size:.72rem">
+            📥 Receives tools/call { name: "get_weather", city: "Mumbai" }
+          </div>
+          <div style="padding:6px 8px;border-radius:4px;background:rgba(166,227,161,.08);font-size:.72rem">
+            🔍 Matches tool "get_weather" in registry
+          </div>
+          <div style="padding:6px 8px;border-radius:4px;background:rgba(166,227,161,.08);font-size:.72rem">
+            🌐 Calls Weather API: GET /v1/Mumbai
+          </div>
+          <div style="padding:6px 8px;border-radius:4px;background:rgba(166,227,161,.08);font-size:.72rem">
+            📤 Returns: {"content": [{"type": "text", "text": "27°C, Sunny"}]}
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. LIVE WEATHER DEMO -->
+<div class="section-title"><span class="num">4</span> Live Demo: Simulate the Full Flow</div>
+<div class="card">
+  <p>Type a city name and click <strong>Ask AI</strong> to simulate the entire Host → Client → Server → API flow with step-by-step visualization.</p>
+
+  <div class="demo-controls">
+    <input class="demo-city" id="cityInput" type="text" value="Mumbai" placeholder="Enter city...">
+    <button class="btn primary" onclick="runWeatherFlow()">🌤️ Ask AI</button>
+    <button class="btn outline" onclick="resetWeather()">🔄 Reset</button>
+  </div>
+
+  <div class="log-area" id="weatherLog" style="min-height:180px;max-height:300px">
+    <div class="entry t-muted">▸ Type a city and click "Ask AI" to see the full MCP flow.</div>
+  </div>
+
+  <div class="temp-display" id="tempDisplay" style="display:none">
+    <div class="temp-val" id="tempVal">27°</div>
+    <div class="temp-info">
+      <div class="city-name" id="cityName">Mumbai</div>
+      <div class="desc" id="weatherDesc">Sunny</div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. SERVER TOOL REGISTRY -->
+<div class="section-title"><span class="num">5</span> What the Server Exposes</div>
+<div class="card">
+  <p>Before calling any tool, the AI first asks the Server: <strong>"What tools do you have?"</strong> via <code>tools/list</code>. Here's what our Weather Server advertises:</p>
+
+  <table class="cap-table">
+    <tr><th>Method</th><th>Description</th><th>Parameters</th></tr>
+    <tr>
+      <td><code style="color:var(--green)">get_weather</code></td>
+      <td>Get current weather for a city</td>
+      <td><code style="color:var(--peach)">city</code> (string, required)</td>
+    </tr>
+    <tr>
+      <td><code style="color:var(--green)">get_forecast</code></td>
+      <td>Get 7-day weather forecast</td>
+      <td><code style="color:var(--peach)">city</code> (string), <code style="color:var(--peach)">days</code> (number)</td>
+    </tr>
+    <tr>
+      <td><code style="color:var(--green)">get_air_quality</code></td>
+      <td>Get AQI data for a city</td>
+      <td><code style="color:var(--peach)">city</code> (string)</td>
+    </tr>
+  </table>
+
+  <div class="code" style="font-size:.72rem;margin-top:8px">
+<span class="comment">// tools/list response — what the Server advertises</span>
+{
+  <span class="string">"tools"</span>: [
+    {
+      <span class="string">"name"</span>: <span class="string">"get_weather"</span>,
+      <span class="string">"description"</span>: <span class="string">"Get current weather for a city"</span>,
+      <span class="string">"inputSchema"</span>: {
+        <span class="string">"type"</span>: <span class="string">"object"</span>,
+        <span class="string">"properties"</span>: {
+          <span class="string">"city"</span>: { <span class="string">"type"</span>: <span class="string">"string"</span> }
+        },
+        <span class="string">"required"</span>: [<span class="string">"city"</span>]
+      }
+    }
+  ]
+}
+  </div>
+
+  <div class="callout" style="font-size:.78rem">
+    <strong>Why advertise?</strong> The AI reads this list and decides which tool fits the user's question. It sees <code>get_weather</code> with <code>city</code> parameter → knows it can use this for "Weather in Mumbai".
+  </div>
+</div>
+
+<!-- 6. COMPLETE MESSAGE FLOW -->
+<div class="section-title"><span class="num">6</span> Complete Message Flow</div>
+<div class="card">
+  <p>Here's every message exchanged — from the first <code>initialize</code> to the final weather response. Click <strong>Run Full Sequence</strong> to animate.</p>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn primary" onclick="runFullSequence()">▶️ Run Full Sequence</button>
+    <button class="btn outline" onclick="resetSequence()">⏹ Reset</button>
+  </div>
+
+  <div class="log-area" id="seqLog" style="min-height:200px;max-height:320px">
+    <div class="entry t-muted">▸ Click "Run Full Sequence" to see every message exchanged.</div>
+  </div>
+</div>
+
+<!-- 7. VISUAL SUMMARY -->
+<div class="section-title"><span class="num">7</span> Visual Summary: The Full Journey</div>
+<div class="card">
+  <p>A user asks "What's the weather in Mumbai?" — here's every actor and message in order:</p>
+
+  <div style="padding:14px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--surface2);margin:10px 0;font-size:.74rem;font-family:monospace;line-height:2">
+    <span style="color:var(--teal);font-weight:700">🧑 User</span> → <span style="color:var(--muted)">"Weather in Mumbai?"</span><br>
+    <span style="color:var(--teal);font-weight:700">🧑‍💻 Host</span> → <span style="color:var(--muted)">AI decides: call get_weather(city: "Mumbai")</span><br>
+    <span style="color:var(--blue);font-weight:700">🔌 Client</span> → <span style="color:var(--muted)">Sends tools/call JSON-RPC request</span><br>
+    <span style="color:var(--green);font-weight:700">⚡ Server</span> → <span style="color:var(--muted)">Receives request, calls Weather API</span><br>
+    <span style="color:var(--peach);font-weight:700">🌤️ Weather API</span> → <span style="color:var(--muted)">Returns 27°C, Sunny</span><br>
+    <span style="color:var(--green);font-weight:700">⚡ Server</span> → <span style="color:var(--muted)">Formats response as text content</span><br>
+    <span style="color:var(--blue);font-weight:700">🔌 Client</span> → <span style="color:var(--muted)">Returns result to Host</span><br>
+    <span style="color:var(--teal);font-weight:700">🧑‍💻 Host</span> → <span style="color:var(--muted)">AI: "It's 27°C and Sunny in Mumbai"</span><br>
+    <span style="color:var(--teal);font-weight:700">🧑 User</span> ← <span style="color:var(--green)">Sees the answer! ✅</span>
+  </div>
+
+  <div class="callout success" style="margin-bottom:0">
+    <strong>That's MCP in action.</strong> The AI gets real-time data through a clean, standardized pipeline. The Host never needs to know about the Weather API — it just talks to the Client. The Server handles the external API details. Clean separation of concerns.
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+// === Step Click Handler ===
+const stepData = {
+  1: {
+    title: 'Step 1: User asks the AI',
+    body: 'The user types <strong>"What\'s the weather in Mumbai?"</strong> into the chat interface. The Host (your AI app) receives this message and passes it to the AI model. The AI understands the intent — the user wants real-time weather data.'
+  },
+  2: {
+    title: 'Step 2: AI decides to call a tool',
+    body: 'The AI model checks the list of available tools (from <strong>tools/list</strong>) and finds <code>get_weather</code> with parameter <code>city</code>. It decides: <em>"I should call get_weather with city=\'Mumbai\'"</em>. The Host receives this decision and tells the MCP Client to execute it.'
+  },
+  3: {
+    title: 'Step 3: Client sends JSON-RPC to Server',
+    body: 'The MCP Client serializes the request into a JSON-RPC 2.0 message with <strong>method: "tools/call"</strong>, <strong>params: { name: "get_weather", arguments: { city: "Mumbai" } }</strong>, and an <strong>id: 1</strong>. It sends this over the transport (stdio or SSE). The Server receives it and deserializes it.'
+  },
+  4: {
+    title: 'Step 4: Server fetches weather & responds',
+    body: 'The Server finds the <code>get_weather</code> handler in its tool registry, calls the real Weather API (<code>api.weather.com/v1/Mumbai</code>), gets back <strong>27°C, Sunny</strong>, formats it as MCP content <code>[{type: "text", text: "27°C, Sunny in Mumbai"}]</code>, and sends it back through the Client to the Host. The AI presents the answer to the user.'
+  }
+};
+
+function showStep(n) {
+  document.querySelectorAll('.step-card').forEach(c => c.classList.remove('active'));
+  document.querySelector('.step-card.s' + n).classList.add('active');
+  const d = stepData[n];
+  document.getElementById('stepDetail').innerHTML = '<strong>' + d.title + ':</strong> ' + d.body;
+  const colors = {1:'var(--teal)',2:'var(--blue)',3:'var(--green)',4:'var(--peach)'};
+  document.getElementById('stepDetail').style.borderLeftColor = colors[n];
+}
+
+// === Weather Data ===
+const weatherDB = {
+  mumbai: { temp: 27, condition: 'Sunny', humidity: 65, wind: '12 km/h' },
+  london: { temp: 14, condition: 'Cloudy', humidity: 78, wind: '18 km/h' },
+  tokyo: { temp: 22, condition: 'Partly Cloudy', humidity: 60, wind: '10 km/h' },
+  'new york': { temp: 18, condition: 'Clear', humidity: 55, wind: '15 km/h' },
+  paris: { temp: 16, condition: 'Rainy', humidity: 82, wind: '20 km/h' },
+  dubai: { temp: 38, condition: 'Hot & Sunny', humidity: 25, wind: '8 km/h' },
+  sydney: { temp: 24, condition: 'Sunny', humidity: 50, wind: '14 km/h' },
+  default: { temp: 25, condition: 'Clear', humidity: 55, wind: '10 km/h' }
+};
+
+// === Live Weather Flow ===
+function runWeatherFlow() {
+  const city = document.getElementById('cityInput').value.trim() || 'Mumbai';
+  const log = document.getElementById('weatherLog');
+  const display = document.getElementById('tempDisplay');
+  log.innerHTML = '';
+  display.style.display = 'none';
+
+  const data = weatherDB[city.toLowerCase()] || weatherDB.default;
+  const steps = [
+    { t: 0, msg: '🧑 User: "What\'s the weather in ' + city + '?"', cls: 't-teal' },
+    { t: 500, msg: '🧑‍💻 Host: Received question. Sending to AI model...', cls: 't-teal' },
+    { t: 1000, msg: '🧑‍💻 Host: AI decided to call get_weather(city: "' + city + '")', cls: 't-teal' },
+    { t: 1500, msg: '🔌 Client: Building JSON-RPC request (method: tools/call)...', cls: 't-blue' },
+    { t: 2000, msg: '🔌 Client: Sent → {"method":"tools/call","params":{"name":"get_weather","arguments":{"city":"' + city + '"}}}', cls: 't-blue' },
+    { t: 2600, msg: '⚡ Server: Received tools/call request. Matching tool "get_weather"...', cls: 't-green' },
+    { t: 3200, msg: '⚡ Server: Found handler. Calling Weather API for "' + city + '"...', cls: 't-green' },
+    { t: 3800, msg: '🌤️ Weather API: Returning ' + data.temp + '°C, ' + data.condition, cls: 't-yellow' },
+    { t: 4400, msg: '⚡ Server: Formatting response as MCP content...', cls: 't-green' },
+    { t: 5000, msg: '⚡ Server: Sent response → {"result":{"content":[{"type":"text","text":"' + data.temp + '°C, ' + data.condition + ' in ' + city + '"}]}}', cls: 't-green' },
+    { t: 5600, msg: '🔌 Client: Received response. Returning to Host...', cls: 't-blue' },
+    { t: 6200, msg: '🧑‍💻 Host: AI says → "It\'s ' + data.temp + '°C and ' + data.condition + ' in ' + city + '."', cls: 't-teal' },
+    { t: 6800, msg: '✅ Done! Full MCP flow completed.', cls: 't-teal' }
+  ];
+
+  steps.forEach(s => {
+    setTimeout(() => {
+      log.innerHTML += '<div class="entry ' + s.cls + '">▸ ' + s.msg + '</div>';
+      log.scrollTop = log.scrollHeight;
+    }, s.t);
+  });
+
+  setTimeout(() => {
+    display.style.display = 'flex';
+    const val = document.getElementById('tempVal');
+    const name = document.getElementById('cityName');
+    const desc = document.getElementById('weatherDesc');
+    val.textContent = data.temp + '°C';
+    name.textContent = city;
+    desc.textContent = data.condition + ' · Humidity: ' + data.humidity + '% · Wind: ' + data.wind;
+    val.className = 'temp-val';
+    if (data.temp >= 30) val.classList.add('hot');
+    else if (data.temp >= 20) val.classList.add('mid');
+    else val.classList.add('cold');
+  }, 7000);
+}
+
+function resetWeather() {
+  document.getElementById('weatherLog').innerHTML = '<div class="entry t-muted">▸ Type a city and click "Ask AI" to see the full MCP flow.</div>';
+  document.getElementById('tempDisplay').style.display = 'none';
+}
+
+// === Full Sequence ===
+function runFullSequence() {
+  const log = document.getElementById('seqLog');
+  log.innerHTML = '';
+
+  const msgs = [
+    { t: 0, msg: '🔌 Client → Server: {"method":"initialize","params":{"protocolVersion":"2025-03-26","capabilities":{}}}', cls: 't-blue' },
+    { t: 600, msg: '⚡ Server → Client: {"result":{"protocolVersion":"2025-03-26","capabilities":{"tools":{},"resources":{}}}}', cls: 't-green' },
+    { t: 1200, msg: '🔌 Client → Server: {"method":"notifications/initialized"} (no id — notification)', cls: 't-yellow' },
+    { t: 1700, msg: '✅ Connection initialized. Ready for operation.', cls: 't-teal' },
+    { t: 2200, msg: '🔌 Client → Server: {"id":1,"method":"tools/list"}', cls: 't-blue' },
+    { t: 2800, msg: '⚡ Server → Client: {"id":1,"result":{"tools":[{"name":"get_weather","description":"Get weather for a city"}]}}', cls: 't-green' },
+    { t: 3400, msg: '🧑‍💻 Host: AI sees get_weather tool. Decides to call it for Mumbai.', cls: 't-teal' },
+    { t: 4000, msg: '🔌 Client → Server: {"id":2,"method":"tools/call","params":{"name":"get_weather","arguments":{"city":"Mumbai"}}}', cls: 't-blue' },
+    { t: 4600, msg: '⚡ Server: Executing get_weather handler. Calling external Weather API...', cls: 't-green' },
+    { t: 5200, msg: '⚡ Server → Client: {"id":2,"result":{"content":[{"type":"text","text":"27°C, Sunny in Mumbai"}]}}', cls: 't-green' },
+    { t: 5800, msg: '🧑‍💻 Host: "It\'s 27°C and Sunny in Mumbai." ✅', cls: 't-teal' },
+  ];
+
+  msgs.forEach(m => {
+    setTimeout(() => {
+      log.innerHTML += '<div class="entry ' + m.cls + '">▸ ' + m.msg + '</div>';
+      log.scrollTop = log.scrollHeight;
+    }, m.t);
+  });
+}
+
+function resetSequence() {
+  document.getElementById('seqLog').innerHTML = '<div class="entry t-muted">▸ Click "Run Full Sequence" to see every message exchanged.</div>';
+}
+
+// Init
+showStep(1);
+</script>
+</body>
+</html>

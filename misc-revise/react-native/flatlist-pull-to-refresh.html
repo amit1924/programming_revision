@@ -1,0 +1,936 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>FlatList + Pull to Refresh - Interactive Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    * { scroll-behavior: smooth; }
+    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+
+    /* --- Animations --- */
+    .fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .slide-left { animation: slideLeft 0.5s ease-out forwards; opacity: 0; }
+    @keyframes slideLeft { to { opacity: 1; transform: translateX(0); } }
+
+    .pulse-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; background: #a6e3a1; animation: pulse 1.5s ease-in-out infinite; }
+    @keyframes pulse { 0%,100% { opacity: 1; transform: scale(1); } 50% { opacity: 0.5; transform: scale(1.3); } }
+
+    .float-icon { animation: float 3s ease-in-out infinite; }
+    @keyframes float { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-8px); } }
+
+    .gradient-text { background: linear-gradient(135deg, #89b4fa, #cba6f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .highlight-card { transition: all 0.3s ease; }
+    .highlight-card:hover { transform: translateX(8px); border-color: #89b4fa !important; }
+
+    .terminal-dot { width: 12px; height: 12px; border-radius: 50%; }
+    .term-red { background: #f38ba8; }
+    .term-yellow { background: #f9e2af; }
+    .term-green { background: #a6e3a1; }
+
+    /* --- Phone Frame --- */
+    .phone-frame {
+      width: 320px; height: 580px;
+      border-radius: 40px;
+      border: 3px solid #45475a;
+      background: #1e1e2e;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 20px 60px rgba(0,0,0,0.5);
+      flex-shrink: 0;
+    }
+    .phone-notch {
+      position: absolute; top: 0; left: 50%; transform: translateX(-50%);
+      width: 120px; height: 28px;
+      background: #11111b;
+      border-radius: 0 0 16px 16px;
+      z-index: 20;
+    }
+    .phone-screen {
+      width: 100%; height: 100%;
+      padding-top: 28px;
+      display: flex; flex-direction: column;
+      position: relative;
+    }
+    .status-bar {
+      padding: 8px 20px 4px;
+      display: flex; justify-content: space-between;
+      font-size: 11px; color: #a6adc8;
+      z-index: 10;
+    }
+
+    /* --- Simulated FlatList --- */
+    .sim-list {
+      flex: 1; overflow-y: auto;
+      position: relative;
+      overscroll-behavior: contain;
+    }
+    .sim-list::-webkit-scrollbar { display: none; }
+
+    .sim-item {
+      padding: 14px 18px;
+      border-bottom: 1px solid #313244;
+      display: flex; align-items: center; gap: 12px;
+      animation: itemPop 0.3s ease-out both;
+    }
+    @keyframes itemPop {
+      from { opacity: 0; transform: scale(0.95) translateY(-8px); }
+      to { opacity: 1; transform: scale(1) translateY(0); }
+    }
+    .sim-item .avatar {
+      width: 36px; height: 36px;
+      border-radius: 50%;
+      display: flex; align-items: center; justify-content: center;
+      font-size: 14px; font-weight: bold; color: #1e1e2e;
+      flex-shrink: 0;
+    }
+    .sim-item .line {
+      height: 8px; border-radius: 4px; background: #313244;
+      margin-bottom: 5px;
+    }
+
+    /* --- Pull-to-refresh indicator (spinner overlay) --- */
+    .ptr-indicator {
+      position: absolute; top: 0; left: 0; right: 0;
+      height: 80px;
+      display: flex; align-items: center; justify-content: center;
+      gap: 12px;
+      color: #89b4fa; font-size: 14px; font-weight: 600;
+      transform: translateY(-100%);
+      transition: transform 0.3s ease;
+      z-index: 5;
+      background: linear-gradient(to bottom, #1e1e2e 60%, transparent);
+    }
+    .ptr-indicator.show {
+      transform: translateY(0);
+    }
+
+    .spinner {
+      width: 24px; height: 24px;
+      border: 3px solid #45475a;
+      border-top-color: #89b4fa;
+      border-radius: 50%;
+      animation: spin 0.8s linear infinite;
+    }
+    @keyframes spin { to { transform: rotate(360deg); } }
+
+    /* --- Highlighted code lines --- */
+    .hl-line { background: rgba(137,180,250,0.15); border-left: 3px solid #89b4fa; padding-left: 8px; }
+
+    /* --- Interactive PTR simulation --- */
+    .pull-zone {
+      cursor: grab;
+      transition: transform 0.1s ease;
+    }
+    .pull-zone:active { cursor: grabbing; }
+
+    /* --- Event timeline --- */
+    .event-track {
+      position: relative;
+      padding-left: 30px;
+    }
+    .event-track::before {
+      content: '';
+      position: absolute; left: 10px; top: 0; bottom: 0;
+      width: 2px; background: #313244;
+    }
+    .event-step {
+      position: relative;
+      padding: 12px 16px;
+      margin-bottom: 8px;
+      border-radius: 10px;
+      background: #1e1e2e;
+      border: 1px solid #313244;
+      transition: all 0.3s;
+    }
+    .event-step .dot {
+      position: absolute; left: -24px; top: 16px;
+      width: 14px; height: 14px;
+      border-radius: 50%;
+      border: 2px solid;
+    }
+    .event-step.active {
+      border-color: #89b4fa;
+      background: rgba(137,180,250,0.08);
+    }
+    .event-step.done {
+      border-color: #a6e3a1;
+      background: rgba(166,227,161,0.08);
+    }
+
+    /* --- Fixed arrow animation --- */
+    .arrow-path {
+      stroke-dasharray: 200;
+      stroke-dashoffset: 200;
+      animation: drawArrow 1.5s ease-in-out forwards;
+    }
+    @keyframes drawArrow {
+      to { stroke-dashoffset: 0; }
+    }
+  </style>
+</head>
+<body class="bg-[#11111b] text-[#cdd6f4]">
+
+  <!-- ==================== HERO ==================== -->
+  <header class="relative overflow-hidden border-b border-[#313244]">
+    <div class="absolute inset-0 opacity-5">
+      <div class="absolute top-10 left-10 text-8xl float-icon"><i class="fab fa-react"></i></div>
+      <div class="absolute bottom-10 right-10 text-6xl float-icon" style="animation-delay:1s"><i class="fas fa-mobile-alt"></i></div>
+      <div class="absolute top-20 right-40 text-4xl float-icon" style="animation-delay:2s"><i class="fas fa-sync-alt"></i></div>
+    </div>
+    <div class="max-w-6xl mx-auto px-6 py-14 text-center relative z-10">
+      <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-6 text-sm">
+        <span class="pulse-dot"></span>
+        <span>React Native 0.85</span>
+        <span class="text-[#585b70]">|</span>
+        <span><i class="fas fa-graduation-cap mr-1"></i> Interactive Study</span>
+      </div>
+      <h1 class="text-5xl md:text-6xl font-bold mb-3">
+        <span class="gradient-text">FlatList</span>
+        <span class="text-[#cdd6f4]">+</span>
+        <span class="text-[#a6e3a1]">Pull to Refresh</span>
+      </h1>
+      <p class="text-lg text-[#a6adc8] max-w-2xl mx-auto">
+        See it work <span class="text-[#f9e2af]">visually</span> — pull down on the phone below, then study every line of code.
+      </p>
+      <div class="flex justify-center gap-3 mt-6 flex-wrap">
+        <a href="#live-demo" class="bg-[#89b4fa] text-[#1e1e2e] px-5 py-2.5 rounded-xl font-semibold hover:bg-[#74c7ec] transition-all hover:scale-105">
+          <i class="fas fa-play mr-2"></i>Try the Demo
+        </a>
+        <a href="#event-handling" class="border border-[#585b70] px-5 py-2.5 rounded-xl font-semibold hover:border-[#89b4fa] transition-all">
+          <i class="fas fa-bolt mr-2"></i>Event Handling
+        </a>
+      </div>
+    </div>
+  </header>
+
+  <div class="max-w-6xl mx-auto px-6 py-10 space-y-20">
+
+    <!-- ===================================================== -->
+    <!-- SECTION: LIVE SIMULATION -->
+    <!-- ===================================================== -->
+    <section id="live-demo" class="fade-in">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#89b4fa]/20 flex items-center justify-center text-[#89b4fa]">
+          <i class="fas fa-play-circle text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold">Live Pull-to-Refresh Simulation</h2>
+      </div>
+      <p class="text-[#a6adc8] mb-6"><span class="text-[#f9e2af]">⬇️ Pull down</span> on the list inside the phone to trigger a refresh. Watch the spinner, then the data update.</p>
+
+      <div class="flex flex-col lg:flex-row items-center gap-10 justify-center">
+        <!-- Phone -->
+        <div class="phone-frame" id="phoneFrame">
+          <div class="phone-notch"></div>
+          <div class="phone-screen">
+            <div class="status-bar">
+              <span>9:41</span>
+              <span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span>
+            </div>
+            <!-- Header -->
+            <div class="px-4 py-3 border-b border-[#313244] flex items-center justify-between">
+              <span class="font-bold text-sm">My Feed</span>
+              <span class="text-xs text-[#6c7086]"><span id="itemCount">5</span> items</span>
+            </div>
+            <!-- The scrollable list -->
+            <div class="sim-list" id="simList">
+              <!-- Pull indicator -->
+              <div class="ptr-indicator" id="ptrIndicator">
+                <div class="spinner"></div>
+                <span id="ptrText">Refreshing...</span>
+              </div>
+              <!-- Items injected by JS -->
+              <div id="listItems"></div>
+            </div>
+            <!-- Bottom nav mock -->
+            <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+              <i class="fas fa-home text-[#89b4fa]"></i>
+              <i class="fas fa-search"></i>
+              <i class="fas fa-plus-circle"></i>
+              <i class="fas fa-bell"></i>
+              <i class="fas fa-user"></i>
+            </div>
+          </div>
+        </div>
+
+        <!-- Legend / side panel -->
+        <div class="flex-1 max-w-md space-y-4">
+          <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-5">
+            <h3 class="font-semibold mb-3 flex items-center gap-2">
+              <i class="fas fa-sync-alt text-[#a6e3a1]"></i>
+              Current State
+            </h3>
+            <div class="space-y-2 text-sm" id="statePanel">
+              <div><span class="text-[#585b70]">refreshing:</span> <span id="stateRefreshing" class="text-[#f38ba8] font-mono">false</span></div>
+              <div><span class="text-[#585b70]">items:</span> <span id="stateItems" class="text-[#f9e2af] font-mono">5</span></div>
+              <div><span class="text-[#585b70]">last action:</span> <span id="stateAction" class="text-[#a6e3a1] font-mono text-xs">—</span></div>
+            </div>
+          </div>
+          <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-5">
+            <h3 class="font-semibold mb-2 flex items-center gap-2">
+              <i class="fas fa-code text-[#f9e2af]"></i>
+              What's happening
+            </h3>
+            <p id="whatsHappening" class="text-sm text-[#a6adc8]">Pull down on the list to trigger a refresh. The list simulates a 1.5s network request.</p>
+          </div>
+          <button id="btnSimRefresh" class="w-full bg-[#313244] hover:bg-[#45475a] border border-[#585b70] rounded-xl py-3 text-sm font-semibold transition-all flex items-center justify-center gap-2">
+            <i class="fas fa-sync-alt"></i> Trigger Refresh Programmatically
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- SECTION: EVENT HANDLING (the flow) -->
+    <!-- ===================================================== -->
+    <section id="event-handling" class="fade-in">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#a6e3a1]/20 flex items-center justify-center text-[#a6e3a1]">
+          <i class="fas fa-bolt text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold">✅ Event Handling — The Full Flow</h2>
+      </div>
+
+      <div class="grid lg:grid-cols-5 gap-6">
+        <!-- Timeline -->
+        <div class="lg:col-span-3">
+          <div class="event-track" id="eventTrack">
+            <div class="event-step" data-step="0">
+              <div class="dot" style="border-color:#585b70;background:#1e1e2e;"></div>
+              <div class="flex items-start gap-3">
+                <span class="text-[#585b70] font-bold text-lg">1</span>
+                <div>
+                  <div class="font-semibold text-sm">User pulls down on the list</div>
+                  <div class="text-xs text-[#6c7086] mt-1">Gesture starts when <code class="text-[#f9e2af]">scrollY === 0</code> and finger drags downward. FlatList detects the overscroll.</div>
+                </div>
+              </div>
+            </div>
+            <div class="event-step" data-step="1">
+              <div class="dot" style="border-color:#585b70;background:#1e1e2e;"></div>
+              <div class="flex items-start gap-3">
+                <span class="text-[#585b70] font-bold text-lg">2</span>
+                <div>
+                  <div class="font-semibold text-sm"><code class="text-[#89b4fa]">onRefresh</code> callback fires</div>
+                  <div class="text-xs text-[#6c7086] mt-1">FlatList calls your function. Inside it, you set <code class="text-[#f9e2af]">refreshing = true</code> to show the spinner.</div>
+                </div>
+              </div>
+            </div>
+            <div class="event-step" data-step="2">
+              <div class="dot" style="border-color:#585b70;background:#1e1e2e;"></div>
+              <div class="flex items-start gap-3">
+                <span class="text-[#585b70] font-bold text-lg">3</span>
+                <div>
+                  <div class="font-semibold text-sm">Fetch new data <span class="text-xs text-[#6c7086]">(async)</span></div>
+                  <div class="text-xs text-[#6c7086] mt-1">Your API call runs. The spinner keeps spinning until you say stop.</div>
+                </div>
+              </div>
+            </div>
+            <div class="event-step" data-step="3">
+              <div class="dot" style="border-color:#585b70;background:#1e1e2e;"></div>
+              <div class="flex items-start gap-3">
+                <span class="text-[#585b70] font-bold text-lg">4</span>
+                <div>
+                  <div class="font-semibold text-sm"><code class="text-[#89b4fa]">setRefreshing(false)</code> — spinner hides</div>
+                  <div class="text-xs text-[#6c7086] mt-1">Data is updated and the spinner disappears. List re-renders with fresh data.</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Danger zone -->
+          <div class="bg-[#f38ba8]/10 border border-[#f38ba8] rounded-xl p-4 mt-4">
+            <div class="flex items-start gap-3">
+              <i class="fas fa-exclamation-triangle text-[#f38ba8] mt-1"></i>
+              <div>
+                <p class="font-semibold text-[#f38ba8] text-sm">⚠️ If you forget <code class="text-[#f9e2af]">setRefreshing(false)</code></p>
+                <p class="text-xs text-[#a6adc8] mt-1">The spinner stays forever. The user is stuck with a spinning wheel and no way to dismiss it.</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick props reference -->
+        <div class="lg:col-span-2 space-y-3">
+          <h3 class="font-semibold flex items-center gap-2"><i class="fas fa-list-check text-[#cba6f7]"></i> Quick Props Reference</h3>
+          <div class="bg-[#1e1e2e] border-l-4 border-[#89b4fa] rounded-xl p-4 highlight-card">
+            <div class="flex justify-between items-start">
+              <code class="text-[#f9e2af] font-mono text-sm">refreshing</code>
+              <span class="text-[#6c7086] text-xs bg-[#313244] px-2 py-0.5 rounded">boolean</span>
+            </div>
+            <p class="text-xs text-[#a6adc8] mt-1">Controls spinner visibility. <span class="text-[#f38ba8]">You must toggle it.</span></p>
+          </div>
+          <div class="bg-[#1e1e2e] border-l-4 border-[#a6e3a1] rounded-xl p-4 highlight-card">
+            <div class="flex justify-between items-start">
+              <code class="text-[#f9e2af] font-mono text-sm">onRefresh</code>
+              <span class="text-[#6c7086] text-xs bg-[#313244] px-2 py-0.5 rounded">function</span>
+            </div>
+            <p class="text-xs text-[#a6adc8] mt-1">Called when user pulls down. Fetch data, then set refreshing to false.</p>
+          </div>
+          <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-4 highlight-card">
+            <div class="flex justify-between items-start">
+              <code class="text-[#f9e2af] font-mono text-sm">refreshControl</code>
+              <span class="text-[#6c7086] text-xs bg-[#313244] px-2 py-0.5 rounded">component</span>
+            </div>
+            <p class="text-xs text-[#a6adc8] mt-1">Alternative: pass a <code class="text-[#f9e2af]">RefreshControl</code> element for custom styling.</p>
+          </div>
+          <div class="bg-[#1e1e2e] border-l-4 border-[#cba6f7] rounded-xl p-4 highlight-card">
+            <div class="flex justify-between items-start">
+              <code class="text-[#f9e2af] font-mono text-sm">keyExtractor</code>
+              <span class="text-[#6c7086] text-xs bg-[#313244] px-2 py-0.5 rounded">function</span>
+            </div>
+            <p class="text-xs text-[#a6adc8] mt-1">Unique key per item. Defaults to <code class="text-[#f9e2af]">item.key</code> then <code class="text-[#f9e2af]">item.id</code>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- SECTION: SIMPLEST POSSIBLE CODE -->
+    <!-- ===================================================== -->
+    <section class="fade-in">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#f9e2af]/20 flex items-center justify-center text-[#f9e2af]">
+          <i class="fas fa-code text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold">Simplest Working Example</h2>
+      </div>
+      <p class="text-[#a6adc8] mb-4">Just 3 things: <span class="text-[#89b4fa]">state</span> → <span class="text-[#a6e3a1]">handler</span> → <span class="text-[#f9e2af]">FlatList props</span>.</p>
+
+      <div class="bg-[#11111b] rounded-xl border border-[#313244] overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-3 bg-[#181825] border-b border-[#313244] text-sm text-[#6c7086]">
+          <i class="fas fa-file-alt"></i> App.tsx
+        </div>
+        <div class="p-5 overflow-x-auto">
+          <pre class="text-sm font-mono leading-relaxed min-w-[600px]"><span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+<span class="text-[#6c7086]">//  1. IMPORTS</span>
+<span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+<span class="text-[#cba6f7]">import</span> <span class="text-[#cdd6f4]">React, { useState, useCallback }</span> <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'react'</span>;
+<span class="text-[#cba6f7]">import</span> <span class="text-[#cdd6f4]">{ FlatList, View, Text }</span> <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'react-native'</span>;
+
+<span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+<span class="text-[#6c7086]">//  2. TYPE &amp; INITIAL DATA</span>
+<span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+<span class="text-[#cba6f7]">type</span> <span class="text-[#f9e2af]">Item</span> = <span class="text-[#cdd6f4]">{ id: string; title: string };</span>
+<span class="text-[#cba6f7]">const</span> <span class="text-[#cdd6f4]">INITIAL: Item[] = [</span>
+  <span class="text-[#cdd6f4]">{ id: '1', title: '🍎 Apple' },</span>
+  <span class="text-[#cdd6f4]">{ id: '2', title: '🍌 Banana' },</span>
+  <span class="text-[#cdd6f4]">{ id: '3', title: '🍒 Cherry' },</span>
+<span class="text-[#cdd6f4]">];</span>
+
+<span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+<span class="text-[#6c7086]">//  3. COMPONENT</span>
+<span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+<span class="text-[#cba6f7]">const</span> <span class="text-[#89b4fa]">FruitList</span> = <span class="text-[#cdd6f4]">() => {</span>
+  <span class="text-[#cba6f7]">const</span> <span class="text-[#cdd6f4]">[data, setData] = useState(INITIAL);</span>
+  <span class="text-[#cba6f7]">const</span> <span class="text-[#cdd6f4]">[refreshing, setRefreshing] = useState(false);</span>
+
+  <span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+  <span class="text-[#6c7086]">//  4. HANDLER (the key piece!)</span>
+  <span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+  <span class="text-[#cba6f7">const</span> <span class="text-[#89b4fa]">onRefresh</span> = <span class="text-[#89b4fa]">useCallback</span><span class="text-[#cdd6f4]">(</span><span class="text-[#cba6f7">async</span> <span class="text-[#cdd6f4">() => {</span>
+    <span class="text-[#89b4fa]">setRefreshing</span><span class="text-[#cdd6f4]">(true);</span>                          <span class="text-[#6c7086]">// 4a. Show spinner</span>
+    <span class="text-[#cba6f7">const</span> <span class="text-[#cdd6f4]">res =</span> <span class="text-[#cba6f7">await</span> <span class="text-[#89b4fa]">fetch</span><span class="text-[#cdd6f4]">(</span><span class="text-[#a6e3a1]">'https://api.example.com/fruits'</span><span class="text-[#cdd6f4]">);</span>  <span class="text-[#6c7086]">// 4b. Fetch</span>
+    <span class="text-[#89b4fa]">setData</span><span class="text-[#cdd6f4]">(</span><span class="text-[#cba6f7">await</span> <span class="text-[#cdd6f4]">res.json());</span>
+    <span class="text-[#89b4fa]">setRefreshing</span><span class="text-[#cdd6f4]">(false);</span>                         <span class="text-[#6c7086]">// 4c. Hide spinner</span>
+  }, []);
+
+  <span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+  <span class="text-[#6c7086]">//  5. RENDER</span>
+  <span class="text-[#6c7086]">// ─────────────────────────────────────────────</span>
+  <span class="text-[#cba6f7">return</span> <span class="text-[#cdd6f4]">(</span>
+    <span class="text-[#cdd6f4]">&lt;FlatList</span>
+      <span class="text-[#89b4fa]">data</span>=<span class="text-[#cdd6f4]">{data}</span>
+      <span class="text-[#89b4fa]">renderItem</span>=<span class="text-[#cdd6f4]">{({ item }) =&gt; &lt;Text&gt;{item.title}&lt;/Text&gt;}</span>
+      <span class="text-[#89b4fa]">keyExtractor</span>=<span class="text-[#cdd6f4]">{item =&gt; item.id}</span>
+      <span class="hl-line text-[#89b4fa]">refreshing</span>=<span class="hl-line text-[#cdd6f4]">{refreshing}</span>           <span class="text-[#6c7086]">// ← required</span>
+      <span class="hl-line text-[#89b4fa]">onRefresh</span>=<span class="hl-line text-[#cdd6f4]">{onRefresh}</span>             <span class="text-[#6c7086]">// ← required</span>
+    <span class="text-[#cdd6f4]">/&gt;</span>
+  );
+};</pre>
+        </div>
+      </div>
+
+      <div class="flex flex-wrap gap-3 mt-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl px-4 py-3 flex items-center gap-2 text-sm">
+          <i class="fas fa-circle-check text-[#a6e3a1]"></i>
+          That's all you need for pull-to-refresh
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl px-4 py-3 flex items-center gap-2 text-sm">
+          <i class="fas fa-circle-check text-[#a6e3a1]"></i>
+          <code class="text-[#f9e2af]">refreshing</code> + <code class="text-[#f9e2af]">onRefresh</code> = pull-to-refresh enabled
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- SECTION: CODE WITH VISUAL BREAKDOWN -->
+    <!-- ===================================================== -->
+    <section class="fade-in">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#cba6f7]/20 flex items-center justify-center text-[#cba6f7]">
+          <i class="fas fa-brain text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold">Code + Visual Breakdown</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Card: refreshing -->
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="bg-[#89b4fa]/10 px-5 py-3 border-b border-[#313244] flex items-center gap-2">
+            <span class="bg-[#89b4fa] text-[#1e1e2e] text-xs font-bold px-2 py-0.5 rounded">PROP</span>
+            <code class="text-[#f9e2af] font-semibold">refreshing</code>
+            <span class="text-xs text-[#6c7086]">boolean</span>
+          </div>
+          <div class="p-5 space-y-3">
+            <p class="text-sm text-[#a6adc8]">A boolean that <strong class="text-[#f9e2af]">you control</strong>. When <code class="text-[#a6e3a1]">true</code>, the refresh spinner is visible.</p>
+            <div class="bg-[#11111b] rounded-lg p-3 flex items-center justify-between">
+              <code class="text-sm font-mono">refreshing = true</code>
+              <div class="flex items-center gap-2 text-sm">
+                <div class="spinner" style="width:18px;height:18px;border-width:2px;"></div>
+                <span class="text-[#a6e3a1]">Spinner ON</span>
+              </div>
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-3 flex items-center justify-between">
+              <code class="text-sm font-mono">refreshing = false</code>
+              <span class="text-[#585b70] text-sm">Spinner OFF</span>
+            </div>
+            <div class="text-xs text-[#6c7086] flex items-start gap-2">
+              <i class="fas fa-info-circle mt-0.5"></i>
+              <span>FlatList does NOT auto-set this. If you forget to set it back to <code class="text-[#f9e2af]">false</code>, the spinner spins forever.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: onRefresh -->
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="bg-[#a6e3a1]/10 px-5 py-3 border-b border-[#313244] flex items-center gap-2">
+            <span class="bg-[#a6e3a1] text-[#1e1e2e] text-xs font-bold px-2 py-0.5 rounded">PROP</span>
+            <code class="text-[#f9e2af] font-semibold">onRefresh</code>
+            <span class="text-xs text-[#6c7086]">() => void</span>
+          </div>
+          <div class="p-5 space-y-3">
+            <p class="text-sm text-[#a6adc8]">Called when the user's pull gesture exceeds the threshold. Your job:</p>
+            <div class="bg-[#11111b] rounded-lg p-3 font-mono text-xs leading-relaxed">
+              <div>1. <span class="text-[#89b4fa]">setRefreshing</span>(<span class="text-[#a6e3a1]">true</span>)   <span class="text-[#6c7086]">// show spinner</span></div>
+              <div>2. <span class="text-[#cba6f7]">await</span> <span class="text-[#89b4fa]">fetchData</span>()     <span class="text-[#6c7086]">// get fresh data</span></div>
+              <div>3. <span class="text-[#89b4fa]">setRefreshing</span>(<span class="text-[#a6e3a1]">false</span>)  <span class="text-[#6c7086]">// hide spinner</span></div>
+            </div>
+            <div class="text-xs text-[#6c7086] flex items-start gap-2">
+              <i class="fas fa-info-circle mt-0.5"></i>
+              <span>Always wrap with <code class="text-[#f9e2af]">try/finally</code> so step 3 runs even if step 2 throws an error.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: RefreshControl custom -->
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="bg-[#f9e2af]/10 px-5 py-3 border-b border-[#313244] flex items-center gap-2">
+            <span class="bg-[#f9e2af] text-[#1e1e2e] text-xs font-bold px-2 py-0.5 rounded">ALTERNATIVE</span>
+            <code class="text-[#f9e2af] font-semibold">refreshControl</code>
+          </div>
+          <div class="p-5 space-y-3">
+            <p class="text-sm text-[#a6adc8]">Use this instead of <code class="text-[#f9e2af]">refreshing</code>/<code class="text-[#f9e2af]">onRefresh</code> when you need platform-specific styling:</p>
+            <div class="bg-[#11111b] rounded-lg p-3 font-mono text-xs leading-relaxed">
+              &lt;FlatList<br>
+              &nbsp;&nbsp;refreshControl={}<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&lt;RefreshControl<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;refreshing={refreshing}<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;onRefresh={onRefresh}<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#89b4fa]">tintColor</span>=<span class="text-[#a6e3a1]">"#fff"</span>        <span class="text-[#6c7086]">// iOS</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#89b4fa]">title</span>=<span class="text-[#a6e3a1]">"Loading..."</span>     <span class="text-[#6c7086]">// iOS</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;<span class="text-[#89b4fa]">colors</span>={<span class="text-[#cdd6f4]">[</span><span class="text-[#a6e3a1]">'#blue'</span><span class="text-[#cdd6f4">]</span>}  <span class="text-[#6c7086]">// Android</span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;/&gt;<br>
+              }
+            </div>
+          </div>
+        </div>
+
+        <!-- Card: keyExtractor + extraData -->
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="bg-[#cba6f7]/10 px-5 py-3 border-b border-[#313244] flex items-center gap-2">
+            <span class="bg-[#cba6f7] text-[#1e1e2e] text-xs font-bold px-2 py-0.5 rounded">IMPORTANT</span>
+            <code class="text-[#f9e2af] font-semibold">keyExtractor</code> + <code class="text-[#f9e2af]">extraData</code>
+          </div>
+          <div class="p-5 space-y-3">
+            <div class="text-sm text-[#a6adc8] space-y-2">
+              <p><strong class="text-[#f9e2af]">keyExtractor</strong> — must return a unique string per item. FlatList uses it for React keys. Default: <code class="text-[#f9e2af]">item.key</code> → <code class="text-[#f9e2af]">item.id</code> → index.</p>
+              <p><strong class="text-[#f9e2af]">extraData</strong> — if <code class="text-[#f9e2af]">renderItem</code> depends on state outside <code class="text-[#f9e2af]">data</code> (e.g., a selected ID), pass it here. FlatList is a PureComponent and won't re-render otherwise.</p>
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-3 font-mono text-xs">
+              <span class="text-[#6c7086]">// Without extraData, FlatList skips re-render</span><br>
+              &lt;FlatList<br>
+              &nbsp;&nbsp;extraData={<span class="text-[#cdd6f4]">{selectedId}</span>}<br>
+              &nbsp;&nbsp;renderItem={<span class="text-[#cdd6f4]">{({item}) =></span><br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&lt;Text style={{color: <span class="text-[#89b4fa]">item.id === selectedId</span> ? <span class="text-[#a6e3a1]">'blue'</span> : <span class="text-[#a6e3a1]">'black'</span>}}&gt;<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;{item.title}<br>
+              &nbsp;&nbsp;&nbsp;&nbsp;&lt;/Text&gt;<br>
+              &nbsp;&nbsp;}<br>
+              /&gt;
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- SECTION: ALL PROPS TABLE -->
+    <!-- ===================================================== -->
+    <section class="fade-in">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#f38ba8]/20 flex items-center justify-center text-[#f38ba8]">
+          <i class="fas fa-table text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold">Every FlatList Prop You Need</h2>
+      </div>
+
+      <div class="overflow-x-auto rounded-xl border border-[#313244]">
+        <table class="w-full text-sm">
+          <thead>
+            <tr class="bg-[#181825] text-left">
+              <th class="px-5 py-3 font-semibold text-[#89b4fa]">Prop</th>
+              <th class="px-5 py-3 font-semibold text-[#a6e3a1]">Type</th>
+              <th class="px-5 py-3 font-semibold text-[#f9e2af]">Required</th>
+              <th class="px-5 py-3 font-semibold">What it does</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-[#313244]">
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">refreshing</td><td class="px-5 py-3">boolean</td><td class="px-5 py-3 text-[#f38ba8]">yes*</td><td class="px-5 py-3 text-[#a6adc8]">Show/hide the refresh spinner</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">onRefresh</td><td class="px-5 py-3">() → void</td><td class="px-5 py-3 text-[#f38ba8]">yes*</td><td class="px-5 py-3 text-[#a6adc8]">Callback when user pulls down</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">data</td><td class="px-5 py-3">Array</td><td class="px-5 py-3 text-[#f38ba8]">yes</td><td class="px-5 py-3 text-[#a6adc8]">The list of items to render</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">renderItem</td><td class="px-5 py-3">function</td><td class="px-5 py-3 text-[#f38ba8]">yes</td><td class="px-5 py-3 text-[#a6adc8]">Renders each item</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">keyExtractor</td><td class="px-5 py-3">function</td><td class="px-5 py-3 text-[#a6e3a1]">recommended</td><td class="px-5 py-3 text-[#a6adc8]">Unique key per item</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">extraData</td><td class="px-5 py-3">any</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Force re-render when external state changes</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">refreshControl</td><td class="px-5 py-3">element</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Custom RefreshControl component</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">getItemLayout</td><td class="px-5 py-3">function</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Performance boost for fixed-height items</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">numColumns</td><td class="px-5 py-3">number</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Multi-column grid layout</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">ListHeaderComponent</td><td class="px-5 py-3">component</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Sticky/fixed header above the list</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">ListFooterComponent</td><td class="px-5 py-3">component</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Footer below the list</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">ItemSeparatorComponent</td><td class="px-5 py-3">component</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Rendered between items</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">ListEmptyComponent</td><td class="px-5 py-3">component</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Shown when data is empty</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">horizontal</td><td class="px-5 py-3">boolean</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Horizontal scrolling layout</td></tr>
+            <tr class="hover:bg-[#1e1e2e]/50"><td class="px-5 py-3 font-mono">inverted</td><td class="px-5 py-3">boolean</td><td class="px-5 py-3">optional</td><td class="px-5 py-3 text-[#a6adc8]">Reverse scroll direction (e.g. chat)</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p class="text-xs text-[#6c7086] mt-2">* <code class="text-[#f9e2af]">refreshing</code> + <code class="text-[#f9e2af]">onRefresh</code> must be used together for pull-to-refresh.</p>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- SECTION: COMPLETE PRODUCTION CODE -->
+    <!-- ===================================================== -->
+    <section id="complete-code" class="fade-in">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#a6e3a1]/20 flex items-center justify-center text-[#a6e3a1]">
+          <i class="fas fa-shield-alt text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold">Production-Ready Pattern</h2>
+      </div>
+
+      <div class="bg-[#11111b] rounded-xl border border-[#313244] overflow-hidden">
+        <div class="flex items-center gap-2 px-5 py-3 bg-[#181825] border-b border-[#313244] text-sm text-[#6c7086]">
+          <span class="terminal-dot term-red"></span>
+          <span class="terminal-dot term-yellow"></span>
+          <span class="terminal-dot term-green"></span>
+          <span class="ml-2"><i class="fas fa-file-alt mr-1"></i> App.tsx — with error handling</span>
+        </div>
+        <div class="p-5 overflow-x-auto">
+          <pre class="text-sm font-mono leading-relaxed min-w-[600px]"><span class="text-[#cba6f7]">import</span> <span class="text-[#cdd6f4]">React, { useState, useCallback }</span> <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'react'</span>;
+<span class="text-[#cba6f7]">import</span> <span class="text-[#cdd6f4]">{ FlatList, RefreshControl, View, Text, StyleSheet }</span> <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'react-native'</span>;
+
+<span class="text-[#cba6f7]">type</span> <span class="text-[#f9e2af]">Item</span> = <span class="text-[#cdd6f4]">{ id: string; title: string };</span>
+
+<span class="text-[#cba6f7]">const</span> <span class="text-[#89b4fa]">App</span> = <span class="text-[#cdd6f4]">() => {</span>
+  <span class="text-[#cba6f7]">const</span> <span class="text-[#cdd6f4]">[data, setData] = useState&lt;Item[]&gt;([]);</span>
+  <span class="text-[#cba6f7]">const</span> <span class="text-[#cdd6f4]">[refreshing, setRefreshing] = useState(false);</span>
+
+  <span class="text-[#cba6f7">const</span> <span class="text-[#89b4fa]">fetchData</span> = <span class="text-[#cba6f7">async</span> <span class="text-[#cdd6f4">() => {</span>
+    <span class="text-[#cba6f7">const</span> <span class="text-[#cdd6f4]">res =</span> <span class="text-[#cba6f7">await</span> <span class="text-[#89b4fa]">fetch</span><span class="text-[#cdd6f4]">(</span><span class="text-[#a6e3a1]">'https://api.example.com/items'</span><span class="text-[#cdd6f4]">);</span>
+    <span class="text-[#cba6f7">if</span> <span class="text-[#cdd6f4]">(!res.ok)</span> <span class="text-[#cba6f7">throw</span> <span class="text-[#cba6f7">new</span> <span class="text-[#cdd6f4]">Error(</span><span class="text-[#a6e3a1]">'Network error'</span><span class="text-[#cdd6f4]">);</span>
+    <span class="text-[#cba6f7">const</span> <span class="text-[#cdd6f4]">json =</span> <span class="text-[#cba6f7">await</span> <span class="text-[#cdd6f4]">res.json();</span>
+    <span class="text-[#89b4fa]">setData</span><span class="text-[#cdd6f4]">(json);</span>
+  };
+
+  <span class="text-[#6c7086]">// ✅ try/finally ensures spinner ALWAYS stops, even on error</span>
+  <span class="text-[#cba6f7">const</span> <span class="text-[#89b4fa]">onRefresh</span> = <span class="text-[#89b4fa]">useCallback</span><span class="text-[#cdd6f4]">(</span><span class="text-[#cba6f7">async</span> <span class="text-[#cdd6f4">() => {</span>
+    <span class="text-[#89b4fa]">setRefreshing</span><span class="text-[#cdd6f4]">(true);</span>
+    <span class="text-[#cba6f7">try</span> <span class="text-[#cdd6f4]">{</span>
+      <span class="text-[#cba6f7">await</span> <span class="text-[#89b4fa]">fetchData</span><span class="text-[#cdd6f4]">();</span>
+    <span class="text-[#cdd6f4]">}</span> <span class="text-[#cba6f7">catch</span> <span class="text-[#cdd6f4]">(err) {</span>
+      <span class="text-[#89b4fa]">console.error</span><span class="text-[#cdd6f4]">(err);</span>  <span class="text-[#6c7086]">// Log it, show toast, etc.</span>
+    <span class="text-[#cdd6f4]">}</span> <span class="text-[#cba6f7">finally</span> <span class="text-[#cdd6f4]">{</span>
+      <span class="text-[#89b4fa]">setRefreshing</span><span class="text-[#cdd6f4]">(false);</span>  <span class="text-[#6c7086]">// ✅ Always runs</span>
+    <span class="text-[#cdd6f4]">}</span>
+  }, []);
+
+  <span class="text-[#cba6f7">return</span> <span class="text-[#cdd6f4]">(</span>
+    <span class="text-[#cdd6f4]">&lt;FlatList</span>
+      <span class="text-[#89b4fa]">data</span>=<span class="text-[#cdd6f4]">{data}</span>
+      <span class="text-[#89b4fa]">renderItem</span>=<span class="text-[#cdd6f4]">{({ item }) => (</span>
+        <span class="text-[#cdd6f4]">&lt;View style={styles.item}&gt;</span>
+          <span class="text-[#cdd6f4]">&lt;Text style={styles.title}&gt;{item.title}&lt;/Text&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;/View&gt;</span>
+      <span class="text-[#cdd6f4]">)}</span>
+      <span class="text-[#89b4fa]">keyExtractor</span>=<span class="text-[#cdd6f4]">{item => item.id}</span>
+      <span class="text-[#89b4fa]">refreshControl</span>=<span class="text-[#cdd6f4]">{</span>
+        <span class="text-[#cdd6f4]">&lt;RefreshControl</span>
+          <span class="text-[#89b4fa]">refreshing</span>=<span class="text-[#cdd6f4]">{refreshing}</span>
+          <span class="text-[#89b4fa]">onRefresh</span>=<span class="text-[#cdd6f4]">{onRefresh}</span>
+          <span class="text-[#89b4fa]">tintColor</span>=<span class="text-[#a6e3a1]">"#89b4fa"</span>
+          <span class="text-[#89b4fa]">colors</span>=<span class="text-[#cdd6f4]">{['#89b4fa', '#a6e3a1', '#f9e2af']}</span>
+        <span class="text-[#cdd6f4]">/&gt;</span>
+      <span class="text-[#cdd6f4]">}</span>
+    <span class="text-[#cdd6f4]">/&gt;</span>
+  );
+};
+
+<span class="text-[#cba6f7">const</span> <span class="text-[#cdd6f4]">styles = StyleSheet.create({</span>
+  <span class="text-[#cdd6f4]">item: { padding: 16, borderBottomWidth: 1, borderBottomColor: '#313244' },</span>
+  <span class="text-[#cdd6f4]">title: { fontSize: 16, fontWeight: '600' },
+});</span>
+
+<span class="text-[#cba6f7">export</span> <span class="text-[#cba6f7">default</span> <span class="text-[#89b4fa]">App</span>;</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- SECTION: BEST PRACTICES -->
+    <!-- ===================================================== -->
+    <section class="fade-in">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-[#f9e2af]/20 flex items-center justify-center text-[#f9e2af]">
+          <i class="fas fa-star text-xl"></i>
+        </div>
+        <h2 class="text-2xl font-bold">✅ Best Practices Checklist</h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-3">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4 flex items-start gap-3">
+          <i class="fas fa-check-circle text-[#a6e3a1] mt-1"></i>
+          <div><span class="font-semibold text-sm">useCallback on onRefresh</span><p class="text-xs text-[#6c7086]">Prevents unnecessary re-renders.</p></div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4 flex items-start gap-3">
+          <i class="fas fa-check-circle text-[#a6e3a1] mt-1"></i>
+          <div><span class="font-semibold text-sm">try/finally to dismiss spinner</span><p class="text-xs text-[#6c7086]">Guarantees refreshing=false even on error.</p></div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4 flex items-start gap-3">
+          <i class="fas fa-check-circle text-[#a6e3a1] mt-1"></i>
+          <div><span class="font-semibold text-sm">Always provide keyExtractor</span><p class="text-xs text-[#6c7086]">Stable keys = stable list performance.</p></div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4 flex items-start gap-3">
+          <i class="fas fa-check-circle text-[#a6e3a1] mt-1"></i>
+          <div><span class="font-semibold text-sm">Use getItemLayout when possible</span><p class="text-xs text-[#6c7086]">Skip measurement for fixed-height items.</p></div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4 flex items-start gap-3">
+          <i class="fas fa-check-circle text-[#a6e3a1] mt-1"></i>
+          <div><span class="font-semibold text-sm">extraData for external state</span><p class="text-xs text-[#6c7086]">Force re-render when needed.</p></div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4 flex items-start gap-3">
+          <i class="fas fa-check-circle text-[#a6e3a1] mt-1"></i>
+          <div><span class="font-semibold text-sm">RefreshControl for custom UI</span><p class="text-xs text-[#6c7086]">iOS titles, Android colors, etc.</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ===================================================== -->
+    <!-- FOOTER -->
+    <!-- ===================================================== -->
+    <footer class="border-t border-[#313244] pt-8 text-center text-sm text-[#585b70]">
+      <div class="flex justify-center gap-6 mb-4 flex-wrap">
+        <a href="https://reactnative.dev/docs/flatlist" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> FlatList Docs</a>
+        <a href="https://reactnative.dev/docs/refreshcontrol" target="_blank" class="hover:text-[#a6e3a1] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> RefreshControl Docs</a>
+      </div>
+      <p>Built with <i class="fas fa-heart text-[#f38ba8]"></i> for React Native — Happy coding!</p>
+    </footer>
+  </div>
+
+  <!-- ==================== JAVASCRIPT ==================== -->
+  <script>
+    (function() {
+      const fruits = ['🍎 Apple', '🍌 Banana', '🍒 Cherry', '🍇 Grape', '🥝 Kiwi', '🍊 Orange', '🍓 Strawberry', '🍉 Watermelon', '🍍 Pineapple', '🥭 Mango', '🍑 Peach', '🍐 Pear'];
+
+      function getItems(count) {
+        const shuffled = [...fruits].sort(() => Math.random() - 0.5);
+        return shuffled.slice(0, count).map((name, i) => ({
+          id: 'item-' + Date.now() + '-' + i,
+          title: name,
+          color: ['#89b4fa','#a6e3a1','#f9e2af','#f38ba8','#cba6f7','#74c7ec','#fab387','#94e2d5','#b4befe','#f5c2e7'][i % 10]
+        }));
+      }
+
+      let items = getItems(5);
+      let refreshing = false;
+      let simList = document.getElementById('simList');
+      let listItems = document.getElementById('listItems');
+      let ptrIndicator = document.getElementById('ptrIndicator');
+      let ptrText = document.getElementById('ptrText');
+      let stateRefreshing = document.getElementById('stateRefreshing');
+      let stateItems = document.getElementById('stateItems');
+      let stateAction = document.getElementById('stateAction');
+      let whatsHappening = document.getElementById('whatsHappening');
+      let itemCount = document.getElementById('itemCount');
+      let eventSteps = document.querySelectorAll('.event-step');
+
+      // Event timeline labels
+      const eventLabels = [
+        'User pulls down on the list',
+        'onRefresh callback fires → setRefreshing(true)',
+        'Fetching new data... (async)',
+        'setRefreshing(false) → spinner hides ✅'
+      ];
+
+      function renderItems() {
+        listItems.innerHTML = items.map((item, i) => `
+          <div class="sim-item" style="animation-delay:${i * 0.05}s">
+            <div class="avatar" style="background:${item.color}">${item.title.charAt(2)}</div>
+            <div class="flex-1 min-w-0">
+              <div class="font-medium text-sm truncate">${item.title}</div>
+              <div class="line" style="width:${60 + Math.random() * 30}%"></div>
+              <div class="line" style="width:${30 + Math.random() * 30}%;margin-bottom:0"></div>
+            </div>
+            <i class="fas fa-chevron-right text-[#585b70] text-xs"></i>
+          </div>
+        `).join('');
+        itemCount.textContent = items.length;
+        stateItems.textContent = items.length;
+        simList.scrollTop = 0;
+      }
+
+      function updateState(action) {
+        stateRefreshing.textContent = refreshing;
+        stateRefreshing.style.color = refreshing ? '#a6e3a1' : '#f38ba8';
+        stateAction.textContent = action;
+      }
+
+      function updatePtr(show, text) {
+        ptrIndicator.classList.toggle('show', show);
+        if (text) ptrText.textContent = text;
+      }
+
+      function highlightEvent(stepIndex) {
+        eventSteps.forEach((el, i) => {
+          el.classList.remove('active', 'done');
+          const dot = el.querySelector('.dot');
+          if (i < stepIndex) {
+            el.classList.add('done');
+            dot.style.borderColor = '#a6e3a1';
+            dot.style.background = '#a6e3a1';
+          } else if (i === stepIndex) {
+            el.classList.add('active');
+            dot.style.borderColor = '#89b4fa';
+            dot.style.background = '#89b4fa';
+            // Update label
+            const labelDiv = el.querySelector('.font-semibold');
+            if (labelDiv && eventLabels[i]) {
+              labelDiv.innerHTML = eventLabels[i];
+            }
+          } else {
+            dot.style.borderColor = '#585b70';
+            dot.style.background = '#1e1e2e';
+          }
+        });
+      }
+
+      function resetEvents() {
+        eventSteps.forEach(el => {
+          el.classList.remove('active', 'done');
+          el.querySelector('.dot').style.borderColor = '#585b70';
+          el.querySelector('.dot').style.background = '#1e1e2e';
+        });
+      }
+
+      function doRefresh() {
+        if (refreshing) return;
+        refreshing = true;
+        updatePtr(true, 'Refreshing...');
+        updateState('onRefresh fired! ⚡');
+        whatsHappening.textContent = '⏳ Fetching new data... spinner is visible.';
+        highlightEvent(0);
+        setTimeout(() => highlightEvent(1), 400);
+        setTimeout(() => highlightEvent(2), 800);
+
+        // Simulate 1.5s network request
+        setTimeout(() => {
+          // New data (random count 4-8)
+          const newCount = 4 + Math.floor(Math.random() * 5);
+          items = getItems(newCount);
+          renderItems();
+          refreshing = false;
+          updatePtr(false);
+          updateState('setRefreshing(false) — done ✅');
+          stateRefreshing.textContent = 'false';
+          stateRefreshing.style.color = '#f38ba8';
+          whatsHappening.textContent = '✅ List updated with ' + items.length + ' items. Pull down again to refresh!';
+          highlightEvent(3);
+          setTimeout(resetEvents, 2000);
+        }, 1500);
+      }
+
+      // Track scroll for pull-to-refresh simulation
+      let startY = 0;
+      let pulling = false;
+
+      simList.addEventListener('touchstart', (e) => {
+        if (simList.scrollTop === 0) {
+          startY = e.touches[0].clientY;
+          pulling = true;
+        }
+      });
+
+      simList.addEventListener('touchmove', (e) => {
+        if (!pulling) return;
+        const dy = e.touches[0].clientY - startY;
+        if (dy > 60) {
+          pulling = false;
+          doRefresh();
+        }
+      });
+
+      simList.addEventListener('touchend', () => { pulling = false; });
+
+      // Mouse drag support
+      let mouseDown = false;
+      let mouseStartY = 0;
+
+      simList.addEventListener('mousedown', (e) => {
+        if (simList.scrollTop === 0) {
+          mouseDown = true;
+          mouseStartY = e.clientY;
+        }
+      });
+
+      simList.addEventListener('mousemove', (e) => {
+        if (!mouseDown) return;
+        const dy = e.clientY - mouseStartY;
+        if (dy > 60) {
+          mouseDown = false;
+          doRefresh();
+        }
+      });
+
+      simList.addEventListener('mouseup', () => { mouseDown = false; });
+      simList.addEventListener('mouseleave', () => { mouseDown = false; });
+
+      // Button trigger
+      document.getElementById('btnSimRefresh').addEventListener('click', doRefresh);
+
+      // Initial render
+      renderItems();
+      updateState('List ready. Pull down to refresh!');
+      whatsHappening.textContent = '⬇️ Pull down on the list (touch or drag) to see pull-to-refresh in action.';
+
+      // Scroll event — allow refresh only at top
+      simList.addEventListener('scroll', () => {
+        if (simList.scrollTop > 0) {
+          // Not at top, can't pull to refresh naturally
+        }
+      });
+    })();
+  </script>
+</body>
+</html>

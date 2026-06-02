@@ -1,0 +1,467 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>__name__ == "__main__" · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--blue)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;scroll-margin-top:70px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px;animation:fadeSlide .35s ease-out}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .highlight{color:var(--yellow)}
+.code .danger{color:var(--red)}
+.code .pink{color:var(--pink)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--blue);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.small{padding:5px 12px;font-size:.72rem}
+.log-area{font-family:monospace;font-size:.75rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:60px;max-height:200px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0}
+.log-area .t-blue{color:var(--blue)}
+.log-area .t-green{color:var(--green)}
+.log-area .t-red{color:var(--red)}
+.log-area .t-yellow{color:var(--yellow)}
+.log-area .t-muted{color:var(--muted)}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* ===== NAME VISUALIZATION ===== */
+.name-viz{display:flex;align-items:stretch;gap:20px;padding:14px;flex-wrap:wrap}
+.name-case{flex:1;min-width:220px;border-radius:var(--radius);padding:16px;border:2px solid;text-align:center}
+.name-case.direct{border-color:var(--green);background:rgba(166,227,161,.04)}
+.name-case.import{border-color:var(--blue);background:rgba(137,180,250,.04)}
+.name-case h4{font-size:.9rem;margin-bottom:4px}
+.name-case.direct h4{color:var(--green)}
+.name-case.import h4{color:var(--blue)}
+.name-case .nameval{font-family:monospace;font-size:1.6rem;font-weight:700;padding:12px 0}
+.name-case.direct .nameval{color:var(--green)}
+.name-case.import .nameval{color:var(--blue)}
+.name-case .cmd{font-family:monospace;font-size:.72rem;color:var(--muted);background:var(--bg);padding:6px 10px;border-radius:4px;display:inline-block}
+
+/* ===== FILE CARD ===== */
+.file-card{background:var(--bg);border:1px solid var(--surface2);border-radius:var(--radius);padding:14px;margin:8px 0;position:relative}
+.file-card .file-name{font-size:.7rem;color:var(--muted);margin-bottom:6px;font-family:monospace}
+.file-card .file-name .ext{color:var(--teal)}
+.file-line{font-family:monospace;font-size:.72rem;padding:3px 0;line-height:1.8}
+.file-line .ln{color:var(--muted);display:inline-block;width:24px}
+.file-line.highlight{background:rgba(166,227,161,.06);border-radius:3px}
+.file-line.highlight-red{background:rgba(243,139,168,.06);border-radius:3px}
+
+/* ===== COMPARE ROW ===== */
+.comp-row{display:flex;gap:16px;margin:10px 0;flex-wrap:wrap}
+.comp-side{flex:1;min-width:220px;padding:14px;border-radius:var(--radius)}
+.comp-side.bad{background:rgba(243,139,168,.04);border:1px solid rgba(243,139,168,.15)}
+.comp-side.good{background:rgba(166,227,161,.04);border:1px solid rgba(166,227,161,.15)}
+.comp-side h4{font-size:.82rem;margin-bottom:6px}
+.comp-side.bad h4{color:var(--red)}
+.comp-side.good h4{color:var(--green)}
+.comp-side ul{list-style:none;padding:0;font-size:.75rem;color:var(--muted)}
+.comp-side li{padding:3px 0 3px 16px;position:relative}
+.comp-side.bad li::before{content:'✗';position:absolute;left:0;color:var(--red)}
+.comp-side.good li::before{content:'✓';position:absolute;left:0;color:var(--green)}
+
+/* ===== SCENARIO CARDS ===== */
+.scenario{padding:14px;border-radius:var(--radius);margin:10px 0;border-left:4px solid}
+.scenario.run{border-color:var(--green);background:rgba(166,227,161,.04)}
+.scenario.import{border-color:var(--blue);background:rgba(137,180,250,.04)}
+.scenario.cli{border-color:var(--peach);background:rgba(250,179,135,.04)}
+.scenario h4{font-size:.85rem;margin-bottom:4px}
+.scenario.run h4{color:var(--green)}
+.scenario.import h4{color:var(--blue)}
+.scenario.cli h4{color:var(--peach)}
+.scenario p{font-size:.78rem;color:var(--muted);margin:0}
+
+/* ===== FLOW ARROW DIAGRAM ===== */
+.flow-arrows{display:flex;align-items:center;justify-content:center;gap:10px;padding:14px;flex-wrap:wrap}
+.flow-arrows .fa-box{padding:10px 18px;border-radius:var(--radius);text-align:center;font-size:.78rem;font-weight:600;border:2px solid;min-width:100px}
+.flow-arrows .fa-box.file{border-color:var(--blue);color:var(--blue);background:rgba(137,180,250,.06)}
+.flow-arrows .fa-box.run{border-color:var(--green);color:var(--green);background:rgba(166,227,161,.06)}
+.flow-arrows .fa-box.import{border-color:var(--yellow);color:var(--yellow);background:rgba(249,226,175,.06)}
+.flow-arrows .fa-arrow{color:var(--muted);font-size:.8rem}
+
+/* ===== USE CASE GRID ===== */
+.usecase-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:12px}
+.usecase-card{padding:16px;border-radius:var(--radius);border:2px solid;text-align:center;transition:.2s;background:var(--surface)}
+.usecase-card:hover{transform:translateY(-3px)}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>Py</span> __name__ == "__main__"</div>
+  <div class="crumbs"><a href="../index.html">Python</a> &rsaquo; __name__ idiom</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(137,180,250,.18);color:var(--blue)">Core Pattern</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. WHAT IS __name__? -->
+<div class="section-title"><span class="num">1</span> What Is <code>__name__</code>?</div>
+<div class="card">
+  <p><code>__name__</code> is a <strong>special built-in variable</strong> that Python sets <strong>automatically</strong> in every file. Its value depends on <em>how</em> the file is being used.</p>
+
+  <div class="name-viz">
+    <div class="name-case direct">
+      <h4>▶ Run Directly</h4>
+      <div class="nameval">"__main__"</div>
+      <div class="cmd">$ python calculator.py</div>
+      <div style="margin-top:8px;font-size:.76rem;color:var(--muted)">Python sets <code>__name__</code> → <strong style="color:var(--green)">"__main__"</strong></div>
+    </div>
+    <div class="name-case import">
+      <h4>📦 Imported</h4>
+      <div class="nameval">"calculator"</div>
+      <div class="cmd">>>> import calculator</div>
+      <div style="margin-top:8px;font-size:.76rem;color:var(--muted)">Python sets <code>__name__</code> → <strong style="color:var(--blue)">module name</strong></div>
+    </div>
+  </div>
+
+  <div class="callout" style="font-size:.8rem">
+    <strong>Key insight:</strong> <code>__name__</code> is <strong>not</strong> something you define — Python sets it automatically. Your code just <em>checks</em> it with <code>if __name__ == "__main__":</code> to decide what to do based on how the file is being used.
+  </div>
+</div>
+
+<!-- 2. THE TWO SCENARIOS -->
+<div class="section-title"><span class="num">2</span> The Two Scenarios</div>
+
+<div class="card">
+  <h3 style="color:var(--green)">Scenario 1: Run Directly</h3>
+  <p>When you run a file with <code>python file.py</code>, Python executes it from top to bottom. It sets <code>__name__</code> to <strong>"__main__"</strong> before executing.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="file-card">
+        <div class="file-name">📄 <span class="ext">calc.py</span></div>
+        <div class="file-line"><span class="ln">1</span> <span class="keyword">def</span> <span class="highlight">add</span>(a, b):</div>
+        <div class="file-line"><span class="ln">2</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> a + b</div>
+        <div class="file-line"><span class="ln">3</span> </div>
+        <div class="file-line"><span class="ln">4</span> <span class="comment"># Python sets this before running:</span></div>
+        <div class="file-line highlight"><span class="ln">5</span> <span class="keyword">print</span>(<span class="string">"__name__ =="</span>, __name__)</div>
+        <div class="file-line"><span class="ln">6</span> <span class="comment"># Output: __name__ == __main__</span></div>
+      </div>
+    </div>
+    <div>
+      <div class="code" style="height:100%;display:flex;flex-direction:column;justify-content:center">
+$ <span class="highlight">python calc.py</span>
+<span class="comment"># Python executes the file...</span>
+__name__ == <span class="string">"__main__"</span>
+
+<span class="comment"># ↓ So this condition is True</span>
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    <span class="comment"># This block RUNS</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3 style="color:var(--blue)">Scenario 2: Imported</h3>
+  <p>When another file imports this one, Python sets <code>__name__</code> to the <strong>module's name</strong> (the filename without <code>.py</code>).</p>
+
+  <div class="grid2">
+    <div>
+      <div class="file-card">
+        <div class="file-name">📄 <span class="ext">main.py</span></div>
+        <div class="file-line"><span class="ln">1</span> <span class="comment"># main.py imports calc</span></div>
+        <div class="file-line"><span class="ln">2</span> <span class="keyword">import</span> <span class="highlight">calc</span></div>
+        <div class="file-line"><span class="ln">3</span> </div>
+        <div class="file-line"><span class="ln">4</span> result = <span class="highlight">calc</span>.add(3, 5)</div>
+        <div class="file-line"><span class="ln">5</span> <span class="keyword">print</span>(result)</div>
+      </div>
+    </div>
+    <div>
+      <div class="code" style="height:100%;display:flex;flex-direction:column;justify-content:center">
+$ <span class="highlight">python main.py</span>
+<span class="comment"># Python executes calc.py FIRST (due to import)</span>
+__name__ == <span class="string">"calc"</span>  <span class="comment"># ← NOT __main__!</span>
+
+<span class="comment"># ↓ So this condition is False</span>
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    <span class="comment"># This block does NOT run</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 3. THE GUARD PATTERN -->
+<div class="section-title"><span class="num">3</span> The Guard Pattern</div>
+<div class="card">
+  <p>The <strong>guard</strong> is the <code>if __name__ == "__main__":</code> block. It creates a <strong>fence</strong> — code inside runs <em>only</em> when the file is executed directly, not when imported.</p>
+
+  <div class="flow-arrows">
+    <div class="fa-box file">📄 utils.py</div>
+    <div class="fa-arrow">⬇</div>
+    <div class="fa-box run">▶ python utils.py</div>
+    <div class="fa-arrow">→</div>
+    <div class="fa-box run" style="border-color:var(--green);color:var(--green);background:rgba(166,227,161,.08)">✅ Guard runs</div>
+    <div style="font-size:1.2rem;color:var(--muted)">vs</div>
+    <div class="fa-box import">📦 import utils</div>
+    <div class="fa-arrow">→</div>
+    <div class="fa-box import" style="border-color:var(--red);color:var(--red);background:rgba(243,139,168,.08)">⛔ Guard skipped</div>
+  </div>
+
+  <div class="code" style="font-size:.76rem">
+<span class="comment"># === With Guard (Correct) ===</span>
+<span class="keyword">def</span> <span class="highlight">greet</span>(name):
+    <span class="keyword">return</span> <span class="string">f"Hello, {name}!"</span>
+
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:   <span class="comment"># ← The Guard</span>
+    <span class="comment"># Only runs when "python file.py"</span>
+    <span class="keyword">print</span>(<span class="highlight">greet</span>(<span class="string">"Alice"</span>))
+  </div>
+
+  <div class="callout" style="font-size:.8rem">
+    <strong>Put the guard at the bottom</strong> of your file — after all function and class definitions. This ensures everything is defined before the guard runs.
+  </div>
+</div>
+
+<!-- 4. WITHOUT THE GUARD -->
+<div class="section-title"><span class="num">4</span> What Happens Without the Guard?</div>
+<div class="card">
+  <div class="grid2">
+    <div class="compare-side bad" style="border:1px solid rgba(243,139,168,.15);border-radius:var(--radius);padding:14px">
+      <h4 style="color:var(--red);font-size:.85rem">❌ Without Guard</h4>
+      <div class="code" style="font-size:.72rem">
+<span class="comment"># calculator.py — NO guard</span>
+<span class="keyword">def</span> <span class="highlight">add</span>(a, b):
+    <span class="keyword">return</span> a + b
+
+<span class="danger">print</span>(<span class="string">"Result:"</span>, <span class="highlight">add</span>(5, 3))
+<span class="comment"># ⚠ Prints when imported too!</span>
+      </div>
+      <div class="callout danger" style="font-size:.76rem;margin:6px 0 0">
+        <strong>Problem:</strong> <code>import calculator</code> prints <strong>"Result: 8"</strong> — unexpected side effect! The import runs all top-level code.
+      </div>
+    </div>
+
+    <div class="compare-side good" style="border:1px solid rgba(166,227,161,.15);border-radius:var(--radius);padding:14px">
+      <h4 style="color:var(--green);font-size:.85rem">✅ With Guard</h4>
+      <div class="code" style="font-size:.72rem">
+<span class="comment"># calculator.py — WITH guard</span>
+<span class="keyword">def</span> <span class="highlight">add</span>(a, b):
+    <span class="keyword">return</span> a + b
+
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    <span class="keyword">print</span>(<span class="string">"Result:"</span>, <span class="highlight">add</span>(5, 3))
+<span class="comment"># ✅ Only prints when run directly</span>
+      </div>
+      <div class="callout success" style="font-size:.76rem;margin:6px 0 0">
+        <strong>Safe:</strong> <code>import calculator</code> silently defines <code>add</code> — no output. The print only runs when <code>python calculator.py</code> is executed.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. INTERACTIVE DEMO -->
+<div class="section-title"><span class="num">5</span> Interactive Demo: See It In Action</div>
+<div class="card">
+  <p>Click to simulate how Python behaves <strong>with</strong> and <strong>without</strong> the guard when importing.</p>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn primary" onclick="simDirect()">▶ Run Directly</button>
+    <button class="btn outline" onclick="simImportNoGuard()">📦 Import (No Guard)</button>
+    <button class="btn outline" onclick="simImportWithGuard()">📦 Import (With Guard)</button>
+    <button class="btn small outline" onclick="clearLog()">Clear</button>
+  </div>
+
+  <div class="log-area" id="simLog" style="min-height:120px;max-height:240px">
+    <div class="entry t-muted">▸ Click a button to simulate Python's behavior.</div>
+  </div>
+</div>
+
+<!-- 6. WHY USE THE GUARD -->
+<div class="section-title"><span class="num">6</span> 4 Real Benefits</div>
+<div class="card">
+  <div class="usecase-grid">
+    <div class="usecase-card" style="border-color:var(--green)">
+      <div style="font-size:1.6rem;margin-bottom:4px">♻️</div>
+      <h4 style="color:var(--green);font-size:.82rem">Reusable Code</h4>
+      <p style="font-size:.7rem;color:var(--muted);margin:0">Import functions/classes without running test code or printing output</p>
+    </div>
+    <div class="usecase-card" style="border-color:var(--blue)">
+      <div style="font-size:1.6rem;margin-bottom:4px">🧪</div>
+      <h4 style="color:var(--blue);font-size:.82rem">Testability</h4>
+      <p style="font-size:.7rem;color:var(--muted);margin:0">Import a module in tests without triggering <code>main()</code> or side effects</p>
+    </div>
+    <div class="usecase-card" style="border-color:var(--peach)">
+      <div style="font-size:1.6rem;margin-bottom:4px">🎯</div>
+      <h4 style="color:var(--peach);font-size:.82rem">CLI Entry Point</h4>
+      <p style="font-size:.7rem;color:var(--muted);margin:0">Guard acts as the CLI entry — runs only when invoked via <code>python file.py</code></p>
+    </div>
+    <div class="usecase-card" style="border-color:var(--yellow)">
+      <div style="font-size:1.6rem;margin-bottom:4px">🚫</div>
+      <h4 style="color:var(--yellow);font-size:.82rem">No Side Effects</h4>
+      <p style="font-size:.7rem;color:var(--muted);margin:0">Importing doesn't print, write files, or start servers accidentally</p>
+    </div>
+  </div>
+</div>
+
+<!-- 7. REAL EXAMPLE -->
+<div class="section-title"><span class="num">7</span> Real Example: CLI Tool</div>
+<div class="card">
+  <p>A typical Python CLI tool uses the guard to separate <strong>library code</strong> from <strong>CLI code</strong>.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="file-card">
+        <div class="file-name">📄 <span class="ext">math_tools.py</span></div>
+        <div class="file-line"><span class="ln"> 1</span> <span class="keyword">import</span> sys</div>
+        <div class="file-line"><span class="ln"> 2</span> </div>
+        <div class="file-line"><span class="ln"> 3</span> <span class="comment"># Library code — reusable</span></div>
+        <div class="file-line"><span class="ln"> 4</span> <span class="keyword">def</span> <span class="highlight">add</span>(a, b):</div>
+        <div class="file-line"><span class="ln"> 5</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> a + b</div>
+        <div class="file-line"><span class="ln"> 6</span> </div>
+        <div class="file-line"><span class="ln"> 7</span> <span class="keyword">def</span> <span class="highlight">multiply</span>(a, b):</div>
+        <div class="file-line"><span class="ln"> 8</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">return</span> a * b</div>
+        <div class="file-line"><span class="ln"> 9</span> </div>
+        <div class="file-line highlight"><span class="ln">10</span> <span class="comment"># Guard — CLI entry point</span></div>
+        <div class="file-line highlight"><span class="ln">11</span> <span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:</div>
+        <div class="file-line highlight"><span class="ln">12</span> &nbsp;&nbsp;&nbsp;&nbsp;a = <span class="keyword">int</span>(sys.argv[<span class="n">1</span>])</div>
+        <div class="file-line highlight"><span class="ln">13</span> &nbsp;&nbsp;&nbsp;&nbsp;b = <span class="keyword">int</span>(sys.argv[<span class="n">2</span>])</div>
+        <div class="file-line highlight"><span class="ln">14</span> &nbsp;&nbsp;&nbsp;&nbsp;<span class="keyword">print</span>(<span class="highlight">add</span>(a, b))</div>
+      </div>
+    </div>
+    <div>
+      <div class="code" style="height:100%;display:flex;flex-direction:column;justify-content:center">
+<span class="comment"># Run as CLI — guard activates</span>
+$ <span class="highlight">python math_tools.py</span> 10 5
+<span class="n">15</span>
+
+<span class="comment"># Import as module — guard skips</span>
+$ <span class="highlight">python</span>
+&gt;&gt;&gt; <span class="keyword">import</span> <span class="highlight">math_tools</span>
+&gt;&gt;&gt; <span class="highlight">math_tools</span>.add(3, 4)
+<span class="n">7</span>
+<span class="comment"># No CLI output — clean import!</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. COMMON MISTAKES -->
+<div class="section-title"><span class="num">8</span> Common Mistakes</div>
+<div class="card">
+  <table>
+    <tr><th>Mistake</th><th>Why It's Wrong</th><th>Fix</th></tr>
+    <tr>
+      <td><code>if __name__ == "__main__"</code> at the top of file</td>
+      <td>Functions used inside aren't defined yet</td>
+      <td>Move the guard to the <strong>bottom</strong></td>
+    </tr>
+    <tr>
+      <td>Forgetting the double underscores</td>
+      <td><code>__name__</code> is <code>__name__</code> not <code>_name_</code> or <code>__main</code></td>
+      <td>Use exactly <code>__name__</code> and <code>"__main__"</code></td>
+    </tr>
+    <tr>
+      <td>Putting ALL code inside the guard</td>
+      <td>Functions aren't accessible when imported</td>
+      <td>Define functions <strong>outside</strong>, call <strong>inside</strong></td>
+    </tr>
+  </table>
+</div>
+
+<!-- 9. VISUAL SUMMARY -->
+<div class="section-title"><span class="num">9</span> Visual Summary</div>
+<div class="card">
+  <div class="grid3" style="margin-bottom:10px">
+    <div style="padding:14px;border-radius:var(--radius);border:1px solid var(--surface2);text-align:center">
+      <div style="font-size:1.5rem;font-weight:700;color:var(--blue)">__name__</div>
+      <div style="font-size:.72rem;color:var(--muted)">Built-in variable set by Python automatically</div>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);border:1px solid var(--surface2);text-align:center">
+      <div style="font-size:1.5rem;font-weight:700;color:var(--green)">"__main__"</div>
+      <div style="font-size:.72rem;color:var(--muted)">Value when <strong>run directly</strong> — guard runs</div>
+    </div>
+    <div style="padding:14px;border-radius:var(--radius);border:1px solid var(--surface2);text-align:center">
+      <div style="font-size:1.5rem;font-weight:700;color:var(--blue)">module_name</div>
+      <div style="font-size:.72rem;color:var(--muted)">Value when <strong>imported</strong> — guard skips</div>
+    </div>
+  </div>
+
+  <div class="code" style="text-align:center;font-size:.8rem">
+<span class="comment"># The universal Python idiom</span>
+<span class="keyword">if</span> __name__ == <span class="string">"__main__"</span>:
+    <span class="comment"># Only runs when this file is executed directly</span>
+    <span class="comment"># Does NOT run when this file is imported</span>
+  </div>
+
+  <div class="callout" style="margin-bottom:0;font-size:.82rem">
+    <strong>One sentence:</strong> <code>if __name__ == "__main__":</code> lets a Python file be <strong>both</strong> a reusable module <strong>and</strong> a standalone script — code inside the guard runs <em>only</em> when the file is the entry point.
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+function simDirect() {
+  const log = document.getElementById('simLog');
+  log.innerHTML = '';
+  setTimeout(() => addLog('$ python calculator.py', 't-muted'), 100);
+  setTimeout(() => addLog('Python sets __name__ = "__main__"', 't-blue'), 500);
+  setTimeout(() => addLog('▶ Running: print(add(5, 3))', 't-green'), 900);
+  setTimeout(() => addLog('✅ Output: Result: 8', 't-green'), 1300);
+}
+
+function simImportNoGuard() {
+  const log = document.getElementById('simLog');
+  log.innerHTML = '';
+  setTimeout(() => addLog('$ python main.py  (imports calculator)', 't-muted'), 100);
+  setTimeout(() => addLog('Python sets __name__ = "calculator"', 't-blue'), 500);
+  setTimeout(() => addLog('⛔ No guard — all top-level code runs!', 't-red'), 900);
+  setTimeout(() => addLog('😱 Unexpected: Result: 8', 't-red'), 1300);
+  setTimeout(() => addLog('  (the print in calculator.py executed on import)', 't-yellow'), 1700);
+}
+
+function simImportWithGuard() {
+  const log = document.getElementById('simLog');
+  log.innerHTML = '';
+  setTimeout(() => addLog('$ python main.py  (imports calculator)', 't-muted'), 100);
+  setTimeout(() => addLog('Python sets __name__ = "calculator"', 't-blue'), 500);
+  setTimeout(() => addLog('✅ Guard sees __name__ != "__main__"', 't-green'), 900);
+  setTimeout(() => addLog('⏭ Skipping guard block — clean import', 't-green'), 1300);
+  setTimeout(() => addLog('✓ No side effects. Just defines the functions.', 't-green'), 1700);
+}
+
+function addLog(msg, cls) {
+  const log = document.getElementById('simLog');
+  log.innerHTML += '<div class="entry ' + cls + '">▸ ' + msg + '</div>';
+  log.scrollTop = log.scrollHeight;
+}
+
+function clearLog() {
+  document.getElementById('simLog').innerHTML = '<div class="entry t-muted">▸ Click a button to simulate Python\'s behavior.</div>';
+}
+</script>
+</body>
+</html>

@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Streamable HTTP MCP · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--orange)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px;scroll-margin-top:70px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px;animation:fadeSlide .35s ease-out}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .highlight{color:var(--yellow)}
+.code .danger{color:var(--red)}
+.code .teal{color:var(--teal)}
+.code .orange{color:var(--orange)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.callout.orange{border-color:var(--orange);background:rgba(248,189,127,.04)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.badge.teal{background:rgba(148,226,213,.18);color:var(--teal)}
+.badge.orange{background:rgba(248,189,127,.18);color:var(--orange)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--orange);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.small{padding:5px 12px;font-size:.72rem}
+.log-area{font-family:monospace;font-size:.75rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:80px;max-height:260px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0;border-bottom:1px solid rgba(255,255,255,.03)}
+.log-area .entry:last-child{border-bottom:none}
+.log-area .t-teal{color:var(--teal)}.log-area .t-blue{color:var(--blue)}.log-area .t-green{color:var(--green)}.log-area .t-peach{color:var(--peach)}.log-area .t-red{color:var(--red)}.log-area .t-yellow{color:var(--yellow)}.log-area .t-muted{color:var(--muted)}.log-area .t-orange{color:var(--orange)}
+
+/* ===== TRANSPORT COMPARISON ===== */
+.transport-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px}
+@media(max-width:780px){.transport-grid{grid-template-columns:1fr}}
+.transport-card{padding:18px;border-radius:var(--radius);text-align:center;transition:.2s}
+.transport-card:hover{transform:translateY(-3px)}
+.transport-card.std{border:2px solid var(--green);background:rgba(166,227,161,.04)}
+.transport-card.sse{border:2px solid var(--blue);background:rgba(137,180,250,.04)}
+.transport-card.http{border:2px solid var(--orange);background:rgba(248,189,127,.04)}
+.transport-card .icon{font-size:2rem;margin-bottom:6px}
+.transport-card h4{font-size:.9rem;margin-bottom:4px}
+.transport-card.std h4{color:var(--green)}
+.transport-card.sse h4{color:var(--blue)}
+.transport-card.http h4{color:var(--orange)}
+.transport-card p{font-size:.72rem;color:var(--muted);margin:0}
+.transport-card .badge-group{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;margin-top:8px}
+
+/* ===== HTTP REQUEST/RESPONSE VIZ ===== */
+.http-viz{font-family:monospace;font-size:.72rem;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);overflow:hidden;margin:6px 0}
+.http-viz .section{padding:8px 12px;border-bottom:1px solid rgba(255,255,255,.04)}
+.http-viz .section:last-child{border-bottom:none}
+.http-viz .section .hdr{color:var(--muted);font-size:.65rem;margin-bottom:4px}
+.http-viz .section .body{line-height:1.6}
+.http-viz .method{color:var(--orange);font-weight:700}
+.http-viz .url{color:var(--text)}
+.http-viz .hdr-name{color:var(--pink)}
+.http-viz .hdr-val{color:var(--muted)}
+.http-viz .json-body{color:var(--green)}
+
+/* ===== FLOW DIAGRAM ===== */
+.flow-diag{display:flex;flex-direction:column;align-items:center;gap:6px;padding:14px 0}
+.flow-diag .row{display:flex;align-items:center;gap:10px;justify-content:center;flex-wrap:wrap}
+.flow-diag .box{padding:10px 18px;border-radius:8px;text-align:center;font-size:.78rem;font-weight:600;border:2px solid;min-width:90px}
+.flow-diag .box.client{border-color:var(--blue);color:var(--blue);background:rgba(137,180,250,.06)}
+.flow-diag .box.server{border-color:var(--green);color:var(--green);background:rgba(166,227,161,.06)}
+.flow-diag .box.http{border-color:var(--orange);color:var(--orange);background:rgba(248,189,127,.06)}
+.flow-diag .arw{color:var(--muted);font-size:.7rem}
+
+/* ===== COMPARE TABLE ===== */
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+@keyframes fadeSlide{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>MCP</span> Streamable HTTP</div>
+  <div class="crumbs"><a href="index.html">MCP</a> &rsaquo; Streamable HTTP</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(248,189,127,.18);color:var(--orange)">Transport</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. WHAT IS STREAMABLE HTTP -->
+<div class="section-title"><span class="num">1</span> What Is Streamable HTTP?</div>
+<div class="card">
+  <p><strong>Streamable HTTP</strong> is a new MCP transport that uses standard HTTP POST requests + chunked transfer encoding for streaming responses — no persistent connection needed.</p>
+
+  <div class="transport-grid">
+    <div class="transport-card std">
+      <div class="icon">📦</div>
+      <h4>stdio</h4>
+      <p>Subprocess over stdin/stdout. Local only. Fastest.</p>
+      <div class="badge-group">
+        <span class="badge green">Local</span>
+        <span class="badge green">Simple</span>
+      </div>
+    </div>
+    <div class="transport-card sse">
+      <div class="icon">🌐</div>
+      <h4>HTTP + SSE</h4>
+      <p>POST for requests, SSE stream for responses. Persistent TCP connection.</p>
+      <div class="badge-group">
+        <span class="badge blue">Remote</span>
+        <span class="badge blue">Persistent</span>
+      </div>
+    </div>
+    <div class="transport-card http">
+      <div class="icon">⚡</div>
+      <h4>Streamable HTTP</h4>
+      <p>HTTP POST for both directions. Chunked encoding for streaming. No persistent connection.</p>
+      <div class="badge-group">
+        <span class="badge orange">Remote</span>
+        <span class="badge orange">Stateless</span>
+        <span class="badge orange">Streaming</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout orange" style="margin-top:14px">
+    <strong>Think of it as:</strong> Regular HTTP requests that can <em>stream</em> their response back using chunked transfer encoding. No WebSocket, no SSE — just plain HTTP POST with a streaming twist.
+  </div>
+</div>
+
+<!-- 2. HOW IT WORKS -->
+<div class="section-title"><span class="num">2</span> How Streamable HTTP Works</div>
+
+<div class="card">
+  <h3 style="color:var(--orange)">The Core Idea</h3>
+  <p>Instead of keeping a persistent connection open (like SSE), Streamable HTTP uses <strong>standard HTTP POST</strong> for each request. The server sends back the response using <strong>chunked transfer encoding</strong>, which allows streaming data without knowing the full size upfront.</p>
+
+  <div class="flow-diag">
+    <div class="row">
+      <div class="box client">🔌 Client</div>
+      <span class="arw">── POST /mcp ──▶</span>
+      <div class="box http">🌐 HTTP</div>
+      <span class="arw">── POST /mcp ──▶</span>
+      <div class="box server">⚡ Server</div>
+    </div>
+    <div class="row" style="margin-top:4px">
+      <div class="box client">🔌 Client</div>
+      <span class="arw" style="color:var(--orange)">◀── Chunked stream ──</span>
+      <div class="box http">🌐 HTTP</div>
+      <span class="arw" style="color:var(--orange)">◀── Chunked stream ──</span>
+      <div class="box server">⚡ Server</div>
+    </div>
+  </div>
+
+  <div class="callout" style="font-size:.78rem">
+    <strong>Key difference from SSE:</strong> With SSE, the client keeps a <em>persistent TCP connection</em> open to receive events. With Streamable HTTP, each request is a <strong>separate HTTP POST</strong>, and the response is streamed back chunk-by-chunk. No persistent connection to maintain.
+  </div>
+</div>
+
+<!-- 3. REQUEST/RESPONSE VISUAL -->
+<div class="section-title"><span class="num">3</span> Request & Response Format</div>
+
+<div class="grid2">
+  <div class="card" style="margin:0">
+    <h3 style="color:var(--blue);font-size:.9rem">🔵 Client → Server (POST)</h3>
+    <p style="font-size:.76rem">Client sends a JSON-RPC message as the HTTP request body.</p>
+    <div class="http-viz">
+      <div class="section">
+        <div class="hdr">HTTP Request</div>
+        <div class="body">
+          <span class="method">POST</span> <span class="url">/mcp</span> HTTP/1.1<br>
+          <span class="hdr-name">Host</span>: <span class="hdr-val">api.example.com</span><br>
+          <span class="hdr-name">Content-Type</span>: <span class="hdr-val">application/json</span><br>
+          <span class="hdr-name">Accept</span>: <span class="hdr-val">application/json, text/event-stream</span>
+        </div>
+      </div>
+      <div class="section">
+        <div class="hdr">JSON-RPC Body</div>
+        <div class="body json-body">
+{<br>
+&nbsp;&nbsp;"jsonrpc": "2.0",<br>
+&nbsp;&nbsp;"id": 1,<br>
+&nbsp;&nbsp;"method": "tools/call",<br>
+&nbsp;&nbsp;"params": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"name": "get_weather",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"arguments": { "city": "Mumbai" }<br>
+&nbsp;&nbsp;}<br>
+}
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="card" style="margin:0">
+    <h3 style="color:var(--orange);font-size:.9rem">🟠 Server → Client (Chunked Response)</h3>
+    <p style="font-size:.76rem">Server responds with chunked transfer encoding. Each chunk can be a partial result.</p>
+    <div class="http-viz">
+      <div class="section">
+        <div class="hdr">HTTP Response</div>
+        <div class="body">
+          <span class="method">200</span> <span class="url">OK</span><br>
+          <span class="hdr-name">Content-Type</span>: <span class="hdr-val">application/json</span><br>
+          <span class="hdr-name">Transfer-Encoding</span>: <span class="hdr-val">chunked</span><br>
+        </div>
+      </div>
+      <div class="section">
+        <div class="hdr">Chunked Body (streamed)</div>
+        <div class="body json-body">
+<span style="color:var(--muted)">chunk 1</span> {<br>
+&nbsp;&nbsp;"jsonrpc": "2.0",<br>
+&nbsp;&nbsp;"id": 1,<br>
+&nbsp;&nbsp;"result": {<br>
+&nbsp;&nbsp;&nbsp;&nbsp;"content": [{<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"type": "text",<br>
+&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;"text": "27°C, Sunny"<br>
+&nbsp;&nbsp;&nbsp;&nbsp;}]<br>
+&nbsp;&nbsp;}<br>
+}
+        </div>
+      </div>
+    </div>
+    <div style="margin-top:6px">
+      <span class="badge orange">Chunked encoding</span>
+      <span class="badge teal">No persistent TCP</span>
+    </div>
+  </div>
+</div>
+
+<!-- 4. SSE vs STREAMABLE HTTP -->
+<div class="section-title"><span class="num">4</span> SSE vs Streamable HTTP</div>
+<div class="card">
+  <table>
+    <tr><th>Feature</th><th>SSE Transport</th><th>Streamable HTTP</th></tr>
+    <tr>
+      <td>Connection</td>
+      <td>Persistent TCP (kept open)</td>
+      <td>Short-lived HTTP request/response</td>
+    </tr>
+    <tr>
+      <td>Streaming</td>
+      <td>SSE events over open connection</td>
+      <td>Chunked transfer encoding</td>
+    </tr>
+    <tr>
+      <td>Infrastructure</td>
+      <td>Needs special config for load balancers (timeouts, sticky sessions)</td>
+      <td>Works with standard HTTP load balancers</td>
+    </tr>
+    <tr>
+      <td>Connection Count</td>
+      <td>1 TCP per session (held open)</td>
+      <td>1 TCP per request (released after response)</td>
+    </tr>
+    <tr>
+      <td>Server Push</td>
+      <td>✅ Yes (events sent anytime)</td>
+      <td>❌ No (response to a request only)</td>
+    </tr>
+    <tr>
+      <td>Complexity</td>
+      <td>Medium (SSE protocol)</td>
+      <td>Low (plain HTTP)</td>
+    </tr>
+    <tr>
+      <td>Best For</td>
+      <td>Long-running connections, real-time updates</td>
+      <td>Request-response, serverless, HTTP-only infra</td>
+    </tr>
+  </table>
+
+  <div class="callout orange" style="margin-top:10px;font-size:.78rem">
+    <strong>Streamable HTTP is simpler.</strong> No persistent connections means it works everywhere standard HTTP works — serverless functions, container orchestration, standard load balancers. SSE requires infrastructure that supports long-lived connections.
+  </div>
+</div>
+
+<!-- 5. LIVE COMPARISON DEMO -->
+<div class="section-title"><span class="num">5</span> Live Demo: SSE vs Streamable HTTP</div>
+<div class="card">
+  <p>Click each transport to see how the <strong>same request</strong> ("What's the weather?") behaves differently.</p>
+
+  <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px">
+    <button class="btn primary" onclick="runSSE()">🌐 Run SSE Transport</button>
+    <button class="btn outline" onclick="runStreamableHTTP()">⚡ Run Streamable HTTP</button>
+    <button class="btn small outline" onclick="clearDemo()">Clear</button>
+  </div>
+
+  <div class="log-area" id="demoLog" style="min-height:200px;max-height:300px">
+    <div class="entry t-muted">▸ Click a transport to see how it handles the request.</div>
+  </div>
+</div>
+
+<!-- 6. CODE EXAMPLE -->
+<div class="section-title"><span class="num">6</span> Code: Streamable HTTP Server</div>
+<div class="card">
+  <p>Here's a <strong>minimal Streamable HTTP MCP server</strong> using Python's <code>FastAPI</code> or any HTTP framework.</p>
+
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.72rem">
+<span class="comment"># streamable_http_server.py</span>
+<span class="keyword">from</span> fastapi <span class="keyword">import</span> FastAPI, Request
+<span class="keyword">from</span> fastapi.responses <span class="keyword">import</span> StreamingResponse
+<span class="keyword">from</span> mcp.server <span class="keyword">import</span> Server
+<span class="keyword">import</span> json
+
+app = FastAPI()
+mcp = Server(<span class="string">"weather-server"</span>)
+
+<span class="highlight">@mcp.tool</span>()
+<span class="keyword">async def</span> <span class="highlight">get_weather</span>(city: str) <span class="keyword">-&gt;</span> str:
+    <span class="keyword">return</span> <span class="string">f"27°C, Sunny in {city}"</span>
+
+<span class="highlight">@app.post</span>(<span class="string">"/mcp"</span>)
+<span class="keyword">async def</span> <span class="highlight">handle_mcp</span>(request: Request):
+    body = <span class="keyword">await</span> request.json()
+    
+    <span class="comment"># Process through MCP server</span>
+    result = <span class="keyword">await</span> mcp.process_request(body)
+    
+    <span class="comment"># Stream response back</span>
+    <span class="keyword">return</span> <span class="highlight">StreamingResponse</span>(
+        iter([json.dumps(result)]),
+        media_type=<span class="string">"application/json"</span>,
+        headers={<span class="string">"Transfer-Encoding"</span>: <span class="string">"chunked"</span>}
+    )
+      </div>
+    </div>
+    <div>
+      <div class="code" style="font-size:.72rem">
+<span class="comment"># Client connecting to Streamable HTTP</span>
+<span class="keyword">import</span> httpx
+
+<span class="keyword">async def</span> <span class="highlight">call_mcp</span>(method, params):
+    <span class="keyword">async with</span> httpx.AsyncClient() <span class="keyword">as</span> client:
+        response = <span class="keyword">await</span> client.post(
+            <span class="string">"http://localhost:8000/mcp"</span>,
+            json={
+                <span class="string">"jsonrpc"</span>: <span class="string">"2.0"</span>,
+                <span class="string">"id"</span>: 1,
+                <span class="string">"method"</span>: method,
+                <span class="string">"params"</span>: params
+            }
+        )
+        <span class="keyword">return</span> response.json()
+
+<span class="comment"># Usage — just like REST API!</span>
+result = <span class="keyword">await</span> <span class="highlight">call_mcp</span>(
+    <span class="string">"tools/call"</span>,
+    {<span class="string">"name"</span>: <span class="string">"get_weather"</span>,
+     <span class="string">"arguments"</span>: {<span class="string">"city"</span>: <span class="string">"Mumbai"</span>}}
+)
+<span class="keyword">print</span>(result)
+<span class="comment"># → 27°C, Sunny in Mumbai</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout" style="font-size:.78rem">
+    <strong>Notice:</strong> The client just does a normal HTTP POST. No special SSE parsing, no persistent stream handling. The server uses <code>Transfer-Encoding: chunked</code> to stream the response back if needed.
+  </div>
+</div>
+
+<!-- 7. WHEN TO USE -->
+<div class="section-title"><span class="num">7</span> When to Use Streamable HTTP</div>
+
+<div class="card">
+  <div class="grid2">
+    <div>
+      <div style="padding:14px;border-radius:var(--radius);border:2px solid var(--orange);background:rgba(248,189,127,.04);height:100%">
+        <h4 style="color:var(--orange);font-size:.85rem">✅ Good For</h4>
+        <ul style="list-style:none;padding:0;font-size:.76rem;color:var(--muted);line-height:1.8">
+          <li>✓ Serverless deployments (AWS Lambda, Cloudflare Workers)</li>
+          <li>✓ HTTP-only infrastructure</li>
+          <li>✓ Standard load balancers (no sticky sessions needed)</li>
+          <li>✓ Simple request-response patterns</li>
+          <li>✓ Microservices architecture</li>
+        </ul>
+      </div>
+    </div>
+    <div>
+      <div style="padding:14px;border-radius:var(--radius);border:2px solid var(--red);background:rgba(243,139,168,.04);height:100%">
+        <h4 style="color:var(--red);font-size:.85rem">❌ Not Ideal For</h4>
+        <ul style="list-style:none;padding:0;font-size:.76rem;color:var(--muted);line-height:1.8">
+          <li>✗ Real-time server push (notifications)</li>
+          <li>✗ Long-lived bidirectional streaming</li>
+          <li>✗ Scenarios needing persistent connection state</li>
+          <li>✗ SSE-based event streaming</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. TRANSPORT EVOLUTION -->
+<div class="section-title"><span class="num">8</span> Transport Evolution</div>
+<div class="card">
+  <p>MCP transports have evolved to meet different deployment needs:</p>
+
+  <div style="display:flex;flex-direction:column;gap:8px;padding:10px 0">
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius);background:rgba(166,227,161,.06);border-left:4px solid var(--green)">
+      <span class="badge green">v1</span>
+      <div>
+        <strong style="font-size:.85rem">stdio</strong>
+        <span style="font-size:.74rem;color:var(--muted);margin-left:8px">Local subprocess → stdin/stdout. For local development and local-only tools.</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius);background:rgba(137,180,250,.06);border-left:4px solid var(--blue)">
+      <span class="badge blue">v2</span>
+      <div>
+        <strong style="font-size:.85rem">HTTP + SSE</strong>
+        <span style="font-size:.74rem;color:var(--muted);margin-left:8px">Remote access via HTTP POST + SSE stream. Persistent TCP connection.</span>
+      </div>
+    </div>
+    <div style="display:flex;align-items:center;gap:12px;padding:10px 14px;border-radius:var(--radius);background:rgba(248,189,127,.06);border-left:4px solid var(--orange)">
+      <span class="badge orange">v3</span>
+      <div>
+        <strong style="font-size:.85rem">Streamable HTTP</strong>
+        <span style="font-size:.74rem;color:var(--muted);margin-left:8px">Simple HTTP POST with chunked response. No persistent connection. Works everywhere HTTP works.</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="callout orange" style="margin-bottom:0;font-size:.8rem">
+    <strong>Bottom line:</strong> Streamable HTTP is the simplest remote transport. If your infrastructure supports standard HTTP (and whose doesn't?), this is the easiest MCP transport to deploy. No persistent connections, no special proxies, no sticky sessions.
+  </div>
+</div>
+
+</div><!-- /container -->
+
+<script>
+function addLog(msg, cls) {
+  const log = document.getElementById('demoLog');
+  log.innerHTML += '<div class="entry ' + cls + '">▸ ' + msg + '</div>';
+  log.scrollTop = log.scrollHeight;
+}
+
+function sleep(ms) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+async function runSSE() {
+  const log = document.getElementById('demoLog');
+  log.innerHTML = '';
+  addLog('🌐 SSE Transport: Handling "What\'s the weather in Mumbai?"', 't-peach');
+  await sleep(400);
+  addLog('🔌 Client: Opening SSE connection to server...', 't-blue');
+  await sleep(500);
+  addLog('🔌 Client: SSE connection ESTABLISHED (persistent TCP open)', 't-green');
+  await sleep(400);
+  addLog('🔌 Client: Sending POST /mcp with JSON-RPC body', 't-blue');
+  await sleep(500);
+  addLog('⚡ Server: Processing tools/call...', 't-green');
+  await sleep(400);
+  addLog('⚡ Server: Sending event via SSE stream...', 't-green');
+  await sleep(300);
+  addLog('📡 SSE event: data: {"result":{"content":[{"type":"text","text":"27°C, Sunny in Mumbai"}]}}', 't-yellow');
+  await sleep(400);
+  addLog('🔌 Client: Received SSE event. Parsing...', 't-blue');
+  await sleep(300);
+  addLog('✅ Result: 27°C, Sunny in Mumbai', 't-green');
+  await sleep(200);
+  addLog('🔌 SSE connection remains OPEN for future events.', 't-muted');
+}
+
+async function runStreamableHTTP() {
+  const log = document.getElementById('demoLog');
+  log.innerHTML = '';
+  addLog('⚡ Streamable HTTP: Handling "What\'s the weather in Mumbai?"', 't-peach');
+  await sleep(400);
+  addLog('🔌 Client: POST /mcp with JSON-RPC body', 't-orange');
+  await sleep(400);
+  addLog('🔌 Headers: Content-Type: application/json', 't-muted');
+  await sleep(200);
+  addLog('🔌 Accept: application/json', 't-muted');
+  await sleep(300);
+  addLog('⚡ Server: Processing tools/call...', 't-green');
+  await sleep(400);
+  addLog('⚡ Server: Response with Transfer-Encoding: chunked', 't-orange');
+  await sleep(300);
+  addLog('📦 Chunk 1: {"jsonrpc":"2.0","id":1,"result":{...}}', 't-yellow');
+  await sleep(300);
+  addLog('📦 Chunk 2: (end of stream)', 't-yellow');
+  await sleep(200);
+  addLog('🔌 Client: Received full response. Connection CLOSED.', 't-orange');
+  await sleep(300);
+  addLog('✅ Result: 27°C, Sunny in Mumbai', 't-green');
+  await sleep(200);
+  addLog('🔌 TCP connection released. No persistent state.', 't-muted');
+}
+
+function clearDemo() {
+  document.getElementById('demoLog').innerHTML = '<div class="entry t-muted">▸ Click a transport to see how it handles the request.</div>';
+}
+</script>
+</body>
+</html>

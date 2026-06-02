@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Closures · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;--blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;--teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--coral:#f28fad;--radius:8px;--header-bg:#1e1e36}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}nav .logo span{color:var(--peach)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}.code .keyword{color:var(--blue)}.code .string{color:var(--green)}.code .highlight{color:var(--yellow)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--peach);color:#0f0f17}.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}.btn.outline:hover{background:var(--surface2)}
+.btn.danger{background:var(--red);color:white}
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+.demo-box{padding:14px;min-height:60px;border-radius:6px;background:var(--bg);border:1px dashed var(--surface2);margin:8px 0}
+.counter-display{display:flex;align-items:center;gap:16px;padding:14px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);margin:8px 0}
+.counter-display .val{font-size:2rem;font-weight:700;font-family:monospace;min-width:50px;text-align:center}
+.counter-display .val.green{color:var(--green)}.counter-display .val.blue{color:var(--blue)}.counter-display .val.peach{color:var(--peach)}
+.counter-display .val.pink{color:var(--pink)}
+.counter-display .label{flex:1;font-size:.82rem;color:var(--muted)}
+.counter-display .btns{display:flex;gap:4px}
+
+.scope-viz{position:relative;padding:16px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--surface2);margin:12px 0;min-height:160px}
+.scope-box{border-radius:6px;padding:14px;margin:6px 0;border:2px solid;position:relative;transition:.3s}
+.scope-box.global{border-color:var(--blue);background:rgba(137,180,250,.04)}
+.scope-box.outer{border-color:var(--yellow);background:rgba(249,226,175,.04);margin-left:20px}
+.scope-box.inner{border-color:var(--green);background:rgba(166,227,161,.04);margin-left:40px}
+.scope-box .tag{font-size:.68rem;position:absolute;top:-10px;left:10px;padding:2px 8px;border-radius:4px;font-weight:600}
+.scope-box.global .tag{background:var(--blue);color:#0f0f17}
+.scope-box.outer .tag{background:var(--yellow);color:#0f0f17}
+.scope-box.inner .tag{background:var(--green);color:#0f0f17}
+.scope-box .vars{font-family:monospace;font-size:.76rem;margin-top:4px;line-height:1.8}
+.scope-box .vars .var-name{color:var(--text)}.scope-box .vars .var-val{color:var(--muted)}
+
+.closure-chain{display:flex;flex-direction:column;gap:2px;padding:8px 0}
+.chain-link{display:flex;align-items:center;gap:10px;padding:8px 12px;border-radius:4px;font-size:.78rem;background:var(--surface2);border-left:3px solid var(--blue)}
+.chain-link .arrow{color:var(--muted);font-size:.7rem;min-width:20px}
+.chain-link .fn{font-family:monospace;color:var(--peach);font-weight:600}
+.chain-link .var{font-family:monospace;color:var(--green)}
+.chain-link.green{border-left-color:var(--green)}
+
+.log-area{font-family:monospace;font-size:.76rem;padding:12px;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);min-height:60px;max-height:200px;overflow-y:auto;line-height:1.7;margin:8px 0}
+.log-area .entry{padding:2px 0}
+
+.compare-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+.compare-cell{padding:14px;border-radius:var(--radius);background:var(--bg);border:1px solid var(--surface2);text-align:center}
+.compare-cell .val{font-size:1.5rem;font-family:monospace;font-weight:700;margin:6px 0}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>JS</span> Closures</div>
+  <div class="crumbs">JavaScript &rsaquo; Closures</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(250,179,135,.18);color:var(--peach)">Core concept</div>
+</nav>
+
+<div class="container">
+
+<!-- 1. WHAT IS A CLOSURE -->
+<div class="section-title"><span class="num">1</span> What Is a Closure?</div>
+<div class="card">
+  <p>A <strong>closure</strong> is a function that <strong>"remembers"</strong> the variables from its outer (lexical) scope even after the outer function has finished executing. The inner function "closes over" the variables it needs.</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.76rem">
+<span class="keyword">function</span> <span class="highlight">outer</span>(x) {
+  <span class="comment">// x is a local variable of outer</span>
+  <span class="keyword">function</span> <span class="highlight">inner</span>(y) {
+    <span class="comment">// inner "closes over" x</span>
+    <span class="keyword">return</span> x + y; <span class="comment">// x is from outer!</span>
+  }
+  <span class="keyword">return</span> inner; <span class="comment">// return the closure</span>
+}
+
+<span class="keyword">const</span> add5 = <span class="highlight">outer</span>(5);
+console.log(add5(3)); <span class="comment">// 8</span>
+<span class="comment">// add5 still "remembers" x=5</span>
+<span class="comment">// even though outer() finished!</span>
+      </div>
+    </div>
+    <div style="display:flex;flex-direction:column;justify-content:center">
+      <div class="scope-viz">
+        <div class="scope-box global">
+          <span class="tag">GLOBAL</span>
+          <div class="vars"><span class="var-name">add5</span> = <span class="var-val">[Function: inner]</span></div>
+        </div>
+        <div class="scope-box outer">
+          <span class="tag">CLOSURE &#127775;</span>
+          <div class="vars"><span class="var-name">x</span> = <span class="var-val" style="color:var(--green);font-weight:600">5</span> <span style="color:var(--muted)">// preserved!</span></div>
+          <div class="vars" style="color:var(--muted);font-size:.72rem">&#8593; This is the closure — x survives because <code>inner</code> references it</div>
+        </div>
+        <div class="scope-box inner">
+          <span class="tag"><code>inner(y)</code></span>
+          <div class="vars"><span class="var-name">y</span> = <span class="var-val">?</span></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 2. THE SCOPE CHAIN -->
+<div class="section-title"><span class="num">2</span> The Scope Chain</div>
+<div class="card">
+  <p>When a function is called, JavaScript creates a <strong>scope chain</strong> — a linked list of variable environments. The inner function can access variables from <strong>all</strong> outer scopes.</p>
+  <div class="code" style="font-size:.74rem">
+<span class="keyword">const</span> globalVar = <span class="string">'GLOBAL'</span>;
+
+<span class="keyword">function</span> outer(a) {
+  <span class="keyword">const</span> b = <span class="string">'OUTER'</span>;
+  <span class="keyword">function</span> inner(c) {
+    <span class="keyword">const</span> d = <span class="string">'INNER'</span>;
+    <span class="comment">// inner can access: d, c, b, a, globalVar</span>
+    <span class="comment">// 5 levels of scope!</span>
+    console.log(globalVar, a, b, c, d);
+  }
+  <span class="keyword">return</span> inner;
+}
+  </div>
+  <div class="closure-chain">
+    <div class="chain-link"><span class="arrow">&#9492;</span> <span class="fn">inner(c)</span> has access to:</div>
+    <div class="chain-link green"><span class="arrow">&#8592;</span> <span class="fn">inner's local</span>: <span class="var">d</span> (<code>"INNER"</code>)</div>
+    <div class="chain-link"><span class="arrow">&#8592;</span> <span class="fn">inner's params</span>: <span class="var">c</span></div>
+    <div class="chain-link"><span class="arrow">&#8592;</span> <span class="fn">outer's scope</span>: <span class="var">a</span>, <span class="var">b</span> (<code>"OUTER"</code>)</div>
+    <div class="chain-link"><span class="arrow">&#8592;</span> <span class="fn">global scope</span>: <span class="var">globalVar</span> (<code>"GLOBAL"</code>)</div>
+  </div>
+  <div class="callout" style="font-size:.8rem">
+    <strong>&#9432; Every function "remembers" its chain:</strong> All functions have <code>[[Environment]]</code> (internal property) pointing to their outer scope. Closures are not magic — they're how JS works by default.
+  </div>
+</div>
+
+<!-- 3. COUNTER FACTORY -->
+<div class="section-title"><span class="num">3</span> Counter Factory · Live Demo</div>
+<div class="card">
+  <p>Each call to <code>createCounter()</code> creates a <strong>new closure</strong> with its own independent <code>count</code> variable.</p>
+  <div class="code" style="font-size:.74rem">
+<span class="keyword">function</span> createCounter(start) {
+  <span class="keyword">let</span> count = start || 0;
+  <span class="keyword">return</span> {
+    increment: <span class="keyword">function</span>() { <span class="keyword">return</span> ++count; },
+    decrement: <span class="keyword">function</span>() { <span class="keyword">return</span> --count; },
+    getCount:  <span class="keyword">function</span>() { <span class="keyword">return</span> count; },
+  };
+  <span class="comment">// Each method closes over the SAME "count"</span>
+}
+  </div>
+  <div class="grid2">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Counter A (starts at 0):</p>
+      <div class="counter-display"><div class="val green" id="counterAVal">0</div><div class="label">Closure A</div><div class="btns"><button class="btn primary" onclick="counterA.increment();updateCounters()">+</button><button class="btn outline" onclick="counterA.decrement();updateCounters()">-</button></div></div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Counter B (starts at 100):</p>
+      <div class="counter-display"><div class="val blue" id="counterBVal">100</div><div class="label">Closure B</div><div class="btns"><button class="btn primary" onclick="counterB.increment();updateCounters()">+</button><button class="btn outline" onclick="counterB.decrement();updateCounters()">-</button></div></div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:4px">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Counter C (starts at -10):</p>
+      <div class="counter-display"><div class="val peach" id="counterCVal">-10</div><div class="label">Closure C</div><div class="btns"><button class="btn primary" onclick="counterC.increment();updateCounters()">+</button><button class="btn outline" onclick="counterC.decrement();updateCounters()">-</button></div></div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">All three closures are <strong>independent</strong>:</p>
+      <div class="log-area" id="counterLog" style="min-height:40px;font-size:.74rem">// Each counter has its own "count" variable</div>
+    </div>
+  </div>
+</div>
+
+<!-- 4. PRIVATE VARIABLES -->
+<div class="section-title"><span class="num">4</span> Private Variables (Encapsulation)</div>
+<div class="card">
+  <p>Closures enable <strong>true private state</strong> in JavaScript. The variable <code>balance</code> below is inaccessible from outside — it can only be changed through the returned methods.</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="keyword">function</span> createBank(initial) {
+  <span class="keyword">let</span> <span class="highlight">balance</span> = initial;
+  <span class="comment">// balance is PRIVATE — cannot access from outside!</span>
+  <span class="keyword">return</span> {
+    deposit(amount) {
+      <span class="keyword">if</span> (amount &gt; 0) <span class="highlight">balance</span> += amount;
+      <span class="keyword">return</span> <span class="highlight">balance</span>;
+    },
+    withdraw(amount) {
+      <span class="keyword">if</span> (amount &gt; 0 &amp;&amp; <span class="highlight">balance</span> &gt;= amount)
+        <span class="highlight">balance</span> -= amount;
+      <span class="keyword">return</span> <span class="highlight">balance</span>;
+    },
+    getBalance() { <span class="keyword">return</span> <span class="highlight">balance</span>; }
+  };
+}
+      </div>
+    </div>
+    <div>
+      <div class="counter-display" style="margin:0"><div class="val pink" id="bankVal">100</div><div class="label">Account Balance</div></div>
+      <div style="display:flex;gap:6px;margin:8px 0">
+        <button class="btn primary" onclick="bank.deposit(10);updateBank()">Deposit $10</button>
+        <button class="btn primary" onclick="bank.withdraw(10);updateBank()">Withdraw $10</button>
+        <button class="btn outline" onclick="tryHackBank()">&#128520; Hack it</button>
+      </div>
+      <div class="log-area" id="bankLog" style="min-height:40px;font-size:.74rem">// Try clicking "Hack it"</div>
+      <div class="callout success" style="font-size:.76rem;padding:8px">
+        <strong>&#10003; balance is private.</strong> No code outside the closure can access or modify <code>balance</code> directly — only through the returned methods.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 5. CLOSURE IN LOOPS -->
+<div class="section-title"><span class="num">5</span> The Classic Loop Problem</div>
+<div class="card">
+  <p>This is one of the most famous closure bugs. Compare <code>var</code> vs <code>let</code> in a loop:</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">// BAD: var — all closures share the SAME i</span>
+<span class="keyword">for</span> (<span class="keyword">var</span> i = 0; i &lt; 3; i++) {
+  setTimeout(<span class="keyword">function</span>() {
+    console.log(<span class="string">'var '</span> + i);
+    <span class="comment">// Prints: 3, 3, 3</span>
+    <span class="comment">// By the time timeout fires, i=3!</span>
+  }, i * 200);
+}
+      </div>
+      <p style="font-size:.78rem;color:var(--muted)">Click to see: all show <strong>3</strong></p>
+      <button class="btn danger" onclick="runVarLoop()">Run var loop</button>
+      <div class="log-area" id="varLoopLog" style="min-height:40px;font-size:.74rem">// 3, 3, 3</div>
+    </div>
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">// GOOD: let — each iteration gets its OWN i</span>
+<span class="keyword">for</span> (<span class="keyword">let</span> i = 0; i &lt; 3; i++) {
+  setTimeout(<span class="keyword">function</span>() {
+    console.log(<span class="string">'let '</span> + i);
+    <span class="comment">// Prints: 0, 1, 2</span>
+    <span class="comment">// Each closure captures a DIFFERENT i!</span>
+  }, i * 200);
+}
+      </div>
+      <p style="font-size:.78rem;color:var(--muted)">Click to see: each shows its own value</p>
+      <button class="btn primary" onclick="runLetLoop()">Run let loop</button>
+      <div class="log-area" id="letLoopLog" style="min-height:40px;font-size:.74rem">// 0, 1, 2</div>
+    </div>
+  </div>
+  <div class="grid2" style="margin-top:4px">
+    <div class="callout danger" style="font-size:.78rem;padding:8px">
+      <strong>&#9888; Why var breaks:</strong> <code>var</code> is function-scoped, not block-scoped. There is only ONE <code>i</code> variable shared across all iterations. By the time the timeout fires, the loop has finished and <code>i</code> is 3.
+    </div>
+    <div class="callout success" style="font-size:.78rem;padding:8px">
+      <strong>&#10003; Why let fixes it:</strong> <code>let</code> is block-scoped. Each loop iteration creates a <strong>new binding</strong> for <code>i</code>. Each closure captures a different <code>i</code> (0, 1, 2).
+    </div>
+  </div>
+</div>
+
+<!-- 6. FIXING THE LOOP (Classic IIFE pattern) -->
+<div class="section-title"><span class="num">6</span> Fixing the Loop · IIFE Pattern</div>
+<div class="card">
+  <p>Before <code>let</code> existed, the fix was an <strong>IIFE</strong> (Immediately Invoked Function Expression) — creating a new closure per iteration.</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="comment">// Classic fix: IIFE wrapper</span>
+<span class="keyword">for</span> (<span class="keyword">var</span> i = 0; i &lt; 3; i++) {
+  (<span class="keyword">function</span>(j) {
+    <span class="comment">// j is a new variable per iteration</span>
+    setTimeout(<span class="keyword">function</span>() {
+      console.log(<span class="string">'IIFE '</span> + j);
+      <span class="comment">// 0, 1, 2</span>
+    }, j * 200);
+  })(i); <span class="comment">// pass i as argument</span>
+}
+      </div>
+      <button class="btn primary" onclick="runIIFELoop()">Run IIFE fix</button>
+      <div class="log-area" id="iifeLoopLog" style="min-height:40px;font-size:.74rem">// 0, 1, 2</div>
+    </div>
+    <div>
+      <div class="scope-viz" style="font-size:.76rem;min-height:150px">
+        <div style="font-weight:600;margin-bottom:6px;color:var(--yellow)">Why IIFE works:</div>
+        <div class="scope-box outer" style="margin:4px 0;padding:8px">
+          <span class="tag" style="font-size:.65rem">Iteration 0</span>
+          <div class="vars"><span class="var-name">j</span> = <span class="var-val" style="color:var(--green);font-weight:600">0</span></div>
+        </div>
+        <div class="scope-box outer" style="margin:4px 0;padding:8px">
+          <span class="tag" style="font-size:.65rem">Iteration 1</span>
+          <div class="vars"><span class="var-name">j</span> = <span class="var-val" style="color:var(--green);font-weight:600">1</span></div>
+        </div>
+        <div class="scope-box outer" style="margin:4px 0;padding:8px">
+          <span class="tag" style="font-size:.65rem">Iteration 2</span>
+          <div class="vars"><span class="var-name">j</span> = <span class="var-val" style="color:var(--green);font-weight:600">2</span></div>
+        </div>
+        <div style="font-size:.7rem;color:var(--muted);margin-top:4px">Each IIFE creates a new scope with its own <code>j</code></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 7. PRACTICAL: memoize -->
+<div class="section-title"><span class="num">7</span> Practical: Memoization</div>
+<div class="card">
+  <p>Closures are ideal for <strong>caching</strong>. The cache object lives in the closure — invisible to the outside, but persists across calls.</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.73rem">
+<span class="keyword">function</span> memoize(fn) {
+  <span class="keyword">const</span> cache = {}; <span class="comment">// PRIVATE cache</span>
+  <span class="keyword">return</span> <span class="keyword">function</span>(n) {
+    <span class="keyword">if</span> (cache[n] !== <span class="keyword">undefined</span>) {
+      console.log(<span class="string">'CACHE HIT for'</span>, n);
+      <span class="keyword">return</span> cache[n];
+    }
+    console.log(<span class="string">'COMPUTE for'</span>, n);
+    <span class="keyword">const</span> result = fn(n);
+    cache[n] = result;
+    <span class="keyword">return</span> result;
+  };
+}
+
+<span class="comment">// Expensive function:</span>
+<span class="keyword">function</span> fib(x) {
+  <span class="keyword">if</span> (x &lt;= 1) <span class="keyword">return</span> x;
+  <span class="keyword">return</span> fib(x - 1) + fib(x - 2);
+}
+
+<span class="keyword">const</span> fastFib = memoize(fib);
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">Call <code>fastFib</code> with various values:</p>
+      <div style="display:flex;gap:6px;flex-wrap:wrap">
+        <button class="btn primary" onclick="callMemoized(10)">fib(10)</button>
+        <button class="btn primary" onclick="callMemoized(15)">fib(15)</button>
+        <button class="btn primary" onclick="callMemoized(10)">fib(10) again</button>
+        <button class="btn primary" onclick="callMemoized(15)">fib(15) again</button>
+        <button class="btn outline" onclick="resetMemoLog()">Reset log</button>
+      </div>
+      <div class="log-area" id="memoLog" style="min-height:60px;font-size:.74rem">// Click to see cache in action</div>
+      <div class="callout" style="font-size:.76rem;padding:8px;margin-top:6px">
+        <strong>&#9432; Second call is instant</strong> — the cache closure still holds the computed values.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 8. MEMORY -->
+<div class="section-title"><span class="num">8</span> Memory &amp; Garbage Collection</div>
+<div class="card">
+  <div class="grid2">
+    <div>
+      <p><strong>Closures keep variables alive.</strong> As long as a closure is referenced, all variables it captures stay in memory — they cannot be garbage collected.</p>
+      <div class="code" style="font-size:.73rem">
+<span class="keyword">function</span> heavy() {
+  <span class="keyword">const</span> bigData = <span class="keyword">new</span> Array(<span class="number">1000000</span>).fill(<span class="string">'data'</span>);
+  <span class="keyword">return</span> <span class="keyword">function</span>() {
+    console.log(<span class="string">'I only need this log, not bigData!'</span>);
+    <span class="comment">// &#9888; BUT bigData is captured anyway!</span>
+  };
+}
+<span class="comment">// The closure keeps bigData alive &mdash; waste!</span>
+      </div>
+    </div>
+    <div>
+      <p><strong>Best practices:</strong></p>
+      <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+        <li>Only capture what you need</li>
+        <li>Null out large references if closure outlives their need</li>
+        <li>Closures in <strong>DOM event listeners</strong> can prevent elements from being GC'd</li>
+        <li>Modern JS engines optimize — they only capture variables actually referenced</li>
+      </ul>
+      <div class="code" style="font-size:.73rem;margin-top:6px">
+<span class="comment">// Good: only what's needed</span>
+<span class="keyword">function</span> createLogger(prefix) {
+  <span class="comment">// Only 'prefix' is captured</span>
+  <span class="keyword">return</span> (msg) =&gt; console.log(<span class="string">`[${prefix}]`</span>, msg);
+}
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- R. REFERENCE -->
+<div class="section-title"><span class="num">R</span> Quick Reference</div>
+<div class="card">
+  <table>
+    <tr><th>Concept</th><th>Summary</th><th>Key takeaway</th></tr>
+    <tr><td>Closure</td><td>Function + its lexical environment (variables from outer scope)</td><td><span class="badge green">"Remembers" outer variables</span></td></tr>
+    <tr><td>Lexical scoping</td><td>Inner functions can access outer variables</td><td><span class="badge blue">Based on where functions are defined</span></td></tr>
+    <tr><td>Scope chain</td><td>Link of variable environments from inner to global</td><td><span class="badge yellow">Innermost &#8594; outermost</span></td></tr>
+    <tr><td>Factory function</td><td>Function that returns a closure with its own state</td><td><span class="badge green">Each call creates new scope</span></td></tr>
+    <tr><td>Private variables</td><td>Variables in closure inaccessible from outside</td><td><span class="badge peach">Encapsulation pattern</span></td></tr>
+    <tr><td>var in loop</td><td>One shared variable, all closures see final value</td><td><span class="badge red">Bug: prints 3,3,3</span></td></tr>
+    <tr><td>let in loop</td><td>New binding per iteration, each closure unique</td><td><span class="badge green">Fix: prints 0,1,2</span></td></tr>
+    <tr><td>IIFE</td><td>Immediately Invoked Function Expression — creates new scope</td><td><span class="badge yellow">Classic var fix</span></td></tr>
+    <tr><td>Memoization</td><td>Cache results in closure — skip recomputation</td><td><span class="badge pink">Performance pattern</span></td></tr>
+    <tr><td>Memory</td><td>Closures keep captured variables alive (GC cannot collect)</td><td><span class="badge yellow">Only capture what you need</span></td></tr>
+  </table>
+</div>
+
+<div class="callout success" style="text-align:center;padding:16px">
+  <strong>&#10003; A closure is not a special thing you create — it's what every function in JavaScript is.</strong><br>
+  <span style="color:var(--muted);font-size:.85rem">All functions carry their [[Environment]] with them. That's all a closure is.</span>
+</div>
+
+</div>
+
+<script>
+// =====================================================
+// 3. COUNTER FACTORY
+// =====================================================
+function createCounter(start) {
+  let count = start || 0;
+  return {
+    increment: function() { return ++count; },
+    decrement: function() { return --count; },
+    getCount:  function() { return count; },
+  };
+}
+const counterA = createCounter(0);
+const counterB = createCounter(100);
+const counterC = createCounter(-10);
+
+function updateCounters() {
+  document.getElementById('counterAVal').textContent = counterA.getCount();
+  document.getElementById('counterBVal').textContent = counterB.getCount();
+  document.getElementById('counterCVal').textContent = counterC.getCount();
+  const log = document.getElementById('counterLog');
+  log.innerHTML = `<div class="entry">A=${counterA.getCount()}, B=${counterB.getCount()}, C=${counterC.getCount()} (all independent)</div>` + log.innerHTML;
+  if (log.children.length > 5) log.removeChild(log.lastChild);
+}
+
+// =====================================================
+// 4. PRIVATE BANK
+// =====================================================
+function createBank(initial) {
+  let balance = initial;
+  return {
+    deposit: function(amount) { if (amount > 0) balance += amount; return balance; },
+    withdraw: function(amount) { if (amount > 0 && balance >= amount) balance -= amount; return balance; },
+    getBalance: function() { return balance; },
+  };
+}
+const bank = createBank(100);
+
+function updateBank() {
+  document.getElementById('bankVal').textContent = bank.getBalance();
+  document.getElementById('bankLog').innerHTML =
+    `<div class="entry">&#9654; Balance: $${bank.getBalance()}</div>` +
+    document.getElementById('bankLog').innerHTML;
+}
+
+function tryHackBank() {
+  const log = document.getElementById('bankLog');
+  log.innerHTML = `<div class="entry" style="color:var(--red)">&#9888; Tried: bank.balance = 99999</div>
+<div class="entry" style="color:var(--red)">&#9888; Result: $${bank.getBalance()} (balance stayed the same!)</div>
+<div class="entry" style="color:var(--green)">&#10003; balance is truly private — can't be accessed from outside</div>` + log.innerHTML;
+}
+
+// =====================================================
+// 5. LOOP PROBLEM
+// =====================================================
+function runVarLoop() {
+  const log = document.getElementById('varLoopLog');
+  log.innerHTML = '<div class="entry" style="color:var(--muted)">// Running...</div>';
+  for (var i = 0; i < 3; i++) {
+    ((j) => {
+      setTimeout(() => {
+        log.innerHTML = `<div class="entry" style="color:var(--red)">var i = ${j} (all closures share the SAME i)</div>` + log.innerHTML;
+        if (log.children.length > 5) log.removeChild(log.lastChild);
+      }, j * 400);
+    })(i);
+  }
+}
+
+function runLetLoop() {
+  const log = document.getElementById('letLoopLog');
+  log.innerHTML = '<div class="entry" style="color:var(--muted)">// Running...</div>';
+  for (let i = 0; i < 3; i++) {
+    setTimeout(() => {
+      log.innerHTML = `<div class="entry" style="color:var(--green)">let i = ${i} (each closure gets its own i)</div>` + log.innerHTML;
+      if (log.children.length > 5) log.removeChild(log.lastChild);
+    }, i * 400);
+  }
+}
+
+// =====================================================
+// 6. IIFE FIX
+// =====================================================
+function runIIFELoop() {
+  const log = document.getElementById('iifeLoopLog');
+  log.innerHTML = '<div class="entry" style="color:var(--muted)">// Running...</div>';
+  for (var i = 0; i < 3; i++) {
+    (function(j) {
+      setTimeout(() => {
+        log.innerHTML = `<div class="entry" style="color:var(--green)">IIFE j = ${j} (each IIFE has its own j)</div>` + log.innerHTML;
+        if (log.children.length > 5) log.removeChild(log.lastChild);
+      }, j * 400);
+    })(i);
+  }
+}
+
+// =====================================================
+// 7. MEMOIZATION
+// =====================================================
+function memoize(fn) {
+  const cache = {};
+  return function(n) {
+    if (cache[n] !== undefined) return cache[n];
+    const result = fn(n);
+    cache[n] = result;
+    return result;
+  };
+}
+
+function fib(x) {
+  if (x <= 1) return x;
+  return fib(x - 1) + fib(x - 2);
+}
+const memoFib = memoize(fib);
+
+function fastFib(n) {
+  if (n <= 1) return n;
+  const cached = memoFib(n);
+  // We need a memoized version that caches internally
+  return cached;
+}
+
+// Better: make the memo work recursively
+function makeMemoFib() {
+  const cache = {};
+  function f(n) {
+    if (cache[n] !== undefined) {
+      console.log('CACHE HIT', n);
+      return cache[n];
+    }
+    console.log('COMPUTE', n);
+    if (n <= 1) {
+      cache[n] = n;
+      return n;
+    }
+    const result = f(n - 1) + f(n - 2);
+    cache[n] = result;
+    return result;
+  }
+  return f;
+}
+const fastFib2 = makeMemoFib();
+
+function callMemoized(n) {
+  const log = document.getElementById('memoLog');
+  const start = performance.now();
+  const result = fastFib2(n);
+  const elapsed = (performance.now() - start).toFixed(2);
+  log.innerHTML =
+    `<div class="entry">fastFib(${n}) = ${result} (${elapsed}ms)</div>` +
+    log.innerHTML;
+  if (log.children.length > 6) log.removeChild(log.lastChild);
+}
+
+function resetMemoLog() {
+  document.getElementById('memoLog').innerHTML = '// Click to see cache in action';
+}
+
+// =====================================================
+// INIT
+// =====================================================
+updateCounters();
+</script>
+</body>
+</html>

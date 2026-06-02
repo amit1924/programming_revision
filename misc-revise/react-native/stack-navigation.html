@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Stack Navigation - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; position:relative; overflow:hidden; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .nav-header {
+      display:flex; align-items:center; padding:6px 12px; border-bottom:1px solid #313244;
+      background:#181825; z-index:10; min-height:44px;
+    }
+    .screen-area { flex:1; overflow-y:auto; position:relative; }
+    .screen-area::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #89b4fa, #a6e3a1); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:8px; padding:8px 16px; font-size:12px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#89b4fa; color:#1e1e2e; }
+    .btn-p:hover { background:#74c7ec; }
+    .btn-s { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+    .btn-s:hover { background:#45475a; }
+    .btn-back { background:transparent; color:#89b4fa; padding:4px 8px; font-size:13px; }
+    .btn-back:hover { color:#74c7ec; }
+
+    .screen-card {
+      background:#181825; border:1px solid #313244; border-radius:12px; padding:16px; text-align:center;
+      position:absolute; inset:0; display:flex; flex-direction:column; justify-content:center; align-items:center;
+      transition:all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+    .screen-card.stack-enter { transform:translateX(100%); }
+    .screen-card.stack-active { transform:translateX(0); }
+    .screen-card.stack-exit { transform:translateX(-30%); opacity:0; }
+
+    .stack-visual {
+      display:flex; align-items:flex-end; gap:6px; height:60px; margin:10px 0;
+    }
+    .stack-layer {
+      width:40px; border-radius:6px 6px 0 0; transition:all 0.4s;
+      display:flex; align-items:center; justify-content:center; font-size:10px; font-weight:700;
+    }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+    .hl { border-left:3px solid #89b4fa; padding-left:10px; background:rgba(137,180,250,0.08); }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      React Navigation
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">Stack Navigation</span>
+    </h1>
+    <p class="text-[#a6adc8]">Screens stacked on top of each other. <span class="text-[#89b4fa]">Push</span> to go forward, <span class="text-[#a6e3a1]">pop</span> to go back.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone" id="phoneEl">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <!-- Header with back button -->
+          <div class="nav-header">
+            <button id="backBtn" class="btn-back" style="visibility:hidden"><i class="fas fa-chevron-left mr-1"></i> Back</button>
+            <span id="screenTitle" class="flex-1 text-center font-semibold text-sm">Home</span>
+            <span class="w-16"></span>
+          </div>
+          <!-- Screen area -->
+          <div class="screen-area" id="screenArea">
+            <div class="screen-card stack-active" id="screen0" data-name="Home">
+              <div class="w-12 h-12 rounded-2xl bg-[#89b4fa]/20 flex items-center justify-center text-2xl mb-3">🏠</div>
+              <h2 class="text-lg font-bold mb-1">Home</h2>
+              <p class="text-xs text-[#6c7086] mb-5">The first screen in the stack</p>
+              <div class="flex flex-col gap-2 w-full max-w-[200px]">
+                <button class="btn btn-p w-full" onclick="window.pushScreen('Profile')"><i class="fas fa-user mr-1"></i> Go to Profile</button>
+                <button class="btn btn-s w-full" onclick="window.pushScreen('Settings')"><i class="fas fa-cog mr-1"></i> Go to Settings</button>
+              </div>
+            </div>
+          </div>
+          <!-- Stack visualizer -->
+          <div class="border-t border-[#313244] px-4 py-2 bg-[#181825]">
+            <div class="flex items-center justify-between mb-1">
+              <span class="text-xs text-[#6c7086]">Stack</span>
+              <span id="stackDepth" class="text-xs font-mono text-[#585b70]">1 screen</span>
+            </div>
+            <div class="stack-visual" id="stackVisual"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Key Methods</h3>
+          <div class="space-y-1 text-xs font-mono">
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#89b4fa]">navigation.navigate</span>(<span class="text-[#a6e3a1]">'Screen'</span>)</div>
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#89b4fa]">navigation.push</span>(<span class="text-[#a6e3a1]">'Screen'</span>)</div>
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#89b4fa]">navigation.goBack</span>()</div>
+            <div class="bg-[#11111b] rounded-lg p-2"><span class="text-[#89b4fa]">navigation.popToTop</span>()</div>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Screen code</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed">
+<span class="text-[#cba6f7">function</span> <span class="text-[#89b4fa]">HomeScreen</span>({ navigation }) {
+  <span class="text-[#cba6f7">return</span> (
+    <span class="text-[#cdd6f4]">&lt;View&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Button</span>
+        <span class="text-[#89b4fa]">title</span>=<span class="text-[#a6e3a1]">"Go to Profile"</span>
+        <span class="text-[#89b4fa]">onPress</span>={() =>
+          <span class="text-[#89b4fa]">navigation.navigate</span>(<span class="text-[#a6e3a1]">'Profile'</span>)
+        }
+      <span class="text-[#cdd6f4]">/&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/View&gt;</span>
+  );
+}</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 Stack = LIFO.</span> Last screen pushed is the first one popped. The stack visualizer at the bottom of the phone shows you the current stack depth.
+        </div>
+      </div>
+    </section>
+
+    <!-- === SETUP CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#89b4fa]"></i> Minimal Setup
+      </h2>
+      <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+        <div class="px-5 py-2.5 bg-[#181825] border-b border-[#313244] flex items-center gap-2 text-sm text-[#6c7086]">
+          <i class="fas fa-file-alt"></i> App.tsx
+        </div>
+        <pre class="p-5 text-sm font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#cba6f7">import</span> { NavigationContainer } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'@react-navigation/native'</span>;
+<span class="text-[#cba6f7]">import</span> { createNativeStackNavigator } <span class="text-[#cba6f7]">from</span> <span class="text-[#a6e3a1]">'@react-navigation/native-stack'</span>;
+
+<span class="text-[#cba6f7">type</span> <span class="text-[#f9e2af]">RootStack</span> = {
+  Home: undefined;
+  Profile: { userId: string };
+  Settings: undefined;
+};
+
+<span class="text-[#cba6f7">const</span> Stack = createNativeStackNavigator&lt;RootStack&gt;();
+
+<span class="text-[#cba6f7">function</span> <span class="text-[#89b4fa]">App</span>() {
+  <span class="text-[#cba6f7">return</span> (
+    <span class="text-[#cdd6f4]">&lt;NavigationContainer&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;Stack.Navigator</span>
+        <span class="text-[#89b4fa]">initialRouteName</span>=<span class="text-[#a6e3a1]">"Home"</span><span class="text-[#cdd6f4]">&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"Home"</span> <span class="text-[#89b4fa]">component</span>={HomeScreen} <span class="text-[#cdd6f4]">/&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"Profile"</span> <span class="text-[#89b4fa]">component</span>={ProfileScreen} <span class="text-[#cdd6f4]">/&gt;</span>
+        <span class="text-[#cdd6f4]">&lt;Stack.Screen</span> <span class="text-[#89b4fa]">name</span>=<span class="text-[#a6e3a1]">"Settings"</span> <span class="text-[#89b4fa]">component</span>={SettingsScreen} <span class="text-[#cdd6f4]">/&gt;</span>
+      <span class="text-[#cdd6f4]">&lt;/Stack.Navigator&gt;</span>
+    <span class="text-[#cdd6f4]">&lt;/NavigationContainer&gt;</span>
+  );
+}</pre>
+      </div>
+    </section>
+
+    <!-- === NAVIGATION PARAMS === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-box text-[#f9e2af]"></i> Passing Params
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#89b4fa] text-[#1e1e2e]">Navigate with params</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+navigation.navigate(<span class="text-[#a6e3a1]">'Profile'</span>, {
+  userId: <span class="text-[#a6e3a1]">'123'</span>,
+  name: <span class="text-[#a6e3a1]">'Alice'</span>
+});</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#a6e3a1] text-[#1e1e2e]">Read params</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cba6f7">function</span> <span class="text-[#89b4fa]">ProfileScreen</span>({ route }) {
+  <span class="text-[#cba6f7">const</span> { userId, name } = route.params;
+  <span class="text-[#6c7086">// userId = '123', name = 'Alice'</span>
+}</pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70">
+      <a href="https://reactnavigation.org/docs/stack-navigator" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> React Navigation Docs</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const screens = {
+        Home: {
+          title: 'Home',
+          icon: '🏠',
+          content: (nav) => `
+            <div class="w-12 h-12 rounded-2xl bg-[#89b4fa]/20 flex items-center justify-center text-2xl mb-3">🏠</div>
+            <h2 class="text-lg font-bold mb-1">Home</h2>
+            <p class="text-xs text-[#6c7086] mb-2">First screen in the stack</p>
+            <div class="text-xs text-[#6c7086] mb-5">Stack depth: ${nav.length}</div>
+            <div class="flex flex-col gap-2 w-full max-w-[200px]">
+              <button class="btn btn-p w-full" onclick="window.pushScreen('Profile')"><i class="fas fa-user mr-1"></i> Go to Profile</button>
+              <button class="btn btn-s w-full" onclick="window.pushScreen('Settings')"><i class="fas fa-cog mr-1"></i> Go to Settings</button>
+            </div>
+          `
+        },
+        Profile: {
+          title: 'Profile',
+          icon: '👤',
+          content: (nav) => `
+            <div class="w-12 h-12 rounded-2xl bg-[#a6e3a1]/20 flex items-center justify-center text-2xl mb-3">👤</div>
+            <h2 class="text-lg font-bold mb-1">Profile</h2>
+            <p class="text-xs text-[#6c7086] mb-2">Received params:</p>
+            <div class="bg-[#11111b] rounded-lg p-2 font-mono text-xs mb-5">
+              { userId: "42", name: "Alice" }
+            </div>
+            <div class="flex flex-col gap-2 w-full max-w-[200px]">
+              <button class="btn btn-p w-full" onclick="window.pushScreen('Settings')"><i class="fas fa-cog mr-1"></i> Go to Settings</button>
+              <button class="btn btn-s w-full" onclick="window.goBack()"><i class="fas fa-arrow-left mr-1"></i> Go Back</button>
+            </div>
+          `
+        },
+        Settings: {
+          title: 'Settings',
+          icon: '⚙️',
+          content: (nav) => `
+            <div class="w-12 h-12 rounded-2xl bg-[#f9e2af]/20 flex items-center justify-center text-2xl mb-3">⚙️</div>
+            <h2 class="text-lg font-bold mb-1">Settings</h2>
+            <p class="text-xs text-[#6c7086] mb-5">Deepest screen in the stack</p>
+            <div class="flex flex-col gap-2 w-full max-w-[200px]">
+              <button class="btn btn-back w-full" onclick="window.goBack()" style="background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:8px 16px;border-radius:8px;"><i class="fas fa-arrow-left mr-1"></i> Go Back</button>
+              <button class="btn btn-s w-full" onclick="window.popToTop()"><i class="fas fa-fast-backward mr-1"></i> Pop to Top (Home)</button>
+            </div>
+          `
+        }
+      };
+
+      let stack = ['Home'];
+      const screenArea = document.getElementById('screenArea');
+      const screenTitle = document.getElementById('screenTitle');
+      const backBtn = document.getElementById('backBtn');
+      const stackVisual = document.getElementById('stackVisual');
+      const stackDepth = document.getElementById('stackDepth');
+
+      function renderStack() {
+        const current = stack[stack.length - 1];
+        const screen = screens[current];
+        if (!screen) return;
+
+        screenTitle.textContent = screen.title;
+        backBtn.style.visibility = stack.length > 1 ? 'visible' : 'hidden';
+
+        // Render screen
+        const content = screen.content(stack);
+        screenArea.innerHTML = `
+          <div class="screen-card stack-active" style="padding:24px 16px;">
+            ${content}
+          </div>
+        `;
+
+        // Stack visual
+        const colors = ['#89b4fa', '#a6e3a1', '#f9e2af', '#f38ba8', '#cba6f7'];
+        stackVisual.innerHTML = stack.map((name, i) => `
+          <div class="stack-layer" style="
+            height: ${20 + i * 8}px;
+            background: ${colors[i % colors.length]}30;
+            border: 1px solid ${colors[i % colors.length]};
+            color: ${colors[i % colors.length]};
+          ">${name === 'Home' ? '🏠' : name === 'Profile' ? '👤' : '⚙️'}</div>
+        `).join('');
+        stackDepth.textContent = stack.length + ' screen' + (stack.length > 1 ? 's' : '');
+      }
+
+      window.pushScreen = function(name) {
+        if (stack.includes(name) && name !== stack[stack.length - 1]) {
+          // Navigate to existing (simulate)
+          stack = stack.slice(0, stack.indexOf(name) + 1);
+        } else if (name !== stack[stack.length - 1]) {
+          stack.push(name);
+        }
+        renderStack();
+      };
+
+      window.goBack = function() {
+        if (stack.length > 1) {
+          stack.pop();
+          renderStack();
+        }
+      };
+
+      window.popToTop = function() {
+        stack = [stack[0]];
+        renderStack();
+      };
+
+      backBtn.addEventListener('click', window.goBack);
+
+      // Init
+      renderStack();
+    })();
+  </script>
+</body>
+</html>

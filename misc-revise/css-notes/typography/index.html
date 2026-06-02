@@ -1,0 +1,676 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Text Wrapping & Breaking — Visualized</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f17; color: #cdd6f4; padding: 0; }
+    .page { max-width: 1060px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    h1 { font-size: 2.6rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    h1 .glyph { background: linear-gradient(135deg, #89b4fa, #a6e3a1, #f9e2af, #f38ba8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    h2 { font-size: 1.4rem; margin: 2.5rem 0 0.8rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .sub { font-size: 0.7rem; color: #6c7086; font-weight: 400; }
+    h3 { font-size: 1.05rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p { color: #a6adc8; line-height: 1.7; margin-bottom: 10px; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 8px 0; border: 1px solid #2a2a3c; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+    .subtitle { color: #6c7086; font-size: 1.05rem; margin-bottom: 2rem; }
+
+    .card { background: #1a1a2a; border: 1px solid #2a2a3c; border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .card-label { font-size: 0.7rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; letter-spacing: 0.3px; }
+    .card-label .hl { color: #89b4fa; }
+
+    .compare-row { display: flex; gap: 16px; margin: 12px 0; }
+    @media (max-width: 700px) { .compare-row { flex-direction: column; } }
+    .compare-side { flex: 1; background: #1a1a2a; border-radius: 10px; border: 1px solid #2a2a3c; overflow: hidden; }
+    .compare-side .cs-head { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .compare-side .cs-head.bad { background: #f38ba815; color: #f38ba8; }
+    .compare-side .cs-head.good { background: #a6e3a115; color: #a6e3a1; }
+    .compare-side .cs-head.info { background: #89b4fa15; color: #89b4fa; }
+    .compare-side .cs-body { padding: 12px; }
+
+    .tag { display: inline-flex; align-items: center; gap: 4px; padding: 2px 8px; font-size: 0.7rem; font-family: monospace; border-radius: 4px; }
+    .tag-blue { background: #89b4fa20; color: #89b4fa; }
+    .tag-green { background: #a6e3a120; color: #a6e3a1; }
+    .tag-red { background: #f38ba820; color: #f38ba8; }
+    .tag-yellow { background: #f9e2af20; color: #f9e2af; }
+    .tag-purple { background: #cba6f720; color: #cba6f7; }
+
+    table { width: 100%; border-collapse: collapse; font-size: 0.82rem; }
+    th { background: #181825; color: #89b4fa; padding: 10px 14px; text-align: left; font-weight: 600; border-bottom: 2px solid #2a2a3c; }
+    td { padding: 10px 14px; border-bottom: 1px solid #2a2a3c; color: #a6adc8; }
+    tr:hover td { background: #1a1a2a; }
+    td:first-child { font-family: monospace; color: #fab387; }
+
+    .tip { background: #1a1a2a; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .toggle-group button { background: #2a2a3c; color: #a6adc8; border: 1px solid #3a3a50; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.78rem; font-family: monospace; transition: all 0.2s; }
+    .toggle-group button:hover { background: #3a3a50; }
+    .toggle-group button.on { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f17; }
+    ::-webkit-scrollbar-thumb { background: #3a3a50; border-radius: 3px; }
+
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .text-center { text-align: center; }
+
+    .demo-text-box { background: #181825; border: 1px solid #2a2a3c; border-radius: 6px; padding: 12px; width: 280px; font-size: 0.85rem; line-height: 1.5; transition: all 0.3s; margin: 4px 0; }
+    .demo-text-box.small { width: 160px; font-size: 0.75rem; }
+    .demo-text-box.tiny { width: 120px; font-size: 0.7rem; }
+    .demo-text-box code { font-size: 0.65rem; }
+
+    .prop-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+    @media (max-width: 600px) { .prop-grid { grid-template-columns: 1fr; } }
+
+    .flow-chart { display: flex; align-items: center; gap: 4px; padding: 12px; background: #181825; border-radius: 8px; border: 1px solid #2a2a3c; flex-wrap: wrap; justify-content: center; }
+    .flow-chart .fc-box { background: #2a2a3c; border-radius: 6px; padding: 6px 12px; font-size: 0.7rem; text-align: center; min-width: 60px; }
+    .flow-chart .fc-arrow { color: #585b70; font-size: 1.1rem; }
+
+    .badge { display: inline-flex; align-items: center; padding: 2px 10px; border-radius: 999px; font-size: 0.65rem; font-weight: 600; }
+    .badge-req { background: #f38ba820; color: #f38ba8; border: 1px solid #f38ba850; }
+    .badge-opt { background: #a6e3a120; color: #a6e3a1; border: 1px solid #a6e3a150; }
+    .badge-rec { background: #f9e2af20; color: #f9e2af; border: 1px solid #f9e2af50; }
+
+    input[type="range"] { accent-color: #89b4fa; width: 100%; }
+
+    .visual-row { display: flex; align-items: flex-start; gap: 2px; margin: 2px 0; }
+    .visual-row .vr-label { flex: 0 0 120px; font-size: 0.65rem; color: #585b70; text-align: right; padding-right: 8px; padding-top: 8px; }
+    .visual-row .vr-demo { flex: 1; }
+
+    .inline-demo { line-height: 1.8; padding: 8px; background: #181825; border-radius: 6px; font-size: 0.82rem; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <h1><span class="glyph">Text Wrapping & Breaking</span> <span style="font-size:1.4rem;color:#6c7086;font-weight:400;">— Visualized</span></h1>
+  <p class="subtitle">
+    <code>white-space</code>, <code>word-break</code>, <code>overflow-wrap</code>, <code>text-overflow</code>, <code>text-wrap</code>, <code>hyphens</code> — how text wraps, breaks, overflows, and how to control every behavior.
+  </p>
+
+  <!-- ===== 1. THE DEFAULT: TEXT WRAPS ===== -->
+  <section>
+    <h2>1. The Default: Text Wraps <span class="sub">— overflow-wrap: normal</span></h2>
+    <p>By default, text <strong>wraps at word boundaries</strong> (spaces). Long unbroken strings <strong>overflow</strong> the container. This is the starting point for all text behavior.</p>
+
+    <div class="card">
+      <div class="card-label">Default text behavior — <span class="hl">words wrap, long strings overflow</span></div>
+      <div style="display:flex;gap:12px;flex-wrap:wrap;">
+        <div class="demo-text-box" style="width:200px;">
+          <div style="font-size:0.6rem;color:#585b70;margin-bottom:4px;">Normal text (wraps)</div>
+          This is a normal sentence that wraps at word boundaries automatically.
+        </div>
+        <div class="demo-text-box" style="width:200px;">
+          <div style="font-size:0.6rem;color:#f38ba8;margin-bottom:4px;">Long unbroken string (overflows)</div>
+          <div style="overflow:visible;">https://very-long-url-that-has-no-breaks.example.com/page</div>
+        </div>
+        <div class="demo-text-box" style="width:200px;">
+          <div style="font-size:0.6rem;color:#f38ba8;margin-bottom:4px;">Long word (overflows)</div>
+          <div style="overflow:visible;">Supercalifragilisticexpialidocious</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>The problem:</strong> Normal text wraps fine at spaces. But URLs, long words, and code strings don't have natural breakpoints. They <strong>overflow</strong> the container. The properties below fix this.
+    </div>
+  </section>
+
+  <!-- ===== 2. WHITE-SPACE ===== -->
+  <section>
+    <h2>2. <code>white-space</code> <span class="sub">— Controls wrapping & whitespace collapsing</span></h2>
+    <p>Controls how whitespace (spaces, tabs, newlines) is handled and whether text wraps.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin:12px 0;">
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;overflow:hidden;">
+        <div style="background:#89b4fa20;padding:6px 10px;font-size:0.7rem;font-weight:600;color:#89b4fa;">white-space: normal</div>
+        <div class="demo-text-box" style="width:200px;border:none;white-space:normal;">
+          Multiple   spaces   collapse. Newlines are ignored. Text wraps normally.
+        </div>
+        <pre style="margin:4px 6px;padding:4px;font-size:0.55rem;"><code>/* default — collapses whitespace,
+   wraps at container edge */</code></pre>
+      </div>
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;overflow:hidden;">
+        <div style="background:#f38ba820;padding:6px 10px;font-size:0.7rem;font-weight:600;color:#f38ba8;">white-space: nowrap</div>
+        <div class="demo-text-box" style="width:200px;border:none;white-space:nowrap;overflow:hidden;">
+          Multiple   spaces   collapse. Text   does NOT wrap. Single line.
+        </div>
+        <pre style="margin:4px 6px;padding:4px;font-size:0.55rem;"><code>/* no wrap — single line.
+   Used with text-overflow */</code></pre>
+      </div>
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;overflow:hidden;">
+        <div style="background:#a6e3a120;padding:6px 10px;font-size:0.7rem;font-weight:600;color:#a6e3a1;">white-space: pre</div>
+        <div class="demo-text-box" style="width:200px;border:none;white-space:pre;overflow:auto;">
+          Spaces   kept.  
+          Newlines kept.
+          No wrap.
+        </div>
+        <pre style="margin:4px 6px;padding:4px;font-size:0.55rem;"><code>/* like &lt;pre&gt; — preserves
+   spaces, newlines, no wrap */</code></pre>
+      </div>
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;overflow:hidden;">
+        <div style="background:#f9e2af20;padding:6px 10px;font-size:0.7rem;font-weight:600;color:#f9e2af;">white-space: pre-wrap</div>
+        <div class="demo-text-box" style="width:200px;border:none;white-space:pre-wrap;">
+          Spaces   kept.  
+          Newlines kept.
+          Text wraps.
+        </div>
+        <pre style="margin:4px 6px;padding:4px;font-size:0.55rem;"><code>/* pre but wraps —
+   best for code blocks */</code></pre>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Quick guide:</strong> Use <code>normal</code> for body text. <code>nowrap</code> for nav links + ellipsis. <code>pre</code> for code. <code>pre-wrap</code> for code that must wrap on small screens. <code>pre-line</code> for user-generated content with newlines.
+    </div>
+  </section>
+
+  <!-- ===== 3. WORD-BREAK vs OVERFLOW-WRAP ===== -->
+  <section>
+    <h2>3. <code>word-break</code> vs <code>overflow-wrap</code> <span class="sub">— The #1 confusion</span></h2>
+    <p>Both control how words break, but they differ in <strong>when</strong> they break words:</p>
+
+    <div class="flow-chart">
+      <div class="fc-box"><span style="color:#89b4fa;">overflow-wrap</span><br><span style="font-size:0.5rem;">break-word</span></div>
+      <div class="fc-arrow">vs</div>
+      <div class="fc-box"><span style="color:#f38ba8;">word-break</span><br><span style="font-size:0.5rem;">break-all</span></div>
+      <div class="fc-arrow">vs</div>
+      <div class="fc-box"><span style="color:#a6e3a1;">word-break</span><br><span style="font-size:0.5rem;">keep-all</span></div>
+    </div>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head info"><code>overflow-wrap: break-word</code> (soft)</div>
+        <div class="cs-body">
+          <div class="demo-text-box" style="width:150px;overflow-wrap:break-word;">
+            Only breaks a word if it would otherwise overflow. Prefers wrapping at spaces first. https://very-long-url-that-does-not-break.com/page
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.box { overflow-wrap: break-word; }
+/* ✅ Best for general use
+   Breaks only when necessary */</code></pre>
+          <p style="font-size:0.65rem;color:#a6e3a1;">Breaks words only if they'd overflow. Normal words still wrap at spaces first.</p>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head info"><code>word-break: break-all</code> (aggressive)</div>
+        <div class="cs-body">
+          <div class="demo-text-box" style="width:150px;word-break:break-all;">
+            Breaks at every character boundary even at normal words. This makes text harder to read. https://very-long-url.com/page
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.box { word-break: break-all; }
+/* ⚠️ Aggressive — breaks
+   EVERYTHING at any char */</code></pre>
+          <p style="font-size:0.65rem;color:#f38ba8;">Breaks words even when they don't need it. Use for URLs/code only.</p>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head info"><code>word-break: keep-all</code> (CJK)</div>
+        <div class="cs-body">
+          <div class="demo-text-box" style="width:150px;word-break:keep-all;">
+            For Chinese/Japanese/Korean text. Prevents breaks within words. Normal Latin text still wraps at spaces. 这是一个中文句子
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.box { word-break: keep-all; }
+/* CJK text — prevents breaks
+   within words */</code></pre>
+          <p style="font-size:0.65rem;color:#6c7086;">For CJK languages. Latin behaves normally.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Side-by-side — <span class="hl">same text, different breaking</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;">
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #f38ba850;">
+          <div style="font-size:0.65rem;color:#f38ba8;margin-bottom:4px;">✕ overflow (default)</div>
+          <div class="demo-text-box" style="width:140px;border:none;padding:8px;">
+            https://very-long-url-that-overflows.com/page
+          </div>
+          <p style="font-size:0.55rem;color:#6c7086;margin-top:2px;">No wrap → overflows</p>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #a6e3a150;">
+          <div style="font-size:0.65rem;color:#a6e3a1;margin-bottom:4px;">✓ overflow-wrap: break-word</div>
+          <div class="demo-text-box" style="width:140px;border:none;padding:8px;overflow-wrap:break-word;">
+            https://very-long-url-that-overflows.com/page
+          </div>
+          <p style="font-size:0.55rem;color:#a6e3a1;margin-top:2px;">Breaks only at overflow point</p>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:10px;border:1px solid #f9e2af50;">
+          <div style="font-size:0.65rem;color:#f9e2af;margin-bottom:4px;">⚠ word-break: break-all</div>
+          <div class="demo-text-box" style="width:140px;border:none;padding:8px;word-break:break-all;">
+            https://very-long-url-that-overflows.com/page
+          </div>
+          <p style="font-size:0.55rem;color:#f9e2af;margin-top:2px;">Breaks every character</p>
+        </div>
+      </div>
+      <pre style="margin-top:8px;"><code>/* Rule of thumb */
+body     { overflow-wrap: break-word; }  /* ✅ safe for everything */
+code,pre { word-break: break-all; }      /* ✅ for code blocks */
+/* Never use word-break: break-all on body text — it breaks normal words */</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 4. TEXT-OVERFLOW ===== -->
+  <section>
+    <h2>4. <code>text-overflow</code> <span class="sub">— The ellipsis trio</span></h2>
+    <p>Shows <strong>...</strong> when text overflows its container. <span style="color:#f38ba8;">Requires all 3 properties to work.</span></p>
+
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Missing one = broken</div>
+        <div class="cs-body">
+          <div style="display:flex;flex-direction:column;gap:8px;">
+            <div>
+              <div style="font-size:0.6rem;color:#f38ba8;margin-bottom:2px;">Missing white-space: nowrap</div>
+              <div style="width:180px;overflow:hidden;text-overflow:ellipsis;background:#f38ba815;border-radius:4px;padding:6px;font-size:0.7rem;">
+                This long text wraps and there's no ellipsis
+              </div>
+            </div>
+            <div>
+              <div style="font-size:0.6rem;color:#f38ba8;margin-bottom:2px;">Missing overflow: hidden</div>
+              <div style="width:180px;white-space:nowrap;text-overflow:ellipsis;background:#f38ba815;border-radius:4px;padding:6px;font-size:0.7rem;">
+                This long text spills out because no overflow hidden
+              </div>
+            </div>
+            <div>
+              <div style="font-size:0.6rem;color:#f38ba8;margin-bottom:2px;">Missing text-overflow: ellipsis</div>
+              <div style="width:180px;overflow:hidden;white-space:nowrap;background:#f38ba815;border-radius:4px;padding:6px;font-size:0.7rem;">
+                This long text just clips abruptly with no visual indicator
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ All 3 together = ellipsis</div>
+        <div class="cs-body">
+          <div style="background:#a6e3a115;border-radius:6px;padding:12px;border:1px solid #a6e3a150;">
+            <div style="font-size:0.65rem;color:#a6e3a1;margin-bottom:6px;">The magic trio:</div>
+            <div style="overflow:hidden;white-space:nowrap;text-overflow:ellipsis;background:#181825;border-radius:4px;padding:8px;font-size:0.8rem;font-weight:600;">
+              This long text gets an ellipsis because all three properties are present and working together correctly
+            </div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.6rem;"><code>.text {
+  overflow: hidden;        /* 1. clip content */
+  white-space: nowrap;     /* 2. prevent wrap */
+  text-overflow: ellipsis; /* 3. show ... */
+}
+/* All three required — remove any → breaks */</code></pre>
+          <p style="font-size:0.7rem;color:#a6e3a1;font-weight:600;">This is the most common CSS trio. Memorize it.</p>
+        </div>
+      </div>
+    </div>
+
+    <h3>Multi-line ellipsis (line-clamp)</h3>
+    <div class="card">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div>
+          <div style="font-size:0.7rem;color:#89b4fa;margin-bottom:4px;">Standard ellipsis (1 line)</div>
+          <div style="width:220px;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;background:#181825;border-radius:4px;padding:8px;font-size:0.75rem;">
+            This is a long text that will be truncated to a single line with ellipsis at the end
+          </div>
+          <pre style="margin:4px 0 0;padding:4px;font-size:0.55rem;"><code>white-space: nowrap;
+text-overflow: ellipsis;</code></pre>
+        </div>
+        <div>
+          <div style="font-size:0.7rem;color:#a6e3a1;margin-bottom:4px;">Multi-line clamp (3 lines)</div>
+          <div style="width:220px;overflow:hidden;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;background:#181825;border-radius:4px;padding:8px;font-size:0.75rem;">
+            This is a long text that will be clamped to 3 lines with ellipsis at the end of the third line automatically by the browser.
+          </div>
+          <pre style="margin:4px 0 0;padding:4px;font-size:0.55rem;"><code>display: -webkit-box;
+-webkit-line-clamp: 3;
+-webkit-box-orient: vertical;
+overflow: hidden;</code></pre>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. TEXT-WRAP (NEW) ===== -->
+  <section>
+    <h2>5. <code>text-wrap</code> <span class="sub">— New CSS property (modern browsers)</span></h2>
+    <p>Controls <em>how</em> text wraps within a line, beyond just on/off. Newer than <code>white-space</code>.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:10px;margin:12px 0;">
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;padding:10px;">
+        <div style="font-size:0.65rem;font-weight:600;color:#89b4fa;margin-bottom:4px;">text-wrap: wrap</div>
+        <div style="width:140px;text-wrap:wrap;background:#89b4fa10;border-radius:4px;padding:6px;font-size:0.65rem;">
+          Normal wrapping at word boundaries (default).
+        </div>
+      </div>
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;padding:10px;">
+        <div style="font-size:0.65rem;font-weight:600;color:#f38ba8;margin-bottom:4px;">text-wrap: nowrap</div>
+        <div style="width:140px;text-wrap:nowrap;overflow:hidden;background:#f38ba810;border-radius:4px;padding:6px;font-size:0.65rem;">
+          No wrapping — same as white-space: nowrap
+        </div>
+      </div>
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;padding:10px;">
+        <div style="font-size:0.65rem;font-weight:600;color:#a6e3a1;margin-bottom:4px;">text-wrap: balance</div>
+        <div style="width:140px;text-wrap:balance;background:#a6e3a110;border-radius:4px;padding:6px;font-size:0.65rem;">
+          Balances line lengths for headings — fewer ragged lines.
+        </div>
+      </div>
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;padding:10px;">
+        <div style="font-size:0.65rem;font-weight:600;color:#cba6f7;margin-bottom:4px;">text-wrap: pretty</div>
+        <div style="width:140px;text-wrap:pretty;background:#cba6f710;border-radius:4px;padding:6px;font-size:0.65rem;">
+          Optimizes the last line to avoid orphaned single words.
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label"><code>text-wrap: balance</code> — <span class="hl">before and after on headings</span></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #f38ba850;">
+          <div style="font-size:0.6rem;color:#f38ba8;margin-bottom:4px;">Without balance (default wrap)</div>
+          <div style="width:280px;font-size:1rem;font-weight:700;line-height:1.3;color:#cdd6f4;">
+            This is a long heading that wraps naturally leaving a ragged right edge
+          </div>
+        </div>
+        <div style="background:#181825;border-radius:6px;padding:12px;border:1px solid #a6e3a150;">
+          <div style="font-size:0.6rem;color:#a6e3a1;margin-bottom:4px;">With text-wrap: balance</div>
+          <div style="width:280px;font-size:1rem;font-weight:700;line-height:1.3;color:#cdd6f4;text-wrap:balance;">
+            This is a long heading that wraps naturally leaving a ragged right edge
+          </div>
+        </div>
+      </div>
+      <pre style="margin-top:8px;"><code>/* Best for headings — balances line lengths */
+h1, h2, h3 { text-wrap: balance; }
+
+/* Best for body text — avoids orphan words on last line */
+p { text-wrap: pretty; }</code></pre>
+    </div>
+  </section>
+
+  <!-- ===== 6. HYPHENS ===== -->
+  <section>
+    <h2>6. <code>hyphens</code> <span class="sub">— Adds hyphens at break points</span></h2>
+    <p>Adds hyphens (<code>-</code>) when words break across lines. Makes justified text more readable.</p>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;margin:12px 0;">
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;padding:12px;">
+        <div style="font-size:0.65rem;font-weight:600;color:#f38ba8;margin-bottom:4px;">hyphens: none (default)</div>
+        <div style="width:180px;text-align:justify;hyphens:none;font-size:0.72rem;line-height:1.5;">
+          This is a paragraph with no hyphens enabled. Words break without any visual indicator.
+        </div>
+      </div>
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;padding:12px;">
+        <div style="font-size:0.65rem;font-weight:600;color:#a6e3a1;margin-bottom:4px;">hyphens: auto</div>
+        <div style="width:180px;text-align:justify;hyphens:auto;font-size:0.72rem;line-height:1.5;overflow-wrap:break-word;">
+          This is a paragraph with automatic hyphens enabled. Words break with hyphen character.
+        </div>
+        <p style="font-size:0.55rem;color:#6c7086;margin-top:2px;">Needs <code>lang="en"</code> on HTML tag</p>
+      </div>
+      <div style="background:#181825;border:1px solid #2a2a3c;border-radius:8px;padding:12px;">
+        <div style="font-size:0.65rem;font-weight:600;color:#f9e2af;margin-bottom:4px;">hyphens: manual</div>
+        <div style="width:180px;text-align:justify;hyphens:manual;font-size:0.72rem;line-height:1.5;">
+          Only breaks at hy&shy;phen&shy;ation points you insert with <code>&amp;shy;</code>.
+        </div>
+        <p style="font-size:0.55rem;color:#6c7086;margin-top:2px;">You control break points</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 7. INTERACTIVE PLAYGROUND ===== -->
+  <section>
+    <h2>7. Interactive Playground <span class="sub">— Combine every property</span></h2>
+
+    <div class="card">
+      <div class="card-label">Choose any combination — <span class="hl">see the result live</span></div>
+
+      <div class="prop-grid">
+        <div>
+          <label style="font-size:0.7rem;">white-space</label>
+          <select id="wsSelect" style="background:#2a2a3c;color:#cdd6f4;border:1px solid #3a3a50;border-radius:4px;padding:4px 8px;font-size:0.75rem;width:100%;">
+            <option value="normal">normal</option>
+            <option value="nowrap">nowrap</option>
+            <option value="pre">pre</option>
+            <option value="pre-wrap">pre-wrap</option>
+            <option value="pre-line">pre-line</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.7rem;">word-break</label>
+          <select id="wbSelect" style="background:#2a2a3c;color:#cdd6f4;border:1px solid #3a3a50;border-radius:4px;padding:4px 8px;font-size:0.75rem;width:100%;">
+            <option value="normal">normal</option>
+            <option value="break-all">break-all</option>
+            <option value="keep-all">keep-all</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.7rem;">overflow-wrap</label>
+          <select id="owSelect" style="background:#2a2a3c;color:#cdd6f4;border:1px solid #3a3a50;border-radius:4px;padding:4px 8px;font-size:0.75rem;width:100%;">
+            <option value="normal">normal</option>
+            <option value="break-word">break-word</option>
+          </select>
+        </div>
+        <div>
+          <label style="font-size:0.7rem;">text-overflow</label>
+          <select id="toSelect" style="background:#2a2a3c;color:#cdd6f4;border:1px solid #3a3a50;border-radius:4px;padding:4px 8px;font-size:0.75rem;width:100%;">
+            <option value="clip">clip</option>
+            <option value="ellipsis">ellipsis</option>
+          </select>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;">
+        <label style="font-size:0.7rem;display:flex;align-items:center;gap:4px;">
+          <input type="checkbox" id="hyphensCheck"> hyphens: auto
+        </label>
+        <label style="font-size:0.7rem;display:flex;align-items:center;gap:4px;">
+          Container width: <input type="range" id="playWidth" min="100" max="400" value="220" style="width:120px;">
+          <span id="playWidthLabel">220px</span>
+        </label>
+      </div>
+
+      <div style="margin-top:10px;">
+        <div class="demo-text-box" id="playBox" style="width:220px;">
+          This is normal text with a verylongunbrokenstringthatoverflows and https://a-very-long-url-that-does-not-break.com/page
+        </div>
+      </div>
+
+      <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap;">
+        <span class="tag tag-blue" id="playResult">white-space: normal</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 8. DECISION GUIDE ===== -->
+  <section>
+    <h2>8. Decision Guide <span class="sub">— Which property when</span></h2>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div style="background:#181825;border-radius:8px;padding:14px;border:1px solid #2a2a3c;border-left:3px solid #a6e3a1;">
+        <div style="font-weight:600;font-size:0.8rem;color:#a6e3a1;">📝 Body text</div>
+        <pre style="margin:6px 0;padding:6px;font-size:0.6rem;"><code>p {
+  overflow-wrap: break-word;  /* prevent overflow from long URLs */
+  hyphens: auto;              /* optional: better justified text */
+}</code></pre>
+      </div>
+      <div style="background:#181825;border-radius:8px;padding:14px;border:1px solid #2a2a3c;border-left:3px solid #89b4fa;">
+        <div style="font-weight:600;font-size:0.8rem;color:#89b4fa;">📰 Headings</div>
+        <pre style="margin:6px 0;padding:6px;font-size:0.6rem;"><code>h1, h2, h3 {
+  text-wrap: balance;          /* balanced line lengths */
+}</code></pre>
+      </div>
+      <div style="background:#181825;border-radius:8px;padding:14px;border:1px solid #2a2a3c;border-left:3px solid #f38ba8;">
+        <div style="font-weight:600;font-size:0.8rem;color:#f38ba8;">🔗 URLs / Code</div>
+        <pre style="margin:6px 0;padding:6px;font-size:0.6rem;"><code>code, pre {
+  word-break: break-all;       /* break at any character */
+  white-space: pre-wrap;       /* preserve formatting, wrap */
+}</code></pre>
+      </div>
+      <div style="background:#181825;border-radius:8px;padding:14px;border:1px solid #2a2a3c;border-left:3px solid #f9e2af;">
+        <div style="font-weight:600;font-size:0.8rem;color:#f9e2af;">🔠 Single-line truncation</div>
+        <pre style="margin:6px 0;padding:6px;font-size:0.6rem;"><code>.truncate {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;     /* ... */
+}</code></pre>
+      </div>
+      <div style="background:#181825;border-radius:8px;padding:14px;border:1px solid #2a2a3c;border-left:3px solid #cba6f7;">
+        <div style="font-weight:600;font-size:0.8rem;color:#cba6f7;">📋 Nav links / buttons</div>
+        <pre style="margin:6px 0;padding:6px;font-size:0.6rem;"><code>nav a {
+  white-space: nowrap;         /* prevent link text from wrapping */
+}</code></pre>
+      </div>
+      <div style="background:#181825;border-radius:8px;padding:14px;border:1px solid #2a2a3c;border-left:3px solid #f38ba8;">
+        <div style="font-weight:600;font-size:0.8rem;color:#f38ba8;">📱 Multi-line clamp</div>
+        <pre style="margin:6px 0;padding:6px;font-size:0.6rem;"><code>.clamp {
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}</code></pre>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 9. CHEAT SHEET ===== -->
+  <section>
+    <h2>9. Quick Reference</h2>
+
+    <table>
+      <thead><tr><th>Property</th><th>Values</th><th>What it does</th><th>Use when</th></tr></thead>
+      <tbody>
+        <tr>
+          <td><code>white-space</code></td>
+          <td><span class="tag tag-blue">normal</span> <span class="tag tag-red">nowrap</span> <span class="tag tag-yellow">pre</span> <span class="tag tag-green">pre-wrap</span> <span class="tag tag-purple">pre-line</span></td>
+          <td>Controls whitespace collapsing + wrapping</td>
+          <td>Body text (normal), nav (nowrap), code (pre-wrap)</td>
+        </tr>
+        <tr>
+          <td><code>overflow-wrap</code></td>
+          <td><span class="tag tag-blue">normal</span> <span class="tag tag-green">break-word</span></td>
+          <td>Breaks a word only if it would overflow</td>
+          <td>✅ Safe for body text</td>
+        </tr>
+        <tr>
+          <td><code>word-break</code></td>
+          <td><span class="tag tag-blue">normal</span> <span class="tag tag-red">break-all</span> <span class="tag tag-yellow">keep-all</span></td>
+          <td>Aggressively breaks at character boundaries</td>
+          <td>Code/URLs only (break-all), CJK (keep-all)</td>
+        </tr>
+        <tr>
+          <td><code>text-overflow</code></td>
+          <td><span class="tag tag-blue">clip</span> <span class="tag tag-green">ellipsis</span></td>
+          <td>Shows ... when text overflows</td>
+          <td>Truncation — requires overflow:hidden + nowrap</td>
+        </tr>
+        <tr>
+          <td><code>text-wrap</code></td>
+          <td><span class="tag tag-blue">wrap</span> <span class="tag tag-red">nowrap</span> <span class="tag tag-green">balance</span> <span class="tag tag-purple">pretty</span></td>
+          <td>Controls wrapping strategy</td>
+          <td>Headings (balance), body (pretty)</td>
+        </tr>
+        <tr>
+          <td><code>hyphens</code></td>
+          <td><span class="tag tag-blue">none</span> <span class="tag tag-green">auto</span> <span class="tag tag-yellow">manual</span></td>
+          <td>Adds hyphen at break points</td>
+          <td>Justified text (auto), needs lang attribute</td>
+        </tr>
+        <tr>
+          <td><code>-webkit-line-clamp</code></td>
+          <td>number</td>
+          <td>Limits text to N lines + ellipsis</td>
+          <td>Card descriptions, previews</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <div class="tip" style="border-left-color:#89b4fa;margin-top:20px;">
+      <strong>Universal rule:</strong> Set <code>overflow-wrap: break-word</code> on your body (prevents URL overflow). Use <code>white-space: nowrap</code> on nav links. Use the trio (<code>overflow:hidden + nowrap + text-overflow:ellipsis</code>) for truncation. Use <code>word-break: break-all</code> only on code elements. <strong>4 rules cover 95% of text-breaking needs.</strong>
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #2a2a3c;padding-top:24px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    Text Wrapping & Breaking — Visualized &bull; css-notes/typography
+  </footer>
+</div>
+
+<script>
+// ===== 7. Interactive Playground =====
+(function() {
+  const box = document.getElementById('playBox');
+  const ws = document.getElementById('wsSelect');
+  const wb = document.getElementById('wbSelect');
+  const ow = document.getElementById('owSelect');
+  const to = document.getElementById('toSelect');
+  const hyphens = document.getElementById('hyphensCheck');
+  const width = document.getElementById('playWidth');
+  const widthLabel = document.getElementById('playWidthLabel');
+  const result = document.getElementById('playResult');
+
+  // Store original text
+  const origText = box.textContent;
+
+  function update() {
+    const wsVal = ws.value;
+    const wbVal = wb.value;
+    const owVal = ow.value;
+    const toVal = to.value;
+    const w = width.value;
+
+    // white-space
+    box.style.whiteSpace = wsVal;
+
+    // word-break
+    box.style.wordBreak = wbVal;
+
+    // overflow-wrap
+    box.style.overflowWrap = owVal;
+
+    // hyphens
+    box.style.hyphens = hyphens.checked ? 'auto' : 'none';
+
+    // text-overflow only works with nowrap + hidden
+    if (toVal === 'ellipsis' && wsVal === 'nowrap') {
+      box.style.textOverflow = 'ellipsis';
+      box.style.overflow = 'hidden';
+    } else if (toVal === 'ellipsis') {
+      box.style.textOverflow = 'ellipsis';
+      box.style.overflow = '';
+      // Show a warning
+    } else {
+      box.style.textOverflow = 'clip';
+      box.style.overflow = '';
+    }
+
+    // width
+    box.style.width = w + 'px';
+    widthLabel.textContent = w + 'px';
+
+    // Build result label
+    let parts = ['white-space: ' + wsVal];
+    if (wbVal !== 'normal') parts.push('word-break: ' + wbVal);
+    if (owVal !== 'normal') parts.push('overflow-wrap: ' + owVal);
+    if (hyphens.checked) parts.push('hyphens: auto');
+    if (toVal === 'ellipsis' && wsVal === 'nowrap') parts.push('text-overflow: ellipsis ✓');
+    else if (toVal === 'ellipsis') parts.push('text-overflow: ellipsis ⚠ needs nowrap');
+    result.textContent = parts.join(' | ');
+  }
+
+  ws.addEventListener('change', update);
+  wb.addEventListener('change', update);
+  ow.addEventListener('change', update);
+  to.addEventListener('change', update);
+  hyphens.addEventListener('change', update);
+  width.addEventListener('input', update);
+  update();
+})();
+</script>
+</body>
+</html>

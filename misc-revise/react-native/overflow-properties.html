@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Overflow Properties - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:10px 12px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #f9e2af, #89b4fa); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:6px; padding:5px 10px; font-size:10px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#89b4fa; color:#1e1e2e; }
+    .btn-p:hover { background:#74c7ec; }
+    .btn-s { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+    .btn-s:hover { background:#45475a; }
+    .btn-warn { background:#f9e2af; color:#1e1e2e; }
+    .btn-warn:hover { background:#f5c2e7; }
+
+    .prop-chip {
+      display:inline-flex; align-items:center; gap:4px; background:#313244; border-radius:4px;
+      padding:4px 10px; font-size:11px; font-family:monospace; cursor:pointer; transition:all 0.2s; border:1px solid transparent; user-select:none;
+    }
+    .prop-chip:hover { background:#45475a; }
+    .prop-chip.active { background:#89b4fa30; border-color:#89b4fa; box-shadow:0 0 12px #89b4fa40; }
+
+    .container-box {
+      border:2px dashed #45475a; border-radius:8px; position:relative; transition:all 0.4s;
+    }
+    .container-box.overflow-visible { overflow:visible; }
+    .container-box.overflow-hidden { overflow:hidden; }
+    .container-box.overflow-scroll { overflow:auto; }
+
+    .demo-badge {
+      position:absolute; top:-24px; left:0; font-size:10px; font-family:monospace;
+      background:#313244; padding:1px 6px; border-radius:4px; color:#a6adc8;
+    }
+
+    .tl { background:linear-gradient(135deg, #f38ba8, #f9e2af); width:100%; height:100%; border-radius:6px; min-height:60px; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      Layout & Style
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <span class="gradient-text">Overflow</span>
+    </h1>
+    <p class="text-[#a6adc8]">Controls how content that exceeds its container is displayed.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <div class="phone">
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">Overflow Lab</span>
+            <span id="currentBadge" class="text-xs bg-[#89b4fa]/20 text-[#89b4fa] px-2 py-0.5 rounded-full font-mono">visible</span>
+          </div>
+          <div class="body-scroll" id="phoneBody">
+            <!-- overflow: visible demo -->
+            <div id="demoContainer" class="container-box" style="width:100%;height:130px;">
+              <span class="demo-badge" id="demoBadge">overflow: visible</span>
+              <!-- Inner content that can overflow -->
+              <div style="position:relative;width:100%;height:100%;">
+                <!-- Main box -->
+                <div style="position:absolute;top:10px;left:10px;right:10px;bottom:10px;background:#181825;border-radius:6px;z-index:1;display:flex;align-items:center;justify-content:center;border:1px solid #45475a;">
+                  <span class="text-xs text-[#585b70]">Container</span>
+                </div>
+                <!-- Overflowing child 1 - top-left -->
+                <div id="overflow1" style="position:absolute;top:-18px;left:-12px;width:50px;height:50px;background:linear-gradient(135deg,#f38ba8,#89b4fa);border-radius:8px;z-index:2;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1e1e2e;font-weight:700;transition:all 0.4s;">A</div>
+                <!-- Overflowing child 2 - bottom-right -->
+                <div id="overflow2" style="position:absolute;bottom:-14px;right:-10px;width:60px;height:40px;background:linear-gradient(135deg,#a6e3a1,#f9e2af);border-radius:8px;z-index:2;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1e1e2e;font-weight:700;transition:all 0.4s;">B</div>
+                <!-- Overflowing child 3 - big bottom -->
+                <div id="overflow3" style="position:absolute;bottom:-30px;left:20%;width:60%;height:34px;background:linear-gradient(135deg,#cba6f7,#f5c2e7);border-radius:8px;z-index:2;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1e1e2e;font-weight:700;transition:all 0.4s;">C</div>
+              </div>
+            </div>
+
+            <!-- borderRadius + overflow demo -->
+            <div class="mt-6">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold">borderRadius + overflow</span>
+                <span class="text-[10px] text-[#585b70]">common pattern for clipping</span>
+              </div>
+              <div class="flex gap-3">
+                <div style="flex:1;text-align:center;">
+                  <div id="brHidden" style="width:100%;height:70px;border-radius:14px;border:2px solid #45475a;overflow:hidden;position:relative;">
+                    <div style="position:absolute;top:-4px;left:-4px;right:-4px;bottom:-4px;background:linear-gradient(135deg,#89b4fa,#cba6f7);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1e1e2e;font-weight:600;">hidden ✓</div>
+                  </div>
+                  <span class="text-[10px] text-[#585b70]">overflow: hidden</span>
+                </div>
+                <div style="flex:1;text-align:center;">
+                  <div id="brVisible" style="width:100%;height:70px;border-radius:14px;border:2px solid #f38ba8;overflow:visible;position:relative;">
+                    <div style="position:absolute;top:-4px;left:-4px;right:-4px;bottom:-4px;background:linear-gradient(135deg,#f38ba8,#f9e2af);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:10px;color:#1e1e2e;font-weight:600;">visible ✗</div>
+                  </div>
+                  <span class="text-[10px] text-[#585b70]">overflow: visible</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Scrollable content demo -->
+            <div class="mt-6" id="scrollDemo">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-semibold">overflow: scroll</span>
+                <span class="text-[10px] text-[#585b70]">content scrolls inside container</span>
+              </div>
+              <div id="scrollContainer" style="width:100%;height:90px;border:2px solid #45475a;border-radius:8px;overflow:auto;padding:6px;">
+                <div style="display:flex;gap:6px;width:max-content;">
+                  <div class="token" style="width:70px;height:70px;background:linear-gradient(135deg,#f38ba8,#89b4fa);border-radius:8px;flex-shrink:0;"></div>
+                  <div class="token" style="width:70px;height:70px;background:linear-gradient(135deg,#a6e3a1,#f9e2af);border-radius:8px;flex-shrink:0;"></div>
+                  <div class="token" style="width:70px;height:70px;background:linear-gradient(135deg,#cba6f7,#f5c2e7);border-radius:8px;flex-shrink:0;"></div>
+                  <div class="token" style="width:70px;height:70px;background:linear-gradient(135deg,#94e2d5,#89b4fa);border-radius:8px;flex-shrink:0;"></div>
+                  <div class="token" style="width:70px;height:70px;background:linear-gradient(135deg,#f9e2af,#f38ba8);border-radius:8px;flex-shrink:0;"></div>
+                </div>
+              </div>
+              <div class="flex gap-1 mt-1">
+                <span class="text-[10px] py-1 px-2 rounded bg-[#313244] text-[#6c7086] font-mono">overflow: scroll</span>
+                <span class="text-[10px] py-1 px-2 rounded bg-[#313244] text-[#6c7086] font-mono">white-space: nowrap</span>
+              </div>
+            </div>
+
+            <p class="text-center mt-3 text-[10px] text-[#6c7086]">Tap a chip below to change overflow value</p>
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Syntax</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed overflow-x-auto">
+<span class="text-[#cba6f7">import</span> { View } <span class="text-[#cba6f7">from</span> <span class="text-[#a6e3a1]">'react-native'</span>;
+
+<span class="text-[#cdd6f4]">&lt;View</span> <span class="text-[#89b4fa]">style</span>={{ <span class="text-[#89b4fa]">overflow</span>: <span class="text-[#a6e3a1]">"hidden"</span> }} <span class="text-[#cdd6f4]">&gt;</span>
+  <span class="text-[#6c7086]">&lt;!-- clipped child content --&gt;</span>
+<span class="text-[#cdd6f4]">&lt;/View&gt;</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">overflow values</h3>
+          <div class="space-y-2 text-xs" id="valueChips"></div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Common Patterns</h3>
+          <div class="space-y-2 text-xs">
+            <div class="bg-[#11111b] rounded-lg p-2 flex items-start gap-2">
+              <span class="text-[#89b4fa] mt-0.5"><i class="fas fa-crop-alt"></i></span>
+              <div><span class="text-[#89b4fa] font-semibold">Image mask</span><br><span class="text-[#6c7086]">borderRadius + overflow:hidden clips image to rounded shape</span></div>
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-2 flex items-start gap-2">
+              <span class="text-[#a6e3a1] mt-0.5"><i class="fas fa-layer-group"></i></span>
+              <div><span class="text-[#a6e3a1] font-semibold">Badge overlap</span><br><span class="text-[#6c7086]">overflow:visible lets badges/indicators spill outside container</span></div>
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-2 flex items-start gap-2">
+              <span class="text-[#f9e2af] mt-0.5"><i class="fas fa-arrows-alt-h"></i></span>
+              <div><span class="text-[#f9e2af] font-semibold">Horizontal scroll</span><br><span class="text-[#6c7086]">overflow:scroll (with horizontal content) creates carousels</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f38ba8] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f38ba8] font-semibold">⚠️ Platform difference:</span> On <strong>iOS</strong>, the default overflow is <code class="text-[#f9e2af]">visible</code>. On <strong>Android</strong>, the default is <code class="text-[#f9e2af]">hidden</code>. Always set it explicitly for cross-platform consistency.
+        </div>
+      </div>
+    </section>
+
+    <!-- === CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#89b4fa]"></i> All Overflow Patterns
+      </h2>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold flex items-center gap-2">
+            <span class="text-[#a6e3a1]"><i class="fas fa-eye"></i></span> visible
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#cdd6f4]">&lt;View</span> <span class="text-[#89b4fa]">style</span>={{
+  <span class="text-[#89b4fa]">overflow</span>: <span class="text-[#a6e3a1]">'visible'</span>
+}}<span class="text-[#cdd6f4]">&gt;</span>
+  <span class="text-[#6c7086]">// Children can render</span>
+  <span class="text-[#6c7086]">// outside the container</span>
+<span class="text-[#cdd6f4]">&lt;/View&gt;</span></pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold flex items-center gap-2">
+            <span class="text-[#f38ba8]"><i class="fas fa-cut"></i></span> hidden
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#cdd6f4]">&lt;View</span> <span class="text-[#89b4fa]">style</span>={{
+  <span class="text-[#89b4fa]">overflow</span>: <span class="text-[#a6e3a1]">'hidden'</span>,
+  <span class="text-[#89b4fa]">borderRadius</span>: <span class="text-[#cdd6f4]">16</span>,
+}}<span class="text-[#cdd6f4]">&gt;</span>
+  <span class="text-[#6c7086]">// Content clipped</span>
+  <span class="text-[#6c7086]">// to rounded bounds</span>
+<span class="text-[#cdd6f4]">&lt;/View&gt;</span></pre>
+        </div>
+        <div class="bg-[#11111b] border border-[#313244] rounded-xl overflow-hidden">
+          <div class="px-4 py-2 bg-[#181825] border-b border-[#313244] text-xs font-semibold flex items-center gap-2">
+            <span class="text-[#f9e2af]"><i class="fas fa-scroll"></i></span> scroll
+          </div>
+          <pre class="p-4 text-xs font-mono leading-relaxed overflow-x-auto">
+<span class="text-[#cdd6f4]">&lt;View</span> <span class="text-[#89b4fa]">style</span>={{
+  <span class="text-[#89b4fa]">overflow</span>: <span class="text-[#a6e3a1]">'scroll'</span>
+}}<span class="text-[#cdd6f4]">&gt;</span>
+  <span class="text-[#6c7086]">// Overflowing content</span>
+  <span class="text-[#6c7086]">// becomes scrollable</span>
+<span class="text-[#cdd6f4]">&lt;/View&gt;</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70]">
+      <a href="https://reactnative.dev/docs/layout-props#overflow" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> RN Docs: Overflow</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      let currentOverflow = 'visible';
+
+      const container = document.getElementById('demoContainer');
+      const badge = document.getElementById('demoBadge');
+      const currentBadge = document.getElementById('currentBadge');
+      const o1 = document.getElementById('overflow1');
+      const o2 = document.getElementById('overflow2');
+      const o3 = document.getElementById('overflow3');
+      const phoneBody = document.getElementById('phoneBody');
+
+      function applyOverflow(val) {
+        currentOverflow = val;
+
+        container.className = 'container-box';
+        if (val === 'hidden') container.classList.add('overflow-hidden');
+        else if (val === 'scroll') container.classList.add('overflow-scroll');
+        else container.classList.add('overflow-visible');
+
+        badge.textContent = 'overflow: ' + val;
+        currentBadge.textContent = val;
+        currentBadge.className = 'text-xs px-2 py-0.5 rounded-full font-mono ' + (
+          val === 'visible' ? 'bg-[#a6e3a1]/20 text-[#a6e3a1]' :
+          val === 'hidden' ? 'bg-[#f38ba8]/20 text-[#f38ba8]' :
+          'bg-[#f9e2af]/20 text-[#f9e2af]'
+        );
+
+        // update chips
+        document.querySelectorAll('#valueChips .prop-chip').forEach(c => {
+          c.classList.toggle('active', c.dataset.val === val);
+        });
+      }
+
+      const values = [
+        { val: 'visible', icon: 'fa-eye', desc: 'Content can render outside container bounds. Default on iOS.', accent: '#a6e3a1' },
+        { val: 'hidden', icon: 'fa-cut', desc: 'Content clipped to container. Default on Android. Required for borderRadius clipping.', accent: '#f38ba8' },
+        { val: 'scroll', icon: 'fa-scroll', desc: 'Overflowing content becomes scrollable within the container.', accent: '#f9e2af' },
+      ];
+
+      const chipsContainer = document.getElementById('valueChips');
+      values.forEach(v => {
+        const chip = document.createElement('div');
+        chip.className = 'prop-chip w-full' + (v.val === currentOverflow ? ' active' : '');
+        chip.dataset.val = v.val;
+        chip.innerHTML = `<i class="fas ${v.icon}" style="color:${v.accent}"></i> <strong>${v.val}</strong> <span class="text-[#585b70] font-normal">— ${v.desc}</span>`;
+        chip.addEventListener('click', () => applyOverflow(v.val));
+        chipsContainer.appendChild(chip);
+      });
+
+      applyOverflow('visible');
+    })();
+  </script>
+</body>
+</html>

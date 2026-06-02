@@ -1,0 +1,981 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Advanced Claude Code Skills</title>
+<style>
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--subtext:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--orange:#f8bd7f;--coral:#f28fad;
+  --radius:12px;--transition:0.5s cubic-bezier(0.22,1,0.36,1);
+}
+html{scroll-behavior:smooth}
+body{
+  font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',system-ui,sans-serif;
+  background:var(--bg);color:var(--text);min-height:100vh;overflow-x:hidden;line-height:1.6;
+}
+::-webkit-scrollbar{width:6px}
+::-webkit-scrollbar-track{background:var(--bg)}
+::-webkit-scrollbar-thumb{background:var(--surface2);border-radius:3px}
+::-webkit-scrollbar-thumb:hover{background:#3a3a5c}
+
+#particles{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.particle{position:absolute;border-radius:50%;opacity:0;animation:particleUp linear infinite}
+@keyframes particleUp{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:0.6}90%{opacity:0.6}100%{transform:translateY(-10vh) scale(1);opacity:0}}
+
+.hero{
+  position:relative;z-index:1;min-height:100vh;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;text-align:center;padding:2rem;overflow:hidden;
+}
+.hero::before{content:'';position:absolute;inset:0;
+  background:radial-gradient(ellipse at 50% 0%, rgba(137,180,250,0.08) 0%, transparent 60%),
+              radial-gradient(ellipse at 80% 100%, rgba(147,153,178,0.05) 0%, transparent 50%);
+  pointer-events:none;
+}
+.hero-badge{
+  display:inline-flex;align-items:center;gap:0.5rem;padding:0.4rem 1rem;
+  background:rgba(180,190,254,0.1);border:1px solid rgba(180,190,254,0.2);
+  border-radius:100px;font-size:0.8rem;color:var(--lavender);margin-bottom:1.5rem;
+  letter-spacing:0.5px;
+}
+.hero h1{
+  font-size:clamp(2.5rem,6vw,4.5rem);font-weight:800;line-height:1.1;
+  background:linear-gradient(135deg,var(--lavender),var(--pink),var(--peach));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+  margin-bottom:1rem;
+}
+.hero p{font-size:clamp(1rem,2vw,1.3rem);color:var(--subtext);max-width:600px;margin-bottom:2rem}
+.hero-arrow{width:32px;height:32px;border-right:2px solid var(--lavender);border-bottom:2px solid var(--lavender);transform:rotate(45deg);animation:bounce 2s infinite;opacity:0.5}
+@keyframes bounce{0%,100%{transform:rotate(45deg) translate(0,0)}50%{transform:rotate(45deg) translate(8px,8px)}}
+
+.container{max-width:1000px;margin:0 auto;padding:0 1.5rem;position:relative;z-index:1}
+
+.section{opacity:0;transform:translateY(50px);transition:opacity 0.8s ease,transform 0.8s ease;margin-bottom:6rem}
+.section.visible{opacity:1;transform:translateY(0)}
+.section-number{
+  display:inline-flex;align-items:center;justify-content:center;width:36px;height:36px;
+  border-radius:10px;font-size:0.85rem;font-weight:700;margin-bottom:1rem;
+}
+.section h2{
+  font-size:clamp(1.5rem,3vw,2rem);font-weight:700;margin-bottom:1.5rem;line-height:1.3;
+  background:linear-gradient(135deg,var(--text),var(--lavender));
+  -webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;
+}
+.section h3{font-size:1.15rem;font-weight:600;margin-bottom:0.75rem;color:var(--text)}
+.section p{color:var(--subtext);margin-bottom:1rem;font-size:0.95rem}
+
+.card{
+  background:var(--surface);border-radius:var(--radius);padding:1.5rem;
+  border:1px solid rgba(255,255,255,0.05);transition:var(--transition);
+}
+.card:hover{border-color:rgba(137,180,250,0.2);transform:translateY(-2px)}
+.card-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:1rem;margin-bottom:1.5rem}
+
+.code-block{
+  background:#13132a;border-radius:var(--radius);padding:1.25rem;overflow-x:auto;
+  font-family:'JetBrains Mono','SF Mono','Fira Code',monospace;font-size:0.82rem;line-height:1.7;
+  border:1px solid rgba(255,255,255,0.06);position:relative;
+}
+.code-header{
+  display:flex;align-items:center;justify-content:space-between;margin-bottom:0.75rem;
+  font-size:0.75rem;color:var(--subtext);text-transform:uppercase;letter-spacing:0.5px;
+}
+.code-dots{display:flex;gap:6px}
+.code-dot{width:10px;height:10px;border-radius:50%}
+.code-dot.r{background:#ff5f56}.code-dot.y{background:#ffbd2e}.code-dot.g{background:#27c93f}
+.code-keyword{color:var(--pink)}.code-prop{color:var(--blue)}.code-str{color:var(--green)}
+.code-comment{color:var(--subtext);font-style:italic}.code-punct{color:var(--text)}
+.code-val{color:var(--peach)}.code-section{color:var(--yellow)}
+
+.btn{
+  display:inline-flex;align-items:center;gap:0.5rem;padding:0.5rem 1.25rem;
+  border-radius:8px;border:none;font-size:0.85rem;font-weight:500;cursor:pointer;
+  transition:var(--transition);font-family:inherit;
+}
+.btn-primary{background:var(--blue);color:#0f0f17}.btn-primary:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-ghost{background:rgba(255,255,255,0.05);color:var(--text);border:1px solid rgba(255,255,255,0.08)}
+.btn-ghost:hover{background:rgba(255,255,255,0.1);border-color:rgba(255,255,255,0.15)}
+.btn-sm{padding:0.35rem 0.85rem;font-size:0.78rem}
+.btn-danger{background:var(--red);color:#0f0f17}.btn-danger:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-green{background:var(--green);color:#0f0f17}.btn-green:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-peach{background:var(--peach);color:#0f0f17}.btn-peach:hover{filter:brightness(1.15);transform:translateY(-1px)}
+.btn-pink{background:var(--pink);color:#0f0f17}.btn-pink:hover{filter:brightness(1.15);transform:translateY(-1px)}
+
+.diagram{width:100%;max-width:700px;margin:1.5rem auto;display:block;overflow:visible}
+.diagram path.flow-line{fill:none;stroke-width:2;stroke-dasharray:8,4;animation:dashFlow 1s linear infinite}
+@keyframes dashFlow{to{stroke-dashoffset:-24}}
+.diagram circle.node{transition:r 0.3s ease,fill 0.3s ease;cursor:pointer}
+.diagram circle.node:hover{r:22}
+.diagram text.label{font-size:11px;fill:var(--text);font-family:system-ui;dominant-baseline:middle;text-anchor:middle}
+
+.toggle-group{display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap}
+.toggle-btn{
+  padding:0.5rem 1.1rem;border-radius:8px;border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.03);color:var(--subtext);cursor:pointer;font-size:0.82rem;
+  font-family:inherit;transition:var(--transition);
+}
+.toggle-btn.active{background:rgba(137,180,250,0.15);border-color:var(--blue);color:var(--blue)}
+.toggle-btn:hover:not(.active){background:rgba(255,255,255,0.06);border-color:rgba(255,255,255,0.12)}
+
+.table-wrap{overflow-x:auto;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.06)}
+table{width:100%;border-collapse:collapse;font-size:0.85rem}
+thead th{
+  text-align:left;padding:0.85rem 1rem;background:var(--surface2);
+  color:var(--subtext);font-weight:600;font-size:0.75rem;text-transform:uppercase;letter-spacing:0.5px;
+  border-bottom:1px solid rgba(255,255,255,0.06);
+}
+tbody td{padding:0.75rem 1rem;border-bottom:1px solid rgba(255,255,255,0.04)}
+tbody tr{transition:var(--transition);position:relative}
+tbody tr::before{content:'';position:absolute;left:0;top:0;bottom:0;width:3px;border-radius:0 3px 3px 0;opacity:0;transition:var(--transition)}
+tbody tr:hover{background:rgba(255,255,255,0.03)}
+tbody tr:hover::before{opacity:1}
+.badge{
+  display:inline-block;padding:0.15rem 0.5rem;border-radius:100px;font-size:0.7rem;
+  font-weight:600;letter-spacing:0.3px;
+}
+
+.log-window{
+  background:#0a0a18;border-radius:var(--radius);padding:1rem;font-family:'JetBrains Mono','SF Mono',monospace;
+  font-size:0.8rem;line-height:1.8;border:1px solid rgba(255,255,255,0.06);min-height:200px;position:relative;
+}
+.log-line{opacity:0;transform:translateX(-10px);transition:opacity 0.3s,transform 0.3s;padding:2px 0}
+.log-line.visible{opacity:1;transform:translateX(0)}
+.log-line .ts{color:var(--subtext)}.log-line .ok{color:var(--green)}.log-line .info{color:var(--blue)}
+.log-line .warn{color:var(--yellow)}.log-line .err{color:var(--red)}
+.log-line .highlight{color:var(--peach);font-weight:600}
+.log-cursor::after{content:'\25A0';color:var(--green);animation:blink 1s step-end infinite;margin-left:2px}
+@keyframes blink{50%{opacity:0}}
+
+.c-blue{color:var(--blue)}.c-green{color:var(--green)}.c-red{color:var(--red)}
+.c-yellow{color:var(--yellow)}.c-peach{color:var(--peach)}.c-teal{color:var(--teal)}
+.c-pink{color:var(--pink)}.c-lavender{color:var(--lavender)}.c-orange{color:var(--orange)}
+.bg-blue{background:var(--blue);color:#0f0f17}.bg-green{background:var(--green);color:#0f0f17}
+.bg-red{background:var(--red);color:#0f0f17}.bg-yellow{background:var(--yellow);color:#0f0f17}
+.bg-peach{background:var(--peach);color:#0f0f17}.bg-teal{background:var(--teal);color:#0f0f17}
+.bg-pink{background:var(--pink);color:#0f0f17}.bg-lavender{background:var(--lavender);color:#0f0f17}
+.bg-orange{background:var(--orange);color:#0f0f17}
+
+.mt-1{margin-top:1rem}.mb-1{margin-bottom:1rem}
+.flex{display:flex;align-items:center;gap:0.5rem;flex-wrap:wrap}
+.gap-1{gap:1rem}.text-center{text-align:center}
+.text-sm{font-size:0.85rem;color:var(--subtext)}
+
+/* Fork split-screen */
+.fork-view{display:grid;grid-template-columns:1fr auto 1fr;gap:0.75rem;margin-bottom:1.5rem;min-height:340px}
+@media(max-width:800px){.fork-view{grid-template-columns:1fr}}
+.fork-pane{
+  background:var(--surface);border-radius:var(--radius);padding:1.25rem;
+  border:1px solid rgba(255,255,255,0.06);position:relative;overflow:hidden;
+  transition:var(--transition);
+}
+.fork-pane.highlight{border-color:var(--peach);box-shadow:0 0 30px rgba(250,179,135,0.1)}
+.fork-pane .pane-title{
+  font-size:0.7rem;text-transform:uppercase;letter-spacing:0.5px;color:var(--subtext);margin-bottom:0.75rem;
+}
+.fork-pane .pane-block{
+  padding:0.4rem 0.6rem;border-radius:6px;margin-bottom:0.35rem;font-size:0.78rem;
+  background:rgba(255,255,255,0.04);border-left:2px solid rgba(255,255,255,0.1);
+  animation:fadeIn 0.4s ease forwards;opacity:0;
+}
+@keyframes fadeIn{to{opacity:1}}
+.fork-pane .pane-block:nth-child(2){animation-delay:0.1s}
+.fork-pane .pane-block:nth-child(3){animation-delay:0.2s}
+.fork-pane .pane-block:nth-child(4){animation-delay:0.3s}
+.fork-pane .pane-block:nth-child(5){animation-delay:0.4s}
+.fork-arrow{
+  display:flex;align-items:center;justify-content:center;
+  font-size:1.8rem;color:var(--peach);animation:arrowPulse 1.5s ease-in-out infinite;
+}
+@keyframes arrowPulse{0%,100%{transform:scaleX(1);opacity:0.6}50%{transform:scaleX(1.3);opacity:1}}
+.fork-btn-wrap{text-align:center;margin-bottom:1rem}
+
+/* Shield grid */
+.shield-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(130px,1fr));gap:0.75rem}
+.shield-item{
+  display:flex;flex-direction:column;align-items:center;gap:0.4rem;
+  padding:1rem;border-radius:var(--radius);background:var(--surface);
+  border:1px solid rgba(255,255,255,0.06);transition:var(--transition);cursor:pointer;
+}
+.shield-item:hover{transform:translateY(-2px)}
+.shield-item .shield-icon{font-size:1.6rem;transition:var(--transition)}
+.shield-item .shield-name{font-size:0.72rem;color:var(--subtext);text-align:center;word-break:break-all}
+.shield-item.allowed{border-color:rgba(166,227,161,0.3)}
+.shield-item.allowed .shield-icon{filter:drop-shadow(0 0 6px rgba(166,227,161,0.4))}
+.shield-item.denied{border-color:rgba(243,139,168,0.3)}
+.shield-item.denied .shield-icon{filter:drop-shadow(0 0 6px rgba(243,139,168,0.4))}
+
+/* File tree */
+.file-tree{
+  background:var(--surface);border-radius:var(--radius);padding:1rem;
+  border:1px solid rgba(255,255,255,0.06);font-family:'JetBrains Mono','SF Mono',monospace;
+  font-size:0.82rem;line-height:2;
+}
+.file-tree .tree-item{opacity:0;transform:translateX(-10px);transition:opacity 0.5s ease,transform 0.5s ease;cursor:pointer}
+.file-tree .tree-item.visible{opacity:1;transform:translateX(0)}
+.file-tree .tree-item:hover{color:var(--blue)}
+.file-tree .folder{color:var(--yellow)}
+.file-tree .file{color:var(--subtext)}
+.file-tree .indent{padding-left:1.5rem}
+.file-tree .indent2{padding-left:3rem}
+
+/* Animated code highlighter */
+.animated-code{position:relative}
+.animated-code .highlight-overlay{
+  position:absolute;top:0;left:0;right:0;pointer-events:none;
+}
+.code-highlight-line{
+  transition:background 0.3s ease;border-radius:4px;
+}
+.code-highlight-line.active{background:rgba(137,180,250,0.12)}
+
+/* Input demo */
+.arg-demo{
+  display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem;
+}
+@media(max-width:700px){.arg-demo{grid-template-columns:1fr}}
+.arg-input-bar{
+  display:flex;gap:0.5rem;align-items:center;background:var(--surface);
+  padding:0.75rem 1rem;border-radius:var(--radius);border:1px solid rgba(255,255,255,0.06);
+  font-family:'JetBrains Mono',monospace;font-size:0.85rem;
+}
+.arg-input-bar input{
+  flex:1;background:transparent;border:none;color:var(--text);font-family:inherit;
+  font-size:0.85rem;outline:none;
+}
+.arg-input-bar input::placeholder{color:var(--subtext)}
+
+/* Injection demo */
+.injection-stage{
+  display:flex;align-items:center;justify-content:center;gap:0.5rem;flex-wrap:wrap;
+  padding:1.5rem 0;
+}
+.inj-node{
+  display:flex;flex-direction:column;align-items:center;gap:0.3rem;
+  padding:0.75rem 1rem;border-radius:var(--radius);font-size:0.78rem;
+  border:1px solid rgba(255,255,255,0.08);transition:var(--transition);
+  min-width:80px;
+}
+.inj-node .inj-icon{font-size:1.3rem}
+.inj-node .inj-label{font-size:0.7rem;color:var(--subtext)}
+.inj-node.active{transform:scale(1.1);border-color:var(--blue);background:rgba(137,180,250,0.1)}
+.inj-arrow{font-size:1.2rem;color:var(--subtext);animation:arrowPulse 1.5s ease-in-out infinite}
+.inj-demo-output{
+  background:#0a0a18;border-radius:var(--radius);padding:1rem;
+  border:1px solid rgba(255,255,255,0.06);min-height:60px;
+  font-family:'JetBrains Mono',monospace;font-size:0.82rem;line-height:1.7;
+}
+
+/* Glow pulse for skill override demo */
+@keyframes glowPulse{
+  0%,100%{box-shadow:0 0 5px rgba(137,180,250,0.2)}
+  50%{box-shadow:0 0 20px rgba(137,180,250,0.5)}
+}
+.glow-border{border:1px solid rgba(137,180,250,0.3);animation:glowPulse 2s ease-in-out infinite}
+
+/* Tool filter bar */
+.filter-bar{display:flex;gap:0.5rem;flex-wrap:wrap;margin-bottom:1rem}
+.filter-pill{
+  padding:0.3rem 0.8rem;border-radius:100px;border:1px solid rgba(255,255,255,0.08);
+  background:rgba(255,255,255,0.03);color:var(--subtext);cursor:pointer;font-size:0.75rem;
+  font-family:inherit;transition:var(--transition);
+}
+.filter-pill.active{background:rgba(137,180,250,0.15);border-color:var(--blue);color:var(--blue)}
+.filter-pill:hover:not(.active){background:rgba(255,255,255,0.06)}
+
+/* Result display */
+.result-box{
+  background:#0a0a18;border-radius:var(--radius);padding:1rem;
+  border:1px solid rgba(255,255,255,0.06);font-family:'JetBrains Mono',monospace;
+  font-size:0.82rem;line-height:1.7;min-height:40px;
+}
+</style>
+</head>
+<body>
+
+<div id="particles"></div>
+
+<section class="hero">
+  <div class="hero-badge">&#9670; Claude Code Guide</div>
+  <h1>Advanced Skills</h1>
+  <p>Dynamic context injection, subagent forking, argument passing, supporting files, tool permissions &amp; skill overrides.</p>
+  <div class="hero-arrow"></div>
+</section>
+
+<div class="container">
+
+<!-- SECTION 1: Dynamic Context Injection -->
+<section class="section" id="s1">
+  <div class="section-number" style="background:rgba(137,180,250,0.15);color:var(--blue)">01</div>
+  <h2>Dynamic Context Injection</h2>
+  <p>The killer feature: <code style="color:var(--blue)">!command</code> in SKILL.md runs a shell command at load time and injects its output directly into the prompt. No hardcoding — live data, every time.</p>
+
+  <svg class="diagram" viewBox="0 0 680 160">
+    <defs>
+      <marker id="arrBlue" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="var(--blue)"/>
+      </marker>
+      <marker id="arrGreen" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="var(--green)"/>
+      </marker>
+      <marker id="arrPeach" markerWidth="10" markerHeight="7" refX="10" refY="3.5" orient="auto">
+        <polygon points="0 0, 10 3.5, 0 7" fill="var(--peach)"/>
+      </marker>
+      <linearGradient id="flowGrad1" x1="0%" y1="0%" x2="100%" y2="0%">
+        <stop offset="0%" stop-color="var(--blue)"/><stop offset="100%" stop-color="var(--green)"/>
+      </linearGradient>
+      <filter id="glow">
+        <feGaussianBlur stdDeviation="3" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+      <filter id="glowStrong">
+        <feGaussianBlur stdDeviation="5" result="blur"/>
+        <feMerge><feMergeNode in="blur"/><feMergeNode in="SourceGraphic"/></feMerge>
+      </filter>
+    </defs>
+
+    <path d="M 40 80 L 130 80" stroke="url(#flowGrad1)" stroke-width="2" marker-end="url(#arrBlue)" class="flow-line"/>
+    <path d="M 190 80 L 290 80" stroke="url(#flowGrad1)" stroke-width="2" marker-end="url(#arrBlue)" class="flow-line"/>
+    <path d="M 350 80 L 450 80" stroke="url(#flowGrad1)" stroke-width="2" marker-end="url(#arrGreen)" class="flow-line"/>
+    <path d="M 510 80 L 610 80" stroke="url(#flowGrad1)" stroke-width="2" marker-end="url(#arrPeach)" class="flow-line"/>
+
+    <rect x="8" y="52" width="74" height="56" rx="10" fill="var(--surface)" stroke="var(--green)" stroke-width="1.5" filter="url(#glow)"/>
+    <text x="45" y="73" class="label" fill="var(--green)" font-size="9">SKILL.md</text>
+    <text x="45" y="88" class="label" fill="var(--green)" font-size="8">!command</text>
+
+    <rect x="140" y="52" width="88" height="56" rx="10" fill="var(--surface2)" stroke="var(--blue)" stroke-width="1.5"/>
+    <text x="184" y="73" class="label" fill="var(--blue)" font-size="9">Shell</text>
+    <text x="184" y="88" class="label" fill="var(--blue)" font-size="8">executes</text>
+
+    <rect x="300" y="52" width="88" height="56" rx="10" fill="var(--surface2)" stroke="var(--green)" stroke-width="1.5"/>
+    <text x="344" y="73" class="label" fill="var(--green)" font-size="9">Output</text>
+    <text x="344" y="88" class="label" fill="var(--green)" font-size="8">captured</text>
+
+    <rect x="460" y="52" width="88" height="56" rx="10" fill="var(--surface2)" stroke="var(--peach)" stroke-width="1.5"/>
+    <text x="504" y="73" class="label" fill="var(--peach)" font-size="9">Prompt</text>
+    <text x="504" y="88" class="label" fill="var(--peach)" font-size="8">sees data</text>
+
+    <circle cx="620" cy="80" r="18" fill="var(--peach)" opacity="0.85" filter="url(#glow)"/>
+    <text x="620" y="80" class="label" fill="#0f0f17" font-weight="700">AI</text>
+
+    <path d="M 620 98 L 620 130 L 45 130 L 45 108" stroke="var(--lavender)" stroke-width="1.5" fill="none" stroke-dasharray="4,3" marker-end="url(#arrBlue)"/>
+    <text x="330" y="127" class="label" fill="var(--lavender)" font-size="8">output injected as context — changes every time</text>
+  </svg>
+
+  <h3>Common Injection Patterns</h3>
+  <div class="table-wrap">
+  <table>
+    <thead><tr><th>Pattern</th><th>What It Does</th><th>Use Case</th></tr></thead>
+    <tbody>
+      <tr><td><code style="color:var(--blue)">!git diff --cached</code></td><td>Injects staged diff</td><td><span class="badge bg-green">Commit skills</span></td></tr>
+      <tr><td><code style="color:var(--blue)">!cat package.json</code></td><td>Injects project metadata</td><td><span class="badge bg-blue">Setup skills</span></td></tr>
+      <tr><td><code style="color:var(--blue)">!ls -la src/</code></td><td>Injects file listing</td><td><span class="badge bg-peach">Analysis skills</span></td></tr>
+      <tr><td><code style="color:var(--blue)">!node -e "process.version"</code></td><td>Injects runtime info</td><td><span class="badge bg-pink">Env checks</span></td></tr>
+      <tr><td><code style="color:var(--blue)">!date</code></td><td>Injects current timestamp</td><td><span class="badge bg-yellow">Logging skills</span></td></tr>
+      <tr><td><code style="color:var(--blue)">!curl -s http://localhost:3000/health</code></td><td>Injects server status</td><td><span class="badge bg-teal">Health checks</span></td></tr>
+    </tbody>
+  </table>
+  </div>
+
+  <div class="mt-1" style="text-align:center">
+    <div class="toggle-group" style="justify-content:center">
+      <button class="toggle-btn active" onclick="showInjection('diff')" data-inj="diff">git diff</button>
+      <button class="toggle-btn" onclick="showInjection('package')" data-inj="package">package.json</button>
+      <button class="toggle-btn" onclick="showInjection('ls')" data-inj="ls">ls -la</button>
+      <button class="toggle-btn" onclick="showInjection('date')" data-inj="date">date</button>
+    </div>
+    <div id="injDemoOutput" class="inj-demo-output">
+      <span class="c-blue">$</span> <span class="c-green">git diff --cached</span>
+      <br><span style="color:var(--subtext)">diff --git a/src/index.js b/src/index.js</span>
+      <br><span class="c-green">+</span> console.log("hello world");
+    </div>
+    <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--subtext)">
+      &#9664; Click a button above to see different injection outputs
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2: Subagent Skills (context: fork) -->
+<section class="section" id="s2">
+  <div class="section-number" style="background:rgba(250,179,135,0.15);color:var(--peach)">02</div>
+  <h2>Subagent Skills <span style="font-size:0.85rem;color:var(--peach);font-weight:400">context: fork</span></h2>
+  <p><code style="color:var(--peach)">context: fork</code> spawns an isolated subagent with its own context window — only the SKILL.md content is available. Main session stays untouched.</p>
+
+  <div class="fork-btn-wrap">
+    <button class="btn btn-peach" id="forkBtn" onclick="triggerFork()">&#9889; Fork Subagent</button>
+    <button class="btn btn-ghost btn-sm" onclick="resetFork()">&#8634; Reset</button>
+  </div>
+
+  <div class="fork-view" id="forkView">
+    <div class="fork-pane" id="mainPane">
+      <div class="pane-title" style="color:var(--blue)">&#9679; Main Session Context</div>
+      <div class="pane-block" style="border-left-color:var(--blue)"><span style="color:var(--blue)">CLAUDE.md</span> — project instructions</div>
+      <div class="pane-block" style="border-left-color:var(--green)"><span style="color:var(--green)">git info</span> — branch, diff, log</div>
+      <div class="pane-block" style="border-left-color:var(--yellow)"><span style="color:var(--yellow)">Conversation history</span> — 50+ messages</div>
+      <div class="pane-block" style="border-left-color:var(--pink)"><span style="color:var(--pink)">Open files</span> — 4 tabs</div>
+      <div class="pane-block" style="border-left-color:var(--teal)"><span style="color:var(--teal)">Tool results</span> — cached outputs</div>
+    </div>
+    <div class="fork-arrow" id="forkArrow">&#10142;</div>
+    <div class="fork-pane" id="subPane">
+      <div class="pane-title" style="color:var(--peach)">&#9672; Forked Subagent (Explore/Plan)</div>
+      <div class="pane-block" style="border-left-color:var(--peach);opacity:1"><span style="color:var(--peach)">SKILL.md</span> — skill instructions only</div>
+      <div class="pane-block" style="border-left-color:var(--peach);opacity:1"><span style="color:var(--peach)">!command results</span> — injected at fork</div>
+      <div class="pane-block" style="border-left-color:var(--subtext);opacity:0.5"><span style="color:var(--subtext)">No CLAUDE.md</span> — isolated context</div>
+      <div class="pane-block" style="border-left-color:var(--subtext);opacity:0.5"><span style="color:var(--subtext)">No conversation history</span> — fresh start</div>
+      <div style="margin-top:0.5rem;font-size:0.75rem;color:var(--subtext);text-align:center">&#9889; <span id="forkStatus">Click "Fork Subagent"</span></div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot r"></span><span class="code-dot y"></span><span class="code-dot g"></span></div>
+      <span>SKILL.md — subagent skill</span>
+    </div>
+    <pre style="margin:0;white-space:pre-wrap;word-break:break-word">---
+<span class="code-prop">name</span>: <span class="code-str">explore</span>
+<span class="code-prop">mode</span>: <span class="code-str">auto</span>
+<span class="code-prop">context</span>: <span class="code-str">fork</span>
+<span class="code-prop">description</span>: <span class="code-str">Spawns isolated explore agent to investigate codebase</span>
+<span class="code-prop">modelDescription</span>: <span class="code-str">Explorer agent — reads files, maps structure</span>
+---
+<span class="code-section">## Instructions</span>
+<span class="code-comment"># This subagent runs in its own context window</span>
+<span class="code-comment"># No access to main session conversation history</span>
+1. Explore the codebase structure
+2. Identify key files and patterns
+3. Report findings back to the main session</pre>
+  </div>
+</section>
+
+<!-- SECTION 3: Arguments: $ARGUMENTS -->
+<section class="section" id="s3">
+  <div class="section-number" style="background:rgba(166,227,161,0.15);color:var(--green)">03</div>
+  <h2>Arguments: <code style="color:var(--green)">$ARGUMENTS</code></h2>
+  <p>When a user invokes a skill with <code style="color:var(--blue)">/skill-name value</code>, the <code style="color:var(--green)">$ARGUMENTS</code> variable captures everything after the skill name.</p>
+
+  <div class="arg-demo">
+    <div>
+      <div class="arg-input-bar">
+        <span style="color:var(--subtext)">$</span>
+        <input type="text" id="argInput" placeholder="/commit feat: add button" oninput="updateArgPreview()">
+      </div>
+      <div class="text-sm" style="margin-top:0.25rem">Type a skill invocation above</div>
+    </div>
+    <div>
+      <div class="code-block" style="height:100%;display:flex;flex-direction:column;justify-content:center">
+        <div style="font-size:0.75rem;color:var(--subtext);margin-bottom:0.5rem">$ARGUMENTS captured:</div>
+        <div id="argPreview" style="font-size:1rem;font-weight:600;color:var(--green);min-height:1.5rem">feat: add button</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="code-block">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot r"></span><span class="code-dot y"></span><span class="code-dot g"></span></div>
+      <span>SKILL.md — with $ARGUMENTS</span>
+    </div>
+    <pre style="margin:0;white-space:pre-wrap;word-break:break-word">---
+<span class="code-prop">name</span>: <span class="code-str">commit</span>
+<span class="code-prop">mode</span>: <span class="code-str">auto</span>
+<span class="code-prop">description</span>: <span class="code-str">Create a commit with a custom message</span>
+---
+<span class="code-section">## Instructions</span>
+
+<span class="code-comment"># $ARGUMENTS contains everything after the skill name</span>
+<span class="code-comment"># User types: /commit feat: add search</span>
+<span class="code-comment"># $ARGUMENTS = "feat: add search"</span>
+
+The user wants to commit with message: <span class="code-keyword" style="background:rgba(166,227,161,0.1);padding:0 4px;border-radius:4px">$ARGUMENTS</span>
+
+1. Run <span class="code-str">`git add -A`</span> to stage all changes
+2. Run <span class="code-str">`git commit -m "<span class="code-keyword">$ARGUMENTS</span>"`</span>
+3. Show the commit output</pre>
+  </div>
+</section>
+
+<!-- SECTION 4: Supporting Files -->
+<section class="section" id="s4">
+  <div class="section-number" style="background:rgba(249,226,175,0.15);color:var(--yellow)">04</div>
+  <h2>Supporting Files</h2>
+  <p>Skills can reference companion files like templates, examples, and scripts. Claude discovers them automatically.</p>
+
+  <div style="display:flex;gap:0.5rem;margin-bottom:1rem;flex-wrap:wrap">
+    <button class="btn btn-ghost btn-sm active" id="discoverBtn" onclick="toggleDiscover()">&#9654; Discover Files</button>
+    <button class="btn btn-ghost btn-sm" onclick="resetTree()">&#8634; Reset</button>
+  </div>
+
+  <div class="file-tree" id="fileTree">
+    <div class="tree-item" style="transition-delay:0s">
+      <span class="folder">&#128193; .claude/</span>
+    </div>
+    <div class="tree-item indent" style="transition-delay:0.1s">
+      <span class="folder">&#128193; skills/</span>
+    </div>
+    <div class="tree-item indent2" style="transition-delay:0.2s">
+      <span class="file">&#128196; SKILL.md</span> <span style="color:var(--subtext);font-size:0.7rem">&#8592; main skill file</span>
+    </div>
+    <div class="tree-item indent2" style="transition-delay:0.35s">
+      <span class="file">&#128196; TEMPLATES.md</span> <span style="color:var(--blue);font-size:0.7rem">&#8592; message templates</span>
+    </div>
+    <div class="tree-item indent2" style="transition-delay:0.5s">
+      <span class="file">&#128196; EXAMPLES.md</span> <span style="color:var(--green);font-size:0.7rem">&#8592; usage examples</span>
+    </div>
+    <div class="tree-item indent2" style="transition-delay:0.65s">
+      <span class="file">&#128196; PROMPTS.md</span> <span style="color:var(--peach);font-size:0.7rem">&#8592; prompt variations</span>
+    </div>
+    <div class="tree-item indent" style="transition-delay:0.8s">
+      <span class="folder">&#128193; scripts/</span>
+    </div>
+    <div class="tree-item indent2" style="transition-delay:0.95s">
+      <span class="file">&#128196; analyze.sh</span> <span style="color:var(--teal);font-size:0.7rem">&#8592; analysis helper</span>
+    </div>
+    <div class="tree-item indent2" style="transition-delay:1.1s">
+      <span class="file">&#128196; format.js</span> <span style="color:var(--pink);font-size:0.7rem">&#8592; formatting utility</span>
+    </div>
+    <div class="tree-item indent2" style="transition-delay:1.25s">
+      <span class="file">&#128196; validate.py</span> <span style="color:var(--orange);font-size:0.7rem">&#8592; validation script</span>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5: allowed-tools Deep Dive -->
+<section class="section" id="s5">
+  <div class="section-number" style="background:rgba(243,139,168,0.15);color:var(--red)">05</div>
+  <h2><code style="color:var(--red)">allowed-tools</code> Deep Dive</h2>
+  <p>Restrict a skill to only specific tools. Block everything else. Great for sandboxed or read-only skills.</p>
+
+  <div class="filter-bar" id="toolFilterBar">
+    <span style="font-size:0.8rem;color:var(--subtext)">Filter:</span>
+    <span class="filter-pill active" onclick="filterTools('all',this)">All</span>
+    <span class="filter-pill" onclick="filterTools('allowed',this)">&#128737; Allowed</span>
+    <span class="filter-pill" onclick="filterTools('denied',this)">&#128308; Denied</span>
+  </div>
+
+  <div class="shield-grid" id="shieldGrid">
+    <div class="shield-item allowed" onclick="toggleTool(this)" data-tool="Read" data-allowed="true">
+      <div class="shield-icon">&#128737;</div>
+      <div class="shield-name">Read</div>
+    </div>
+    <div class="shield-item allowed" onclick="toggleTool(this)" data-tool="Edit" data-allowed="true">
+      <div class="shield-icon">&#128737;</div>
+      <div class="shield-name">Edit</div>
+    </div>
+    <div class="shield-item allowed" onclick="toggleTool(this)" data-tool="Write" data-allowed="true">
+      <div class="shield-icon">&#128737;</div>
+      <div class="shield-name">Write</div>
+    </div>
+    <div class="shield-item denied" onclick="toggleTool(this)" data-tool="WebSearch" data-allowed="false">
+      <div class="shield-icon">&#128308;</div>
+      <div class="shield-name">WebSearch</div>
+    </div>
+    <div class="shield-item denied" onclick="toggleTool(this)" data-tool="Bash" data-allowed="false">
+      <div class="shield-icon">&#128308;</div>
+      <div class="shield-name">Bash</div>
+    </div>
+    <div class="shield-item denied" onclick="toggleTool(this)" data-tool="WebFetch" data-allowed="false">
+      <div class="shield-icon">&#128308;</div>
+      <div class="shield-name">WebFetch</div>
+    </div>
+    <div class="shield-item allowed" onclick="toggleTool(this)" data-tool="Glob" data-allowed="true">
+      <div class="shield-icon">&#128737;</div>
+      <div class="shield-name">Glob</div>
+    </div>
+    <div class="shield-item allowed" onclick="toggleTool(this)" data-tool="Grep" data-allowed="true">
+      <div class="shield-icon">&#128737;</div>
+      <div class="shield-name">Grep</div>
+    </div>
+  </div>
+
+  <div style="margin-top:0.75rem">
+    <span class="badge bg-green" id="allowedCount">5 allowed</span>
+    <span class="badge bg-red" id="deniedCount" style="margin-left:0.5rem">3 denied</span>
+  </div>
+
+  <div class="code-block mt-1" id="allowedToolsCode">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot r"></span><span class="code-dot y"></span><span class="code-dot g"></span></div>
+      <span>SKILL.md — restricted tools</span>
+    </div>
+    <pre style="margin:0;white-space:pre-wrap;word-break:break-word">---
+<span class="code-prop">name</span>: <span class="code-str">read-only-review</span>
+<span class="code-prop">mode</span>: <span class="code-str">auto</span>
+<span class="code-prop">allowed-tools</span>:
+  - <span class="code-str">Read</span>
+  - <span class="code-str">Glob</span>
+  - <span class="code-str">Grep</span>
+<span class="code-comment">  # Bash, WebSearch, WebFetch NOT allowed</span>
+---
+<span class="code-section">## Instructions</span>
+Review the codebase for style issues and security concerns.
+Do not modify any files.</pre>
+  </div>
+</section>
+
+<!-- SECTION 6: Putting It All Together -->
+<section class="section" id="s6">
+  <div class="section-number" style="background:rgba(180,190,254,0.15);color:var(--lavender)">06</div>
+  <h2>Putting It All Together</h2>
+  <p>An advanced skill using <span class="c-peach">fork</span>, <span class="c-red">allowed-tools</span>, <span class="c-green">$ARGUMENTS</span>, and <span class="c-blue">dynamic injection</span> simultaneously.</p>
+
+  <div class="animated-code code-block" id="masterSkill">
+    <div class="code-header">
+      <div class="code-dots"><span class="code-dot r"></span><span class="code-dot y"></span><span class="code-dot g"></span></div>
+      <span>SKILL.md — advanced master skill</span>
+    </div>
+    <pre style="margin:0;white-space:pre-wrap;word-break:break-word">---
+<span class="code-prop">name</span>: <span class="code-str">audit</span>
+<span class="code-prop">mode</span>: <span class="code-str">auto</span>
+<span class="code-prop">description</span>: <span class="code-str">Full codebase audit with forked explorer</span>
+<span class="code-prop">context</span>: <span class="code-str highlight-fork" id="hlFork">fork</span>
+<span class="code-prop">allowed-tools</span>:
+  - <span class="code-str highlight-tools" id="hlTools">Bash</span>
+  - <span class="code-str highlight-tools">Read</span>
+  - <span class="code-str highlight-tools">Glob</span>
+  - <span class="code-str highlight-tools">Grep</span>
+---
+<span class="code-section">## Instructions</span>
+
+<span class="code-comment"># Dynamic context: inject current state</span>
+!<span class="highlight-inject" id="hlInject">git diff --stat</span>
+!<span class="highlight-inject">node -e "process.version"</span>
+!<span class="highlight-inject">date</span>
+
+<span class="code-comment"># $ARGUMENTS captures the user's specific focus</span>
+<span class="c-green">The user wants to audit: <span class="highlight-args" id="hlArgs">$ARGUMENTS</span></span>
+
+1. Use Read/Glob/Grep to explore relevant files
+2. Run analysis with <span class="code-str">Bash</span> tools
+3. Report findings with severity ratings
+4. Suggest fixes for each issue found</pre>
+    <div style="display:flex;justify-content:center;gap:0.5rem;margin-top:1rem">
+      <button class="btn btn-pink btn-sm" onclick="cycleHighlights()">&#9654; Animate Features</button>
+      <button class="btn btn-ghost btn-sm" onclick="stopHighlights()">&#9632; Stop</button>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 7: Execution Timeline -->
+<section class="section" id="s7">
+  <div class="section-number" style="background:rgba(248,189,127,0.15);color:var(--orange)">07</div>
+  <h2>Execution Timeline</h2>
+  <p>Click "Run Advanced Skill" to see the complete flow of a complex skill with subagent fork, dynamic injection, and tool restrictions.</p>
+
+  <div class="flex gap-1 mb-1">
+    <button class="btn btn-primary" onclick="runAdvancedExec()">&#9654; Run Advanced Skill</button>
+    <button class="btn btn-ghost" onclick="clearAdvancedExec()">&#8634; Clear</button>
+  </div>
+
+  <div class="log-window" id="advLogWindow">
+    <div style="color:var(--subtext);font-size:0.75rem;margin-bottom:0.5rem">$ claude /audit security</div>
+    <div id="advLogContent"></div>
+    <div id="advLogCursor" class="log-cursor"></div>
+  </div>
+</section>
+
+</div><!-- /container -->
+
+<script>
+// Particles
+(function(){
+  const c = document.getElementById('particles');
+  const colors = ['var(--blue)','var(--green)','var(--pink)','var(--lavender)','var(--peach)','var(--teal)','var(--orange)'];
+  for(let i=0;i<30;i++){
+    const d = document.createElement('div');
+    d.className = 'particle';
+    d.style.left = Math.random()*100+'%';
+    d.style.width = d.style.height = (2+Math.random()*4)+'px';
+    d.style.background = colors[i%colors.length];
+    d.style.animationDuration = (15+Math.random()*25)+'s';
+    d.style.animationDelay = (Math.random()*20)+'s';
+    c.appendChild(d);
+  }
+})();
+
+// IntersectionObserver
+(function(){
+  const opts = {threshold:0.1};
+  const obs = new IntersectionObserver((entries)=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');obs.unobserve(e.target)}});
+  },opts);
+  document.querySelectorAll('.section').forEach(s=>obs.observe(s));
+})();
+
+// Row hover colors
+document.querySelectorAll('tbody tr').forEach(tr=>{
+  tr.addEventListener('mouseenter',()=>{
+    tr.style.borderLeftColor = tr.style.getPropertyValue('--row-color') || 'transparent';
+  });
+  tr.addEventListener('mouseleave',()=>{
+    tr.style.borderLeftColor = 'transparent';
+  });
+});
+
+// ====== SECTION 1: Dynamic Context Injection ======
+const injectionData = {
+  diff: '<span class="c-blue">$</span> <span class="c-green">git diff --cached</span>\n<br><span style="color:var(--subtext)">diff --git a/src/index.js b/src/index.js</span>\n<br><span style="color:var(--subtext)">index abc123..def456 100644</span>\n<br><span class="c-green">+</span> console.log("hello world");\n<br><span class="c-red">-</span> console.log("old");',
+  package: '<span class="c-blue">$</span> <span class="c-green">cat package.json</span>\n<br><span style="color:var(--subtext)">{</span>\n<br>  "name": <span class="c-green">"my-project"</span>,\n<br>  "version": <span class="c-green">"1.2.3"</span>,\n<br>  "dependencies": {<span class="c-teal">"react"</span>: <span class="c-green">"^18.2.0"</span>}\n<br><span style="color:var(--subtext)">}</span>',
+  ls: '<span class="c-blue">$</span> <span class="c-green">ls -la src/</span>\n<br><span style="color:var(--subtext)">drwxr-xr-x</span>  <span class="c-blue">index.js</span>\n<br><span style="color:var(--subtext)">drwxr-xr-x</span>  <span class="c-blue">components/</span>\n<br><span style="color:var(--subtext)">drwxr-xr-x</span>  <span class="c-blue">utils/</span>\n<br><span style="color:var(--subtext)">-rw-r--r--</span>  <span class="c-blue">app.js</span>',
+  date: '<span class="c-blue">$</span> <span class="c-green">date</span>\n<br><span style="color:var(--subtext)">Tue Jun 2 14:30:00 UTC 2026</span>\n<br><br><span style="color:var(--teal);font-size:0.75rem">&#8592; injected timestamp updates every run</span>'
+};
+
+function showInjection(type){
+  document.querySelectorAll('[data-inj]').forEach(b=>b.classList.remove('active'));
+  document.querySelector(`[data-inj="${type}"]`).classList.add('active');
+  document.getElementById('injDemoOutput').innerHTML = injectionData[type];
+}
+
+// ====== SECTION 2: Subagent Fork ======
+let forked = false;
+
+function triggerFork(){
+  if(forked) return;
+  forked = true;
+  const mainPane = document.getElementById('mainPane');
+  const subPane = document.getElementById('subPane');
+  const arrow = document.getElementById('forkArrow');
+  const status = document.getElementById('forkStatus');
+
+  mainPane.style.transform = 'scale(0.97)';
+  mainPane.style.opacity = '0.7';
+
+  subPane.classList.add('highlight');
+
+  const blocks = subPane.querySelectorAll('.pane-block');
+  blocks.forEach((b,i)=>{
+    b.style.animation = 'none';
+    b.offsetHeight;
+    b.style.animation = 'fadeIn 0.4s ease forwards';
+    b.style.animationDelay = (i*0.15)+'s';
+    b.style.opacity = '0';
+    setTimeout(()=>{b.style.opacity = '1'}, (i+1)*150 + 100);
+    if(i >= 3){
+      b.style.opacity = '0.5';
+    }
+  });
+
+  arrow.innerHTML = '&#9889;';
+  arrow.style.fontSize = '2.2rem';
+  arrow.style.color = 'var(--green)';
+
+  status.innerHTML = '&#10003; Subagent forked! Isolated context active.';
+  status.style.color = 'var(--green)';
+
+  document.getElementById('forkBtn').textContent = '&#9889; Forked!';
+}
+
+function resetFork(){
+  forked = false;
+  const mainPane = document.getElementById('mainPane');
+  const subPane = document.getElementById('subPane');
+  const arrow = document.getElementById('forkArrow');
+  const status = document.getElementById('forkStatus');
+
+  mainPane.style.transform = '';
+  mainPane.style.opacity = '';
+  subPane.classList.remove('highlight');
+
+  const blocks = subPane.querySelectorAll('.pane-block');
+  blocks.forEach((b,i)=>{
+    b.style.opacity = i >= 3 ? '0.5' : '1';
+    b.style.animation = '';
+  });
+
+  arrow.innerHTML = '&#10142;';
+  arrow.style.fontSize = '';
+  arrow.style.color = '';
+
+  status.innerHTML = 'Click "Fork Subagent"';
+  status.style.color = '';
+
+  document.getElementById('forkBtn').textContent = '&#9889; Fork Subagent';
+}
+
+// ====== SECTION 3: $ARGUMENTS ======
+function updateArgPreview(){
+  const input = document.getElementById('argInput');
+  const preview = document.getElementById('argPreview');
+  const val = input.value.trim() || '(empty — type something after /skill-name)';
+  preview.textContent = val;
+}
+
+// Initialize with default
+updateArgPreview();
+
+// ====== SECTION 4: Supporting Files ======
+let treeVisible = false;
+
+function toggleDiscover(){
+  const items = document.querySelectorAll('.tree-item');
+  if(treeVisible){
+    items.forEach((item,i)=>{
+      setTimeout(()=>{item.classList.remove('visible')}, i*50);
+    });
+    treeVisible = false;
+    document.getElementById('discoverBtn').textContent = '&#9654; Discover Files';
+    return;
+  }
+  items.forEach((item,i)=>{
+    setTimeout(()=>{item.classList.add('visible')}, i*120);
+  });
+  treeVisible = true;
+  document.getElementById('discoverBtn').textContent = '&#9632; Hide Files';
+}
+
+function resetTree(){
+  const items = document.querySelectorAll('.tree-item');
+  items.forEach(item=>item.classList.remove('visible'));
+  treeVisible = false;
+  document.getElementById('discoverBtn').textContent = '&#9654; Discover Files';
+}
+
+// ====== SECTION 5: allowed-tools ======
+function toggleTool(el){
+  const allowed = el.dataset.allowed === 'true';
+  if(allowed){
+    el.dataset.allowed = 'false';
+    el.classList.remove('allowed');
+    el.classList.add('denied');
+    el.querySelector('.shield-icon').innerHTML = '&#128308;';
+  } else {
+    el.dataset.allowed = 'true';
+    el.classList.remove('denied');
+    el.classList.add('allowed');
+    el.querySelector('.shield-icon').innerHTML = '&#128737;';
+  }
+  updateToolCounts();
+  updateToolsCode();
+}
+
+function updateToolCounts(){
+  const allowed = document.querySelectorAll('.shield-item.allowed').length;
+  const denied = document.querySelectorAll('.shield-item.denied').length;
+  document.getElementById('allowedCount').textContent = allowed + ' allowed';
+  document.getElementById('deniedCount').textContent = denied + ' denied';
+}
+
+function updateToolsCode(){
+  const items = document.querySelectorAll('.shield-item');
+  const allowed = [];
+  items.forEach(item=>{
+    if(item.dataset.allowed === 'true') allowed.push(item.dataset.tool);
+  });
+  const pre = document.querySelector('#allowedToolsCode pre');
+  pre.innerHTML = `---\n<span class="code-prop">name</span>: <span class="code-str">read-only-review</span>\n<span class="code-prop">mode</span>: <span class="code-str">auto</span>\n<span class="code-prop">allowed-tools</span>:\n${allowed.map(t=>`  - <span class="code-str">${t}</span>`).join('\n')}\n<span class="code-comment">  # all other tools blocked</span>\n---\n<span class="code-section">## Instructions</span>\nReview the codebase for style issues and security concerns.\nDo not modify any files.`;
+}
+
+function filterTools(filter, el){
+  document.querySelectorAll('.filter-pill').forEach(p=>p.classList.remove('active'));
+  el.classList.add('active');
+  document.querySelectorAll('.shield-item').forEach(item=>{
+    if(filter === 'all'){item.style.display = ''; return;}
+    if(filter === 'allowed'){item.style.display = item.dataset.allowed === 'true' ? '' : 'none';}
+    if(filter === 'denied'){item.style.display = item.dataset.allowed === 'false' ? '' : 'none';}
+  });
+}
+
+// ====== SECTION 6: Putting It All Together ======
+let highlightInterval = null;
+let highlightStep = 0;
+
+function cycleHighlights(){
+  if(highlightInterval) return;
+  const ids = ['hlFork','hlTools','hlInject','hlArgs'];
+  const colors = ['var(--peach)','var(--red)','var(--blue)','var(--green)'];
+  const names = ['fork','tools','inject','args'];
+  highlightStep = 0;
+
+  function step(){
+    ids.forEach((id,i)=>{
+      const el = document.getElementById(id);
+      if(!el) return;
+      el.style.background = i === highlightStep ? colors[i] : 'transparent';
+      el.style.color = i === highlightStep ? '#0f0f17' : '';
+      el.style.padding = i === highlightStep ? '0 4px' : '0';
+      el.style.borderRadius = i === highlightStep ? '4px' : '0';
+      el.style.transition = 'all 0.3s ease';
+    });
+    highlightStep = (highlightStep + 1) % ids.length;
+  }
+  step();
+  highlightInterval = setInterval(step, 1200);
+}
+
+function stopHighlights(){
+  if(highlightInterval){
+    clearInterval(highlightInterval);
+    highlightInterval = null;
+  }
+  const ids = ['hlFork','hlTools','hlInject','hlArgs'];
+  ids.forEach(id=>{
+    const el = document.getElementById(id);
+    if(!el) return;
+    el.style.background = '';
+    el.style.color = '';
+    el.style.padding = '';
+    el.style.borderRadius = '';
+  });
+}
+
+// ====== SECTION 7: Execution Timeline ======
+const advLogs = [
+  {text:'User types: <span class="highlight">/audit security</span>', cls:'info'},
+  {text:'Claude locates SKILL.md with context: <span class="highlight">fork</span>', cls:'info'},
+  {text:'Allowed tools filtered: <span class="highlight">Bash, Read, Glob, Grep</span> only', cls:'ok'},
+  {text:'Dynamic injection phase — running <span class="highlight">!commands</span>', cls:'warn'},
+  {text:'  !git diff --stat → injects staged changes', cls:'info'},
+  {text:'  !node -e "process.version" → injects runtime', cls:'info'},
+  {text:'  !date → injects timestamp', cls:'info'},
+  {text:'$ARGUMENTS captured: <span class="highlight">"security"</span>', cls:'ok'},
+  {text:'<span class="highlight">Subagent forked!</span> — isolated context spawned (Explore/Plan)', cls:'warn'},
+  {text:'  Subagent reads files, maps structure...', cls:'info'},
+  {text:'  Subagent returns findings to main session', cls:'ok'},
+  {text:'Main session assembles final audit report', cls:'info'},
+  {text:'Output delivered — security audit complete', cls:'ok'},
+  {text:'<span style="font-weight:700">Advanced skill execution finished.</span>', cls:'ok'}
+];
+let advExecRunning = false;
+
+function runAdvancedExec(){
+  if(advExecRunning) return;
+  advExecRunning = true;
+  const log = document.getElementById('advLogContent');
+  const cursor = document.getElementById('advLogCursor');
+  log.innerHTML = '';
+  cursor.style.display = 'inline';
+  let i = 0;
+  function addLine(){
+    if(i >= advLogs.length){
+      cursor.style.display = 'none';
+      const done = document.createElement('div');
+      done.style.color = 'var(--green)';
+      done.style.fontWeight = '700';
+      done.style.marginTop = '0.5rem';
+      done.textContent = '\u2713 Advanced skill executed with fork + injection + restrictions';
+      log.appendChild(done);
+      advExecRunning = false;
+      return;
+    }
+    const d = document.createElement('div');
+    d.className = 'log-line';
+    d.innerHTML = '<span class="ts">['+String(i+1).padStart(2,'0')+']</span> <span class="'+advLogs[i].cls+'">'+advLogs[i].text+'</span>';
+    log.appendChild(d);
+    requestAnimationFrame(()=>d.classList.add('visible'));
+    i++;
+    setTimeout(addLine, 380);
+  }
+  addLine();
+}
+
+function clearAdvancedExec(){
+  if(advExecRunning) return;
+  document.getElementById('advLogContent').innerHTML = '';
+  document.getElementById('advLogCursor').style.display = 'inline';
+}
+
+// Init tool counts
+updateToolCounts();
+</script>
+</body>
+</html>

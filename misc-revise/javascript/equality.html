@@ -1,0 +1,624 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>JS Equality · undefined, null, == vs === — Deep Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#11111b;color:#cdd6f4;padding:20px}
+h1{font-size:2.5rem;margin-bottom:.3rem}
+h2{font-size:1.4rem;margin:2rem 0 1rem;color:#89b4fa;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.7rem;background:#313244;color:#a6adc8;padding:2px 8px;border-radius:999px;font-weight:400}
+h3{font-size:1.05rem;margin:1.2rem 0 .5rem;color:#a6e3a1}
+p,li{color:#bac2de;line-height:1.7}
+code{background:#181825;padding:2px 6px;border-radius:4px;font-size:.85em;color:#fab387;font-family:'JetBrains Mono',monospace}
+pre{background:#181825;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0;border:1px solid #313244}
+pre code{background:none;padding:0;color:#a6e3a1}
+.wrapper{max-width:960px;margin:0 auto}
+.gradient-text{background:linear-gradient(135deg,#89b4fa,#a6e3a1,#f9e2af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#6c7086;margin-bottom:2rem}
+.demo-panel{background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:20px;margin:20px 0}
+.demo-panel .label{font-size:.75rem;color:#6c7086;margin-bottom:8px;font-family:monospace}
+.demo-panel .label span{color:#89b4fa}
+.tip{background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.85rem;color:#a6adc8}
+.tip strong{color:#f9e2af}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.84rem;border-left:4px solid #89b4fa;background:rgba(137,180,250,.04)}
+.callout.danger{border-color:#f38ba8;background:rgba(243,139,168,.06)}
+.callout.warn{border-color:#f9e2af;background:rgba(249,226,175,.06)}
+.callout.success{border-color:#a6e3a1;background:rgba(166,227,161,.06)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;font-size:.85rem}
+.info-card .prop{color:#89b4fa;font-family:monospace;font-weight:600}
+.info-card .val{color:#a6e3a1}
+.info-card .desc{color:#6c7086;font-size:.8rem;margin-top:4px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{background:#181825;color:#89b4fa;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid #313244}
+td{padding:10px 14px;border-bottom:1px solid #313244;color:#a6adc8;font-family:monospace;font-size:.8rem}
+tr:hover td{background:#1e1e2e50}
+td:first-child{font-family:monospace;color:#fab387}
+.coercion-flow{display:flex;align-items:center;gap:6px;padding:14px;background:#181825;border-radius:8px;border:1px solid #313244;flex-wrap:wrap;justify-content:center}
+.cf-step{background:#313244;border-radius:6px;padding:6px 12px;font-size:.75rem;color:#cdd6f4;text-align:center;min-width:60px}
+.cf-step.active{background:#89b4fa30;border:1px solid #89b4fa}
+.cf-arrow{color:#585b70;font-size:1.2rem}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.controls button,.btn{background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:monospace;transition:.2s}
+.controls button:hover,.btn:hover{background:#45475a}
+.controls button.active,.btn.active{background:#89b4fa30;border-color:#89b4fa;color:#89b4fa}
+.eq-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:12px 0}
+@media(max-width:700px){.eq-grid{grid-template-columns:1fr}}
+.eq-card{border-radius:8px;padding:14px;position:relative}
+.eq-card.loose{background:rgba(249,226,175,.06);border:1px solid #f9e2af40}
+.eq-card.strict{background:rgba(137,180,250,.06);border:1px solid #89b4fa40}
+.eq-card .eq-result{font-size:1.5rem;font-weight:700;text-align:center;padding:10px;margin:8px 0;border-radius:6px;font-family:monospace}
+.eq-card .eq-result.true{background:rgba(166,227,161,.12);color:#a6e3a1}
+.eq-card .eq-result.false{background:rgba(243,139,168,.12);color:#f38ba8}
+.eq-card .eq-title{font-weight:600;font-size:.85rem;margin-bottom:4px}
+.error-line{color:#f38ba8;font-weight:600}
+.console-line{color:#a6e3a1}
+.output-line{color:#cdd6f4}
+.playground-row{display:flex;gap:6px;align-items:center;margin:6px 0;flex-wrap:wrap}
+.playground-row select{background:#313244;color:#cdd6f4;border:1px solid #45475a;border-radius:4px;padding:4px 8px;font-family:monospace;font-size:.8rem}
+.playground-row input{background:#313244;border:1px solid #45475a;color:#cdd6f4;padding:4px 8px;border-radius:4px;font-family:monospace;font-size:.8rem;width:120px}
+::selection{background:#89b4fa40}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#11111b}
+::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+.console-box{background:#0a0a14;border:1px solid #313244;border-radius:8px;padding:14px;font-family:monospace;font-size:.8rem;line-height:1.8;min-height:60px;margin:10px 0}
+.console-box .prompt{color:#6c7086}
+.console-box .result{color:#a6e3a1}
+.console-box .error{color:#f38ba8}
+.console-box .special{color:#f9e2af}
+.vis-row{display:flex;gap:4px;align-items:center;margin:8px 0;flex-wrap:wrap}
+.vis-tag{display:inline-flex;align-items:center;gap:4px;padding:4px 12px;border-radius:20px;font-size:.75rem;font-family:monospace;font-weight:600}
+.vis-tag.tag-type{background:#313244;color:#a6adc8}
+.vis-tag.tag-value{background:#1e1e2e;border:1px solid #45475a;color:#cdd6f4}
+.vis-tag.tag-undefined{background:rgba(243,139,168,.15);border:1px solid #f38ba8;color:#f38ba8}
+.vis-tag.tag-null{background:rgba(108,112,134,.15);border:1px solid #6c7086;color:#6c7086}
+.vis-tag.tag-number{background:rgba(137,180,250,.15);border:1px solid #89b4fa;color:#89b4fa}
+.vis-tag.tag-string{background:rgba(166,227,161,.15);border:1px solid #a6e3a1;color:#a6e3a1}
+.vis-tag.tag-boolean{background:rgba(249,226,175,.15);border:1px solid #f9e2af;color:#f9e2af}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1><span class="gradient-text">JS Equality</span> — Deep Visual Guide</h1>
+<p class="subtitle">undefined, null, ReferenceError, <code>==</code> vs <code>===</code>, type coercion &mdash; see exactly what happens under the hood.</p>
+
+<!-- ===== 1. ReferenceError ===== -->
+<section>
+<h2><span>1. ReferenceError</span> <span class="badge">The "Not Found" Error</span></h2>
+<p>JavaScript throws a <strong>ReferenceError</strong> when you try to access a variable that doesn't exist in any scope. This is different from <code>undefined</code> &mdash; the variable was never declared at all.</p>
+
+<div class="demo-panel">
+  <div class="label">Click each to see the difference</div>
+  <div class="controls" id="refErrorControls">
+    <button class="active" data-v="declared">let x = 42; x</button>
+    <button data-v="undeclared">y (never declared)</button>
+    <button data-v="tdz">let z; console.log(z)</button>
+    <button data-v="typo">typo in variable name</button>
+  </div>
+  <div class="console-box" id="refErrorConsole">
+    <div class="prompt">&gt; let x = 42; x</div>
+    <div class="result">&lArr; 42</div>
+  </div>
+</div>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop" style="color:#f38ba8;">ReferenceError</div><div class="desc">Variable <strong>was never declared</strong> in any accessible scope. The JS engine cannot find it. <span style="color:#f38ba8;">Code execution stops here</span> unless caught.</div></div>
+  <div class="info-card"><div class="prop" style="color:#a6e3a1;">undefined</div><div class="desc">Variable <strong>was declared</strong> but has <strong>no value assigned</strong>. JS engine knows it exists, but the value is empty. <span style="color:#a6e3a1;">Code continues running.</span></div></div>
+  <div class="info-card"><div class="prop" style="color:#f9e2af;">TDZ (Temporal Dead Zone)</div><div class="desc">Accessing <code>let</code> or <code>const</code> <strong>before declaration</strong> throws ReferenceError too. The variable exists in scope but isn't initialized yet.</div></div>
+</div>
+
+<div class="callout danger">
+  <strong>&#9888; Common cause:</strong> Typos. <code>userName</code> vs <code>username</code>. <code>event.target</code> vs <code>event.target</code>. Always check spelling first when you see ReferenceError.
+</div>
+</section>
+
+<!-- ===== 2. undefined ===== -->
+<section>
+<h2><span>2. undefined</span> <span class="badge">Default Empty</span></h2>
+<p><code>undefined</code> is the default value JavaScript assigns when nothing else is set. It's a <strong>primitive type</strong> with a single value: <code>undefined</code>.</p>
+
+<div class="demo-panel">
+  <div class="label">Where <code>undefined</code> appears automatically:</div>
+  <div class="console-box" id="undefinedConsole">
+    <div class="prompt">&gt; let a;</div>
+    <div class="result">&lArr; undefined (declared, no assignment)</div>
+    <div class="prompt">&gt; function f() {}</div>
+    <div class="result">&lArr; undefined (no return statement)</div>
+    <div class="prompt">&gt; const obj = {}; obj.x</div>
+    <div class="result">&lArr; undefined (property doesn't exist)</div>
+  </div>
+</div>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop" style="color:#f38ba8;">Declared, no value</div><div class="desc"><code>let x;</code> → x is <code>undefined</code>. The variable slot exists but is empty.</div></div>
+  <div class="info-card"><div class="prop" style="color:#f38ba8;">Missing property</div><div class="desc"><code>obj.nonExistent</code> → <code>undefined</code>. Not an error — JS just returns undefined.</div></div>
+  <div class="info-card"><div class="prop" style="color:#f38ba8;">No return</div><div class="desc"><code>function f() {}</code> → returns <code>undefined</code>. Every function returns something.</div></div>
+  <div class="info-card"><div class="prop" style="color:#f38ba8;">Missing args</div><div class="desc"><code>f(a)</code> called as <code>f()</code> → a is <code>undefined</code> inside.</div></div>
+  <div class="info-card"><div class="prop" style="color:#f38ba8;">void operator</div><div class="desc"><code>void 0</code> → <code>undefined</code>. Safe way to get undefined.</div></div>
+</div>
+
+<div class="tip">
+  <strong>Never assign undefined manually.</strong> If you need to mark something as "empty", use <code>null</code>. Treat <code>undefined</code> as JS's own "not set" signal, not yours.
+</div>
+</section>
+
+<!-- ===== 3. null ===== -->
+<section>
+<h2><span>3. null</span> <span class="badge">Intentional Absence</span></h2>
+<p><code>null</code> is a <strong>primitive value</strong> representing the intentional absence of any object value. You assign it deliberately.</p>
+
+<div class="demo-panel">
+  <div class="label">The crucial difference:</div>
+  <div class="vis-row">
+    <span class="vis-tag tag-undefined">undefined</span>
+    <span style="font-size:.8rem;color:#6c7086;">— "JavaScript hasn't set anything here"</span>
+  </div>
+  <div class="vis-row">
+    <span class="vis-tag tag-null">null</span>
+    <span style="font-size:.8rem;color:#6c7086;">— "I explicitly set this to nothing"</span>
+  </div>
+  <div class="console-box" style="margin-top:10px;">
+    <div class="prompt">&gt; let user = null;</div>
+    <div class="result">&lArr; null (developer says: no user)</div>
+    <div class="prompt">&gt; typeof null</div>
+    <div class="result">&lArr; "object" <span style="color:#6c7088;">// historic JS bug, kept forever</span></div>
+    <div class="prompt">&gt; Object.getPrototypeOf(null)</div>
+    <div class="error">&lArr; TypeError: Cannot read properties of null</div>
+  </div>
+</div>
+
+<div class="info-grid">
+  <div class="info-card"><div class="prop" style="color:#6c7086;">Use null when</div><div class="desc">You want to <strong>reset</strong> a value. <strong>Clear</strong> a reference. Represent "no data" intentionally (e.g., no user selected, no result yet).</div></div>
+  <div class="info-card"><div class="prop" style="color:#6c7086;">typeof null</div><div class="desc">Returns <code>"object"</code> — a bug since JS's birth (1995). Can't be fixed without breaking the web. Always use strict equality to check for null.</div></div>
+</div>
+</section>
+
+<!-- ===== 4. undefined vs null head-to-head ===== -->
+<section>
+<h2><span>4. undefined vs null</span> <span class="badge">Head to Head</span></h2>
+
+<div class="eq-grid">
+  <div class="eq-card strict">
+    <div class="eq-title">undefined</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;">
+      <span class="vis-tag tag-undefined">undefined</span>
+      <span class="vis-tag tag-type">typeof → "undefined"</span>
+    </div>
+    <div style="font-size:.8rem;color:#bac2de;line-height:1.7;">
+      <div>✔ Variable declared, not assigned</div>
+      <div>✔ Property doesn't exist</div>
+      <div>✔ No return value</div>
+      <div>✔ Missing function argument</div>
+      <div>✘ Not intentional — JS's default</div>
+    </div>
+  </div>
+  <div class="eq-card loose">
+    <div class="eq-title">null</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin:8px 0;">
+      <span class="vis-tag tag-null">null</span>
+      <span class="vis-tag tag-type">typeof → "object" (bug)</span>
+    </div>
+    <div style="font-size:.8rem;color:#bac2de;line-height:1.7;">
+      <div>✘ Not automatic — you assign it</div>
+      <div>✔ Intentional "no value"</div>
+      <div>✔ Clearing references</div>
+      <div>✔ API responses (no data)</div>
+      <div>✔ Database records (field is null)</div>
+    </div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">Equality comparisons — click to test:</div>
+  <div class="controls" id="nullUndefControls">
+    <button class="active" data-v="undefEqNull">undefined == null</button>
+    <button data-v="undefEqeqNull">undefined === null</button>
+    <button data-v="typeofUndef">typeof undefined</button>
+    <button data-v="typeofNull">typeof null</button>
+    <button data-v="ObjectIs">Object.is(undefined, null)</button>
+  </div>
+  <div class="console-box" id="nullUndefConsole">
+    <div class="prompt">&gt; undefined == null</div>
+    <div class="result" style="color:#a6e3a1;">&lArr; true <span style="color:#6c7086;">// loose equality says they're equal!</span></div>
+  </div>
+  <div class="tip">
+    <strong>Critical rule:</strong> <code>undefined == null</code> is <code>true</code>. But <code>undefined === null</code> is <code>false</code>. They are different types (<code>"undefined"</code> vs <code>"object"</code>). Always use <code>===</code> when checking for null or undefined.
+  </div>
+</div>
+</section>
+
+<!-- ===== 5. == vs === ===== -->
+<section>
+<h2><span>5. <code>==</code> vs <code>===</code></span> <span class="badge">The Core of Equality</span></h2>
+<p><strong>=== (Strict):</strong> No type conversion. If types differ → false. <strong>== (Loose):</strong> Converts types first, then compares.</p>
+
+<div class="eq-grid">
+  <div class="eq-card loose">
+    <div class="eq-title">== Loose Equality</div>
+    <div style="font-size:.78rem;color:#bac2de;line-height:1.7;">
+      <div>1️⃣ Are types the same? → compare directly</div>
+      <div>2️⃣ Different types? → <strong>coerce</strong> one or both</div>
+      <div>3️⃣ Compare the coerced values</div>
+    </div>
+    <div style="margin-top:8px;padding:8px;background:rgba(249,226,175,.06);border-radius:4px;font-size:.75rem;">
+      <code style="color:#f9e2af;">"5" == 5</code> → coerces string to number → <code style="color:#a6e3a1;">true</code><br>
+      <code style="color:#f9e2af;">0 == false</code> → coerces boolean to number → <code style="color:#a6e3a1;">true</code>
+    </div>
+  </div>
+  <div class="eq-card strict">
+    <div class="eq-title">=== Strict Equality</div>
+    <div style="font-size:.78rem;color:#bac2de;line-height:1.7;">
+      <div>1️⃣ Are types the same?</div>
+      <div style="margin-left:12px;">→ <strong style="color:#a6e3a1;">No:</strong> return <strong>false</strong> immediately</div>
+      <div style="margin-left:12px;">→ <strong style="color:#a6e3a1;">Yes:</strong> compare values</div>
+    </div>
+    <div style="margin-top:8px;padding:8px;background:rgba(137,180,250,.06);border-radius:4px;font-size:.75rem;">
+      <code style="color:#89b4fa;">"5" === 5</code> → types differ → <code style="color:#f38ba8;">false</code><br>
+      <code style="color:#89b4fa;">0 === false</code> → types differ → <code style="color:#f38ba8;">false</code>
+    </div>
+  </div>
+</div>
+
+<div class="demo-panel">
+  <div class="label">The coercion flow — what happens with <code>==</code>:</div>
+  <div class="coercion-flow" id="coercionFlow">
+    <div class="cf-step" id="cf1">"5" == 5</div>
+    <div class="cf-arrow">→</div>
+    <div class="cf-step" id="cf2">Coerce string → number</div>
+    <div class="cf-arrow">→</div>
+    <div class="cf-step" id="cf3">5 == 5</div>
+    <div class="cf-arrow">→</div>
+    <div class="cf-step" id="cf4" style="background:#a6e3a130;border:1px solid #a6e3a1;color:#a6e3a1;">true</div>
+  </div>
+</div>
+
+<div class="callout danger">
+  <strong>&#9888; The golden rule:</strong> Always use <code>===</code> except in these specific cases where <code>==</code> is intentional: checking <code>null == null</code> (catches both null and undefined), or comparing against <code>null/undefined</code> in a single check.
+</div>
+</section>
+
+<!-- ===== 6. Coercion Matrix ===== -->
+<section>
+<h2><span>6. Type Coercion Matrix</span> <span class="badge">The WTF Table</span></h2>
+<p>See for yourself which values are equal under <code>==</code> vs <code>===</code>:</p>
+
+<div class="demo-panel">
+  <div class="controls" id="coercionMatrixControls">
+    <button class="active" data-v="loose">== (loose)</button>
+    <button data-v="strict">=== (strict)</button>
+  </div>
+  <table id="coercionTable">
+    <thead><tr><th>Expression</th><th>Result</th><th>Why?</th></tr></thead>
+    <tbody id="coercionTbody"></tbody>
+  </table>
+</div>
+
+<div class="tip">
+  <strong>Reacting to <code>==</code> surprises is a rite of passage.</strong> <code>[] == false</code> is <code>true</code> (empty array → "" → 0 → false). <code>[] == ![]</code> is <code>true</code> (both coerce to 0). Memorize: use <code>===</code> and you avoid all of these.
+</div>
+</section>
+
+<!-- ===== 7. Interactive Playground ===== -->
+<section>
+<h2><span>7. Interactive Playground</span> <span class="badge">Test Any Comparison</span></h2>
+<p>Type any two JavaScript expressions and see what <code>==</code> and <code>===</code> say about them, plus their types:</p>
+
+<div class="demo-panel">
+  <div class="playground-row">
+    <input id="pgLeft" value='"5"'>
+    <select id="pgOp">
+      <option value="==">==</option>
+      <option value="===" selected>===</option>
+      <option value="!=">!=</option>
+      <option value="!==">!==</option>
+    </select>
+    <input id="pgRight" value="5">
+    <button id="pgRun" class="btn active">Evaluate</button>
+  </div>
+  <div class="eq-grid">
+    <div class="eq-card loose">
+      <div class="eq-title">Left value</div>
+      <div style="font-family:monospace;font-size:1rem;padding:8px 0;" id="pgLeftValue">"5"</div>
+      <div style="font-size:.8rem;color:#6c7086;">Type: <span id="pgLeftType" style="color:#fab387;">string</span></div>
+    </div>
+    <div class="eq-card strict">
+      <div class="eq-title">Right value</div>
+      <div style="font-family:monospace;font-size:1rem;padding:8px 0;" id="pgRightValue">5</div>
+      <div style="font-size:.8rem;color:#6c7086;">Type: <span id="pgRightType" style="color:#fab387;">number</span></div>
+    </div>
+  </div>
+  <div style="text-align:center;padding:16px;background:#181825;border:1px solid #313244;border-radius:8px;">
+    <div style="font-size:.8rem;color:#6c7086;" id="pgExprLabel">"5" === 5</div>
+    <div style="font-size:2.5rem;font-weight:700;" id="pgResult">false</div>
+  </div>
+  <div class="tip">
+    <strong>Tip:</strong> Try <code>null == undefined</code>, <code>[] == false</code>, <code>"" == 0</code>, <code>" " == 0</code>. See which ones surprise you — then reflect on why <code>===</code> is safer.
+  </div>
+</div>
+</section>
+
+<!-- ===== 8. Best Practices ===== -->
+<section>
+<h2><span>8. Best Practices</span> <span class="badge">Decision Tree</span></h2>
+
+<div class="info-grid">
+  <div class="info-card">
+    <div class="prop" style="color:#a6e3a1;">✅ Always use ===</div>
+    <div class="desc">Default to strict equality. No surprises. No coercion. Your code is explicit about what it compares.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#a6e3a1;">✅ Use == only for null check</div>
+    <div class="desc"><code>if (x == null)</code> catches both <code>null</code> and <code>undefined</code>. Equivalent to <code>x === null || x === undefined</code>.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#a6e3a1;">✅ Use Object.is for edge cases</div>
+    <div class="desc"><code>Object.is(NaN, NaN)</code> → <code>true</code> (unlike ===). <code>Object.is(-0, +0)</code> → <code>false</code>.</div>
+  </div>
+  <div class="info-card">
+    <div class="prop" style="color:#f38ba8;">❌ Never rely on coercion</div>
+    <div class="desc">Code like <code>if (x == 1)</code> is fine (same type). But <code>if (x == "1")</code> is ambiguous — be explicit.</div>
+  </div>
+</div>
+
+<pre><code><span style="color:#6c7086">// Good — explicit, no surprises</span>
+<span style="color:#89b4fa">if</span> (x <span style="color:#a6e3a1;">===</span> null)  { <span style="color:#6c7086">/* only null */</span> }
+<span style="color:#89b4fa">if</span> (x <span style="color:#a6e3a1;">==</span> null)   { <span style="color:#6c7086">/* null OR undefined — intentional */</span> }
+<span style="color:#89b4fa">if</span> (x <span style="color:#a6e3a1;">===</span> <span style="color:#fab387;">undefined</span>) { <span style="color:#6c7086">/* only undefined */</span> }
+<span style="color:#89b4fa">if</span> (typeof x <span style="color:#a6e3a1;">===</span> <span style="color:#a6e3a1;">'undefined'</span>) { <span style="color:#6c7086">/* safe even if x is not declared */</span> }
+
+<span style="color:#6c7086">// Bad — relies on coercion, hard to read</span>
+<span style="color:#89b4fa">if</span> (!x)  { <span style="color:#6c7086">/* true for 0, "", false, null, undefined, NaN */</span> }
+<span style="color:#89b4fa">if</span> (x == <span style="color:#a6e3a1;">'false'</span>) { <span style="color:#6c7086">// ??? */</span> }</code></pre>
+</section>
+
+<!-- ===== 9. Quick Reference ===== -->
+<section>
+<h2><span>Quick Reference</span> <span class="badge">All in One</span></h2>
+<table>
+  <thead><tr><th>Expression</th><th>==</th><th>===</th><th>Notes</th></tr></thead>
+  <tbody id="refTableBody"></tbody>
+</table>
+</section>
+
+<footer style="border-top:1px solid #313244;padding-top:20px;margin-top:40px;text-align:center;font-size:.85rem;color:#585b70;">
+  JS Equality · undefined, null, == vs === — Deep Visual Guide
+</footer>
+</div>
+
+<script>
+// ===== 1. ReferenceError simulator =====
+(function(){
+  const consoleBox = document.getElementById('refErrorConsole');
+  const scenarios = {
+    declared: {
+      lines: [
+        '<span class="prompt">&gt; let x = 42; x</span>',
+        '<span class="result">&lArr; 42</span>'
+      ]
+    },
+    undeclared: {
+      lines: [
+        '<span class="prompt">&gt; y</span>',
+        '<span class="error">&lArr; ReferenceError: y is not defined</span>',
+        '<span style="color:#6c7086;font-size:.78rem;">// The variable "y" was never declared anywhere in scope.</span>'
+      ]
+    },
+    tdz: {
+      lines: [
+        '<span class="prompt">&gt; console.log(z); let z = 5;</span>',
+        '<span class="error">&lArr; ReferenceError: Cannot access "z" before initialization</span>',
+        '<span style="color:#6c7086;font-size:.78rem;">// z is in the Temporal Dead Zone — declared but not initialized.</span>'
+      ]
+    },
+    typo: {
+      lines: [
+        '<span class="prompt">&gt; const userName = "Alice"; userNamw</span>',
+        '<span class="error">&lArr; ReferenceError: userNamw is not defined</span>',
+        '<span style="color:#6c7086;font-size:.78rem;">// Typo! "userNamw" was never declared (you meant "userName").</span>'
+      ]
+    }
+  };
+
+  document.querySelectorAll('#refErrorControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#refErrorControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const s = scenarios[btn.dataset.v];
+      consoleBox.innerHTML = s.lines.join('\n');
+    });
+  });
+})();
+
+// ===== 4. null vs undefined =====
+(function(){
+  const consoleBox = document.getElementById('nullUndefConsole');
+  const scenarios = {
+    'undefEqNull': [
+      '<span class="prompt">&gt; undefined == null</span>',
+      '<span class="result" style="color:#a6e3a1;">&lArr; true <span style="color:#6c7086;">// loose equality coerces them to the same value</span></span>'
+    ],
+    'undefEqeqNull': [
+      '<span class="prompt">&gt; undefined === null</span>',
+      '<span class="result" style="color:#f38ba8;">&lArr; false <span style="color:#6c7086;">// different types: "undefined" vs "object"</span></span>'
+    ],
+    'typeofUndef': [
+      '<span class="prompt">&gt; typeof undefined</span>',
+      '<span class="result">&lArr; "undefined"</span>'
+    ],
+    'typeofNull': [
+      '<span class="prompt">&gt; typeof null</span>',
+      '<span class="result">&lArr; "object" <span style="color:#6c7086;">// historic bug since 1995</span></span>'
+    ],
+    'ObjectIs': [
+      '<span class="prompt">&gt; Object.is(undefined, null)</span>',
+      '<span class="result" style="color:#f38ba8;">&lArr; false <span style="color:#6c7086;">// Object.is behaves like === for these</span></span>'
+    ]
+  };
+
+  document.querySelectorAll('#nullUndefControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#nullUndefControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      consoleBox.innerHTML = scenarios[btn.dataset.v].join('\n');
+    });
+  });
+})();
+
+// ===== 5. Coercion Flow =====
+(function(){
+  const flowSteps = [
+    { label: '"5" == 5', type: 'start' },
+    { label: 'String → Number', type: 'coerce' },
+    { label: '5 == 5', type: 'compare' },
+    { label: 'true', type: 'result' }
+  ];
+  const flowEl = document.getElementById('coercionFlow');
+  // Already set in HTML
+})();
+
+// ===== 6. Coercion Matrix =====
+(function(){
+  const tbody = document.getElementById('coercionTbody');
+  const data = [
+    { expr: 'null == undefined', loose: 'true', strict: 'false', why: 'Loose: null/undefined are equal. Strict: different types.' },
+    { expr: 'null === undefined', loose: 'false', strict: 'false', why: 'Both return false. Different types → false immediately.' },
+    { expr: '"5" == 5', loose: 'true', strict: 'false', why: 'Loose coerces "5" → 5. Strict: string ≠ number.' },
+    { expr: '0 == false', loose: 'true', strict: 'false', why: 'Loose coerces false → 0. Strict: number ≠ boolean.' },
+    { expr: '"" == 0', loose: 'true', strict: 'false', why: 'Loose coerces "" → 0. Empty string is falsy.' },
+    { expr: '"" == false', loose: 'true', strict: 'false', why: 'Loose coercions all the way down: "" → 0, false → 0.' },
+    { expr: '" " == 0', loose: 'true', strict: 'false', why: 'Space string → 0. Whitespace is trimmed and coerced.' },
+    { expr: '[] == false', loose: 'true', strict: 'false', why: 'Empty array → "" → 0 → matches false.' },
+    { expr: '[] == ![]', loose: 'true', strict: 'false', why: 'ToPrimitive([]) = "", "" → 0. ![] = false, false → 0. Both 0!' },
+    { expr: '[] == 0', loose: 'true', strict: 'false', why: 'Array → primitive via "" → 0.' },
+    { expr: '[1] == 1', loose: 'true', strict: 'false', why: '[1] → "1" → 1. Strict fails on type.' },
+    { expr: '[1,2] == "1,2"', loose: 'true', strict: 'false', why: 'Array → string via toString().' },
+    { expr: 'NaN == NaN', loose: 'false', strict: 'false', why: 'NaN is never equal to anything, including itself.' },
+    { expr: 'Object.is(NaN, NaN)', loose: '—', strict: '—', why: 'Only Object.is says true for NaN === NaN.' },
+  ];
+
+  function render(mode) {
+    tbody.innerHTML = data.map(d => {
+      const result = mode === 'loose' ? d.loose : d.strict;
+      return `<tr><td>${d.expr}</td><td style="color:${result === 'true' ? '#a6e3a1' : '#f38ba8'}">${result}</td><td style="color:#6c7086;font-family:sans-serif;font-size:.75rem;">${d.why}</td></tr>`;
+    }).join('');
+  }
+
+  document.querySelectorAll('#coercionMatrixControls button').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('#coercionMatrixControls button').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      render(btn.dataset.v);
+    });
+  });
+  render('loose');
+})();
+
+// ===== 7. Interactive Playground =====
+(function(){
+  const leftInput = document.getElementById('pgLeft');
+  const rightInput = document.getElementById('pgRight');
+  const opSelect = document.getElementById('pgOp');
+  const runBtn = document.getElementById('pgRun');
+  const leftVal = document.getElementById('pgLeftValue');
+  const rightVal = document.getElementById('pgRightValue');
+  const leftType = document.getElementById('pgLeftType');
+  const rightType = document.getElementById('pgRightType');
+  const exprLabel = document.getElementById('pgExprLabel');
+  const pgResult = document.getElementById('pgResult');
+
+  function evaluateSafe(code) {
+    try {
+      return { value: eval(code), error: false };
+    } catch(e) {
+      return { value: e.message, error: true };
+    }
+  }
+
+  function getType(val) {
+    if (val === null) return 'null';
+    if (Array.isArray(val)) return 'array';
+    return typeof val;
+  }
+
+  function formatValue(val) {
+    if (val === null) return 'null';
+    if (val === undefined) return 'undefined';
+    if (typeof val === 'string') return '"' + val + '"';
+    if (Array.isArray(val)) return '[' + val.map(v => typeof v === 'string' ? '"' + v + '"' : v).join(',') + ']';
+    if (typeof val === 'object') return JSON.stringify(val);
+    return String(val);
+  }
+
+  function evaluate() {
+    const leftRaw = leftInput.value || 'undefined';
+    const rightRaw = rightInput.value || 'undefined';
+    const op = opSelect.value;
+
+    const leftEval = evaluateSafe(leftRaw);
+    const rightEval = evaluateSafe(rightRaw);
+
+    if (leftEval.error) {
+      leftVal.textContent = '⚠ Error: ' + leftEval.value;
+      leftType.textContent = 'error';
+    } else {
+      leftVal.textContent = formatValue(leftEval.value);
+      leftType.textContent = getType(leftEval.value);
+    }
+
+    if (rightEval.error) {
+      rightVal.textContent = '⚠ Error: ' + rightEval.value;
+      rightType.textContent = 'error';
+    } else {
+      rightVal.textContent = formatValue(rightEval.value);
+      rightType.textContent = getType(rightEval.value);
+    }
+
+    if (!leftEval.error && !rightEval.error) {
+      let result;
+      try {
+        const expr = leftRaw + ' ' + op + ' ' + rightRaw;
+        result = eval(expr);
+      } catch(e) {
+        result = '⚠ ' + e.message;
+      }
+      exprLabel.textContent = leftRaw + ' ' + op + ' ' + rightRaw;
+      pgResult.textContent = formatValue(result);
+      pgResult.style.color = result === true ? '#a6e3a1' : result === false ? '#f38ba8' : '#cdd6f4';
+    }
+  }
+
+  runBtn.addEventListener('click', evaluate);
+  leftInput.addEventListener('keydown', e => { if (e.key === 'Enter') evaluate(); });
+  rightInput.addEventListener('keydown', e => { if (e.key === 'Enter') evaluate(); });
+  evaluate();
+})();
+
+// ===== 9. Quick Reference Table =====
+(function(){
+  const tbody = document.getElementById('refTableBody');
+  const data = [
+    { expr: 'null == undefined', eq: 'true', eqeq: 'false', note: 'Use == if you want both' },
+    { expr: 'null === undefined', eq: 'false', eqeq: 'false', note: 'Use === if you want exactly one' },
+    { expr: '"0" == 0', eq: 'true', eqeq: 'false', note: 'String coerces to number' },
+    { expr: '"0" === 0', eq: 'false', eqeq: 'false', note: 'Type mismatch' },
+    { expr: '0 == false', eq: 'true', eqeq: 'false', note: 'false → 0' },
+    { expr: '0 === false', eq: 'false', eqeq: 'false', note: 'number ≠ boolean' },
+    { expr: '"" == 0', eq: 'true', eqeq: 'false', note: '"" → 0' },
+    { expr: '"" == false', eq: 'true', eqeq: 'false', note: '"" → 0, false → 0' },
+    { expr: '[] == false', eq: 'true', eqeq: 'false', note: '[] → "" → 0' },
+    { expr: '[] == 0', eq: 'true', eqeq: 'false', note: '[] → "" → 0' },
+    { expr: 'NaN == NaN', eq: 'false', eqeq: 'false', note: 'NaN !== anything' },
+    { expr: 'undefined == null', eq: 'true', eqeq: 'false', note: 'The == null shortcut' },
+  ];
+  tbody.innerHTML = data.map(d =>
+    '<tr><td>' + d.expr + '</td><td style="color:' + (d.eq === 'true' ? '#a6e3a1' : '#f38ba8') + '">' + d.eq + '</td><td style="color:' + (d.eqeq === 'true' ? '#a6e3a1' : '#f38ba8') + '">' + d.eqeq + '</td><td style="color:#6c7086;font-family:sans-serif;">' + d.note + '</td></tr>'
+  ).join('');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>String ↔ Array Conversion — Visual Guide</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#11111b;color:#cdd6f4;padding:20px}
+h1{font-size:2.5rem;margin-bottom:.3rem}
+h2{font-size:1.35rem;margin:2rem 0 .8rem;color:#89b4fa;display:flex;align-items:center;gap:10px}
+h2 .badge{font-size:.7rem;background:#313244;color:#a6adc8;padding:2px 8px;border-radius:999px;font-weight:400}
+h3{font-size:1.05rem;margin:1.2rem 0 .5rem;color:#a6e3a1}
+p,li{color:#bac2de;line-height:1.7}
+code{background:#181825;padding:2px 6px;border-radius:4px;font-size:.85em;color:#fab387;font-family:'JetBrains Mono',monospace}
+pre{background:#181825;padding:14px 16px;border-radius:8px;overflow-x:auto;margin:10px 0;border:1px solid #313244;line-height:1.7}
+pre code{background:none;padding:0;color:#a6e3a1}
+.wrapper{max-width:1000px;margin:0 auto}
+.gradient-text{background:linear-gradient(135deg,#89b4fa,#a6e3a1,#f9e2af);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.subtitle{color:#6c7086;margin-bottom:2rem}
+.demo-panel{background:#1e1e2e;border:1px solid #313244;border-radius:12px;padding:20px;margin:20px 0}
+.demo-panel .label{font-size:.75rem;color:#6c7086;margin-bottom:8px;font-family:monospace}
+.demo-panel .label span{color:#89b4fa}
+.tip{background:#1e1e2e;border-left:3px solid #f9e2af;border-radius:6px;padding:10px 14px;margin:10px 0;font-size:.85rem;color:#a6adc8}
+.tip strong{color:#f9e2af}
+.callout{padding:12px 16px;border-radius:8px;margin:12px 0;font-size:.84rem;border-left:4px solid #89b4fa;background:rgba(137,180,250,.04)}
+.callout.danger{border-color:#f38ba8;background:rgba(243,139,168,.06)}
+.callout.warn{border-color:#f9e2af;background:rgba(249,226,175,.06)}
+.info-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin:10px 0}
+@media(max-width:600px){.info-grid{grid-template-columns:1fr}}
+.info-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:12px;font-size:.85rem}
+.info-card .prop{color:#89b4fa;font-family:monospace;font-weight:600}
+.info-card .val{color:#a6e3a1}
+.info-card .desc{color:#6c7086;font-size:.8rem;margin-top:4px}
+.controls{display:flex;flex-wrap:wrap;gap:6px;margin:12px 0 0}
+.controls button,.btn{background:#313244;color:#cdd6f4;border:1px solid #45475a;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:.8rem;font-family:monospace;transition:.2s}
+.controls button:hover,.btn:hover{background:#45475a}
+.controls button.active,.btn.active{background:#89b4fa30;border-color:#89b4fa;color:#89b4fa}
+.slider-group{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0}
+.slider-group label{font-size:.78rem;color:#a6adc8}
+.slider-group input[type=range]{accent-color:#89b4fa;width:140px}
+.slider-group .value{font-family:monospace;font-size:.8rem;color:#fab387;min-width:40px}
+table{width:100%;border-collapse:collapse;margin:10px 0;font-size:.82rem}
+th{background:#181825;color:#89b4fa;padding:10px 14px;text-align:left;font-weight:600;border-bottom:2px solid #313244}
+td{padding:10px 14px;border-bottom:1px solid #313244;color:#a6adc8}
+tr:hover td{background:#1e1e2e50}
+td:first-child{font-family:monospace;color:#fab387}
+::selection{background:#89b4fa40}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#11111b}
+::-webkit-scrollbar-thumb{background:#45475a;border-radius:3px}
+
+.conversion-flow{display:flex;align-items:center;justify-content:center;gap:16px;margin:24px 0;flex-wrap:wrap}
+.conversion-flow .cf-box{padding:20px 28px;border-radius:10px;font-family:monospace;font-size:1rem;font-weight:600;border:2px solid;min-width:100px;text-align:center}
+.conversion-flow .cf-box.string{background:#1e1e3e;border-color:#89b4fa;color:#89b4fa}
+.conversion-flow .cf-box.array{background:#1e3a2e;border-color:#a6e3a1;color:#a6e3a1}
+.conversion-flow .cf-arrow{font-size:1.3rem;color:#585b70;text-align:center}
+.conversion-flow .cf-arrow .cf-label{display:block;font-size:.6rem;color:#6c7086}
+
+.compare-cols{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin:12px 0}
+@media(max-width:600px){.compare-cols{grid-template-columns:1fr}}
+.method-card{background:#181825;border:1px solid #313244;border-radius:8px;padding:14px}
+.method-card .mc-title{font-family:monospace;font-size:.85rem;color:#89b4fa;margin-bottom:6px}
+.method-card .mc-syntax{font-family:monospace;font-size:.78rem;background:#0f0f17;padding:6px 10px;border-radius:4px;margin:6px 0;color:#fab387}
+.method-card .mc-example{font-family:monospace;font-size:.76rem;background:#0f0f17;padding:6px 10px;border-radius:4px;margin:4px 0;color:#a6e3a1}
+.method-card .mc-desc{font-size:.78rem;color:#6c7086;margin-top:4px}
+.method-card .mc-edge{font-size:.72rem;color:#f38ba8;margin-top:4px;padding:4px 8px;background:#f38ba808;border-radius:4px;display:none}
+.method-card .mc-edge.show{display:block}
+
+.demo-row{display:flex;gap:8px;margin:8px 0;flex-wrap:wrap;align-items:center}
+.demo-row input[type=text]{background:#0f0f17;border:1px solid #313244;border-radius:6px;padding:8px 12px;color:#cdd6f4;font-family:monospace;font-size:.82rem;flex:1;min-width:180px;outline:none}
+.demo-row input[type=text]:focus{border-color:#89b4fa}
+.demo-row select{background:#0f0f17;border:1px solid #313244;border-radius:6px;padding:8px 12px;color:#cdd6f4;font-family:monospace;font-size:.82rem;outline:none;cursor:pointer}
+.demo-row select:focus{border-color:#89b4fa}
+.demo-row .demo-val{font-family:monospace;font-size:.82rem;color:#a6e3a1;background:#181825;border-radius:6px;padding:8px 12px;border:1px solid #313244;min-width:60px}
+
+.result-box{background:#181825;border:1px solid #313244;border-radius:8px;padding:14px;margin:8px 0;font-family:monospace;font-size:.82rem;min-height:40px;line-height:1.8}
+.result-box .arrow{color:#585b70}
+.result-box .str{color:#a6e3a1}
+.result-box .arr{color:#89b4fa}
+.result-box .note{color:#6c7086;font-size:.75rem}
+.result-box .err{color:#f38ba8}
+
+.tag{display:inline-block;padding:2px 8px;border-radius:4px;font-size:.65rem;font-weight:600;font-family:monospace;margin-right:4px}
+.tag.good{background:#a6e3a120;color:#a6e3a1;border:1px solid #a6e3a1}
+.tag.bad{background:#f38ba820;color:#f38ba8;border:1px solid #f38ba8}
+.tag.warn{background:#f9e2af20;color:#f9e2af;border:1px solid #f9e2af}
+
+.vis-grid{display:flex;gap:4px;flex-wrap:wrap;margin:8px 0;padding:10px;background:#0f0f17;border-radius:6px;min-height:36px;align-items:center}
+.vis-cell{display:inline-flex;align-items:center;justify-content:center;padding:4px 10px;border-radius:4px;font-family:monospace;font-size:.78rem;min-width:28px;border:1px solid}
+.vis-cell.char{background:#89b4fa15;border-color:#89b4fa;color:#89b4fa}
+.vis-cell.element{background:#a6e3a115;border-color:#a6e3a1;color:#a6e3a1}
+.vis-cell.separator{background:#585b70;border-color:#585b70;color:#11111b;font-size:.6rem;min-width:auto;padding:2px 5px}
+.vis-cell.empty{background:#31324430;border-color:#313244;color:#585b70;border-style:dashed}
+.vis-cell.emoji{background:#f9e2af20;border-color:#f9e2af;color:#f9e2af;padding:4px 6px}
+.vis-label{font-size:.65rem;color:#6c7086;margin-right:8px;font-family:monospace}
+
+.playground-edit{width:100%;background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:14px;font-family:'JetBrains Mono',monospace;font-size:.8rem;color:#cdd6f4;min-height:100px;resize:vertical;margin:8px 0;outline:none;tab-size:2;line-height:1.6}
+.playground-edit:focus{border-color:#89b4fa}
+.playground-output{background:#0f0f17;border:1px solid #313244;border-radius:8px;padding:14px;font-family:monospace;font-size:.82rem;min-height:60px;max-height:200px;overflow-y:auto;line-height:1.8;margin:8px 0}
+.playground-output .log{color:#bac2de}
+.playground-output .log.resolved{color:#a6e3a1}
+.playground-output .log.rejected{color:#f38ba8}
+.playground-output .log.info{color:#89b4fa}
+.playground-output .log.result{color:#f9e2af}
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+<h1 class="gradient-text">String ↔ Array Conversion</h1>
+<p class="subtitle">Every method to go between strings and arrays, with edge cases and live demos</p>
+
+<div class="conversion-flow">
+  <div class="cf-box string">"hello"</div>
+  <div class="cf-arrow">→<span class="cf-label">split / Array.from / spread</span></div>
+  <div class="cf-box array">["h","e","l","l","o"]</div>
+  <div style="color:#585b70;font-size:1.2rem">⇄</div>
+  <div class="cf-box array">["a","b","c"]</div>
+  <div class="cf-arrow">→<span class="cf-label">join / toString / String()</span></div>
+  <div class="cf-box string">"a,b,c"</div>
+</div>
+
+<h2><span>1. String → Array</span><span class="badge">split · Array.from · spread</span></h2>
+
+<div class="compare-cols">
+  <div class="method-card">
+    <div class="mc-title">str.split(separator?, limit?)</div>
+    <div class="mc-syntax">"a,b,c".split(",")  →  ["a","b","c"]</div>
+    <div class="mc-desc">Splits by delimiter. Supports <strong>regex</strong> separators. Limit param truncates result. Original string unchanged.</div>
+    <div class="mc-edge" id="splitEdge"><span class="tag bad">⚠️</span> <code>"".split(",")</code> → <code>[""]</code> (not <code>[]</code>). Empty string with no separator: <code>"".split()</code> → <code>[""]</code>. <code>"".split("")</code> → <code>[]</code>.</div>
+  </div>
+  <div class="method-card">
+    <div class="mc-title">Array.from(str)</div>
+    <div class="mc-syntax">Array.from("hello")  →  ["h","e","l","l","o"]</div>
+    <div class="mc-desc">Creates array from <strong>iterable</strong>. Unicode-safe — respects code points. Accepts optional map callback.</div>
+    <div class="mc-edge" id="fromEdge"><span class="tag good">✅</span> <code>Array.from("😊")</code> → <code>["😊"]</code> (1 element). <code>Array.from("")</code> → <code>[]</code>.</div>
+  </div>
+  <div class="method-card">
+    <div class="mc-title">[...str] (spread)</div>
+    <div class="mc-syntax">[..."hello"]  →  ["h","e","l","l","o"]</div>
+    <div class="mc-desc">Same as <code>Array.from</code> — iterates via <code>Symbol.iterator</code>. Unicode-safe. Slightly faster syntax.</div>
+    <div class="mc-edge" id="spreadEdge"><span class="tag good">✅</span> <code>["😊"]</code> works correctly. Same edge cases as <code>Array.from</code>.</div>
+  </div>
+  <div class="method-card">
+    <div class="mc-title">Object.assign([], str)</div>
+    <div class="mc-syntax">Object.assign([], "hi")  →  ["h","i"]</div>
+    <div class="mc-desc">Copies indexed properties from string to array. <span class="tag bad">Not recommended</span> — surprising behavior with <strong>sparse arrays</strong> and <strong>non-indexed keys</strong>.</div>
+    <div class="mc-edge" id="assignEdge"><span class="tag bad">⚠️</span> Copies <code>length</code> and other enumerable properties. Avoid unless you know what you're doing.</div>
+  </div>
+</div>
+
+<h3>Interactive split demo</h3>
+<div class="demo-panel">
+  <div class="label">🔧 <span>Enter a string and separator — watch the split</span></div>
+  <div class="demo-row">
+    <input type="text" id="splitInput" value="apple,banana,cherry,date">
+    <select id="splitSepSelect">
+      <option value="," selected>, (comma)</option>
+      <option value=",">- (dash)</option>
+      <option value=" ">␣ (space)</option>
+      <option value="">"" (empty — split chars)</option>
+      <option value="regex">/\s+/ (regex — whitespace)</option>
+    </select>
+    <button class="btn active" id="splitApply">Split</button>
+  </div>
+  <div class="result-box" id="splitResult">Click "Split" to see result</div>
+  <div class="label" style="margin-top:12px">📊 <span>Visual: characters → array elements</span></div>
+  <div class="vis-grid" id="splitVisual"></div>
+</div>
+
+<h2><span>2. Array → String</span><span class="badge">join · toString · String()</span></h2>
+
+<div class="compare-cols">
+  <div class="method-card">
+    <div class="mc-title">arr.join(separator?)</div>
+    <div class="mc-syntax">["a","b","c"].join("-")  →  "a-b-c"</div>
+    <div class="mc-desc">Joins elements with separator. Default is <code>","</code>. <code>null</code>/<code>undefined</code> become empty strings. Sparse arrays skip holes.</div>
+    <div class="mc-edge" id="joinEdge"><span class="tag warn">⚠️</span> <code>[1, null, 3].join()</code> → <code>"1,,3"</code>. <code>[1,,3].join()</code> → <code>"1,,3"</code> (hole → empty). <code>[].join()</code> → <code>""</code>.</div>
+  </div>
+  <div class="method-card">
+    <div class="mc-title">arr.toString()</div>
+    <div class="mc-syntax">["a","b","c"].toString()  →  "a,b,c"</div>
+    <div class="mc-desc">Always uses <code>","</code> separator. Calls <code>toString()</code> on each element. No separator customization.</div>
+    <div class="mc-edge" id="toStringEdge"><span class="tag warn">⚠️</span> <code>[[1,2],[3,4]].toString()</code> → <code>"1,2,3,4"</code> (flattens! but shallow). <code>[1,[2,[3]]].toString()</code> → <code>"1,2,3"</code>.</div>
+  </div>
+  <div class="method-card">
+    <div class="mc-title">String(arr)</div>
+    <div class="mc-syntax">String(["a","b"])  →  "a,b"</div>
+    <div class="mc-desc">Exactly the same as <code>arr.toString()</code>. Also triggered by <code>"" + arr</code> or template literals <code>`${arr}`</code>.</div>
+    <div class="mc-edge" id="stringEdge">Same edge cases as <code>.toString()</code>.</div>
+  </div>
+  <div class="method-card">
+    <div class="mc-title">arr.toLocaleString()</div>
+    <div class="mc-syntax">[1000,2000].toLocaleString("de-DE")  →  "1.000,2.000"</div>
+    <div class="mc-desc">Locale-aware formatting. Useful for numbers/dates with region-appropriate separators.</div>
+    <div class="mc-edge" id="localeEdge">Separator is locale-specific ("," in en-US, ";" in de-DE for array elements).</div>
+  </div>
+</div>
+
+<h3>Interactive join demo</h3>
+<div class="demo-panel">
+  <div class="label">🔧 <span>Enter array elements and a separator — watch the join</span></div>
+  <div class="demo-row">
+    <input type="text" id="joinInput" value="a,b,c,d">
+    <select id="joinSepSelect">
+      <option value=",">, (comma)</option>
+      <option value="-">- (dash)</option>
+      <option value=" ">␣ (space)</option>
+      <option value="">"" (empty — no separator)</option>
+      <option value=" | "> |  (pipe)</option>
+    </select>
+    <button class="btn active" id="joinApply">Join</button>
+  </div>
+  <div class="result-box" id="joinResult">Click "Join" to see result</div>
+  <div class="label" style="margin-top:12px">📊 <span>Visual: array elements → string</span></div>
+  <div class="vis-grid" id="joinVisual"></div>
+</div>
+
+<h2><span>3. Edge Cases &amp; Gotchas</span><span class="badge">emoji · empty · holes · null</span></h2>
+
+<div class="demo-panel">
+  <div class="label">🧪 <span>Click to test any conversion edge case</span></div>
+  <div class="controls" id="edgeControls">
+    <button data-edge="emoji">😊 Emoji</button>
+    <button data-edge="emojiFamily">👨‍👩‍👧 Family emoji</button>
+    <button data-edge="empty">"" Empty string</button>
+    <button data-edge="sparse">[1,,3] Sparse</button>
+    <button data-edge="null">[null, undefined]</button>
+    <button data-edge="nested">[[1,2],[3,4]] Nested</button>
+    <button data-edge="mixed">[1,"a",true] Mixed</button>
+  </div>
+  <div class="result-box" id="edgeResult">Click an edge case button</div>
+</div>
+
+<h2><span>4. Quick Reference Table</span></h2>
+<table>
+  <tr><th>Direction</th><th>Method</th><th>Unicode Safe</th><th>Empty Input</th><th>Notes</th></tr>
+  <tr><td>String→Array</td><td><code>str.split(sep)</code></td><td><span class="tag warn">⚠️</span> No</td><td><code>"".split()</code> → <code>[""]</code></td><td>Use regex / regex separator</td></tr>
+  <tr><td>String→Array</td><td><code>Array.from(str)</code></td><td><span class="tag good">✅</span> Yes</td><td><code>[]</code></td><td>Map callback too</td></tr>
+  <tr><td>String→Array</td><td><code>[...str]</code></td><td><span class="tag good">✅</span> Yes</td><td><code>[]</code></td><td>Concise syntax</td></tr>
+  <tr><td>Array→String</td><td><code>arr.join(sep)</code></td><td><span class="tag good">✅</span> Yes</td><td><code>""</code></td><td>Custom separator</td></tr>
+  <tr><td>Array→String</td><td><code>arr.toString()</code></td><td><span class="tag good">✅</span> Yes</td><td><code>""</code></td><td>Always ","-separated</td></tr>
+  <tr><td>Array→String</td><td><code>String(arr)</code></td><td><span class="tag good">✅</span> Yes</td><td><code>""</code></td><td>Same as .toString()</td></tr>
+  <tr><td>String→Array</td><td><code>str.match(/./g)</code></td><td><span class="tag warn">⚠️</span> No</td><td><code>null</code></td><td>Returns null, not []</td></tr>
+  <tr><td>Array→String</td><td><code>arr.join("")</code></td><td><span class="tag good">✅</span> Yes</td><td><code>""</code></td><td>Concatenates elements</td></tr>
+</table>
+
+<h2><span>5. Interactive Playground</span><span class="badge">experiment</span></h2>
+<p>Edit code and run. <code>log()</code> prints to output. Variables <code>s</code> (string) and <code>a</code> (array) are predefined.</p>
+
+<div class="demo-panel">
+  <div class="label">💻 <span>Live code editor</span></div>
+  <textarea class="playground-edit" id="playgroundEdit" spellcheck="false">var s = "hello world";
+var a = ["foo", "bar", "baz"];
+
+// String → Array
+log("split:     " + JSON.stringify(s.split(" ")), "info");
+log("Array.from:" + JSON.stringify(Array.from(s)), "info");
+log("spread:    " + JSON.stringify([...s]), "info");
+
+// Array → String
+log("join:      " + a.join(" | "), "result");
+log("toString:  " + a.toString(), "result");
+log("String():  " + String(a), "result");
+
+// Round-trip
+log("round-trip:" + JSON.stringify("a,b,c".split(",").join("->")), "resolved");</textarea>
+  <div class="demo-row" style="justify-content:space-between">
+    <div>
+      <button class="btn" id="runPlayground">▶️ Run</button>
+      <button class="btn" id="clearPlayground">🧹 Clear</button>
+    </div>
+  </div>
+  <div class="playground-output" id="playgroundOutput"></div>
+</div>
+
+<h2><span>6. Cheat Sheet</span></h2>
+<pre><code><span style="color:#6c7086">// String → Array</span>
+str.split(<span class="str">","</span>)               <span style="color:#6c7086">// → ["a","b","c"] by delimiter</span>
+str.split(<span class="str">""</span>)                <span style="color:#6c7086">// → ["h","e","l","l","o"] chars (NOT unicode-safe)</span>
+Array.from(str)               <span style="color:#6c7086">// → ["h","e","l","l","o"] (unicode-safe)</span>
+[...str]                      <span style="color:#6c7086">// → ["h","e","l","l","o"] (unicode-safe)</span>
+str.split(<span class="str">""</span>).reverse().join(<span class="str">""</span>)  <span style="color:#6c7086">// → "olleh" reverse a string</span>
+
+<span style="color:#6c7086">// Array → String</span>
+arr.join(<span class="str">","</span>)                <span style="color:#6c7086">// → "a,b,c"</span>
+arr.join(<span class="str">""</span>)                 <span style="color:#6c7086">// → "abc" concatenate</span>
+arr.toString()                <span style="color:#6c7086">// → "a,b,c"</span>
+String(arr)                   <span style="color:#6c7086">// → "a,b,c"</span>
+<span class="str">""</span> + arr                      <span style="color:#6c7086">// → "a,b,c" implicit coercion</span>
+
+<span style="color:#6c7086">// Convert each element</span>
+arr.map(x => String(x))       <span style="color:#6c7086">// → ["1","2","3"]</span>
+str.split(<span class="str">","</span>).map(Number)    <span style="color:#6c7086">// → [1,2,3] parse numbers</span>
+
+<span style="color:#6c7086">// Multi-char separator</span>
+<span class="str">"a||b||c"</span>.split(<span class="str">"||"</span>)           <span style="color:#6c7086">// → ["a","b","c"]</span>
+[<span class="str">"a"</span>,<span class="str">"b"</span>].join(<span class="str">" || "</span>)          <span style="color:#6c7086">// → "a || b"</span></code></pre>
+
+</div><!-- /wrapper -->
+
+<script>
+(function(){
+"use strict";
+
+const $ = s => document.querySelector(s);
+const $$ = s => document.querySelectorAll(s);
+
+function escape(v) {
+  return JSON.stringify(v);
+}
+
+// ===== Split Demo =====
+(function(){
+  const input = $('#splitInput');
+  const sel = $('#splitSepSelect');
+  const btn = $('#splitApply');
+  const result = $('#splitResult');
+  const visual = $('#splitVisual');
+
+  function runSplit(){
+    const str = input.value;
+    const raw = sel.value;
+    let parts, label;
+
+    if (raw === 'regex') {
+      parts = str.split(/\s+/);
+      label = 'split(/\\s+/)';
+    } else {
+      parts = str.split(raw);
+      label = 'split(' + escape(raw) + ')';
+    }
+
+    result.innerHTML = '<span class="str">' + escape(str) + '</span> <span class="arrow">→</span> <span class="arr">' + escape(parts) + '</span> <span class="note">(' + parts.length + ' items)</span> <code style="float:right">."' + label + '"</code>';
+
+    // Visual
+    visual.innerHTML = '<span class="vis-label">characters:</span>';
+    for (const ch of str) {
+      const d = document.createElement('span');
+      d.className = 'vis-cell char';
+      d.textContent = ch === ' ' ? '␣' : ch;
+      visual.appendChild(d);
+    }
+
+    visual.innerHTML += '<span class="vis-label" style="margin-left:12px">→ array:</span>';
+    parts.forEach((p, i) => {
+      if (i > 0) {
+        const sep = document.createElement('span');
+        sep.className = 'vis-cell separator';
+        sep.textContent = ',';
+        visual.appendChild(sep);
+      }
+      const d = document.createElement('span');
+      d.className = 'vis-cell element';
+      d.textContent = p === '' ? '""' : p;
+      visual.appendChild(d);
+    });
+  }
+
+  btn.addEventListener('click', runSplit);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') runSplit(); });
+  runSplit();
+})();
+
+// ===== Join Demo =====
+(function(){
+  const input = $('#joinInput');
+  const sel = $('#joinSepSelect');
+  const btn = $('#joinApply');
+  const result = $('#joinResult');
+  const visual = $('#joinVisual');
+
+  function runJoin(){
+    const raw = input.value;
+    const arr = raw.split(',').map(s => s.trim()).filter(s => s.length > 0 || raw.includes(','));
+    const sep = sel.value;
+    const joined = arr.join(sep);
+
+    result.innerHTML = '<span class="arr">' + escape(arr) + '</span> <span class="arrow">→</span> <span class="str">' + escape(joined) + '</span> <code style="float:right">.join(' + escape(sep) + ')</code>';
+
+    // Visual
+    visual.innerHTML = '<span class="vis-label">elements:</span>';
+    arr.forEach((v, i) => {
+      if (i > 0) {
+        const sepEl = document.createElement('span');
+        sepEl.className = 'vis-cell separator';
+        sepEl.textContent = sep === '' ? '·' : sep;
+        visual.appendChild(sepEl);
+      }
+      const d = document.createElement('span');
+      d.className = 'vis-cell element';
+      d.textContent = v;
+      visual.appendChild(d);
+    });
+
+    visual.innerHTML += '<span class="vis-label" style="margin-left:12px">→ string:</span>';
+    for (const ch of joined) {
+      const d = document.createElement('span');
+      d.className = 'vis-cell char';
+      d.textContent = ch === ' ' ? '␣' : ch;
+      visual.appendChild(d);
+    }
+  }
+
+  btn.addEventListener('click', runJoin);
+  input.addEventListener('keydown', e => { if (e.key === 'Enter') runJoin(); });
+  runJoin();
+})();
+
+// ===== Edge Cases =====
+(function(){
+  const result = $('#edgeResult');
+  const btns = $$('#edgeControls button');
+
+  const edges = {
+    emoji() {
+      const str = '😊';
+      const split = str.split('');
+      const from = Array.from(str);
+      const spread = [...str];
+      result.innerHTML =
+        '<span style="color:#89b4fa">String: </span>' + escape(str) +
+        '<br><code>.split("")</code>: ' + escape(split) + ' <span class="note">(' + split.length + ' — BROKEN! Surrogate pair split)</span>' +
+        '<br><code>Array.from()</code>: ' + escape(from) + ' <span class="note">(' + from.length + ' ✅)</span>' +
+        '<br><code>[...str]</code>: ' + escape(spread) + ' <span class="note">(' + spread.length + ' ✅)</span>';
+    },
+    emojiFamily() {
+      const str = '👨‍👩‍👧';
+      const split = str.split('');
+      const from = Array.from(str);
+      result.innerHTML =
+        '<span style="color:#89b4fa">String: </span>' + str + ' (family emoji — 7 code units)' +
+        '<br><code>.split("")</code>: ' + escape(split) + ' <span class="note">(' + split.length + ' — BROKEN! ZWJ sequence split)</span>' +
+        '<br><code>Array.from()</code>: ' + escape(from) + ' <span class="note">(' + from.length + ' — better but still 4 graphemes, ZWJ not resolved)</span>' +
+        '<br><span class="note">💡 Use <code>Intl.Segmenter</code> or a grapheme library for true grapheme clusters.</span>';
+    },
+    empty() {
+      const str = '';
+      result.innerHTML =
+        '<span style="color:#89b4fa">String: </span>' + escape(str) +
+        '<br><code>.split(",")</code>: ' + escape(str.split(',')) + ' <span class="note">' + str.split(',').length + ' items — ⚠️ [""] not []</span>' +
+        '<br><code>.split("")</code>: ' + escape(str.split('')) + ' <span class="note">' + str.split('').length + ' items — ✅ empty array</span>' +
+        '<br><code>Array.from()</code>: ' + escape(Array.from(str)) + ' <span class="note">' + Array.from(str).length + ' items — ✅</span>' +
+        '<br><code>[...str]</code>: ' + escape([...str]) + ' <span class="note">' + [...str].length + ' items — ✅</span>';
+    },
+    sparse() {
+      const arr = [1,,3];
+      result.innerHTML =
+        '<span style="color:#89b4fa">Array: </span>' + JSON.stringify(arr) + ' (sparse — length=' + arr.length + ', index 1 is empty)' +
+        '<br><code>.join()</code>: ' + escape(arr.join()) + ' <span class="note">(hole becomes empty string)</span>' +
+        '<br><code>.join("")</code>: ' + escape(arr.join('')) + ' <span class="note">("13" — hole disappears)</span>' +
+        '<br><code>.toString()</code>: ' + escape(arr.toString()) + ' <span class="note">(holes become empty)</span>' +
+        '<br><code>String()</code>: ' + escape(String(arr)) + ' <span class="note">(same)</span>';
+    },
+    null() {
+      const arr = [null, undefined, 1];
+      result.innerHTML =
+        '<span style="color:#89b4fa">Array: </span>' + JSON.stringify(arr) +
+        '<br><code>.join()</code>: ' + escape(arr.join()) + ' <span class="note">(null/undefined → empty)</span>' +
+        '<br><code>.toString()</code>: ' + escape(arr.toString()) + ' <span class="note">(null/undefined → empty)</span>' +
+        '<br><code>.join(" | ")</code>: ' + escape(arr.join(' | ')) + ' <span class="note">(empty slots preserved)</span>';
+    },
+    nested() {
+      const arr = [[1,2],[3,4]];
+      result.innerHTML =
+        '<span style="color:#89b4fa">Array: </span>' + JSON.stringify(arr) +
+        '<br><code>.toString()</code>: ' + escape(arr.toString()) + ' <span class="note">(flattens one level!)</span>' +
+        '<br><code>.join()</code>: ' + escape(arr.join()) + ' <span class="note">(also flattens — join calls .toString on each subarray)</span>' +
+        '<br><code>.join(" | ")</code>: ' + escape(arr.join(' | ')) + ' <span class="note">(subarrays still flattened)</span>';
+    },
+    mixed() {
+      const arr = [1, "a", true, null, {x:1}];
+      result.innerHTML =
+        '<span style="color:#89b4fa">Array: </span>' + JSON.stringify(arr) +
+        '<br><code>.join()</code>: ' + escape(arr.join()) + ' <span class="note">(object → "[object Object]")</span>' +
+        '<br><code>.toString()</code>: ' + escape(arr.toString()) +
+        '<br><code>"".join()</code>: ' + escape(arr.join('')) +
+        '<br><span class="note">💡 <code>Number</code> → digits, <code>Boolean</code> → "true"/"false", <code>null/undefined</code> → "", <code>Object</code> → "[object Object]"</span>';
+    }
+  };
+
+  btns.forEach(btn => {
+    btn.addEventListener('click', () => {
+      const key = btn.dataset.edge;
+      if (edges[key]) edges[key]();
+    });
+  });
+})();
+
+// ===== Interactive Playground =====
+(function(){
+  const edit = $('#playgroundEdit');
+  const output = $('#playgroundOutput');
+  const runBtn = $('#runPlayground');
+  const clearBtn = $('#clearPlayground');
+
+  clearBtn.addEventListener('click', () => { output.innerHTML = ''; });
+
+  runBtn.addEventListener('click', () => {
+    output.innerHTML = '';
+    const code = edit.value;
+
+    const helpers = `
+      window.__pgLogs = [];
+      function log(msg, type) { window.__pgLogs.push({msg: String(msg), type: type || ''}); }
+      var s = "hello world";
+      var a = ["foo", "bar", "baz"];
+    `;
+
+    try {
+      const fullCode = helpers + '\n' + code;
+      eval(fullCode);
+      const logs = window.__pgLogs || [];
+      logs.forEach(l => {
+        const d = document.createElement('div');
+        d.className = 'log' + (l.type ? ' ' + l.type : '');
+        d.textContent = l.msg;
+        output.appendChild(d);
+      });
+      window.__pgLogs = [];
+    } catch(e) {
+      const d = document.createElement('div');
+      d.className = 'log rejected';
+      d.textContent = '❌ ' + e.message;
+      output.appendChild(d);
+    }
+  });
+})();
+
+})();
+</script>
+</body>
+</html>

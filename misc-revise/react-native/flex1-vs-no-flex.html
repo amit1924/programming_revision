@@ -1,0 +1,237 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>flex: 1 vs no flex - Study</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    body { font-family: 'Segoe UI', sans-serif; background: #11111b; color: #cdd6f4; }
+    .fade-in { animation: fadeIn 0.5s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; transform: translateY(0); } }
+
+    .phone {
+      width: 320px; height: 580px; border-radius: 40px; border: 3px solid #45475a;
+      background: #1e1e2e; position: relative; overflow: hidden; box-shadow: 0 20px 60px rgba(0,0,0,0.5); flex-shrink: 0;
+    }
+    .phone-notch { position:absolute; top:0; left:50%; transform:translateX(-50%); width:120px; height:26px; background:#11111b; border-radius:0 0 14px 14px; z-index:20; }
+    .screen { width:100%; height:100%; padding-top:26px; display:flex; flex-direction:column; }
+    .status-bar { padding:6px 18px 2px; display:flex; justify-content:space-between; font-size:11px; color:#a6adc8; z-index:10; }
+    .body-scroll { flex:1; overflow-y:auto; padding:12px 14px; }
+    .body-scroll::-webkit-scrollbar { display:none; }
+
+    .gradient-text { background:linear-gradient(135deg, #89b4fa, #f9e2af); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+
+    .btn { border-radius:8px; padding:6px 12px; font-size:11px; font-weight:600; transition:all 0.2s; cursor:pointer; border:none; }
+    .btn-p { background:#89b4fa; color:#1e1e2e; }
+    .btn-p:hover { background:#74c7ec; }
+    .btn-s { background:#313244; color:#cdd6f4; border:1px solid #45475a; }
+    .btn-s:hover { background:#45475a; }
+
+    pre { white-space:pre-wrap; word-break:break-word; }
+    .hl { border-left:3px solid #89b4fa; padding-left:10px; background:rgba(137,180,250,0.08); }
+
+    .demo-box { border-radius:8px; display:flex; align-items:center; justify-content:center; font-weight:600; font-size:13px; transition:all 0.3s; overflow:hidden; }
+
+    .parent-box { border:2px dashed #585b70; border-radius:10px; padding:4px; transition:all 0.3s; }
+    .parent-box.flex1 { height:200px; display:flex; flex-direction:column; }
+    .parent-box.no-flex { display:flex; flex-direction:column; min-height:auto; }
+
+    .child-box { border-radius:6px; display:flex; align-items:center; justify-content:center; font-size:11px; font-weight:600; transition:all 0.3s; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-5xl mx-auto px-6 pt-10 pb-4 text-center">
+    <div class="inline-flex items-center gap-3 bg-[#1e1e2e] border border-[#313244] rounded-full px-5 py-2 mb-4 text-sm">
+      <span class="inline-block w-2.5 h-2.5 rounded-full bg-[#a6e3a1] animate-pulse"></span>
+      Flexbox Basics
+    </div>
+    <h1 class="text-4xl md:text-5xl font-bold mb-2">
+      <code class="gradient-text">flex: 1</code>
+      <span class="text-[#a6adc8]">vs</span>
+      <span class="text-[#f38ba8]">no flex</span>
+    </h1>
+    <p class="text-[#a6adc8]">The single most important layout property in React Native.</p>
+  </div>
+
+  <div class="max-w-5xl mx-auto px-6 pb-16 space-y-14">
+
+    <!-- === LIVE PHONE === -->
+    <section class="fade-in flex flex-col lg:flex-row items-center gap-8 justify-center">
+      <!-- Phone -->
+      <div class="phone">
+        <div class="phone-notch"></div>
+        <div class="screen">
+          <div class="status-bar"><span>9:41</span><span><i class="fas fa-wifi"></i> <i class="fas fa-battery-full ml-1"></i></span></div>
+          <div class="px-4 py-2 border-b border-[#313244] flex items-center justify-between text-sm">
+            <span class="font-bold">Flex Lab</span>
+            <span id="toggleLabel" class="text-xs bg-[#89b4fa]/20 text-[#89b4fa] px-2 py-0.5 rounded-full">flex: 1 ON</span>
+          </div>
+          <div class="body-scroll" id="phoneBody">
+
+            <!-- Toggle -->
+            <div class="flex gap-2 mb-3">
+              <button id="flexOnBtn" class="btn btn-p flex-1">flex: 1 ✅</button>
+              <button id="flexOffBtn" class="btn btn-s flex-1">No flex ❌</button>
+            </div>
+
+            <!-- Visual demo -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4 mb-3">
+              <div class="text-xs text-[#6c7086] mb-2">Screen layout (parent = entire device)</div>
+              <div id="demoParent" class="parent-box flex1" style="background:#11111b;">
+                <div class="child-box" style="background:#89b4fa40;border:1px solid #89b4fa;height:40px;flex-shrink:0;">
+                  <span class="text-[10px] text-[#89b4fa]">Header (fixed height)</span>
+                </div>
+                <div id="flexChild" class="child-box" style="background:#f9e2af20;border:1px solid #f9e2af;flex:1;">
+                  <span class="text-[10px] text-[#f9e2af] text-center px-2" id="childLabel">flex: 1 — fills remaining space</span>
+                </div>
+                <div class="child-box" style="background:#f38ba820;border:1px solid #f38ba8;height:40px;flex-shrink:0;">
+                  <span class="text-[10px] text-[#f38ba8]">Footer (fixed height)</span>
+                </div>
+              </div>
+            </div>
+
+            <!-- Real app example -->
+            <div class="bg-[#181825] border border-[#313244] rounded-xl p-4">
+              <div class="text-xs text-[#6c7086] mb-2">Real app layout</div>
+              <div id="appDemo" style="background:#11111b;border:2px dashed #585b70;border-radius:10px;height:220px;display:flex;flex-direction:column;overflow:hidden;">
+                <div style="background:#89b4fa20;border-bottom:1px solid #89b4fa;padding:10px;text-align:center;font-size:11px;font-weight:600;color:#89b4fa;">Header (fixed)</div>
+                <div id="appContent" style="background:#f9e2af10;flex:1;display:flex;align-items:center;justify-content:center;font-size:11px;color:#f9e2af;">
+                  <span id="appContentLabel">⬇️ Content fills all remaining space (flex: 1)</span>
+                </div>
+                <div style="background:#f38ba820;border-top:1px solid #f38ba8;padding:10px;text-align:center;font-size:11px;font-weight:600;color:#f38ba8;">Footer (fixed)</div>
+              </div>
+            </div>
+
+            <!-- Explanation -->
+            <div id="explanationBox" class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4 mt-3">
+              <div class="text-xs leading-relaxed text-[#a6adc8]" id="explanationText">
+                <strong class="text-[#89b4fa]">flex: 1</strong> tells the View to take up all remaining space inside its parent. The middle section stretches to fill everything between the header and footer.
+              </div>
+            </div>
+          </div>
+          <div class="border-t border-[#313244] px-6 py-2 flex justify-between text-xs text-[#585b70]">
+            <i class="fas fa-home"></i><i class="fas fa-search"></i><i class="fas fa-plus-circle"></i><i class="fas fa-heart"></i><i class="fas fa-user"></i>
+          </div>
+        </div>
+      </div>
+
+      <!-- Side panel -->
+      <div class="flex-1 max-w-sm space-y-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Rule</h3>
+          <div class="space-y-2 text-xs text-[#a6adc8]">
+            <div class="bg-[#11111b] rounded-lg p-3">
+              <span class="text-[#89b4fa] font-semibold">flex: 1</span> → "Take all available space"<br>
+              <span class="text-[#6c7086]">Without it, a View shrinks to fit its content (height: auto).</span>
+            </div>
+            <div class="bg-[#11111b] rounded-lg p-3">
+              <span class="text-[#f9e2af] font-semibold">Parent needs height</span><br>
+              <span class="text-[#6c7086]"><code>flex: 1</code> on a child only works if the parent has a defined height — either <code>flex: 1</code> on the parent or a fixed height.</span>
+            </div>
+          </div>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <h3 class="text-sm font-semibold mb-2">Common patterns</h3>
+          <pre class="text-xs font-mono bg-[#11111b] p-3 rounded-lg leading-relaxed">
+<span class="text-[#6c7086]">// ✅ Full screen layout</span>
+&lt;View style={{<span class="text-[#89b4fa]">flex: 1</span>}}&gt;
+  &lt;Header /&gt;            <span class="text-[#6c7086]">// fixed height</span>
+  &lt;FlatList style={{<span class="text-[#89b4fa]">flex: 1</span>}} /&gt;  <span class="text-[#6c7086]">// fills rest</span>
+  &lt;Footer /&gt;            <span class="text-[#6c7086]">// fixed height</span>
+&lt;/View&gt;
+
+<span class="text-[#6c7086]">// ❌ Without flex:1</span>
+&lt;View&gt;  <span class="text-[#6c7086">// height = content only</span>
+  &lt;Header /&gt;
+  &lt;FlatList /&gt;  <span class="text-[#6c7086]">// might not scroll!</span>
+  &lt;Footer /&gt;
+&lt;/View&gt;</pre>
+        </div>
+        <div class="bg-[#1e1e2e] border-l-4 border-[#f9e2af] rounded-xl p-3 text-xs text-[#a6adc8]">
+          <span class="text-[#f9e2af] font-semibold">💡 In React Native,</span> the default <code>flexDirection</code> is <code>column</code> (not row like CSS). And <code>flex: 1</code> is how you make a View fill the screen — there's no <code>height: 100vh</code> in RN.
+        </div>
+      </div>
+    </section>
+
+    <!-- === CODE === -->
+    <section class="fade-in">
+      <h2 class="text-xl font-bold mb-4 flex items-center gap-2">
+        <i class="fas fa-code text-[#f9e2af]"></i> The Only Code You Need
+      </h2>
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="bg-[#1e1e2e] border border-[#313244] rounded-xl p-4">
+          <span class="text-xs font-bold px-2 py-0.5 rounded bg-[#a6e3a1] text-[#1e1e2e]">✅ With flex: 1</span>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cdd6f4]">&lt;View style={{</span><span class="text-[#89b4fa]">flex: 1</span><span class="text-[#cdd6f4]">}}&gt;</span>
+  <span class="text-[#cdd6f4]">&lt;Header /&gt;</span>
+  <span class="text-[#cdd6f4]">&lt;FlatList style={{</span><span class="text-[#89b4fa]">flex: 1</span><span class="text-[#cdd6f4]">}} /&gt;</span>
+  <span class="text-[#cdd6f4]">&lt;Footer /&gt;</span>
+<span class="text-[#cdd6f4]">&lt;/View&gt;</span>
+
+<span class="text-[#6c7086]">// ✅ FlatList scrolls properly</span>
+<span class="text-[#6c7086]">// ✅ Content fills screen height</span></pre>
+        </div>
+        <div class="bg-[#1e1e2e] border border-[#f38ba8] rounded-xl p-4">
+          <div class="flex items-center gap-2 text-xs text-[#f38ba8] font-semibold mb-1"><i class="fas fa-exclamation-triangle"></i> Without flex: 1</div>
+          <pre class="text-xs font-mono mt-2 leading-relaxed">
+<span class="text-[#cdd6f4]">&lt;View&gt;</span> <span class="text-[#6c7086]">// ← no flex: 1!</span>
+  <span class="text-[#cdd6f4]">&lt;Header /&gt;</span>
+  <span class="text-[#cdd6f4]">&lt;FlatList /&gt;</span>
+  <span class="text-[#cdd6f4]">&lt;Footer /&gt;</span>
+<span class="text-[#cdd6f4]">&lt;/View&gt;</span>
+
+<span class="text-[#6c7086]">// ❌ FlatList might not scroll</span>
+<span class="text-[#6c7086]">// ❌ Footer gets pushed off screen</span>
+<span class="text-[#6c7086]">// ❌ Content collapses to fit</span></pre>
+        </div>
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-[#313244] pt-6 text-center text-sm text-[#585b70">
+      <a href="https://reactnative.dev/docs/flexbox" target="_blank" class="hover:text-[#89b4fa] transition-colors"><i class="fas fa-external-link-alt mr-1"></i> RN Docs: Flexbox</a>
+    </footer>
+  </div>
+
+  <script>
+    (() => {
+      const flexChild = document.getElementById('flexChild');
+      const childLabel = document.getElementById('childLabel');
+      const appContent = document.getElementById('appContent');
+      const appContentLabel = document.getElementById('appContentLabel');
+      const toggleLabel = document.getElementById('toggleLabel');
+      const explanationText = document.getElementById('explanationText');
+      const demoParent = document.getElementById('demoParent');
+
+      document.getElementById('flexOnBtn').addEventListener('click', () => {
+        flexChild.style.flex = '1';
+        flexChild.style.borderColor = '#f9e2af';
+        childLabel.textContent = 'flex: 1 — fills remaining space';
+        appContent.style.flex = '1';
+        appContentLabel.textContent = '⬇️ Content fills all remaining space (flex: 1)';
+        toggleLabel.textContent = 'flex: 1 ON';
+        toggleLabel.className = 'text-xs bg-[#89b4fa]/20 text-[#89b4fa] px-2 py-0.5 rounded-full';
+        demoParent.style.height = '200px';
+        explanationText.innerHTML = '<strong class="text-[#89b4fa]">flex: 1</strong> tells the View to take up <strong>all remaining space</strong> inside its parent. The middle section stretches to fill everything between the header and footer.';
+      });
+
+      document.getElementById('flexOffBtn').addEventListener('click', () => {
+        flexChild.style.flex = 'none';
+        flexChild.style.height = '';
+        flexChild.style.borderColor = '#f38ba8';
+        childLabel.textContent = '❌ No flex — collapses to content height (0 here)';
+        appContent.style.flex = 'none';
+        appContent.style.height = '30px';
+        appContentLabel.textContent = '❌ No flex — content squeezed';
+        toggleLabel.textContent = 'flex: 1 OFF';
+        toggleLabel.className = 'text-xs bg-[#f38ba8]/20 text-[#f38ba8] px-2 py-0.5 rounded-full';
+        demoParent.style.height = 'auto';
+        explanationText.innerHTML = 'Without <strong class="text-[#f38ba8]">flex: 1</strong>, the View collapses to its content height. If there\'s no content, it becomes 0px tall. The footer might float up or get hidden.';
+      });
+    })();
+  </script>
+</body>
+</html>

