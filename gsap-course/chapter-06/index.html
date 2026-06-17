@@ -1,0 +1,806 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 6: Text Animations — Characters, Words & Typewriter</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; overflow-wrap:break-word; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .highlight-box.orange { border-left-color:#ff6b35; background:rgba(255,107,53,.04); }
+      .highlight-box.pink { border-left-color:#fd79a8; background:rgba(253,121,168,.04); }
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .split-panel > * { min-width:0; overflow:hidden; }
+      .live-preview { min-height:300px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+      .box-demo { width:80px; height:80px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:600; color:#fff; cursor:pointer; user-select:none; }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+      .playground-slider { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,.1); outline:none; }
+      .playground-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .playground-slider::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      .max-w-6xl { overflow:hidden; }
+      .char { display:inline-block; }
+      .word { display:inline-block; white-space:nowrap; }
+      .cursor-blink { animation:blink .8s step-end infinite; }
+      @keyframes blink { 0%,100% { opacity:1; } 50% { opacity:0; } }
+      .typing-text::after { content:'|'; animation:blink .8s step-end infinite; color:#ff6b35; font-weight:700; }
+      .select-ease { background:#0d0d1a; border:1px solid rgba(255,255,255,.1); border-radius:8px; padding:.4rem .6rem; color:#fff; font-family:'Fira Code',monospace; font-size:.75rem; width:100%; outline:none; cursor:pointer; }
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        .md\:text-5xl { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-xs { font-size:.55rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .mb-6 { margin-bottom:.4rem; }
+        .mb-4 { margin-bottom:.3rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .gap-3 { gap:.3rem; }
+        .gap-2 { gap:.2rem; }
+        .gap-1\.5 { gap:.2rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-5 { padding:.5rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .p-3 { padding:.4rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .px-4 { padding-left:.4rem; padding-right:.4rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .py-2 { padding-top:.25rem; padding-bottom:.25rem; }
+        .px-3 { padding-left:.4rem; padding-right:.4rem; }
+        .rounded-xl { border-radius:6px; }
+        .rounded-2xl { border-radius:8px; }
+        .rounded-lg { border-radius:5px; }
+        .space-y-6 > :not([hidden])~:not([hidden]) { margin-top:.5rem; }
+        .space-y-5 > :not([hidden])~:not([hidden]) { margin-top:.4rem; }
+        .space-y-4 > :not([hidden])~:not([hidden]) { margin-top:.3rem; }
+        .space-y-3 > :not([hidden])~:not([hidden]) { margin-top:.2rem; }
+        .space-y-2 > :not([hidden])~:not([hidden]) { margin-top:.15rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:120px; border-radius:6px; }
+        .box-demo { width:44px; height:44px; font-size:.5rem; border-radius:8px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        [class*="md:grid-cols-"] { grid-template-columns:1fr!important; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .playground-slider::-webkit-slider-thumb { width:20px; height:20px; }
+        .playground-slider::-moz-range-thumb { width:20px; height:20px; }
+        .max-w-2xl { max-width:100%; }
+        .tag { font-size:.5rem; padding:.08rem .35rem; }
+        .flex.items-center.justify-between { flex-wrap:wrap; gap:.2rem; }
+        .flex.items-center.gap-2 { flex-wrap:wrap; }
+        .inline-flex.items-center.gap-2 { flex-wrap:wrap; }
+        .inline-flex.items-center.gap-3 { flex-wrap:wrap; }
+        .split-panel > * { overflow:hidden; }
+        .char { font-size:inherit; }
+        .word { font-size:inherit; }
+      }
+      @media (min-width:641px) and (max-width:768px) {
+        .split-panel { grid-template-columns:1fr; }
+        .card { padding:1.5rem!important; }
+        h1 { font-size:2rem!important; }
+        .md\:text-5xl { font-size:2rem!important; }
+        [class*="md:grid-cols-"] { grid-template-columns:1fr 1fr!important; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="max-w-6xl mx-auto px-6 py-10">
+
+      <!-- HEADER -->
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-cyan-500/10 border border-cyan-500/20 text-cyan-400 text-sm mb-4">
+          <i class="fa-solid fa-font"></i> Chapter 6 of 10
+        </div>
+        <h1 class="text-4xl md:text-5xl font-black mb-3">
+          <span class="gradient-text">Text Animations</span> — Characters, Words & Typewriter
+        </h1>
+        <p class="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          Text is the most common element on any page. Learn to animate it
+          <span class="text-cyan-400">letter by letter</span>,
+          <span class="text-purple-400">word by word</span>, and with
+          <span class="text-orange-400">typewriter effects</span>.
+        </p>
+      </div>
+
+      <!-- 1. THE CHALLENGE -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">1</span>
+          The Challenge with Text
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          You can't animate individual letters in a <span class="font-mono text-sm text-orange-400">&lt;p&gt;</span> tag
+          because it's <strong class="text-white">one DOM element</strong>. To animate per-character or per-word,
+          you need to <strong class="text-white">split</strong> the text into individual
+          <span class="font-mono text-sm text-cyan-400">&lt;span&gt;</span> elements first.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <div class="flex items-center gap-2 mb-2"><span class="tag tag-orange">Before</span></div>
+            <pre class="code-block"><span class="comment">&lt;!-- One element, one animation --&gt;</span>
+&lt;h2&gt;Hello World&lt;/h2&gt;
+
+<span class="comment">// Can only animate the whole thing</span>
+<span class="keyword">gsap.from</span>(<span class="string">"h2"</span>, { <span class="property">opacity</span>: <span class="number">0</span> });
+<span class="comment">// Whole text fades in at once</span></pre>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-2"><span class="tag tag-cyan">After split</span></div>
+            <pre class="code-block"><span class="comment">&lt;!-- Each letter is a span --&gt;</span>
+&lt;h2&gt;
+  &lt;span&gt;H&lt;/span&gt;&lt;span&gt;e&lt;/span&gt;
+  &lt;span&gt;l&lt;/span&gt;&lt;span&gt;l&lt;/span&gt;&lt;span&gt;o&lt;/span&gt;
+  ...
+&lt;/h2&gt;
+
+<span class="comment">// Animate each letter!</span>
+<span class="keyword">gsap.from</span>(<span class="string">"h2 span"</span>, {
+  <span class="property">opacity</span>: <span class="number">0</span>,
+  <span class="property">y</span>: <span class="number">-20</span>,
+  <span class="property">stagger</span>: <span class="number">0.05</span>
+});</pre>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i>
+            <strong class="text-white">Key insight:</strong> GSAP has no built-in text splitter
+            (unlike libraries like SplitText). We'll write a simple JS helper to split text
+            into <span class="text-cyan-400">characters</span> or
+            <span class="text-purple-400">words</span> manually.
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. SPLIT TEXT HELPER -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">2</span>
+          Text Split Helper
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          A reusable function that takes an element, splits its text into
+          <span class="text-cyan-400">chars</span> or
+          <span class="text-purple-400">words</span>, wraps each in a
+          <span class="font-mono text-sm text-green-400">&lt;span&gt;</span>,
+          and returns the array for GSAP to animate.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Split into characters</span>
+<span class="keyword">function</span> splitChars(el) {
+  const text = el.textContent;
+  el.textContent = <span class="string">''</span>;
+  const chars = [...text].map(char => {
+    const span = document.createElement(<span class="string">'span'</span>);
+    span.className = <span class="string">'char'</span>;
+    span.textContent = char === <span class="string">' '</span> ? <span class="string">'\u00A0'</span> : char;
+    el.appendChild(span);
+    return span;
+  });
+  return chars;
+}
+
+<span class="comment">// Split into words</span>
+<span class="keyword">function</span> splitWords(el) {
+  const text = el.textContent;
+  el.textContent = <span class="string">''</span>;
+  const words = text.split(<span class="string">' '</span>).map(word => {
+    const span = document.createElement(<span class="string">'span'</span>);
+    span.className = <span class="string">'word'</span>;
+    span.textContent = word;
+    el.appendChild(span);
+    el.append(<span class="string">' '</span>); <span class="comment">// preserve space</span>
+    return span;
+  });
+  return words;
+}</pre>
+          </div>
+          <div id="splitDemo" class="live-preview" style="flex-direction:column;gap:8px;padding:1rem;">
+            <div style="text-align:center;">
+              <p id="splitDemoText" class="text-lg font-semibold text-white mb-4">Split Me!</p>
+              <div class="flex gap-2 flex-wrap justify-center">
+                <button onclick="demoSplitChars()" class="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-sm hover:bg-cyan-500/30 transition-all">
+                  <i class="fa-solid fa-i-cursor mr-2"></i>Split Characters
+                </button>
+                <button onclick="demoSplitWords()" class="px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 text-sm hover:bg-purple-500/30 transition-all">
+                  <i class="fa-solid fa-words mr-2"></i>Split Words
+                </button>
+                <button onclick="resetSplitDemo()" class="px-4 py-2 rounded-lg bg-gray-700/30 border border-gray-700/30 text-gray-400 text-sm hover:bg-gray-700/50">
+                  <i class="fa-solid fa-rotate mr-2"></i>Reset
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="highlight-box cyan">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-code text-cyan-400 mr-2"></i>
+            The helper handles spaces (<span class="text-cyan-400">non-breaking space</span> for chars,
+            <span class="text-purple-400">text node</span> for words) so layout stays correct.
+            Each span gets a class for easy GSAP targeting.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3. CHARACTER ANIMATION -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">3</span>
+          Character Animation
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Once text is split into <span class="text-cyan-400">.char</span> spans,
+          GSAP can animate each letter with stagger — creating that satisfying
+          "unfolding" effect.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Step 1: Split</span>
+<span class="keyword">const</span> chars = splitChars(el);
+
+<span class="comment">// Step 2: Set initial state</span>
+<span class="keyword">gsap.set</span>(chars, {
+  <span class="property">opacity</span>: <span class="number">0</span>,
+  <span class="property">y</span>: <span class="number">-30</span>,
+  <span class="property">rotationX</span>: <span class="number">-90</span>
+});
+
+<span class="comment">// Step 3: Animate in with stagger</span>
+<span class="keyword">gsap.to</span>(chars, {
+  <span class="property">opacity</span>: <span class="number">1</span>,
+  <span class="property">y</span>: <span class="number">0</span>,
+  <span class="property">rotationX</span>: <span class="number">0</span>,
+  <span class="property">duration</span>: <span class="number">0.5</span>,
+  <span class="property">stagger</span>: <span class="number">0.04</span>,
+  <span class="property">ease</span>: <span class="string">"back.out(1.7)"</span>
+});</pre>
+          </div>
+          <div id="charDemo" class="live-preview" style="flex-direction:column;gap:8px;padding:1rem;">
+            <h3 id="charDemoText" class="text-2xl font-black text-white" style="text-align:center;">Animate</h3>
+            <button onclick="runCharAnim()" class="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-sm hover:bg-cyan-500/30 transition-all">
+              <i class="fa-solid fa-play mr-2"></i>Animate Characters
+            </button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="highlight-box cyan">
+            <p class="text-xs text-cyan-400 font-semibold mb-1">stagger: 0.04</p>
+            <p class="text-xs text-gray-300">Each letter starts 40ms after the last — creates a smooth wave</p>
+          </div>
+          <div class="highlight-box purple">
+            <p class="text-xs text-purple-400 font-semibold mb-1">rotationX</p>
+            <p class="text-xs text-gray-300">3D rotation on X axis — letters flip into view</p>
+          </div>
+          <div class="highlight-box orange">
+            <p class="text-xs text-orange-400 font-semibold mb-1">back.out(1.7)</p>
+            <p class="text-xs text-gray-300">Slight overshoot at the end — letters "pop" into place</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. WORD ANIMATION -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">4</span>
+          Word Animation
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Word-by-word is more readable for longer text. Split into
+          <span class="text-purple-400">.word</span> spans and use a larger stagger.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Split into words</span>
+<span class="keyword">const</span> words = splitWords(el);
+
+<span class="comment">// Animate each word sliding in</span>
+<span class="keyword">gsap.from</span>(words, {
+  <span class="property">opacity</span>: <span class="number">0</span>,
+  <span class="property">x</span>: <span class="number">-40</span>,
+  <span class="property">duration</span>: <span class="number">0.6</span>,
+  <span class="property">stagger</span>: <span class="number">0.12</span>,
+  <span class="property">ease</span>: <span class="string">"power2.out"</span>
+});
+
+<span class="comment">// stagger: 0.12 = 120ms between each word</span>
+<span class="comment">// 6 words × 0.12 = 0.72s total animation</span></pre>
+          </div>
+          <div id="wordDemo" class="live-preview" style="flex-direction:column;gap:8px;padding:1rem;">
+            <p id="wordDemoText" class="text-lg font-semibold text-white" style="text-align:center;max-width:360px;">Words slide in one at a time</p>
+            <button onclick="runWordAnim()" class="px-4 py-2 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 text-sm hover:bg-purple-500/30 transition-all">
+              <i class="fa-solid fa-play mr-2"></i>Animate Words
+            </button>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-arrow-right text-purple-400 mr-2"></i>
+            <strong class="text-white">Characters vs Words:</strong>
+            Characters are great for <span class="text-cyan-400">titles and short phrases</span>.
+            Words work better for <span class="text-purple-400">paragraphs and longer text</span>
+            where per-letter is too slow or hard to read.
+          </p>
+        </div>
+      </div>
+
+      <!-- 5. TYPEWRITER EFFECT -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">5</span>
+          Typewriter Effect
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          The classic typewriter reveals characters one at a time with a blinking cursor.
+          With GSAP, we use a <span class="text-orange-400">timeline</span> with
+          <span class="text-orange-400">stagger</span> and a CSS cursor.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// 1. Split into chars, set all invisible</span>
+<span class="keyword">const</span> chars = splitChars(el);
+<span class="keyword">gsap.set</span>(chars, { <span class="property">opacity</span>: <span class="number">0</span> });
+
+<span class="comment">// 2. Reveal one by one with stagger</span>
+<span class="keyword">gsap.to</span>(chars, {
+  <span class="property">opacity</span>: <span class="number">1</span>,
+  <span class="property">duration</span>: <span class="number">0.05</span>,
+  <span class="property">stagger</span>: <span class="number">0.06</span>,
+  <span class="property">ease</span>: <span class="string">"none"</span>
+});
+
+<span class="comment">// 3. Add blinking cursor with CSS</span>
+<span class="comment">// .typing-text::after { content:'|'; }</span>
+<span class="comment">// @keyframes blink { 50% { opacity:0; } }</span></pre>
+          </div>
+          <div id="typewriterDemo" class="live-preview" style="flex-direction:column;gap:8px;padding:1rem;">
+            <p id="typewriterText" class="text-lg font-semibold text-white typing-text" style="text-align:center;min-height:1.8em;">Typewriter!</p>
+            <button onclick="runTypewriter()" class="px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 text-sm hover:bg-orange-500/30 transition-all">
+              <i class="fa-solid fa-play mr-2"></i>Type It
+            </button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="highlight-box orange">
+            <p class="text-xs text-orange-400 font-semibold mb-1">stagger: 0.06</p>
+            <p class="text-xs text-gray-300">60ms per character = ~16 chars/second (comfortable reading speed)</p>
+          </div>
+          <div class="highlight-box purple">
+            <p class="text-xs text-purple-400 font-semibold mb-1">duration: 0.05</p>
+            <p class="text-xs text-gray-300">Each character fades in very fast — looks like instant appearance</p>
+          </div>
+          <div class="highlight-box cyan">
+            <p class="text-xs text-cyan-400 font-semibold mb-1">CSS cursor</p>
+            <p class="text-xs text-gray-300">Blinking "|" via <span class="font-mono">::after</span> pseudo-element animation</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. FANCY REVEALS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">6</span>
+          Fancy Combined Reveals
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Combine multiple properties for impressive text reveals —
+          <span class="text-cyan-400">fade + slide + scale + color</span>.
+          Each character transitions through multiple states.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Multi-property character reveal</span>
+<span class="keyword">gsap.from</span>(chars, {
+  <span class="property">opacity</span>: <span class="number">0</span>,
+  <span class="property">scale</span>: <span class="number">2</span>,
+  <span class="property">rotation</span>: <span class="number">-30</span>,
+  <span class="property">y</span>: <span class="number">-40</span>,
+  <span class="property">duration</span>: <span class="number">0.6</span>,
+  <span class="property">stagger</span>: <span class="number">0.05</span>,
+  <span class="property">ease</span>: <span class="string">"back.out(1.7)"</span>,
+  <span class="property">onComplete</span>: () => {
+    <span class="comment">// BONUS: randomize colors after reveal</span>
+    chars.forEach(c => {
+      c.style.color = randomColor();
+    });
+  }
+});</pre>
+          </div>
+          <div id="fancyDemo" class="live-preview" style="flex-direction:column;gap:8px;padding:1rem;">
+            <h3 id="fancyText" class="text-2xl font-black text-white" style="text-align:center;">Fancy</h3>
+            <button onclick="runFancy()" class="px-4 py-2 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-sm hover:bg-pink-500/30 transition-all">
+              <i class="fa-solid fa-wand-magic-sparkles mr-2"></i>Fancy Reveal
+            </button>
+          </div>
+        </div>
+
+        <div class="highlight-box pink">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-palette text-pink-400 mr-2"></i>
+            <strong class="text-white">Experiment:</strong> After the stagger animation completes,
+            each character gets a random color from the gradient palette —
+            creating a rainbow title effect. Combine this with
+            <span class="text-cyan-400">scrollTrigger</span> for scroll-driven text reveals.
+          </p>
+        </div>
+      </div>
+
+      <!-- 7. PLAYGROUND -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">7</span>
+          Text Animation Playground
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-6">
+          Tune every parameter — mode (chars/words), stagger, direction, scale, ease —
+          and see the code update live.
+        </p>
+
+        <div class="split-panel mb-6">
+          <div>
+            <div class="flex gap-2 mb-3 flex-wrap">
+              <button onclick="setPgMode('chars')" id="pgModeChars" class="code-tab active" style="background:#0d0d1a;padding:.35rem 1rem;border-radius:8px 8px 0 0;font-size:.75rem;font-weight:500;cursor:pointer;border:1px solid transparent;border-bottom:none;color:#fff;transition:all .15s;">Characters</button>
+              <button onclick="setPgMode('words')" id="pgModeWords" class="code-tab" style="padding:.35rem 1rem;border-radius:8px 8px 0 0;font-size:.75rem;font-weight:500;cursor:pointer;border:1px solid transparent;border-bottom:none;color:#6b6b80;transition:all .15s;">Words</button>
+            </div>
+            <pre class="code-block" id="pgCode" style="min-height:140px;"></pre>
+          </div>
+          <div id="pgPreview" class="live-preview" style="flex-direction:column;gap:8px;padding:1rem;">
+            <h3 id="pgText" class="text-xl md:text-2xl font-black text-white" style="text-align:center;">GSAP Text</h3>
+            <div class="flex gap-2 flex-wrap justify-center mt-2">
+              <button onclick="runPg()" class="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-sm hover:bg-cyan-500/30 transition-all">
+                <i class="fa-solid fa-play mr-2"></i>Animate
+              </button>
+              <button onclick="resetPg()" class="px-4 py-2 rounded-lg bg-gray-700/30 border border-gray-700/30 text-gray-400 text-sm hover:bg-gray-700/50 transition-all">
+                <i class="fa-solid fa-rotate mr-2"></i>Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Stagger (s)</span>
+              <span class="font-mono text-white" id="pgStagger">0.05</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgStagger" min="0.01" max="0.3" step="0.01" value="0.05" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Duration (s)</span>
+              <span class="font-mono text-white" id="pgDur">0.6</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgDur" min="0.2" max="2" step="0.1" value="0.6" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Y offset (px)</span>
+              <span class="font-mono text-white" id="pgY">-30</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgY" min="-60" max="60" value="-30" oninput="updatePg()" />
+          </div>
+        </div>
+        <div class="grid md:grid-cols-3 gap-6 mt-6">
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Scale</span>
+              <span class="font-mono text-white" id="pgScale">1</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgScale" min="0" max="3" step="0.1" value="1" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Rotation (°)</span>
+              <span class="font-mono text-white" id="pgRot">0</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgRot" min="-90" max="90" value="0" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Ease</span>
+            </label>
+            <select id="pgPgEase" class="select-ease" oninput="updatePg()">
+              <option value="power2.out">power2.out</option>
+              <option value="power1.out">power1.out</option>
+              <option value="power3.out">power3.out</option>
+              <option value="back.out(1.7)">back.out(1.7)</option>
+              <option value="bounce.out">bounce.out</option>
+              <option value="elastic.out(1,0.3)">elastic.out</option>
+              <option value="none">none (linear)</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- WRAP UP -->
+      <div class="card p-8 mb-8" style="border:1px solid rgba(78,205,196,.15);">
+        <div class="flex items-start gap-4">
+          <div class="step-number" style="border-color:rgba(78,205,196,.5);color:#4ecdc4;">✓</div>
+          <div>
+            <h2 class="text-xl font-bold text-white mb-3">What You Learned</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><span class="text-cyan-400 mt-0.5">→</span> <span><strong class="text-white">Text splitting</strong> — wrap each char/word in a &lt;span&gt; for GSAP targeting</span></li>
+                  <li class="flex items-start gap-2"><span class="text-cyan-400 mt-0.5">→</span> <span><strong class="text-white">Character animation</strong> — small stagger (0.03-0.05) creates letter waves</span></li>
+                  <li class="flex items-start gap-2"><span class="text-cyan-400 mt-0.5">→</span> <span><strong class="text-white">Word animation</strong> — larger stagger (0.1-0.15) for readable text reveals</span></li>
+                </ul>
+              </div>
+              <div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><span class="text-cyan-400 mt-0.5">→</span> <span><strong class="text-white">Typewriter</strong> — stagger chars with fast duration + CSS blinking cursor</span></li>
+                  <li class="flex items-start gap-2"><span class="text-cyan-400 mt-0.5">→</span> <span><strong class="text-white">Combined effects</strong> — scale + rotation + y + opacity for dramatic reveals</span></li>
+                  <li class="flex items-start gap-2"><span class="text-cyan-400 mt-0.5">→</span> <span><strong class="text-white">Next up:</strong> SVG Animations — morphing, drawing, and path animations</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NAV -->
+      <div class="text-center py-6">
+        <div class="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-500">
+          <span>Ch 1: Intro</span><span class="text-gray-700">·</span>
+          <span>Ch 2: Easing</span><span class="text-gray-700">·</span>
+          <span>Ch 3: from & fromTo</span><span class="text-gray-700">·</span>
+          <span>Ch 4: Timeline</span><span class="text-gray-700">·</span>
+          <span>Ch 5: ScrollTrigger</span><span class="text-gray-700">·</span>
+          <span class="text-cyan-400 font-semibold">Ch 6: Text Animations</span>
+        </div>
+      </div>
+    </div>
+
+    <style>
+      .code-tab { padding:.35rem 1rem; border-radius:8px 8px 0 0; font-size:.75rem; font-weight:500; cursor:pointer; border:1px solid transparent; border-bottom:none; transition:all .15s; }
+      .code-tab.active { background:#0d0d1a; border-color:rgba(255,255,255,.06); color:#fff; }
+      .code-tab:not(.active) { color:#6b6b80; }
+      .code-tab:not(.active):hover { color:#e2e2e8; }
+      @media (max-width:640px) {
+        .code-tab { font-size:.6rem; padding:.25rem .6rem; }
+      }
+    </style>
+
+    <script>
+      // ─── Text Split Helpers ───
+      function splitChars(el) {
+        const text = el.textContent;
+        el.textContent = '';
+        return [...text].map(char => {
+          const span = document.createElement('span');
+          span.className = 'char';
+          span.textContent = char === ' ' ? '\u00A0' : char;
+          el.appendChild(span);
+          return span;
+        });
+      }
+
+      function splitWords(el) {
+        const text = el.textContent.trim();
+        el.textContent = '';
+        return text.split(' ').map((word, i, arr) => {
+          const span = document.createElement('span');
+          span.className = 'word';
+          span.textContent = word;
+          el.appendChild(span);
+          if (i < arr.length - 1) el.append(' ');
+          return span;
+        });
+      }
+
+      function resetText(el) {
+        el.textContent = el.getAttribute('data-original') || el.textContent;
+      }
+
+      // ─── 2. Split Demo ───
+      const splitDemoEl = document.getElementById('splitDemoText');
+      splitDemoEl.setAttribute('data-original', 'Split Me!');
+
+      function demoSplitChars() {
+        resetText(splitDemoEl);
+        const chars = splitChars(splitDemoEl);
+        gsap.set(chars, { opacity: 0, y: -20, scale: 0.5, rotation: -15 });
+        gsap.to(chars, {
+          opacity: 1, y: 0, scale: 1, rotation: 0,
+          duration: 0.4, stagger: 0.05, ease: 'back.out(1.7)'
+        });
+      }
+
+      function demoSplitWords() {
+        resetText(splitDemoEl);
+        const words = splitWords(splitDemoEl);
+        gsap.set(words, { opacity: 0, x: -30 });
+        gsap.to(words, {
+          opacity: 1, x: 0,
+          duration: 0.5, stagger: 0.2, ease: 'power2.out'
+        });
+      }
+
+      function resetSplitDemo() {
+        resetText(splitDemoEl);
+      }
+
+      // ─── 3. Character Animation ───
+      const charDemoEl = document.getElementById('charDemoText');
+      charDemoEl.setAttribute('data-original', 'Animate');
+
+      function runCharAnim() {
+        resetText(charDemoEl);
+        const chars = splitChars(charDemoEl);
+        gsap.set(chars, { opacity: 0, y: -30, rotationX: -90 });
+        gsap.to(chars, {
+          opacity: 1, y: 0, rotationX: 0,
+          duration: 0.5, stagger: 0.04, ease: 'back.out(1.7)'
+        });
+      }
+
+      // ─── 4. Word Animation ───
+      const wordDemoEl = document.getElementById('wordDemoText');
+      wordDemoEl.setAttribute('data-original', 'Words slide in one at a time');
+
+      function runWordAnim() {
+        resetText(wordDemoEl);
+        const words = splitWords(wordDemoEl);
+        gsap.from(words, {
+          opacity: 0, x: -40,
+          duration: 0.6, stagger: 0.12, ease: 'power2.out'
+        });
+      }
+
+      // ─── 5. Typewriter ───
+      const typewriterEl = document.getElementById('typewriterText');
+      typewriterEl.setAttribute('data-original', 'Typewriter!');
+
+      function runTypewriter() {
+        resetText(typewriterEl);
+        typewriterEl.classList.add('typing-text');
+        const chars = splitChars(typewriterEl);
+        gsap.set(chars, { opacity: 0 });
+        gsap.to(chars, {
+          opacity: 1,
+          duration: 0.03,
+          stagger: 0.07,
+          ease: 'none',
+          onComplete: () => {
+            // cursor stays blinking via CSS
+          }
+        });
+      }
+
+      // ─── 6. Fancy Reveal ───
+      const fancyEl = document.getElementById('fancyText');
+      fancyEl.setAttribute('data-original', 'Fancy');
+
+      const colors = ['#ff6b35','#f7c948','#4ecdc4','#6c5ce7','#fd79a8','#22c55e'];
+      function randomColor() { return colors[Math.floor(Math.random() * colors.length)]; }
+
+      function runFancy() {
+        resetText(fancyEl);
+        const chars = splitChars(fancyEl);
+        gsap.from(chars, {
+          opacity: 0, scale: 2, rotation: -30, y: -40,
+          duration: 0.6, stagger: 0.05, ease: 'back.out(1.7)',
+          onComplete: () => {
+            chars.forEach(c => { c.style.color = randomColor(); });
+          }
+        });
+      }
+
+      // ─── 7. Playground ───
+      const pgEl = document.getElementById('pgText');
+      pgEl.setAttribute('data-original', 'GSAP Text');
+      let pgMode = 'chars';
+
+      function setPgMode(mode) {
+        pgMode = mode;
+        document.getElementById('pgModeChars').classList.toggle('active', mode === 'chars');
+        document.getElementById('pgModeChars').style.background = mode === 'chars' ? '#0d0d1a' : 'transparent';
+        document.getElementById('pgModeChars').style.color = mode === 'chars' ? '#fff' : '#6b6b80';
+        document.getElementById('pgModeWords').classList.toggle('active', mode === 'words');
+        document.getElementById('pgModeWords').style.background = mode === 'words' ? '#0d0d1a' : 'transparent';
+        document.getElementById('pgModeWords').style.color = mode === 'words' ? '#fff' : '#6b6b80';
+        updatePg();
+      }
+
+      function updatePg() {
+        const stagger = parseFloat(document.getElementById('pgPgStagger').value);
+        const dur = parseFloat(document.getElementById('pgPgDur').value);
+        const y = parseFloat(document.getElementById('pgPgY').value);
+        const scale = parseFloat(document.getElementById('pgPgScale').value);
+        const rot = parseFloat(document.getElementById('pgPgRot').value);
+        const ease = document.getElementById('pgPgEase').value;
+
+        document.getElementById('pgStagger').textContent = stagger;
+        document.getElementById('pgDur').textContent = dur;
+        document.getElementById('pgY').textContent = y;
+        document.getElementById('pgScale').textContent = scale;
+        document.getElementById('pgRot').textContent = rot;
+
+        const target = pgMode === 'chars' ? '.char' : '.word';
+        let code = `<span class="keyword">gsap.from</span>(<span class="string">"${target}"</span>, {\n`;
+        code += `  <span class="property">opacity</span>: <span class="number">0</span>,\n`;
+        if (y !== 0) code += `  <span class="property">y</span>: <span class="number">${y}</span>,\n`;
+        if (scale !== 1) code += `  <span class="property">scale</span>: <span class="number">${scale}</span>,\n`;
+        if (rot !== 0) code += `  <span class="property">rotation</span>: <span class="number">${rot}</span>,\n`;
+        code += `  <span class="property">duration</span>: <span class="number">${dur}</span>,\n`;
+        code += `  <span class="property">stagger</span>: <span class="number">${stagger}</span>,\n`;
+        code += `  <span class="property">ease</span>: <span class="string">"${ease}"</span>\n});`;
+        document.getElementById('pgCode').innerHTML = code;
+      }
+
+      function runPg() {
+        resetText(pgEl);
+        const stagger = parseFloat(document.getElementById('pgPgStagger').value);
+        const dur = parseFloat(document.getElementById('pgPgDur').value);
+        const y = parseFloat(document.getElementById('pgPgY').value);
+        const scale = parseFloat(document.getElementById('pgPgScale').value);
+        const rot = parseFloat(document.getElementById('pgPgRot').value);
+        const ease = document.getElementById('pgPgEase').value;
+
+        const items = pgMode === 'chars' ? splitChars(pgEl) : splitWords(pgEl);
+        const vars = { opacity: 0, duration: dur, stagger: stagger, ease: ease };
+        if (y !== 0) vars.y = y;
+        if (scale !== 1) vars.scale = scale;
+        if (rot !== 0) vars.rotation = rot;
+        gsap.from(items, vars);
+      }
+
+      function resetPg() {
+        resetText(pgEl);
+      }
+
+      // ─── Init ───
+      updatePg();
+    </script>
+  </body>
+</html>

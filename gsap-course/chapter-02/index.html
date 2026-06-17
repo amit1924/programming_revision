@@ -1,0 +1,1333 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 2: Easing — Making Animations Feel Alive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+      body {
+        background: #08080e;
+        color: #e2e2e8;
+        font-family: 'Inter', sans-serif;
+      }
+      code,
+      pre {
+        font-family: 'Fira Code', monospace !important;
+      }
+      .card {
+        background: linear-gradient(145deg, #13131f, #1a1a2e);
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 16px;
+      }
+      .gradient-text {
+        background: linear-gradient(135deg, #ff6b35, #f7c948, #4ecdc4, #6c5ce7);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+      .code-block {
+        background: #0d0d1a;
+        border: 1px solid rgba(255, 255, 255, 0.06);
+        border-radius: 12px;
+        padding: 1.25rem;
+        overflow-x: auto;
+        font-size: 0.85rem;
+        line-height: 1.7;
+      }
+      .keyword {
+        color: #ff6b35;
+      }
+      .string {
+        color: #22c55e;
+      }
+      .number {
+        color: #f7c948;
+      }
+      .comment {
+        color: #6c5ce7;
+        font-style: italic;
+      }
+      .property {
+        color: #4ecdc4;
+      }
+      .step-number {
+        width: 32px;
+        height: 32px;
+        border-radius: 50%;
+        background: linear-gradient(135deg, rgba(255, 107, 53, 0.2), rgba(108, 92, 231, 0.2));
+        border: 1px solid rgba(255, 107, 53, 0.3);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.8rem;
+        font-weight: 700;
+        color: #ff6b35;
+        flex-shrink: 0;
+      }
+      .highlight-box {
+        border-left: 3px solid #ff6b35;
+        padding: 1rem 1.2rem;
+        background: rgba(255, 107, 53, 0.04);
+        border-radius: 0 12px 12px 0;
+      }
+      .highlight-box.cyan {
+        border-left-color: #4ecdc4;
+        background: rgba(78, 205, 196, 0.04);
+      }
+      .highlight-box.purple {
+        border-left-color: #6c5ce7;
+        background: rgba(108, 92, 231, 0.04);
+      }
+      .highlight-box.green {
+        border-left-color: #22c55e;
+        background: rgba(34, 197, 94, 0.04);
+      }
+      .split-panel {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1.5rem;
+      }
+      @media (max-width: 768px) {
+        .split-panel {
+          grid-template-columns: 1fr;
+        }
+      }
+      .live-preview {
+        min-height: 300px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        position: relative;
+        overflow: hidden;
+        border-radius: 12px;
+        background: radial-gradient(ellipse at center, rgba(255, 107, 53, 0.05), transparent 70%);
+      }
+      .box-demo {
+        width: 80px;
+        height: 80px;
+        border-radius: 16px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: white;
+        cursor: pointer;
+        user-select: none;
+      }
+      .ease-row {
+        display: grid;
+        grid-template-columns: 140px 1fr 40px;
+        gap: 1rem;
+        align-items: center;
+        padding: 0.5rem 0;
+        transition: all 0.2s;
+        cursor: pointer;
+        border-radius: 8px;
+        padding: 0.5rem 0.8rem;
+      }
+      .ease-row:hover {
+        background: rgba(255, 255, 255, 0.03);
+      }
+      .ease-row.active {
+        background: rgba(255, 107, 53, 0.08);
+      }
+      .ease-track {
+        height: 30px;
+        background: rgba(255, 255, 255, 0.04);
+        border-radius: 6px;
+        position: relative;
+        overflow: hidden;
+      }
+      .ease-ball {
+        width: 18px;
+        height: 18px;
+        border-radius: 50%;
+        position: absolute;
+        top: 50%;
+        transform: translateY(-50%);
+        left: 4px;
+      }
+      .ease-label {
+        font-size: 0.8rem;
+        font-weight: 500;
+      }
+      .ease-dot {
+        width: 6px;
+        height: 6px;
+        border-radius: 50%;
+      }
+      ::-webkit-scrollbar {
+        width: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: #08080e;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: #2d2d3d;
+        border-radius: 3px;
+      }
+      .curve-viz {
+        height: 80px;
+        width: 100%;
+        border-radius: 8px;
+        background: rgba(255, 255, 255, 0.02);
+        position: relative;
+        overflow: hidden;
+      }
+      .playground-slider {
+        -webkit-appearance: none;
+        width: 100%;
+        height: 4px;
+        border-radius: 2px;
+        background: rgba(255, 255, 255, 0.1);
+        outline: none;
+      }
+      .playground-slider::-webkit-slider-thumb {
+        -webkit-appearance: none;
+        width: 16px;
+        height: 16px;
+        border-radius: 50%;
+        background: #ff6b35;
+        cursor: pointer;
+        border: 2px solid #08080e;
+      }
+      .select-ease {
+        background: #0d0d1a;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        border-radius: 8px;
+        padding: 0.5rem 1rem;
+        color: white;
+        font-family: 'Fira Code', monospace;
+        font-size: 0.85rem;
+        width: 100%;
+        outline: none;
+        cursor: pointer;
+      }
+      .select-ease:focus {
+        border-color: #ff6b35;
+      }
+      @media (max-width: 640px) {
+        .card {
+          padding: 1rem !important;
+          border-radius: 12px;
+        }
+        h1 {
+          font-size: 1.6rem !important;
+        }
+        .md\:text-5xl {
+          font-size: 1.6rem !important;
+        }
+        h2 {
+          font-size: 1.1rem !important;
+        }
+        h3 {
+          font-size: 1rem !important;
+        }
+        .text-4xl {
+          font-size: 1.6rem !important;
+        }
+        .text-3xl {
+          font-size: 1.3rem !important;
+        }
+        .text-2xl {
+          font-size: 1.1rem !important;
+        }
+        .text-xl {
+          font-size: 1rem !important;
+        }
+        .text-lg {
+          font-size: 0.85rem !important;
+        }
+        .text-sm {
+          font-size: 0.7rem !important;
+        }
+        .text-xs {
+          font-size: 0.6rem !important;
+        }
+        .text-base {
+          font-size: 0.8rem !important;
+        }
+        .code-block {
+          font-size: 0.65rem;
+          padding: 0.7rem;
+        }
+        .py-10 {
+          padding-top: 1rem;
+          padding-bottom: 1rem;
+        }
+        .px-6 {
+          padding-left: 0.8rem;
+          padding-right: 0.8rem;
+        }
+        .mb-12 {
+          margin-bottom: 1.5rem;
+        }
+        .mb-8 {
+          margin-bottom: 0.8rem;
+        }
+        .mb-6 {
+          margin-bottom: 0.6rem;
+        }
+        .mb-4 {
+          margin-bottom: 0.4rem;
+        }
+        .gap-6 {
+          gap: 0.6rem;
+        }
+        .gap-4 {
+          gap: 0.5rem;
+        }
+        .gap-3 {
+          gap: 0.4rem;
+        }
+        .gap-2 {
+          gap: 0.3rem;
+        }
+        .gap-1\.5 {
+          gap: 0.3rem;
+        }
+        .p-8 {
+          padding: 1rem !important;
+        }
+        .p-6 {
+          padding: 0.8rem !important;
+        }
+        .p-5 {
+          padding: 0.7rem !important;
+        }
+        .p-4 {
+          padding: 0.6rem !important;
+        }
+        .p-3 {
+          padding: 0.6rem !important;
+        }
+        .px-5 {
+          padding-left: 0.7rem;
+          padding-right: 0.7rem;
+        }
+        .px-4 {
+          padding-left: 0.6rem;
+          padding-right: 0.6rem;
+        }
+        .py-3 {
+          padding-top: 0.5rem;
+          padding-bottom: 0.5rem;
+        }
+        .py-2 {
+          padding-top: 0.3rem;
+          padding-bottom: 0.3rem;
+        }
+        .px-3 {
+          padding-left: 0.5rem;
+          padding-right: 0.5rem;
+        }
+        .rounded-xl {
+          border-radius: 8px;
+        }
+        .rounded-2xl {
+          border-radius: 10px;
+        }
+        .rounded-lg {
+          border-radius: 6px;
+        }
+        .max-w-4xl,
+        .max-w-6xl {
+          padding-left: 0.5rem;
+          padding-right: 0.5rem;
+        }
+        .space-y-6 > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 0.8rem;
+        }
+        .space-y-5 > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 0.6rem;
+        }
+        .space-y-4 > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 0.4rem;
+        }
+        .space-y-3 > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 0.3rem;
+        }
+        .space-y-2 > :not([hidden]) ~ :not([hidden]) {
+          margin-top: 0.2rem;
+        }
+        .space-x-3 > :not([hidden]) ~ :not([hidden]) {
+          margin-left: 0.4rem;
+        }
+        .split-panel {
+          grid-template-columns: 1fr;
+          gap: 0.8rem;
+        }
+        .live-preview {
+          min-height: 160px;
+          border-radius: 8px;
+        }
+        .box-demo {
+          width: 56px;
+          height: 56px;
+          font-size: 0.55rem;
+          border-radius: 10px;
+        }
+        .step-number {
+          width: 24px;
+          height: 24px;
+          font-size: 0.65rem;
+        }
+        .ease-row {
+          grid-template-columns: 1fr;
+          gap: 0.3rem;
+          padding: 0.4rem 0.5rem;
+        }
+        .ease-label {
+          font-size: 0.7rem;
+        }
+        .ease-track {
+          height: 24px;
+        }
+        .ease-ball {
+          width: 14px;
+          height: 14px;
+        }
+        .ease-dot {
+          width: 4px;
+          height: 4px;
+        }
+        .curve-viz {
+          height: 50px;
+          border-radius: 6px;
+        }
+        [class*='md:grid-cols-'] {
+          grid-template-columns: 1fr !important;
+        }
+        .highlight-box {
+          padding: 0.6rem 0.8rem;
+        }
+        .select-ease {
+          font-size: 0.75rem;
+          padding: 0.4rem 0.6rem;
+        }
+        .playground-slider::-webkit-slider-thumb {
+          width: 22px;
+          height: 22px;
+        }
+        .playground-slider::-moz-range-thumb {
+          width: 22px;
+          height: 22px;
+        }
+        .inline-flex.items-center.gap-2 {
+          flex-wrap: wrap;
+        }
+        .max-w-2xl {
+          max-width: 100%;
+        }
+        .w-10 {
+          width: 1.5rem;
+        }
+        .h-10 {
+          height: 1.5rem;
+        }
+        .w-8 {
+          width: 1.2rem;
+        }
+        .h-8 {
+          height: 1.2rem;
+        }
+      }
+      @media (min-width: 641px) and (max-width: 768px) {
+        .split-panel {
+          grid-template-columns: 1fr;
+        }
+        .card {
+          padding: 1.5rem !important;
+        }
+        h1 {
+          font-size: 2rem !important;
+        }
+        .md\:text-5xl {
+          font-size: 2rem !important;
+        }
+        .ease-row {
+          grid-template-columns: 100px 1fr 30px;
+          gap: 0.5rem;
+        }
+        [class*='md:grid-cols-'] {
+          grid-template-columns: 1fr 1fr !important;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="max-w-6xl mx-auto px-6 py-10">
+      <!-- HEADER -->
+      <div class="text-center mb-12">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm mb-4"
+        >
+          <i class="fa-solid fa-chart-line"></i> Chapter 2 of 10
+        </div>
+        <h1 class="text-4xl md:text-5xl font-black mb-3">
+          Easing: Making Animations <span class="gradient-text">Feel Alive</span>
+        </h1>
+        <p class="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          In Chapter 1, you made things move. In Chapter 2, you'll make them move
+          <span class="text-orange-400">well</span>. Easing is the secret that separates robotic
+          animations from buttery-smooth, professional ones.
+        </p>
+      </div>
+
+      <!-- 1. WHAT IS EASING -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">1</span>
+          What is Easing?
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          <strong class="text-white">Easing</strong> controls the
+          <span class="text-orange-400 font-semibold">speed curve</span> of an animation — how it
+          speeds up and slows down over time. Without easing, everything moves at a constant speed,
+          which looks robotic. With easing, animations feel
+          <span class="text-white">natural, weighted, and alive</span>.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-6 mb-4">
+          <div class="highlight-box">
+            <p class="text-sm text-gray-400 leading-relaxed">
+              <span class="text-white font-semibold">🚫 Without easing (linear):</span><br />
+              The box moves at the exact same speed from start to finish. Like a conveyor belt — no
+              acceleration, no deceleration. It feels dead.
+            </p>
+          </div>
+          <div class="highlight-box green">
+            <p class="text-sm text-gray-400 leading-relaxed">
+              <span class="text-white font-semibold">✅ With easing (power2.out):</span><br />
+              The box starts fast, then <span class="text-green-400">slowly coasts to a stop</span>.
+              Like a car braking gently. It feels natural and satisfying.
+            </p>
+          </div>
+        </div>
+
+        <div class="highlight-box purple mt-4">
+          <p class="text-sm text-gray-400 leading-relaxed">
+            <span class="text-white font-semibold">Real-world analogy:</span> Imagine throwing a
+            ball. It leaves your hand fast (<span class="text-purple-400">ease-out</span>), or
+            imagine a train starting from a station — it starts slow, then speeds up (<span
+              class="text-purple-400"
+              >ease-in</span
+            >). Or a roller coaster going up and over a hill (ease-in-out).
+            <span class="text-white">Easing mimics how things move in the real world.</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. THE THREE DIRECTIONS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3 flex-wrap">
+          <span class="step-number">2</span>
+          The Three Directions: <code class="text-orange-400 text-base">.in</code> ·
+          <code class="text-orange-400 text-base">.out</code> ·
+          <code class="text-orange-400 text-base">.inOut</code>
+        </h2>
+        <p class="text-gray-400 text-sm mb-6">
+          Every GSAP ease comes in three flavors that control where the speed variation happens:
+        </p>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-6">
+          <div class="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+            <div
+              class="w-12 h-12 rounded-xl bg-orange-500/20 flex items-center justify-center mx-auto mb-3"
+            >
+              <span class="text-orange-400 font-bold text-lg">in</span>
+            </div>
+            <h4 class="text-white font-semibold text-sm mb-2">ease-in</h4>
+            <p class="text-gray-400 text-xs leading-relaxed">
+              Starts slow, ends fast.<br />
+              Like a train <span class="text-orange-400">leaving the station</span>.
+            </p>
+          </div>
+          <div class="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+            <div
+              class="w-12 h-12 rounded-xl bg-cyan-500/20 flex items-center justify-center mx-auto mb-3"
+            >
+              <span class="text-cyan-400 font-bold text-lg">out</span>
+            </div>
+            <h4 class="text-white font-semibold text-sm mb-2">ease-out</h4>
+            <p class="text-gray-400 text-xs leading-relaxed">
+              Starts fast, ends slow.<br />
+              Like a car <span class="text-cyan-400">coasting to a stop</span>.
+            </p>
+          </div>
+          <div class="p-5 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+            <div
+              class="w-12 h-12 rounded-xl bg-purple-500/20 flex items-center justify-center mx-auto mb-3"
+            >
+              <span class="text-purple-400 font-bold text-lg">inOut</span>
+            </div>
+            <h4 class="text-white font-semibold text-sm mb-2">ease-inOut</h4>
+            <p class="text-gray-400 text-xs leading-relaxed">
+              Starts slow, speeds up, ends slow.<br />
+              Like a <span class="text-purple-400">roller coaster</span> going over a hill.
+            </p>
+          </div>
+        </div>
+
+        <div class="highlight-box text-sm text-gray-400">
+          <p>
+            <span class="text-white font-semibold">💡 Rule of thumb:</span>
+            <code class="text-orange-400">ease-out</code> is the most commonly used for UI
+            animations (elements entering the screen). <code class="text-cyan-400">ease-in</code> is
+            good for elements leaving. <code class="text-purple-400">ease-inOut</code> is great for
+            continuous motion like a bouncing loader.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3. THE POWER LEVELS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">3</span>
+          The Power Levels: <code class="text-orange-400 text-base">Power1</code> →
+          <code class="text-orange-400 text-base">Power4</code>
+        </h2>
+        <p class="text-gray-400 text-sm mb-4">
+          GSAP has 4 power levels. The higher the number, the
+          <span class="text-orange-400">more dramatic</span> the easing effect.
+        </p>
+
+        <div class="grid md:grid-cols-4 gap-4 mb-6">
+          <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+            <div class="text-2xl font-bold text-white mb-1">1</div>
+            <code class="text-xs text-orange-400">Power1</code>
+            <p class="text-gray-500 text-xs mt-1">Subtle</p>
+          </div>
+          <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+            <div class="text-2xl font-bold text-white mb-1">2</div>
+            <code class="text-xs text-cyan-400">Power2</code>
+            <p class="text-gray-500 text-xs mt-1">Moderate</p>
+          </div>
+          <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+            <div class="text-2xl font-bold text-white mb-1">3</div>
+            <code class="text-xs text-purple-400">Power3</code>
+            <p class="text-gray-500 text-xs mt-1">Strong</p>
+          </div>
+          <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5 text-center">
+            <div class="text-2xl font-bold text-white mb-1">4</div>
+            <code class="text-xs text-green-400">Power4</code>
+            <p class="text-gray-500 text-xs mt-1">Very Strong</p>
+          </div>
+        </div>
+
+        <div class="code-block mb-4">
+          <pre><span class="comment">// All of these are valid. They get progressively more dramatic:</span>
+gsap.to(<span class="string">".box"</span>, { x: <span class="number">300</span>, duration: <span class="number">1</span>, ease: <span class="string">"power1.out"</span> });  <span class="comment">// subtle deceleration</span>
+gsap.to(<span class="string">".box"</span>, { x: <span class="number">300</span>, duration: <span class="number">1</span>, ease: <span class="string">"power2.out"</span> });  <span class="comment">// moderate (most common)</span>
+gsap.to(<span class="string">".box"</span>, { x: <span class="number">300</span>, duration: <span class="number">1</span>, ease: <span class="string">"power3.out"</span> });  <span class="comment">// strong coast</span>
+gsap.to(<span class="string">".box"</span>, { x: <span class="number">300</span>, duration: <span class="number">1</span>, ease: <span class="string">"power4.out"</span> });  <span class="comment"># very dramatic coast</span></pre>
+        </div>
+
+        <div class="curve-viz" id="powerCurves"></div>
+        <p class="text-gray-500 text-xs mt-2 text-center">
+          Power1 → Power4: each curve gets more aggressive. The steeper the start, the stronger the
+          deceleration.
+        </p>
+      </div>
+
+      <!-- 4. VISUAL COMPARISON: ALL EASES SIDE BY SIDE -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">4</span>
+          Visual Comparison — See the Difference
+        </h2>
+        <p class="text-gray-400 text-sm mb-6">
+          All boxes move the same distance in the same time. Only the
+          <span class="text-orange-400">ease</span> changes. Click any row to replay and focus on
+          that one.
+        </p>
+
+        <div id="easeComparison">
+          <div class="ease-row" data-ease="linear" onclick="runEaseDemo('linear')">
+            <span class="ease-label text-gray-300">linear</span>
+            <div class="ease-track" id="track-linear">
+              <div class="ease-ball" id="ball-linear" style="background: #6b7280"></div>
+            </div>
+            <span class="text-gray-500 text-xs">none</span>
+          </div>
+          <div class="ease-row" data-ease="power1.out" onclick="runEaseDemo('power1.out')">
+            <span class="ease-label text-orange-300">power1.out</span>
+            <div class="ease-track" id="track-power1.out">
+              <div class="ease-ball" id="ball-power1.out" style="background: #ff6b35"></div>
+            </div>
+            <span class="text-orange-400 text-xs">subtle</span>
+          </div>
+          <div class="ease-row active" data-ease="power2.out" onclick="runEaseDemo('power2.out')">
+            <span class="ease-label text-cyan-300">power2.out</span>
+            <div class="ease-track" id="track-power2.out">
+              <div class="ease-ball" id="ball-power2.out" style="background: #4ecdc4"></div>
+            </div>
+            <span class="text-cyan-400 text-xs">common ✓</span>
+          </div>
+          <div class="ease-row" data-ease="power3.out" onclick="runEaseDemo('power3.out')">
+            <span class="ease-label text-purple-300">power3.out</span>
+            <div class="ease-track" id="track-power3.out">
+              <div class="ease-ball" id="ball-power3.out" style="background: #6c5ce7"></div>
+            </div>
+            <span class="text-purple-400 text-xs">strong</span>
+          </div>
+          <div class="ease-row" data-ease="power4.out" onclick="runEaseDemo('power4.out')">
+            <span class="ease-label text-green-300">power4.out</span>
+            <div class="ease-track" id="track-power4.out">
+              <div class="ease-ball" id="ball-power4.out" style="background: #22c55e"></div>
+            </div>
+            <span class="text-green-400 text-xs">very strong</span>
+          </div>
+          <div class="ease-row" data-ease="back.out(2)" onclick="runEaseDemo('back.out(2)')">
+            <span class="ease-label text-pink-300">back.out</span>
+            <div class="ease-track" id="track-back.out(2)">
+              <div class="ease-ball" id="ball-back.out(2)" style="background: #ec4899"></div>
+            </div>
+            <span class="text-pink-400 text-xs">overshoot!</span>
+          </div>
+          <div
+            class="ease-row"
+            data-ease="elastic.out(1,0.3)"
+            onclick="runEaseDemo('elastic.out(1,0.3)')"
+          >
+            <span class="ease-label text-yellow-300">elastic.out</span>
+            <div class="ease-track" id="track-elastic.out(1,0.3)">
+              <div class="ease-ball" id="ball-elastic.out(1,0.3)" style="background: #f7c948"></div>
+            </div>
+            <span class="text-yellow-400 text-xs">bouncy!</span>
+          </div>
+          <div class="ease-row" data-ease="bounce.out" onclick="runEaseDemo('bounce.out')">
+            <span class="ease-label text-red-300">bounce.out</span>
+            <div class="ease-track" id="track-bounce.out">
+              <div class="ease-ball" id="ball-bounce.out" style="background: #ef4444"></div>
+            </div>
+            <span class="text-red-400 text-xs">bounce!</span>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-6">
+          <button
+            onclick="runAllEases()"
+            class="px-6 py-2.5 rounded-full bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-all flex items-center gap-2"
+          >
+            <i class="fa-solid fa-play"></i> Run All
+          </button>
+          <button
+            onclick="resetAllEases()"
+            class="px-6 py-2.5 rounded-full border border-white/10 text-gray-300 text-sm hover:border-white/30 transition-all flex items-center gap-2"
+          >
+            <i class="fa-solid fa-arrow-rotate-left"></i> Reset All
+          </button>
+        </div>
+      </div>
+
+      <!-- 5. SPECIAL EASES -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">5</span>
+          Special Eases: Back, Elastic, Bounce
+        </h2>
+        <p class="text-gray-400 text-sm mb-6">
+          These eases add <span class="text-orange-400">personality</span>. Use them sparingly —
+          they're the punctuation marks of animation.
+        </p>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <div class="p-5 rounded-xl bg-white/[0.02] border border-white/5">
+            <div class="w-10 h-10 rounded-xl bg-pink-500/20 flex items-center justify-center mb-3">
+              <i class="fa-solid fa-arrow-left text-pink-400"></i>
+            </div>
+            <h4 class="text-white font-semibold text-sm mb-2">
+              <code class="text-pink-400">back.out()</code>
+            </h4>
+            <p class="text-gray-400 text-xs leading-relaxed mb-3">
+              Goes <span class="text-pink-400">past</span> the target, then snaps back into place.
+              Like pulling a slingshot.
+            </p>
+            <div class="code-block text-xs">
+              <pre>gsap.to(<span class="string">".box"</span>, {
+  x: <span class="number">300</span>,
+  ease: <span class="string">"back.out(2)"</span>
+  <span class="comment">// goes past 300, then</span>
+  <span class="comment">// snaps back to 300</span>
+});</pre>
+            </div>
+          </div>
+          <div class="p-5 rounded-xl bg-white/[0.02] border border-white/5">
+            <div
+              class="w-10 h-10 rounded-xl bg-yellow-500/20 flex items-center justify-center mb-3"
+            >
+              <i class="fa-solid fa-wave-square text-yellow-400"></i>
+            </div>
+            <h4 class="text-white font-semibold text-sm mb-2">
+              <code class="text-yellow-400">elastic.out()</code>
+            </h4>
+            <p class="text-gray-400 text-xs leading-relaxed mb-3">
+              <span class="text-yellow-400">Oscillates</span> around the target like a rubber band,
+              gradually settling.
+            </p>
+            <div class="code-block text-xs">
+              <pre>gsap.to(<span class="string">".box"</span>, {
+  x: <span class="number">300</span>,
+  ease: <span class="string">"elastic.out(1,0.3)"</span>
+  <span class="comment">// wiggles before settling</span>
+});</pre>
+            </div>
+          </div>
+          <div class="p-5 rounded-xl bg-white/[0.02] border border-white/5">
+            <div class="w-10 h-10 rounded-xl bg-red-500/20 flex items-center justify-center mb-3">
+              <i class="fa-solid fa-basketball text-red-400"></i>
+            </div>
+            <h4 class="text-white font-semibold text-sm mb-2">
+              <code class="text-red-400">bounce.out()</code>
+            </h4>
+            <p class="text-gray-400 text-xs leading-relaxed mb-3">
+              <span class="text-red-400">Bounces</span> at the end like a ball dropping. Each bounce
+              gets smaller.
+            </p>
+            <div class="code-block text-xs">
+              <pre>gsap.to(<span class="string">".box"</span>, {
+  x: <span class="number">300</span>,
+  ease: <span class="string">"bounce.out"</span>
+  <span class="comment">// bounces at the end</span>
+});</pre>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. CODE + LIVE DEMO -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">6</span>
+          Code vs. Result — See the Difference
+        </h2>
+        <p class="text-gray-400 text-sm mb-6">
+          Same animation. Same distance. Same duration.
+          <span class="text-orange-400">Only the ease changes.</span> Watch how different each one
+          feels.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div class="code-block text-xs">
+            <pre><span class="comment">// All boxes move 250px right in 1.5s</span>
+<span class="comment">// Only the ease changes:</span>
+
+gsap.to(<span class="string">".box-linear"</span>, {
+  x: <span class="number">250</span>, duration: <span class="number">1.5</span>,
+  ease: <span class="string">"linear"</span>
+});
+
+gsap.to(<span class="string">".box-power2"</span>, {
+  x: <span class="number">250</span>, duration: <span class="number">1.5</span>,
+  ease: <span class="string">"power2.out"</span>
+});
+
+gsap.to(<span class="string">".box-back"</span>, {
+  x: <span class="number">250</span>, duration: <span class="number">1.5</span>,
+  ease: <span class="string">"back.out(3)"</span>
+});
+
+gsap.to(<span class="string">".box-bounce"</span>, {
+  x: <span class="number">250</span>, duration: <span class="number">1.5</span>,
+  ease: <span class="string">"bounce.out"</span>
+});</pre>
+          </div>
+
+          <div
+            class="live-preview"
+            style="flex-direction: column; gap: 12px; padding: 1.5rem; min-height: 320px"
+          >
+            <div
+              style="display: flex; align-items: center; gap: 8px; width: 100%; max-width: 400px"
+            >
+              <span class="text-gray-500 text-xs w-16 text-right">linear</span>
+              <div
+                class="box-demo box-linear"
+                style="
+                  width: 60px;
+                  height: 36px;
+                  border-radius: 8px;
+                  background: #6b7280;
+                  font-size: 0;
+                  flex-shrink: 0;
+                "
+              ></div>
+              <span class="text-gray-600 text-xs" id="pos-linear">0px</span>
+            </div>
+            <div
+              style="display: flex; align-items: center; gap: 8px; width: 100%; max-width: 400px"
+            >
+              <span class="text-orange-400 text-xs w-16 text-right font-medium">power2.out</span>
+              <div
+                class="box-demo box-power2"
+                style="
+                  width: 60px;
+                  height: 36px;
+                  border-radius: 8px;
+                  background: #ff6b35;
+                  font-size: 0;
+                  flex-shrink: 0;
+                "
+              ></div>
+              <span class="text-gray-600 text-xs" id="pos-power2">0px</span>
+            </div>
+            <div
+              style="display: flex; align-items: center; gap: 8px; width: 100%; max-width: 400px"
+            >
+              <span class="text-pink-400 text-xs w-16 text-right font-medium">back.out</span>
+              <div
+                class="box-demo box-back"
+                style="
+                  width: 60px;
+                  height: 36px;
+                  border-radius: 8px;
+                  background: #ec4899;
+                  font-size: 0;
+                  flex-shrink: 0;
+                "
+              ></div>
+              <span class="text-gray-600 text-xs" id="pos-back">0px</span>
+            </div>
+            <div
+              style="display: flex; align-items: center; gap: 8px; width: 100%; max-width: 400px"
+            >
+              <span class="text-red-400 text-xs w-16 text-right font-medium">bounce.out</span>
+              <div
+                class="box-demo box-bounce"
+                style="
+                  width: 60px;
+                  height: 36px;
+                  border-radius: 8px;
+                  background: #ef4444;
+                  font-size: 0;
+                  flex-shrink: 0;
+                "
+              ></div>
+              <span class="text-gray-600 text-xs" id="pos-bounce">0px</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3">
+          <button
+            onclick="runDemo2()"
+            class="px-6 py-2.5 rounded-full bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-all flex items-center gap-2"
+          >
+            <i class="fa-solid fa-play"></i> Play Animation
+          </button>
+          <button
+            onclick="resetDemo2()"
+            class="px-6 py-2.5 rounded-full border border-white/10 text-gray-300 text-sm hover:border-white/30 transition-all flex items-center gap-2"
+          >
+            <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+          </button>
+        </div>
+      </div>
+
+      <!-- 7. PLAYGROUND -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">7</span>
+          🎮 Playground — Try Any Ease
+        </h2>
+        <p class="text-gray-400 text-sm mb-6">
+          Pick an ease from the dropdown, then hit <span class="text-orange-400">Animate</span>. See
+          exactly how it behaves.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-6">
+          <div>
+            <label class="text-gray-400 text-sm mb-2 block">Choose an ease:</label>
+            <select class="select-ease mb-4" id="easeSelect">
+              <optgroup label="Standard">
+                <option value="linear">linear</option>
+                <option value="power1.out">power1.out</option>
+                <option value="power2.out" selected>power2.out (recommended)</option>
+                <option value="power3.out">power3.out</option>
+                <option value="power4.out">power4.out</option>
+                <option value="power1.in">power1.in</option>
+                <option value="power2.in">power2.in</option>
+                <option value="power3.in">power3.in</option>
+                <option value="power4.in">power4.in</option>
+                <option value="power1.inOut">power1.inOut</option>
+                <option value="power2.inOut">power2.inOut</option>
+                <option value="power3.inOut">power3.inOut</option>
+                <option value="power4.inOut">power4.inOut</option>
+              </optgroup>
+              <optgroup label="Special">
+                <option value="back.out(2)">back.out</option>
+                <option value="back.in(2)">back.in</option>
+                <option value="back.inOut(2)">back.inOut</option>
+                <option value="elastic.out(1,0.3)">elastic.out</option>
+                <option value="elastic.in(1,0.3)">elastic.in</option>
+                <option value="bounce.out">bounce.out</option>
+                <option value="bounce.in">bounce.in</option>
+              </optgroup>
+            </select>
+
+            <div class="flex gap-2">
+              <input
+                type="range"
+                class="playground-slider"
+                id="easeDuration"
+                min="0.3"
+                max="4"
+                step="0.1"
+                value="2"
+                oninput="document.getElementById('dur-val').textContent = this.value"
+              />
+              <span class="text-gray-500 text-xs flex-shrink-0 w-12 text-right pt-1"
+                ><span id="dur-val">2</span>s</span
+              >
+            </div>
+
+            <div class="flex gap-3 mt-4">
+              <button
+                onclick="runEasePlayground()"
+                class="px-6 py-2.5 rounded-full bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-all flex items-center gap-2"
+              >
+                <i class="fa-solid fa-play"></i> Animate
+              </button>
+              <button
+                onclick="resetEasePlayground()"
+                class="px-6 py-2.5 rounded-full border border-white/10 text-gray-300 text-sm hover:border-white/30 transition-all flex items-center gap-2"
+              >
+                <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+              </button>
+            </div>
+
+            <div class="mt-4 p-3 rounded-xl bg-white/[0.02] text-xs">
+              <span class="text-gray-500">Current code:</span>
+              <div class="code-block text-xs mt-1">
+                <pre>gsap.to(<span class="string">".pg-box"</span>, {
+  x: <span class="number">200</span>,
+  duration: <span class="number" id="code-duration">2</span>,
+  ease: <span class="string" id="code-ease">"power2.out"</span>
+});</pre>
+              </div>
+            </div>
+          </div>
+
+          <div class="live-preview" id="easePreview">
+            <div
+              class="box-demo pg-box"
+              style="
+                width: 100px;
+                height: 100px;
+                background: linear-gradient(135deg, #ff6b35, #f7c948);
+                border-radius: 16px;
+                box-shadow: 0 0 40px rgba(255, 107, 53, 0.2);
+              "
+            >
+              BOX
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 8. SUMMARY -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <i class="fa-solid fa-check-circle text-green-400"></i>
+          Chapter 2 Summary — What You Learned
+        </h2>
+        <div class="grid md:grid-cols-4 gap-4">
+          <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+            <div class="text-green-400 text-lg font-bold mb-1">1</div>
+            <p class="text-gray-300 text-sm font-medium">What easing is</p>
+            <p class="text-gray-500 text-xs">
+              Controls the speed curve of an animation. Makes motion feel natural instead of
+              robotic.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+            <div class="text-green-400 text-lg font-bold mb-1">2</div>
+            <p class="text-gray-300 text-sm font-medium">The 3 directions</p>
+            <p class="text-gray-500 text-xs">
+              <code class="text-xs text-orange-400">.in</code> (slow start),
+              <code class="text-xs text-cyan-400">.out</code> (slow end),
+              <code class="text-xs text-purple-400">.inOut</code> (slow both ends).
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+            <div class="text-green-400 text-lg font-bold mb-1">3</div>
+            <p class="text-gray-300 text-sm font-medium">Power levels</p>
+            <p class="text-gray-500 text-xs">
+              Power1 → Power4. Higher number = more dramatic easing.
+            </p>
+          </div>
+          <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+            <div class="text-green-400 text-lg font-bold mb-1">4</div>
+            <p class="text-gray-300 text-sm font-medium">Special eases</p>
+            <p class="text-gray-500 text-xs">
+              <code class="text-xs">back</code> (overshoots),
+              <code class="text-xs">elastic</code> (wiggles),
+              <code class="text-xs">bounce</code> (bounces).
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <!-- CHEAT SHEET -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-4">
+          <i class="fa-solid fa-sheet-plastic text-yellow-400 text-xl"></i>
+          <h2 class="text-xl font-bold text-white">Chapter 2 Cheat Sheet</h2>
+        </div>
+        <div class="code-block">
+          <pre><span class="comment">// ─────────── GSAP CHAPTER 2 CHEAT SHEET: EASING ───────────</span>
+
+<span class="comment">// Syntax: ease: "name.direction"</span>
+
+<span class="comment">// Standard eases (most common)</span>
+<span class="comment">// .out = starts fast, ends slow (✅ most used)</span>
+ease: <span class="string">"power1.out"</span>   <span class="comment">// subtle</span>
+ease: <span class="string">"power2.out"</span>   <span class="comment">// moderate — your default</span>
+ease: <span class="string">"power3.out"</span>   <span class="comment">// strong</span>
+ease: <span class="string">"power4.out"</span>   <span class="comment">// very strong</span>
+
+<span class="comment">// Directions</span>
+ease: <span class="string">"power2.in"</span>     <span class="comment">// starts slow, ends fast (leaving)</span>
+ease: <span class="string">"power2.inOut"</span>  <span class="comment">// slow-slow (continuous motion)</span>
+ease: <span class="string">"linear"</span>         <span class="comment">// constant speed (robotic — avoid)</span>
+
+<span class="comment">// Special eases (use sparingly — they POP)</span>
+ease: <span class="string">"back.out(2)"</span>        <span class="comment">// overshoots target, then snaps</span>
+ease: <span class="string">"elastic.out(1,0.3)"</span> <span class="comment">// rubber band wiggle</span>
+ease: <span class="string">"bounce.out"</span>         <span class="comment">// like a bouncing ball</span>
+
+<span class="comment">// ─────────────────────────────────────────────────────────</span></pre>
+        </div>
+      </div>
+
+      <!-- END -->
+      <div class="card p-8 text-center" style="border: 1px solid rgba(255, 107, 53, 0.15)">
+        <div
+          class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm mb-4"
+        >
+          <i class="fa-solid fa-flag-checkered"></i> End of Chapter 2
+        </div>
+        <h3 class="text-2xl font-bold text-white mb-2">On to Chapter 3?</h3>
+        <p class="text-gray-400 text-sm mb-1">
+          Chapter 3 will cover:
+          <span class="text-orange-400">gsap.from() &amp; gsap.fromTo()</span> — reverse animations
+          and precise control over start/end states.
+        </p>
+        <p class="text-gray-500 text-xs">Tell me <strong>"make chapter 3"</strong> when ready.</p>
+      </div>
+    </div>
+
+    <script>
+      // ─── POWER CURVES VIZ ───
+      (function drawCurves() {
+        const container = document.getElementById('powerCurves');
+        const svg = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+        svg.setAttribute('width', '100%');
+        svg.setAttribute('height', '80');
+        svg.setAttribute('viewBox', '0 0 600 80');
+        svg.style.display = 'block';
+
+        const colors = ['#ff6b35', '#4ecdc4', '#6c5ce7', '#22c55e'];
+        const eases = ['power1.out', 'power2.out', 'power3.out', 'power4.out'];
+        const labels = ['Power1', 'Power2', 'Power3', 'Power4'];
+
+        eases.forEach((ease, i) => {
+          const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+          let d = `M 10,70 `;
+          for (let t = 0; t <= 1; t += 0.02) {
+            const x = 10 + t * 580;
+            const val = 1 - Math.pow(1 - t, i + 2);
+            const y = 70 - val * 55;
+            d += `L ${x.toFixed(1)},${y.toFixed(1)} `;
+          }
+          path.setAttribute('d', d);
+          path.setAttribute('stroke', colors[i]);
+          path.setAttribute('stroke-width', '2');
+          path.setAttribute('fill', 'none');
+          svg.appendChild(path);
+
+          const label = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+          label.setAttribute('x', 10 + i * 140 + 40);
+          label.setAttribute('y', 18);
+          label.setAttribute('fill', colors[i]);
+          label.setAttribute('font-size', '10');
+          label.setAttribute('font-family', 'Fira Code, monospace');
+          label.textContent = labels[i];
+          svg.appendChild(label);
+        });
+
+        // axis
+        const axis = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+        axis.setAttribute('x1', '10');
+        axis.setAttribute('y1', '70');
+        axis.setAttribute('x2', '590');
+        axis.setAttribute('y2', '70');
+        axis.setAttribute('stroke', 'rgba(255,255,255,0.1)');
+        axis.setAttribute('stroke-width', '1');
+        svg.appendChild(axis);
+
+        container.appendChild(svg);
+      })();
+
+      // ─── EASE COMPARISON ───
+      let easeTweens = {};
+      let easeTimelines = {};
+
+      function runEaseDemo(ease) {
+        const ball = document.getElementById(`ball-${ease}`);
+        const track = document.getElementById(`track-${ease}`);
+        if (!ball || !track) return;
+
+        if (easeTweens[ease]) easeTweens[ease].kill();
+        gsap.set(ball, { x: 0 });
+
+        const trackWidth = track.offsetWidth - 22;
+        easeTweens[ease] = gsap.to(ball, {
+          x: trackWidth,
+          duration: 1.2,
+          ease: ease,
+          onUpdate: () => {
+            // highlight active row
+            document.querySelectorAll('.ease-row').forEach((el) => el.classList.remove('active'));
+            const row = document.querySelector(`[data-ease="${ease}"]`);
+            if (row) row.classList.add('active');
+          },
+        });
+      }
+
+      function runAllEases() {
+        [
+          'linear',
+          'power1.out',
+          'power2.out',
+          'power3.out',
+          'power4.out',
+          'back.out(2)',
+          'elastic.out(1,0.3)',
+          'bounce.out',
+        ].forEach((e) => {
+          setTimeout(() => runEaseDemo(e), 100);
+        });
+      }
+
+      function resetAllEases() {
+        [
+          'linear',
+          'power1.out',
+          'power2.out',
+          'power3.out',
+          'power4.out',
+          'back.out(2)',
+          'elastic.out(1,0.3)',
+          'bounce.out',
+        ].forEach((e) => {
+          if (easeTweens[e]) easeTweens[e].kill();
+          const ball = document.getElementById(`ball-${e}`);
+          if (ball) gsap.set(ball, { x: 0 });
+        });
+        document.querySelectorAll('.ease-row').forEach((el) => el.classList.remove('active'));
+      }
+
+      // ─── DEMO 2: SIDE BY SIDE ───
+      function runDemo2() {
+        const boxes = document.querySelectorAll('.box-linear, .box-power2, .box-back, .box-bounce');
+        boxes.forEach((b) => gsap.set(b, { x: 0 }));
+        document.getElementById('pos-linear').textContent = '0px';
+        document.getElementById('pos-power2').textContent = '0px';
+        document.getElementById('pos-back').textContent = '0px';
+        document.getElementById('pos-bounce').textContent = '0px';
+
+        gsap.to('.box-linear', {
+          x: 250,
+          duration: 1.5,
+          ease: 'linear',
+          onUpdate: () => {
+            const box = document.querySelector('.box-linear');
+            const x = box ? gsap.getProperty(box, 'x') : 0;
+            document.getElementById('pos-linear').textContent = Math.round(x) + 'px';
+          },
+        });
+        gsap.to('.box-power2', {
+          x: 250,
+          duration: 1.5,
+          ease: 'power2.out',
+          onUpdate: () => {
+            const box = document.querySelector('.box-power2');
+            const x = box ? gsap.getProperty(box, 'x') : 0;
+            document.getElementById('pos-power2').textContent = Math.round(x) + 'px';
+          },
+        });
+        gsap.to('.box-back', {
+          x: 250,
+          duration: 1.5,
+          ease: 'back.out(3)',
+          onUpdate: () => {
+            const box = document.querySelector('.box-back');
+            const x = box ? gsap.getProperty(box, 'x') : 0;
+            document.getElementById('pos-back').textContent = Math.round(x) + 'px';
+          },
+        });
+        gsap.to('.box-bounce', {
+          x: 250,
+          duration: 1.5,
+          ease: 'bounce.out',
+          onUpdate: () => {
+            const box = document.querySelector('.box-bounce');
+            const x = box ? gsap.getProperty(box, 'x') : 0;
+            document.getElementById('pos-bounce').textContent = Math.round(x) + 'px';
+          },
+        });
+      }
+
+      function resetDemo2() {
+        gsap.set('.box-linear, .box-power2, .box-back, .box-bounce', { x: 0 });
+        document.getElementById('pos-linear').textContent = '0px';
+        document.getElementById('pos-power2').textContent = '0px';
+        document.getElementById('pos-back').textContent = '0px';
+        document.getElementById('pos-bounce').textContent = '0px';
+      }
+
+      // ─── PLAYGROUND ───
+      let easePlayTween;
+
+      function runEasePlayground() {
+        if (easePlayTween) easePlayTween.kill();
+        const ease = document.getElementById('easeSelect').value;
+        const dur = parseFloat(document.getElementById('easeDuration').value);
+        document.getElementById('code-ease').textContent = `"${ease}"`;
+        document.getElementById('code-duration').textContent = dur;
+
+        gsap.set('.pg-box', { x: 0 });
+        easePlayTween = gsap.to('.pg-box', { x: 200, duration: dur, ease: ease });
+      }
+
+      function resetEasePlayground() {
+        if (easePlayTween) easePlayTween.kill();
+        gsap.set('.pg-box', { x: 0 });
+      }
+
+      // ─── AUTO RUN ON LOAD ───
+      setTimeout(() => {
+        runEaseDemo('power2.out');
+        runDemo2();
+      }, 300);
+    </script>
+  </body>
+</html>

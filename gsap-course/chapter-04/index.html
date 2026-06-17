@@ -1,0 +1,834 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 4: Timeline — Sequencing Animations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; overflow-wrap:break-word; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .highlight-box.orange { border-left-color:#ff6b35; background:rgba(255,107,53,.04); }
+      .highlight-box.pink { border-left-color:#fd79a8; background:rgba(253,121,168,.04); }
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .split-panel > * { min-width:0; overflow:hidden; }
+      .live-preview { min-height:300px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+      .box-demo { width:80px; height:80px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:600; color:#fff; cursor:pointer; user-select:none; }
+      .anim-box { width:64px; height:64px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:.6rem; font-weight:600; color:#fff; }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+      .playground-slider { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,.1); outline:none; }
+      .playground-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .playground-slider::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      .tl-step { display:flex; align-items:center; gap:.6rem; padding:.5rem .8rem; border-radius:8px; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.04); }
+      .tl-step .num { width:22px; height:22px; border-radius:50%; display:flex; align-items:center; justify-content:center; font-size:.6rem; font-weight:700; flex-shrink:0; }
+      .tl-step .desc { font-size:.75rem; color:#a0a0b8; }
+      .tl-track { height:8px; background:rgba(255,255,255,.04); border-radius:4px; position:relative; overflow:hidden; display:flex; }
+      .tl-segment { height:100%; border-radius:4px; position:relative; transition:width .4s; flex-shrink:0; }
+      .control-btn { padding:.4rem .9rem; border-radius:8px; font-size:.7rem; font-weight:500; border:1px solid rgba(255,255,255,.1); background:#0d0d1a; color:#e2e2e8; cursor:pointer; transition:all .15s; }
+      .control-btn:hover { background:#1a1a2e; border-color:rgba(255,255,255,.2); }
+      .control-btn.active-btn { background:rgba(255,107,53,.15); border-color:#ff6b35; color:#ff6b35; }
+      .timeline-bar { height:100px; width:100%; border-radius:8px; background:rgba(255,255,255,.02); position:relative; overflow:hidden; }
+      .tl-event { position:absolute; height:100%; display:flex; flex-direction:column; align-items:center; justify-content:center; font-size:.5rem; padding:0 .2rem; border-radius:4px; }
+      .max-w-6xl { overflow:hidden; }
+      .code-block code { white-space:pre-wrap; overflow-wrap:break-word; }
+
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        .md\:text-5xl { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-xs { font-size:.55rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .mb-6 { margin-bottom:.4rem; }
+        .mb-4 { margin-bottom:.3rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .gap-3 { gap:.3rem; }
+        .gap-2 { gap:.2rem; }
+        .gap-1\.5 { gap:.2rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-5 { padding:.5rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .p-3 { padding:.4rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .px-4 { padding-left:.4rem; padding-right:.4rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .py-2 { padding-top:.25rem; padding-bottom:.25rem; }
+        .px-3 { padding-left:.4rem; padding-right:.4rem; }
+        .rounded-xl { border-radius:6px; }
+        .rounded-2xl { border-radius:8px; }
+        .rounded-lg { border-radius:5px; }
+        .space-y-6 > :not([hidden])~:not([hidden]) { margin-top:.5rem; }
+        .space-y-5 > :not([hidden])~:not([hidden]) { margin-top:.4rem; }
+        .space-y-4 > :not([hidden])~:not([hidden]) { margin-top:.3rem; }
+        .space-y-3 > :not([hidden])~:not([hidden]) { margin-top:.2rem; }
+        .space-y-2 > :not([hidden])~:not([hidden]) { margin-top:.15rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:120px; border-radius:6px; }
+        .box-demo { width:44px; height:44px; font-size:.5rem; border-radius:8px; }
+        .anim-box { width:40px; height:40px; font-size:.48rem; border-radius:8px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        [class*="md:grid-cols-"] { grid-template-columns:1fr!important; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .playground-slider::-webkit-slider-thumb { width:20px; height:20px; }
+        .playground-slider::-moz-range-thumb { width:20px; height:20px; }
+        .max-w-2xl { max-width:100%; }
+        .tag { font-size:.5rem; padding:.08rem .35rem; }
+        .tl-step { padding:.3rem .5rem; gap:.4rem; }
+        .tl-step .desc { font-size:.6rem; }
+        .control-btn { font-size:.6rem; padding:.3rem .6rem; }
+        .flex.items-center.justify-between { flex-wrap:wrap; gap:.2rem; }
+        .flex.items-center.gap-2 { flex-wrap:wrap; }
+        .inline-flex.items-center.gap-2 { flex-wrap:wrap; }
+        .inline-flex.items-center.gap-3 { flex-wrap:wrap; }
+        .timeline-bar { height:60px; }
+        .tl-event { font-size:.4rem; }
+        .split-panel > * { overflow:hidden; }
+        #tlControlsDemo .flex { flex-wrap:wrap; justify-content:center; }
+      }
+      @media (min-width:641px) and (max-width:768px) {
+        .split-panel { grid-template-columns:1fr; }
+        .card { padding:1.5rem!important; }
+        h1 { font-size:2rem!important; }
+        .md\:text-5xl { font-size:2rem!important; }
+        [class*="md:grid-cols-"] { grid-template-columns:1fr 1fr!important; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="max-w-6xl mx-auto px-6 py-10">
+
+      <!-- HEADER -->
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-pink-500/10 border border-pink-500/20 text-pink-400 text-sm mb-4">
+          <i class="fa-solid fa-layer-group"></i> Chapter 4 of 10
+        </div>
+        <h1 class="text-4xl md:text-5xl font-black mb-3">
+          <span class="gradient-text">Timeline</span> — Sequencing Animations
+        </h1>
+        <p class="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          Chapters 1-3 taught you single animations. Now chain them together in
+          <span class="text-pink-400">perfect sequence</span> with GSAP's built-in timeline.
+        </p>
+      </div>
+
+      <!-- 1. THE PROBLEM — NAIVE CHAINING -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">1</span>
+          The Problem — Chaining Without Timeline
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Before timelines, developers chained animations using
+          <span class="text-orange-400">onComplete</span> callbacks. It works, but creates
+          deeply nested "callback hell" — hard to read, hard to reorder, hard to maintain.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="tag tag-orange">❌ Callback Hell</span>
+            </div>
+            <pre class="code-block"><span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">200</span>,
+  <span class="property">onComplete</span>: () => {
+    <span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+      <span class="property">rotation</span>: <span class="number">180</span>,
+      <span class="property">onComplete</span>: () => {
+        <span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+          <span class="property">scale</span>: <span class="number">0.5</span>
+        });
+      }
+    });
+  }
+});
+<span class="comment">// 😵 Hard to read, reorder, or debug</span></pre>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="tag tag-cyan">✅ Timeline</span>
+            </div>
+            <pre class="code-block"><span class="keyword">const tl</span> = <span class="keyword">gsap.timeline</span>();
+
+<span class="keyword">tl.to</span>(<span class="string">".box"</span>, { <span class="property">x</span>: <span class="number">200</span> })
+  <span class="keyword">.to</span>(<span class="string">".box"</span>, { <span class="property">rotation</span>: <span class="number">180</span> })
+  <span class="keyword">.to</span>(<span class="string">".box"</span>, { <span class="property">scale</span>: <span class="number">0.5</span> });
+
+<span class="comment">// ✅ Chainable, readable, easy to reorder</span>
+<span class="comment">// Each .to() runs AFTER the previous one finishes</span></pre>
+          </div>
+        </div>
+
+        <div id="chainDemo" class="live-preview mb-4" style="flex-direction:column;gap:6px;">
+          <div class="box-demo" id="chainBox" style="background:linear-gradient(135deg,#ff6b35,#e8503a);">chain</div>
+          <div class="flex gap-3 mt-2 flex-wrap justify-center">
+            <button onclick="runChainHell()" class="px-4 py-2 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 text-sm hover:bg-orange-500/30 transition-all">
+              <i class="fa-solid fa-play mr-2"></i>Callback Hell
+            </button>
+            <button onclick="runChainTimeline()" class="px-4 py-2 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-sm hover:bg-cyan-500/30 transition-all">
+              <i class="fa-solid fa-play mr-2"></i>Timeline
+            </button>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-code text-pink-400 mr-2"></i>
+            Both demos do the exact same thing: <strong class="text-white">move right → rotate 180° → scale down</strong>.
+            The timeline version is 5 lines vs 15 — and you can reorder steps by just moving a line.
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. CREATING A TIMELINE -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">2</span>
+          Creating a <span class="text-pink-400">Timeline</span>
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Create a timeline with <span class="text-pink-400 font-semibold">gsap.timeline()</span>,
+          then chain <span class="text-orange-400">.to()</span>,
+          <span class="text-cyan-400">.from()</span>, and
+          <span class="text-purple-400">.fromTo()</span> onto it.
+        </p>
+
+        <div class="split-panel mb-6">
+          <div>
+            <pre class="code-block"><span class="comment">// 1. Create the timeline</span>
+<span class="keyword">const tl</span> = <span class="keyword">gsap.timeline</span>({
+  <span class="property">defaults</span>: {
+    <span class="property">duration</span>: <span class="number">0.6</span>,
+    <span class="property">ease</span>: <span class="string">"power2.out"</span>
+  }
+});
+
+<span class="comment">// 2. Chain tweens — they run one after another</span>
+<span class="keyword">tl.to</span>(<span class="string">".box"</span>, { <span class="property">x</span>: <span class="number">150</span> })  <span class="comment">// 0s → 0.6s</span>
+  <span class="keyword">.to</span>(<span class="string">".box"</span>, { <span class="property">rotation</span>: <span class="number">90</span> }) <span class="comment">// 0.6s → 1.2s</span>
+  <span class="keyword">.to</span>(<span class="string">".box"</span>, { <span class="property">scale</span>: <span class="number">0.3</span> }); <span class="comment">// 1.2s → 1.8s</span></pre>
+          </div>
+          <div id="tlBasicDemo" class="live-preview" style="flex-direction:column;gap:8px;">
+            <div class="box-demo" id="tlBasicBox" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);">tl</div>
+            <div style="width:100%;max-width:280px;">
+              <div id="tlBasicBar" class="timeline-bar">
+                <div id="tlSeg1" class="tl-event" style="left:0%;width:33%;background:rgba(255,107,53,.25);border:1px solid rgba(255,107,53,.3);color:#ff6b35;">move x</div>
+                <div id="tlSeg2" class="tl-event" style="left:33%;width:33%;background:rgba(78,205,196,.25);border:1px solid rgba(78,205,196,.3);color:#4ecdc4;">rotate</div>
+                <div id="tlSeg3" class="tl-event" style="left:66%;width:34%;background:rgba(108,92,231,.25);border:1px solid rgba(108,92,231,.3);color:#6c5ce7;">scale</div>
+              </div>
+            </div>
+            <button onclick="runTlBasic()" class="px-4 py-2 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-sm hover:bg-pink-500/30 transition-all">
+              <i class="fa-solid fa-play mr-2"></i>Play Timeline
+            </button>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4 mb-4">
+          <div class="highlight-box cyan">
+            <p class="text-xs text-cyan-400 font-semibold mb-1">Chain .to()</p>
+            <p class="text-xs text-gray-300">Adds a tween that runs when previous animation finishes</p>
+          </div>
+          <div class="highlight-box purple">
+            <p class="text-xs text-purple-400 font-semibold mb-1">Chain .from()</p>
+            <p class="text-xs text-gray-300">Same chainable API — works on any tween type</p>
+          </div>
+          <div class="highlight-box orange">
+            <p class="text-xs text-orange-400 font-semibold mb-1">defaults</p>
+            <p class="text-xs text-gray-300">Shared properties applied to every child tween (DRY)</p>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-lightbulb text-yellow-400 mr-2"></i>
+            <strong class="text-white">defaults</strong> is a game-changer. Set
+            <span class="text-pink-400">duration</span> and
+            <span class="text-pink-400">ease</span> once in the timeline constructor,
+            and every chained tween inherits them. Override per-tween when needed.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3. POSITION PARAMETER -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">3</span>
+          The Position Parameter
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Every chained method accepts an optional <strong class="text-white">position parameter</strong>
+          as the 3rd argument — it controls <em>when</em> the tween starts.
+          This is the most powerful timeline feature.
+        </p>
+
+        <div class="split-panel mb-6">
+          <div>
+            <pre class="code-block"><span class="comment">// Absolute time (seconds)</span>
+tl.<span class="keyword">to</span>(box, { <span class="property">x</span>: <span class="number">200</span> }, <span class="number">0.5</span>)
+  <span class="comment">// starts at 0.5s regardless of other tweens</span>
+
+<span class="comment">// Relative to end (+=)</span>
+tl.<span class="keyword">to</span>(box, { <span class="property">x</span>: <span class="number">200</span> })
+  <span class="keyword">.to</span>(box, { <span class="property">rotation</span>: <span class="number">90</span> }, <span class="string">"-=0.3"</span>)
+  <span class="comment">// starts 0.3s BEFORE previous tween ends</span>
+
+<span class="comment">// Relative to start (-= on timeline)</span>
+tl.<span class="keyword">to</span>(box, { <span class="property">x</span>: <span class="number">200</span> })
+  <span class="keyword">.to</span>(box, { <span class="property">scale</span>: <span class="number">0.5</span> }, <span class="string">"+=0.2"</span>)
+  <span class="comment">// starts 0.2s AFTER previous tween ends</span>
+
+<span class="comment">// Label reference</span>
+tl.<span class="keyword">addLabel</span>(<span class="string">"middle"</span>, <span class="number">1.5</span>)
+  <span class="keyword">.to</span>(box, { <span class="property">rotation</span>: <span class="number">90</span> }, <span class="string">"middle"</span>)
+  <span class="comment">// starts at the "middle" label</span>
+
+<span class="comment">// "<" means "at the START of the previous tween"</span>
+tl.<span class="keyword">to</span>(box, { <span class="property">x</span>: <span class="number">200</span> }, <span class="string">"<"</span>)
+  <span class="keyword">.to</span>(box, { <span class="property">y</span>: <span class="number">100</span> }, <span class="string">"<"</span>)
+  <span class="comment">// both start at the same time!</span></pre>
+          </div>
+          <div id="posDemo" class="live-preview" style="flex-direction:column;gap:6px;">
+            <div class="box-demo" id="posBox1" style="background:linear-gradient(135deg,#ff6b35,#e8503a);">+=0</div>
+            <div class="box-demo" id="posBox2" style="background:linear-gradient(135deg,#4ecdc4,#2ecc71);">-=0.3</div>
+            <div class="box-demo" id="posBox3" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);">"&lt;"</div>
+            <div class="flex gap-2 mt-2 flex-wrap justify-center">
+              <button onclick="runPosDemo('sequenced')" class="px-3 py-1.5 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-xs hover:bg-pink-500/30">Sequenced</button>
+              <button onclick="runPosDemo('overlap')" class="px-3 py-1.5 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-xs hover:bg-pink-500/30">Overlap</button>
+              <button onclick="runPosDemo('same')" class="px-3 py-1.5 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-xs hover:bg-pink-500/30">Same Time</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-3">
+          <div class="highlight-box orange" style="border-left-width:3px;">
+            <p class="text-xs font-bold text-orange-400 mb-1">Absolute</p>
+            <p class="text-xs text-gray-300 font-mono">tl.to(el, {}, 1.5)</p>
+            <p class="text-xs text-gray-500">Starts at exactly 1.5s on the timeline</p>
+          </div>
+          <div class="highlight-box cyan" style="border-left-width:3px;">
+            <p class="text-xs font-bold text-cyan-400 mb-1">Relative +=</p>
+            <p class="text-xs text-gray-300 font-mono">tl.to(el, {}, "+=0.5")</p>
+            <p class="text-xs text-gray-500">Starts 0.5s after previous ends</p>
+          </div>
+          <div class="highlight-box purple" style="border-left-width:3px;">
+            <p class="text-xs font-bold text-purple-400 mb-1">Overlap -=</p>
+            <p class="text-xs text-gray-300 font-mono">tl.to(el, {}, "-=0.3")</p>
+            <p class="text-xs text-gray-500">Starts 0.3s before previous ends</p>
+          </div>
+          <div class="highlight-box pink" style="border-left-width:3px;">
+            <p class="text-xs font-bold text-pink-400 mb-1">"&lt;" marker</p>
+            <p class="text-xs text-gray-300 font-mono">tl.to(el, {}, "&lt;")</p>
+            <p class="text-xs text-gray-500">Starts same time as previous tween</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4. STAGGER IN TIMELINE -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">4</span>
+          Stagger in a Timeline
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Combine timeline with stagger for complex group sequences —
+          like rows of items entering one by one, then doing something together.
+        </p>
+
+        <div class="split-panel mb-6">
+          <div>
+            <pre class="code-block"><span class="comment">// Timeline with stagger + position parameter</span>
+<span class="keyword">const tl</span> = <span class="keyword">gsap.timeline</span>({ <span class="property">defaults</span>: { <span class="property">duration</span>: <span class="number">0.4</span>, <span class="property">ease</span>: <span class="string">"back.out(1.7)"</span> } });
+
+<span class="comment">// Row 1: stagger fly in (each takes 0.4s + 0.1s stagger = 0.8s total)</span>
+tl.<span class="keyword">from</span>(<span class="string">".row1 .item"</span>, {
+  <span class="property">y</span>: <span class="number">-40</span>, <span class="property">opacity</span>: <span class="number">0</span>,
+  <span class="property">stagger</span>: <span class="number">0.12</span>
+});
+
+<span class="comment">// Row 2: starts when row 1's stagger is done</span>
+tl.<span class="keyword">from</span>(<span class="string">".row2 .item"</span>, {
+  <span class="property">x</span>: <span class="number">-40</span>, <span class="property">opacity</span>: <span class="number">0</span>,
+  <span class="property">stagger</span>: <span class="number">0.12</span>
+}, <span class="string">"-=0.3"</span>);
+<span class="comment">// Overlap: row2 starts 0.3s before row1 finishes!</span></pre>
+          </div>
+          <div id="staggerTlDemo" class="live-preview" style="flex-direction:column;gap:4px;padding:.8rem;align-items:stretch;justify-content:center;">
+            <div class="row1 flex gap-2 justify-center mb-1">
+              <div class="anim-box" style="background:linear-gradient(135deg,#ff6b35,#e8503a);width:44px;height:44px;font-size:.5rem;">A</div>
+              <div class="anim-box" style="background:linear-gradient(135deg,#f7c948,#f39c12);width:44px;height:44px;font-size:.5rem;">B</div>
+              <div class="anim-box" style="background:linear-gradient(135deg,#4ecdc4,#2ecc71);width:44px;height:44px;font-size:.5rem;">C</div>
+              <div class="anim-box" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);width:44px;height:44px;font-size:.5rem;">D</div>
+            </div>
+            <div class="row2 flex gap-2 justify-center mb-1">
+              <div class="anim-box" style="background:linear-gradient(135deg,#fd79a8,#e84393);width:44px;height:44px;font-size:.5rem;">E</div>
+              <div class="anim-box" style="background:linear-gradient(135deg,#ff6b35,#e8503a);width:44px;height:44px;font-size:.5rem;">F</div>
+              <div class="anim-box" style="background:linear-gradient(135deg,#f7c948,#f39c12);width:44px;height:44px;font-size:.5rem;">G</div>
+              <div class="anim-box" style="background:linear-gradient(135deg,#4ecdc4,#2ecc71);width:44px;height:44px;font-size:.5rem;">H</div>
+            </div>
+            <button onclick="runStaggerTl()" class="mt-2 px-4 py-2 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-sm hover:bg-pink-500/30 transition-all" style="align-self:center;">
+              <i class="fa-solid fa-play mr-2"></i>Run Stagger Timeline
+            </button>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-wand-magic-sparkles text-yellow-400 mr-2"></i>
+            <strong class="text-white">Pro tip:</strong> The stagger's total duration is
+            <span class="text-pink-400">(count - 1) × stagger</span>. Use
+            <span class="text-cyan-400">-=</span> in the position parameter to overlap
+            stagger groups for a seamless cascade effect.
+          </p>
+        </div>
+      </div>
+
+      <!-- 5. PRACTICAL: HERO SEQUENCE -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">5</span>
+          Practical: Hero Section Timeline
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          A real hero entrance with staggered text, a shape reveal, and a CTA bounce-in —
+          all orchestrated with a single timeline.
+        </p>
+
+        <div id="heroTlDemo" class="live-preview" style="flex-direction:column;min-height:320px;padding:1.5rem;align-items:stretch;">
+          <div style="text-align:center;max-width:500px;margin:0 auto;">
+            <!-- decorative shape -->
+            <div id="heroShape" style="width:60px;height:60px;border-radius:16px;background:linear-gradient(135deg,#ff6b35,#6c5ce7);margin:0 auto 1rem;opacity:0;scale:0;"></div>
+            <h2 id="heroTlTitle" class="text-2xl md:text-3xl font-black text-white mb-3" style="opacity:0;x:-30;">Build With <span class="gradient-text">GSAP</span></h2>
+            <p id="heroTlDesc" class="text-sm text-gray-400 leading-relaxed mb-5" style="opacity:0;x:-30;">Master the timeline and create cinematic web experiences.</p>
+            <div id="heroTlCta" style="opacity:0;y:20;">
+              <button class="px-5 py-2.5 rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white text-sm font-semibold">Start Building</button>
+              <button class="px-5 py-2.5 rounded-lg border border-gray-700 text-gray-300 text-sm font-semibold ml-3">Watch Demo</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="flex gap-3 mt-4 flex-wrap items-center">
+          <button onclick="runHeroTl()" class="px-5 py-2.5 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-sm hover:bg-pink-500/30 transition-all">
+            <i class="fa-solid fa-play mr-2"></i>Play Hero
+          </button>
+          <button onclick="resetHeroTl()" class="px-5 py-2.5 rounded-lg bg-gray-700/30 border border-gray-700/30 text-gray-400 text-sm hover:bg-gray-700/50 transition-all">
+            <i class="fa-solid fa-rotate mr-2"></i>Reset
+          </button>
+          <span id="heroTlCode" class="text-xs text-gray-500 font-mono"></span>
+        </div>
+
+        <div class="highlight-box mt-4">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-code text-pink-400 mr-2"></i>
+            The hero uses a single timeline with <span class="text-pink-400">defaults</span>
+            set once. Shape bounces in (<span class="text-cyan-400">back.out</span>),
+            then title + desc slide in with <span class="text-cyan-400">"-=0.3"</span> overlap,
+            then the CTA fades up with <span class="text-purple-400">"+=0.2"</span> delay.
+          </p>
+        </div>
+      </div>
+
+      <!-- 6. TIMELINE CONTROLS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">6</span>
+          Timeline Controls
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Timelines have built-in methods to <span class="text-green-400">play</span>,
+          <span class="text-cyan-400">pause</span>, <span class="text-orange-400">reverse</span>,
+          <span class="text-purple-400">restart</span>, and even
+          <strong class="text-white">seek</strong> to a specific time.
+        </p>
+
+        <div id="tlControlsDemo" class="split-panel mb-6">
+          <div>
+            <pre class="code-block" style="min-height:160px;"><span class="keyword">const tl</span> = <span class="keyword">gsap.timeline</span>();
+
+tl.<span class="keyword">to</span>(<span class="string">".box"</span>, { <span class="property">x</span>: <span class="number">200</span>, <span class="property">duration</span>: <span class="number">1</span> })
+  <span class="keyword">.to</span>(<span class="string">".box"</span>, { <span class="property">rotation</span>: <span class="number">180</span>, <span class="property">duration</span>: <span class="number">1</span> })
+  <span class="keyword">.to</span>(<span class="string">".box"</span>, { <span class="property">scale</span>: <span class="number">0.3</span>, <span class="property">duration</span>: <span class="number">1</span> });
+
+<span class="comment">// Controls:</span>
+tl.<span class="keyword">play</span>();      <span class="comment">// ▶ play forward</span>
+tl.<span class="keyword">pause</span>();     <span class="comment">">|| pause at current position</span>
+tl.<span class="keyword">reverse</span>();   <span class="comment">> ◀ play backward</span>
+tl.<span class="keyword">restart</span>();   <span class="comment">> ↺ go to 0 and play</span>
+tl.<span class="keyword">progress</span>(<span class="number">0.5</span>); <span class="comment">> jump to 50%</span>
+tl.<span class="keyword">seek</span>(<span class="number">1.5</span>);   <span class="comment">> jump to 1.5s</span>
+tl.<span class="keyword">timeScale</span>(<span class="number">2</span>); <span class="comment">> play at 2x speed</span></pre>
+          </div>
+          <div class="live-preview" style="flex-direction:column;gap:8px;">
+            <div class="box-demo" id="ctrlBox" style="background:linear-gradient(135deg,#fd79a8,#e84393);">ctrl</div>
+            <div class="flex gap-2 flex-wrap justify-center">
+              <button onclick="controlTl('play')" class="control-btn active-btn"><i class="fa-solid fa-play mr-1"></i>Play</button>
+              <button onclick="controlTl('pause')" class="control-btn"><i class="fa-solid fa-pause mr-1"></i>Pause</button>
+              <button onclick="controlTl('reverse')" class="control-btn"><i class="fa-solid fa-backward mr-1"></i>Reverse</button>
+              <button onclick="controlTl('restart')" class="control-btn"><i class="fa-solid fa-rotate mr-1"></i>Restart</button>
+            </div>
+            <div class="flex items-center gap-3 w-full max-w-xs">
+              <span class="text-xs text-gray-500">Progress</span>
+              <input type="range" class="playground-slider" id="ctrlProgress" min="0" max="1" step="0.01" value="0" oninput="controlTl('progress')" />
+            </div>
+            <div class="flex items-center gap-3 w-full max-w-xs">
+              <span class="text-xs text-gray-500">Speed</span>
+              <button onclick="controlTl('speed05')" class="control-btn text-xs">0.5x</button>
+              <button onclick="controlTl('speed1')" class="control-btn text-xs active-btn">1x</button>
+              <button onclick="controlTl('speed2')" class="control-btn text-xs">2x</button>
+              <button onclick="controlTl('speed4')" class="control-btn text-xs">4x</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-gamepad text-green-400 mr-2"></i>
+            <strong class="text-white">timeScale()</strong> is the hidden gem — speed up
+            playback for testing without changing durations. At 4x, a 3-second sequence plays in 0.75s.
+          </p>
+        </div>
+      </div>
+
+      <!-- 7. PLAYGROUND -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">7</span>
+          Timeline Playground
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-6">
+          Build a timeline step by step. Add animations, adjust positions, and watch the visual bar update.
+        </p>
+
+        <div class="split-panel mb-6">
+          <div>
+            <div id="pgSteps" class="space-y-2 mb-3">
+              <div class="tl-step" data-idx="0">
+                <span class="num" style="background:rgba(255,107,53,.2);color:#ff6b35;">1</span>
+                <span class="desc"><strong>move right</strong> — x: 150, dur: 0.6</span>
+                <span class="text-xs text-gray-600 font-mono">default</span>
+              </div>
+              <div class="tl-step" data-idx="1">
+                <span class="num" style="background:rgba(78,205,196,.2);color:#4ecdc4;">2</span>
+                <span class="desc"><strong>rotate</strong> — rotation: 180, dur: 0.5</span>
+                <span class="text-xs text-gray-600 font-mono">-=0.2</span>
+              </div>
+              <div class="tl-step" data-idx="2">
+                <span class="num" style="background:rgba(108,92,231,.2);color:#6c5ce7;">3</span>
+                <span class="desc"><strong>scale down</strong> — scale: 0.3, dur: 0.4</span>
+                <span class="text-xs text-gray-600 font-mono">+=0.1</span>
+              </div>
+            </div>
+            <pre class="code-block" id="pgTlCode" style="min-height:80px;"></pre>
+          </div>
+          <div id="pgTlPreview" class="live-preview" style="flex-direction:column;gap:8px;">
+            <div class="box-demo" id="pgTlBox" style="background:linear-gradient(135deg,#ff6b35,#e8503a);">box</div>
+            <div class="flex gap-2 flex-wrap justify-center">
+              <button onclick="runPgTl()" class="px-4 py-2 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-sm hover:bg-pink-500/30 transition-all">
+                <i class="fa-solid fa-play mr-2"></i>Play
+              </button>
+              <button onclick="resetPgTl()" class="px-4 py-2 rounded-lg bg-gray-700/30 border border-gray-700/30 text-gray-400 text-sm hover:bg-gray-700/50 transition-all">
+                <i class="fa-solid fa-rotate mr-2"></i>Reset
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <!-- interactive builder -->
+        <div class="grid md:grid-cols-4 gap-4">
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Step 1 x (px)</span>
+              <span class="font-mono text-white" id="pgS1X">150</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgS1x" min="50" max="250" value="150" oninput="updatePgTl()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Overlap (s)</span>
+              <span class="font-mono text-white" id="pgOverlap">-0.2</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgOverlapSlider" min="-0.5" max="0.5" step="0.05" value="-0.2" oninput="updatePgTl()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Step 3 scale</span>
+              <span class="font-mono text-white" id="pgS3Scale">0.3</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgS3scale" min="0.1" max="1" step="0.05" value="0.3" oninput="updatePgTl()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Ease</span>
+            </label>
+            <select id="pgTlEase" class="select-ease" onchange="updatePgTl()" style="background:#0d0d1a;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.4rem .6rem;color:#fff;font-family:'Fira Code',monospace;font-size:.75rem;width:100%;outline:none;cursor:pointer;">
+              <option value="power2.out">power2.out</option>
+              <option value="power1.out">power1.out</option>
+              <option value="power3.out">power3.out</option>
+              <option value="back.out(1.7)">back.out(1.7)</option>
+              <option value="bounce.out">bounce.out</option>
+              <option value="elastic.out(1,0.3)">elastic.out</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- WRAP UP -->
+      <div class="card p-8 mb-8" style="border:1px solid rgba(253,121,168,.15);">
+        <div class="flex items-start gap-4">
+          <div class="step-number" style="border-color:rgba(253,121,168,.5);color:#fd79a8;">✓</div>
+          <div>
+            <h2 class="text-xl font-bold text-white mb-3">What You Learned</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><span class="text-pink-400 mt-0.5">→</span> <span><strong class="text-white">gsap.timeline()</strong> — chain tweens without callback hell</span></li>
+                  <li class="flex items-start gap-2"><span class="text-pink-400 mt-0.5">→</span> <span><strong class="text-white">Position parameter</strong> — absolute, relative (+=), overlap (-=), "&lt;" marker</span></li>
+                  <li class="flex items-start gap-2"><span class="text-pink-400 mt-0.5">→</span> <span><strong class="text-white">defaults</strong> — shared duration/ease for all child tweens</span></li>
+                </ul>
+              </div>
+              <div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><span class="text-pink-400 mt-0.5">→</span> <span><strong class="text-white">Stagger in timeline</strong> — sequence groups with overlap</span></li>
+                  <li class="flex items-start gap-2"><span class="text-pink-400 mt-0.5">→</span> <span><strong class="text-white">Controls</strong> — play, pause, reverse, timeScale, progress</span></li>
+                  <li class="flex items-start gap-2"><span class="text-pink-400 mt-0.5">→</span> <span><strong class="text-white">Next up:</strong> ScrollTrigger — animations tied to scroll position</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NAV -->
+      <div class="text-center py-6">
+        <div class="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-500">
+          <span>Ch 1: Intro</span>
+          <span class="text-gray-700">·</span>
+          <span>Ch 2: Easing</span>
+          <span class="text-gray-700">·</span>
+          <span>Ch 3: from & fromTo</span>
+          <span class="text-gray-700">·</span>
+          <span class="text-pink-400 font-semibold">Ch 4: Timeline</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ─── 1. Chain Demo ───
+      function runChainHell() {
+        const box = document.getElementById('chainBox');
+        gsap.set(box, { clearProps: 'all' });
+        gsap.to(box, { x: 150, duration: 0.5, onComplete: () => {
+          gsap.to(box, { rotation: 180, duration: 0.5, onComplete: () => {
+            gsap.to(box, { scale: 0.5, duration: 0.5 });
+          }});
+        }});
+      }
+      function runChainTimeline() {
+        const box = document.getElementById('chainBox');
+        gsap.set(box, { clearProps: 'all' });
+        const tl = gsap.timeline({ defaults: { duration: 0.5, ease: 'power2.out' } });
+        tl.to(box, { x: 150 }).to(box, { rotation: 180 }).to(box, { scale: 0.5 });
+      }
+
+      // ─── 2. Basic Timeline ───
+      function runTlBasic() {
+        const box = document.getElementById('tlBasicBox');
+        gsap.set(box, { clearProps: 'all' });
+        const tl = gsap.timeline({ defaults: { duration: 0.6, ease: 'power2.out' } });
+        tl.to(box, { x: 120 })
+          .to(box, { rotation: 90 })
+          .to(box, { scale: 0.3 });
+      }
+
+      // ─── 3. Position Parameter ───
+      function runPosDemo(mode) {
+        const b1 = document.getElementById('posBox1');
+        const b2 = document.getElementById('posBox2');
+        const b3 = document.getElementById('posBox3');
+        gsap.set([b1, b2, b3], { x: 0, clearProps: 'all' });
+
+        const tl = gsap.timeline({ defaults: { duration: 0.8, ease: 'power2.out' } });
+
+        if (mode === 'sequenced') {
+          tl.to(b1, { x: 180 })
+            .to(b2, { x: 180 }, '+=0')
+            .to(b3, { x: 180 }, '+=0');
+        } else if (mode === 'overlap') {
+          tl.to(b1, { x: 180 })
+            .to(b2, { x: 180 }, '-=0.3')
+            .to(b3, { x: 180 }, '-=0.3');
+        } else {
+          tl.to(b1, { x: 180 }, '<')
+            .to(b2, { x: 180 }, '<')
+            .to(b3, { x: 180 }, '<');
+        }
+      }
+
+      // ─── 4. Stagger Timeline ───
+      function runStaggerTl() {
+        const items1 = document.querySelectorAll('.row1 .anim-box');
+        const items2 = document.querySelectorAll('.row2 .anim-box');
+        gsap.set([...items1, ...items2], { clearProps: 'all' });
+
+        const tl = gsap.timeline({ defaults: { duration: 0.4, ease: 'back.out(1.7)' } });
+        tl.from(items1, { y: -40, opacity: 0, stagger: 0.12 })
+          .from(items2, { x: -40, opacity: 0, stagger: 0.12 }, '-=0.3');
+      }
+
+      // ─── 5. Hero Timeline ───
+      let heroTl = null;
+      function runHeroTl() {
+        const shape = document.getElementById('heroShape');
+        const title = document.getElementById('heroTlTitle');
+        const desc = document.getElementById('heroTlDesc');
+        const cta = document.getElementById('heroTlCta');
+        const code = document.getElementById('heroTlCode');
+
+        if (heroTl) heroTl.kill();
+        gsap.set([shape, title, desc, cta], { clearProps: 'all' });
+
+        heroTl = gsap.timeline({ defaults: { duration: 0.5, ease: 'power2.out' } });
+        heroTl.from(shape, { scale: 0, opacity: 0, duration: 0.6, ease: 'back.out(2)' })
+          .from(title, { x: -30, opacity: 0 }, '-=0.2')
+          .from(desc, { x: -30, opacity: 0 }, '-=0.3')
+          .from(cta, { y: 20, opacity: 0 }, '+=0.1');
+
+        code.textContent = 'Single timeline, 4 tweens, 3 overlap markers';
+        setTimeout(() => { if (code) code.textContent = ''; }, 3000);
+      }
+      function resetHeroTl() {
+        if (heroTl) heroTl.kill();
+        ['heroShape', 'heroTlTitle', 'heroTlDesc', 'heroTlCta'].forEach(id =>
+          gsap.set(document.getElementById(id), { clearProps: 'all' })
+        );
+        document.getElementById('heroTlCode').textContent = '';
+      }
+      setTimeout(runHeroTl, 600);
+
+      // ─── 6. Timeline Controls ───
+      let ctrlTl = null;
+      function controlTl(action) {
+        const box = document.getElementById('ctrlBox');
+
+        if (!ctrlTl || !ctrlTl.isActive()) {
+          if (ctrlTl) ctrlTl.kill();
+          gsap.set(box, { clearProps: 'all' });
+          ctrlTl = gsap.timeline();
+          ctrlTl.to(box, { x: 180, duration: 1, ease: 'power2.out' })
+            .to(box, { rotation: 180, duration: 1, ease: 'power2.out' })
+            .to(box, { scale: 0.3, duration: 1, ease: 'power2.out' });
+
+          ctrlTl.eventCallback('onUpdate', () => {
+            if (ctrlTl) {
+              document.getElementById('ctrlProgress').value = ctrlTl.progress();
+            }
+          });
+          ctrlTl.eventCallback('onComplete', () => {
+            document.querySelectorAll('#tlControlsDemo .control-btn').forEach(b =>
+              b.classList.remove('active-btn')
+            );
+          });
+        }
+
+        if (action === 'play') ctrlTl.play();
+        else if (action === 'pause') ctrlTl.pause();
+        else if (action === 'reverse') ctrlTl.reverse();
+        else if (action === 'restart') ctrlTl.restart();
+        else if (action === 'progress') ctrlTl.progress(parseFloat(document.getElementById('ctrlProgress').value));
+        else if (action === 'speed05') { ctrlTl.timeScale(0.5); setSpeedBtn('speed05'); }
+        else if (action === 'speed1') { ctrlTl.timeScale(1); setSpeedBtn('speed1'); }
+        else if (action === 'speed2') { ctrlTl.timeScale(2); setSpeedBtn('speed2'); }
+        else if (action === 'speed4') { ctrlTl.timeScale(4); setSpeedBtn('speed4'); }
+
+        document.querySelectorAll('#tlControlsDemo .control-btn').forEach(b => b.classList.remove('active-btn'));
+        if (action === 'play') event.target.classList.add('active-btn');
+      }
+      function setSpeedBtn(id) {
+        document.querySelectorAll('#tlControlsDemo .flex.items-center.gap-3 .control-btn').forEach(b => b.classList.remove('active-btn'));
+        const btn = document.querySelector(`#tlControlsDemo button[onclick*="${id}"]`);
+        if (btn) btn.classList.add('active-btn');
+      }
+
+      // ─── 7. Playground ───
+      let pgTl = null;
+      function updatePgTl() {
+        const s1x = parseFloat(document.getElementById('pgS1x').value);
+        const overlap = parseFloat(document.getElementById('pgOverlapSlider').value);
+        const s3scale = parseFloat(document.getElementById('pgS3scale').value);
+        const ease = document.getElementById('pgTlEase').value;
+
+        document.getElementById('pgS1X').textContent = s1x;
+        document.getElementById('pgOverlap').textContent = overlap;
+        document.getElementById('pgS3Scale').textContent = s3scale;
+
+        const code = document.getElementById('pgTlCode');
+        code.innerHTML = `<span class="keyword">const tl</span> = <span class="keyword">gsap.timeline</span>({ <span class="property">defaults</span>: { <span class="property">ease</span>: <span class="string">"${ease}"</span> } });\n\n` +
+          `<span class="keyword">tl.to</span>(<span class="string">".box"</span>, { <span class="property">x</span>: <span class="number">${s1x}</span>, <span class="property">duration</span>: <span class="number">0.6</span> })\n` +
+          `  <span class="keyword">.to</span>(<span class="string">".box"</span>, { <span class="property">rotation</span>: <span class="number">180</span>, <span class="property">duration</span>: <span class="number">0.5</span> }, <span class="string">"${overlap >= 0 ? '+' : ''}${overlap}"</span>)\n` +
+          `  <span class="keyword">.to</span>(<span class="string">".box"</span>, { <span class="property">scale</span>: <span class="number">${s3scale}</span>, <span class="property">duration</span>: <span class="number">0.4</span> }, <span class="string">"+=0.1"</span>);`;
+      }
+
+      function runPgTl() {
+        const box = document.getElementById('pgTlBox');
+        if (pgTl) pgTl.kill();
+        gsap.set(box, { clearProps: 'all' });
+
+        const s1x = parseFloat(document.getElementById('pgS1x').value);
+        const overlap = parseFloat(document.getElementById('pgOverlapSlider').value);
+        const s3scale = parseFloat(document.getElementById('pgS3scale').value);
+        const ease = document.getElementById('pgTlEase').value;
+
+        pgTl = gsap.timeline({ defaults: { ease } });
+        pgTl.to(box, { x: s1x, duration: 0.6 })
+          .to(box, { rotation: 180, duration: 0.5 }, overlap)
+          .to(box, { scale: s3scale, duration: 0.4 }, '+=0.1');
+      }
+
+      function resetPgTl() {
+        if (pgTl) pgTl.kill();
+        gsap.set(document.getElementById('pgTlBox'), { clearProps: 'all' });
+      }
+
+      // ─── Init ───
+      updatePgTl();
+    </script>
+  </body>
+</html>

@@ -1,0 +1,663 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>GSAP Chapter 1: What is GSAP & Your First Animation</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body {
+      background: #08080e;
+      color: #e2e2e8;
+      font-family: 'Inter', sans-serif;
+    }
+    code, pre { font-family: 'Fira Code', monospace !important; }
+    .card {
+      background: linear-gradient(145deg, #13131f, #1a1a2e);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 16px;
+    }
+    .gradient-text {
+      background: linear-gradient(135deg, #ff6b35, #f7c948, #4ecdc4, #6c5ce7);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .code-block {
+      background: #0d0d1a;
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 12px;
+      padding: 1.25rem;
+      overflow-x: auto;
+      font-size: 0.85rem;
+      line-height: 1.7;
+    }
+    .keyword { color: #ff6b35; }
+    .string { color: #22c55e; }
+    .number { color: #f7c948; }
+    .comment { color: #6c5ce7; font-style: italic; }
+    .property { color: #4ecdc4; }
+    .box-demo {
+      width: 80px; height: 80px;
+      border-radius: 16px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.7rem;
+      font-weight: 600;
+      color: white;
+      cursor: pointer;
+      user-select: none;
+    }
+    .playground-slider {
+      -webkit-appearance: none;
+      width: 100%;
+      height: 4px;
+      border-radius: 2px;
+      background: rgba(255,255,255,0.1);
+      outline: none;
+    }
+    .playground-slider::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #ff6b35;
+      cursor: pointer;
+      border: 2px solid #08080e;
+    }
+    .playground-slider::-moz-range-thumb {
+      width: 16px; height: 16px;
+      border-radius: 50%;
+      background: #ff6b35;
+      cursor: pointer;
+      border: 2px solid #08080e;
+    }
+    .split-panel {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1.5rem;
+    }
+    @media (max-width: 640px) {
+      .split-panel { grid-template-columns: 1fr; }
+      .card { padding: 1.2rem !important; border-radius: 12px; }
+      .code-block { font-size: 0.7rem; padding: 0.9rem; border-radius: 8px; }
+      h1 { font-size: 2rem !important; }
+      h2 { font-size: 1.2rem !important; }
+      .box-demo { width: 60px; height: 60px; font-size: 0.6rem; border-radius: 12px; }
+      .live-preview { min-height: 200px; border-radius: 8px; }
+      .step-number { width: 26px; height: 26px; font-size: 0.7rem; }
+      .py-10 { padding-top: 1.5rem; padding-bottom: 1.5rem; }
+      .px-6 { padding-left: 1rem; padding-right: 1rem; }
+      .mb-12 { margin-bottom: 2rem; }
+      .mb-8 { margin-bottom: 1.2rem; }
+      .gap-6 { gap: 0.8rem; }
+      .playground-slider::-webkit-slider-thumb { width: 22px; height: 22px; }
+      .playground-slider::-moz-range-thumb { width: 22px; height: 22px; }
+      .grid.md\:grid-cols-2 { grid-template-columns: 1fr !important; }
+      .grid.md\:grid-cols-3 { grid-template-columns: 1fr !important; }
+      [class*="md:grid-cols-"] { grid-template-columns: 1fr !important; }
+      .highlight-box { padding: 0.8rem 1rem; }
+      .text-4xl { font-size: 1.8rem !important; }
+      .md\:text-5xl { font-size: 1.8rem !important; }
+      .text-xl { font-size: 1rem !important; }
+      .md\:text-8xl { font-size: 2.5rem !important; }
+      .text-lg { font-size: 0.9rem !important; }
+      .py-10 { padding-top: 1.2rem; padding-bottom: 1.2rem; }
+      .space-y-5 > :not([hidden]) ~ :not([hidden]) { margin-top: 0.8rem; }
+      .px-6 { padding-left: 0.8rem; padding-right: 0.8rem; }
+      .gap-4 { gap: 0.6rem; }
+      .p-4 { padding: 0.8rem; }
+      .p-5 { padding: 0.8rem; }
+      .rounded-xl { border-radius: 10px; }
+      .rounded-2xl { border-radius: 12px; }
+      .rounded-3xl { border-radius: 14px; }
+      .gap-2 { gap: 0.4rem; }
+      .text-xs { font-size: 0.65rem !important; }
+      .text-sm { font-size: 0.75rem !important; }
+      .px-5 { padding-left: 0.8rem; padding-right: 0.8rem; }
+      .py-2\.5 { padding-top: 0.5rem; padding-bottom: 0.5rem; }
+      .py-3\.5 { padding-top: 0.6rem; padding-bottom: 0.6rem; }
+      .px-8 { padding-left: 1rem; padding-right: 1rem; }
+      .py-2 { padding-top: 0.4rem; padding-bottom: 0.4rem; }
+      .gap-1\.5 { gap: 0.3rem; }
+      .gap-3 { gap: 0.5rem; }
+    }
+    @media (min-width: 641px) and (max-width: 768px) {
+      .split-panel { grid-template-columns: 1fr; }
+      .card { padding: 1.5rem !important; }
+      .code-block { font-size: 0.75rem; }
+      h1 { font-size: 2.5rem !important; }
+      .grid.md\:grid-cols-2 { grid-template-columns: 1fr 1fr !important; }
+      .grid.md\:grid-cols-3 { grid-template-columns: 1fr 1fr 1fr !important; }
+    }
+    .live-preview {
+      min-height: 300px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      position: relative;
+      overflow: hidden;
+      border-radius: 12px;
+      background: radial-gradient(ellipse at center, rgba(255,107,53,0.05), transparent 70%);
+    }
+    .step-number {
+      width: 32px; height: 32px;
+      border-radius: 50%;
+      background: linear-gradient(135deg, rgba(255,107,53,0.2), rgba(108,92,231,0.2));
+      border: 1px solid rgba(255,107,53,0.3);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 0.8rem;
+      font-weight: 700;
+      color: #ff6b35;
+      flex-shrink: 0;
+    }
+    .highlight-box {
+      border-left: 3px solid #ff6b35;
+      padding: 1rem 1.2rem;
+      background: rgba(255,107,53,0.04);
+      border-radius: 0 12px 12px 0;
+    }
+    .highlight-box.cyan { border-left-color: #4ecdc4; background: rgba(78,205,196,0.04); }
+    .highlight-box.purple { border-left-color: #6c5ce7; background: rgba(108,92,231,0.04); }
+    .highlight-box.green { border-left-color: #22c55e; background: rgba(34,197,94,0.04); }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #08080e; }
+    ::-webkit-scrollbar-thumb { background: #2d2d3d; border-radius: 3px; }
+  </style>
+</head>
+<body>
+
+  <div class="max-w-6xl mx-auto px-6 py-10">
+
+    <!-- HEADER -->
+    <div class="text-center mb-12">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm mb-4">
+        <i class="fa-solid fa-play"></i> Chapter 1 of 10
+      </div>
+      <h1 class="text-4xl md:text-5xl font-black mb-3">
+        What is <span class="gradient-text">GSAP</span>?
+    </h1>
+      <p class="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+        Your very first step into the world of web animations. No experience needed.
+        By the end of this chapter, you'll have animated your first element.
+      </p>
+    </div>
+
+    <!-- 1. WHAT IS GSAP -->
+    <div class="card p-8 mb-8">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+        <span class="step-number">1</span>
+        What is GSAP?
+      </h2>
+      <p class="text-gray-300 leading-relaxed mb-4">
+        <strong class="text-white">GSAP</strong> stands for <strong class="text-white">GreenSock Animation Platform</strong>.
+        It's a JavaScript library that lets you create <span class="text-orange-400 font-semibold">high-performance animations</span> on the web.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-4">
+        <div class="highlight-box">
+          <p class="text-sm text-gray-400 leading-relaxed">
+            <span class="text-white font-semibold">Without GSAP:</span> You'd write complex CSS animations, 
+            manage JavaScript timers, calculate frame-by-frame movements, and struggle with cross-browser consistency.
+            It's possible — but painful.
+          </p>
+        </div>
+        <div class="highlight-box green">
+          <p class="text-sm text-gray-400 leading-relaxed">
+            <span class="text-white font-semibold">With GSAP:</span> You write <span class="text-green-400">one line of JavaScript</span> 
+            and get smooth 60fps animations that work on every browser. That's it. Seriously — one line.
+          </p>
+        </div>
+      </div>
+
+      <div class="highlight-box purple mt-4">
+        <p class="text-sm text-gray-400 leading-relaxed">
+          <span class="text-white font-semibold">Real-world analogy:</span> Imagine you have a toy car on your desk. 
+          You want it to move from the left side to the right side in 2 seconds. 
+          Without GSAP, you'd have to push it step-by-step. With GSAP, you just say: 
+          <span class="text-purple-400">"Move to the right in 2 seconds"</span> — and it happens smoothly.
+        </p>
+      </div>
+    </div>
+
+    <!-- 2. HOW TO ADD GSAP -->
+    <div class="card p-8 mb-8">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+        <span class="step-number">2</span>
+        How to Add GSAP to Your Page
+      </h2>
+      <p class="text-gray-400 text-sm mb-4">
+        You need to include GSAP's library before you can use it. The easiest way is via CDN 
+        (Content Delivery Network) — a link that loads the library from the internet.
+      </p>
+
+      <div class="code-block mb-4">
+<pre><span class="comment">&lt;!-- Add this ONE line inside your &lt;head&gt; or before your &lt;/body&gt; --&gt;</span>
+<span class="keyword">&lt;script</span> <span class="property">src</span>=<span class="string">"https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"</span><span class="keyword">&gt;&lt;/script&gt;</span></pre>
+      </div>
+
+      <div class="highlight-box text-sm text-gray-400">
+        <p><span class="text-orange-400 font-semibold">That's it.</span> Once this script loads, the global <code class="text-white">gsap</code> object becomes available. 
+        You can now write <code class="text-white">gsap.to()</code>, <code class="text-white">gsap.from()</code>, and many more — 
+        which you'll learn in this course.</p>
+      </div>
+    </div>
+
+    <!-- 3. YOUR FIRST ANIMATION: gsap.to() -->
+    <div class="card p-8 mb-8">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+        <span class="step-number">3</span>
+        Your First Animation: <code class="text-orange-400 text-base">gsap.to()</code>
+      </h2>
+
+      <p class="text-gray-400 text-sm mb-6">
+        <code class="text-white">gsap.to()</code> is the most fundamental method. 
+        It animates an element <span class="text-orange-400">to</span> a new state. 
+        Think: <span class="text-white italic">"Take this element and animate it TO these new properties."</span>
+      </p>
+
+      <div class="code-block mb-6">
+<pre><span class="comment">// The basic formula:</span>
+gsap.to( <span class="property">target</span>, <span class="property">vars</span> );
+
+<span class="comment">// Real example — animate a box 300px to the right in 2 seconds:</span>
+gsap.to(<span class="string">".box"</span>, {
+  x: <span class="number">300</span>,        <span class="comment">// move 300px horizontally</span>
+  duration: <span class="number">2</span>   <span class="comment">// take 2 seconds</span>
+});</pre>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-4 mb-4">
+        <div>
+          <h4 class="text-white text-sm font-semibold mb-2">The <code class="text-orange-400">target</code></h4>
+          <p class="text-gray-400 text-xs leading-relaxed">
+            What you want to animate. Can be a CSS selector string (<code class="text-white">".box"</code>, <code class="text-white">"#id"</code>), 
+            a DOM element, or even an array of elements.
+          </p>
+        </div>
+        <div>
+          <h4 class="text-white text-sm font-semibold mb-2">The <code class="text-orange-400">vars</code> (variables)</h4>
+          <p class="text-gray-400 text-xs leading-relaxed">
+            An object containing the CSS properties you want to animate TO, plus special properties like 
+            <code class="text-white">duration</code>, <code class="text-white">ease</code>, <code class="text-white">delay</code>, etc.
+          </p>
+        </div>
+      </div>
+
+      <div class="highlight-box text-sm text-gray-400">
+        <p class="font-semibold text-white mb-1"> Key insight:</p>
+        <p><code class="text-white">gsap.to()</code> animates <span class="text-orange-400">from</span> wherever the element currently is 
+        <span class="text-orange-400">to</span> the values you specify. You don't need to tell it the starting position — 
+        GSAP reads the current state automatically.</p>
+      </div>
+    </div>
+
+    <!-- 4. SEE IT IN ACTION: CODE + LIVE PREVIEW -->
+    <div class="card p-8 mb-8">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+        <span class="step-number">4</span>
+        See It In Action
+      </h2>
+      <p class="text-gray-400 text-sm mb-6">
+        Left side: the code. Right side: the live animation. The code runs automatically when the page loads.
+      </p>
+
+      <div class="split-panel">
+        <!-- CODE -->
+        <div class="code-block text-xs">
+<pre><span class="comment">// Target: the orange box</span>
+gsap.to(<span class="string">".demo-box"</span>, {
+  <span class="property">x</span>: <span class="number">250</span>,           <span class="comment">// move 250px right</span>
+  <span class="property">duration</span>: <span class="number">2</span>,      <span class="comment">// over 2 seconds</span>
+  <span class="property">rotation</span>: <span class="number">360</span>,    <span class="comment">// full spin</span>
+  <span class="property">scale</span>: <span class="number">1.3</span>,        <span class="comment">// grow 30% bigger</span>
+  <span class="property">ease</span>: <span class="string">"power2.out"</span> <span class="comment">// smooth deceleration</span>
+});</pre>
+        </div>
+
+        <!-- LIVE PREVIEW -->
+        <div class="live-preview" id="preview1">
+          <div class="box-demo demo-box" style="background: linear-gradient(135deg, #ff6b35, #f7c948); box-shadow: 0 0 40px rgba(255,107,53,0.2);">
+            BOX
+          </div>
+        </div>
+      </div>
+
+      <div class="flex gap-3 mt-4">
+        <button onclick="replayDemo1()" class="px-5 py-2 rounded-full bg-orange-500/10 border border-orange-500/30 text-orange-400 text-sm hover:bg-orange-500/20 transition-all flex items-center gap-2">
+          <i class="fa-solid fa-rotate"></i> Replay
+        </button>
+      </div>
+    </div>
+
+    <!-- 5. BREAKING DOWN THE PROPERTIES -->
+    <div class="card p-8 mb-8">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+        <span class="step-number">5</span>
+        What Each Property Does
+      </h2>
+
+      <div class="grid md:grid-cols-2 gap-4">
+        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded bg-orange-500/20 flex items-center justify-center text-xs text-orange-400 font-bold">x</div>
+            <span class="text-white font-semibold text-sm">x: 250</span>
+          </div>
+          <p class="text-gray-400 text-xs">Moves the element <span class="text-orange-400">250 pixels to the right</span> on the X-axis. Negative values move left.</p>
+          <p class="text-gray-600 text-xs mt-1">Think: <span class="text-gray-400">"slide right by 250px"</span></p>
+        </div>
+        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded bg-cyan-500/20 flex items-center justify-center text-xs text-cyan-400 font-bold">y</div>
+            <span class="text-white font-semibold text-sm">y: 100</span>
+          </div>
+          <p class="text-gray-400 text-xs">Moves the element <span class="text-cyan-400">100 pixels down</span> on the Y-axis. Negative values move up.</p>
+          <p class="text-gray-600 text-xs mt-1">Think: <span class="text-gray-400">"drop down by 100px"</span></p>
+        </div>
+        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded bg-purple-500/20 flex items-center justify-center text-xs text-purple-400 font-bold">↻</div>
+            <span class="text-white font-semibold text-sm">rotation: 360</span>
+          </div>
+          <p class="text-gray-400 text-xs">Rotates the element <span class="text-purple-400">360 degrees</span> (one full spin). You can use any degree value.</p>
+          <p class="text-gray-600 text-xs mt-1">Think: <span class="text-gray-400">"spin around once"</span></p>
+        </div>
+        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded bg-green-500/20 flex items-center justify-center text-xs text-green-400 font-bold">⇱</div>
+            <span class="text-white font-semibold text-sm">scale: 1.5</span>
+          </div>
+          <p class="text-gray-400 text-xs">Scales the element. <span class="text-green-400">1.5 = 50% bigger</span>. 0.5 = 50% smaller. 1 = original size.</p>
+          <p class="text-gray-600 text-xs mt-1">Think: <span class="text-gray-400">"grow to 1.5x the original size"</span></p>
+        </div>
+        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded bg-yellow-500/20 flex items-center justify-center text-xs text-yellow-400 font-bold">◐</div>
+            <span class="text-white font-semibold text-sm">opacity: 0.5</span>
+          </div>
+          <p class="text-gray-400 text-xs">Changes transparency. <span class="text-yellow-400">1 = fully visible</span>, 0 = invisible, 0.5 = half transparent.</p>
+          <p class="text-gray-600 text-xs mt-1">Think: <span class="text-gray-400">"fade to 50% visible"</span></p>
+        </div>
+        <div class="p-4 rounded-xl bg-white/[0.02] border border-white/5">
+          <div class="flex items-center gap-2 mb-2">
+            <div class="w-6 h-6 rounded bg-pink-500/20 flex items-center justify-center text-xs text-pink-400 font-bold">⏱</div>
+            <span class="text-white font-semibold text-sm">duration: 2</span>
+          </div>
+          <p class="text-gray-400 text-xs">How long the animation takes <span class="text-pink-400">in seconds</span>. 2 = two seconds. 0.5 = half a second.</p>
+          <p class="text-gray-600 text-xs mt-1">Think: <span class="text-gray-400">"stretch this over 2 seconds"</span></p>
+        </div>
+      </div>
+
+      <div class="mt-6 p-4 rounded-xl bg-white/[0.02] border border-white/5">
+        <div class="flex items-center gap-2 mb-2">
+          <span class="text-white font-semibold text-sm">ease: "power2.out"</span>
+        </div>
+        <p class="text-gray-400 text-xs leading-relaxed">
+          This controls the <span class="text-orange-400">speed curve</span> of the animation. 
+          <span class="text-white">"power2.out"</span> means: starts fast, then <span class="text-orange-400">slowly decelerates</span> at the end (like a car braking).
+          Without easing, animations feel robotic. With easing, they feel natural. 
+          We'll cover easing in depth in Chapter 2.
+        </p>
+      </div>
+    </div>
+
+    <!-- 5. PLAYGROUND -->
+    <div class="card p-8 mb-8">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+        <span class="step-number">6</span>
+        🎮 Playground — Tweak & See Instantly
+      </h2>
+      <p class="text-gray-400 text-sm mb-6">
+        Drag the sliders. Watch the box update <span class="text-orange-400">instantly</span>. 
+        This is how you build intuition — change a value, see what happens.
+      </p>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Controls -->
+        <div>
+          <div class="space-y-5">
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-400">x (move right)</span>
+                <span class="text-orange-400 font-mono" id="val-x">250</span>
+              </div>
+              <input type="range" class="playground-slider" id="slider-x" min="-300" max="300" value="250" oninput="updatePlayground()">
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-400">y (move down)</span>
+                <span class="text-cyan-400 font-mono" id="val-y">0</span>
+              </div>
+              <input type="range" class="playground-slider" id="slider-y" min="-300" max="300" value="0" oninput="updatePlayground()">
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-400">rotation (degrees)</span>
+                <span class="text-purple-400 font-mono" id="val-rot">360</span>
+              </div>
+              <input type="range" class="playground-slider" id="slider-rot" min="0" max="720" value="360" oninput="updatePlayground()">
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-400">scale (1 = original)</span>
+                <span class="text-green-400 font-mono" id="val-scale">1.3</span>
+              </div>
+              <input type="range" class="playground-slider" id="slider-scale" min="0.2" max="3" step="0.1" value="1.3" oninput="updatePlayground()">
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-400">opacity (1 = solid)</span>
+                <span class="text-yellow-400 font-mono" id="val-opacity">1</span>
+              </div>
+              <input type="range" class="playground-slider" id="slider-opacity" min="0" max="1" step="0.05" value="1" oninput="updatePlayground()">
+            </div>
+            <div>
+              <div class="flex justify-between text-sm mb-1">
+                <span class="text-gray-400">duration (seconds)</span>
+                <span class="text-pink-400 font-mono" id="val-duration">2</span>
+              </div>
+              <input type="range" class="playground-slider" id="slider-duration" min="0.2" max="5" step="0.1" value="2" oninput="updatePlayground()">
+            </div>
+          </div>
+
+          <div class="flex gap-3 mt-6">
+            <button onclick="playPlayground()" class="px-6 py-2.5 rounded-full bg-orange-500 text-white text-sm font-medium hover:bg-orange-600 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-play"></i> Animate
+            </button>
+            <button onclick="resetPlayground()" class="px-6 py-2.5 rounded-full border border-white/10 text-gray-300 text-sm hover:border-white/30 transition-all flex items-center gap-2">
+              <i class="fa-solid fa-arrow-rotate-left"></i> Reset
+            </button>
+          </div>
+        </div>
+
+        <!-- Preview -->
+        <div class="live-preview" style="min-height:350px" id="playground-preview">
+          <div class="box-demo" id="playground-box" style="width:100px;height:100px;background:linear-gradient(135deg,#ff6b35,#f7c948);border-radius:16px;box-shadow:0 0 40px rgba(255,107,53,0.2);">
+            BOX
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 6. WHAT YOU LEARNED -->
+    <div class="card p-8 mb-8">
+      <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+        <i class="fa-solid fa-check-circle text-green-400"></i>
+        Chapter 1 Summary — What You Learned
+      </h2>
+      <div class="grid md:grid-cols-3 gap-4">
+        <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+          <div class="text-green-400 text-lg font-bold mb-1">1</div>
+          <p class="text-gray-300 text-sm font-medium">What GSAP is</p>
+          <p class="text-gray-500 text-xs">A JavaScript library for high-performance animations. One line = smooth 60fps animation.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+          <div class="text-green-400 text-lg font-bold mb-1">2</div>
+          <p class="text-gray-300 text-sm font-medium">How to add GSAP</p>
+          <p class="text-gray-500 text-xs">One script tag with the CDN URL in your HTML. That's all.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+          <div class="text-green-400 text-lg font-bold mb-1">3</div>
+          <p class="text-gray-300 text-sm font-medium"><code class="text-xs">gsap.to()</code></p>
+          <p class="text-gray-500 text-xs">Animate an element TO new values. Formula: <code class="text-xs text-green-400">gsap.to(target, {properties})</code></p>
+        </div>
+        <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+          <div class="text-green-400 text-lg font-bold mb-1">4</div>
+          <p class="text-gray-300 text-sm font-medium">Transform properties</p>
+          <p class="text-gray-500 text-xs"><code class="text-xs">x</code>, <code class="text-xs">y</code>, <code class="text-xs">rotation</code>, <code class="text-xs">scale</code>, <code class="text-xs">opacity</code> — GSAP handles them all.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+          <div class="text-green-400 text-lg font-bold mb-1">5</div>
+          <p class="text-gray-300 text-sm font-medium">Duration &amp; Easing</p>
+          <p class="text-gray-500 text-xs"><code class="text-xs">duration</code> controls speed in seconds. <code class="text-xs">ease</code> controls the feel.</p>
+        </div>
+        <div class="p-4 rounded-xl bg-green-500/5 border border-green-500/10">
+          <div class="text-green-400 text-lg font-bold mb-1">6</div>
+          <p class="text-gray-300 text-sm font-medium">Live Playground</p>
+          <p class="text-gray-500 text-xs">You can tweak values and see results instantly. This builds muscle memory.</p>
+        </div>
+      </div>
+    </div>
+
+    <!-- CHEAT SHEET -->
+    <div class="card p-8 mb-8">
+      <div class="flex items-center gap-3 mb-4">
+        <i class="fa-solid fa-sheet-plastic text-yellow-400 text-xl"></i>
+        <h2 class="text-xl font-bold text-white">Chapter 1 Cheat Sheet</h2>
+      </div>
+      <div class="code-block">
+<pre><span class="comment">// ───────────── GSAP CHAPTER 1 CHEAT SHEET ─────────────</span>
+
+<span class="comment">// 1. Load GSAP (add in &lt;head&gt;)</span>
+<span class="keyword">&lt;script</span> <span class="property">src</span>=<span class="string">"https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"</span><span class="keyword">&gt;&lt;/script&gt;</span>
+
+<span class="comment">// 2. Animate a box 300px right in 2 seconds</span>
+gsap.to(<span class="string">".box"</span>, { x: <span class="number">300</span>, duration: <span class="number">2</span> });
+
+<span class="comment">// 3. Animate with multiple properties</span>
+gsap.to(<span class="string">".box"</span>, {
+  x: <span class="number">300</span>,            <span class="comment">// move right 300px</span>
+  y: <span class="number">100</span>,            <span class="comment">// move down 100px</span>
+  rotation: <span class="number">360</span>,    <span class="comment">// spin 360 degrees</span>
+  scale: <span class="number">1.5</span>,        <span class="comment">// grow 50% bigger</span>
+  opacity: <span class="number">0.5</span>,      <span class="comment">// fade to 50%</span>
+  duration: <span class="number">2</span>,       <span class="comment">// over 2 seconds</span>
+  ease: <span class="string">"power2.out"</span> <span class="comment">// smooth deceleration</span>
+});
+
+<span class="comment">// ────────────────────────────────────────────────────</span></pre>
+      </div>
+    </div>
+
+    <!-- PREVIEW CHAPTER 2 -->
+    <div class="card p-8 text-center" style="border: 1px solid rgba(255,107,53,0.15);">
+      <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm mb-4">
+        <i class="fa-solid fa-flag-checkered"></i> End of Chapter 1
+      </div>
+      <h3 class="text-2xl font-bold text-white mb-2">Ready for Chapter 2?</h3>
+      <p class="text-gray-400 text-sm mb-4">Chapter 2 will cover: <span class="text-orange-400">Easing Functions</span> — make your animations feel alive with different speed curves.</p>
+      <p class="text-gray-500 text-xs">Tell me "make chapter 2" when you're ready to continue.</p>
+    </div>
+
+  </div>
+
+  <script>
+    // ─── DEMO 1: Auto-play on load ───
+    let demo1Tween;
+
+    function runDemo1() {
+      // Kill any existing animation on this box
+      if (demo1Tween) demo1Tween.kill();
+      // Reset
+      gsap.set(".demo-box", { x: 0, rotation: 0, scale: 1, opacity: 1, clearProps: "transform" });
+      // Animate
+      demo1Tween = gsap.to(".demo-box", {
+        x: 250,
+        duration: 2,
+        rotation: 360,
+        scale: 1.3,
+        ease: "power2.out",
+        delay: 0.5
+      });
+    }
+
+    function replayDemo1() {
+      if (demo1Tween) demo1Tween.kill();
+      gsap.set(".demo-box", { x: 0, rotation: 0, scale: 1, opacity: 1, clearProps: "transform" });
+      demo1Tween = gsap.to(".demo-box", {
+        x: 250,
+        duration: 2,
+        rotation: 360,
+        scale: 1.3,
+        ease: "power2.out"
+      });
+    }
+
+    // ─── PLAYGROUND ───
+    let playTween;
+
+    function getPlayVals() {
+      return {
+        x: parseFloat(document.getElementById('slider-x').value),
+        y: parseFloat(document.getElementById('slider-y').value),
+        rotation: parseFloat(document.getElementById('slider-rot').value),
+        scale: parseFloat(document.getElementById('slider-scale').value),
+        opacity: parseFloat(document.getElementById('slider-opacity').value),
+        duration: parseFloat(document.getElementById('slider-duration').value),
+      };
+    }
+
+    function updateDisplay() {
+      const v = getPlayVals();
+      document.getElementById('val-x').textContent = v.x;
+      document.getElementById('val-y').textContent = v.y;
+      document.getElementById('val-rot').textContent = v.rotation;
+      document.getElementById('val-scale').textContent = v.scale;
+      document.getElementById('val-opacity').textContent = v.opacity;
+      document.getElementById('val-duration').textContent = v.duration;
+    }
+
+    function updatePlayground() {
+      updateDisplay();
+    }
+
+    function playPlayground() {
+      const v = getPlayVals();
+      if (playTween) playTween.kill();
+      gsap.set("#playground-box", { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1, clearProps: "transform" });
+      playTween = gsap.to("#playground-box", {
+        x: v.x,
+        y: v.y,
+        rotation: v.rotation,
+        scale: v.scale,
+        opacity: v.opacity,
+        duration: v.duration,
+        ease: "power2.out"
+      });
+    }
+
+    function resetPlayground() {
+      if (playTween) playTween.kill();
+      gsap.set("#playground-box", { x: 0, y: 0, rotation: 0, scale: 1, opacity: 1, clearProps: "transform" });
+      document.getElementById('slider-x').value = 250;
+      document.getElementById('slider-y').value = 0;
+      document.getElementById('slider-rot').value = 360;
+      document.getElementById('slider-scale').value = 1.3;
+      document.getElementById('slider-opacity').value = 1;
+      document.getElementById('slider-duration').value = 2;
+      updateDisplay();
+    }
+
+    // ─── INIT ───
+    runDemo1();
+    updateDisplay();
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 14: gsap.effects</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; overflow-x:hidden; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .live-preview { min-height:320px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+      .anim-box { width:52px; height:52px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.55rem; font-weight:600; color:#fff; }
+      .effect-box { width:100px; height:80px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:600; color:#fff; cursor:pointer; }
+      .console-box { background:#0d0d1a; border-radius:8px; padding:.8rem; font-family:'Fira Code',monospace; font-size:.7rem; line-height:1.6; color:#a0a0b8; max-height:120px; overflow-y:auto; }
+      .playground-slider { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,.1); outline:none; }
+      .playground-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .playground-slider::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:180px; border-radius:6px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .effect-box { width:72px; height:60px; font-size:.55rem; }
+        .anim-box { width:38px; height:38px; font-size:.45rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="max-w-6xl mx-auto px-6 py-10">
+      <div class="text-center mb-12">
+        <div class="flex items-center justify-center gap-3 mb-4">
+          <span class="tag tag-purple">Ch 14</span>
+          <span class="text-sm text-gray-500 font-mono">/</span>
+          <span class="tag tag-orange">gsap.effects</span>
+        </div>
+        <h1 class="text-4xl font-extrabold gradient-text mb-3">gsap.effects — Reusable Animation Recipes</h1>
+        <p class="text-gray-400 text-sm max-w-2xl mx-auto leading-relaxed">
+          <code class="text-orange-300">gsap.registerEffect()</code> lets you package any animation logic into a reusable
+          named effect with defaults — invoke it with <code class="text-cyan-300">gsap.effect("name", target, config)</code>
+          or extend it directly onto timelines.
+        </p>
+      </div>
+
+      <!-- 1: Basic effect registration -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">1</span>
+          <h2 class="text-xl font-bold">registerEffect — Your First Effect</h2>
+          <span class="tag tag-orange">registerEffect</span>
+          <span class="tag tag-cyan">defaults</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// registerEffect defines a named, reusable animation recipe.</span>
+            <span class="property">gsap</span>.registerEffect({
+              name: <span class="string">"fadeIn"</span>,
+              effect: (targets, config) => {
+                <span class="keyword">return</span> <span class="property">gsap</span>.fromTo(targets,
+                  { opacity: <span class="number">0</span>, y: <span class="number">20</span> },
+                  { opacity: <span class="number">1</span>, y: <span class="number">0</span>, duration: config.duration, ease: config.ease }
+                );
+              },
+              defaults: { duration: <span class="number">0.6</span>, ease: <span class="string">"power2.out"</span> }
+            });
+            <span class="comment">// Usage:</span>
+            <span class="property">gsap</span>.effect(<span class="string">"fadeIn"</span>, <span class="string">".el"</span>);
+            <span class="property">gsap</span>.effect(<span class="string">"fadeIn"</span>, <span class="string">".el"</span>, { duration: <span class="number">1</span>, ease: <span class="string">"bounce.out"</span> });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3 self-center">
+            <div class="fadeIn-el anim-box" style="background:linear-gradient(135deg,#ff6b35,#e85d2c);">1</div>
+            <div class="fadeIn-el anim-box" style="background:linear-gradient(135deg,#4ecdc4,#2eaa9e);">2</div>
+            <div class="fadeIn-el anim-box" style="background:linear-gradient(135deg,#6c5ce7,#4834d4);">3</div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:220px">
+            <div class="flex gap-2">
+              <button onclick="runFadeIn()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white">Run fadeIn</button>
+              <button onclick="runFadeInCustom()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-cyan-600 text-white">Custom Duration</button>
+            </div>
+            <p class="text-xs text-gray-500 text-center"><code class="text-orange-300">gsap.effect("fadeIn", ".fadeIn-el")</code><br/>with defaults: 0.6s, power2.out</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2: Effect with stagger -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">2</span>
+          <h2 class="text-xl font-bold">Effect with Stagger — Built-in Config</h2>
+          <span class="tag tag-orange">stagger</span>
+          <span class="tag tag-cyan">extendTimeline</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Effects automatically handle stagger if you pass stagger in config.</span>
+            <span class="property">gsap</span>.registerEffect({
+              name: <span class="string">"staggerIn"</span>,
+              effect: (targets, config) => {
+                <span class="keyword">return</span> <span class="property">gsap</span>.fromTo(targets,
+                  { opacity: <span class="number">0</span>, scale: <span class="number">0.5</span>, y: <span class="number">30</span> },
+                  { opacity: <span class="number">1</span>, scale: <span class="number">1</span>, y: <span class="number">0</span>,
+                    stagger: config.stagger || <span class="number">0.1</span>,
+                    duration: config.duration,
+                    ease: config.ease }
+                );
+              },
+              defaults: { duration: <span class="number">0.5</span>, stagger: <span class="number">0.08</span>, ease: <span class="string">"back.out(1.7)"</span> }
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex gap-2 flex-wrap self-center">
+            <div class="staggerIn-el anim-box" style="background:#ff6b35;">A</div>
+            <div class="staggerIn-el anim-box" style="background:#4ecdc4;">B</div>
+            <div class="staggerIn-el anim-box" style="background:#6c5ce7;">C</div>
+            <div class="staggerIn-el anim-box" style="background:#22c55e;">D</div>
+            <div class="staggerIn-el anim-box" style="background:#fd79a8;">E</div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:200px">
+            <div class="flex gap-2">
+              <button onclick="runStaggerIn()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white">staggerIn</button>
+              <button onclick="runStaggerSlow()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-purple-600 text-white">Slow Stagger</button>
+            </div>
+            <p class="text-xs text-gray-500">Effects accept all GSAP config props — including <code class="text-purple-300">stagger</code>, <code class="text-purple-300">delay</code>, <code class="text-purple-300">repeat</code>.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3: extendTimeline -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">3</span>
+          <h2 class="text-xl font-bold">extendTimeline — Chain Effects on Timelines</h2>
+          <span class="tag tag-orange">extendTimeline</span>
+          <span class="tag tag-cyan">Timeline</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// With extendTimeline: true, the effect becomes a method on any timeline.</span>
+            <span class="property">gsap</span>.registerEffect({
+              name: <span class="string">"slideIn"</span>,
+              effect: (targets, config) => {
+                <span class="keyword">return</span> <span class="property">gsap</span>.fromTo(targets,
+                  { x: -config.distance || <span class="number">-100</span>, opacity: <span class="number">0</span> },
+                  { x: <span class="number">0</span>, opacity: <span class="number">1</span>, duration: config.duration, ease: config.ease }
+                );
+              },
+              defaults: { duration: <span class="number">0.5</span>, distance: <span class="number">80</span>, ease: <span class="string">"power2.out"</span> },
+              extendTimeline: <span class="string">true</span>  <span class="comment">// ← Key! Enables tl.slideIn()</span>
+            });
+            <span class="comment">// Usage on timeline:</span>
+            <span class="keyword">const</span> tl = <span class="property">gsap</span>.timeline();
+            tl.slideIn(<span class="string">".el1"</span>).slideIn(<span class="string">".el2"</span>, { distance: <span class="number">-80</span> }).slideIn(<span class="string">".el3"</span>, { duration: <span class="number">1</span> });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3 self-center">
+            <div class="slideIn-el anim-box" style="background:linear-gradient(135deg,#ff6b35,#f7c948);">A</div>
+            <div class="slideIn-el anim-box" style="background:linear-gradient(135deg,#4ecdc4,#22c55e);">B</div>
+            <div class="slideIn-el anim-box" style="background:linear-gradient(135deg,#6c5ce7,#fd79a8);">C</div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:240px">
+            <div class="flex gap-2">
+              <button onclick="runSlideIn()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white">Timeline Slide</button>
+              <button onclick="runSlideMixed()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-green-600 text-white">Mixed Directions</button>
+            </div>
+            <p class="text-xs text-gray-500"><code class="text-cyan-300">extendTimeline: true</code> makes the effect a chainable timeline method. Each returns the timeline for chaining.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4: Parameterized effects -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">4</span>
+          <h2 class="text-xl font-bold">Parameterized Effects — Config-Driven</h2>
+          <span class="tag tag-orange">config</span>
+          <span class="tag tag-cyan">direction</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Effects shine when they accept semantic config parameters.</span>
+            <span class="property">gsap</span>.registerEffect({
+              name: <span class="string">"flyIn"</span>,
+              effect: (targets, config) => {
+                <span class="keyword">const</span> fromX = config.direction === <span class="string">"left"</span> ? -config.distance :
+                             config.direction === <span class="string">"right"</span> ? config.distance : <span class="number">0</span>;
+                <span class="keyword">const</span> fromY = config.direction === <span class="string">"top"</span> ? -config.distance :
+                             config.direction === <span class="string">"bottom"</span> ? config.distance : <span class="number">0</span>;
+                <span class="keyword">return</span> <span class="property">gsap</span>.fromTo(targets,
+                  { x: fromX, y: fromY, opacity: <span class="number">0</span> },
+                  { x: <span class="number">0</span>, y: <span class="number">0</span>, opacity: <span class="number">1</span>, duration: config.duration, ease: config.ease }
+                );
+              },
+              defaults: { duration: <span class="number">0.6</span>, distance: <span class="number">120</span>, direction: <span class="string">"left"</span>, ease: <span class="string">"power3.out"</span> }
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3 self-center items-center">
+            <div class="flyIn-el effect-box" style="background:linear-gradient(135deg,#6c5ce7,#4834d4);">Target</div>
+            <div class="flex gap-2">
+              <button onclick="runFly('left')" class="px-3 py-1.5 text-xs rounded-lg bg-orange-600/20 border border-orange-500/30 text-orange-300">Left</button>
+              <button onclick="runFly('right')" class="px-3 py-1.5 text-xs rounded-lg bg-cyan-600/20 border border-cyan-500/30 text-cyan-300">Right</button>
+              <button onclick="runFly('top')" class="px-3 py-1.5 text-xs rounded-lg bg-purple-600/20 border border-purple-500/30 text-purple-300">Top</button>
+              <button onclick="runFly('bottom')" class="px-3 py-1.5 text-xs rounded-lg bg-green-600/20 border border-green-500/30 text-green-300">Bottom</button>
+            </div>
+          </div>
+          <div class="live-preview flex-col gap-2" style="min-height:200px">
+            <p class="text-xs text-gray-500 text-center">Same effect, different <code class="text-orange-300">direction</code> config.<br/>Semantic params make effects feel like native GSAP plugins.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5: Complex effect — 3D card flip -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">5</span>
+          <h2 class="text-xl font-bold">Complex Effect — 3D Flip</h2>
+          <span class="tag tag-orange">3D</span>
+          <span class="tag tag-cyan">timeline</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Effects can return a timeline and accept complex configs</span>
+            <span class="property">gsap</span>.registerEffect({
+              name: <span class="string">"cardFlip3D"</span>,
+              effect: (targets, config) => {
+                <span class="keyword">const</span> tl = <span class="property">gsap</span>.timeline();
+                tl.to(targets, { rotationY: config.angle || <span class="number">180</span>, duration: config.duration, ease: config.ease });
+                tl.to(targets, { rotationY: <span class="number">0</span>, duration: config.duration, ease: config.ease });
+                <span class="keyword">return</span> tl;
+              },
+              defaults: { duration: <span class="number">0.8</span>, angle: <span class="number">180</span>, ease: <span class="string">"power2.inOut"</span> },
+              extendTimeline: <span class="string">true</span>
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex items-center justify-center" style="perspective:500px;min-height:180px">
+            <div id="flip3dTarget" class="effect-box" style="width:120px;height:120px;background:linear-gradient(135deg,#ff6b35,#6c5ce7);transform-style:preserve-3d;border-radius:16px;cursor:pointer;">Click to Flip</div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:200px">
+            <button onclick="flip3D()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white">Flip 180</button>
+            <button onclick="flip3DPartial()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-cyan-600 text-white">Flip 90</button>
+            <p class="text-xs text-gray-500">The <code class="text-orange-300">cardFlip3D</code> effect returns a timeline, making it chainable and composable.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6: Effect playground -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">6</span>
+          <h2 class="text-xl font-bold">Playground — Create Your Own Effect</h2>
+          <span class="tag tag-orange">Interactive</span>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <p class="text-xs text-gray-400">Toggle the registered effects on the demo box:</p>
+            <div class="flex gap-2 flex-wrap">
+              <button onclick="applyEffect('fadeIn')" class="px-3 py-1.5 text-xs rounded-lg bg-orange-600/20 border border-orange-500/30 text-orange-300">fadeIn</button>
+              <button onclick="applyEffect('staggerIn')" class="px-3 py-1.5 text-xs rounded-lg bg-cyan-600/20 border border-cyan-500/30 text-cyan-300">staggerIn</button>
+              <button onclick="applyEffect('slideIn')" class="px-3 py-1.5 text-xs rounded-lg bg-purple-600/20 border border-purple-500/30 text-purple-300">slideIn</button>
+              <button onclick="applyEffect('flyIn')" class="px-3 py-1.5 text-xs rounded-lg bg-green-600/20 border border-green-500/30 text-green-300">flyIn</button>
+              <button onclick="applyEffect('cardFlip3D')" class="px-3 py-1.5 text-xs rounded-lg bg-pink-600/20 border border-pink-500/30 text-pink-300">cardFlip3D</button>
+            </div>
+            <div class="console-box" id="effectLog">&gt; Click an effect to apply it</div>
+          </div>
+          <div class="live-preview" id="pgEffectTarget" style="min-height:200px">
+            <div class="anim-box" id="pgDemoBox" style="width:100px;height:100px;border-radius:16px;background:linear-gradient(135deg,#ff6b35,#6c5ce7);font-size:.65rem;">Demo</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card p-8">
+        <h2 class="text-lg font-bold mb-4 gradient-text">Key Takeaways — gsap.effects</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="highlight-box"><strong class="text-orange-400">gsap.registerEffect({name, effect, defaults})</strong> — Register a named effect</div>
+          <div class="highlight-box cyan"><strong class="text-cyan-400">effect(targets, config)</strong> — The effect function receives targets and merged config (user config <code class="text-cyan-300">Object.assign</code>'d over defaults)</div>
+          <div class="highlight-box purple"><strong class="text-purple-400">defaults</strong> — Default values for config params. User-supplied values override these.</div>
+          <div class="highlight-box green"><strong class="text-green-400">extendTimeline: true</strong> — Makes the effect a chainable timeline method (<code class="text-green-300">tl.myEffect()</code>)</div>
+          <div class="highlight-box" style="border-left-color:#fd79a8"><strong class="text-pink-400">gsap.effect("name", target, config)</strong> — Invoke a registered effect</div>
+          <div class="highlight-box" style="border-left-color:#f7c948"><strong class="text-yellow-400">Semantic configs</strong> — Define domain-specific params (<code class="text-yellow-300">direction</code>, <code class="text-yellow-300">distance</code>, <code class="text-yellow-300">angle</code>) for clean API</div>
+          <div class="highlight-box" style="border-left-color:#22c55e"><strong class="text-green-400">Return a tween or timeline</strong> — Effects can return <code class="text-green-300">gsap.to()</code>, <code class="text-green-300">gsap.fromTo()</code>, or a <code class="text-green-300">gsap.timeline()</code></div>
+          <div class="highlight-box cyan"><strong class="text-cyan-400">DRY principle</strong> — Package repeated animation patterns into effects. Change once, update everywhere.</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // Register all effects first
+      gsap.registerEffect({
+        name: 'fadeIn',
+        effect: (targets, config) => {
+          return gsap.fromTo(targets, { opacity: 0, y: 20 }, { opacity: 1, y: 0, duration: config.duration, ease: config.ease });
+        },
+        defaults: { duration: 0.6, ease: 'power2.out' }
+      });
+
+      gsap.registerEffect({
+        name: 'staggerIn',
+        effect: (targets, config) => {
+          return gsap.fromTo(targets,
+            { opacity: 0, scale: 0.5, y: 30 },
+            { opacity: 1, scale: 1, y: 0, stagger: config.stagger || 0.1, duration: config.duration, ease: config.ease }
+          );
+        },
+        defaults: { duration: 0.5, stagger: 0.08, ease: 'back.out(1.7)' }
+      });
+
+      gsap.registerEffect({
+        name: 'slideIn',
+        effect: (targets, config) => {
+          return gsap.fromTo(targets,
+            { x: -config.distance || -100, opacity: 0 },
+            { x: 0, opacity: 1, duration: config.duration, ease: config.ease }
+          );
+        },
+        defaults: { duration: 0.5, distance: 80, ease: 'power2.out' },
+        extendTimeline: true
+      });
+
+      gsap.registerEffect({
+        name: 'flyIn',
+        effect: (targets, config) => {
+          const fromX = config.direction === 'left' ? -config.distance : config.direction === 'right' ? config.distance : 0;
+          const fromY = config.direction === 'top' ? -config.distance : config.direction === 'bottom' ? config.distance : 0;
+          return gsap.fromTo(targets,
+            { x: fromX, y: fromY, opacity: 0 },
+            { x: 0, y: 0, opacity: 1, duration: config.duration, ease: config.ease }
+          );
+        },
+        defaults: { duration: 0.6, distance: 120, direction: 'left', ease: 'power3.out' }
+      });
+
+      gsap.registerEffect({
+        name: 'cardFlip3D',
+        effect: (targets, config) => {
+          const tl = gsap.timeline();
+          tl.to(targets, { rotationY: config.angle || 180, duration: config.duration, ease: config.ease });
+          tl.to(targets, { rotationY: 0, duration: config.duration, ease: config.ease });
+          return tl;
+        },
+        defaults: { duration: 0.8, angle: 180, ease: 'power2.inOut' },
+        extendTimeline: true
+      });
+
+      // 1: fadeIn
+      function runFadeIn() {
+        gsap.set('.fadeIn-el', { clearProps: 'all', opacity: 0, y: 20 });
+        gsap.effect('fadeIn', '.fadeIn-el');
+      }
+      function runFadeInCustom() {
+        gsap.set('.fadeIn-el', { clearProps: 'all', opacity: 0, y: 20 });
+        gsap.effect('fadeIn', '.fadeIn-el', { duration: 1.2, ease: 'bounce.out' });
+      }
+
+      // 2: staggerIn
+      function runStaggerIn() {
+        gsap.set('.staggerIn-el', { clearProps: 'all', opacity: 0, scale: 0.5, y: 30 });
+        gsap.effect('staggerIn', '.staggerIn-el');
+      }
+      function runStaggerSlow() {
+        gsap.set('.staggerIn-el', { clearProps: 'all', opacity: 0, scale: 0.5, y: 30 });
+        gsap.effect('staggerIn', '.staggerIn-el', { duration: 0.8, stagger: 0.2, ease: 'power2.out' });
+      }
+
+      // 3: slideIn (extendTimeline)
+      function runSlideIn() {
+        gsap.set('.slideIn-el', { clearProps: 'all', x: -80, opacity: 0 });
+        const els = document.querySelectorAll('.slideIn-el');
+        const tl = gsap.timeline();
+        tl.slideIn(els[0], {}).slideIn(els[1], { distance: 60 }).slideIn(els[2], { distance: 100 });
+      }
+      function runSlideMixed() {
+        gsap.set('.slideIn-el', { clearProps: 'all' });
+        gsap.set('.slideIn-el', { opacity: 0 });
+        const els = document.querySelectorAll('.slideIn-el');
+        const tl = gsap.timeline();
+        tl.slideIn(els[0], { distance: -80 })
+          .slideIn(els[1], { distance: 80 })
+          .slideIn(els[2], { distance: -60 });
+      }
+
+      // 4: flyIn
+      function runFly(dir) {
+        const el = document.querySelector('.flyIn-el');
+        gsap.set(el, { clearProps: 'all', opacity: 0 });
+        gsap.effect('flyIn', el, { direction: dir, distance: 150 });
+      }
+
+      // 5: 3D flip
+      const flipTarget = document.getElementById('flip3dTarget');
+      flipTarget.addEventListener('click', () => flip3D());
+      function flip3D() {
+        gsap.set(flipTarget, { clearProps: 'rotationY' });
+        gsap.effect('cardFlip3D', flipTarget);
+      }
+      function flip3DPartial() {
+        gsap.set(flipTarget, { clearProps: 'rotationY' });
+        gsap.effect('cardFlip3D', flipTarget, { angle: 90, duration: 0.5 });
+      }
+
+      // 6: Playground
+      const pgBox = document.getElementById('pgDemoBox');
+      window.applyEffect = function(name) {
+        const log = document.getElementById('effectLog');
+        gsap.set(pgBox, { clearProps: 'all' });
+        gsap.set(pgBox, { opacity: 1, scale: 1, x: 0, y: 0, rotationY: 0 });
+
+        if (name === 'fadeIn') {
+          gsap.set(pgBox, { opacity: 0, y: 20 });
+          gsap.effect('fadeIn', pgBox);
+          log.innerHTML = `&gt; gsap.effect("fadeIn", pgBox)`;
+        } else if (name === 'staggerIn') {
+          gsap.set(pgBox, { opacity: 0, scale: 0.5, y: 30 });
+          gsap.effect('staggerIn', pgBox);
+          log.innerHTML = `&gt; gsap.effect("staggerIn", pgBox)`;
+        } else if (name === 'slideIn') {
+          gsap.set(pgBox, { x: -80, opacity: 0 });
+          gsap.effect('slideIn', pgBox);
+          log.innerHTML = `&gt; gsap.effect("slideIn", pgBox)`;
+        } else if (name === 'flyIn') {
+          gsap.set(pgBox, { opacity: 0 });
+          gsap.effect('flyIn', pgBox, { direction: 'left', distance: 150 });
+          log.innerHTML = `&gt; gsap.effect("flyIn", pgBox, { direction: "left" })`;
+        } else if (name === 'cardFlip3D') {
+          gsap.effect('cardFlip3D', pgBox);
+          log.innerHTML = `&gt; gsap.effect("cardFlip3D", pgBox)`;
+        }
+      };
+
+      // Init: run fadeIn on load
+      gsap.set('.fadeIn-el', { opacity: 0, y: 20 });
+      gsap.set('.staggerIn-el', { opacity: 0, scale: 0.5, y: 30 });
+      gsap.set('.slideIn-el', { x: -80, opacity: 0 });
+      gsap.set('.flyIn-el', { opacity: 0 });
+      setTimeout(() => {
+        gsap.effect('fadeIn', '.fadeIn-el');
+        gsap.effect('staggerIn', '.staggerIn-el');
+        gsap.effect('slideIn', '.slideIn-el');
+      }, 300);
+    </script>
+  </body>
+</html>

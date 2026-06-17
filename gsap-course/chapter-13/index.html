@@ -1,0 +1,433 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 13: gsap.utils Deep Dive</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; overflow-x:hidden; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .live-preview { min-height:320px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+      .console-box { background:#0d0d1a; border-radius:8px; padding:.8rem; font-family:'Fira Code',monospace; font-size:.7rem; line-height:1.6; color:#a0a0b8; min-height:60px; }
+      .playground-slider { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,.1); outline:none; }
+      .playground-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .playground-slider::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .anim-box { width:44px; height:44px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.5rem; font-weight:600; color:#fff; }
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:180px; border-radius:6px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .console-box { font-size:.55rem; padding:.5rem; }
+        .anim-box { width:32px; height:32px; font-size:.4rem; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="max-w-6xl mx-auto px-6 py-10">
+      <div class="text-center mb-12">
+        <div class="flex items-center justify-center gap-3 mb-4">
+          <span class="tag tag-purple">Ch 13</span>
+          <span class="text-sm text-gray-500 font-mono">/</span>
+          <span class="tag tag-orange">gsap.utils</span>
+        </div>
+        <h1 class="text-4xl font-extrabold gradient-text mb-3">gsap.utils — Utility Functions</h1>
+        <p class="text-gray-400 text-sm max-w-2xl mx-auto leading-relaxed">
+          <code class="text-orange-300">gsap.utils</code> provides functional helpers — <code class="text-cyan-300">pipe</code>, <code class="text-purple-300">distribute</code>,
+          <code class="text-green-300">selector</code>, <code class="text-pink-300">mapRange</code>, and more. These are pure functions you use
+          <strong>outside</strong> of GSAP tweens to compose logic.
+        </p>
+      </div>
+
+      <!-- 1: pipe -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">1</span>
+          <h2 class="text-xl font-bold">pipe() — Function Composition</h2>
+          <span class="tag tag-orange">pipe</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// pipe(value, fns...) passes a value through each function left-to-right.</span>
+            <span class="comment">// Each function receives the return value of the previous one.</span>
+            <span class="keyword">const</span> add2 = x => x + <span class="number">2</span>;
+            <span class="keyword">const</span> double = x => x * <span class="number">2</span>;
+            <span class="keyword">const</span> square = x => x * x;
+            <span class="keyword">const</span> transform = <span class="property">gsap</span>.utils.pipe(add2, double, square);
+            <span class="property">console</span>.log(transform(<span class="number">3</span>));  <span class="comment">// ((3+2)*2)^2 = 100</span>
+            <span class="comment">// Equivalent to: square(double(add2(3)))</span>
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <p class="text-xs text-gray-400">Enter a number and see it pass through the pipeline:</p>
+            <div class="flex gap-2 items-center">
+              <input id="pipeInput" type="number" value="3" class="w-20 px-3 py-2 text-sm bg-transparent border border-white/10 rounded-lg text-white" />
+              <span class="text-xs text-gray-500">→</span>
+              <span class="text-xs"><span class="text-orange-400">add2</span> → <span class="text-cyan-400">double</span> → <span class="text-purple-400">square</span></span>
+            </div>
+            <div class="console-box" id="pipeOutput">&gt; transform(3) = 100</div>
+            <p class="text-xs text-gray-500"><code class="text-orange-300">pipe</code> is useful for chaining calculations, e.g., mapping mouse position → normalized → clamped → applied to a tween.</p>
+          </div>
+          <div class="live-preview flex-col gap-4" style="min-height:200px">
+            <p class="text-xs text-gray-500 text-center">The box width = piped result (clamped 0-200):</p>
+            <div id="pipeBox" style="width:100px;height:50px;background:linear-gradient(90deg,#ff6b35,#6c5ce7);border-radius:8px;transition:width 0.3s;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2: distribute -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">2</span>
+          <h2 class="text-xl font-bold">distribute() — Spread Values Evenly</h2>
+          <span class="tag tag-orange">distribute</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// distribute() returns a function that maps index → value</span>
+            <span class="keyword">const</span> spread = <span class="property">gsap</span>.utils.distribute({
+              amount: <span class="number">300</span>,     <span class="comment">// total range to spread across</span>
+              base: <span class="number">50</span>,        <span class="comment">// starting point</span>
+              from: <span class="string">"center"</span>,  <span class="comment">// "start"|"center"|"end"|"edges"|index</span>
+              ease: <span class="string">"power1.in"</span> <span class="comment">// optional easing of the distribution</span>
+            });
+            <span class="comment">// spread(0) = 50, spread(1) = ..., spread(4) = 350</span>
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <div>
+              <label class="text-xs text-gray-400">from: <span id="distFrom" class="text-cyan-400">center</span></label>
+              <select id="distFromSelect" class="w-full mt-1 px-3 py-2 text-xs bg-[#0d0d1a] border border-white/10 rounded-lg text-white">
+                <option value="start">start</option>
+                <option value="center" selected>center</option>
+                <option value="end">end</option>
+                <option value="edges">edges</option>
+              </select>
+            </div>
+            <button onclick="runDistribute()" class="self-start px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white">Animate</button>
+            <div class="console-box" id="distOutput" style="min-height:80px">&gt; Values: 50, 125, 200, 275, 350</div>
+          </div>
+          <div class="live-preview" id="distPreview" style="min-height:280px;flex-direction:column;justify-content:flex-start;padding:12px 0;gap:8px;">
+            <div class="dist-item anim-box" style="background:#ff6b35;">0</div>
+            <div class="dist-item anim-box" style="background:#4ecdc4;">1</div>
+            <div class="dist-item anim-box" style="background:#6c5ce7;">2</div>
+            <div class="dist-item anim-box" style="background:#22c55e;">3</div>
+            <div class="dist-item anim-box" style="background:#fd79a8;">4</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3: selector -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">3</span>
+          <h2 class="text-xl font-bold">selector() — Scoped DOM Queries</h2>
+          <span class="tag tag-orange">selector</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// selector() creates a scoped querySelectorAll bound to a parent element.</span>
+            <span class="comment">// Perfect for targeting elements inside a specific container.</span>
+            <span class="keyword">const</span> container = <span class="property">document</span>.querySelector(<span class="string">"#scopeDemo"</span>);
+            <span class="keyword">const</span> q = <span class="property">gsap</span>.utils.selector(container);
+            <span class="comment">// q(".item") → only .item children of #scopeDemo</span>
+            <span class="property">gsap</span>.to(q(<span class="string">".item"</span>), { x: <span class="number">80</span>, stagger: <span class="number">0.15</span> });
+            <span class="comment">// Without selector: document.querySelectorAll("#scopeDemo .item")</span>
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <p class="text-xs text-gray-400">Only the items in the left container animate:</p>
+            <div id="scopeDemo" class="flex gap-2 p-3" style="border:1px dashed rgba(255,255,255,.1);border-radius:10px;flex-wrap:wrap;">
+              <div class="scope-item anim-box" style="background:#ff6b35;">A</div>
+              <div class="scope-item anim-box" style="background:#4ecdc4;">B</div>
+              <div class="scope-item anim-box" style="background:#6c5ce7;">C</div>
+            </div>
+            <button onclick="runSelector()" class="self-start px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white">Animate Scoped</button>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:200px">
+            <p class="text-xs text-gray-400">Same class but <strong>not</strong> inside the scope:</p>
+            <div class="flex gap-2 flex-wrap justify-center">
+              <div class="scope-item anim-box" style="background:rgba(255,107,53,.3);border:1px dashed rgba(255,107,53,.4);">X</div>
+              <div class="scope-item anim-box" style="background:rgba(78,205,196,.3);border:1px dashed rgba(78,205,196,.4);">Y</div>
+              <div class="scope-item anim-box" style="background:rgba(108,92,231,.3);border:1px dashed rgba(108,92,231,.4);">Z</div>
+            </div>
+            <p class="text-xs text-gray-500">These stay put — <code class="text-purple-300">selector()</code> only finds children of the scope element.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4: mapRange -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">4</span>
+          <h2 class="text-xl font-bold">mapRange() — Remap Values</h2>
+          <span class="tag tag-orange">mapRange</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// mapRange(inMin, inMax, outMin, outMax, value)</span>
+            <span class="comment">// Maps a value from one numeric range to another.</span>
+            <span class="keyword">const</span> mouseToHue = <span class="property">gsap</span>.utils.mapRange(<span class="number">0</span>, <span class="number">800</span>, <span class="number">0</span>, <span class="number">360</span>);
+            <span class="property">console</span>.log(mouseToHue(<span class="number">400</span>));  <span class="comment">// 180</span>
+            <span class="property">console</span>.log(mouseToHue(<span class="number">200</span>));  <span class="comment">// 90</span>
+            <span class="comment">// Also: mapRange(inMin, inMax, outMin, outMax) → returns a reusable function</span>
+            <span class="comment">// Or:   mapRange(inMin, inMax, outMin, outMax, value) → returns the mapped value</span>
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <p class="text-xs text-gray-400">Drag the slider to see the mapped result:</p>
+            <input type="range" class="playground-slider" id="mapSlider" min="0" max="100" value="50" />
+            <div class="console-box" id="mapOutput">
+              &gt; input: 50<br/>&gt; 0→100 mapped to 0→360: 180<br/>&gt; 0→100 mapped to -100→100: 0<br/>&gt; 0→100 mapped to red→blue hue
+            </div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:200px">
+            <div id="mapBox" style="width:120px;height:120px;border-radius:20px;background:hsl(180,80%,50%);transition:background 0.15s;"></div>
+            <p class="text-xs text-gray-500">Color hue mapped from slider (0-100 → 0-360)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5: Bonus utilities -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">5</span>
+          <h2 class="text-xl font-bold">Bonus: clamp, snap, random, interpolate</h2>
+          <span class="tag tag-orange">clamp</span>
+          <span class="tag tag-cyan">snap</span>
+          <span class="tag tag-purple">random</span>
+          <span class="tag tag-green">interpolate</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// clamp(min, max, value) — constrain within range</span>
+            <span class="property">gsap</span>.utils.clamp(<span class="number">0</span>, <span class="number">100</span>, <span class="number">150</span>);  <span class="comment">// 100</span>
+            <span class="comment">// snap(increment, value) — snap to nearest increment</span>
+            <span class="property">gsap</span>.utils.snap(<span class="number">15</span>, <span class="number">22</span>);       <span class="comment">// 15</span>
+            <span class="comment">// random(min, max, increment) — random in range</span>
+            <span class="property">gsap</span>.utils.random(<span class="number">0</span>, <span class="number">100</span>, <span class="number">5</span>);  <span class="comment">// e.g. 35</span>
+            <span class="comment">// interpolate(from, to, progress) — linear interpolation</span>
+            <span class="property">gsap</span>.utils.interpolate(<span class="number">0</span>, <span class="number">100</span>, <span class="number">0.5</span>); <span class="comment">// 50</span>
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <p class="text-xs text-gray-400">Test each utility:</p>
+            <div class="grid grid-cols-2 gap-2">
+              <button onclick="testClamp()" class="px-3 py-2 text-xs rounded-lg bg-orange-600/20 border border-orange-500/30 text-orange-300">clamp(0,100,150)</button>
+              <button onclick="testSnap()" class="px-3 py-2 text-xs rounded-lg bg-cyan-600/20 border border-cyan-500/30 text-cyan-300">snap(15, 22)</button>
+              <button onclick="testRandom()" class="px-3 py-2 text-xs rounded-lg bg-purple-600/20 border border-purple-500/30 text-purple-300">random(0,100,5)</button>
+              <button onclick="testInterp()" class="px-3 py-2 text-xs rounded-lg bg-green-600/20 border border-green-500/30 text-green-300">interpolate(0,100,0.5)</button>
+            </div>
+            <div class="console-box" id="bonusOutput">&gt; Click a button</div>
+          </div>
+          <div class="live-preview" style="min-height:180px">
+            <p class="text-xs text-gray-500 text-center">These are pure math functions used everywhere in GSAP configs — from snapping ScrollTrigger progress to randomizing stagger values.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6: Combined example -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">6</span>
+          <h2 class="text-xl font-bold">Putting It All Together</h2>
+          <span class="tag tag-orange">pipe</span>
+          <span class="tag tag-cyan">distribute</span>
+          <span class="tag tag-purple">mapRange</span>
+          <span class="tag tag-green">clamp</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// A real-world example combining utils:</span>
+            <span class="keyword">const</span> boxes = <span class="property">gsap</span>.utils.selector(<span class="property">document</span>.getElementById(<span class="string">"comboDemo"</span>));
+            <span class="comment">// Distribute initial x positions</span>
+            <span class="keyword">const</span> pos = <span class="property">gsap</span>.utils.distribute({ amount: <span class="number">200</span>, base: <span class="number">20</span>, from: <span class="string">"start"</span> });
+            <span class="keyword">const</span> hues = <span class="property">gsap</span>.utils.distribute({ amount: <span class="number">300</span>, base: <span class="number">0</span>, from: <span class="string">"start"</span> });
+            boxes(<span class="string">".combo-item"</span>).forEach(<span class="keyword">(el, i)</span> => {
+              <span class="property">gsap</span>.set(el, { x: pos(i), backgroundColor: <span class="string">`hsl(${hues(i)}, 80%, 60%)`</span> });
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div id="comboDemo" class="flex items-center" style="min-height:200px;gap:0;flex-wrap:wrap;">
+            <div class="combo-item anim-box" style="background:#ff6b35;">1</div>
+            <div class="combo-item anim-box" style="background:#4ecdc4;">2</div>
+            <div class="combo-item anim-box" style="background:#6c5ce7;">3</div>
+            <div class="combo-item anim-box" style="background:#22c55e;">4</div>
+            <div class="combo-item anim-box" style="background:#fd79a8;">5</div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:200px">
+            <p class="text-xs text-gray-500 text-center"><code class="text-orange-300">distribute</code> sets positions and colors.<br/><code class="text-purple-300">selector</code> scopes queries.<br/><code class="text-green-300">clamp</code> + <code class="text-cyan-300">pipe</code> on your data pipeline.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card p-8">
+        <h2 class="text-lg font-bold mb-4 gradient-text">Key Takeaways — gsap.utils</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="highlight-box"><strong class="text-orange-400">pipe(value, ...fns)</strong> — Chain functions left-to-right. Each output feeds the next input.</div>
+          <div class="highlight-box cyan"><strong class="text-cyan-400">distribute({amount, base, from, ease, grid})</strong> — Returns <code class="text-cyan-300">(index) => value</code>. Great for stagger positions.</div>
+          <div class="highlight-box purple"><strong class="text-purple-400">selector(parent)</strong> — Returns <code class="text-purple-300">(selector) => elements[]</code> scoped to parent. Replaces <code class="text-purple-300">parent.querySelectorAll</code>.</div>
+          <div class="highlight-box green"><strong class="text-green-400">mapRange(inMin, inMax, outMin, outMax)</strong> — Returns a reusable function to remap values across ranges.</div>
+          <div class="highlight-box" style="border-left-color:#f7c948"><strong class="text-yellow-400">clamp(min, max)</strong> — Constrains a value within a range.</div>
+          <div class="highlight-box" style="border-left-color:#fd79a8"><strong class="text-pink-400">snap(increment)</strong> — Snaps to nearest increment.</div>
+          <div class="highlight-box" style="border-left-color:#22c55e"><strong class="text-green-400">random(min, max, increment?)</strong> — Random value in range.</div>
+          <div class="highlight-box cyan"><strong class="text-cyan-400">interpolate(from, to, progress)</strong> — Linear interpolation between values.</div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 1: pipe
+      const add2 = x => x + 2;
+      const double = x => x * 2;
+      const square = x => x * x;
+      const transform = gsap.utils.pipe(add2, double, square);
+      const clampWidth = gsap.utils.clamp(20, 200);
+
+      const pipeInput = document.getElementById('pipeInput');
+      const pipeOutput = document.getElementById('pipeOutput');
+      const pipeBox = document.getElementById('pipeBox');
+
+      function updatePipe() {
+        const val = parseFloat(pipeInput.value) || 0;
+        const result = transform(val);
+        const clamped = clampWidth(result);
+        pipeOutput.innerHTML = `&gt; transform(${val}) = ${result}`;
+        pipeBox.style.width = clamped + 'px';
+      }
+      pipeInput.addEventListener('input', updatePipe);
+      updatePipe();
+
+      // 2: distribute
+      const distItems = document.querySelectorAll('.dist-item');
+      function runDistribute() {
+        const from = document.getElementById('distFromSelect').value;
+        document.getElementById('distFrom').textContent = from;
+        const pos = gsap.utils.distribute({ amount: 200, base: 10, from });
+        const vals = [];
+        gsap.set(distItems, { clearProps: 'y' });
+        distItems.forEach((el, i) => {
+          const v = Math.round(pos(i));
+          vals.push(v);
+          gsap.to(el, { y: v, duration: 0.6, ease: 'power2.out' });
+        });
+        document.getElementById('distOutput').innerHTML = `&gt; Values: ${vals.join(', ')}`;
+      }
+      runDistribute();
+
+      // 3: selector
+      function runSelector() {
+        const container = document.getElementById('scopeDemo');
+        const q = gsap.utils.selector(container);
+        gsap.fromTo(q('.scope-item'), { x: 0 }, { x: 80, duration: 0.5, ease: 'back.out(2)', stagger: 0.1 });
+      }
+
+      // 4: mapRange
+      const mapSlider = document.getElementById('mapSlider');
+      const mapOutput = document.getElementById('mapOutput');
+      const mapBox = document.getElementById('mapBox');
+      const toHue = gsap.utils.mapRange(0, 100, 0, 360);
+      const toBipolar = gsap.utils.mapRange(0, 100, -100, 100);
+      const toRGB = gsap.utils.mapRange(0, 100, 0, 255);
+
+      function updateMap() {
+        const val = parseFloat(mapSlider.value);
+        const hue = Math.round(toHue(val));
+        const bi = Math.round(toBipolar(val));
+        const r = Math.round(toRGB(val));
+        const b = Math.round(toRGB(100 - val));
+        mapOutput.innerHTML = `&gt; input: ${val}\n&gt; 0→100 mapped to 0→360: ${hue}\n&gt; 0→100 mapped to -100→100: ${bi}\n&gt; 0→100 mapped to red→blue: rgb(${r},0,${b})`;
+        mapBox.style.background = `hsl(${hue}, 80%, 60%)`;
+      }
+      mapSlider.addEventListener('input', updateMap);
+      updateMap();
+
+      // 5: Bonus
+      document.getElementById('bonusOutput').innerHTML = '&gt; Click a button';
+      window.testClamp = function() {
+        document.getElementById('bonusOutput').innerHTML = `&gt; gsap.utils.clamp(0, 100, 150) = ${gsap.utils.clamp(0, 100, 150)}`;
+      };
+      window.testSnap = function() {
+        document.getElementById('bonusOutput').innerHTML = `&gt; gsap.utils.snap(15, 22) = ${gsap.utils.snap(15, 22)}\n&gt; gsap.utils.snap(15, 30) = ${gsap.utils.snap(15, 30)}`;
+      };
+      window.testRandom = function() {
+        document.getElementById('bonusOutput').innerHTML = `&gt; gsap.utils.random(0, 100, 5) = ${gsap.utils.random(0, 100, 5)}<br/>&gt; gsap.utils.random(['red','blue','green']) = ${gsap.utils.random(['red','blue','green'])}`;
+      };
+      window.testInterp = function() {
+        document.getElementById('bonusOutput').innerHTML = `&gt; gsap.utils.interpolate(0, 100, 0.5) = ${gsap.utils.interpolate(0, 100, 0.5)}<br/>&gt; gsap.utils.interpolate("#ff6b35", "#6c5ce7", 0.5) = ${gsap.utils.interpolate('#ff6b35', '#6c5ce7', 0.5)}`;
+      };
+
+      // 6: Combined
+      const comboContainer = document.getElementById('comboDemo');
+      const qCombo = gsap.utils.selector(comboContainer);
+      const posDist = gsap.utils.distribute({ amount: 220, base: 10, from: 'start' });
+      const hueDist = gsap.utils.distribute({ amount: 300, base: 0, from: 'start' });
+      const satDist = gsap.utils.distribute({ amount: 40, base: 50, from: 'center' });
+
+      qCombo('.combo-item').forEach((el, i) => {
+        gsap.set(el, {
+          x: posDist(i),
+          backgroundColor: `hsl(${Math.round(hueDist(i))}, ${Math.round(satDist(i))}%, 60%)`
+        });
+      });
+    </script>
+  </body>
+</html>

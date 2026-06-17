@@ -1,0 +1,420 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 11: 3D Transforms</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; overflow-x:hidden; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .live-preview { min-height:320px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+      .scene-3d { perspective:800px; perspective-origin:50% 50%; }
+      .cube-face { position:absolute; width:100%; height:100%; display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#fff; border:1px solid rgba(255,255,255,.1); backface-visibility:hidden; }
+      .playground-slider { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,.1); outline:none; }
+      .playground-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .playground-slider::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .card-3d { width:160px; height:220px; position:relative; transform-style:preserve-3d; cursor:pointer; }
+      .card-3d-face { position:absolute; width:100%; height:100%; backface-visibility:hidden; border-radius:14px; display:flex; align-items:center; justify-content:center; font-weight:700; font-size:1.1rem; }
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .rounded-xl { border-radius:6px; }
+        .rounded-2xl { border-radius:8px; }
+        .space-y-6 > :not([hidden])~:not([hidden]) { margin-top:.5rem; }
+        .space-y-4 > :not([hidden])~:not([hidden]) { margin-top:.3rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:180px; border-radius:6px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .card-3d { width:120px; height:160px; }
+        .card-3d-face { font-size:.85rem; }
+        .scene-3d { perspective:500px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="max-w-6xl mx-auto px-6 py-10">
+      <div class="text-center mb-12">
+        <div class="flex items-center justify-center gap-3 mb-4">
+          <span class="tag tag-purple">Ch 11</span>
+          <span class="text-sm text-gray-500 font-mono">/</span>
+          <span class="tag tag-orange">3D Transforms</span>
+        </div>
+        <h1 class="text-4xl font-extrabold gradient-text mb-3">3D Transforms with GSAP</h1>
+        <p class="text-gray-400 text-sm max-w-2xl mx-auto leading-relaxed">
+          GSAP animates <code class="text-orange-300">rotationX</code>, <code class="text-cyan-300">rotationY</code>, <code class="text-purple-300">rotationZ</code>,
+          <code class="text-green-300">transformOrigin</code>, and <code class="text-pink-300">perspective</code> — turning flat elements into 3D scenes.
+        </p>
+      </div>
+
+      <!-- 1: rotationX -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">1</span>
+          <h2 class="text-xl font-bold">rotationX — Tilt Forward/Back</h2>
+          <span class="tag tag-orange">rotationX</span>
+          <span class="tag tag-cyan">perspective</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// rotationX rotates around the horizontal axis (top-to-bottom)</span>
+            <span class="comment">// perspective on the parent creates the 3D depth</span>
+            <span class="property">gsap</span>.to(<span class="string">".box-x"</span>, { rotationX: <span class="number">60</span>, duration: <span class="number">1</span>, ease: <span class="string">"power2.out"</span> });
+            <span class="property">gsap</span>.to(<span class="string">".box-x"</span>, { rotationX: <span class="number">0</span>, duration: <span class="number">1</span>, ease: <span class="string">"bounce.out"</span>, delay: <span class="number">1.2</span> });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="scene-3d flex items-center justify-center" style="min-height:200px">
+            <div class="box-x" style="width:120px;height:120px;border-radius:16px;background:linear-gradient(135deg,rgba(255,107,53,.3),rgba(255,107,53,.1));border:2px solid rgba(255,107,53,.4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:#ff6b35;transform-style:preserve-3d;">rotationX</div>
+          </div>
+          <div class="live-preview" style="min-height:200px">
+            <button onclick="playRX()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white">Play rotationX</button>
+            <p class="text-xs text-gray-500 mt-3">Think of a book tilting toward/away from you</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2: rotationY -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">2</span>
+          <h2 class="text-xl font-bold">rotationY — Spin Like a Door</h2>
+          <span class="tag tag-orange">rotationY</span>
+          <span class="tag tag-cyan">backface-visibility</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// rotationY spins around the vertical axis (left-to-right)</span>
+            <span class="comment">// This is the foundation of card-flip effects</span>
+            <span class="property">gsap</span>.to(<span class="string">".box-y"</span>, { rotationY: <span class="number">180</span>, duration: <span class="number">1.2</span>, ease: <span class="string">"power2.inOut"</span> });
+            <span class="property">gsap</span>.to(<span class="string">".box-y"</span>, { rotationY: <span class="number">0</span>, duration: <span class="number">1.2</span>, ease: <span class="string">"power2.inOut"</span>, delay: <span class="number">1.5</span> });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="scene-3d flex items-center justify-center" style="min-height:200px">
+            <div class="box-y" style="width:120px;height:120px;border-radius:16px;background:linear-gradient(135deg,rgba(78,205,196,.3),rgba(78,205,196,.1));border:2px solid rgba(78,205,196,.4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:#4ecdc4;transform-style:preserve-3d;">rotationY</div>
+          </div>
+          <div class="live-preview" style="min-height:200px">
+            <button onclick="playRY()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-cyan-600 text-white">Play rotationY</button>
+            <p class="text-xs text-gray-500 mt-3">Like a door swinging open</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3: rotationZ -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">3</span>
+          <h2 class="text-xl font-bold">rotationZ — Spin 2D (same as rotation)</h2>
+          <span class="tag tag-orange">rotationZ</span>
+          <span class="tag tag-cyan">same as rotation</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// rotationZ is equivalent to "rotation" — spinning flat in the screen plane</span>
+            <span class="property">gsap</span>.to(<span class="string">".box-z"</span>, { rotationZ: <span class="number">360</span>, duration: <span class="number">2</span>, ease: <span class="string">"none"</span>, repeat: <span class="number">-1</span> });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="scene-3d flex items-center justify-center" style="min-height:200px">
+            <div class="box-z" style="width:120px;height:120px;border-radius:16px;background:linear-gradient(135deg,rgba(108,92,231,.3),rgba(108,92,231,.1));border:2px solid rgba(108,92,231,.4);display:flex;align-items:center;justify-content:center;font-size:.75rem;font-weight:600;color:#6c5ce7;transform-style:preserve-3d;">rotationZ</div>
+          </div>
+          <div class="live-preview" style="min-height:200px">
+            <button onclick="playRZ()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-purple-600 text-white">Play rotationZ</button>
+            <p class="text-xs text-gray-500 mt-3">Same as <code class="text-purple-300">rotation</code> — flat spin</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4: transformOrigin -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">4</span>
+          <h2 class="text-xl font-bold">transformOrigin — Pivot Point</h2>
+          <span class="tag tag-orange">transformOrigin</span>
+          <span class="tag tag-cyan">perspective</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// transformOrigin changes where the rotation pivots from</span>
+            <span class="comment">// "left" → 0% 50%, "right" → 100% 50%, "top left" → 0% 0%</span>
+            <span class="property">gsap</span>.to(<span class="string">".box-origin"</span>, { rotationY: <span class="number">60</span>, transformOrigin: <span class="string">"left"</span>, duration: <span class="number">1</span> });
+            <span class="property">gsap</span>.to(<span class="string">".box-origin"</span>, { rotationY: <span class="number">0</span>, transformOrigin: <span class="string">"right"</span>, duration: <span class="number">1</span>, delay: <span class="number">1.3</span> });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="scene-3d flex items-center justify-center" style="min-height:200px">
+            <div class="box-origin" style="width:120px;height:120px;border-radius:16px;background:linear-gradient(135deg,rgba(247,201,72,.3),rgba(247,201,72,.1));border:2px solid rgba(247,201,72,.4);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;color:#f7c948;transform-style:preserve-3d;">transform<br/>Origin</div>
+          </div>
+          <div class="live-preview" style="min-height:200px">
+            <button onclick="playOrigin()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-yellow-600 text-white">Play Origin</button>
+            <p class="text-xs text-gray-500 mt-3">First pivots on left, then on right</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5: Card Flip Demo -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">5</span>
+          <h2 class="text-xl font-bold">Card Flip — rotationY + Backface</h2>
+          <span class="tag tag-orange">rotationY</span>
+          <span class="tag tag-cyan">backface-visibility</span>
+          <span class="tag tag-purple">transformStyle</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Card flip requires:</span>
+            <span class="comment">// 1. Parent: transform-style: preserve-3d</span>
+            <span class="comment">// 2. Both faces: backface-visibility: hidden</span>
+            <span class="comment">// 3. Back face pre-rotated 180deg</span>
+            <span class="keyword">const</span> cardTL = <span class="property">gsap</span>.timeline();
+            cardTL.to(<span class="string">".card-3d"</span>, { rotationY: <span class="number">180</span>, duration: <span class="number">1</span>, ease: <span class="string">"power2.inOut"</span> });
+            cardTL.to(<span class="string">".card-3d"</span>, { rotationY: <span class="number">0</span>, duration: <span class="number">1</span>, ease: <span class="string">"power2.inOut"</span> });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="scene-3d flex items-center justify-center" style="min-height:260px">
+            <div class="card-3d" id="cardFlip">
+              <div class="card-3d-face" style="background:linear-gradient(135deg,#ff6b35,#e85d2c);">Front</div>
+              <div class="card-3d-face" style="background:linear-gradient(135deg,#6c5ce7,#4834d4);transform:rotateY(180deg);">Back</div>
+            </div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:260px">
+            <button onclick="flipCard()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white">Flip Card</button>
+            <p class="text-xs text-gray-500">Click to flip. The back face is pre-rotated 180deg so it's hidden until the parent reaches 180deg.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6: 3D Cube -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">6</span>
+          <h2 class="text-xl font-bold">3D Cube — All Axes Together</h2>
+          <span class="tag tag-orange">rotationX</span>
+          <span class="tag tag-cyan">rotationY</span>
+          <span class="tag tag-purple">translateZ</span>
+          <span class="tag tag-green">transformStyle</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// A 3D cube uses translateZ on each face to push it outward</span>
+            <span class="comment">// Face positions: front(0,0,60) back(0,0,-60) left(-60,0,0) right(60,0,0)</span>
+            <span class="comment">//                   top(0,-60,0) bottom(0,60,0)</span>
+            <span class="property">gsap</span>.to(<span class="string">"#cubeContainer"</span>, { rotationX: <span class="number">-30</span>, rotationY: <span class="number">45</span>, duration: <span class="number">2</span>, ease: <span class="string">"power2.out"</span> });
+            <span class="property">gsap</span>.to(<span class="string">"#cubeContainer"</span>, { rotationY: <span class="string">"+=360"</span>, duration: <span class="number">6</span>, ease: <span class="string">"none"</span>, repeat: <span class="number">-1</span> });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="scene-3d flex items-center justify-center" style="min-height:300px">
+            <div id="cubeContainer" style="width:120px;height:120px;position:relative;transform-style:preserve-3d;">
+              <div class="cube-face" style="background:rgba(255,107,53,.25);transform:translateZ(60px);border-color:rgba(255,107,53,.4);">Front</div>
+              <div class="cube-face" style="background:rgba(255,107,53,.15);transform:rotateY(180deg) translateZ(60px);border-color:rgba(255,107,53,.3);">Back</div>
+              <div class="cube-face" style="background:rgba(78,205,196,.2);transform:rotateY(-90deg) translateZ(60px);border-color:rgba(78,205,196,.4);">Left</div>
+              <div class="cube-face" style="background:rgba(78,205,196,.15);transform:rotateY(90deg) translateZ(60px);border-color:rgba(78,205,196,.3);">Right</div>
+              <div class="cube-face" style="background:rgba(108,92,231,.2);transform:rotateX(90deg) translateZ(60px);border-color:rgba(108,92,231,.4);">Top</div>
+              <div class="cube-face" style="background:rgba(108,92,231,.15);transform:rotateX(-90deg) translateZ(60px);border-color:rgba(108,92,231,.3);">Bottom</div>
+            </div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:300px">
+            <button onclick="spinCube()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-cyan-500 to-purple-600 text-white">Spin Cube</button>
+            <p class="text-xs text-gray-500">Cube uses 6 faces each translated ±60px on its local Z axis</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7: Playground -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">7</span>
+          <h2 class="text-xl font-bold">Playground — All 3D Properties</h2>
+          <span class="tag tag-orange">Interactive</span>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <div><label class="text-xs text-gray-400">rotationX: <span id="valX" class="text-orange-400">0</span></label><input type="range" class="playground-slider" id="sliderX" min="-180" max="180" value="0" /></div>
+            <div><label class="text-xs text-gray-400">rotationY: <span id="valY" class="text-cyan-400">0</span></label><input type="range" class="playground-slider" id="sliderY" min="-180" max="180" value="0" /></div>
+            <div><label class="text-xs text-gray-400">rotationZ: <span id="valZ" class="text-purple-400">0</span></label><input type="range" class="playground-slider" id="sliderZ" min="-180" max="180" value="0" /></div>
+            <div><label class="text-xs text-gray-400">perspective: <span id="valP" class="text-green-400">800</span></label><input type="range" class="playground-slider" id="sliderP" min="200" max="1500" value="800" /></div>
+            <div><label class="text-xs text-gray-400">transformOrigin X: <span id="valOX" class="text-pink-400">50</span>%</label><input type="range" class="playground-slider" id="sliderOX" min="0" max="100" value="50" /></div>
+            <div><label class="text-xs text-gray-400">transformOrigin Y: <span id="valOY" class="text-yellow-400">50</span>%</label><input type="range" class="playground-slider" id="sliderOY" min="0" max="100" value="50" /></div>
+            <button onclick="reset3D()" class="self-start px-4 py-2 text-xs font-semibold rounded-lg bg-gray-700 text-white">Reset</button>
+          </div>
+          <div class="scene-3d live-preview" id="pg3dScene" style="min-height:400px;perspective:800px;">
+            <div id="pg3dBox" style="width:140px;height:140px;border-radius:20px;background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2));border:2px solid rgba(255,107,53,.3);display:flex;align-items:center;justify-content:center;font-size:.7rem;font-weight:600;color:#fff;transform-style:preserve-3d;">
+              <span class="text-center">GSAP<br/>3D</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card p-8">
+        <h2 class="text-lg font-bold mb-4 gradient-text">Key Takeaways — 3D Transforms</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="highlight-box">
+            <strong class="text-orange-400">rotationX</strong> — Tilts around the horizontal axis (like a see-saw)
+          </div>
+          <div class="highlight-box cyan">
+            <strong class="text-cyan-400">rotationY</strong> — Spins around the vertical axis (like a door)
+          </div>
+          <div class="highlight-box purple">
+            <strong class="text-purple-400">rotationZ</strong> — Same as <code class="text-purple-300">rotation</code>, spins in the 2D plane
+          </div>
+          <div class="highlight-box green">
+            <strong class="text-green-400">transformOrigin</strong> — Sets the pivot point (<code class="text-green-300">"50% 50%"</code> default)
+          </div>
+          <div class="highlight-box" style="border-left-color:#fd79a8">
+            <strong class="text-pink-400">perspective</strong> — Enables 3D depth on the <strong>parent</strong> element
+          </div>
+          <div class="highlight-box" style="border-left-color:#f7c948">
+            <strong class="text-yellow-400">transformStyle: "preserve-3d"</strong> — Needed so children keep their 3D positions
+          </div>
+          <div class="highlight-box" style="border-left-color:#22c55e">
+            <strong class="text-green-400">backface-visibility: hidden</strong> — Hides the element when rotated > 90deg (essential for card flips)
+          </div>
+          <div class="highlight-box cyan">
+            <strong class="text-cyan-400">translateZ</strong> — Moves an element toward/away from the viewer along the Z axis
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 1: rotationX
+      function playRX() {
+        const el = document.querySelector('.box-x');
+        gsap.set(el, { clearProps: 'all', transformOrigin: '50% 50%' });
+        gsap.to(el, { rotationX: 60, duration: 1, ease: 'power2.out' });
+        gsap.to(el, { rotationX: 0, duration: 1, ease: 'bounce.out', delay: 1.2 });
+      }
+
+      // 2: rotationY
+      function playRY() {
+        const el = document.querySelector('.box-y');
+        gsap.set(el, { clearProps: 'all', transformOrigin: '50% 50%' });
+        gsap.to(el, { rotationY: 180, duration: 1.2, ease: 'power2.inOut' });
+        gsap.to(el, { rotationY: 0, duration: 1.2, ease: 'power2.inOut', delay: 1.5 });
+      }
+
+      // 3: rotationZ
+      function playRZ() {
+        const el = document.querySelector('.box-z');
+        gsap.set(el, { clearProps: 'all', transformOrigin: '50% 50%' });
+        gsap.to(el, { rotationZ: 360, duration: 2, ease: 'back.out(3)' });
+      }
+
+      // 4: transformOrigin
+      function playOrigin() {
+        const el = document.querySelector('.box-origin');
+        gsap.set(el, { clearProps: 'all', transformOrigin: '50% 50%' });
+        gsap.to(el, { rotationY: 60, transformOrigin: 'left', duration: 1, ease: 'power2.out' });
+        gsap.to(el, { rotationY: 0, transformOrigin: 'right', duration: 1, ease: 'power2.out', delay: 1.3 });
+      }
+
+      // 5: Card flip
+      function flipCard() {
+        const el = document.getElementById('cardFlip');
+        gsap.killTweensOf(el);
+        gsap.set(el, { clearProps: 'rotationY' });
+        const cardTL = gsap.timeline();
+        cardTL.to(el, { rotationY: 180, duration: 1, ease: 'power2.inOut' });
+        cardTL.to(el, { rotationY: 0, duration: 1, ease: 'power2.inOut' });
+      }
+
+      // 6: Cube
+      function spinCube() {
+        const el = document.getElementById('cubeContainer');
+        gsap.killTweensOf(el);
+        gsap.set(el, { clearProps: 'all' });
+        gsap.to(el, { rotationX: -30, rotationY: 45, duration: 2, ease: 'power2.out' });
+        gsap.to(el, { rotationY: '+=360', duration: 6, ease: 'none', repeat: -1 });
+      }
+
+      // 7: Playground
+      const pgBox = document.getElementById('pg3dBox');
+      const pgScene = document.getElementById('pg3dScene');
+
+      function update3D() {
+        const x = parseFloat(document.getElementById('sliderX').value);
+        const y = parseFloat(document.getElementById('sliderY').value);
+        const z = parseFloat(document.getElementById('sliderZ').value);
+        const p = parseFloat(document.getElementById('sliderP').value);
+        const ox = parseFloat(document.getElementById('sliderOX').value);
+        const oy = parseFloat(document.getElementById('sliderOY').value);
+
+        document.getElementById('valX').textContent = x;
+        document.getElementById('valY').textContent = y;
+        document.getElementById('valZ').textContent = z;
+        document.getElementById('valP').textContent = p;
+        document.getElementById('valOX').textContent = ox;
+        document.getElementById('valOY').textContent = oy;
+
+        gsap.set(pgScene, { perspective: p });
+        gsap.set(pgBox, { rotationX: x, rotationY: y, rotationZ: z, transformOrigin: `${ox}% ${oy}%` });
+      }
+
+      document.querySelectorAll('.playground-slider').forEach(s => s.addEventListener('input', update3D));
+      window.reset3D = function() {
+        document.getElementById('sliderX').value = 0;
+        document.getElementById('sliderY').value = 0;
+        document.getElementById('sliderZ').value = 0;
+        document.getElementById('sliderP').value = 800;
+        document.getElementById('sliderOX').value = 50;
+        document.getElementById('sliderOY').value = 50;
+        update3D();
+      };
+      update3D();
+    </script>
+  </body>
+</html>

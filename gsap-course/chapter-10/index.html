@@ -1,0 +1,726 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 10: Final Project — Animated Landing Page</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; overflow-x:hidden; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .live-preview { min-height:320px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+
+      .hero-shape { position:absolute; border-radius:50%; pointer-events:none; }
+      .about-card { opacity:0; transform:translateY(40px); }
+      .skill-ring { transform:rotate(-90deg); }
+      .stat-number { font-variant-numeric:tabular-nums; }
+      .tl-card { opacity:0; transform:translateX(60px); }
+      .tl-line { width:3px; background:linear-gradient(180deg,#ff6b35,#6c5ce7); border-radius:2px; }
+      .tl-dot { width:16px; height:16px; border-radius:50%; border:3px solid #ff6b35; background:#08080e; flex-shrink:0; z-index:1; }
+
+      .log-box { max-height:100px; overflow-y:auto; background:#0d0d1a; border-radius:8px; padding:.6rem; font-size:.65rem; font-family:'Fira Code',monospace; color:#a0a0b8; line-height:1.6; }
+      .parallax-wrap { position:relative; overflow:hidden; }
+
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .mb-6 { margin-bottom:.4rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .rounded-xl { border-radius:6px; }
+        .rounded-2xl { border-radius:8px; }
+        .space-y-6 > :not([hidden])~:not([hidden]) { margin-top:.5rem; }
+        .space-y-4 > :not([hidden])~:not([hidden]) { margin-top:.3rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:180px; border-radius:6px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .tl-card { transform:translateX(0)!important; }
+        .skill-ring { width:80px; height:80px; }
+        .hero-shape { width:40px!important; height:40px!important; }
+        .parallax-wrap { overflow:visible; }
+      }
+      @media (min-width:641px) and (max-width:768px) {
+        .card { padding:1rem!important; }
+        .split-panel { gap:1rem; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="max-w-6xl mx-auto px-6 py-10">
+
+      <!-- Header -->
+      <div class="text-center mb-12">
+        <div class="flex items-center justify-center gap-3 mb-4">
+          <span class="tag tag-purple">Ch 10</span>
+          <span class="text-sm text-gray-500 font-mono">/</span>
+          <span class="tag tag-orange">Final Project</span>
+          <span class="text-sm text-gray-500 font-mono">/</span>
+          <span class="tag tag-cyan">All Chapters Combined</span>
+        </div>
+        <h1 class="text-4xl font-extrabold gradient-text mb-3 text-balance">Final Project: Animated Landing Page</h1>
+        <p class="text-gray-400 text-sm max-w-2xl mx-auto leading-relaxed">
+          A production-grade landing page combining <strong class="text-white">all 9 chapters</strong> into one seamless experience.
+          Scroll down to see each GSAP technique in action within a real website.
+        </p>
+      </div>
+
+      <!-- Section 1: Hero — Chapters 1,2,3,4,6,9 -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">1</span>
+          <h2 class="text-xl font-bold">Hero Section</h2>
+          <span class="tag tag-orange">gsap.to</span>
+          <span class="tag tag-cyan">fromTo</span>
+          <span class="tag tag-purple">Timeline</span>
+          <span class="tag tag-green">Split Text</span>
+          <span class="tag tag-pink">Stagger</span>
+        </div>
+
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Timeline orchestrates the full hero entrance</span>
+            <span class="keyword">const</span> heroTL = <span class="property">gsap</span>.timeline({ defaults: { ease: <span class="string">"power3.out"</span> } });
+            <span class="comment">// Split each word into a span</span>
+            splitWords(<span class="string">".hero-title"</span>);
+            <span class="comment">// Ch6: Stagger each word into view</span>
+            heroTL.from(<span class="string">".hero-word"</span>, { y: 80, opacity: 0, stagger: 0.12, duration: 0.8 }, 0);
+            <span class="comment">// Ch3: fromTo subtitle</span>
+            heroTL.fromTo(<span class="string">".hero-sub"</span>, { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6 }, 0.4);
+            <span class="comment">// Ch1,9: Floating shapes — infinite rotation + bob</span>
+            heroTL.to(<span class="string">".hero-shape"</span>, { scale: 1, opacity: 0.6, stagger: 0.1, duration: 0.5 }, 0);
+            <span class="comment">// Ch2: Bouncy exit not used — shapes float forever</span>
+            <span class="property">gsap</span>.to(<span class="string">".hero-shape"</span>, { y: -20, duration: 2, yoyo: true, repeat: -1, ease: <span class="string">"sine.inOut"</span>, stagger: { each: 0.3, from: <span class="string">"random"</span> } });
+            <span class="property">gsap</span>.to(<span class="string">".hero-shape"</span>, { rotation: 360, duration: 8, repeat: -1, ease: <span class="string">"none"</span> });
+          </div>
+        </div>
+
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <p class="text-xs text-gray-500">Key techniques for every section header can be explored live:</p>
+            <div class="flex flex-wrap gap-2">
+              <button onclick="playHero()" class="px-4 py-2 text-xs font-semibold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white hover:scale-105 transition-transform">Replay Hero</button>
+              <span class="text-xs text-gray-500 self-center"><i class="fas fa-mouse mr-1"></i>Move mouse over page</span>
+            </div>
+          </div>
+          <div class="live-preview relative" id="heroPreview" style="min-height:340px">
+            <p class="hero-title text-4xl font-extrabold text-white z-10 text-center leading-relaxed">
+              Build Amazing Things
+            </p>
+            <p class="hero-sub text-sm text-gray-400 z-10 mt-3 absolute" style="bottom:50px">with GSAP &amp; modern web tech</p>
+            <div class="hero-shape" style="width:60px;height:60px;background:rgba(255,107,53,.15);border:2px solid rgba(255,107,53,.3);top:10%;left:10%;border-radius:30% 70% 70% 30% / 30% 30% 70% 70%;"></div>
+            <div class="hero-shape" style="width:40px;height:40px;background:rgba(78,205,196,.12);border:2px solid rgba(78,205,196,.3);top:20%;right:15%;border-radius:50% 50% 50% 50%;"></div>
+            <div class="hero-shape" style="width:50px;height:50px;background:rgba(108,92,231,.12);border:2px solid rgba(108,92,231,.3);bottom:25%;left:15%;border-radius:60% 40% 30% 70% / 60% 30% 70% 40%;"></div>
+            <div class="hero-shape" style="width:35px;height:35px;background:rgba(247,201,72,.1);border:2px solid rgba(247,201,72,.25);bottom:30%;right:20%;border-radius:40% 60% 60% 40% / 40% 50% 50% 60%;"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 2: About — Chapters 3,4,5,9 -->
+      <div class="card p-8 mb-8" id="aboutSection">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">2</span>
+          <h2 class="text-xl font-bold">About — Scroll Entrance</h2>
+          <span class="tag tag-orange">fromTo</span>
+          <span class="tag tag-cyan">ScrollTrigger</span>
+          <span class="tag tag-purple">Stagger</span>
+          <span class="tag tag-green">Easing</span>
+        </div>
+
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Ch3+5: Each card enters on scroll with different timing</span>
+            <span class="property">gsap</span>.fromTo(<span class="string">".about-card"</span>,
+              { opacity: 0, y: 60, scale: 0.9 },
+              { opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.2,
+                <span class="property">scrollTrigger</span>: { trigger: <span class="string">"#aboutSection"</span>, start: <span class="string">"top 75%"</span>, toggleActions: <span class="string">"play none none reverse"</span> }
+              }
+            );
+            <span class="comment">// Ch2: Each card gets a different ease</span>
+            <span class="property">gsap</span>.fromTo(<span class="string">".about-card"</span>, { opacity: 0, y: 40 }, {
+              opacity: 1, y: 0, stagger: 0.2, ease: <span class="string">"back.out(1.7)"</span>,
+              <span class="property">scrollTrigger</span>: { trigger: <span class="string">"#aboutSection"</span>, start: <span class="string">"top 70%"</span> }
+            });
+          </div>
+        </div>
+
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <p class="text-xs text-gray-500">Scroll down to trigger card entrance animations:</p>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+              <div class="about-card card p-4" style="opacity:0">
+                <i class="fas fa-code text-orange-400 text-xl mb-2"></i>
+                <h3 class="text-sm font-bold mb-1">Clean Code</h3>
+                <p class="text-xs text-gray-400">Every animation is crafted with <code class="text-orange-300">best practices</code> in mind.</p>
+              </div>
+              <div class="about-card card p-4" style="opacity:0">
+                <i class="fas fa-bolt text-cyan-400 text-xl mb-2"></i>
+                <h3 class="text-sm font-bold mb-1">High Performance</h3>
+                <p class="text-xs text-gray-400">GPU-accelerated <code class="text-cyan-300">transforms</code> for silky 60fps.</p>
+              </div>
+              <div class="about-card card p-4" style="opacity:0">
+                <i class="fas fa-mobile-alt text-purple-400 text-xl mb-2"></i>
+                <h3 class="text-sm font-bold mb-1">Fully Responsive</h3>
+                <p class="text-xs text-gray-400">Works across all devices with <code class="text-purple-300">matchMedia</code>.</p>
+              </div>
+              <div class="about-card card p-4" style="opacity:0">
+                <i class="fas fa-layer-group text-green-400 text-xl mb-2"></i>
+                <h3 class="text-sm font-bold mb-1">Scroll-Driven</h3>
+                <p class="text-xs text-gray-400">ScrollTrigger powers <code class="text-green-300">pin, scrub, toggle</code>.</p>
+              </div>
+            </div>
+          </div>
+          <div class="live-preview" id="aboutPreview" style="min-height:280px">
+            <div class="text-center">
+              <i class="fas fa-arrow-down text-orange-400 text-2xl animate-bounce"></i>
+              <p class="text-xs text-gray-500 mt-2">Scroll to see cards animate in</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 3: Skills — Chapters 1,4,5,7,9 -->
+      <div class="card p-8 mb-8" id="skillsSection">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">3</span>
+          <h2 class="text-xl font-bold">Skills — SVG Progress</h2>
+          <span class="tag tag-orange">SVG</span>
+          <span class="tag tag-cyan">ScrollTrigger</span>
+          <span class="tag tag-purple">Timeline</span>
+          <span class="tag tag-pink">Stagger</span>
+          <span class="tag tag-green">fromTo</span>
+        </div>
+
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Ch7: SVG stroke-dashoffset animation + Ch5: scroll trigger</span>
+            <span class="keyword">const</span> circles = <span class="property">document</span>.querySelectorAll(<span class="string">".skill-ring circle:last-child"</span>);
+            circles.forEach(<span class="keyword">c</span> => {
+              <span class="keyword">const</span> len = c.getTotalLength();
+              c.style.strokeDasharray = len;
+              c.style.strokeDashoffset = len;
+            });
+            <span class="comment">// Ch4+5: Timeline with ScrollTrigger</span>
+            <span class="keyword">const</span> skillsTL = <span class="property">gsap</span>.timeline({
+              <span class="property">scrollTrigger</span>: { trigger: <span class="string">"#skillsSection"</span>, start: <span class="string">"top 70%"</span>, toggleActions: <span class="string">"play none none reverse"</span> }
+            });
+            <span class="comment">// Ch9: stagger direction from end</span>
+            skillsTL.to(<span class="string">".skill-ring circle:last-child"</span>, {
+              strokeDashoffset: 0, duration: 1.2, ease: <span class="string">"power2.out"</span>,
+              stagger: { each: 0.25, from: <span class="string">"end"</span> }
+            }, 0);
+            <span class="comment">// Ch1: Animate the percentage numbers</span>
+            skillsTL.to(<span class="string">".skill-pct"</span>, { innerText: 95, duration: 1.2, ease: <span class="string">"power2.out"</span>, stagger: 0.25, snap: { innerText: 1 } }, 0);
+          </div>
+        </div>
+
+        <div class="split-panel">
+          <div class="grid grid-cols-2 md:grid-cols-2 gap-4">
+            <div class="flex flex-col items-center gap-2">
+              <svg class="skill-ring" width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#ff6b35" stroke-width="6" stroke-linecap="round"/>
+              </svg>
+              <span class="text-xs text-gray-400">GSAP</span>
+              <span class="skill-pct text-sm font-bold text-orange-400">0%</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <svg class="skill-ring" width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#4ecdc4" stroke-width="6" stroke-linecap="round"/>
+              </svg>
+              <span class="text-xs text-gray-400">Three.js</span>
+              <span class="skill-pct text-sm font-bold text-cyan-400">0%</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <svg class="skill-ring" width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#6c5ce7" stroke-width="6" stroke-linecap="round"/>
+              </svg>
+              <span class="text-xs text-gray-400">React</span>
+              <span class="skill-pct text-sm font-bold text-purple-400">0%</span>
+            </div>
+            <div class="flex flex-col items-center gap-2">
+              <svg class="skill-ring" width="100" height="100" viewBox="0 0 100 100">
+                <circle cx="50" cy="50" r="42" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="6"/>
+                <circle cx="50" cy="50" r="42" fill="none" stroke="#22c55e" stroke-width="6" stroke-linecap="round"/>
+              </svg>
+              <span class="text-xs text-gray-400">CSS</span>
+              <span class="skill-pct text-sm font-bold text-green-400">0%</span>
+            </div>
+          </div>
+          <div class="live-preview" id="skillsPreview" style="min-height:280px">
+            <div class="text-center">
+              <i class="fas fa-arrow-down text-cyan-400 text-2xl animate-bounce"></i>
+              <p class="text-xs text-gray-500 mt-2">Scroll to fill skill rings</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 4: Timeline — Chapters 4,5,9 -->
+      <div class="card p-8 mb-8" id="timelineSection">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">4</span>
+          <h2 class="text-xl font-bold">Experience — Scroll Timeline</h2>
+          <span class="tag tag-orange">Timeline</span>
+          <span class="tag tag-cyan">ScrollTrigger</span>
+          <span class="tag tag-purple">Pin</span>
+          <span class="tag tag-green">Scrub</span>
+          <span class="tag tag-pink">Callbacks</span>
+        </div>
+
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Ch4+5: Pinned timeline with scrub creates a story-telling scroll</span>
+            <span class="keyword">const</span> expTL = <span class="property">gsap</span>.timeline({
+              <span class="property">scrollTrigger</span>: {
+                trigger: <span class="string">"#expWrap"</span>, start: <span class="string">"top 20%"</span>, end: <span class="string">"+=600"</span>,
+                pin: <span class="string">true</span>, scrub: <span class="string">1</span>, anticipatePin: <span class="number">1</span>,
+                onEnter: () => log(<span class="string">"Timeline entered!"</span>),
+                onLeaveBack: () => log(<span class="string">"Going back..."</span>)
+              }
+            });
+            <span class="comment">// Ch3+9: Each card enters with stagger from edges</span>
+            expTL.fromTo(<span class="string">".tl-card"</span>, { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.6, stagger: 0.3 });
+          </div>
+        </div>
+
+        <div class="split-panel" id="expWrap">
+          <div class="flex flex-col gap-0 relative pl-6" id="expTimeline">
+            <div class="tl-line absolute left-[7px] top-2 bottom-2"></div>
+            <div class="flex gap-4 items-start mb-6">
+              <div class="tl-dot mt-1"></div>
+              <div class="tl-card card p-4 flex-1">
+                <span class="text-xs text-orange-400 font-mono">2024 — Present</span>
+                <h3 class="text-sm font-bold mt-1">Senior Frontend Dev</h3>
+                <p class="text-xs text-gray-400 mt-1">Building animated experiences with GSAP + Three.js</p>
+              </div>
+            </div>
+            <div class="flex gap-4 items-start mb-6">
+              <div class="tl-dot mt-1" style="border-color:#4ecdc4"></div>
+              <div class="tl-card card p-4 flex-1">
+                <span class="text-xs text-cyan-400 font-mono">2022 — 2024</span>
+                <h3 class="text-sm font-bold mt-1">Full Stack Developer</h3>
+                <p class="text-xs text-gray-400 mt-1">React + Node.js + Tailwind — delivered 10+ projects</p>
+              </div>
+            </div>
+            <div class="flex gap-4 items-start mb-6">
+              <div class="tl-dot mt-1" style="border-color:#6c5ce7"></div>
+              <div class="tl-card card p-4 flex-1">
+                <span class="text-xs text-purple-400 font-mono">2020 — 2022</span>
+                <h3 class="text-sm font-bold mt-1">Junior Developer</h3>
+                <p class="text-xs text-gray-400 mt-1">Started career — HTML, CSS, JS, GSAP animations</p>
+              </div>
+            </div>
+          </div>
+          <div class="live-preview flex-col gap-2" id="expPreview" style="min-height:320px">
+            <div class="text-center">
+              <i class="fas fa-arrow-down text-purple-400 text-2xl animate-bounce"></i>
+              <p class="text-xs text-gray-500 mt-2">Scroll to trigger pinned timeline</p>
+            </div>
+            <div class="log-box w-full max-w-xs text-xs" id="expLog">&gt; waiting...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 5: Stats — Chapters 1,2,5,9 -->
+      <div class="card p-8 mb-8" id="statsSection">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">5</span>
+          <h2 class="text-xl font-bold">Stats — Counter Animation</h2>
+          <span class="tag tag-orange">gsap.to</span>
+          <span class="tag tag-cyan">ScrollTrigger</span>
+          <span class="tag tag-purple">Snap</span>
+          <span class="tag tag-pink">quickTo</span>
+        </div>
+
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Ch1: Animate numbers with gsap.to + snap for integers</span>
+            <span class="property">gsap</span>.to(<span class="string">".stat-number"</span>, {
+              innerText: <span class="number">100</span>, duration: <span class="number">2</span>, ease: <span class="string">"power2.out"</span>,
+              snap: { innerText: <span class="number">1</span> }, stagger: <span class="number">0.3</span>,
+              <span class="property">scrollTrigger</span>: { trigger: <span class="string">"#statsSection"</span>, start: <span class="string">"top 75%"</span> }
+            });
+            <span class="comment">// Ch9: quickTo for mouse tracking glow</span>
+            <span class="keyword">const</span> xTo = <span class="property">gsap</span>.quickTo(<span class="string">".stat-glow"</span>, <span class="string">"x"</span>, { ease: <span class="string">"power3"</span>, duration: 0.4 });
+            <span class="keyword">const</span> yTo = <span class="property">gsap</span>.quickTo(<span class="string">".stat-glow"</span>, <span class="string">"y"</span>, { ease: <span class="string">"power3"</span>, duration: 0.4 });
+            <span class="property">document</span>.querySelector(<span class="string">"#statsSection"</span>).addEventListener(<span class="string">"mousemove"</span>, e => {
+              xTo(e.clientX); yTo(e.clientY);
+            });
+          </div>
+        </div>
+
+        <div class="split-panel">
+          <div class="grid grid-cols-2 gap-4 relative">
+            <div class="stat-glow absolute w-32 h-32 rounded-full bg-gradient-to-r from-orange-500/10 to-purple-500/10 blur-3xl pointer-events-none" style="top:50%;left:50%;transform:translate(-50%,-50%)"></div>
+            <div class="card p-5 text-center">
+              <div class="stat-number text-3xl font-extrabold text-orange-400" data-target="128">0</div>
+              <p class="text-xs text-gray-400 mt-1">Projects</p>
+            </div>
+            <div class="card p-5 text-center">
+              <div class="stat-number text-3xl font-extrabold text-cyan-400" data-target="56">0</div>
+              <p class="text-xs text-gray-400 mt-1">Happy Clients</p>
+            </div>
+            <div class="card p-5 text-center">
+              <div class="stat-number text-3xl font-extrabold text-purple-400" data-target="3400">0</div>
+              <p class="text-xs text-gray-400 mt-1">Contributions</p>
+            </div>
+            <div class="card p-5 text-center">
+              <div class="stat-number text-3xl font-extrabold text-green-400" data-target="12">0</div>
+              <p class="text-xs text-gray-400 mt-1">Years Exp</p>
+            </div>
+          </div>
+          <div class="live-preview" id="statsPreview" style="min-height:280px">
+            <div class="text-center">
+              <i class="fas fa-arrow-down text-green-400 text-2xl animate-bounce"></i>
+              <p class="text-xs text-gray-500 mt-2">Scroll to count up + move mouse for glow</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 6: Contact — Chapters 1,3,4,8,9 -->
+      <div class="card p-8 mb-8" id="contactSection">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">6</span>
+          <h2 class="text-xl font-bold">Contact — Responsive Form</h2>
+          <span class="tag tag-orange">matchMedia</span>
+          <span class="tag tag-cyan">fromTo</span>
+          <span class="tag tag-purple">Keyframes</span>
+          <span class="tag tag-green">Stagger</span>
+        </div>
+
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Ch8: Different animations per breakpoint</span>
+            <span class="keyword">const</span> mm = <span class="property">gsap</span>.matchMedia();
+            mm.add(<span class="string">"(min-width: 768px)"</span>, () => {
+              <span class="property">gsap</span>.from(<span class="string">".form-field"</span>, { opacity: 0, x: -60, stagger: 0.1, duration: 0.5,
+                <span class="property">scrollTrigger</span>: { trigger: <span class="string">"#contactSection"</span>, start: <span class="string">"top 75%"</span> }
+              });
+            });
+            mm.add(<span class="string">"(max-width: 767px)"</span>, () => {
+              <span class="property">gsap</span>.from(<span class="string">".form-field"</span>, { opacity: 0, y: 30, stagger: 0.1, duration: 0.4,
+                <span class="property">scrollTrigger</span>: { trigger: <span class="string">"#contactSection"</span>, start: <span class="string">"top 85%"</span> }
+              });
+            });
+            <span class="comment">// Ch9: Keyframes on button hover</span>
+            btn.addEventListener(<span class="string">"mouseenter"</span>, () => {
+              <span class="property">gsap</span>.to(btn, { keyframes: [{ scale: 1.05 }, { scale: 0.97 }, { scale: 1.02 }, { scale: 1 }], duration: 0.4 });
+            });
+          </div>
+        </div>
+
+        <div class="split-panel">
+          <div class="flex flex-col gap-3">
+            <input class="form-field card px-4 py-3 text-sm bg-transparent border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors" placeholder="Your Name" />
+            <input class="form-field card px-4 py-3 text-sm bg-transparent border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors" placeholder="Email Address" />
+            <textarea class="form-field card px-4 py-3 text-sm bg-transparent border border-white/10 rounded-lg text-white placeholder-gray-500 focus:outline-none focus:border-orange-500/50 transition-colors" rows="3" placeholder="Your Message"></textarea>
+            <button class="form-field self-start px-6 py-2.5 text-xs font-bold rounded-lg bg-gradient-to-r from-orange-500 to-purple-600 text-white" id="contactBtn">Send Message <i class="fas fa-paper-plane ml-1"></i></button>
+          </div>
+          <div class="live-preview" id="contactPreview" style="min-height:250px">
+            <div class="text-center">
+              <i class="fas fa-arrow-down text-pink-400 text-2xl animate-bounce"></i>
+              <p class="text-xs text-gray-500 mt-2">Scroll to reveal form + hover button</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Section 7: Footer — Chapters 1,4,9 -->
+      <div class="card p-8 mb-8" id="footerSection">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">7</span>
+          <h2 class="text-xl font-bold">Footer — Nested Timelines</h2>
+          <span class="tag tag-orange">Timeline</span>
+          <span class="tag tag-cyan">Nested</span>
+          <span class="tag tag-purple">gsap.set</span>
+          <span class="tag tag-green">from</span>
+        </div>
+
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Ch4: Nested timelines for modular animation control</span>
+            <span class="keyword">const</span> iconsTL = <span class="property">gsap</span>.timeline();
+            iconsTL.from(<span class="string">".social-icon"</span>, { opacity: 0, scale: 0, stagger: 0.08, ease: <span class="string">"back.out(2)"</span> });
+            <span class="keyword">const</span> textTL = <span class="property">gsap</span>.timeline();
+            textTL.from(<span class="string">".footer-text"</span>, { opacity: 0, y: 15, stagger: 0.1, duration: 0.4 });
+            <span class="keyword">const</span> masterTL = <span class="property">gsap</span>.timeline();
+            masterTL.add(iconsTL).add(textTL, 0.2);
+            <span class="property">ScrollTrigger</span>.create({ trigger: <span class="string">"#footerSection"</span>, start: <span class="string">"top 85%"</span>, animation: masterTL });
+          </div>
+        </div>
+
+        <div class="split-panel">
+          <div class="flex flex-col items-center gap-4 py-6">
+            <div class="flex gap-4">
+              <div class="social-icon card w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:bg-orange-500/10 transition-colors"><i class="fab fa-github text-orange-400"></i></div>
+              <div class="social-icon card w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:bg-cyan-500/10 transition-colors"><i class="fab fa-twitter text-cyan-400"></i></div>
+              <div class="social-icon card w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:bg-purple-500/10 transition-colors"><i class="fab fa-linkedin text-purple-400"></i></div>
+              <div class="social-icon card w-10 h-10 rounded-full flex items-center justify-center cursor-pointer hover:bg-green-500/10 transition-colors"><i class="fab fa-dribbble text-green-400"></i></div>
+            </div>
+            <p class="footer-text text-xs text-gray-500">Built with <i class="fas fa-heart text-orange-400 text-xs"></i> using GSAP</p>
+            <p class="footer-text text-xs text-gray-600">&copy; 2026 — All Rights Reserved</p>
+          </div>
+          <div class="live-preview" id="footerPreview" style="min-height:200px">
+            <div class="text-center">
+              <i class="fas fa-arrow-down text-orange-400 text-2xl animate-bounce"></i>
+              <p class="text-xs text-gray-500 mt-2">Scroll to see footer entrance</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Technique Reference -->
+      <div class="card p-8">
+        <h2 class="text-lg font-bold mb-4 gradient-text">Chapter Reference — What Was Used Where</h2>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs text-left">
+            <thead><tr class="text-gray-400 border-b border-white/5">
+              <th class="pb-2 pr-4">Chapter</th><th class="pb-2 pr-4">Technique</th><th class="pb-2">Used In</th>
+            </tr></thead>
+            <tbody class="text-gray-300">
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-orange">Ch 1</span></td><td class="py-2 pr-4">gsap.to()</td><td class="py-2">Hero shapes float, stat counters, skill pcts</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-cyan">Ch 2</span></td><td class="py-2 pr-4">Easing</td><td class="py-2">Hero timeline defaults, about cards back.out, shape bob sine.inOut</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-purple">Ch 3</span></td><td class="py-2 pr-4">from / fromTo</td><td class="py-2">Hero entrance, about cards, timeline cards</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-green">Ch 4</span></td><td class="py-2 pr-4">Timeline</td><td class="py-2">Hero master TL, skill TL, nested footer TL</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-pink">Ch 5</span></td><td class="py-2 pr-4">ScrollTrigger</td><td class="py-2">About, skills, experience (pin+scrub), stats, contact</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-orange">Ch 6</span></td><td class="py-2 pr-4">Text Animations</td><td class="py-2">Hero split words stagger</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-cyan">Ch 7</span></td><td class="py-2 pr-4">SVG</td><td class="py-2">Skill rings — stroke-dashoffset animation</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-purple">Ch 8</span></td><td class="py-2 pr-4">Responsive & Perf</td><td class="py-2">matchMedia for contact form breakpoints</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 pr-4"><span class="tag tag-green">Ch 9</span></td><td class="py-2 pr-4">Advanced</td><td class="py-2">Stagger direction/random, callbacks, quickTo, keyframes, nested TLs</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+    </div>
+
+    <script>
+      function splitWords(selector) {
+        const el = document.querySelector(selector);
+        if (!el) return;
+        const words = el.textContent.split(' ');
+        el.innerHTML = words.map(w => `<span class="hero-word inline-block mr-[.3em]">${w}</span>`).join('');
+      }
+      splitWords('.hero-title');
+
+      function log(msg) {
+        const box = document.getElementById('expLog');
+        if (!box) return;
+        box.innerHTML += `<div>&gt; ${msg}</div>`;
+        box.scrollTop = box.scrollHeight;
+      }
+
+      // Ch 10 — Final Project Master Timeline
+      function initHero() {
+        const heroTL = gsap.timeline({ defaults: { ease: 'power3.out' } });
+        heroTL.from('.hero-word', { y: 80, opacity: 0, stagger: 0.12, duration: 0.8 }, 0);
+        heroTL.fromTo('.hero-sub', { opacity: 0, x: -30 }, { opacity: 1, x: 0, duration: 0.6 }, 0.4);
+        heroTL.to('.hero-shape', { scale: 1, opacity: 0.6, stagger: 0.1, duration: 0.5 }, 0);
+
+        gsap.set('.hero-shape', { scale: 0, opacity: 0 });
+
+        gsap.to('.hero-shape', {
+          y: -20, duration: 2, yoyo: true, repeat: -1, ease: 'sine.inOut',
+          stagger: { each: 0.3, from: 'random' }
+        });
+        gsap.to('.hero-shape', {
+          rotation: 360, duration: 8, repeat: -1, ease: 'none'
+        });
+      }
+
+      window.playHero = function() {
+        const heroTitle = document.querySelector('.hero-title');
+        if (heroTitle) heroTitle.innerHTML = 'Build Amazing Things';
+        gsap.set('.hero-sub', { clearProps: 'all' });
+        gsap.set('.hero-shape', { clearProps: 'all' });
+        splitWords('.hero-title');
+        gsap.set('.hero-shape', { scale: 0, opacity: 0 });
+        initHero();
+      };
+
+      // About — Ch3+5: ScrollTrigger entrance
+      function initAbout() {
+        gsap.set('.about-card', { opacity: 0, y: 60, scale: 0.9 });
+        gsap.fromTo('.about-card',
+          { opacity: 0, y: 60, scale: 0.9 },
+          {
+            opacity: 1, y: 0, scale: 1, duration: 0.8, stagger: 0.2, ease: 'back.out(1.7)',
+            scrollTrigger: { trigger: '#aboutSection', start: 'top 75%', toggleActions: 'play none none reverse' }
+          }
+        );
+      }
+
+      // Skills — Ch7+5: SVG stroke animation
+      function initSkills() {
+        const circles = document.querySelectorAll('.skill-ring circle:last-child');
+        circles.forEach(c => {
+          const len = c.getTotalLength();
+          c.style.strokeDasharray = len;
+          c.style.strokeDashoffset = len;
+        });
+        const pcts = [
+          document.querySelector('.skill-ring + .skill-pct'), // won't work, use index
+        ];
+
+        const skillsTL = gsap.timeline({
+          scrollTrigger: { trigger: '#skillsSection', start: 'top 70%', toggleActions: 'play none none reverse' }
+        });
+        skillsTL.to('.skill-ring circle:last-child', {
+          strokeDashoffset: 0, duration: 1.2, ease: 'power2.out',
+          stagger: { each: 0.25, from: 'end' }
+        }, 0);
+
+        const targets = [95, 88, 92, 78];
+        document.querySelectorAll('.skill-pct').forEach((el, i) => {
+          const val = targets[i] || 80;
+          skillsTL.to(el, { innerText: val, duration: 1.2, ease: 'power2.out', snap: { innerText: 1 } }, 0.1 * i);
+        });
+      }
+
+      // Timeline — Ch4+5: Pinned scrub timeline
+      function initTimeline() {
+        gsap.set('.tl-card', { opacity: 0, x: 80 });
+
+        const expTL = gsap.timeline({
+          scrollTrigger: {
+            trigger: '#expTimeline', start: 'top 20%', end: '+=600',
+            pin: true, scrub: 1, anticipatePin: 1,
+            onEnter: () => log('Timeline entered — scrub active!'),
+            onLeave: () => log('Reached end of timeline'),
+            onEnterBack: () => log('Scrubbing back in'),
+            onLeaveBack: () => log('Left timeline backwards')
+          }
+        });
+        expTL.fromTo('.tl-card', { opacity: 0, x: 80 }, { opacity: 1, x: 0, duration: 0.6, stagger: 0.3 });
+      }
+
+      // Stats — Ch1+5+9: Counter + quickTo mouse glow
+      function initStats() {
+        document.querySelectorAll('.stat-number').forEach(el => {
+          const target = parseInt(el.dataset.target);
+          gsap.fromTo(el, { innerText: 0 }, {
+            innerText: target, duration: 2, ease: 'power2.out', snap: { innerText: 1 },
+            scrollTrigger: { trigger: '#statsSection', start: 'top 75%', toggleActions: 'play none none reverse' }
+          });
+        });
+
+        const glow = document.querySelector('.stat-glow');
+        if (glow) {
+          const xTo = gsap.quickTo(glow, 'x', { ease: 'power3', duration: 0.4 });
+          const yTo = gsap.quickTo(glow, 'y', { ease: 'power3', duration: 0.4 });
+          document.querySelector('#statsSection').addEventListener('mousemove', e => {
+            const rect = document.querySelector('#statsSection .grid').getBoundingClientRect();
+            xTo(e.clientX - rect.left - 64);
+            yTo(e.clientY - rect.top - 64);
+          });
+        }
+      }
+
+      // Contact — Ch8+9: matchMedia + keyframes
+      function initContact() {
+        const mm = gsap.matchMedia();
+        mm.add('(min-width: 768px)', () => {
+          gsap.from('.form-field', {
+            opacity: 0, x: -60, stagger: 0.1, duration: 0.5,
+            scrollTrigger: { trigger: '#contactSection', start: 'top 75%', toggleActions: 'play none none reverse' }
+          });
+        });
+        mm.add('(max-width: 767px)', () => {
+          gsap.from('.form-field', {
+            opacity: 0, y: 30, stagger: 0.1, duration: 0.4,
+            scrollTrigger: { trigger: '#contactSection', start: 'top 85%', toggleActions: 'play none none reverse' }
+          });
+        });
+
+        const btn = document.getElementById('contactBtn');
+        btn.addEventListener('mouseenter', () => {
+          gsap.to(btn, {
+            keyframes: [
+              { scale: 1.05, duration: 0.1 },
+              { scale: 0.95, duration: 0.08 },
+              { scale: 1.03, duration: 0.06 },
+              { scale: 1, duration: 0.04 }
+            ]
+          });
+        });
+      }
+
+      // Footer — Ch4+9: Nested timelines
+      function initFooter() {
+        gsap.set('.social-icon', { opacity: 0, scale: 0 });
+        gsap.set('.footer-text', { opacity: 0, y: 15 });
+
+        const iconsTL = gsap.timeline();
+        iconsTL.from('.social-icon', { opacity: 0, scale: 0, stagger: 0.08, ease: 'back.out(2)' });
+        const textTL = gsap.timeline();
+        textTL.from('.footer-text', { opacity: 0, y: 15, stagger: 0.1, duration: 0.4 });
+        const masterTL = gsap.timeline();
+        masterTL.add(iconsTL).add(textTL, 0.2);
+        ScrollTrigger.create({ trigger: '#footerSection', start: 'top 85%', animation: masterTL, toggleActions: 'play none none reverse' });
+      }
+
+      document.addEventListener('DOMContentLoaded', () => {
+        initHero();
+        initAbout();
+        initSkills();
+        initTimeline();
+        initStats();
+        initContact();
+        initFooter();
+      });
+    </script>
+  </body>
+</html>

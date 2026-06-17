@@ -1,0 +1,425 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 12: Draggable + Inertia</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/Draggable.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; overflow-x:hidden; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .live-preview { min-height:320px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+      .drag-box { width:80px; height:80px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:600; color:#fff; cursor:grab; user-select:none; touch-action:none; }
+      .drag-box:active { cursor:grabbing; }
+      .drag-area { width:100%; height:200px; border:1px dashed rgba(255,255,255,.1); border-radius:12px; position:relative; overflow:hidden; }
+      .snap-grid { background-image:radial-gradient(circle,rgba(255,255,255,.04) 1px,transparent 1px); background-size:40px 40px; }
+      .log-box { max-height:100px; overflow-y:auto; background:#0d0d1a; border-radius:8px; padding:.6rem; font-size:.65rem; font-family:'Fira Code',monospace; color:#a0a0b8; line-height:1.6; }
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:180px; border-radius:6px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .drag-box { width:60px; height:60px; font-size:.55rem; }
+        .drag-area { height:160px; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="max-w-6xl mx-auto px-6 py-10">
+      <div class="text-center mb-12">
+        <div class="flex items-center justify-center gap-3 mb-4">
+          <span class="tag tag-purple">Ch 12</span>
+          <span class="text-sm text-gray-500 font-mono">/</span>
+          <span class="tag tag-orange">Draggable + Inertia</span>
+        </div>
+        <h1 class="text-4xl font-extrabold gradient-text mb-3">Draggable &amp; Inertia</h1>
+        <p class="text-gray-400 text-sm max-w-2xl mx-auto leading-relaxed">
+          Turn any element into a draggable, throw-able, snap-able interactive widget
+          with <code class="text-orange-300">Draggable</code> and its built-in <code class="text-cyan-300">inertia</code> physics.
+        </p>
+      </div>
+
+      <!-- 1: Basic XY Drag -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">1</span>
+          <h2 class="text-xl font-bold">Basic Drag — type:"xy"</h2>
+          <span class="tag tag-orange">Draggable.create</span>
+          <span class="tag tag-cyan">type</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Draggable.create() accepts a selector and config object.</span>
+            <span class="comment">// type: "x" | "y" | "xy" | "rotation" | "scroll" | "scrollTop" | "scrollLeft"</span>
+            <span class="property">Draggable</span>.create(<span class="string">".drag-xy"</span>, {
+              type: <span class="string">"xy"</span>,
+              bounds: <span class="string">".drag-area"</span>
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="drag-area self-center">
+            <div class="drag-xy drag-box" style="background:linear-gradient(135deg,#ff6b35,#e85d2c);position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);">Drag me</div>
+          </div>
+          <div class="live-preview" style="min-height:220px">
+            <p class="text-xs text-gray-500 text-center">Drag the orange box inside the dashed area.<br/><code class="text-orange-300">type:"xy"</code> enables both axes.<br/><code class="text-cyan-300">bounds</code> keeps it inside the container.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 2: Inertia / Throw -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">2</span>
+          <h2 class="text-xl font-bold">Inertia — Throw on Release</h2>
+          <span class="tag tag-orange">inertia</span>
+          <span class="tag tag-cyan">throwProps</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Inertia is BUILT INTO Draggable in GSAP 3.</span>
+            <span class="comment">// Just set inertia: true and it throws on release.</span>
+            <span class="property">Draggable</span>.create(<span class="string">".drag-throw"</span>, {
+              type: <span class="string">"x"</span>,
+              bounds: { minX: <span class="number">0</span>, maxX: <span class="number">400</span> },
+              inertia: <span class="string">true</span>
+            });
+            <span class="comment">// Or configure throw resistance:</span>
+            <span class="property">Draggable</span>.create(<span class="string">".drag-throw"</span>, {
+              type: <span class="string">"x"</span>, inertia: { minVelocity: <span class="number">10</span>, resistance: <span class="number">30</span> }
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3 self-center" style="width:100%">
+            <div class="drag-area relative" style="height:100px">
+              <div class="drag-throw drag-box" style="background:linear-gradient(135deg,#4ecdc4,#2eaa9e);position:absolute;top:10px;left:10px;width:60px;height:60px;border-radius:12px;">Flick</div>
+            </div>
+            <p class="text-xs text-gray-500">Flick the box — it keeps momentum and slows down naturally</p>
+          </div>
+          <div class="live-preview" style="min-height:220px">
+            <p class="text-xs text-gray-500 text-center"><code class="text-cyan-300">inertia: true</code> adds physics-based throwing.<br/>The box continues moving after you release,<br/>decelerating by friction.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 3: Snap -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">3</span>
+          <h2 class="text-xl font-bold">Snap — Snap to Grid / Values</h2>
+          <span class="tag tag-orange">snap</span>
+          <span class="tag tag-cyan">grid</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Snap to a grid (40px increments)</span>
+            <span class="property">Draggable</span>.create(<span class="string">".drag-snap"</span>, {
+              type: <span class="string">"xy"</span>,
+              bounds: <span class="string">".snap-grid"</span>,
+              snap: { x: <span class="function">gsap.utils.snap</span>(<span class="number">40</span>), y: <span class="function">gsap.utils.snap</span>(<span class="number">40</span>) }
+            });
+            <span class="comment">// Or snap to discrete values:</span>
+            <span class="comment">// snap: { x: [0, 100, 200, 300] }</span>
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="snap-grid drag-area self-center" style="height:240px">
+            <div class="drag-snap drag-box" style="background:linear-gradient(135deg,#6c5ce7,#4834d4);position:absolute;top:20px;left:20px;border-radius:8px;">Snap</div>
+          </div>
+          <div class="live-preview" style="min-height:260px">
+            <p class="text-xs text-gray-500 text-center">The box snaps to a 40x40 grid.<br/>The background dots show the snap points.<br/><code class="text-purple-300">snap: { x: snap(40), y: snap(40) }</code></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 4: Rotation Drag -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">4</span>
+          <h2 class="text-xl font-bold">Rotation Drag — Dial / Knob</h2>
+          <span class="tag tag-orange">type:"rotation"</span>
+          <span class="tag tag-cyan">snap</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Draggable can rotate elements by dragging</span>
+            <span class="property">Draggable</span>.create(<span class="string">".dial"</span>, {
+              type: <span class="string">"rotation"</span>,
+              snap: <span class="function">gsap.utils.snap</span>(<span class="number">15</span>)
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex items-center justify-center" style="min-height:200px">
+            <div class="dial" style="width:120px;height:120px;border-radius:50%;background:conic-gradient(from 0deg, #ff6b35, #f7c948, #4ecdc4, #6c5ce7, #ff6b35);display:flex;align-items:center;justify-content:center;cursor:grab;user-select:none;touch-action:none;">
+              <div style="width:90px;height:90px;border-radius:50%;background:#13131f;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:600;color:#fff;flex-direction:column;">
+                <span id="dialAngle" class="text-sm text-orange-400">0</span>
+                <span class="text-xs text-gray-500">&deg;</span>
+              </div>
+            </div>
+          </div>
+          <div class="live-preview flex-col gap-3" style="min-height:200px">
+            <p class="text-xs text-gray-500 text-center">Drag the dial to rotate.<br/>Snaps to 15&deg; increments.<br/>Useful for volume knobs, color wheels, etc.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5: Callbacks + Live Log -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">5</span>
+          <h2 class="text-xl font-bold">Callbacks — onDrag, onDragStart, onDragEnd</h2>
+          <span class="tag tag-orange">onDrag</span>
+          <span class="tag tag-cyan">onDragStart</span>
+          <span class="tag tag-purple">onDragEnd</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="property">Draggable</span>.create(<span class="string">".drag-cb"</span>, {
+              type: <span class="string">"x"</span>,
+              bounds: { minX: <span class="number">0</span>, maxX: <span class="number">300</span> },
+              onDragStart: <span class="keyword">function</span>() { log(<span class="string">"Drag started at "</span> + <span class="keyword">this</span>.x); },
+              onDrag: <span class="keyword">function</span>() { log(<span class="string">"Dragging: "</span> + <span class="keyword">this</span>.x); },
+              onDragEnd: <span class="keyword">function</span>() { log(<span class="string">"Drag ended at "</span> + <span class="keyword">this</span>.x); }
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3" style="width:100%">
+            <div class="drag-area relative" style="height:100px">
+              <div class="drag-cb drag-box" style="background:linear-gradient(135deg,#22c55e,#16a34a);position:absolute;top:10px;left:10px;width:60px;height:60px;border-radius:12px;">Log</div>
+            </div>
+            <div class="log-box" id="dragLog">&gt; Drag to see callbacks...</div>
+          </div>
+          <div class="live-preview" style="min-height:220px">
+            <p class="text-xs text-gray-500 text-center">Each callback receives the Draggable instance as <code class="text-green-300">this</code>.<br/><code class="text-green-300">this.x</code>/<code class="text-green-300">this.y</code> gives current position.<br/><code class="text-green-300">this.startX</code>/<code class="text-green-300">this.startY</code> gives starting position.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6: Bounds + Edge Resistance -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">6</span>
+          <h2 class="text-xl font-bold">Bounds &amp; Edge Resistance</h2>
+          <span class="tag tag-orange">bounds</span>
+          <span class="tag tag-cyan">edgeResistance</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// bounds can be: Element | {minX,maxX,minY,maxY} | "window"</span>
+            <span class="comment">// edgeResistance (0-1) creates friction at boundaries</span>
+            <span class="property">Draggable</span>.create(<span class="string">".drag-edge"</span>, {
+              type: <span class="string">"x"</span>,
+              bounds: { minX: <span class="number">0</span>, maxX: <span class="number">350</span> },
+              edgeResistance: <span class="number">0.7</span>  <span class="comment">// 0 = no resistance, 1 = stops at edge</span>
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="flex flex-col gap-3" style="width:100%">
+            <div><label class="text-xs text-gray-400">Resistance: <span id="resVal" class="text-cyan-400">0.7</span></label><input type="range" class="playground-slider" id="resSlider" min="0" max="0.95" step="0.05" value="0.7" style="max-width:200px"/></div>
+            <div class="drag-area relative" style="height:90px">
+              <div class="drag-edge drag-box" style="background:linear-gradient(135deg,#fd79a8,#e84393);position:absolute;top:5px;left:5px;width:60px;height:60px;border-radius:12px;">Resist</div>
+            </div>
+          </div>
+          <div class="live-preview" style="min-height:200px">
+            <p class="text-xs text-gray-500 text-center"><code class="text-pink-300">edgeResistance: 0.7</code> means 70% friction at the edge.<br/>Drag the box to the boundary — it pushes back.<br/>Adjust the slider and recreate to feel different values.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 7: Multiple + Live Info -->
+      <div class="card p-8 mb-8">
+        <div class="flex items-center gap-3 mb-5">
+          <span class="step-number">7</span>
+          <h2 class="text-xl font-bold">Playground — Multi Drag with Live Status</h2>
+          <span class="tag tag-orange">Interactive</span>
+        </div>
+        <div class="mb-5">
+          <div class="code-block text-xs">
+            <span class="comment">// Create multiple draggables with one call using a class selector</span>
+            <span class="property">Draggable</span>.create(<span class="string">".drag-item"</span>, {
+              type: <span class="string">"xy"</span>,
+              bounds: <span class="string">"#multiArea"</span>,
+              inertia: <span class="string">true</span>,
+              onDrag: <span class="keyword">function</span>() {
+                <span class="property">document</span>.getElementById(<span class="string">"status_"</span> + <span class="keyword">this</span>.target.dataset.id).textContent =
+                  <span class="string">`x:${Math.round(this.x)}, y:${Math.round(this.y)}`</span>;
+              }
+            });
+          </div>
+        </div>
+        <div class="split-panel">
+          <div class="drag-area" id="multiArea" style="height:260px">
+            <div class="drag-item drag-box" style="background:linear-gradient(135deg,#ff6b35,#e85d2c);position:absolute;top:10px;left:10px;width:60px;height:60px;border-radius:12px;" data-id="1">A</div>
+            <div class="drag-item drag-box" style="background:linear-gradient(135deg,#4ecdc4,#2eaa9e);position:absolute;top:10px;left:120px;width:60px;height:60px;border-radius:12px;" data-id="2">B</div>
+            <div class="drag-item drag-box" style="background:linear-gradient(135deg,#6c5ce7,#4834d4);position:absolute;top:10px;left:230px;width:60px;height:60px;border-radius:12px;" data-id="3">C</div>
+          </div>
+          <div class="live-preview flex-col gap-2" style="min-height:280px">
+            <p class="text-xs text-gray-500 text-center">Drag each box. Live position updates below:</p>
+            <div id="multiStatus" class="text-xs font-mono space-y-1">
+              <div><span class="text-orange-400">A:</span> <span id="status_1">idle</span></div>
+              <div><span class="text-cyan-400">B:</span> <span id="status_2">idle</span></div>
+              <div><span class="text-purple-400">C:</span> <span id="status_3">idle</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Summary -->
+      <div class="card p-8">
+        <h2 class="text-lg font-bold mb-4 gradient-text">Key Takeaways — Draggable</h2>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm">
+          <div class="highlight-box"><strong class="text-orange-400">type</strong> — <code class="text-orange-300">"x"</code>, <code class="text-orange-300">"y"</code>, <code class="text-orange-300">"xy"</code>, <code class="text-orange-300">"rotation"</code>, <code class="text-orange-300">"scroll"</code></div>
+          <div class="highlight-box cyan"><strong class="text-cyan-400">bounds</strong> — Restrict drag area: <code class="text-cyan-300">Element</code>, <code class="text-cyan-300">{minX,maxX,minY,maxY}</code>, or <code class="text-cyan-300">"window"</code></div>
+          <div class="highlight-box purple"><strong class="text-purple-400">inertia</strong> — <code class="text-purple-300">true</code> enables throw physics; customize with <code class="text-purple-300">{minVelocity, resistance}</code></div>
+          <div class="highlight-box green"><strong class="text-green-400">snap</strong> — Snap function or values: <code class="text-green-300">gsap.utils.snap(40)</code> or <code class="text-green-300">[0,100,200]</code></div>
+          <div class="highlight-box" style="border-left-color:#fd79a8"><strong class="text-pink-400">edgeResistance</strong> — 0-1 friction at boundary edges</div>
+          <div class="highlight-box" style="border-left-color:#f7c948"><strong class="text-yellow-400">callbacks</strong> — <code class="text-yellow-300">onDrag</code>, <code class="text-yellow-300">onDragStart</code>, <code class="text-yellow-300">onDragEnd</code>, <code class="text-yellow-300">onPress</code>, <code class="text-yellow-300">onRelease</code></div>
+          <div class="highlight-box" style="border-left-color:#22c55e"><strong class="text-green-400">Draggable.create(selector, config)</strong> — Creates one or many draggables from a selector</div>
+          <div class="highlight-box cyan"><strong class="text-cyan-400">this.x / this.y</strong> — Access current position in callbacks; also <code class="text-cyan-300">this.startX</code>, <code class="text-cyan-300">this.deltaX</code></div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // 1: Basic XY
+      setTimeout(() => {
+        const area = document.querySelector('.drag-xy')?.closest('.drag-area');
+        if (area) {
+          Draggable.create('.drag-xy', { type: 'xy', bounds: area });
+        }
+      }, 100);
+
+      // 2: Inertia throw
+      Draggable.create('.drag-throw', {
+        type: 'x',
+        bounds: { minX: 0, maxX: 280 },
+        inertia: true
+      });
+
+      // 3: Snap grid
+      Draggable.create('.drag-snap', {
+        type: 'xy',
+        bounds: document.querySelector('.snap-grid'),
+        snap: { x: gsap.utils.snap(40), y: gsap.utils.snap(40) }
+      });
+
+      // 4: Rotation dial
+      Draggable.create('.dial', {
+        type: 'rotation',
+        snap: gsap.utils.snap(15),
+        onDrag: function() {
+          document.getElementById('dialAngle').textContent = Math.round(this.rotation);
+        }
+      });
+
+      // 5: Callbacks
+      let cbCount = 0;
+      Draggable.create('.drag-cb', {
+        type: 'x',
+        bounds: { minX: 0, maxX: 280 },
+        onDragStart: function() {
+          const log = document.getElementById('dragLog');
+          log.innerHTML += `<div>&gt; [${++cbCount}] onDragStart @ x=${Math.round(this.x)}</div>`;
+          log.scrollTop = log.scrollHeight;
+        },
+        onDrag: function() {
+          const log = document.getElementById('dragLog');
+          log.innerHTML += `<div>&gt; [${++cbCount}] onDrag @ x=${Math.round(this.x)}</div>`;
+          log.scrollTop = log.scrollHeight;
+          if (log.children.length > 20) log.innerHTML = log.innerHTML.split('<div>').slice(-15).join('<div>');
+        },
+        onDragEnd: function() {
+          const log = document.getElementById('dragLog');
+          log.innerHTML += `<div>&gt; [${++cbCount}] onDragEnd @ x=${Math.round(this.x)}</div>`;
+          log.scrollTop = log.scrollHeight;
+        }
+      });
+
+      // 6: Edge resistance
+      let edgeDrag;
+      function createEdgeDrag(resistance) {
+        if (edgeDrag) edgeDrag.kill();
+        const el = document.querySelector('.drag-edge');
+        if (!el) return;
+        edgeDrag = Draggable.create(el, {
+          type: 'x',
+          bounds: { minX: 0, maxX: 310 },
+          edgeResistance: parseFloat(resistance)
+        })[0];
+      }
+      const resSlider = document.getElementById('resSlider');
+      resSlider.addEventListener('input', function() {
+        document.getElementById('resVal').textContent = this.value;
+        createEdgeDrag(this.value);
+      });
+      createEdgeDrag(0.7);
+
+      // 7: Multi
+      Draggable.create('.drag-item', {
+        type: 'xy',
+        bounds: document.getElementById('multiArea'),
+        inertia: true,
+        onDrag: function() {
+          const id = this.target.dataset.id;
+          const el = document.getElementById('status_' + id);
+          if (el) el.textContent = `x:${Math.round(this.x)}, y:${Math.round(this.y)}`;
+        }
+      });
+    </script>
+  </body>
+</html>

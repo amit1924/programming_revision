@@ -1,0 +1,747 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 5: ScrollTrigger — Scroll-Powered Animations</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; overflow-wrap:break-word; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .highlight-box.orange { border-left-color:#ff6b35; background:rgba(255,107,53,.04); }
+      .highlight-box.pink { border-left-color:#fd79a8; background:rgba(253,121,168,.04); }
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .split-panel > * { min-width:0; overflow:hidden; }
+      .live-preview { min-height:300px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+      .box-demo { width:80px; height:80px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:600; color:#fff; cursor:pointer; user-select:none; }
+      .anim-box { width:64px; height:64px; border-radius:12px; display:flex; align-items:center; justify-content:center; font-size:.6rem; font-weight:600; color:#fff; }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+      .playground-slider { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,.1); outline:none; }
+      .playground-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .playground-slider::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      .max-w-6xl { overflow:hidden; }
+      .scroll-demo-box { width:100%; height:200px; display:flex; align-items:center; justify-content:center; border-radius:12px; font-weight:700; font-size:1rem; color:#fff; }
+      .reveal-item { padding:.8rem 1rem; background:rgba(255,255,255,.02); border:1px solid rgba(255,255,255,.04); border-radius:10px; display:flex; align-items:center; gap:.8rem; opacity:0; transform:translateY(30px); }
+      .reveal-item .dot { width:10px; height:10px; border-radius:50%; flex-shrink:0; }
+      .pin-spacer { pointer-events:none; }
+      .marker-box { padding:.25rem .6rem; border-radius:4px; background:rgba(255,107,53,.1); border:1px solid rgba(255,107,53,.2); font-size:.6rem; color:#ff6b35; font-family:'Fira Code',monospace; }
+      .pg-item { opacity:1; transform:none; }
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        .md\:text-5xl { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-xs { font-size:.55rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .mb-6 { margin-bottom:.4rem; }
+        .mb-4 { margin-bottom:.3rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .gap-3 { gap:.3rem; }
+        .gap-2 { gap:.2rem; }
+        .gap-1\.5 { gap:.2rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-5 { padding:.5rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .p-3 { padding:.4rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .px-4 { padding-left:.4rem; padding-right:.4rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .py-2 { padding-top:.25rem; padding-bottom:.25rem; }
+        .px-3 { padding-left:.4rem; padding-right:.4rem; }
+        .rounded-xl { border-radius:6px; }
+        .rounded-2xl { border-radius:8px; }
+        .rounded-lg { border-radius:5px; }
+        .space-y-6 > :not([hidden])~:not([hidden]) { margin-top:.5rem; }
+        .space-y-5 > :not([hidden])~:not([hidden]) { margin-top:.4rem; }
+        .space-y-4 > :not([hidden])~:not([hidden]) { margin-top:.3rem; }
+        .space-y-3 > :not([hidden])~:not([hidden]) { margin-top:.2rem; }
+        .space-y-2 > :not([hidden])~:not([hidden]) { margin-top:.15rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:120px; border-radius:6px; }
+        .box-demo { width:44px; height:44px; font-size:.5rem; border-radius:8px; }
+        .anim-box { width:40px; height:40px; font-size:.48rem; border-radius:8px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        [class*="md:grid-cols-"] { grid-template-columns:1fr!important; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .playground-slider::-webkit-slider-thumb { width:20px; height:20px; }
+        .playground-slider::-moz-range-thumb { width:20px; height:20px; }
+        .max-w-2xl { max-width:100%; }
+        .tag { font-size:.5rem; padding:.08rem .35rem; }
+        .scroll-demo-box { height:140px; font-size:.85rem; }
+        .reveal-item { padding:.5rem .6rem; gap:.4rem; }
+        .reveal-item .label { font-size:.6rem; }
+        .reveal-item .value { font-size:.6rem; }
+        .flex.items-center.justify-between { flex-wrap:wrap; gap:.2rem; }
+        .flex.items-center.gap-2 { flex-wrap:wrap; }
+        .inline-flex.items-center.gap-2 { flex-wrap:wrap; }
+        .inline-flex.items-center.gap-3 { flex-wrap:wrap; }
+        .split-panel > * { overflow:hidden; }
+      }
+      @media (min-width:641px) and (max-width:768px) {
+        .split-panel { grid-template-columns:1fr; }
+        .card { padding:1.5rem!important; }
+        h1 { font-size:2rem!important; }
+        .md\:text-5xl { font-size:2rem!important; }
+        [class*="md:grid-cols-"] { grid-template-columns:1fr 1fr!important; }
+      }
+    </style>
+  </head>
+  <body>
+
+    <div class="max-w-6xl mx-auto px-6 py-10">
+
+      <!-- HEADER -->
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-green-500/10 border border-green-500/20 text-green-400 text-sm mb-4">
+          <i class="fa-solid fa-scroll"></i> Chapter 5 of 10
+        </div>
+        <h1 class="text-4xl md:text-5xl font-black mb-3">
+          <span class="gradient-text">ScrollTrigger</span> — Scroll-Powered Animations
+        </h1>
+        <p class="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          Chapters 1-4 were time-based. Now learn <span class="text-green-400">ScrollTrigger</span> —
+          animations that fire based on where the user has <strong class="text-white">scrolled</strong>.
+          This is how modern landing pages create those stunning scroll-driven reveals.
+        </p>
+      </div>
+
+      <!-- 1. WHAT IS SCROLLTRIGGER -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">1</span>
+          What is ScrollTrigger?
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          ScrollTrigger is a GSAP plugin that links animations to the
+          <strong class="text-white">scroll position</strong> of a container.
+          Instead of playing on a timeline, animations play as the user scrolls.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="tag tag-orange">❌ Before</span>
+            </div>
+            <pre class="code-block"><span class="comment">// Animation plays immediately or on click</span>
+<span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">300</span>, <span class="property">duration</span>: <span class="number">1</span>
+});
+<span class="comment">// No connection to scroll position</span></pre>
+          </div>
+          <div>
+            <div class="flex items-center gap-2 mb-2">
+              <span class="tag tag-green">✅ With ScrollTrigger</span>
+            </div>
+            <pre class="code-block"><span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">300</span>,
+  <span class="property">scrollTrigger</span>: {
+    <span class="property">trigger</span>: <span class="string">".box"</span>,
+    <span class="property">start</span>: <span class="string">"top center"</span>,
+    <span class="property">end</span>: <span class="string">"top 100px"</span>,
+    <span class="property">scrub</span>: <span class="keyword">true</span>
+  }
+});
+<span class="comment">// Animation plays as user scrolls past the box</span></pre>
+          </div>
+        </div>
+
+        <div class="highlight-box cyan">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-download text-green-400 mr-2"></i>
+            <strong class="text-white">Important:</strong> ScrollTrigger is a
+            <strong class="text-white">separate plugin</strong>. You must include it:
+            <span class="text-green-400 font-mono text-xs">src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/ScrollTrigger.min.js"</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. BASIC SCROLLTRIGGER — TRIGGER, START, END -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">2</span>
+          Trigger, Start & End
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Three essential properties: <span class="text-green-400">trigger</span> (which element),
+          <span class="text-cyan-400">start</span> (when to begin), and
+          <span class="text-orange-400">end</span> (when to finish).
+          Use <span class="text-purple-400">markers: true</span> to visualize them during development.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">250</span>,
+  <span class="property">scrollTrigger</span>: {
+    <span class="property">trigger</span>: <span class="string">".box"</span>,
+    <span class="property">start</span>: <span class="string">"top center"</span>,
+    <span class="property">end</span>: <span class="string">"top 200px"</span>,
+    <span class="property">markers</span>: <span class="keyword">true</span>,
+    <span class="property">scrub</span>: <span class="number">1</span>
+  }
+});
+
+<span class="comment">// "top center" = trigger's top hits viewport center</span>
+<span class="comment">// "top 200px"  = trigger's top is 200px from viewport top</span>
+<span class="comment">// markers show colored lines for debugging</span></pre>
+          </div>
+          <div id="basicStDemo" class="live-preview" style="flex-direction:column;gap:8px;">
+            <div class="scroll-demo-box" id="basicStBox" style="background:linear-gradient(135deg,#4ecdc4,#2ecc71);">↓ Scroll down to see me animate</div>
+          </div>
+        </div>
+
+        <!-- start/end format reference -->
+        <div class="grid md:grid-cols-3 gap-4 mb-4">
+          <div class="highlight-box cyan">
+            <p class="text-xs text-cyan-400 font-semibold mb-1">Format</p>
+            <p class="text-xs text-gray-300 font-mono"><span class="text-white">"{triggerPos} {viewportPos}"</span></p>
+            <p class="text-xs text-gray-500 mt-1">e.g. "top center", "bottom 80%", "left 200px"</p>
+          </div>
+          <div class="highlight-box orange">
+            <p class="text-xs text-orange-400 font-semibold mb-1">Trigger positions</p>
+            <p class="text-xs text-gray-300 font-mono">top, bottom, center, left, right</p>
+          </div>
+          <div class="highlight-box purple">
+            <p class="text-xs text-purple-400 font-semibold mb-1">Viewport positions</p>
+            <p class="text-xs text-gray-300 font-mono">top, center, bottom, 80%, 200px</p>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-bug text-yellow-400 mr-2"></i>
+            <strong class="text-white">Pro tip:</strong> Always add
+            <span class="text-green-400">markers: true</span> when developing.
+            You'll see exactly where your triggers fire — then remove it before going live.
+          </p>
+        </div>
+      </div>
+
+      <!-- 3. TOGGLE ACTIONS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">3</span>
+          Toggle Actions
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          <span class="text-green-400">toggleActions</span> controls what happens at each scroll boundary.
+          It takes <strong class="text-white">4 space-separated values</strong>:
+          <span class="text-cyan-400">onEnter</span>
+          <span class="text-orange-400">onLeave</span>
+          <span class="text-purple-400">onEnterBack</span>
+          <span class="text-pink-400">onLeaveBack</span>.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">250</span>,
+  <span class="property">scrollTrigger</span>: {
+    <span class="property">trigger</span>: <span class="string">".box"</span>,
+    <span class="property">start</span>: <span class="string">"top center"</span>,
+    <span class="property">end</span>: <span class="string">"bottom center"</span>,
+    <span class="property">toggleActions</span>: <span class="string">"play none none reverse"</span>
+  }
+});
+
+<span class="comment">// Values for each action:</span>
+<span class="comment">• play  → play forward</span>
+<span class="comment">• pause → pause at current</span>
+<span class="comment">• resume → continue playing</span>
+<span class="comment">• reverse → play backward</span>
+<span class="comment">• restart → go to 0 then play</span>
+<span class="comment">• none → do nothing</span>
+<span class="comment">• complete → jump to end</span>
+
+<span class="comment">// Most common patterns:</span>
+<span class="comment">"play none none none"    // play once (default)</span>
+<span class="comment">"play none none reverse" // play, reverse on scroll up</span>
+<span class="comment">"play pause resume reset" // complex interaction</span></pre>
+          </div>
+          <div id="toggleDemo" class="live-preview" style="flex-direction:column;gap:8px;">
+            <div class="scroll-demo-box" id="toggleBox" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);">↓ Scroll — plays on enter, reverses on leave back</div>
+            <div class="flex gap-2 flex-wrap justify-center mt-2">
+              <button onclick="toggleActions('play none none reverse')" class="px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-xs hover:bg-green-500/30 transition-all active-btn">play + reverse</button>
+              <button onclick="toggleActions('play none none none')" class="px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-xs hover:bg-green-500/30 transition-all">play once</button>
+              <button onclick="toggleActions('restart none none none')" class="px-3 py-1.5 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-xs hover:bg-green-500/30 transition-all">restart</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-3">
+          <div class="highlight-box orange"><p class="text-xs font-bold text-orange-400 mb-1">onEnter</p><p class="text-xs text-gray-300">Scrolling down, enters trigger</p></div>
+          <div class="highlight-box cyan"><p class="text-xs font-bold text-cyan-400 mb-1">onLeave</p><p class="text-xs text-gray-300">Scrolling down, leaves trigger</p></div>
+          <div class="highlight-box purple"><p class="text-xs font-bold text-purple-400 mb-1">onEnterBack</p><p class="text-xs text-gray-300">Scrolling up, re-enters trigger</p></div>
+          <div class="highlight-box pink"><p class="text-xs font-bold text-pink-400 mb-1">onLeaveBack</p><p class="text-xs text-gray-300">Scrolling up, leaves trigger</p></div>
+        </div>
+      </div>
+
+      <!-- 4. SCRUB — ANIMATION TIED TO SCROLL -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">4</span>
+          Scrub — Direct Scroll Mapping
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          <span class="text-green-400">scrub: true</span> links the animation progress
+          <strong class="text-white">directly</strong> to the scroll position.
+          No "play" — the animation follows your finger exactly.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Without scrub: animation plays once when trigger hits</span>
+<span class="comment">// With scrub: animation follows scroll in BOTH directions</span>
+
+<span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">300</span>,
+  <span class="property">rotation</span>: <span class="number">180</span>,
+  <span class="property">scrollTrigger</span>: {
+    <span class="property">trigger</span>: <span class="string">".box"</span>,
+    <span class="property">start</span>: <span class="string">"top bottom"</span>,
+    <span class="property">end</span>: <span class="string">"top 100px"</span>,
+    <span class="property">scrub</span>: <span class="number">1</span>
+    <span class="comment">// 1 = 1 second of smoothing</span>
+    <span class="comment">// true = instant follow</span>
+  }
+});</pre>
+          </div>
+          <div id="scrubDemo" class="live-preview" style="flex-direction:column;gap:8px;">
+            <div class="scroll-demo-box" id="scrubBox" style="background:linear-gradient(135deg,#fd79a8,#e84393);width:100px;height:100px;border-radius:20px;">scrub</div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="highlight-box cyan">
+            <p class="text-xs text-cyan-400 font-semibold mb-1">scrub: true</p>
+            <p class="text-xs text-gray-300">Animation position = scroll position. Instant. No lag.</p>
+          </div>
+          <div class="highlight-box purple">
+            <p class="text-xs text-purple-400 font-semibold mb-1">scrub: 0.5–3</p>
+            <p class="text-xs text-gray-300">Adds smoothing (in seconds). The animation "catches up" to scroll — feels buttery.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 5. PINNING -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">5</span>
+          Pin — Lock Elements in Place
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          <span class="text-green-400">pin: true</span> locks the trigger element in place
+          while the rest of the page scrolls past. Perfect for section headers or sticky reveals.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="keyword">gsap.to</span>(<span class="string">".section"</span>, {
+  <span class="property">scrollTrigger</span>: {
+    <span class="property">trigger</span>: <span class="string">".section"</span>,
+    <span class="property">start</span>: <span class="string">"top top"</span>,
+    <span class="property">end</span>: <span class="string">"bottom top"</span>,
+    <span class="property">pin</span>: <span class="keyword">true</span>,
+    <span class="property">scrub</span>: <span class="keyword">true</span>
+  }
+});
+
+<span class="comment">// The element is "pinned" in the viewport</span>
+<span class="comment">// from start to end, while content scrolls behind it</span>
+<span class="comment">// GSAP adds a pin-spacer div automatically</span></pre>
+          </div>
+          <div id="pinDemo" class="live-preview" style="flex-direction:column;gap:8px;">
+            <div class="scroll-demo-box" id="pinBox" style="background:linear-gradient(135deg,#ff6b35,#e8503a);">↓ Scroll — I'll pin in place</div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-4">
+          <div class="highlight-box orange">
+            <p class="text-xs text-orange-400 font-semibold mb-1">pin: true</p>
+            <p class="text-xs text-gray-300">Pins the trigger element itself</p>
+          </div>
+          <div class="highlight-box cyan">
+            <p class="text-xs text-cyan-400 font-semibold mb-1">pin: ".selector"</p>
+            <p class="text-xs text-gray-300">Pin a different element by selector</p>
+          </div>
+          <div class="highlight-box purple">
+            <p class="text-xs text-purple-400 font-semibold mb-1">pinSpacing: true</p>
+            <p class="text-xs text-gray-300">Adds padding to prevent layout jump (default: true)</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- 6. PRACTICAL: REVEAL SECTIONS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">6</span>
+          Practical: Scroll Reveal Sections
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          The most common ScrollTrigger pattern — elements fade and slide in as they enter the viewport.
+          Each <span class="text-green-400">.reveal-item</span> gets its own trigger.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// One function to reveal everything</span>
+<span class="keyword">function</span> revealOnScroll() {
+  <span class="keyword">gsap.from</span>(<span class="string">".reveal-item"</span>, {
+    <span class="property">y</span>: <span class="number">40</span>,
+    <span class="property">opacity</span>: <span class="number">0</span>,
+    <span class="property">duration</span>: <span class="number">0.8</span>,
+    <span class="property">stagger</span>: <span class="number">0.15</span>,
+    <span class="property">scrollTrigger</span>: {
+      <span class="property">trigger</span>: <span class="string">".reveal-item"</span>,
+      <span class="property">start</span>: <span class="string">"top 85%"</span>,
+      <span class="property">toggleActions</span>: <span class="string">"play none none none"</span>
+    }
+  });
+}
+
+<span class="comment">// Each item animates independently</span>
+<span class="comment">// when it reaches 85% from viewport top</span>
+<span class="comment">// stagger: 0.15 adds delay between each</span></pre>
+          </div>
+          <div id="revealPreview" class="live-preview" style="flex-direction:column;padding:.8rem;align-items:stretch;gap:8px;">
+            <div class="reveal-item"><span class="dot" style="background:#ff6b35;"></span><span class="text-sm text-gray-300"><strong class="text-white">Section 1</strong> — Hero comes into view</span></div>
+            <div class="reveal-item"><span class="dot" style="background:#4ecdc4;"></span><span class="text-sm text-gray-300"><strong class="text-white">Section 2</strong> — Features slide up</span></div>
+            <div class="reveal-item"><span class="dot" style="background:#f7c948;"></span><span class="text-sm text-gray-300"><strong class="text-white">Section 3</strong> — Stats fade in</span></div>
+            <div class="reveal-item"><span class="dot" style="background:#6c5ce7;"></span><span class="text-sm text-gray-300"><strong class="text-white">Section 4</strong> — Testimonials stagger</span></div>
+            <div class="reveal-item"><span class="dot" style="background:#fd79a8;"></span><span class="text-sm text-gray-300"><strong class="text-white">Section 5</strong> — CTA bounces in</span></div>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-rocket text-green-400 mr-2"></i>
+            <strong class="text-white">Real-world usage:</strong> This exact pattern is used on
+            Apple, Stripe, and Airbnb landing pages. Each element reveals independently as it scrolls into view.
+            Pair with <span class="text-cyan-400">stagger</span> for lists, <span class="text-purple-400">scrub</span> for parallax.
+          </p>
+        </div>
+      </div>
+
+      <!-- 7. PLAYGROUND -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">7</span>
+          ScrollTrigger Playground
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-6">
+          Tune every ScrollTrigger parameter and see the live result below.
+          <span class="text-gray-500">(Scroll down to test)</span>
+        </p>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-6">
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Duration</span>
+              <span class="font-mono text-white" id="pgDur">1</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgDur" min="0.3" max="3" step="0.1" value="1" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Stagger</span>
+              <span class="font-mono text-white" id="pgStagger">0.15</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgStagger" min="0" max="0.5" step="0.03" value="0.15" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Start offset (%)</span>
+              <span class="font-mono text-white" id="pgStart">85</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgStart" min="50" max="100" value="85" oninput="updatePg()" />
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6 mb-6">
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Y offset (px)</span>
+              <span class="font-mono text-white" id="pgY">40</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgY" min="10" max="100" value="40" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Ease</span>
+            </label>
+            <select id="pgPgEase" class="select-ease" onchange="updatePg()" style="background:#0d0d1a;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.4rem .6rem;color:#fff;font-family:'Fira Code',monospace;font-size:.75rem;width:100%;outline:none;cursor:pointer;">
+              <option value="power2.out">power2.out</option>
+              <option value="power1.out">power1.out</option>
+              <option value="power3.out">power3.out</option>
+              <option value="back.out(1.7)">back.out(1.7)</option>
+              <option value="bounce.out">bounce.out</option>
+              <option value="elastic.out(1,0.3)">elastic.out</option>
+              <option value="none">none (linear)</option>
+            </select>
+          </div>
+        </div>
+
+        <div id="pgRevealContainer" class="space-y-3">
+          <div class="reveal-item pg-item"><span class="dot" style="background:#ff6b35;"></span><span class="text-sm text-gray-300"><strong>Item 1</strong> — Customize me above</span></div>
+          <div class="reveal-item pg-item"><span class="dot" style="background:#4ecdc4;"></span><span class="text-sm text-gray-300"><strong>Item 2</strong> — Then scroll to see effect</span></div>
+          <div class="reveal-item pg-item"><span class="dot" style="background:#f7c948;"></span><span class="text-sm text-gray-300"><strong>Item 3</strong> — Each parameter changes behavior</span></div>
+        </div>
+
+        <div class="mt-4 flex gap-3 flex-wrap items-center">
+          <button onclick="initPgReveal()" class="px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm hover:bg-green-500/30 transition-all">
+            <i class="fa-solid fa-rotate mr-2"></i>Apply & Scroll
+          </button>
+          <span class="text-xs text-gray-500">Scroll down below the button to test</span>
+        </div>
+
+        <pre class="code-block mt-4" id="pgCode" style="min-height:60px;"></pre>
+      </div>
+
+      <!-- WRAP UP -->
+      <div class="card p-8 mb-8" style="border:1px solid rgba(34,197,94,.15);">
+        <div class="flex items-start gap-4">
+          <div class="step-number" style="border-color:rgba(34,197,94,.5);color:#22c55e;">✓</div>
+          <div>
+            <h2 class="text-xl font-bold text-white mb-3">What You Learned</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">→</span> <span><strong class="text-white">ScrollTrigger plugin</strong> — separate file, paired with GSAP core</span></li>
+                  <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">→</span> <span><strong class="text-white">trigger, start, end</strong> — "top center", "bottom 80%", "top 200px"</span></li>
+                  <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">→</span> <span><strong class="text-white">toggleActions</strong> — control play/reverse/pause at each boundary</span></li>
+                </ul>
+              </div>
+              <div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">→</span> <span><strong class="text-white">scrub</strong> — animation follows scroll like a vinyl needle</span></li>
+                  <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">→</span> <span><strong class="text-white">pin</strong> — lock elements while content scrolls past</span></li>
+                  <li class="flex items-start gap-2"><span class="text-green-400 mt-0.5">→</span> <span><strong class="text-white">Next up:</strong> Text Animations — split text, typewriter, clever word effects</span></li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NAV -->
+      <div class="text-center py-6">
+        <div class="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-500">
+          <span>Ch 1: Intro</span>
+          <span class="text-gray-700">·</span>
+          <span>Ch 2: Easing</span>
+          <span class="text-gray-700">·</span>
+          <span>Ch 3: from & fromTo</span>
+          <span class="text-gray-700">·</span>
+          <span>Ch 4: Timeline</span>
+          <span class="text-gray-700">·</span>
+          <span class="text-green-400 font-semibold">Ch 5: ScrollTrigger</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ─── 2. Basic ScrollTrigger Demo ───
+      gsap.registerPlugin(ScrollTrigger);
+      let basicST = null;
+      function initBasicST() {
+        const box = document.getElementById('basicStBox');
+        if (basicST) basicST.kill();
+        gsap.set(box, { clearProps: 'all' });
+        basicST = gsap.to(box, {
+          x: 200,
+          scrollTrigger: {
+            trigger: box,
+            start: 'top bottom',
+            end: 'top 100px',
+            scrub: 1,
+            markers: false
+          }
+        });
+      }
+      // need to also init on first load
+      setTimeout(initBasicST, 200);
+
+      // ─── 3. Toggle Actions Demo ───
+      let toggleST = null;
+      function toggleActions(actions) {
+        const box = document.getElementById('toggleBox');
+        if (toggleST) toggleST.kill();
+        gsap.set(box, { clearProps: 'all' });
+
+        document.querySelectorAll('#toggleDemo .flex .active-btn').forEach(b => b.classList.remove('active-btn'));
+        event.target.classList.add('active-btn');
+
+        toggleST = gsap.to(box, {
+          x: 250,
+          scrollTrigger: {
+            trigger: box,
+            start: 'top bottom',
+            end: 'top 100px',
+            toggleActions: actions,
+            markers: false
+          }
+        });
+      }
+
+      // ─── 4. Scrub Demo ───
+      let scrubST = null;
+      function initScrub() {
+        const box = document.getElementById('scrubBox');
+        if (scrubST) scrubST.kill();
+        gsap.set(box, { clearProps: 'all' });
+        scrubST = gsap.to(box, {
+          x: 250,
+          rotation: 180,
+          scrollTrigger: {
+            trigger: box,
+            start: 'top bottom',
+            end: 'top 100px',
+            scrub: 1,
+            markers: false
+          }
+        });
+      }
+      setTimeout(initScrub, 200);
+
+      // ─── 5. Pin Demo ───
+      let pinST = null;
+      function initPin() {
+        const box = document.getElementById('pinBox');
+        if (pinST) pinST.kill();
+        gsap.set(box, { clearProps: 'all' });
+        pinST = gsap.to(box, {
+          scrollTrigger: {
+            trigger: box,
+            start: 'top top',
+            end: '+=200',
+            pin: true,
+            scrub: true,
+            markers: false
+          }
+        });
+      }
+      setTimeout(initPin, 200);
+
+      // ─── 6. Reveal Demo ───
+      let revealST = null;
+      function initReveal() {
+        if (revealST) {
+          revealST.scrollTrigger && revealST.scrollTrigger.kill();
+          revealST.kill();
+        }
+        gsap.set('.reveal-item', { opacity: 1, y: 0 });
+
+        revealST = gsap.from('.reveal-item', {
+          y: 40,
+          opacity: 0,
+          duration: 0.8,
+          stagger: 0.15,
+          scrollTrigger: {
+            trigger: '.reveal-item',
+            start: 'top 85%',
+            toggleActions: 'play none none none',
+            markers: false
+          }
+        });
+      }
+      setTimeout(initReveal, 300);
+
+      // ─── 7. Playground ───
+      let pgST = null;
+      function initPgReveal() {
+        if (pgST) {
+          pgST.scrollTrigger && pgST.scrollTrigger.kill();
+          pgST.kill();
+        }
+        gsap.set('.pg-item', { opacity: 1, y: 0 });
+
+        const dur = parseFloat(document.getElementById('pgPgDur').value);
+        const stagger = parseFloat(document.getElementById('pgPgStagger').value);
+        const startOffset = parseFloat(document.getElementById('pgPgStart').value);
+        const y = parseFloat(document.getElementById('pgPgY').value);
+        const ease = document.getElementById('pgPgEase').value;
+
+        pgST = gsap.from('.pg-item', {
+          y: y,
+          opacity: 0,
+          duration: dur,
+          stagger: stagger,
+          ease: ease,
+          scrollTrigger: {
+            trigger: '.pg-item',
+            start: 'top ' + startOffset + '%',
+            toggleActions: 'play none none none',
+            markers: false
+          }
+        });
+
+        const code = document.getElementById('pgCode');
+        code.innerHTML = `<span class="keyword">gsap.from</span>(<span class="string">".pg-item"</span>, {\n` +
+          `  <span class="property">y</span>: <span class="number">${y}</span>,\n` +
+          `  <span class="property">opacity</span>: <span class="number">0</span>,\n` +
+          `  <span class="property">duration</span>: <span class="number">${dur}</span>,\n` +
+          `  <span class="property">stagger</span>: <span class="number">${stagger}</span>,\n` +
+          `  <span class="property">ease</span>: <span class="string">"${ease}"</span>,\n` +
+          `  <span class="property">scrollTrigger</span>: {\n` +
+          `    <span class="property">trigger</span>: <span class="string">".pg-item"</span>,\n` +
+          `    <span class="property">start</span>: <span class="string">"top ${startOffset}%"</span>,\n` +
+          `    <span class="property">toggleActions</span>: <span class="string">"play none none none"</span>\n` +
+          `  }\n});`;
+      }
+
+      function updatePg() {
+        document.getElementById('pgDur').textContent = parseFloat(document.getElementById('pgPgDur').value);
+        document.getElementById('pgStagger').textContent = parseFloat(document.getElementById('pgPgStagger').value);
+        document.getElementById('pgStart').textContent = parseFloat(document.getElementById('pgPgStart').value);
+        document.getElementById('pgY').textContent = parseFloat(document.getElementById('pgPgY').value);
+        initPgReveal();
+      }
+
+      // init playground
+      setTimeout(initPgReveal, 400);
+
+      // Refresh ScrollTrigger on resize
+      window.addEventListener('resize', () => ScrollTrigger.refresh());
+    </script>
+  </body>
+</html>

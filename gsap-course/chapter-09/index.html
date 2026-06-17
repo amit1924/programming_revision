@@ -1,0 +1,742 @@
+<!doctype html>
+<html lang="en" class="dark">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>GSAP Chapter 9: Advanced Techniques</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet" />
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/gsap/3.12.5/gsap.min.js"></script>
+    <style>
+      * { margin:0; padding:0; box-sizing:border-box; }
+      body { background:#08080e; color:#e2e2e8; font-family:'Inter',sans-serif; }
+      code,pre { font-family:'Fira Code',monospace!important; }
+      .card { background:linear-gradient(145deg,#13131f,#1a1a2e); border:1px solid rgba(255,255,255,.06); border-radius:16px; }
+      .gradient-text { background:linear-gradient(135deg,#ff6b35,#f7c948,#4ecdc4,#6c5ce7); -webkit-background-clip:text; -webkit-text-fill-color:transparent; background-clip:text; }
+      .code-block { background:#0d0d1a; border:1px solid rgba(255,255,255,.06); border-radius:12px; padding:1.25rem; overflow-x:auto; font-size:.85rem; line-height:1.7; white-space:pre-wrap; overflow-wrap:break-word; }
+      .keyword { color:#ff6b35; }
+      .string { color:#22c55e; }
+      .number { color:#f7c948; }
+      .comment { color:#6c5ce7; font-style:italic; }
+      .property { color:#4ecdc4; }
+      .step-number { width:32px; height:32px; border-radius:50%; background:linear-gradient(135deg,rgba(255,107,53,.2),rgba(108,92,231,.2)); border:1px solid rgba(255,107,53,.3); display:flex; align-items:center; justify-content:center; font-size:.8rem; font-weight:700; color:#ff6b35; flex-shrink:0; }
+      .highlight-box { border-left:3px solid #ff6b35; padding:1rem 1.2rem; background:rgba(255,107,53,.04); border-radius:0 12px 12px 0; }
+      .highlight-box.cyan { border-left-color:#4ecdc4; background:rgba(78,205,196,.04); }
+      .highlight-box.purple { border-left-color:#6c5ce7; background:rgba(108,92,231,.04); }
+      .highlight-box.green { border-left-color:#22c55e; background:rgba(34,197,94,.04); }
+      .highlight-box.orange { border-left-color:#ff6b35; background:rgba(255,107,53,.04); }
+      .highlight-box.pink { border-left-color:#fd79a8; background:rgba(253,121,168,.04); }
+      .split-panel { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; }
+      .split-panel > * { min-width:0; overflow:hidden; }
+      .live-preview { min-height:300px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden; border-radius:12px; background:radial-gradient(ellipse at center,rgba(255,107,53,.05),transparent 70%); }
+      .box-demo { width:80px; height:80px; border-radius:16px; display:flex; align-items:center; justify-content:center; font-size:.7rem; font-weight:600; color:#fff; cursor:pointer; user-select:none; }
+      .anim-box { width:52px; height:52px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:.55rem; font-weight:600; color:#fff; }
+      ::-webkit-scrollbar { width:6px; }
+      ::-webkit-scrollbar-track { background:#08080e; }
+      ::-webkit-scrollbar-thumb { background:#2d2d3d; border-radius:3px; }
+      .playground-slider { -webkit-appearance:none; width:100%; height:4px; border-radius:2px; background:rgba(255,255,255,.1); outline:none; }
+      .playground-slider::-webkit-slider-thumb { -webkit-appearance:none; width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .playground-slider::-moz-range-thumb { width:16px; height:16px; border-radius:50%; background:#ff6b35; cursor:pointer; border:2px solid #08080e; }
+      .tag { display:inline-block; padding:.15rem .55rem; border-radius:6px; font-size:.65rem; font-weight:600; font-family:'Fira Code',monospace; }
+      .tag-orange { background:rgba(255,107,53,.15); color:#ff6b35; border:1px solid rgba(255,107,53,.25); }
+      .tag-cyan { background:rgba(78,205,196,.15); color:#4ecdc4; border:1px solid rgba(78,205,196,.25); }
+      .tag-purple { background:rgba(108,92,231,.15); color:#6c5ce7; border:1px solid rgba(108,92,231,.25); }
+      .tag-pink { background:rgba(253,121,168,.15); color:#fd79a8; border:1px solid rgba(253,121,168,.25); }
+      .tag-green { background:rgba(34,197,94,.15); color:#22c55e; border:1px solid rgba(34,197,94,.25); }
+      .max-w-6xl { overflow:hidden; }
+      .log-box { max-height:120px; overflow-y:auto; background:#0d0d1a; border-radius:8px; padding:.6rem; font-size:.65rem; font-family:'Fira Code',monospace; color:#a0a0b8; line-height:1.6; }
+      .select-ease { background:#0d0d1a;border:1px solid rgba(255,255,255,.1);border-radius:8px;padding:.4rem .6rem;color:#fff;font-family:'Fira Code',monospace;font-size:.75rem;width:100%;outline:none;cursor:pointer;}
+      @media (max-width:640px) {
+        .card { padding:.8rem!important; border-radius:12px; }
+        h1 { font-size:1.4rem!important; }
+        .md\:text-5xl { font-size:1.4rem!important; }
+        h2 { font-size:1rem!important; }
+        h3 { font-size:.9rem!important; }
+        .text-4xl { font-size:1.4rem!important; }
+        .text-3xl { font-size:1.1rem!important; }
+        .text-2xl { font-size:1rem!important; }
+        .text-xl { font-size:.9rem!important; }
+        .text-lg { font-size:.8rem!important; }
+        .text-sm { font-size:.65rem!important; }
+        .text-xs { font-size:.55rem!important; }
+        .text-base { font-size:.75rem!important; }
+        .code-block { font-size:.55rem; padding:.4rem; }
+        .py-10 { padding-top:.8rem; padding-bottom:.8rem; }
+        .px-6 { padding-left:.5rem; padding-right:.5rem; }
+        .mb-12 { margin-bottom:1rem; }
+        .mb-8 { margin-bottom:.6rem; }
+        .mb-6 { margin-bottom:.4rem; }
+        .mb-4 { margin-bottom:.3rem; }
+        .gap-6 { gap:.4rem; }
+        .gap-4 { gap:.35rem; }
+        .gap-3 { gap:.3rem; }
+        .gap-2 { gap:.2rem; }
+        .gap-1\.5 { gap:.2rem; }
+        .p-8 { padding:.8rem!important; }
+        .p-6 { padding:.6rem!important; }
+        .p-5 { padding:.5rem!important; }
+        .p-4 { padding:.5rem!important; }
+        .p-3 { padding:.4rem!important; }
+        .px-5 { padding-left:.5rem; padding-right:.5rem; }
+        .px-4 { padding-left:.4rem; padding-right:.4rem; }
+        .py-3 { padding-top:.4rem; padding-bottom:.4rem; }
+        .py-2 { padding-top:.25rem; padding-bottom:.25rem; }
+        .px-3 { padding-left:.4rem; padding-right:.4rem; }
+        .rounded-xl { border-radius:6px; }
+        .rounded-2xl { border-radius:8px; }
+        .rounded-lg { border-radius:5px; }
+        .space-y-6 > :not([hidden])~:not([hidden]) { margin-top:.5rem; }
+        .space-y-5 > :not([hidden])~:not([hidden]) { margin-top:.4rem; }
+        .space-y-4 > :not([hidden])~:not([hidden]) { margin-top:.3rem; }
+        .space-y-3 > :not([hidden])~:not([hidden]) { margin-top:.2rem; }
+        .space-y-2 > :not([hidden])~:not([hidden]) { margin-top:.15rem; }
+        .split-panel { grid-template-columns:1fr; gap:.5rem; }
+        .live-preview { min-height:120px; border-radius:6px; }
+        .box-demo { width:44px; height:44px; font-size:.5rem; border-radius:8px; }
+        .anim-box { width:38px; height:38px; font-size:.45rem; border-radius:8px; }
+        .step-number { width:20px; height:20px; font-size:.55rem; }
+        [class*="md:grid-cols-"] { grid-template-columns:1fr!important; }
+        .highlight-box { padding:.4rem .5rem; border-left-width:2px; }
+        .playground-slider::-webkit-slider-thumb { width:20px; height:20px; }
+        .playground-slider::-moz-range-thumb { width:20px; height:20px; }
+        .max-w-2xl { max-width:100%; }
+        .tag { font-size:.5rem; padding:.08rem .35rem; }
+        .flex.items-center.justify-between { flex-wrap:wrap; gap:.2rem; }
+        .flex.items-center.gap-2 { flex-wrap:wrap; }
+        .inline-flex.items-center.gap-2 { flex-wrap:wrap; }
+        .inline-flex.items-center.gap-3 { flex-wrap:wrap; }
+        .split-panel > * { overflow:hidden; }
+        .log-box { font-size:.55rem; max-height:80px; }
+      }
+      @media (min-width:641px) and (max-width:768px) {
+        .split-panel { grid-template-columns:1fr; }
+        .card { padding:1.5rem!important; }
+        h1 { font-size:2rem!important; }
+        .md\:text-5xl { font-size:2rem!important; }
+        [class*="md:grid-cols-"] { grid-template-columns:1fr 1fr!important; }
+      }
+    </style>
+  </head>
+  <body>
+    <div class="max-w-6xl mx-auto px-6 py-10">
+
+      <!-- HEADER -->
+      <div class="text-center mb-12">
+        <div class="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-orange-500/10 border border-orange-500/20 text-orange-400 text-sm mb-4">
+          <i class="fa-solid fa-wand-sparkles"></i> Chapter 9 of 10
+        </div>
+        <h1 class="text-4xl md:text-5xl font-black mb-3">
+          <span class="gradient-text">Advanced Techniques</span>
+        </h1>
+        <p class="text-gray-400 max-w-2xl mx-auto leading-relaxed">
+          StaggerDirection, callbacks, keyframes, and custom easing —
+          the tools that separate <span class="text-orange-400">good</span> animations
+          from <strong class="text-white">professional</strong> ones.
+        </p>
+      </div>
+
+      <!-- 1. STAGGER DIRECTION -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">1</span>
+          Stagger Direction — <span class="text-cyan-400">staggerFrom</span>
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          You know <span class="text-cyan-400">stagger</span>. But GSAP can also control
+          <strong class="text-white">which direction</strong> the stagger flows —
+          from center outward, from edges inward, reversed order.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Default: 0 → 1 (top-left to bottom-right)</span>
+<span class="keyword">gsap.from</span>(<span class="string">".box"</span>, {
+  <span class="property">stagger</span>: <span class="number">0.1</span>
+});
+
+<span class="comment">// Reverse: last element animates first</span>
+<span class="keyword">gsap.from</span>(<span class="string">".box"</span>, {
+  <span class="property">stagger</span>: {
+    <span class="property">each</span>: <span class="number">0.1</span>,
+    <span class="property">from</span>: <span class="string">"end"</span>
+  }
+});
+
+<span class="comment">// From center: middle elements animate first</span>
+<span class="keyword">gsap.from</span>(<span class="string">".box"</span>, {
+  <span class="property">stagger</span>: {
+    <span class="property">each</span>: <span class="number">0.08</span>,
+    <span class="property">from</span>: <span class="string">"center"</span>
+  }
+});
+
+<span class="comment">// Edge: start from edges, meet in center</span>
+<span class="keyword">gsap.from</span>(<span class="string">".box"</span>, {
+  <span class="property">stagger</span>: {
+    <span class="property">each</span>: <span class="number">0.08</span>,
+    <span class="property">from</span>: <span class="string">"edges"</span>
+  }
+});
+
+<span class="comment">// Random: chaotic order</span>
+<span class="keyword">gsap.from</span>(<span class="string">".box"</span>, {
+  <span class="property">stagger</span>: {
+    <span class="property">each</span>: <span class="number">0.1</span>,
+    <span class="property">from</span>: <span class="string">"random"</span>
+  }
+});</pre>
+          </div>
+          <div id="staggerDirDemo" class="live-preview" style="flex-direction:column;gap:4px;padding:.8rem;align-items:stretch;justify-content:center;">
+            <div class="flex gap-2 justify-center flex-wrap" id="staggerGrid">
+              <div class="anim-box" style="background:#ff6b35;">1</div>
+              <div class="anim-box" style="background:#f7c948;">2</div>
+              <div class="anim-box" style="background:#4ecdc4;">3</div>
+              <div class="anim-box" style="background:#6c5ce7;">4</div>
+              <div class="anim-box" style="background:#fd79a8;">5</div>
+            </div>
+            <div class="flex gap-2 flex-wrap justify-center mt-2">
+              <button onclick="runStaggerDir('start')" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs hover:bg-cyan-500/30">Start</button>
+              <button onclick="runStaggerDir('end')" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs hover:bg-cyan-500/30">End</button>
+              <button onclick="runStaggerDir('center')" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs hover:bg-cyan-500/30">Center</button>
+              <button onclick="runStaggerDir('edges')" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs hover:bg-cyan-500/30">Edges</button>
+              <button onclick="runStaggerDir('random')" class="px-3 py-1.5 rounded-lg bg-cyan-500/20 border border-cyan-500/30 text-cyan-400 text-xs hover:bg-cyan-500/30">Random</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="highlight-box cyan">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-arrow-up-wide-short text-cyan-400 mr-2"></i>
+            <strong class="text-white">Tip:</strong> Use <span class="text-cyan-400">stagger: { each: 0.1, from: "edges" }</span>
+            for list items that should start from both ends and meet in the middle — great for
+            symmetrical layouts.
+          </p>
+        </div>
+      </div>
+
+      <!-- 2. CALLBACKS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">2</span>
+          Callbacks — <span class="text-purple-400">onStart, onComplete, onUpdate</span>
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Callbacks let you run <strong class="text-white">custom code</strong> at specific
+          points during an animation. Click the demo and watch the log — every event fires in order.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">200</span>,
+  <span class="property">duration</span>: <span class="number">2</span>,
+  <span class="property">onStart</span>: () => {
+    <span class="comment">// Fires once — when animation starts</span>
+    log(<span class="string">"▶ Started!"</span>);
+  },
+  <span class="property">onUpdate</span>: () => {
+    <span class="comment">// Fires every frame (60x/sec)</span>
+    <span class="comment">// ⚠️ Keep this lightweight</span>
+  },
+  <span class="property">onComplete</span>: () => {
+    <span class="comment">// Fires once — when animation finishes</span>
+    log(<span class="string">"✅ Complete!"</span>);
+  },
+  <span class="property">onReverseComplete</span>: () => {
+    <span class="comment">// Fires when reverse finishes</span>
+    log(<span class="string">"↩ Reversed!"</span>);
+  }
+});</pre>
+          </div>
+          <div class="live-preview" style="flex-direction:column;gap:4px;padding:1rem;align-items:stretch;">
+            <div class="box-demo" id="cbBox" style="background:linear-gradient(135deg,#6c5ce7,#a29bfe);align-self:center;">cb</div>
+            <div class="flex gap-2 flex-wrap justify-center">
+              <button onclick="runCallbacks()" class="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs hover:bg-purple-500/30"><i class="fa-solid fa-play mr-1"></i>Play</button>
+              <button onclick="reverseCallbacks()" class="px-3 py-1.5 rounded-lg bg-purple-500/20 border border-purple-500/30 text-purple-400 text-xs hover:bg-purple-500/30"><i class="fa-solid fa-backward mr-1"></i>Reverse</button>
+              <button onclick="clearLog()" class="px-3 py-1.5 rounded-lg bg-gray-700/30 border border-gray-700/30 text-gray-400 text-xs hover:bg-gray-700/50">Clear</button>
+            </div>
+            <div class="log-box" id="cbLog">Click Play to see callbacks fire...<br></div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-4">
+          <div class="highlight-box orange"><p class="text-xs font-bold text-orange-400 mb-1">onStart</p><p class="text-xs text-gray-300">Fires when animation begins ticking</p></div>
+          <div class="highlight-box cyan"><p class="text-xs font-bold text-cyan-400 mb-1">onUpdate</p><p class="text-xs text-gray-300">Every frame — do NOT add heavy DOM work here</p></div>
+          <div class="highlight-box purple"><p class="text-xs font-bold text-purple-400 mb-1">onComplete</p><p class="text-xs text-gray-300">Animation finished — chain next action here</p></div>
+          <div class="highlight-box pink"><p class="text-xs font-bold text-pink-400 mb-1">onReverseComplete</p><p class="text-xs text-gray-300">Reverse animation completed</p></div>
+        </div>
+      </div>
+
+      <!-- 3. KEYFRAMES -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">3</span>
+          Keyframes — Multi-Step Single Tween
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          A <span class="text-green-400">keyframes</span> array lets you define
+          <strong class="text-white">multiple states</strong> in a single tween.
+          No timeline needed — perfect for complex, self-contained sequences.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Keyframes = array of states</span>
+<span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">keyframes</span>: [
+    { <span class="property">x</span>: <span class="number">100</span>, <span class="property">duration</span>: <span class="number">0.5</span> },
+    { <span class="property">y</span>: <span class="number">80</span>, <span class="property">rotation</span>: <span class="number">90</span>, <span class="property">duration</span>: <span class="number">0.4</span> },
+    { <span class="property">x</span>: <span class="number">0</span>, <span class="property">scale</span>: <span class="number">0.5</span>, <span class="property">duration</span>: <span class="number">0.6</span> },
+    { <span class="property">y</span>: <span class="number">0</span>, <span class="property">rotation</span>: <span class="number">180</span>, <span class="property">opacity</span>: <span class="number">0.3</span>, <span class="property">duration</span>: <span class="number">0.5</span> },
+  ],
+  <span class="property">ease</span>: <span class="string">"power2.out"</span>
+  <span class="comment">// ease applies to ALL keyframes (can override per-frame)</span>
+});
+
+<span class="comment">// Also works with .from() and .fromTo()!</span>
+<span class="keyword">gsap.fromTo</span>(<span class="string">".box"</span>,
+  { <span class="property">x</span>: <span class="number">-100</span>, <span class="property">opacity</span>: <span class="number">0</span> },
+  { <span class="property">keyframes</span>: [
+    { <span class="property">x</span>: <span class="number">50</span>, <span class="property">opacity</span>: <span class="number">1</span>, <span class="property">duration</span>: <span class="number">0.4</span> },
+    { <span class="property">x</span>: <span class="number">100</span>, <span class="property">rotation</span>: <span class="number">360</span>, <span class="property">duration</span>: <span class="number">0.6</span> },
+  ]}
+);</pre>
+          </div>
+          <div id="kfDemo" class="live-preview" style="flex-direction:column;gap:8px;">
+            <div class="box-demo" id="kfBox" style="background:linear-gradient(135deg,#22c55e,#4ecdc4);">kf</div>
+            <button onclick="runKeyframes()" class="px-4 py-2 rounded-lg bg-green-500/20 border border-green-500/30 text-green-400 text-sm hover:bg-green-500/30 transition-all">
+              <i class="fa-solid fa-play mr-2"></i>Run Keyframes
+            </button>
+          </div>
+        </div>
+
+        <div class="highlight-box green">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-film text-green-400 mr-2"></i>
+            <strong class="text-white">When to use keyframes:</strong> For a single element
+            that goes through multiple states (a box moving right, then down, then back).
+            When to use timeline: For <strong class="text-white">multiple elements</strong>
+            that need synchronized timing.
+          </p>
+        </div>
+      </div>
+
+      <!-- 4. EASING TRICKS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">4</span>
+          Easing Tricks — Custom & Stepped Eases
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Chapter 2 covered basic easing. Now go deeper with
+          <span class="text-orange-400">CustomEase</span>,
+          <span class="text-pink-400">steps</span>, and
+          <span class="text-purple-400">expo / sine</span> variants.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Stepped ease — jumps between values</span>
+<span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">200</span>,
+  <span class="property">ease</span>: <span class="string">"steps(5)"</span>,
+  <span class="property">duration</span>: <span class="number">2</span>
+});
+<span class="comment">// Box jumps in 5 discrete steps</span>
+
+<span class="comment">// Expo — dramatic acceleration</span>
+<span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">200</span>,
+  <span class="property">ease</span>: <span class="string">"expo.out"</span>
+});
+<span class="comment">// Starts slow, ends VERY fast — dramatic!</span>
+
+<span class="comment">// Sine — smooth, natural motion</span>
+<span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">200</span>,
+  <span class="property">ease</span>: <span class="string">"sine.inOut"</span>
+});
+<span class="comment">// Gentle start and end — like a pendulum</span>
+
+<span class="comment">// Rough ease — adds organic randomness</span>
+<span class="keyword">gsap.to</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">200</span>,
+  <span class="property">ease</span>: <span class="string">"rough({strength: 0.3, points: 20})"</span>,
+  <span class="property">duration</span>: <span class="number">2</span>
+});
+<span class="comment">// Gives a "hand-drawn" feel</span></pre>
+          </div>
+          <div id="easeTrickDemo" class="live-preview" style="flex-direction:column;gap:6px;">
+            <div class="box-demo" id="easeTrickBox" style="background:linear-gradient(135deg,#ff6b35,#e8503a);">ease</div>
+            <div class="flex gap-2 flex-wrap justify-center">
+              <button onclick="runEaseTrick('steps(5)')" class="px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs">Steps</button>
+              <button onclick="runEaseTrick('expo.out')" class="px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs">Expo</button>
+              <button onclick="runEaseTrick('sine.inOut')" class="px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs">Sine</button>
+              <button onclick="runEaseTrick('slow(0.5, 0.9)')" class="px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs">Slow</button>
+            </div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-4 gap-3">
+          <div class="highlight-box orange"><p class="text-xs text-orange-400 font-semibold mb-1">steps(n)</p><p class="text-xs text-gray-300">Discrete jumps — countdown timers, loading bars</p></div>
+          <div class="highlight-box cyan"><p class="text-xs text-cyan-400 font-semibold mb-1">expo.out</p><p class="text-xs text-gray-300">Dramatic finish — explosive reveals</p></div>
+          <div class="highlight-box purple"><p class="text-xs text-purple-400 font-semibold mb-1">sine.inOut</p><p class="text-xs text-gray-300">Gentle, natural — breathing, pendulum swings</p></div>
+          <div class="highlight-box pink"><p class="text-xs text-pink-400 font-semibold mb-1">slow()</p><p class="text-xs text-gray-300">Emphasizes middle — slow-mo effect</p></div>
+        </div>
+      </div>
+
+      <!-- 5. NESTED TIMELINES -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">5</span>
+          Nested Timelines
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Timelines can contain <strong class="text-white">other timelines</strong>.
+          This lets you build complex, modular animation systems —
+          each component has its own timeline, then they're combined.
+        </p>
+
+        <div class="split-panel mb-4">
+          <div>
+            <pre class="code-block"><span class="comment">// Child timeline — handles one element</span>
+<span class="keyword">function</span> createBoxAnim(el) {
+  <span class="keyword">const tl</span> = <span class="keyword">gsap.timeline</span>();
+  tl.<span class="keyword">to</span>(el, { <span class="property">x</span>: <span class="number">80</span>, <span class="property">duration</span>: <span class="number">0.4</span> })
+    <span class="keyword">.to</span>(el, { <span class="property">rotation</span>: <span class="number">180</span>, <span class="property">duration</span>: <span class="number">0.3</span> })
+    <span class="keyword">.to</span>(el, { <span class="property">scale</span>: <span class="number">0.5</span>, <span class="property">duration</span>: <span class="number">0.3</span> });
+  <span class="keyword">return</span> tl;
+}
+
+<span class="comment">// Parent timeline — orchestrates children</span>
+<span class="keyword">const master</span> = <span class="keyword">gsap.timeline</span>();
+
+<span class="comment">// Nest via .add()</span>
+master.<span class="keyword">add</span>(createBoxAnim(box1))
+      .<span class="keyword">add</span>(createBoxAnim(box2), <span class="string">"-=0.5"</span>)
+      .<span class="keyword">add</span>(createBoxAnim(box3), <span class="string">"-=0.3"</span>);
+
+<span class="comment">// ✅ Modular, reusable, composable</span></pre>
+          </div>
+          <div id="nestedDemo" class="live-preview" style="flex-direction:column;gap:6px;">
+            <div class="flex gap-3 justify-center flex-wrap">
+              <div class="anim-box" id="nest1" style="background:#ff6b35;width:48px;height:48px;">A</div>
+              <div class="anim-box" id="nest2" style="background:#4ecdc4;width:48px;height:48px;">B</div>
+              <div class="anim-box" id="nest3" style="background:#6c5ce7;width:48px;height:48px;">C</div>
+            </div>
+            <button onclick="runNested()" class="px-4 py-2 rounded-lg bg-pink-500/20 border border-pink-500/30 text-pink-400 text-sm hover:bg-pink-500/30 transition-all">
+              <i class="fa-solid fa-play mr-2"></i>Run Nested Timelines
+            </button>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-diagram-project text-pink-400 mr-2"></i>
+            <strong class="text-white">Use nested timelines</strong> when you have reusable
+            animation patterns. Create one "entrance" timeline function, one "exit" function,
+            and compose them in a master timeline. <span class="text-pink-400">DRY</span> animation code.
+          </p>
+        </div>
+      </div>
+
+      <!-- 6. SET & QUICK METHODS -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">6</span>
+          <span class="text-blue-400">gsap.set()</span> & Quick Utilities
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-4">
+          Beyond <span class="text-orange-400">.to()</span>,
+          <span class="text-cyan-400">.from()</span>, and
+          <span class="text-purple-400">.fromTo()</span>, GSAP offers utility methods
+          for common patterns.
+        </p>
+
+        <div class="grid md:grid-cols-2 gap-4 mb-4">
+          <div class="highlight-box cyan">
+            <pre class="code-block" style="font-size:.75rem;"><span class="comment">// gsap.set() —   snapshot, no animation</span>
+<span class="keyword">gsap.set</span>(<span class="string">".box"</span>, {
+  <span class="property">x</span>: <span class="number">100</span>,
+  <span class="property">opacity</span>: <span class="number">0.5</span>
+});
+<span class="comment">// Instant. Great for initial states</span>
+
+<span class="comment">// gsap.getProperty() — read current value</span>
+<span class="keyword">const</span> x = <span class="keyword">gsap.getProperty</span>(<span class="string">".box"</span>, <span class="string">"x"</span>);
+<span class="comment">// Returns "100" (as string)</span>
+
+<span class="comment">// gsap.quickTo() —     pre-bound function</span>
+<span class="keyword">const</span> moveX = <span class="keyword">gsap.quickTo</span>(<span class="string">".box"</span>, <span class="string">"x"</span>);
+moveX(<span class="number">200</span>); <span class="comment">// same as gsap.to(".box", { x: 200 })</span>
+<span class="comment">// ⚡ Faster — pre-compiled selector + property</span></pre>
+          </div>
+          <div class="highlight-box purple">
+            <pre class="code-block" style="font-size:.75rem;"><span class="comment">// gsap.utils — handy math helpers</span>
+
+<span class="comment">// Clamp: keep value in range</span>
+<span class="keyword">const</span> clamp = <span class="keyword">gsap.utils.clamp</span>(<span class="number">0</span>, <span class="number">100</span>);
+clamp(<span class="number">-50</span>);  <span class="comment">// → 0</span>
+clamp(<span class="number">150</span>);  <span class="comment">// → 100</span>
+
+<span class="comment">// Interpolate: map one range to another</span>
+<span class="keyword">const</span> map = <span class="keyword">gsap.utils.interpolate</span>(
+  [<span class="number">0</span>, <span class="number">500</span>], [<span class="number">0</span>, <span class="number">100</span>]
+);
+map(<span class="number">250</span>); <span class="comment">// → 50 (midpoint)</span>
+
+<span class="comment">// Pipe: compose multiple utils</span>
+<span class="keyword">const</span> safeMap = <span class="keyword">gsap.utils.pipe</span>(
+  map,
+  clamp(<span class="number">0</span>, <span class="number">100</span>)
+);
+safeMap(<span class="number">1000</span>); <span class="comment">// → 100</span></pre>
+          </div>
+        </div>
+
+        <div class="highlight-box">
+          <p class="text-sm text-gray-300">
+            <i class="fa-solid fa-bolt text-blue-400 mr-2"></i>
+            <strong class="text-white">gsap.quickTo()</strong> is a performance gem.
+            It creates a reusable function that's faster than <span class="font-mono text-xs">gsap.to()</span>
+            because it pre-compiles the selector and property. Use it in
+            <span class="text-purple-400">mousemove</span> or
+            <span class="text-cyan-400">scroll</span> handlers for smooth 60fps tracking.
+          </p>
+        </div>
+      </div>
+
+      <!-- 7. PLAYGROUND -->
+      <div class="card p-8 mb-8">
+        <h2 class="text-xl font-bold text-white mb-4 flex items-center gap-3">
+          <span class="step-number">7</span>
+          Advanced Playground
+        </h2>
+        <p class="text-gray-300 leading-relaxed mb-6">
+          Combine keyframes, stagger, and callbacks. Watch the log as each event fires.
+        </p>
+
+        <div class="split-panel mb-6">
+          <div>
+            <pre class="code-block" id="pgCode" style="min-height:140px;"></pre>
+          </div>
+          <div id="pgPreview" class="live-preview" style="flex-direction:column;gap:6px;padding:.8rem;align-items:stretch;">
+            <div class="flex gap-2 justify-center flex-wrap" id="pgBoxes">
+              <div class="anim-box" style="background:#ff6b35;">A</div>
+              <div class="anim-box" style="background:#4ecdc4;">B</div>
+              <div class="anim-box" style="background:#6c5ce7;">C</div>
+            </div>
+            <div class="flex gap-2 flex-wrap justify-center">
+              <button onclick="runPg()" class="px-3 py-1.5 rounded-lg bg-orange-500/20 border border-orange-500/30 text-orange-400 text-xs hover:bg-orange-500/30"><i class="fa-solid fa-play mr-1"></i>Run</button>
+              <button onclick="resetPg()" class="px-3 py-1.5 rounded-lg bg-gray-700/30 border border-gray-700/30 text-gray-400 text-xs hover:bg-gray-700/50">Reset</button>
+            </div>
+            <div class="log-box" id="pgLog" style="max-height:80px;">Logs appear here...<br></div>
+          </div>
+        </div>
+
+        <div class="grid md:grid-cols-3 gap-6">
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Stagger</span>
+              <span class="font-mono text-white" id="pgStagger">0.15</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgStagger" min="0" max="0.5" step="0.03" value="0.15" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Duration</span>
+              <span class="font-mono text-white" id="pgDur">0.6</span>
+            </label>
+            <input type="range" class="playground-slider" id="pgPgDur" min="0.2" max="2" step="0.1" value="0.6" oninput="updatePg()" />
+          </div>
+          <div>
+            <label class="text-xs text-gray-400 font-medium flex justify-between mb-2">
+              <span>Ease</span>
+            </label>
+            <select id="pgPgEase" class="select-ease" oninput="updatePg()">
+              <option value="back.out(1.7)">back.out</option>
+              <option value="power2.out">power2.out</option>
+              <option value="expo.out">expo.out</option>
+              <option value="sine.inOut">sine.inOut</option>
+              <option value="steps(5)">steps(5)</option>
+              <option value="bounce.out">bounce.out</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- WRAP UP -->
+      <div class="card p-8 mb-8" style="border:1px solid rgba(255,107,53,.15);">
+        <div class="flex items-start gap-4">
+          <div class="step-number" style="border-color:rgba(255,107,53,.5);color:#ff6b35;">✓</div>
+          <div>
+            <h2 class="text-xl font-bold text-white mb-3">What You Learned</h2>
+            <div class="grid md:grid-cols-2 gap-4">
+              <div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span> <strong>Stagger direction</strong> — start, end, center, edges, random</li>
+                  <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span> <strong>Callbacks</strong> — onStart, onUpdate, onComplete, onReverseComplete</li>
+                  <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span> <strong>Keyframes</strong> — array of states in a single tween</li>
+                </ul>
+              </div>
+              <div>
+                <ul class="space-y-2 text-sm text-gray-300">
+                  <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span> <strong>Easing tricks</strong> — steps, expo, sine, slow</li>
+                  <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span> <strong>Nested timelines</strong> — reusable timeline functions</li>
+                  <li class="flex items-start gap-2"><span class="text-orange-400 mt-0.5">→</span> <strong>Next up:</strong> Final Project — build a complete animated landing page</li>
+                </ul>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- NAV -->
+      <div class="text-center py-6">
+        <div class="inline-flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-sm text-gray-500">
+          <span>Ch 1-4</span><span class="text-gray-700">·</span>
+          <span>Ch 5-6</span><span class="text-gray-700">·</span>
+          <span>Ch 7: SVG</span><span class="text-gray-700">·</span>
+          <span>Ch 8: Responsive</span><span class="text-gray-700">·</span>
+          <span class="text-orange-400 font-semibold">Ch 9: Advanced</span>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      // ─── 1. Stagger Direction ───
+      function runStaggerDir(dir) {
+        const boxes = document.querySelectorAll('#staggerGrid .anim-box');
+        gsap.set(boxes, { clearProps: 'all' });
+        gsap.from(boxes, {
+          y: -40, opacity: 0, scale: 0.5,
+          duration: 0.5,
+          stagger: { each: 0.12, from: dir },
+          ease: 'back.out(1.7)'
+        });
+      }
+
+      // ─── 2. Callbacks ───
+      let cbTween = null;
+      function log(msg) {
+        const el = document.getElementById('cbLog');
+        el.innerHTML += msg + '<br>';
+        el.scrollTop = el.scrollHeight;
+      }
+      function clearLog() {
+        document.getElementById('cbLog').innerHTML = '';
+      }
+      function runCallbacks() {
+        clearLog();
+        const box = document.getElementById('cbBox');
+        if (cbTween) cbTween.kill();
+        gsap.set(box, { clearProps: 'all' });
+
+        cbTween = gsap.to(box, {
+          x: 180, duration: 2, ease: 'power2.out',
+          onStart: () => log('▶ onStart fired'),
+          onComplete: () => log('✅ onComplete fired'),
+          onReverseComplete: () => log('↩ onReverseComplete fired'),
+          onUpdate: function() {
+            // only log at certain thresholds to avoid spam
+            const p = Math.round(this.progress() * 100);
+            if (p === 50) log('⏳ onUpdate at 50%');
+          }
+        });
+      }
+      function reverseCallbacks() {
+        if (cbTween) cbTween.reverse();
+      }
+
+      // ─── 3. Keyframes ───
+      function runKeyframes() {
+        const box = document.getElementById('kfBox');
+        gsap.set(box, { clearProps: 'all' });
+        gsap.to(box, {
+          keyframes: [
+            { x: 80, duration: 0.4 },
+            { y: 60, rotation: 90, duration: 0.3 },
+            { x: 0, scale: 0.5, duration: 0.5 },
+            { y: 0, rotation: 180, opacity: 0.3, duration: 0.4 },
+          ],
+          ease: 'power2.out'
+        });
+      }
+
+      // ─── 4. Easing Tricks ───
+      function runEaseTrick(ease) {
+        const box = document.getElementById('easeTrickBox');
+        gsap.set(box, { clearProps: 'all' });
+        gsap.to(box, { x: 180, duration: 1.5, ease: ease });
+      }
+
+      // ─── 5. Nested Timelines ───
+      function createBoxAnim(el) {
+        const tl = gsap.timeline({ defaults: { ease: 'back.out(1.7)' } });
+        tl.to(el, { x: 60, duration: 0.3 })
+          .to(el, { rotation: 180, duration: 0.25 })
+          .to(el, { scale: 0.5, duration: 0.2 });
+        return tl;
+      }
+      function runNested() {
+        const ids = ['nest1', 'nest2', 'nest3'];
+        gsap.set(ids.map(id => document.getElementById(id)), { clearProps: 'all' });
+
+        const master = gsap.timeline();
+        master.add(createBoxAnim('#nest1'))
+          .add(createBoxAnim('#nest2'), '-=0.3')
+          .add(createBoxAnim('#nest3'), '-=0.3');
+      }
+
+      // ─── 7. Playground ───
+      function updatePg() {
+        document.getElementById('pgStagger').textContent = document.getElementById('pgPgStagger').value;
+        document.getElementById('pgDur').textContent = document.getElementById('pgPgDur').value;
+        const stagger = parseFloat(document.getElementById('pgPgStagger').value);
+        const dur = parseFloat(document.getElementById('pgPgDur').value);
+        const ease = document.getElementById('pgPgEase').value;
+        document.getElementById('pgCode').innerHTML =
+          `<span class="keyword">gsap.from</span>(<span class="string">".box"</span>, {\n` +
+          `  <span class="property">y</span>: <span class="number">-40</span>,\n` +
+          `  <span class="property">opacity</span>: <span class="number">0</span>,\n` +
+          `  <span class="property">duration</span>: <span class="number">${dur}</span>,\n` +
+          `  <span class="property">stagger</span>: <span class="number">${stagger}</span>,\n` +
+          `  <span class="property">ease</span>: <span class="string">"${ease}"</span>,\n` +
+          `  <span class="property">onStart</span>: () => log(<span class="string">"▶ started"</span>),\n` +
+          `  <span class="property">onComplete</span>: () => log(<span class="string">"✅ done"</span>)\n});`;
+      }
+
+      function runPg() {
+        const boxes = document.querySelectorAll('#pgBoxes .anim-box');
+        const dur = parseFloat(document.getElementById('pgPgDur').value);
+        const stagger = parseFloat(document.getElementById('pgPgStagger').value);
+        const ease = document.getElementById('pgPgEase').value;
+
+        gsap.set(boxes, { clearProps: 'all' });
+        document.getElementById('pgLog').innerHTML = '';
+
+        gsap.from(boxes, {
+          y: -40, opacity: 0, scale: 0.5,
+          duration: dur,
+          stagger: stagger,
+          ease: ease,
+          onStart: () => {
+            document.getElementById('pgLog').innerHTML += '▶ onStart fired<br>';
+          },
+          onComplete: () => {
+            document.getElementById('pgLog').innerHTML += '✅ onComplete fired<br>';
+          }
+        });
+      }
+
+      function resetPg() {
+        const boxes = document.querySelectorAll('#pgBoxes .anim-box');
+        gsap.set(boxes, { clearProps: 'all' });
+        document.getElementById('pgLog').innerHTML = 'Reset<br>';
+      }
+
+      updatePg();
+    </script>
+  </body>
+</html>
