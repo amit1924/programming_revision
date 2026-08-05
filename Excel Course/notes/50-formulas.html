@@ -34,6 +34,11 @@ body{background:#0a0e17;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
 .show-btn{background:transparent;border:1px solid #3b4b6b;color:#94a3b8;padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s}
 .show-btn:hover{background:#1a2744;color:#e2e8f0}
 .correct-answer{background:#0d2818;border:1px solid #34d39933;border-radius:8px;padding:8px 12px;font-size:13px;color:#34d399;display:none}
+.how-box{background:#0d1322;border:1px solid #2a3a55;border-radius:10px;padding:12px 14px;font-size:13px;margin-top:10px}
+.how-title{color:#94a3b8;font-weight:600;font-size:12px;text-transform:uppercase;letter-spacing:.04em;margin-bottom:4px}
+.step{display:flex;gap:8px;align-items:flex-start;margin-top:6px;color:#cbd5e1}
+.step-num{flex:none;width:18px;height:18px;border-radius:50%;background:#1e3a8a;color:#93c5fd;font-size:11px;font-weight:700;display:flex;align-items:center;justify-content:center;margin-top:1px}
+.step-text{line-height:1.55}
 ::-webkit-scrollbar{width:6px;height:6px}
 ::-webkit-scrollbar-track{background:#0a0e17}
 ::-webkit-scrollbar-thumb{background:#2a3a55;border-radius:3px}
@@ -49,7 +54,7 @@ body{background:#0a0e17;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
       <h1 class="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
         <i class="fa-solid fa-calculator mr-2 text-blue-400"></i>50 Excel Formulas
       </h1>
-      <p class="text-slate-400 text-sm mt-1">Interactive practice for data analysis — type a formula &amp; press Enter to test it</p>
+      <p class="text-slate-400 text-sm mt-1">Interactive practice for data analysis — type a formula &amp; press Enter to test it. Every card shows the answer worked out step by step.</p>
     </div>
   </header>
 
@@ -75,6 +80,7 @@ body{background:#0a0e17;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
 <script>
 // ========== FORMULA ENGINE ==========
 const _F = {};
+const G = {}; // shared context so INDIRECT / OFFSET can read cells by reference
 function reg(name, fn) { _F[name.toUpperCase()] = fn; }
 
 reg('SUM',(...r)=>r.flat(9).reduce((s,v)=>(v=Number(v),isNaN(v)?s:s+v),0));
@@ -106,8 +112,18 @@ reg('XLOOKUP',(...r)=>{const[val,from,to,na]=r;const fA=from.flat(9);const tA=to
 reg('INDEX',(...r)=>{const arr=r[0];if(r.length===2)return arr[r[1]-1];if(!Array.isArray(arr[0]))return arr[r[1]-1];const row=arr[r[1]-1];return row?row[r[2]-1]:'#REF!'});
 reg('MATCH',(...r)=>{const[val,arr,type]=r;const a=arr.flat(9);const t=type||0;for(let i=0;i<a.length;i++){if(t===0&&String(a[i]).toLowerCase()===String(val).toLowerCase())return i+1;if(t===1&&Number(a[i])<=Number(val))return i+1;if(t===-1&&Number(a[i])>=Number(val))return i+1}return'#N/A'});
 reg('CHOOSE',(...r)=>{const idx=Math.round(Number(r[0]));return idx>0&&idx<r.length?r[idx]:'#VALUE!'});
-reg('INDIRECT',r=>r);
-reg('OFFSET',(...r)=>`OFFSET(${r[0]},${r[1]},${r[2]},${r[3]||''},${r[4]||''})`);
+reg('INDIRECT',r=>G.lookup?G.lookup(String(r)):String(r));
+reg('OFFSET',(ref,r,c,h,w)=>{
+  r=Number(r)||0;c=Number(c)||0;h=Number(h)||1;w=Number(w)||1;
+  const mref=String(ref).match(/^([A-Z]+)(\d+)$/);
+  if(!mref)return'#REF!';
+  const sC=colToIdx(mref[1]),sR=parseInt(mref[2],10)+r;
+  const out=[];
+  for(let rr=sR;rr<sR+h;rr++)
+    for(let cc=sC;cc<sC+w;cc++)
+      out.push(G.lookup(idxToCol(cc)+rr));
+  return out;
+});
 reg('LEFT',(t,n)=>String(t).substring(0,n||1));
 reg('RIGHT',(t,n)=>String(t).substring(String(t).length-(n||1)));
 reg('MID',(t,s,n)=>String(t).substring((s||1)-1,(s||1)-1+(n||1)));
@@ -157,6 +173,14 @@ function evalFormula(expr, lookup) {
     const strs = [];
     s = s.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, m => { strs.push(m); return '__S'+(strs.length-1)+'__'; });
 
+    // Capture OFFSET(...) calls so the anchor reference stays a string (e.g. OFFSET(B2,0,0,3,1))
+    const offPhs = [];
+    s = s.replace(/OFFSET\s*\(\s*([A-Z]+\d+(?::[A-Z]+\d+)?)\s*,([^)]*)\)/g, (m0, ref, rest) => {
+      const id = offPhs.length;
+      offPhs.push("_F.OFFSET('"+ref+"',"+rest+")");
+      return '__OFF'+id+'__';
+    });
+
     // Quote bare words FIRST (Excel treats unquoted text like IT as "IT")
     // Skip function calls (word followed by `(`), cell refs (A1, B2), and safe words
     const safe = new Set(['lookup','_F','true','false','null','undefined','NaN']);
@@ -177,7 +201,7 @@ function evalFormula(expr, lookup) {
     for (let i=0;i<rangePhs.length;i++) s = s.replace('__R'+i+'__', "lookup('"+rangePhs[i]+"')");
 
     // Replace function names
-    for (const n of Object.keys(_F)) s = s.replace(new RegExp('\\b'+n+'\\\(','g'), '_F.'+n+'(');
+    for (const n of Object.keys(_F)) s = s.replace(new RegExp('\\b'+n+'\\(','g'), '_F.'+n+'(');
 
     // Replace TRUE/FALSE
     s = s.replace(/\bTRUE\b(?!\s*\()/g,'true').replace(/\bFALSE\b(?!\s*\()/g,'false');
@@ -185,18 +209,21 @@ function evalFormula(expr, lookup) {
     // Fix operators
     s = s.replace(/<>/g,'!==').replace(/(?<![<>])=([^=<>\s,\)])/g,'===$1');
 
+    // Restore OFFSET calls (after function names were replaced)
+    for (let i=0;i<offPhs.length;i++) s = s.replace('__OFF'+i+'__', offPhs[i]);
+
     // Restore strings
     for (let i=0;i<strs.length;i++) s = s.replace('__S'+i+'__', strs[i]);
 
-    return new Function('_F','lookup','return ('+s+')')(_F,lookup);
+    return new Function('_F','lookup','G','G.lookup=lookup;return ('+s+')')(_F,lookup,G);
   } catch(e) { return '#ERROR!'; }
 }
 
 // ========== FORMULA DATA ==========
 const formulas = [];
 let fid = 0;
-function addF(cat, name, syntax, desc, data, correctFormula, expected) {
-  formulas.push({ id:++fid, cat, name, syntax, desc, data, correctFormula, expected });
+function addF(cat, name, syntax, desc, data, correctFormula, expected, exp) {
+  formulas.push({ id:++fid, cat, name, syntax, desc, data, correctFormula, expected, exp });
 }
 
 function makeLookup(data) {
@@ -226,64 +253,220 @@ function makeLookup(data) {
 }
 
 // ========== MATH & STATS (15) ==========
-addF('math','SUM','=SUM(range)','Adds all numbers in a range.',{A1:'Product',B1:'Sales',A2:'Widget',B2:120,A3:'Gadget',B3:85,A4:'Doohickey',B4:200,A5:'Thingy',B5:45,A6:'Whatsit',B6:150},'=SUM(B2:B6)',600);
-addF('math','AVERAGE','=AVERAGE(range)','Mean of a set of numbers.',{A1:'Month',B1:'Rev',A2:'Jan',B2:4500,A3:'Feb',B3:5200,A4:'Mar',B4:4800,A5:'Apr',B5:5100,A6:'May',B6:4900},'=AVERAGE(B2:B6)',4900);
-addF('math','COUNT','=COUNT(range)','Counts numeric cells only.',{A1:'Emp',B1:'Sales',A2:'A',B2:15,A3:'B',B3:22,A4:'C',B4:'N/A',A5:'D',B5:18,A6:'E',B6:''},'=COUNT(B2:B6)',3);
-addF('math','COUNTA','=COUNTA(range)','Counts all non-empty cells.',{A1:'Name',B1:'RSVP',A2:'John',B2:'Yes',A3:'Sara',B3:'No',A4:'Mike',B4:'',A5:'Lisa',B5:'Yes',A6:'Tom',B6:'Maybe'},'=COUNTA(B2:B6)',4);
-addF('math','MAX','=MAX(range)','Largest value in a range.',{A1:'City',B1:'Temp',A2:'NYC',B2:72,A3:'MIA',B3:95,A4:'CHI',B4:68,A5:'PHX',B5:105,A6:'SEA',B6:58},'=MAX(B2:B6)',105);
-addF('math','MIN','=MIN(range)','Smallest value in a range.',{A1:'City',B1:'Temp',A2:'NYC',B2:72,A3:'MIA',B3:95,A4:'CHI',B4:68,A5:'PHX',B5:105,A6:'SEA',B6:58},'=MIN(B2:B6)',58);
-addF('math','LARGE','=LARGE(range,k)','k-th largest value.',{A1:'S',B1:'Sco',A2:'A',B2:92,A3:'B',B3:78,A4:'C',B4:95,A5:'D',B5:88,A6:'E',B6:84,A7:'F',B7:73},'=LARGE(B2:B7,2)',92);
-addF('math','SMALL','=SMALL(range,k)','k-th smallest value.',{A1:'P',B1:'Pr',A2:'W',B2:12.99,A3:'G',B3:8.5,A4:'D',B4:24.99,A5:'T',B5:5.99,A6:'W',B6:19.99},'=SMALL(B2:B6,3)',19.99);
-addF('math','RANK.EQ','=RANK(number,range)','Rank of a number (1=highest).',{A1:'P',B1:'Sc',A2:'Al',B2:95,A3:'Ba',B3:82,A4:'Ca',B4:95,A5:'Dr',B5:91,A6:'El',B6:78},'=RANK(95,B2:B6)',1);
-addF('math','SUMPRODUCT','=SUMPRODUCT(a1,a2)','Multiplies arrays & sums.',{A1:'I',B1:'Q',C1:'P',A2:'Ap',B2:10,C2:1.5,A3:'Ba',B3:5,C3:.75,A4:'Ch',B4:8,C4:2,A5:'Da',B5:3,C5:3.5},'=SUMPRODUCT(B2:B5,C2:C5)',45.25);
-addF('math','SUMIF','=SUMIF(range,criteria,[sum])','Sums cells with one condition.',{A1:'S',B1:'Amt',A2:'Al',B2:500,A3:'Bo',B3:1200,A4:'Al',B4:800,A5:'Ca',B5:300,A6:'Bo',B6:600},'=SUMIF(A2:A6,"Alice",B2:B6)',1300);
-addF('math','SUMIFS','=SUMIFS(sum,r1,c1,r2,c2,...)','Sums with multiple conditions.',{A1:'P',B1:'R',C1:'S',A2:'W',B2:'N',C2:100,A3:'G',B3:'S',C3:200,A4:'W',B4:'S',C4:150,A5:'G',B5:'N',C5:250,A6:'W',B6:'N',C6:300},'=SUMIFS(C2:C6,A2:A6,"Widget",B2:B6,"North")',400);
-addF('math','COUNTIF','=COUNTIF(range,criteria)','Counts cells with one condition.',{A1:'D',B1:'E',A2:'Sls',B2:'J',A3:'IT',B3:'S',A4:'Sls',B4:'M',A5:'HR',B5:'L',A6:'Sls',B6:'T',A7:'IT',B7:'J'},'=COUNTIF(A2:A7,"Sales")',3);
-addF('math','COUNTIFS','=COUNTIFS(r1,c1,r2,c2,...)','Counts with multiple conditions.',{A1:'C',B1:'Sl',C1:'O',A2:'NY',B2:600,C2:'Y',A3:'NY',B3:400,C3:'N',A4:'LA',B4:700,C4:'Y',A5:'LA',B5:300,C5:'N',A6:'NY',B6:550,C6:'Y'},'=COUNTIFS(A2:A6,"NYC",B2:B6,">500")',2);
-addF('math','AVERAGEIF','=AVERAGEIF(r,c,[ar])','Averages cells with a condition.',{A1:'T',B1:'H',A2:'A',B2:40,A3:'B',B3:35,A4:'A',B4:45,A5:'G',B5:50,A6:'A',B6:38},'=AVERAGEIF(A2:A6,"Alpha",B2:B6)',41);
+addF('math','SUM','=SUM(range)','Adds all numbers in a range.',{A1:'Product',B1:'Sales',A2:'Widget',B2:120,A3:'Gadget',B3:85,A4:'Doohickey',B4:200,A5:'Thingy',B5:45,A6:'Whatsit',B6:150},'=SUM(B2:B6)',600,
+`1. Look up the range B2:B6 -> the 5 sales values: 120, 85, 200, 45, 150.
+2. Add them together: 120 + 85 + 200 + 45 + 150.
+3. Return the total -> 600.`);
+addF('math','AVERAGE','=AVERAGE(range)','Mean of a set of numbers.',{A1:'Month',B1:'Rev',A2:'Jan',B2:4500,A3:'Feb',B3:5200,A4:'Mar',B4:4800,A5:'Apr',B5:5100,A6:'May',B6:4900},'=AVERAGE(B2:B6)',4900,
+`1. Read B2:B6 -> 4500, 5200, 4800, 5100, 4900.
+2. Add them up: 4500 + 5200 + 4800 + 5100 + 4900 = 24,500.
+3. Count the numbers: 5.
+4. Divide sum by count: 24,500 / 5 = 4,900.`);
+addF('math','COUNT','=COUNT(range)','Counts numeric cells only.',{A1:'Emp',B1:'Sales',A2:'A',B2:15,A3:'B',B3:22,A4:'C',B4:'N/A',A5:'D',B5:18,A6:'E',B6:''},'=COUNT(B2:B6)',3,
+`1. Inspect B2:B6 -> 15, 22, 'N/A', 18, '' (blank).
+2. Keep only true numbers: 15, 22, 18.
+3. Text ('N/A') and blanks are ignored -> count = 3.`);
+addF('math','COUNTA','=COUNTA(range)','Counts all non-empty cells.',{A1:'Name',B1:'RSVP',A2:'John',B2:'Yes',A3:'Sara',B3:'No',A4:'Mike',B4:'',A5:'Lisa',B5:'Yes',A6:'Tom',B6:'Maybe'},'=COUNTA(B2:B6)',4,
+`1. Inspect B2:B6 -> 'Yes', 'No', '' , 'Yes', 'Maybe'.
+2. Keep every cell that is NOT empty: 'Yes', 'No', 'Yes', 'Maybe'.
+3. The blank cell is skipped -> count = 4.`);
+addF('math','MAX','=MAX(range)','Largest value in a range.',{A1:'City',B1:'Temp',A2:'NYC',B2:72,A3:'MIA',B3:95,A4:'CHI',B4:68,A5:'PHX',B5:105,A6:'SEA',B6:58},'=MAX(B2:B6)',105,
+`1. Read B2:B6 -> 72, 95, 68, 105, 58.
+2. Scan for the largest number -> 105.`);
+addF('math','MIN','=MIN(range)','Smallest value in a range.',{A1:'City',B1:'Temp',A2:'NYC',B2:72,A3:'MIA',B3:95,A4:'CHI',B4:68,A5:'PHX',B5:105,A6:'SEA',B6:58},'=MIN(B2:B6)',58,
+`1. Read B2:B6 -> 72, 95, 68, 105, 58.
+2. Scan for the smallest number -> 58.`);
+addF('math','LARGE','=LARGE(range,k)','k-th largest value.',{A1:'S',B1:'Sco',A2:'A',B2:92,A3:'B',B3:78,A4:'C',B4:95,A5:'D',B5:88,A6:'E',B6:84,A7:'F',B7:73},'=LARGE(B2:B7,2)',92,
+`1. Read B2:B7 -> 92, 78, 95, 88, 84, 73.
+2. Sort descending: 95, 92, 88, 84, 78, 73.
+3. k = 2 -> take the 2nd value -> 92.`);
+addF('math','SMALL','=SMALL(range,k)','k-th smallest value.',{A1:'P',B1:'Pr',A2:'W',B2:12.99,A3:'G',B3:8.5,A4:'D',B4:24.99,A5:'T',B5:5.99,A6:'W',B6:19.99},'=SMALL(B2:B6,3)',12.99,
+`1. Read B2:B6 -> 12.99, 8.50, 24.99, 5.99, 19.99.
+2. Sort ascending: 5.99, 8.50, 12.99, 19.99, 24.99.
+3. k = 3 -> take the 3rd value -> 12.99.`);
+addF('math','RANK.EQ','=RANK(number,range)','Rank of a number (1=highest).',{A1:'P',B1:'Sc',A2:'Al',B2:95,A3:'Ba',B3:82,A4:'Ca',B4:95,A5:'Dr',B5:91,A6:'El',B6:78},'=RANK(95,B2:B6)',1,
+`1. Read B2:B6 -> 95, 82, 95, 91, 78.
+2. Sort descending: 95, 95, 91, 82, 78.
+3. 95 is the largest value -> position 1.
+4. Ties share the same rank -> rank = 1.`);
+addF('math','SUMPRODUCT','=SUMPRODUCT(a1,a2)','Multiplies arrays & sums.',{A1:'I',B1:'Q',C1:'P',A2:'Ap',B2:10,C2:1.5,A3:'Ba',B3:5,C3:.75,A4:'Ch',B4:8,C4:2,A5:'Da',B5:3,C5:3.5},'=SUMPRODUCT(B2:B5,C2:C5)',45.25,
+`1. Pair B2:B5 with C2:C5 -> (10,1.5), (5,0.75), (8,2), (3,3.5).
+2. Multiply each pair: 15, 3.75, 16, 10.5.
+3. Sum the products: 15 + 3.75 + 16 + 10.5 = 45.25.`);
+addF('math','SUMIF','=SUMIF(range,criteria,[sum])','Sums cells with one condition.',{A1:'Name',B1:'Amount',A2:'Alice',B2:500,A3:'Bob',B3:1200,A4:'Alice',B4:800,A5:'Carol',B5:300,A6:'Bob',B6:600},'=SUMIF(A2:A6,"Alice",B2:B6)',1300,
+`1. Scan the criteria range A2:A6 for 'Alice' -> found at rows 2 and 4.
+2. Grab the matching amounts from B2:B6 -> 500 and 800.
+3. Sum them: 500 + 800 = 1,300.`);
+addF('math','SUMIFS','=SUMIFS(sum,r1,c1,r2,c2,...)','Sums with multiple conditions.',{A1:'Product',B1:'Region',C1:'Sales',A2:'Widget',B2:'North',C2:100,A3:'Gadget',B3:'South',C3:200,A4:'Widget',B4:'South',C4:150,A5:'Gadget',B5:'North',C5:250,A6:'Widget',B6:'North',C6:300},'=SUMIFS(C2:C6,A2:A6,"Widget",B2:B6,"North")',400,
+`1. Check every row against BOTH conditions: Product = 'Widget' AND Region = 'North'.
+2. Matching rows: row 2 (Sales 100) and row 6 (Sales 300).
+3. Sum the Sales column for those rows: 100 + 300 = 400.`);
+addF('math','COUNTIF','=COUNTIF(range,criteria)','Counts cells with one condition.',{A1:'Dept',B1:'Emp',A2:'Sales',B2:'J',A3:'IT',B3:'S',A4:'Sales',B4:'M',A5:'HR',B5:'L',A6:'Sales',B6:'T',A7:'IT',B7:'J'},'=COUNTIF(A2:A7,"Sales")',3,
+`1. Scan A2:A7 looking for the text 'Sales'.
+2. Count the matches: rows 2, 4 and 6 -> 3.`);
+addF('math','COUNTIFS','=COUNTIFS(r1,c1,r2,c2,...)','Counts with multiple conditions.',{A1:'City',B1:'Sales',C1:'Online',A2:'NYC',B2:600,C2:'Yes',A3:'NYC',B3:400,C3:'No',A4:'LA',B4:700,C4:'Yes',A5:'LA',B5:300,C5:'No',A6:'NYC',B6:550,C6:'Yes'},'=COUNTIFS(A2:A6,"NYC",B2:B6,">500")',2,
+`1. Check each row against both: City = 'NYC' AND Sales > 500.
+2. NYC rows have sales 600, 400, 550; only 600 and 550 pass the > 500 test.
+3. Count the passing rows -> 2.`);
+addF('math','AVERAGEIF','=AVERAGEIF(r,c,[ar])','Averages cells with a condition.',{A1:'Team',B1:'Hours',A2:'Alpha',B2:40,A3:'Beta',B3:35,A4:'Alpha',B4:45,A5:'Gamma',B5:50,A6:'Alpha',B6:38},'=AVERAGEIF(A2:A6,"Alpha",B2:B6)',41,
+`1. Find rows where A2:A6 = 'Alpha' -> rows 2, 4 and 6.
+2. Take their Hours values: 40, 45, 38.
+3. Average them: (40 + 45 + 38) / 3 = 41.`);
 
 // ========== LOGICAL (8) ==========
-addF('logical','IF','=IF(test,true,false)','Returns one value if true, another if false.',{A1:'S',B1:'Sc',A2:'E',B2:85,A3:'L',B3:59,A4:'N',B4:73,A5:'O',B5:92,A6:'M',B6:44},'=IF(B2>=60,"Pass","Fail")','Pass');
-addF('logical','AND','=AND(c1,c2,...)','TRUE only if ALL conditions are true.',{A1:'A',B1:'Ex',C1:'Ce',A2:'Al',B2:5,C2:'Y',A3:'Bo',B3:2,C3:'Y',A4:'Ca',B4:7,C4:'N',A5:'Da',B5:3,C5:'Y'},'=AND(B2>=3,C2="Yes")',true);
-addF('logical','OR','=OR(c1,c2,...)','TRUE if ANY condition is true.',{A1:'P',B1:'Pr',C1:'On',A2:'W',B2:100,C2:'N',A3:'G',B3:50,C3:'Y',A4:'D',B4:200,C4:'N',A5:'T',B5:25,C5:'Y'},'=OR(B5<30,C5="Yes")',true);
-addF('logical','IFERROR','=IFERROR(v,fallback)','Catches errors gracefully.',{A1:'N',B1:'D',A2:100,B2:20,A3:50,B3:0,A4:75,B4:25,A5:30,B5:0},'=IFERROR(A2/B2,"Cannot divide")',5);
-addF('logical','IFNA','=IFNA(v,fallback)','Handles #N/A gracefully.',{A1:'ID',B1:'N',A2:101,B2:'A',A3:102,B3:'B',A4:103,B4:'C',A5:105,B5:''},'=IFNA(VLOOKUP(104,A2:B5,2,FALSE),"Not found")','Not found');
-addF('logical','IFS','=IFS(c1,v1,c2,v2,...)','Multiple conditions, clean syntax.',{A1:'Sc',B1:'G',A2:95,A3:82,A4:67,A5:50,A6:73},'=IFS(A2>=90,"A",A2>=80,"B",A2>=70,"C",A2>=60,"D",TRUE,"F")','A');
-addF('logical','SWITCH','=SWITCH(expr,v1,r1,...)','Match expression to values.',{A1:'C',B1:'S',A2:1,B2:'A',A3:2,B3:'P',A4:3,B4:'C',A5:1,A6:4},'=SWITCH(A2,1,"Active",2,"Pending",3,"Closed","Unknown")','Active');
-addF('logical','NOT','=NOT(logical)','Reverses TRUE/FALSE.',{A1:'I',B1:'D',A2:'W',B2:false,A3:'G',B3:true,A4:'D',B4:false,A5:'T',B5:false},'=NOT(B2)',true);
+addF('logical','IF','=IF(test,true,false)','Returns one value if true, another if false.',{A1:'S',B1:'Sc',A2:'E',B2:85,A3:'L',B3:59,A4:'N',B4:73,A5:'O',B5:92,A6:'M',B6:44},'=IF(B2>=60,"Pass","Fail")','Pass',
+`1. Test the condition: B2 = 85, is 85 >= 60? -> TRUE.
+2. TRUE, so return the true-branch value -> 'Pass'.`);
+addF('logical','AND','=AND(c1,c2,...)','TRUE only if ALL conditions are true.',{A1:'Name',B1:'Exp',C1:'Cert',A2:'Alice',B2:5,C2:'Yes',A3:'Bob',B3:2,C3:'Yes',A4:'Carol',B4:7,C4:'No',A5:'Dave',B5:3,C5:'Yes'},'=AND(B2>=3,C2="Yes")',true,
+`1. Test condition 1: B2 = 5, is 5 >= 3? -> TRUE.
+2. Test condition 2: C2 = 'Yes' -> TRUE.
+3. ALL conditions are TRUE, so AND returns TRUE.`);
+addF('logical','OR','=OR(c1,c2,...)','TRUE if ANY condition is true.',{A1:'Product',B1:'Price',C1:'Online',A2:'Widget',B2:100,C2:'No',A3:'Gadget',B3:50,C3:'Yes',A4:'Doohickey',B4:200,C4:'No',A5:'Thingy',B5:25,C5:'Yes'},'=OR(B5<30,C5="Yes")',true,
+`1. Test condition 1: B5 = 25, is 25 < 30? -> TRUE.
+2. OR stops as soon as ANY condition is TRUE.
+3. (C5 = 'Yes' is also true, but it is not even needed.) -> TRUE.`);
+addF('logical','IFERROR','=IFERROR(v,fallback)','Catches errors gracefully.',{A1:'N',B1:'D',A2:100,B2:20,A3:50,B3:0,A4:75,B4:25,A5:30,B5:0},'=IFERROR(A2/B2,"Cannot divide")',5,
+`1. Compute A2 / B2 = 100 / 20 = 5.
+2. No error happened, so return the normal result -> 5.
+3. The fallback 'Cannot divide' is only used if the division errors (e.g. B2 = 0).`);
+addF('logical','IFNA','=IFNA(v,fallback)','Handles #N/A gracefully.',{A1:'ID',B1:'N',A2:101,B2:'A',A3:102,B3:'B',A4:103,B4:'C',A5:105,B5:''},'=IFNA(VLOOKUP(104,A2:B5,2,FALSE),"Not found")','Not found',
+`1. Run VLOOKUP(104, A2:B5, 2, FALSE) -> search 104 in column A.
+2. 104 is not in the ID column, so VLOOKUP returns #N/A.
+3. IFNA catches the #N/A and returns the fallback -> 'Not found'.`);
+addF('logical','IFS','=IFS(c1,v1,c2,v2,...)','Multiple conditions, clean syntax.',{A1:'Sc',B1:'G',A2:95,A3:82,A4:67,A5:50,A6:73},'=IFS(A2>=90,"A",A2>=80,"B",A2>=70,"C",A2>=60,"D",TRUE,"F")','A',
+`1. Test conditions in order: is 95 >= 90? -> TRUE.
+2. Return the value paired with the FIRST true condition -> 'A'.
+3. Later conditions are never evaluated.`);
+addF('logical','SWITCH','=SWITCH(expr,v1,r1,...)','Match expression to values.',{A1:'C',B1:'S',A2:1,B2:'A',A3:2,B3:'P',A4:3,B4:'C',A5:1,A6:4},'=SWITCH(A2,1,"Active",2,"Pending",3,"Closed","Unknown")','Active',
+`1. Read the expression value: A2 = 1.
+2. Compare it with each case: 1 -> 'Active', 2 -> 'Pending', 3 -> 'Closed'.
+3. First match wins -> 'Active'.
+4. If no case matched, the default 'Unknown' would be returned.`);
+addF('logical','NOT','=NOT(logical)','Reverses TRUE/FALSE.',{A1:'I',B1:'D',A2:'W',B2:false,A3:'G',B3:true,A4:'D',B4:false,A5:'T',B5:false},'=NOT(B2)',true,
+`1. Read the logical value: B2 = FALSE.
+2. NOT flips it -> TRUE.`);
 
 // ========== LOOKUP & REF (9) ==========
-addF('lookup','VLOOKUP','=VLOOKUP(v,table,col,[exact])','Finds value in first column, returns from another column.',{A1:'ID',B1:'N',C1:'S',A2:101,B2:'Al',C2:55e3,A3:102,B3:'Bo',C3:62e3,A4:103,B4:'Ca',C4:48e3,A5:104,B5:'Da',C5:71e3},'=VLOOKUP(103,A2:C5,3,FALSE)',48000);
-addF('lookup','HLOOKUP','=HLOOKUP(v,table,row,[exact])','Finds value in first row, returns from another row.',{A1:'M',B1:'Q1',C1:'Q2',D1:'Q3',E1:'Q4',A2:'Rev',B2:100,C2:120,D2:150,E2:140,A3:'Cost',B3:60,C3:70,D3:80,E3:75,A4:'Pr',B4:30,C4:40,D4:50,E4:45},'=HLOOKUP("Q3",A1:E4,2,FALSE)',150);
-addF('lookup','XLOOKUP','=XLOOKUP(v,from,to,[na])','Modern lookup — searches any direction.',{A1:'P',B1:'Pr',C1:'St',A2:'W',B2:25,C2:100,A3:'G',B3:15,C3:200,A4:'D',B4:50,C4:75,A5:'T',B5:10,C5:500},'=XLOOKUP("Doohickey",A2:A5,B2:B5)',50);
-addF('lookup','INDEX','=INDEX(arr,row,[col])','Returns value at a position in a range.',{A1:'N',B1:'M',C1:'S',D1:'E',A2:'Al',B2:92,C2:85,D2:78,A3:'Bo',B3:80,C3:91,D3:88,A4:'Ca',B4:75,C4:82,D4:95},'=INDEX(B2:D4,2,3)',88);
-addF('lookup','MATCH','=MATCH(v,arr,[type])','Returns position of a value in a range.',{A1:'C',B1:'P',A2:'NY',B2:8.4e6,A3:'LA',B3:3.8e6,A4:'Ch',B4:2.7e6,A5:'Ho',B5:2.3e6,A6:'Ph',B6:1.6e6},'=MATCH("Chicago",A2:A6,0)',3);
-addF('lookup','INDEX+MATCH','=INDEX(r,MATCH(v,l,0))','Powerful combo — more flexible than VLOOKUP.',{A1:'ID',B1:'N',C1:'D',D1:'S',A2:1001,B2:'Al',C2:'Sl',D2:65e3,A3:1002,B3:'Bo',C3:'IT',D3:72e3,A4:1003,B4:'Ca',C4:'HR',D4:58e3,A5:1004,B5:'Da',C5:'IT',D5:83e3},'=INDEX(D2:D5,MATCH(1003,A2:A5,0))',58000);
-addF('lookup','CHOOSE','=CHOOSE(i,v1,v2,...)','Picks from a list by index.',{A1:'R',B1:'M',A2:1,B2:'P',A3:2,B3:'F',A4:3,B4:'G',A5:4,B5:'E',A6:'',B6:3},'=CHOOSE(B6,"Poor","Fair","Good","Excellent")','Good');
-addF('lookup','INDIRECT','=INDIRECT(ref)','Turns text into a cell reference.',{A1:'X',A2:'Val',B1:'Jan',B2:100,C1:'Feb',C2:150,D1:'Mar',D2:200},'=INDIRECT("B2")',100);
-addF('lookup','OFFSET','=OFFSET(ref,rows,cols,[h],[w])','Dynamic range from a starting point.',{A1:'M',B1:'S',A2:'J',B2:500,A3:'F',B3:700,A4:'M',B4:900,A5:'A',B5:600,A6:'M',B6:800,A7:'J',B7:1000,A8:'J',B8:750},'=SUM(OFFSET(B2,0,0,3,1))',2100);
+addF('lookup','VLOOKUP','=VLOOKUP(v,table,col,[exact])','Finds value in first column, returns from another column.',{A1:'ID',B1:'N',C1:'S',A2:101,B2:'Al',C2:55e3,A3:102,B3:'Bo',C3:62e3,A4:103,B4:'Ca',C4:48e3,A5:104,B5:'Da',C5:71e3},'=VLOOKUP(103,A2:C5,3,FALSE)',48000,
+`1. Search column A (A2:A5) for 103 with exact match (FALSE).
+2. Found in the 3rd data row -> the 'Ca' row with salary 48,000.
+3. Return the value in column 3 of that row -> 48,000.`);
+addF('lookup','HLOOKUP','=HLOOKUP(v,table,row,[exact])','Finds value in first row, returns from another row.',{A1:'M',B1:'Q1',C1:'Q2',D1:'Q3',E1:'Q4',A2:'Rev',B2:100,C2:120,D2:150,E2:140,A3:'Cost',B3:60,C3:70,D3:80,E3:75,A4:'Pr',B4:30,C4:40,D4:50,E4:45},'=HLOOKUP("Q3",A1:E4,2,FALSE)',150,
+`1. Search row 1 (A1:E1) for 'Q3' -> found in the 4th column.
+2. Move down the 4th column to row index 2 (the 'Rev' row).
+3. Return that value -> 150.`);
+addF('lookup','XLOOKUP','=XLOOKUP(v,from,to,[na])','Modern lookup — searches any direction.',{A1:'Product',B1:'Price',C1:'Stock',A2:'Widget',B2:25,C2:100,A3:'Gadget',B3:15,C3:200,A4:'Doohickey',B4:50,C4:75,A5:'Thingy',B5:10,C5:500},'=XLOOKUP("Doohickey",A2:A5,B2:B5)',50,
+`1. Search A2:A5 for 'Doohickey' -> found at the 3rd position.
+2. Return the matching value from the return array B2:B5 -> 50.
+3. If it had not been found, the default #N/A would be returned.`);
+addF('lookup','INDEX','=INDEX(arr,row,[col])','Returns value at a position in a range.',{A1:'N',B1:'M',C1:'S',D1:'E',A2:'Al',B2:92,C2:85,D2:78,A3:'Bo',B3:80,C3:91,D3:88,A4:'Ca',B4:75,C4:82,D4:95},'=INDEX(B2:D4,2,3)',88,
+`1. Reference B2:D4 -> 3 rows: Al, Bo, Ca.
+2. row = 2 -> the 'Bo' row: 80, 91, 88.
+3. col = 3 -> the 3rd value of that row -> 88.`);
+addF('lookup','MATCH','=MATCH(v,arr,[type])','Returns position of a value in a range.',{A1:'City',B1:'Pop',A2:'NYC',B2:8400000,A3:'LA',B3:3800000,A4:'Chicago',B4:2700000,A5:'Houston',B5:2300000,A6:'Philly',B6:1600000},'=MATCH("Chicago",A2:A6,0)',3,
+`1. Search A2:A6 for 'Chicago'.
+2. type 0 = exact match.
+3. 'Chicago' sits at the 3rd position (1-based) -> return 3.`);
+addF('lookup','INDEX+MATCH','=INDEX(r,MATCH(v,l,0))','Powerful combo — more flexible than VLOOKUP.',{A1:'ID',B1:'N',C1:'D',D1:'S',A2:1001,B2:'Al',C2:'Sl',D2:65e3,A3:1002,B3:'Bo',C3:'IT',D3:72e3,A4:1003,B4:'Ca',C4:'HR',D4:58e3,A5:1004,B5:'Da',C5:'IT',D5:83e3},'=INDEX(D2:D5,MATCH(1003,A2:A5,0))',58000,
+`1. Inner: MATCH(1003, A2:A5, 0) -> 1003 is at position 3.
+2. Outer: INDEX(D2:D5, 3) -> the 3rd salary in column D.
+3. That salary -> 58,000.
+4. This combo works even when the lookup column is not the leftmost column.`);
+addF('lookup','CHOOSE','=CHOOSE(i,v1,v2,...)','Picks from a list by index.',{A1:'R',B1:'M',A2:1,B2:'P',A3:2,B3:'F',A4:3,B4:'G',A5:4,B5:'E',A6:'',B6:3},'=CHOOSE(B6,"Poor","Fair","Good","Excellent")','Good',
+`1. Read the index: B6 = 3.
+2. Pick the 3rd item from the list: 'Poor', 'Fair', 'Good', 'Excellent'.
+3. Return -> 'Good'.`);
+addF('lookup','INDIRECT','=INDIRECT(ref)','Turns text into a cell reference.',{A1:'X',A2:'Val',B1:'Jan',B2:100,C1:'Feb',C2:150,D1:'Mar',D2:200},'=INDIRECT("B2")',100,
+`1. The argument 'B2' is plain TEXT, not a real reference.
+2. INDIRECT converts that text into an actual cell reference.
+3. Read the value stored at cell B2 -> 100.`);
+addF('lookup','OFFSET','=OFFSET(ref,rows,cols,[h],[w])','Dynamic range from a starting point.',{A1:'M',B1:'S',A2:'J',B2:500,A3:'F',B3:700,A4:'M',B4:900,A5:'A',B5:600,A6:'M',B6:800,A7:'J',B7:1000,A8:'J',B8:750},'=SUM(OFFSET(B2,0,0,3,1))',2100,
+`1. Start from the anchor cell B2 (value 500).
+2. Offset 0 rows down and 0 columns across -> still B2.
+3. Build a range 3 rows tall and 1 column wide -> B2:B4.
+4. SUM adds those values: 500 + 700 + 900 = 2,100.`);
 
 // ========== TEXT (10) ==========
-addF('text','LEFT','=LEFT(text,[n])','First N characters.',{A1:'N',B1:'F',A2:'John Smith',B2:'',A3:'Sarah Johnson',B3:'',A4:'Mike Brown',B4:''},'=LEFT(A2,4)','John');
-addF('text','RIGHT','=RIGHT(text,[n])','Last N characters.',{A1:'E',B1:'D',A2:'alice@co.com',B2:'',A3:'bob@corp.org',B3:'',A4:'carol@web.net',B4:''},'=RIGHT(A2,10)','alice@co.com');
-addF('text','MID','=MID(text,start,n)','Middle characters from a position.',{A1:'Code',B1:'R',A2:'USA-2024-007',B2:'',A3:'EUR-2024-042',B3:'',A4:'APAC-2024-015',B4:''},'=MID(A2,1,3)','USA');
-addF('text','LEN','=LEN(text)','Counts characters in text.',{A1:'E',B1:'L',A2:'Hello World',B2:'',A3:'Data Analysis',B3:'',A4:'Excel',B4:''},'=LEN(A2)',11);
-addF('text','FIND','=FIND(find,within)','Finds position (case-sensitive).',{A1:'E',B1:'@',A2:'alice@gmail.com',B2:'',A3:'bob@yahoo.com',B3:'',A4:'carol@outlook.com',B4:''},'=FIND("@",A2)',6);
-addF('text','TRIM','=TRIM(text)','Removes extra spaces.',{A1:'M',B1:'C',A2:'  Hello   World  ',B2:'',A3:'Data   Analysis   E',B3:'',A4:'  Too   many  spaces ',B4:''},'=TRIM(A2)','Hello World');
-addF('text','SUBSTITUTE','=SUBSTITUTE(t,old,new,[n])','Replaces specific text.',{A1:'Phone',B1:'Fmt',A2:'555-123-4567',B2:'',A3:'555-987-6543',B3:'',A4:'555-555-5555',B4:''},'=SUBSTITUTE(A2,"-"," ")','555 123 4567');
-addF('text','TEXTJOIN','=TEXTJOIN(delim,skip,t1,...)','Joins text with a delimiter.',{A1:'F',B1:'L',C1:'Full',A2:'John',B2:'Smith',C2:'',A3:'Sara',B3:'John',C3:'',A4:'Mike',B4:'Brown',C4:''},'=TEXTJOIN(" ",TRUE,A2:C2)','John Smith');
-addF('text','CONCAT','=CONCAT(t1,t2,...)','Combines text strings.',{A1:'C',B1:', ',C1:'S',D1:'L',A2:'NY',B2:', ',C2:'NY',D2:'',A3:'LA',B3:', ',C3:'CA',D3:'',A4:'Chi',B4:', ',C4:'IL',D4:''},'=CONCAT(A2,B2,C2)','NY, NY');
-addF('text','UPPER/LOWER/PROPER','=UPPER(t)/=LOWER(t)/=PROPER(t)','Change text case.',{A1:'O',B1:'U',C1:'L',D1:'P',A2:'john SMITH',B2:'',C2:'',D2:'',A3:'DATA ANALYSIS',B3:'',C3:'',D3:'',A4:'excel functions',B4:'',C4:'',D4:''},'=PROPER(A2)','John Smith');
+addF('text','LEFT','=LEFT(text,[n])','First N characters.',{A1:'N',B1:'F',A2:'John Smith',B2:'',A3:'Sarah Johnson',B3:'',A4:'Mike Brown',B4:''},'=LEFT(A2,4)','John',
+`1. Read the text: 'John Smith'.
+2. Take the first 4 characters.
+3. Return -> 'John'.`);
+addF('text','RIGHT','=RIGHT(text,[n])','Last N characters.',{A1:'E',B1:'D',A2:'alice@co.com',B2:'',A3:'bob@corp.org',B3:'',A4:'carol@web.net',B4:''},'=RIGHT(A2,10)','ice@co.com',
+`1. Read the text: 'alice@co.com' (12 characters).
+2. Take the last 10 characters.
+3. Return -> 'ice@co.com'.`);
+addF('text','MID','=MID(text,start,n)','Middle characters from a position.',{A1:'Code',B1:'R',A2:'USA-2024-007',B2:'',A3:'EUR-2024-042',B3:'',A4:'APAC-2024-015',B4:''},'=MID(A2,1,3)','USA',
+`1. Read the text: 'USA-2024-007'.
+2. Start at position 1 and take 3 characters.
+3. Return -> 'USA'.`);
+addF('text','LEN','=LEN(text)','Counts characters in text.',{A1:'E',B1:'L',A2:'Hello World',B2:'',A3:'Data Analysis',B3:'',A4:'Excel',B4:''},'=LEN(A2)',11,
+`1. Read the text: 'Hello World'.
+2. Count every character, including the space.
+3. Return -> 11.`);
+addF('text','FIND','=FIND(find,within)','Finds position (case-sensitive).',{A1:'E',B1:'@',A2:'alice@gmail.com',B2:'',A3:'bob@yahoo.com',B3:'',A4:'carol@outlook.com',B4:''},'=FIND("@",A2)',6,
+`1. Search for '@' inside 'alice@gmail.com'.
+2. '@' first appears at position 6 (counting from 1).
+3. FIND is case-sensitive -> return 6.`);
+addF('text','TRIM','=TRIM(text)','Removes extra spaces.',{A1:'M',B1:'C',A2:'  Hello   World  ',B2:'',A3:'Data   Analysis   E',B3:'',A4:'  Too   many  spaces ',B4:''},'=TRIM(A2)','Hello World',
+`1. Read the text: '  Hello   World  '.
+2. Strip all leading and trailing spaces.
+3. Collapse runs of inner spaces into a single space.
+4. Return -> 'Hello World'.`);
+addF('text','SUBSTITUTE','=SUBSTITUTE(t,old,new,[n])','Replaces specific text.',{A1:'Phone',B1:'Fmt',A2:'555-123-4567',B2:'',A3:'555-987-6543',B3:'',A4:'555-555-5555',B4:''},'=SUBSTITUTE(A2,"-"," ")','555 123 4567',
+`1. Read the text: '555-123-4567'.
+2. Replace every '-' character with a space.
+3. Return -> '555 123 4567'.`);
+addF('text','TEXTJOIN','=TEXTJOIN(delim,skip,t1,...)','Joins text with a delimiter.',{A1:'F',B1:'L',C1:'Full',A2:'John',B2:'Smith',C2:'',A3:'Sara',B3:'John',C3:'',A4:'Mike',B4:'Brown',C4:''},'=TEXTJOIN(" ",TRUE,A2:C2)','John Smith',
+`1. Collect the cells to join: A2 = 'John', B2 = 'Smith', C2 = '' (empty).
+2. delimiter = ' ' (a single space).
+3. skip_empty = TRUE -> drop the empty C2.
+4. Join the rest with spaces -> 'John Smith'.`);
+addF('text','CONCAT','=CONCAT(t1,t2,...)','Combines text strings.',{A1:'C',B1:', ',C1:'S',D1:'L',A2:'NY',B2:', ',C2:'NY',D2:'',A3:'LA',B3:', ',C3:'CA',D3:'',A4:'Chi',B4:', ',C4:'IL',D4:''},'=CONCAT(A2,B2,C2)','NY, NY',
+`1. Collect the arguments: 'NY', ', ', 'NY'.
+2. Concatenate them in order with no separator.
+3. Return -> 'NY, NY'.`);
+addF('text','UPPER/LOWER/PROPER','=UPPER(t)/=LOWER(t)/=PROPER(t)','Change text case.',{A1:'O',B1:'U',C1:'L',D1:'P',A2:'john SMITH',B2:'',C2:'',D2:'',A3:'DATA ANALYSIS',B3:'',C3:'',D3:'',A4:'excel functions',B4:'',C4:'',D4:''},'=PROPER(A2)','John Smith',
+`1. Read the text: 'john SMITH'.
+2. PROPER capitalises the first letter of every word.
+3. The remaining letters are lowercased.
+4. Return -> 'John Smith'.`);
 
 // ========== DATE & TIME (8) ==========
-addF('date','TODAY','=TODAY()','Current date — auto-updates.',{A1:'I',B1:'V',A2:'Dt',B2:''},'=TODAY()',new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}));
-addF('date','NOW','=NOW()','Current date & time.',{A1:'I',B1:'V',A2:'Ts',B2:''},'=NOW()',new Date().toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}));
-addF('date','DATE','=DATE(y,m,d)','Creates a date from parts.',{A1:'Y',B1:'M',C1:'D',D1:'Dt',A2:2024,B2:12,C2:25,D2:'',A3:2025,B3:1,C3:1,D3:'',A4:2024,B4:7,C4:4,D4:''},'=DATE(2024,12,25)','Dec 25, 2024');
-addF('date','YEAR/MONTH/DAY','=YEAR(d)/=MONTH(d)/=DAY(d)','Extracts parts of a date.',{A1:'Dt',B1:'Y',C1:'M',D1:'D',A2:'2024-06-15',B2:'',C2:'',D2:'',A3:'2025-01-01',B3:'',C3:'',D3:'',A4:'2023-12-31',B4:'',C4:'',D4:''},'=YEAR("2024-06-15")',2024);
-addF('date','EOMONTH','=EOMONTH(start,months)','Last day of a month.',{A1:'S',B1:'+1',C1:'+3',A2:'2024-01-15',B2:'',C2:'',A3:'2024-06-20',B3:'',C3:'',A4:'2024-12-01',B4:'',C4:''},'=EOMONTH("2024-01-15",1)','Feb 29, 2024');
-addF('date','NETWORKDAYS','=NETWORKDAYS(start,end)','Working days between dates.',{A1:'S',B1:'E',C1:'W',A2:'2024-01-01',B2:'2024-01-15',C2:'',A3:'2024-06-01',B3:'2024-06-30',C3:'',A4:'2024-12-01',B4:'2024-12-31',C4:''},'=NETWORKDAYS("2024-01-01","2024-01-15")',11);
-addF('date','DATEDIF','=DATEDIF(s,e,"unit")','Difference in Y/M/D.',{A1:'E',B1:'S',C1:'T',D1:'Y',A2:'Al',B2:'2019-06-01',C2:'2024-06-15',D2:'',A3:'Bo',B3:'2022-01-15',C3:'2024-06-15',D3:'',A4:'Ca',B4:'2020-09-30',C4:'2024-06-15',D4:''},'=DATEDIF("2019-06-01","2024-06-15","Y")',5);
-addF('date','WEEKDAY','=WEEKDAY(d,[type])','Day of week as number.',{A1:'Dt',B1:'N',C1:'Nm',A2:'2024-12-25',B2:'',C2:'',A3:'2024-11-28',B3:'',C3:'',A4:'2024-07-04',B4:'',C4:''},'=WEEKDAY("2024-12-25")',4);
+addF('date','TODAY','=TODAY()','Current date — auto-updates.',{A1:'I',B1:'V',A2:'Dt',B2:''},'=TODAY()',new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}),
+`1. The function needs no arguments.
+2. It reads the computer's clock and returns today's date.
+3. The value refreshes whenever the workbook recalculates.`);
+addF('date','NOW','=NOW()','Current date & time.',{A1:'I',B1:'V',A2:'Ts',B2:''},'=NOW()',new Date().toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}),
+`1. The function needs no arguments.
+2. It returns the current date AND time from the system clock.
+3. It auto-updates whenever the workbook recalculates.`);
+addF('date','DATE','=DATE(y,m,d)','Creates a date from parts.',{A1:'Y',B1:'M',C1:'D',D1:'Dt',A2:2024,B2:12,C2:25,D2:'',A3:2025,B3:1,C3:1,D3:'',A4:2024,B4:7,C4:4,D4:''},'=DATE(2024,12,25)','Dec 25, 2024',
+`1. Take the three parts: year = 2024, month = 12, day = 25.
+2. Combine them into one real date value.
+3. Displayed in this app as 'Dec 25, 2024'.`);
+addF('date','YEAR/MONTH/DAY','=YEAR(d)/=MONTH(d)/=DAY(d)','Extracts parts of a date.',{A1:'Dt',B1:'Y',C1:'M',D1:'D',A2:'2024-06-15',B2:'',C2:'',D2:'',A3:'2025-01-01',B3:'',C3:'',D3:'',A4:'2023-12-31',B4:'',C4:'',D4:''},'=YEAR("2024-06-15")',2024,
+`1. Read the date: '2024-06-15'.
+2. YEAR extracts just the year component.
+3. Return -> 2024. (MONTH would give 6, DAY would give 15.)`);
+addF('date','EOMONTH','=EOMONTH(start,months)','Last day of a month.',{A1:'S',B1:'+1',C1:'+3',A2:'2024-01-15',B2:'',C2:'',A3:'2024-06-20',B3:'',C3:'',A4:'2024-12-01',B4:'',C4:''},'=EOMONTH("2024-01-15",1)','Feb 29, 2024',
+`1. Start date: 2024-01-15.
+2. months = 1 -> jump to February 2024.
+3. EOMONTH always lands on the LAST day of that month.
+4. February 2024 has 29 days (a leap year) -> 'Feb 29, 2024'.`);
+addF('date','NETWORKDAYS','=NETWORKDAYS(start,end)','Working days between dates.',{A1:'S',B1:'E',C1:'W',A2:'2024-01-01',B2:'2024-01-15',C2:'',A3:'2024-06-01',B3:'2024-06-30',C3:'',A4:'2024-12-01',B4:'2024-12-31',C4:''},'=NETWORKDAYS("2024-01-01","2024-01-15")',11,
+`1. Start: 2024-01-01, End: 2024-01-15.
+2. Count every day in between (inclusive): 15 days.
+3. Subtract the weekend days (Jan 6, 7, 13, 14 -> 4 days).
+4. Working days = 15 - 4 = 11.`);
+addF('date','DATEDIF','=DATEDIF(s,e,"unit")','Difference in Y/M/D.',{A1:'E',B1:'S',C1:'T',D1:'Y',A2:'Al',B2:'2019-06-01',C2:'2024-06-15',D2:'',A3:'Bo',B3:'2022-01-15',C3:'2024-06-15',D3:'',A4:'Ca',B4:'2020-09-30',C4:'2024-06-15',D4:''},'=DATEDIF("2019-06-01","2024-06-15","Y")',5,
+`1. Start date: 2019-06-01, End date: 2024-06-15.
+2. Unit 'Y' = count COMPLETE years between them.
+3. 2019 -> 2024 is 5 full years (2019-06-01 to 2024-06-01).
+4. Return -> 5.`);
+addF('date','WEEKDAY','=WEEKDAY(d,[type])','Day of week as number.',{A1:'Dt',B1:'N',C1:'Nm',A2:'2024-12-25',B2:'',C2:'',A3:'2024-11-28',B3:'',C3:'',A4:'2024-07-04',B4:'',C4:''},'=WEEKDAY("2024-12-25")',4,
+`1. Read the date: 2024-12-25.
+2. Determine its day of the week -> Wednesday.
+3. Default return type (1 = Sunday ... 7 = Saturday): Wednesday = 4.`);
 
 // ========== RENDER ==========
 const grid = document.getElementById('formulaGrid');
@@ -317,6 +500,16 @@ function renderTable(data) {
 }
 
 function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderSteps(text) {
+  const lines = String(text).split('\n').filter(Boolean);
+  let h = '';
+  for (const ln of lines) {
+    const m = ln.match(/^(\d+)\.\s?(.*)$/);
+    h += '<div class="step"><span class="step-num">'+(m?m[1]:'&bull;')+'</span><span class="step-text">'+esc(m?m[2]:ln)+'</span></div>';
+  }
+  return h;
+}
 
 function evaluateCard(id) {
   const input = document.getElementById('input-'+id);
@@ -391,7 +584,8 @@ function renderFormulaCard(f) {
     '<div class="result-box mt-2 flex items-center gap-2" id="result-'+f.id+'">'+
       '<i class="fa-regular fa-equals text-slate-500"></i>'+
       '<span class="result-neutral" id="result-text-'+f.id+'">Enter a formula, click Evaluate</span>'+
-    '</div>';
+    '</div>'+
+    '<div class="how-box"><div class="how-title"><i class="fa-solid fa-lightbulb mr-1 text-amber-400"></i>How it works — step by step</div>'+renderSteps(f.exp)+'</div>';
   card.querySelector('.formula-input').addEventListener('keydown', function(e) {
     if (e.key === 'Enter') evaluateCard(f.id);
   });
