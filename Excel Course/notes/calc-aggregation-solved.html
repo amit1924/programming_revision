@@ -1,0 +1,382 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aggregation Functions — Worked Solutions (Step by Step) | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.85rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:52px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.err{ background:#3a1620; color:#fca5a5; font-weight:700; box-shadow:inset 0 0 0 2px #f87171; }
+    table.g td.lookup{ background:#1f2c4a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #60a5fa; }
+    table.g td.result{ background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.grp{ background:#16234a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #3b82f6; }
+    table.g td.dim{ color:#475569; }
+    table.g td.blank{ color:#64748b; font-style:italic; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .formula { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.9rem; color:#a3e635; overflow-x:auto; white-space:nowrap; }
+    .formula .arg { color:#fcd34d; } .formula .fn { color:#93c5fd; font-weight:600; }
+
+    .math { background:#0b1220; border:1px dashed #475569; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.85rem; color:#dbe3ee; overflow-x:auto; white-space:nowrap; }
+    .math .plus { color:#94a3b8; } .math .skip { color:#64748b; text-decoration:line-through; }
+    .math .eq { color:#fcd34d; font-weight:700; } .math .ans { color:#86efac; font-weight:700; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:36px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-list-check text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Excel — Aggregation Functions: Worked Solutions (Step by Step)</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-person-chalkboard"></i> Teacher mode</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-calculator"></i><span>Same functions as before — but now EVERY answer is worked out cell by cell</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">Aggregation — Worked Solutions</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">We shrink the course's 32,000 rows down to <b class="text-lock-300">6 rows</b> so you can follow every step with your finger. Each section shows the formula, which cells count, the arithmetic, and the answer.</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#20401f;box-shadow:inset 0 0 0 2px #56af3f"></span> included ✓</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a1620;box-shadow:inset 0 0 0 2px #f87171"></span> excluded ✗</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a2816;box-shadow:inset 0 0 0 2px #fbbf24"></span> final answer</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 0. THE DATASET -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm"><i class="fa-solid fa-database text-sm"></i></div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Mini Dataset — Our 6 Rows</h2><p class="text-gray-400 text-xs sm:text-sm">Every solution below uses THIS table. Bookmark it.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A — job_title_short</th><th>K — job_country</th><th>M — salary_year_avg</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td class="lookup">Data Analyst</td><td>United States</td><td>100,000</td></tr>
+          <tr><td class="rn">3</td><td class="lookup">Data Scientist</td><td>United States</td><td>150,000</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">Data Analyst</td><td>India</td><td>45,000</td></tr>
+          <tr><td class="rn">5</td><td class="lookup">Data Engineer</td><td>United States</td><td>130,000</td></tr>
+          <tr><td class="rn">6</td><td class="lookup">Data Analyst</td><td>United States</td><td class="blank">(blank)</td></tr>
+          <tr><td class="rn">7</td><td class="lookup">Data Analyst</td><td>United Kingdom</td><td>60,000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Notice row 6:</strong> it's a Data Analyst in the United States, but its salary cell is <b class="text-amber-300">blank</b>. Whether it counts depends entirely on which column the function looks at — you'll see this difference matter again and again below.</p></div>
+    </div>
+  </section>
+
+  <!-- 1. COUNT SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">COUNT — How many salaries?</h2><p class="text-gray-400 text-xs sm:text-sm">=COUNT(M2:M7) — counts only NUMBERS. Blanks are skipped.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=COUNT</span>(<span class="arg">M2:M7</span>)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Look at each cell in M2:M7</p><p class="text-gray-400 text-xs">Is it a number? Yes → count it. No (blank) → skip it.</p></div></div></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>M — salary</th><th>Number?</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td>100,000</td><td class="m">✓ yes</td></tr>
+          <tr><td class="rn">3</td><td>150,000</td><td class="m">✓ yes</td></tr>
+          <tr><td class="rn">4</td><td>45,000</td><td class="m">✓ yes</td></tr>
+          <tr><td class="rn">5</td><td>130,000</td><td class="m">✓ yes</td></tr>
+          <tr><td class="rn">6</td><td class="blank">(blank)</td><td class="err">✗ skip</td></tr>
+          <tr><td class="rn">7</td><td>60,000</td><td class="m">✓ yes</td></tr>
+        </tbody>
+      </table></div>
+      <div class="math">1 + 1 + 1 + 1 + <span class="skip">0</span> + 1 <span class="plus">=</span> <span class="eq">5</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Answer: 5.</strong> The blank in row 6 is ignored — COUNT never sees it.</p></div>
+    </div>
+  </section>
+
+  <!-- 2. COUNTA SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">COUNTA — How many jobs?</h2><p class="text-gray-400 text-xs sm:text-sm">=COUNTA(A2:A7) — counts every cell that is NOT empty (text or number).</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=COUNTA</span>(<span class="arg">A2:A7</span>)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Look at each cell in A2:A7</p><p class="text-gray-400 text-xs">Is it empty? No → count it. Yes → skip.</p></div></div></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A — job_title_short</th><th>Empty?</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td>Data Analyst</td><td class="m">✓ count</td></tr>
+          <tr><td class="rn">3</td><td>Data Scientist</td><td class="m">✓ count</td></tr>
+          <tr><td class="rn">4</td><td>Data Analyst</td><td class="m">✓ count</td></tr>
+          <tr><td class="rn">5</td><td>Data Engineer</td><td class="m">✓ count</td></tr>
+          <tr><td class="rn">6</td><td>Data Analyst</td><td class="m">✓ count</td></tr>
+          <tr><td class="rn">7</td><td>Data Analyst</td><td class="m">✓ count</td></tr>
+        </tbody>
+      </table></div>
+      <div class="math">1 + 1 + 1 + 1 + 1 + 1 <span class="plus">=</span> <span class="eq">6</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Answer: 6.</strong> COUNTA counts text, so row 6 counts here even though its salary was blank. <b>That's the COUNT vs COUNTA difference.</b></p></div>
+    </div>
+  </section>
+
+  <!-- 3. COUNTIF SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">COUNTIF — How many from the US?</h2><p class="text-gray-400 text-xs sm:text-sm">=COUNTIF(K2:K7,$L$1) — count rows whose country equals "United States".</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=COUNTIF</span>(<span class="arg">K2:K7</span>, <span class="arg">$L$1</span>) &nbsp;<span class="text-gray-500">(L1 = "United States")</span></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Go down column K, test each country</p><p class="text-gray-400 text-xs">Does it equal the criteria? Yes → 1. No → 0.</p></div></div></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>K — job_country</th><th>= "United States"?</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td>United States</td><td class="m">✓ 1</td></tr>
+          <tr><td class="rn">3</td><td>United States</td><td class="m">✓ 1</td></tr>
+          <tr><td class="rn">4</td><td>India</td><td class="err">✗ 0</td></tr>
+          <tr><td class="rn">5</td><td>United States</td><td class="m">✓ 1</td></tr>
+          <tr><td class="rn">6</td><td>United States</td><td class="m">✓ 1</td></tr>
+          <tr><td class="rn">7</td><td>United Kingdom</td><td class="err">✗ 0</td></tr>
+        </tbody>
+      </table></div>
+      <div class="math">1 + 1 + <span class="skip">0</span> + 1 + 1 + <span class="skip">0</span> <span class="plus">=</span> <span class="eq">4</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Answer: 4.</strong> Note row 6 counts — its country is US even though its salary is blank. COUNTIF looks only at column K.</p></div>
+    </div>
+  </section>
+
+  <!-- 4. COUNTIFS SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">COUNTIFS — Analyst AND US</h2><p class="text-gray-400 text-xs sm:text-sm">=COUNTIFS(A2:A7,$L$1,K2:K7,$L$2) — the row must pass BOTH tests.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=COUNTIFS</span>(<span class="arg">A2:A7</span>, <span class="arg">$L$1</span>, <span class="arg">K2:K7</span>, <span class="arg">$L$2</span>) &nbsp;<span class="text-gray-500">(L1 = "Data Analyst", L2 = "United States")</span></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Check BOTH conditions per row</p><p class="text-gray-400 text-xs">Title = Analyst AND country = US. If either fails → 0.</p></div></div></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A — title</th><th>K — country</th><th>Both match?</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td class="m">✓ Analyst</td><td class="m">✓ US</td><td class="m">✓ 1</td></tr>
+          <tr><td class="rn">3</td><td class="err">✗ Scientist</td><td class="m">✓ US</td><td class="err">✗ 0</td></tr>
+          <tr><td class="rn">4</td><td class="m">✓ Analyst</td><td class="err">✗ India</td><td class="err">✗ 0</td></tr>
+          <tr><td class="rn">5</td><td class="err">✗ Engineer</td><td class="m">✓ US</td><td class="err">✗ 0</td></tr>
+          <tr><td class="rn">6</td><td class="m">✓ Analyst</td><td class="m">✓ US</td><td class="m">✓ 1</td></tr>
+          <tr><td class="rn">7</td><td class="m">✓ Analyst</td><td class="err">✗ UK</td><td class="err">✗ 0</td></tr>
+        </tbody>
+      </table></div>
+      <div class="math">1 + <span class="skip">0</span> + <span class="skip">0</span> + <span class="skip">0</span> + 1 + <span class="skip">0</span> <span class="plus">=</span> <span class="eq">2</span></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">The classic trap:</strong> 4 (analysts) + 4 (US) = 8 — WRONG. Each row counts once only if it satisfies both. Adding the two COUNTIFs double-counts row 2 and row 6. The answer is <b class="text-amber-300">2</b>.</p></div>
+    </div>
+  </section>
+
+  <!-- 5. SUM SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">SUM — total of all salaries</h2><p class="text-gray-400 text-xs sm:text-sm">=SUM(M2:M7) — add every number, skip blanks.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=SUM</span>(<span class="arg">M2:M7</span>)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Add the numbers, ignore the blank</p><p class="text-gray-400 text-xs">Take each numeric salary and add them in order.</p></div></div></div>
+      <div class="math">100,000 <span class="plus">+</span> 150,000 <span class="plus">+</span> 45,000 <span class="plus">+</span> 130,000 <span class="plus">+</span> <span class="skip">(blank)</span> <span class="plus">+</span> 60,000 <span class="plus">=</span> <span class="eq">485,000</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Answer: 485,000.</strong> SUM skips blank cells just like COUNT does.</p></div>
+    </div>
+  </section>
+
+  <!-- 6. SUMIF SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">SUMIF — total salary, US only</h2><p class="text-gray-400 text-xs sm:text-sm">=SUMIF(K2:K7,$L$1,M2:M7) — test the country, then add the salary on that same row.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=SUMIF</span>(<span class="arg">K2:K7</span>, <span class="arg">$L$1</span>, <span class="arg">M2:M7</span>)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Two columns work TOGETHER, row by row</p><p class="text-gray-400 text-xs">Column K is checked. If it matches, the M value on the SAME row joins the total.</p></div></div></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>K — country</th><th>M — salary</th><th>Add?</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td class="m">✓ US</td><td class="m">100,000</td><td class="m">✓</td></tr>
+          <tr><td class="rn">3</td><td class="m">✓ US</td><td class="m">150,000</td><td class="m">✓</td></tr>
+          <tr><td class="rn">4</td><td class="err">✗ India</td><td>45,000</td><td class="err">✗</td></tr>
+          <tr><td class="rn">5</td><td class="m">✓ US</td><td class="m">130,000</td><td class="m">✓</td></tr>
+          <tr><td class="rn">6</td><td class="m">✓ US</td><td class="blank">(blank)</td><td class="err">✗ adds 0</td></tr>
+          <tr><td class="rn">7</td><td class="err">✗ UK</td><td>60,000</td><td class="err">✗</td></tr>
+        </tbody>
+      </table></div>
+      <div class="math">100,000 <span class="plus">+</span> 150,000 <span class="plus">+</span> <span class="skip">45,000</span> <span class="plus">+</span> 130,000 <span class="plus">+</span> <span class="skip">(blank)</span> <span class="plus">+</span> <span class="skip">60,000</span> <span class="plus">=</span> <span class="eq">380,000</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Answer: 380,000.</strong> Row 6 matches the country but its salary is blank → adds 0. SUMIF uses the salary from the matching row only.</p></div>
+    </div>
+  </section>
+
+  <!-- 7. SUMIFS SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">7</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">SUMIFS — total for Analyst + US</h2><p class="text-gray-400 text-xs sm:text-sm">=SUMIFS(M2:M7,A2:A7,$L$1,K2:K7,$L$2) — SUM range FIRST, then range/criteria pairs.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=SUMIFS</span>(<span class="arg">M2:M7</span>, <span class="arg">A2:A7</span>, <span class="arg">$L$1</span>, <span class="arg">K2:K7</span>, <span class="arg">$L$2</span>)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Read it left to right</p><p class="text-gray-400 text-xs">The sum column M comes FIRST. Then pair 1: title must be Analyst. Pair 2: country must be US.</p></div></div></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A — title</th><th>K — country</th><th>M — salary</th><th>Add?</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td class="m">✓ Analyst</td><td class="m">✓ US</td><td class="m">100,000</td><td class="m">✓</td></tr>
+          <tr><td class="rn">3</td><td class="err">✗ Scientist</td><td class="m">✓ US</td><td>150,000</td><td class="err">✗</td></tr>
+          <tr><td class="rn">4</td><td class="m">✓ Analyst</td><td class="err">✗ India</td><td>45,000</td><td class="err">✗</td></tr>
+          <tr><td class="rn">5</td><td class="err">✗ Engineer</td><td class="m">✓ US</td><td>130,000</td><td class="err">✗</td></tr>
+          <tr><td class="rn">6</td><td class="m">✓ Analyst</td><td class="m">✓ US</td><td class="blank">(blank)</td><td class="err">✗ adds 0</td></tr>
+          <tr><td class="rn">7</td><td class="m">✓ Analyst</td><td class="err">✗ UK</td><td>60,000</td><td class="err">✗</td></tr>
+        </tbody>
+      </table></div>
+      <div class="math">100,000 <span class="plus">+</span> <span class="skip">150,000</span> <span class="plus">+</span> <span class="skip">45,000</span> <span class="plus">+</span> <span class="skip">130,000</span> <span class="plus">+</span> <span class="skip">(blank)</span> <span class="plus">+</span> <span class="skip">60,000</span> <span class="plus">=</span> <span class="eq">100,000</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Answer: 100,000.</strong> Only row 2 satisfies both conditions AND has a salary. This is why the SUMIFS answer is smaller than the plain SUMIF.</p></div>
+    </div>
+  </section>
+
+  <!-- 8. AVERAGE SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">8</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">AVERAGE — total ÷ how many</h2><p class="text-gray-400 text-xs sm:text-sm">=AVERAGE(M2:M7) — the SUM of the numbers divided by the COUNT of the numbers.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=AVERAGE</span>(<span class="arg">M2:M7</span>)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Add the numbers</p><p class="text-gray-400 text-xs">Same as SUM: 485,000 (blank skipped).</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Count the numbers</p><p class="text-gray-400 text-xs">Same as COUNT: 5 numbers.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Divide</p><p class="text-gray-400 text-xs">485,000 ÷ 5 = 97,000.</p></div></div></div>
+      <div class="math">(100,000 <span class="plus">+</span> 150,000 <span class="plus">+</span> 45,000 <span class="plus">+</span> 130,000 <span class="plus">+</span> 60,000) <span class="plus">÷</span> 5 <span class="plus">=</span> 485,000 <span class="plus">÷</span> 5 <span class="plus">=</span> <span class="eq">97,000</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">AVERAGE is just SUM ÷ COUNT</strong> — computed on the SAME numbers. Blank cells vanish from both sides.</p></div>
+    </div>
+  </section>
+
+  <!-- 9. AVERAGEIF SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">9</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">AVERAGEIF — Analyst average salary</h2><p class="text-gray-400 text-xs sm:text-sm">=AVERAGEIF(A2:A7,$L$1,M2:M7) — average only the matching rows.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=AVERAGEIF</span>(<span class="arg">A2:A7</span>, <span class="arg">$L$1</span>, <span class="arg">M2:M7</span>) &nbsp;<span class="text-gray-500">(L1 = "Data Analyst")</span></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Find the matching rows</p><p class="text-gray-400 text-xs">Analysts are rows 2, 4, 6, 7.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Add their salaries</p><p class="text-gray-400 text-xs">100,000 + 45,000 + (blank) + 60,000 = 205,000.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Divide by how many had a number</p><p class="text-gray-400 text-xs">Row 6 is blank → 3 salaries. 205,000 ÷ 3 ≈ 68,333.</p></div></div></div>
+      <div class="math">(100,000 <span class="plus">+</span> 45,000 <span class="plus">+</span> <span class="skip">(blank)</span> <span class="plus">+</span> 60,000) <span class="plus">÷</span> 3 <span class="plus">=</span> 205,000 <span class="plus">÷</span> 3 <span class="plus">≈</span> <span class="eq">68,333</span></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">Tiny trap:</strong> divide by 3, NOT by 4 — the blank salary is excluded from the average, exactly like COUNT would.</p></div>
+    </div>
+  </section>
+
+  <!-- 10. MIN MAX SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">10</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">MIN &amp; MAX — smallest and biggest</h2><p class="text-gray-400 text-xs sm:text-sm">Scan the numbers, pick the extremes.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=MIN</span>(<span class="arg">M2:M7</span>) &nbsp;·&nbsp; <span class="fn">=MAX</span>(<span class="arg">M2:M7</span>)</div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>M — salary</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td>100,000</td></tr>
+          <tr><td class="rn">3</td><td class="result">150,000 ← MAX</td></tr>
+          <tr><td class="rn">4</td><td class="m">45,000 ← MIN</td></tr>
+          <tr><td class="rn">5</td><td>130,000</td></tr>
+          <tr><td class="rn">6</td><td class="blank">(blank)</td></tr>
+          <tr><td class="rn">7</td><td>60,000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="math">numbers: 100,000 · 150,000 · 45,000 · 130,000 · 60,000 <span class="plus">→</span> <span class="eq">MIN = 45,000</span> &nbsp;·&nbsp; <span class="eq">MAX = 150,000</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">MIN = 45,000, MAX = 150,000.</strong> Blanks are skipped. The range (spread) = 150,000 − 45,000 = 105,000.</p></div>
+    </div>
+  </section>
+
+  <!-- 11. MEDIAN vs AVERAGE SOLVED -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">11</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">MEDIAN vs AVERAGE — the outlier case</h2><p class="text-gray-400 text-xs sm:text-sm">Sort the numbers, find the middle. Compare to the average.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>Salary</th><th>Sorted</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">1</td><td class="lookup">80,000</td><td class="m">80,000</td></tr>
+          <tr><td class="rn">2</td><td class="lookup">95,000</td><td class="m">95,000</td></tr>
+          <tr><td class="rn">3</td><td class="lookup">115,000</td><td class="result">115,000 ← MIDDLE (median)</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">130,000</td><td class="m">130,000</td></tr>
+          <tr><td class="rn">5</td><td class="err">960,000 ← outlier</td><td class="err">960,000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">MEDIAN — pick the middle of the SORTED list</p><p class="text-gray-400 text-xs">5 values → the 3rd one: <b class="text-amber-300">115,000</b>. The 960k doesn't move it.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">AVERAGE — add everything, divide by count</p><p class="text-gray-400 text-xs">(80,000+95,000+115,000+130,000+960,000) ÷ 5 = 1,380,000 ÷ 5 = <b class="text-amber-300">276,000</b>.</p></div></div></div>
+      <div class="math">(80,000 <span class="plus">+</span> 95,000 <span class="plus">+</span> 115,000 <span class="plus">+</span> 130,000 <span class="plus">+</span> 960,000) <span class="plus">÷</span> 5 <span class="plus">=</span> 1,380,000 <span class="plus">÷</span> 5 <span class="plus">=</span> <span class="eq">276,000</span> &nbsp;·&nbsp; <span class="eq">MEDIAN = 115,000</span></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">Why Luke prefers the median:</strong> the single $960k job drags the average from ~115k up to 276k. The median stays at 115k and honestly reflects "a typical salary".</p></div>
+    </div>
+  </section>
+
+  <!-- 12. ALL ANSWERS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">12</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">All Answers on One Page</h2><p class="text-gray-400 text-xs sm:text-sm">Check your own attempt against the worked solutions.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Function</th><th>Formula (6-row data)</th><th>Answer</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td class="grp">COUNT</td><td class="form">=COUNT(M2:M7)</td><td class="result">5</td><td class="lookup">5 numbers, blank skipped</td></tr>
+          <tr><td class="grp">COUNTA</td><td class="form">=COUNTA(A2:A7)</td><td class="result">6</td><td class="lookup">all titles non-empty</td></tr>
+          <tr><td class="grp">COUNTIF</td><td class="form">=COUNTIF(K2:K7,"US")</td><td class="result">4</td><td class="lookup">4 US rows</td></tr>
+          <tr><td class="grp">COUNTIFS</td><td class="form">=COUNTIFS(A:A,"Analyst",K:K,"US")</td><td class="result">2</td><td class="lookup">rows 2 &amp; 6 both match</td></tr>
+          <tr><td class="grp">SUM</td><td class="form">=SUM(M2:M7)</td><td class="result">485,000</td><td class="lookup">all salaries</td></tr>
+          <tr><td class="grp">SUMIF</td><td class="form">=SUMIF(K:K,"US",M:M)</td><td class="result">380,000</td><td class="lookup">US salaries</td></tr>
+          <tr><td class="grp">SUMIFS</td><td class="form">=SUMIFS(M:M,A:A,"Analyst",K:K,"US")</td><td class="result">100,000</td><td class="lookup">Analyst+US, row 2 only</td></tr>
+          <tr><td class="grp">AVERAGE</td><td class="form">=AVERAGE(M2:M7)</td><td class="result">97,000</td><td class="lookup">485,000 ÷ 5</td></tr>
+          <tr><td class="grp">AVERAGEIF</td><td class="form">=AVERAGEIF(A:A,"Analyst",M:M)</td><td class="result">≈ 68,333</td><td class="lookup">205,000 ÷ 3</td></tr>
+          <tr><td class="grp">MIN / MAX</td><td class="form">=MIN(M:M) · =MAX(M:M)</td><td class="result">45,000 / 150,000</td><td class="lookup">extremes</td></tr>
+          <tr><td class="grp">MEDIAN</td><td class="form">=MEDIAN(M1:M5)</td><td class="result">115,000</td><td class="lookup">middle of sorted list</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Golden rule:</strong> every one of these is a loop over the range — decide per cell whether it counts, then combine. Blank cells get skipped by COUNT, SUM, AVERAGE, MIN, MAX; they only matter to COUNTA.</p></div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-list-check mr-1 text-calc-500"></i> Worked Solutions — every aggregation function solved cell by cell on a 6-row dataset</p>
+  </footer>
+
+</body>
+</html>

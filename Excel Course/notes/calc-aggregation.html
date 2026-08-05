@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Aggregation Functions — COUNT SUM AVERAGE MIN MAX &amp; the IF/IFS Versions — Step-by-Step Revision | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.88rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.lookup{ background:#1f2c4a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #60a5fa; }
+    table.g td.result{ background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.err{ background:#3a1620; color:#fca5a5; font-weight:700; box-shadow:inset 0 0 0 2px #f87171; }
+    table.g td.grp{ background:#16234a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #3b82f6; }
+    table.g td.dim{ color:#475569; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .formula { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.9rem; color:#a3e635; overflow-x:auto; white-space:nowrap; }
+    .formula .arg { color:#fcd34d; } .formula .fn { color:#93c5fd; font-weight:600; }
+
+    .funnel { display:flex; flex-direction:column; align-items:center; gap:6px; }
+    .fstep { background:linear-gradient(135deg,#1f2c4a,#0f172a); border:1px solid #3b82f6; border-radius:10px; padding:10px 14px; text-align:center; font-family:'JetBrains Mono',monospace; font-size:.8rem; color:#93c5fd; }
+    .fstep .n { display:block; font-weight:700; font-size:1.05rem; color:#fcd34d; }
+    .fstep.final { border-color:#56af3f; background:linear-gradient(135deg,#16322a,#0f172a); color:#86efac; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:38px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-chart-simple text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Excel — Aggregation Functions (COUNT · SUM · AVERAGE · MIN · MAX + IF/IFS)</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-calculator"></i><span>The five workhorses of data analysis — turn thousands of rows into one number</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">Aggregation Functions</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">On the course's <b class="text-lock-300">32,000+ job postings</b> you learn <b class="text-emerald-300">COUNT, SUM, AVERAGE, MIN, MAX</b> and their conditional cousins <b class="text-amber-300">COUNTIF, COUNTIFS, SUMIF, SUMIFS, AVERAGEIF</b> — the core of exploratory data analysis (EDA).</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#1f2c4a;box-shadow:inset 0 0 0 2px #60a5fa"></span> range / criteria</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#20401f;box-shadow:inset 0 0 0 2px #56af3f"></span> the result</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a2816;box-shadow:inset 0 0 0 2px #fbbf24"></span> locked criteria cell</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 1. THE FIVE MAJOR FUNCTIONS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Five Major Functions</h2><p class="text-gray-400 text-xs sm:text-sm">Plus the IF / IFS versions that filter before they aggregate.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">THE CONCEPT</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Function</th><th>Answers</th><th>IF version</th><th>IFS version</th></tr></thead>
+        <tbody>
+          <tr><td class="grp">COUNT</td><td class="lookup">How many numbers?</td><td class="form">COUNTIF</td><td class="form">COUNTIFS</td></tr>
+          <tr><td class="grp">SUM</td><td class="lookup">What's the total?</td><td class="form">SUMIF</td><td class="form">SUMIFS</td></tr>
+          <tr><td class="grp">AVERAGE</td><td class="lookup">What's the typical value?</td><td class="form">AVERAGEIF</td><td class="form">AVERAGEIFS</td></tr>
+          <tr><td class="grp">MIN</td><td class="lookup">What's the smallest?</td><td class="form">MINIFS</td><td class="form">MINIFS</td></tr>
+          <tr><td class="grp">MAX</td><td class="lookup">What's the biggest?</td><td class="form">MAXIFS</td><td class="form">MAXIFS</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Pattern:</strong> <b>IF</b> = one condition, <b>IFS</b> = many conditions. SUMIF / AVERAGEIF take the value range LAST; SUMIFS / AVERAGEIFS take it FIRST — a classic trap we'll hit below.</p></div>
+    </div>
+  </section>
+
+  <!-- 2. COUNT vs COUNTA -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">COUNT vs COUNTA — Numbers vs Anything</h2><p class="text-gray-400 text-xs sm:text-sm">COUNT counts numbers only (blanks and text ignored). COUNTA ("count all") counts every non-empty cell.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A — job_title_short</th><th>M — salary_year_avg</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td class="lookup">Data Analyst</td><td>100000</td></tr>
+          <tr><td class="rn">3</td><td class="lookup">Data Scientist</td><td>150000</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">Data Analyst</td><td class="err">(blank)</td></tr>
+          <tr><td class="rn">5</td><td class="lookup">Data Engineer</td><td>130000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="formula"><span class="fn">=COUNT</span>(<span class="arg">M2:M5</span>) &nbsp;→&nbsp; <span class="arg">3</span> &nbsp;&nbsp;·&nbsp;&nbsp; <span class="fn">=COUNTA</span>(<span class="arg">A2:A5</span>) &nbsp;→&nbsp; <span class="arg">4</span></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Function</th><th>Counts</th><th>Ignores</th><th>Course result</th></tr></thead>
+        <tbody>
+          <tr><td class="grp">COUNT</td><td class="m">numeric cells</td><td>blanks + text</td><td class="result">~22,000 have salary</td></tr>
+          <tr><td class="grp">COUNTA</td><td class="m">every non-empty cell</td><td>blanks only</td><td class="result">~32,000 total jobs</td></tr>
+        </tbody>
+      </table></div>
+      <div class="warn-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">Off-by-one:</strong> <code class="text-amber-300">=COUNT(M:M)</code> also counts the column <b>header</b>. For exact numbers subtract 1 — or start the range at row 2.</p></div>
+    </div>
+  </section>
+
+  <!-- 3. COUNTIF -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">COUNTIF — One Condition</h2><p class="text-gray-400 text-xs sm:text-sm">Count cells that match a single condition. Criteria cell gets locked with F4.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=COUNTIF</span>(<span class="arg">K2:K32000</span>, <span class="arg">$L$1</span>) &nbsp;→&nbsp; <span class="arg">25,000</span> &nbsp;<span class="text-gray-500">jobs from the United States</span></div>
+      <div class="formula mt-3"><span class="fn">=COUNTIF</span>(<span class="arg">A2:A32000</span>, <span class="arg">$L$2</span>) &nbsp;→&nbsp; <span class="arg">9,600</span> &nbsp;<span class="text-gray-500">jobs titled Data Analyst</span></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A — job_title_short</th><th>K — job_country</th><th>L — criteria</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">1</td><td class="grp">job_title_short</td><td class="grp">job_country</td><td class="result">United States</td></tr>
+          <tr><td class="rn">2</td><td class="lookup">Data Analyst</td><td>United States</td><td class="m">✓ counted</td></tr>
+          <tr><td class="rn">3</td><td class="lookup">Data Scientist</td><td>United States</td><td class="m">✓ counted</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">Data Analyst</td><td class="err">India</td><td class="dim">✗ skipped</td></tr>
+          <tr><td class="rn">5</td><td class="lookup">Data Analyst</td><td class="err">United Kingdom</td><td class="dim">✗ skipped</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Structure:</strong> range first, then criteria. Lock the criteria cell (<span class="fkey">F4</span>) so filling the formula down keeps testing the SAME condition.</p></div>
+    </div>
+  </section>
+
+  <!-- 4. COUNTIFS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">COUNTIFS — Many Conditions, AND logic</h2><p class="text-gray-400 text-xs sm:text-sm">Count rows where ALL conditions are true. Never add two COUNTIFs together.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=COUNTIFS</span>(<span class="arg">A2:A32000</span>, <span class="arg">$L$1</span>, <span class="arg">K2:K32000</span>, <span class="arg">$L$2</span>) &nbsp;→&nbsp; <span class="arg">8,000</span> <span class="text-gray-500">Data Analyst AND United States</span></div>
+      <div class="funnel mt-2">
+        <div class="fstep"><span class="n">32,000</span>all jobs (COUNTA)</div>
+        <div class="fstep"><span class="n">25,000</span>United States (COUNTIF)</div>
+        <div class="fstep"><span class="n">9,600</span>Data Analyst (COUNTIF)</div>
+        <div class="fstep final"><span class="n">8,000</span>Data Analyst + United States (COUNTIFS)</div>
+      </div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">The trap:</strong> don't do <code class="text-amber-300">=COUNTIF(…US) + COUNTIF(…Analyst)</code>. That counts ~34,600 — more than all jobs! The same row must pass BOTH conditions, which is exactly what the S in IFS means.</p></div>
+    </div>
+  </section>
+
+  <!-- 5. SUM & SUMIF -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">SUM &amp; SUMIF</h2><p class="text-gray-400 text-xs sm:text-sm">Add up all values — or only the ones matching a condition.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A — job_title_short</th><th>K — job_country</th><th>M — salary_year_avg</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">2</td><td class="lookup">Data Analyst</td><td>United States</td><td class="lookup">100000</td></tr>
+          <tr><td class="rn">3</td><td class="lookup">Data Scientist</td><td>United States</td><td class="lookup">150000</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">Data Analyst</td><td>India</td><td class="lookup">45000</td></tr>
+          <tr><td class="rn">5</td><td class="lookup">Data Engineer</td><td>United States</td><td class="lookup">130000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="formula"><span class="fn">=SUM</span>(<span class="arg">M2:M5</span>) &nbsp;→&nbsp; <span class="arg">425,000</span></div>
+      <div class="formula mt-3"><span class="fn">=SUMIF</span>(<span class="arg">K2:K5</span>, <span class="arg">$L$1</span>, <span class="arg">M2:M5</span>) &nbsp;→&nbsp; <span class="arg">380,000</span> <span class="text-gray-500">= 100k+150k+130k (US only)</span></div>
+      <div class="step"><div class="flex items-start"><span class="num">→</span><div><p class="text-white text-sm font-semibold mb-1">SUMIF order</p><p class="text-gray-400 text-xs"><b>criteria range</b> (what we test: K) → <b>criteria</b> ($L$1) → <b>sum range</b> (M). The sum range comes LAST.</p></div></div></div>
+    </div>
+  </section>
+
+  <!-- 6. SUMIFS GOTCHA -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">SUMIFS — the Sum Range Comes FIRST</h2><p class="text-gray-400 text-xs sm:text-sm">The number-one confusion. SUMIFS is backwards from SUMIF on purpose.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=SUMIFS</span>(<span class="arg">M2:M5</span>, <span class="arg">A2:A5</span>, <span class="arg">$L$1</span>, <span class="arg">K2:K5</span>, <span class="arg">$L$2</span>) &nbsp;→&nbsp; <span class="arg">100,000</span> <span class="text-gray-500">Analyst + US</span></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th></th><th>SUMIF</th><th>SUMIFS</th></tr></thead>
+        <tbody>
+          <tr><td class="grp">1st argument</td><td class="m">criteria range</td><td class="err">SUM RANGE</td></tr>
+          <tr><td class="grp">2nd argument</td><td>criteria</td><td>criteria range 1</td></tr>
+          <tr><td class="grp">Then…</td><td>sum range (last)</td><td>criteria 1, range 2, criteria 2…</td></tr>
+        </tbody>
+      </table></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">The result of the course example is lower than the plain Analyst sum</strong> — because only rows that are BOTH Analyst AND US are included. Read the formula left to right: SUM range first, then pairs of range+criteria.</p></div>
+    </div>
+  </section>
+
+  <!-- 7. AVERAGE MIN MAX -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">7</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">AVERAGE, MIN, MAX</h2><p class="text-gray-400 text-xs sm:text-sm">The range, spread and extremes of the whole salary column.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=AVERAGE</span>(<span class="arg">M2:M32000</span>) &nbsp;→&nbsp; <span class="arg">≈ 123,000</span></div>
+      <div class="formula mt-3"><span class="fn">=MIN</span>(<span class="arg">M2:M32000</span>) &nbsp;→&nbsp; <span class="arg">≈ 15,000</span> &nbsp;&nbsp;·&nbsp;&nbsp; <span class="fn">=MAX</span>(<span class="arg">M2:M32000</span>) &nbsp;→&nbsp; <span class="arg">≈ 960,000</span></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Function</th><th>On salary col M</th><th>Tells you</th></tr></thead>
+        <tbody>
+          <tr><td class="grp">AVERAGE</td><td class="result">123,000</td><td class="lookup">the mean (pulled up by high earners)</td></tr>
+          <tr><td class="grp">MIN</td><td class="result">15,000</td><td class="lookup">the lowest salary in the data</td></tr>
+          <tr><td class="grp">MAX</td><td class="result">960,000</td><td class="lookup">the highest — a big outlier</td></tr>
+        </tbody>
+      </table></div>
+      <div class="warn-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">Blanks are fine:</strong> unlike COUNT, SUM / AVERAGE / MIN / MAX simply skip empty cells — the "find blanks" logic of COUNTA is not relevant here.</p></div>
+    </div>
+  </section>
+
+  <!-- 8. AVERAGEIF -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">8</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">AVERAGEIF — Average per Job Title</h2><p class="text-gray-400 text-xs sm:text-sm">Criteria range, criteria, average range — then RANK the results.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=AVERAGEIF</span>(<span class="arg">A2:A32000</span>, <span class="arg">$W$2</span>, <span class="arg">M2:M32000</span>) <span class="text-gray-500">→ average salary for the title in W2</span></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Job title (W)</th><th>Average salary</th><th>Rank</th></tr></thead>
+        <tbody>
+          <tr><td class="lookup">Data Analyst</td><td class="m">93,000</td><td class="result">3</td></tr>
+          <tr><td class="lookup">Senior Data Scientist</td><td class="m">155,000</td><td class="result">1</td></tr>
+          <tr><td class="lookup">Business Analyst</td><td class="m">90,000</td><td class="result">4</td></tr>
+          <tr><td class="lookup">Data Scientist</td><td class="m">123,000</td><td class="result">2</td></tr>
+        </tbody>
+      </table></div>
+      <div class="formula mt-2"><span class="fn">=RANK.EQ</span>(<span class="arg">X2</span>, <span class="arg">$X$2:$X$11</span>) <span class="text-gray-500">→ rank of a salary against all titles (ref array MUST be F4-locked)</span></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">Lesson learned in the course:</strong> forgetting the <span class="fkey">F4</span> on the rank reference array gives repeated/wrong ranks. Lock the reference, leave the value free.</p></div>
+    </div>
+  </section>
+
+  <!-- 9. AVERAGE vs MEDIAN -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">9</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Why Average ≠ Median</h2><p class="text-gray-400 text-xs sm:text-sm">One crazy salary drags the average up. The median stays in the middle.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>M — salary_year_avg</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">1</td><td class="lookup">80,000</td></tr>
+          <tr><td class="rn">2</td><td class="lookup">95,000</td></tr>
+          <tr><td class="rn">3</td><td class="m">115,000 ← MEDIAN (middle)</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">130,000</td></tr>
+          <tr><td class="rn">5</td><td class="err">960,000 ← outlier</td></tr>
+        </tbody>
+      </table></div>
+      <div class="formula"><span class="fn">=AVERAGE</span>(<span class="arg">M1:M5</span>) &nbsp;→&nbsp; <span class="arg">276,000</span> &nbsp;&nbsp;·&nbsp;&nbsp; <span class="fn">=MEDIAN</span>(<span class="arg">M1:M5</span>) &nbsp;→&nbsp; <span class="arg">115,000</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Course verdict:</strong> the $960k outlier drags the average way up, so Luke <b>prefers the median</b> for salary analysis — "use the median when you can".</p></div>
+    </div>
+  </section>
+
+  <!-- 10. COMMON ERRORS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">10</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Common Errors</h2><p class="text-gray-400 text-xs sm:text-sm">The #VALUE! that trips everyone up.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Error</th><th>Why it happens</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td class="err">#VALUE!</td><td class="lookup">criteria range spans multiple columns</td><td class="m">one column per range</td></tr>
+          <tr><td class="err">#VALUE!</td><td class="lookup">criteria range &amp; sum range not aligned</td><td class="m">same size, same rows</td></tr>
+          <tr><td class="err">Wrong count</td><td class="lookup">COUNTIF added to COUNTIF instead of IFS</td><td class="m">use COUNTIFS</td></tr>
+          <tr><td class="err">Repeated ranks</td><td class="lookup">ref array not F4-locked</td><td class="m">lock $X$2:$X$11</td></tr>
+          <tr><td class="err">Off-by-one</td><td class="lookup">whole column includes the header</td><td class="m">subtract 1 / start at row 2</td></tr>
+        </tbody>
+      </table></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">Most common:</strong> selecting two columns as one criteria range. Excel can't test a multi-column range against a single criteria → <b class="text-amber-300">#VALUE!</b> Always check that every range is a single column.</p></div>
+    </div>
+  </section>
+
+  <!-- 11. CHEAT SHEET -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">11</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Quick Cheat Sheet</h2><p class="text-gray-400 text-xs sm:text-sm">Every formula and its result.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Formula</th><th>Result</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="form">=COUNT(M:M)</td><td class="result">~22,000</td><td class="lookup">salaries present (numbers)</td></tr>
+          <tr><td class="form">=COUNTA(A:A)</td><td class="result">~32,000</td><td class="lookup">all jobs (non-empty)</td></tr>
+          <tr><td class="form">=COUNTIF(K:K,$L$1)</td><td class="result">~25,000</td><td class="lookup">jobs in the US</td></tr>
+          <tr><td class="form">=COUNTIFS(A:A,$L$1,K:K,$L$2)</td><td class="result">~8,000</td><td class="lookup">Analyst AND US</td></tr>
+          <tr><td class="form">=SUM(M:M)</td><td class="result">total</td><td class="lookup">sum of all salaries</td></tr>
+          <tr><td class="form">=SUMIF(K:K,$L$1,M:M)</td><td class="result">US total</td><td class="lookup">sum range LAST</td></tr>
+          <tr><td class="form">=SUMIFS(M:M,A:A,$L$1,K:K,$L$2)</td><td class="result">Analyst+US</td><td class="lookup">SUM range FIRST</td></tr>
+          <tr><td class="form">=AVERAGE(M:M)</td><td class="result">~123,000</td><td class="lookup">mean (outliers pull up)</td></tr>
+          <tr><td class="form">=MEDIAN(M:M)</td><td class="result">~115,000</td><td class="lookup">the middle — prefer it</td></tr>
+          <tr><td class="form">=AVERAGEIF(A:A,$W$2,M:M)</td><td class="result">per title</td><td class="lookup">avg per job title</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Golden rule:</strong> COUNT = how many · SUM = how much · AVERAGE = how typical · MIN/MAX = how extreme. Add <b>IF</b> to filter one condition, <b>IFS</b> for many. Lock criteria cells with <span class="fkey">F4</span>.</p></div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-chart-simple mr-1 text-calc-500"></i> Aggregation Notes — COUNT · COUNTA · SUM · AVERAGE · MIN · MAX · COUNTIF(S) · SUMIF(S) · AVERAGEIF · MEDIAN · RANK</p>
+  </footer>
+
+</body>
+</html>

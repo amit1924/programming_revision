@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>One-to-Many · Many-to-One · Many-to-Many — Step-by-Step Revision | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.88rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.lookup{ background:#1f2c4a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #60a5fa; }
+    table.g td.result{ background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.err{ background:#3a1620; color:#fca5a5; font-weight:700; box-shadow:inset 0 0 0 2px #f87171; }
+    table.g td.grp{ background:#16234a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #3b82f6; }
+    table.g td.dim{ color:#475569; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .formula { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.9rem; color:#a3e635; overflow-x:auto; white-space:nowrap; }
+    .formula .arg { color:#fcd34d; } .formula .fn { color:#93c5fd; font-weight:600; }
+
+    .relrow { display:flex; align-items:center; gap:12px; font-family:'JetBrains Mono',monospace; flex-wrap:wrap; }
+    .relcard { flex:1 1 200px; max-width:280px; }
+    .relcard .box { border:2px solid #3b82f6; border-radius:12px; padding:10px 14px; background:#16234a; text-align:center; font-size:.72rem; color:#93c5fd; }
+    .relcard .box.fact { border-color:#fbbf24; background:#3a2816; color:#fcd34d; }
+    .relcard .box.dim { border-color:#56af3f; background:#16322a; color:#86efac; }
+    .relcard .t { font-size:.62rem; display:block; opacity:.7; }
+    .relbadge { text-align:center; padding:4px 10px; border-radius:99px; font-size:.7rem; font-weight:700; font-family:'JetBrains Mono',monospace; }
+    .relbadge.one { background:#16322a; color:#86efac; border:1px solid #56af3f; }
+    .relbadge.many { background:#16234a; color:#93c5fd; border:1px solid #3b82f6; }
+    .relbadge.hot { background:#3a2816; color:#fcd34d; border:1px solid #fbbf24; }
+    .relmid { display:flex; flex-direction:column; align-items:center; gap:4px; font-size:.72rem; color:#94a3b8; }
+    .relmid .line { width:60px; height:2px; background:#3b82f6; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:38px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-shuffle text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Excel — Relationship Cardinality (1:1 · 1:N · N:N)</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-arrows-left-right-to-line"></i><span>The "how many" of a relationship — the 1 and the ★ on the diagram line</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">One-to-Many · Many-to-One · Many-to-Many</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base"><b>Cardinality</b> describes how many rows of one table connect to rows of another. It decides how Excel filters and sums across tables in your data model — and whether your pivot table gives you correct answers or double-counted chaos.</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16322a;box-shadow:inset 0 0 0 2px #56af3f"></span> "one" side</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16234a;box-shadow:inset 0 0 0 2px #3b82f6"></span> "many" side</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a2816;box-shadow:inset 0 0 0 2px #fbbf24"></span> fact / result</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 1. WHAT IS CARDINALITY -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">What Is Cardinality?</h2><p class="text-gray-400 text-xs sm:text-sm">"Cardinal" = how many. It's the count of matching rows on each side of a relationship.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">THE CONCEPT</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Cardinality</th><th>Notation</th><th>One job has…</th><th>Real-life sound</th></tr></thead>
+        <tbody>
+          <tr><td class="m">One-to-One</td><td class="grp">1 : 1</td><td>exactly 1 detail row</td><td>Each employee has ONE passport</td></tr>
+          <tr><td class="m">One-to-Many</td><td class="grp">1 : N</td><td>many skill rows</td><td>One job → many skills</td></tr>
+          <tr><td class="m">Many-to-One</td><td class="grp">N : 1</td><td>—</td><td>Many jobs → one company</td></tr>
+          <tr><td class="err">Many-to-Many</td><td class="grp">N : N</td><td>many on both sides</td><td>Students ↔ Courses</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Easy read:</strong> read a diagram line from left to right. "1 : N" means one row on the left links to many rows on the right.</p></div>
+    </div>
+  </section>
+
+  <!-- 2. ONE-TO-ONE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">One-to-One (1 : 1)</h2><p class="text-gray-400 text-xs sm:text-sm">Each row in Table A matches EXACTLY one row in Table B — and vice versa.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Beautiful example — employee &amp; passport</p><p class="text-gray-400 text-xs">Every employee has ONE passport; every passport belongs to ONE employee.</p></div></div>
+        <div class="relrow mt-3">
+          <div class="relcard"><div class="box dim">employees<br><span class="t">emp_id (1) · name</span></div></div>
+          <div class="relmid"><span class="relbadge one">1</span><div class="line"></div><span class="relbadge one">1</span></div>
+          <div class="relcard"><div class="box dim">passports<br><span class="t">passport_id (1) · emp_id · issued</span></div></div>
+        </div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">The data</p><p class="text-gray-400 text-xs">No employee id appears twice in either table.</p></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="wrap"><table class="g"><thead><tr><th>emp_id</th><th>name</th></tr></thead><tbody>
+          <tr><td class="lookup">1</td><td>Amit</td></tr>
+          <tr><td class="lookup">2</td><td>Rahul</td></tr>
+          <tr><td class="lookup">3</td><td>Priya</td></tr>
+          </tbody></table></div>
+          <div class="wrap"><table class="g"><thead><tr><th>passport_id</th><th>emp_id</th><th>issued</th></tr></thead><tbody>
+          <tr><td>101</td><td class="lookup">1</td><td>2020</td></tr>
+          <tr><td>102</td><td class="lookup">2</td><td>2021</td></tr>
+          <tr><td>103</td><td class="lookup">3</td><td>2019</td></tr>
+          </tbody></table></div>
+        </div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Where you see it</p><p class="text-gray-400 text-xs">Rare in Excel models. Usually you just merge the two tables into one — a separate relationship adds nothing.</p></div></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i>Join kind: <strong class="text-emerald-300">Inner</strong> works perfectly — every row finds its pair.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 3. ONE-TO-MANY -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">One-to-Many (1 : N) — The Workhorse</h2><p class="text-gray-400 text-xs sm:text-sm">One row in Table A matches MANY rows in Table B. This is the most common relationship in real data.</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">MOST COMMON</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Beautiful example — one job, many skills</p><p class="text-gray-400 text-xs">job_id appears ONCE in the jobs table, but MANY times in the skills table.</p></div></div>
+        <div class="relrow mt-3">
+          <div class="relcard"><div class="box fact">data_jobs_salary<br><span class="t">job_id (1) · title · salary</span></div></div>
+          <div class="relmid"><span class="relbadge one">1</span><div class="line"></div><span class="relbadge many">★</span></div>
+          <div class="relcard"><div class="box dim">data_jobs_skills<br><span class="t">job_id (★) · skill</span></div></div>
+        </div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">The data — 10001 repeats on the many side</p><p class="text-gray-400 text-xs">Same job_id appears 3× because that job has 3 skills.</p></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="wrap"><table class="g"><thead><tr><th>job_id</th><th>title</th><th>salary</th></tr></thead><tbody>
+          <tr><td class="lookup">10001</td><td>Data Analyst</td><td class="result">85000</td></tr>
+          <tr><td class="lookup">10002</td><td>Data Engineer</td><td class="result">120000</td></tr>
+          </tbody></table></div>
+          <div class="wrap"><table class="g"><thead><tr><th>job_id</th><th>skill</th></tr></thead><tbody>
+          <tr><td class="lookup">10001</td><td>SQL</td></tr>
+          <tr><td class="lookup">10001</td><td>Python</td></tr>
+          <tr><td class="lookup">10001</td><td>Excel</td></tr>
+          <tr><td class="lookup">10002</td><td>Python</td></tr>
+          </tbody></table></div>
+        </div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Why the diagram matters</p><p class="text-gray-400 text-xs">The "1" side is where you filter FROM. Counting skills works because each skill row links back to its one job.</p></div></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-arrow-pointer text-calc-400 mr-1"></i>Filter "Data Analyst" → Excel counts <strong class="text-amber-300">3</strong> skills. That's the whole point of 1:N.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 4. MANY-TO-ONE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Many-to-One (N : 1) — Same Thing, Other Direction</h2><p class="text-gray-400 text-xs sm:text-sm">One-to-many looked from the other side. Nothing new to set up — it's the same line.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Beautiful example — many jobs, one company</p><p class="text-gray-400 text-xs">Many job rows point at the SAME company. From the company's view, that's "one company has many jobs".</p></div></div>
+        <div class="relrow mt-3">
+          <div class="relcard"><div class="box dim">companies<br><span class="t">company_id (1) · name · country</span></div></div>
+          <div class="relmid"><span class="relbadge one">1</span><div class="line"></div><span class="relbadge many">★</span></div>
+          <div class="relcard"><div class="box fact">jobs<br><span class="t">job_id (★) · company_id · title</span></div></div>
+        </div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">The data — Google appears on many job rows</p><p class="text-gray-400 text-xs">The company's name lives ONCE in companies; every job just stores company_id.</p></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="wrap"><table class="g"><thead><tr><th>company_id</th><th>name</th></tr></thead><tbody>
+          <tr><td class="lookup">1</td><td>Google</td></tr>
+          <tr><td class="lookup">2</td><td>TikTok</td></tr>
+          </tbody></table></div>
+          <div class="wrap"><table class="g"><thead><tr><th>job_id</th><th>company_id</th><th>title</th></tr></thead><tbody>
+          <tr><td>101</td><td class="lookup">1</td><td>Data Scientist</td></tr>
+          <tr><td>102</td><td class="lookup">1</td><td>Data Engineer</td></tr>
+          <tr><td>103</td><td class="lookup">2</td><td>Data Analyst</td></tr>
+          <tr><td>104</td><td class="lookup">1</td><td>ML Engineer</td></tr>
+          </tbody></table></div>
+        </div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">"N : 1" vs "1 : N"</p><p class="text-gray-400 text-xs">They're the SAME relationship, just described from opposite directions. In Excel/Power Pivot you always draw it as dim (1) → fact (many).</p></div></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-arrows-rotate text-calc-400 mr-1"></i>Companies (1) ⟷ jobs (many) = "many jobs to one company" = N : 1. Same line, different words.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 5. MANY-TO-MANY -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-red-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Many-to-Many (N : N) — Handle With Care</h2><p class="text-gray-400 text-xs sm:text-sm">Many rows in A match many rows in B — and back. It needs a BRIDGE table to stay healthy.</p></div>
+      <span class="ml-auto bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-xs hidden sm:inline">DANGEROUS</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Beautiful example — students &amp; courses</p><p class="text-gray-400 text-xs">A student takes many courses; a course has many students.</p></div></div>
+        <div class="relrow mt-3">
+          <div class="relcard"><div class="box dim">students<br><span class="t">student_id · name</span></div></div>
+          <div class="relmid"><span class="relbadge many">★</span><div class="line"></div><span class="relbadge many">★</span></div>
+          <div class="relcard"><div class="box dim">courses<br><span class="t">course_id · title</span></div></div>
+        </div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">The data — a mess if linked directly</p><p class="text-gray-400 text-xs">No column is unique on either side. A direct link can't decide how many rows match.</p></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div class="wrap"><table class="g"><thead><tr><th>student_id</th><th>name</th></tr></thead><tbody>
+          <tr><td>1</td><td>Amit</td></tr>
+          <tr><td>2</td><td>Rahul</td></tr>
+          </tbody></table></div>
+          <div class="wrap"><table class="g"><thead><tr><th>course_id</th><th>title</th></tr></thead><tbody>
+          <tr><td>101</td><td>Excel</td></tr>
+          <tr><td>102</td><td>Power Query</td></tr>
+          <tr><td>103</td><td>Power Pivot</td></tr>
+          </tbody></table></div>
+        </div>
+        <p class="text-gray-400 text-xs mt-2"><i class="fa-solid fa-question text-red-400 mr-1"></i>Who takes which course? Neither table knows — the "enrollment" link is missing.</p></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">The fix — a BRIDGE table between them</p><p class="text-gray-400 text-xs">enrollments holds the pairs (student_id + course_id). Now N:N becomes TWO clean 1:N relationships.</p></div></div>
+        <div class="relrow mt-3">
+          <div class="relcard"><div class="box dim">students<br><span class="t">student_id (1)</span></div></div>
+          <div class="relmid"><span class="relbadge one">1</span><div class="line"></div><span class="relbadge many">★</span></div>
+          <div class="relcard"><div class="box fact">enrollments<br><span class="t">student_id · course_id</span></div></div>
+          <div class="relmid"><span class="relbadge many">★</span><div class="line"></div><span class="relbadge one">1</span></div>
+          <div class="relcard"><div class="box dim">courses<br><span class="t">course_id (1)</span></div></div>
+        </div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>enrollment_id</th><th>student_id</th><th>course_id</th></tr></thead><tbody>
+        <tr><td>1</td><td class="lookup">1</td><td class="lookup">101</td></tr>
+        <tr><td>2</td><td class="lookup">1</td><td class="lookup">103</td></tr>
+        <tr><td>3</td><td class="lookup">2</td><td class="lookup">101</td></tr>
+        <tr><td>4</td><td class="lookup">2</td><td class="lookup">102</td></tr>
+        <tr><td>5</td><td class="lookup">2</td><td class="lookup">103</td></tr>
+        </tbody></table></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i>Now "Excel" (101) has <strong class="text-amber-300">2 students</strong>, and Amit takes <strong class="text-emerald-300">2 courses</strong>. No double counting!</p></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">The warning</p><p class="text-gray-400 text-xs">Excel can model N:N with bridge tables, but a raw N:N link (both sides ★) causes double counting and slow models.</p></div></div>
+        <div class="err-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-red-400 mr-1"></i><strong class="text-white">Rule:</strong> never draw a direct N:N line in Power Pivot. Always split it with a bridge table into two 1:N relationships.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 6. READING THE DIAGRAM -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Reading the Diagram View Symbols</h2><p class="text-gray-400 text-xs sm:text-sm">How Power Pivot draws cardinality on the relationship line.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Symbol</th><th>On the line</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="relbadge one">1</td><td>On the dimension side</td><td>Unique key — each row matches once</td></tr>
+          <tr><td class="relbadge many">★</td><td>On the fact side</td><td>Repeated key — each row matches many times</td></tr>
+          <tr><td class="relbadge hot">1 ⟷ ★</td><td>Whole line</td><td>One-to-many (the healthy default)</td></tr>
+          <tr><td class="relbadge hot">★ ⟷ ★</td><td>Whole line</td><td>Many-to-many (trouble — bridge it)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-magnifying-glass text-calc-400 mr-1"></i><strong class="text-white">Check this every time:</strong> open Diagram View and confirm the <b>1</b> sits on the dimension (unique) side and the <b>★</b> on the fact (repeated) side. If both sides show ★, your model has a problem.</p></div>
+    </div>
+  </section>
+
+  <!-- 7. CARDINALITY IN ACTION -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">7</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Cardinality in a Pivot Table — Proof</h2><p class="text-gray-400 text-xs sm:text-sm">The same 1:N job→skills model, and what correct vs wrong counting looks like.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Correct — count skills from the MANY side</p><p class="text-gray-400 text-xs">Count of job_skill from the skills table, grouped by job title. The 1:N line filters properly.</p></div></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>job_title_short</th><th>Count of job_skill</th></tr></thead>
+          <tbody>
+            <tr><td class="grp">Data Analyst</td><td class="result">3</td></tr>
+            <tr><td class="grp">Data Engineer</td><td class="result">2</td></tr>
+            <tr><td class="grp">Data Scientist</td><td class="result">2</td></tr>
+          </tbody>
+        </table></div>
+        <p class="text-gray-400 text-xs mt-2"><i class="fa-solid fa-check text-emerald-400 mr-1"></i>Each job shows its real skill count — the relationship is working.</p></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Wrong — filtering against the arrow</p><p class="text-gray-400 text-xs">Counting job_id from the WRONG side of the arrow gives the same total everywhere.</p></div></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>job_title_short</th><th>Count of job_id</th></tr></thead>
+          <tbody>
+            <tr><td class="grp">Data Analyst</td><td class="err">32672</td></tr>
+            <tr><td class="grp">Data Engineer</td><td class="err">32672</td></tr>
+            <tr><td class="grp">Data Scientist</td><td class="err">32672</td></tr>
+          </tbody>
+        </table></div>
+        <div class="warn-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">Same number in every row = classic cardinality/filter-direction bug.</strong> The arrow flows one way; the measure must sit on the side that respects it.</p></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Memory hook</p><p class="text-gray-400 text-xs">Dimensions "1" → filter. Facts "★" → count. Let the 1 side drive the filter, the ★ side hold the values.</p></div></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i>Filter from <strong class="text-emerald-300">1</strong>, measure on <strong class="text-lock-300">★</strong>. Break that and you'll see repeated totals.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 8. SUMMARY TABLE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">8</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">All Four in One Glance</h2><p class="text-gray-400 text-xs sm:text-sm">Cardinality, example, and Excel verdict.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Type</th><th>Notation</th><th>Example</th><th>In Excel?</th></tr></thead>
+        <tbody>
+          <tr><td class="m">One-to-One</td><td class="grp">1 : 1</td><td>employee ↔ passport</td><td class="m">✅ Rare — just merge</td></tr>
+          <tr><td class="m">One-to-Many</td><td class="grp">1 : N</td><td>job → many skills</td><td class="m">✅ Normal, healthy</td></tr>
+          <tr><td class="m">Many-to-One</td><td class="grp">N : 1</td><td>many jobs → company</td><td class="m">✅ Same as 1:N</td></tr>
+          <tr><td class="err">Many-to-Many</td><td class="grp">N : N</td><td>students ↔ courses</td><td class="err">⚠️ Needs a bridge table</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Golden rule:</strong> in Power Pivot you will almost always draw <b>1 : N</b> with the 1 on the dimension table. If you ever need N:N, insert a bridge table so it becomes two clean 1:N lines.</p></div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-shuffle mr-1 text-calc-500"></i> Cardinality Notes — 1:1 · 1:N · N:1 · N:N · Diagram View · Bridge Tables</p>
+  </footer>
+
+</body>
+</html>

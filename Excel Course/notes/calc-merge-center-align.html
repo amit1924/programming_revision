@@ -1,0 +1,710 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calc Merge & Center + Alignment | LibreOffice</title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          colors: {
+            calc: { 50: '#f4fbf2', 100: '#e3f5dc', 200: '#c8ecba', 300: '#a2dd8f', 400: '#79c963', 500: '#56af3f', 600: '#41902e', 700: '#357326', 800: '#2c5b22', 900: '#254b1e' }
+          }
+        }
+      }
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .cell-mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: #0f172a; }
+    .excel-grid {
+      border-collapse: collapse;
+      width: 100%;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.8rem;
+    }
+    .excel-grid th {
+      background: #1e293b;
+      color: #94a3b8;
+      font-weight: 500;
+      padding: 6px 12px;
+      border: 1px solid #334155;
+      text-align: center;
+      min-width: 80px;
+    }
+    .excel-grid td {
+      padding: 6px 12px;
+      border: 1px solid #334155;
+      text-align: center;
+      color: #e2e8f0;
+      background: #0f172a;
+    }
+    .excel-grid td.highlight {
+      background: #1d3329;
+      border-color: #56af3f;
+    }
+    .excel-grid td.merged {
+      background: #20401f;
+      border-color: #79c963;
+      color: #ffffff;
+      font-weight: 600;
+    }
+    .excel-grid .row-num {
+      color: #475569;
+      background: #1e293b;
+      font-weight: 500;
+      min-width: 30px;
+      text-align: center;
+    }
+    .excel-grid td.left { text-align: left; }
+    .excel-grid td.center { text-align: center; }
+    .excel-grid td.right { text-align: right; }
+    .section-card {
+      background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+      border: 1px solid #334155;
+      border-radius: 16px;
+      overflow: hidden;
+    }
+    .section-card:hover { border-color: #56af3f; }
+    .tip-box {
+      background: linear-gradient(135deg, #20381f, #0f172a);
+      border-left: 4px solid #56af3f;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .warn-box {
+      background: linear-gradient(135deg, #3b2f17, #0f172a);
+      border-left: 4px solid #f59e0b;
+      border-radius: 8px;
+      padding: 16px;
+    }
+    .shortcut-key {
+      display: inline-block;
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.75rem;
+      color: #a3e635;
+    }
+    .menu-path {
+      display: inline-block;
+      background: #1e293b;
+      border: 1px solid #475569;
+      border-radius: 4px;
+      padding: 2px 8px;
+      font-size: 0.75rem;
+      color: #86efac;
+      font-weight: 500;
+    }
+    .scrollbar-thin::-webkit-scrollbar { height: 6px; }
+    .scrollbar-thin::-webkit-scrollbar-track { background: #1e293b; border-radius: 3px; }
+    .scrollbar-thin::-webkit-scrollbar-thumb { background: #475569; border-radius: 3px; }
+    @media (max-width: 640px) {
+      .excel-grid { font-size: 0.65rem; }
+      .excel-grid th, .excel-grid td { padding: 4px 6px; min-width: 50px; }
+    }
+  </style>
+</head>
+<body class="dark">
+
+  <!-- NAV -->
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-calculator text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">LibreOffice Calc — Quick Notes</span>
+      </div>
+      <div class="flex items-center gap-2 sm:gap-4 text-xs sm:text-sm">
+        <span class="bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full font-medium flex items-center gap-1">
+          <i class="fa-solid fa-book-open"></i> Merge & Alignment
+        </span>
+        <span class="text-gray-500 hidden sm:inline">2 lessons</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- HERO -->
+  <header class="max-w-6xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-600/10 text-calc-300 px-4 py-1.5 rounded-full text-sm mb-4">
+      <i class="fa-solid fa-wand-magic-sparkles"></i>
+      <span>Tidy up your spreadsheet the easy way</span>
+    </div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">
+      <i class="fa-solid fa-object-group text-calc-400 mr-2"></i>
+      Merge & Center + Alignment
+    </h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">
+      Make a messy grid look professional — combine cells into one and line up your
+      text, numbers and titles just how you want them.
+    </p>
+    <div class="flex flex-wrap justify-center gap-2 mt-4">
+      <span class="bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-xs flex items-center gap-1">
+        <i class="fa-solid fa-clock text-calc-400"></i> Quick reference
+      </span>
+      <span class="bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-xs flex items-center gap-1">
+        <i class="fa-solid fa-list-check text-calc-400"></i> 2 sections
+      </span>
+      <span class="bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-xs flex items-center gap-1">
+        <i class="fa-solid fa-star text-calc-400"></i> Beginner friendly
+      </span>
+    </div>
+  </header>
+
+  <main class="max-w-6xl mx-auto px-4 pb-16 space-y-10">
+
+    <!-- ============================================================ -->
+    <!-- LESSON 1: MERGE & CENTER -->
+    <!-- ============================================================ -->
+    <section class="section-card">
+      <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+        <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+        <div>
+          <h2 class="text-white font-bold text-lg sm:text-xl">Merge &amp; Center Cells</h2>
+          <p class="text-gray-400 text-xs sm:text-sm">Combine multiple cells into one big title cell</p>
+        </div>
+      </div>
+      <div class="p-5 sm:p-8 space-y-6">
+
+        <!-- Why merge -->
+        <div>
+          <h3 class="text-calc-300 font-semibold text-base flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-question-circle"></i> What "Merge" Does
+          </h3>
+          <p class="text-gray-300 text-sm leading-relaxed">
+            Merging takes a <strong class="text-white">rectangle of cells</strong> (like <span class="cell-mono text-calc-300">A1:D1</span>) and joins them into
+            <strong class="text-white">one big cell</strong>. Perfect for a heading that stretches across several columns — just like a table title.
+          </p>
+          <p class="text-gray-400 text-sm leading-relaxed mt-2">
+            <i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i>
+            Only the <strong>upper-left cell</strong> keeps its content. Everything else (<span class="cell-mono">B1</span>, <span class="cell-mono">C1</span>, <span class="cell-mono">D1</span>) is emptied.
+          </p>
+        </div>
+
+        <!-- Before / After visual -->
+        <div>
+          <h3 class="text-calc-300 font-semibold text-base flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-arrows-left-right"></i> Before vs. After
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div>
+              <p class="text-gray-400 text-xs font-medium mb-2">BEFORE — four separate cells:</p>
+              <div class="overflow-x-auto scrollbar-thin">
+                <table class="excel-grid">
+                  <thead>
+                    <tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="row-num">1</td>
+                      <td class="left text-xs">Sales Report</td>
+                      <td></td>
+                      <td></td>
+                      <td></td>
+                    </tr>
+                    <tr>
+                      <td class="row-num">2</td>
+                      <td class="text-xs">Jan</td>
+                      <td class="text-xs">Feb</td>
+                      <td class="text-xs">Mar</td>
+                      <td class="text-xs">Total</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <div>
+              <p class="text-gray-400 text-xs font-medium mb-2">AFTER — <span class="cell-mono text-calc-300">A1:D1</span> merged &amp; centered:</p>
+              <div class="overflow-x-auto scrollbar-thin">
+                <table class="excel-grid">
+                  <thead>
+                    <tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td class="row-num">1</td>
+                      <td class="merged center text-xs" colspan="4">Sales Report</td>
+                    </tr>
+                    <tr>
+                      <td class="row-num">2</td>
+                      <td class="text-xs">Jan</td>
+                      <td class="text-xs">Feb</td>
+                      <td class="text-xs">Mar</td>
+                      <td class="text-xs">Total</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+              <div class="text-xs text-gray-500 mt-2 flex items-center gap-1">
+                <i class="fa-solid fa-arrow-right text-calc-400"></i> One centered heading across the columns.
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Method 1: Menu -->
+        <div class="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-6 h-6 rounded-full bg-calc-600 text-white text-xs flex items-center justify-center font-bold">1</span>
+            <span class="text-white font-medium text-sm">Quickest way — via the Menu</span>
+          </div>
+          <ol class="text-gray-400 text-sm space-y-2 mt-2">
+            <li>1. <strong class="text-white">Select the cells</strong> to merge (e.g. <span class="cell-mono text-calc-300">A1:D1</span>).</li>
+            <li>2. Go to <span class="menu-path">Format → Merge Cells → Merge and Center Cells</span>.</li>
+            <li>3. Done — the text is merged <em>and</em> centered in one step.</li>
+          </ol>
+          <div class="tip-box mt-3">
+            <p class="text-gray-300 text-sm">
+              <i class="fa-solid fa-lightbulb text-amber-400 mr-1"></i>
+              <strong class="text-white">Note:</strong> If your version only shows <span class="menu-path">Format → Merge Cells → Merge Cells</span>
+              (without the "Center" option), merge first, then center the text using the alignment tools in Lesson 2.
+            </p>
+          </div>
+        </div>
+
+        <!-- Method 2: Toolbar -->
+        <div class="bg-gray-800/30 rounded-lg p-4 border border-gray-700/50">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="w-6 h-6 rounded-full bg-calc-600 text-white text-xs flex items-center justify-center font-bold">2</span>
+            <span class="text-white font-medium text-sm">Via the Toolbar</span>
+          </div>
+          <ol class="text-gray-400 text-sm space-y-1 mt-2">
+            <li><span class="mr-1">1.</span> Select the cells to merge (e.g. <span class="cell-mono text-calc-300">A1:D1</span>).</li>
+            <li>
+              <span class="mr-1">2.</span> Click the <strong class="text-white">Merge Cells</strong> button
+              (<i class="fa-solid fa-table-cells-large text-calc-400"></i> it looks like two cells merging together).
+            </li>
+            <li><span class="mr-1">3.</span> Choose <strong class="text-white">Merge and Center Cells</strong> from its small dropdown if available.</li>
+          </ol>
+        </div>
+
+        <!-- Other merge options -->
+        <div>
+          <h3 class="text-calc-300 font-semibold text-base flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-layer-group"></i> Other Merge Options
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="menu-path">Merge Cells</span>
+              </div>
+              <p class="text-gray-400 text-xs mt-1">Joins the cells but <strong class="text-white">keeps horizontal alignment</strong> (doesn't center automatically).</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="menu-path">Merge and Center Cells</span>
+              </div>
+              <p class="text-gray-400 text-xs mt-1">Joins cells AND centers the content — the usual choice for titles.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="menu-path">Merge Cells in Rows</span>
+              </div>
+              <p class="text-gray-400 text-xs mt-1">Merges each selected row separately into one cell per row.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <div class="flex items-center gap-2 mb-1">
+                <span class="menu-path">Unmerge Cells</span>
+              </div>
+              <p class="text-gray-400 text-xs mt-1">Reverses the merge — splits the big cell back into separate cells (only top-left keeps the text).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Warning -->
+        <div class="warn-box">
+          <p class="text-gray-200 text-sm">
+            <i class="fa-solid fa-triangle-exclamation text-amber-400 mr-1"></i>
+            <strong class="text-white">Heads up!</strong> If the selected cells already contain data, LibreOffice will warn that
+            <strong class="text-amber-300">only the upper-left cell's content will be kept</strong>.
+            Click <span class="shortcut-key">Yes</span> only if that's really what you want — otherwise you'll lose the other cells' data.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- LESSON 2: ALIGNMENT SETTINGS -->
+    <!-- ============================================================ -->
+    <section class="section-card">
+      <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+        <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">2</div>
+        <div>
+          <h2 class="text-white font-bold text-lg sm:text-xl">Alignment Settings</h2>
+          <p class="text-gray-400 text-xs sm:text-sm">Position your text & numbers anywhere inside a cell</p>
+        </div>
+      </div>
+      <div class="p-5 sm:p-8 space-y-6">
+
+        <!-- Where to find it -->
+        <div>
+          <h3 class="text-calc-300 font-semibold text-base flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-magnifying-glass-location"></i> Where to Find It
+          </h3>
+          <p class="text-gray-300 text-sm leading-relaxed">
+            Select your cell(s) → <span class="menu-path">Format → Cells → Alignment</span>, or use the alignment buttons
+            straight from the toolbar.
+          </p>
+        </div>
+
+        <!-- Horizontal -->
+        <div>
+          <h3 class="text-calc-300 font-semibold text-base flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-arrow-right"></i> Horizontal Alignment
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Default</span>
+              <p class="text-gray-400 text-[11px] mt-1">Text goes left, numbers go right. The automatic behavior.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Center</span>
+              <p class="text-gray-400 text-[11px] mt-1">Centers content horizontally. Best for titles &amp; headers.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Right</span>
+              <p class="text-gray-400 text-[11px] mt-1">Aligns to the right — standard for numbers.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Left</span>
+              <p class="text-gray-400 text-[11px] mt-1">Aligns to the left — natural for plain text.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Justified</span>
+              <p class="text-gray-400 text-[11px] mt-1">Stretches text to reach both the left and right edges.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Filled / Distributed</span>
+              <p class="text-gray-400 text-[11px] mt-1">Repeats or evenly spaces the content across the whole cell.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vertical -->
+        <div>
+          <h3 class="text-calc-300 font-semibold text-base flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-arrow-down"></i> Vertical Alignment
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-3 gap-2">
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Top</span>
+              <p class="text-gray-400 text-[11px] mt-1">Content sits at the top of the cell.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Middle</span>
+              <p class="text-gray-400 text-[11px] mt-1">Centers vertically — looks best with headers &amp; titles.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-3 border border-gray-700">
+              <span class="text-white text-xs font-medium">Bottom</span>
+              <p class="text-gray-400 text-[11px] mt-1">Content at the bottom of the cell (the default).</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Text properties -->
+        <div>
+          <h3 class="text-calc-300 font-semibold text-base flex items-center gap-2 mb-3">
+            <i class="fa-solid fa-text-width"></i> Text Properties &amp; Orientation
+          </h3>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="fa-solid fa-rotate text-calc-400"></i>
+                <span class="text-white font-medium text-sm">Text Orientation</span>
+              </div>
+              <p class="text-gray-400 text-xs mt-1">Rotate text (e.g. 45°, 90°) or stack it vertically for narrow columns.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="fa-solid fa-text-height text-calc-400"></i>
+                <span class="text-white font-medium text-sm">Wrap Text Automatically</span>
+              </div>
+              <p class="text-gray-400 text-xs mt-1">Long text flows onto multiple lines inside the cell instead of spilling out.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="fa-solid fa-compress text-calc-400"></i>
+                <span class="text-white font-medium text-sm">Shrink to Cell Size</span>
+              </div>
+              <p class="text-gray-400 text-xs mt-1">Auto-reduces the font size so the text fits without wrapping.</p>
+            </div>
+            <div class="bg-gray-800/50 rounded-lg p-4 border border-gray-700">
+              <div class="flex items-center gap-2 mb-1">
+                <i class="fa-solid fa-indent text-calc-400"></i>
+                <span class="text-white font-medium text-sm">Indent</span>
+              </div>
+              <p class="text-gray-400 text-xs mt-1">Adds spacing before text when using left alignment — great for sub-items.</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Quick reference visual -->
+        <div class="overflow-x-auto scrollbar-thin">
+          <table class="excel-grid">
+            <thead>
+              <tr><th></th><th>A</th><th>B</th><th>C</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td class="row-num">1</td>
+                <td class="left">Left text</td>
+                <td class="center">Center text</td>
+                <td class="right">Right text</td>
+              </tr>
+              <tr>
+                <td class="row-num">2</td>
+                <td class="number right">5,000</td>
+                <td class="number center">5,000</td>
+                <td class="number left">5,000</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="text-xs text-gray-500">
+          <i class="fa-solid fa-info-circle text-calc-400"></i>
+           Row 1 shows text alignment (left / center / right). Row 2 shows that numbers usually look best right-aligned.
+        </div>
+      </div>
+    </section>
+
+    <!-- ============================================================ -->
+    <!-- INTERACTIVE SETTINGS STUDIO / CHEAT SHEET -->
+    <!-- ============================================================ -->
+    <section class="section-card">
+      <div class="bg-gradient-to-r from-amber-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+        <i class="fa-solid fa-star text-amber-400 text-lg"></i>
+        <h2 class="text-white font-bold text-lg">Most-Used Settings — Interactive Lab</h2>
+      </div>
+      <div class="p-5 sm:p-8">
+
+        <!-- Scenario preset buttons -->
+        <p class="text-gray-400 text-sm mb-3"><i class="fa-solid fa-hand-pointer text-calc-400 mr-1"></i> Click a scenario to instantly apply the recommended settings to the live sheet below:</p>
+        <div class="flex flex-wrap gap-2 mb-5" id="presetButtons">
+          <button onclick="applyPreset('title')" class="px-4 py-2 rounded-lg bg-calc-600 text-white text-xs font-semibold hover:bg-calc-500 transition shadow">🏷️ Title</button>
+          <button onclick="applyPreset('header')" class="px-4 py-2 rounded-lg bg-gray-700 text-gray-200 text-xs font-semibold hover:bg-gray-600 transition">📊 Table Header</button>
+          <button onclick="applyPreset('numbers')" class="px-4 py-2 rounded-lg bg-gray-700 text-gray-200 text-xs font-semibold hover:bg-gray-600 transition">🔢 Numbers</button>
+          <button onclick="applyPreset('text')" class="px-4 py-2 rounded-lg bg-gray-700 text-gray-200 text-xs font-semibold hover:bg-gray-600 transition">📝 Plain Text</button>
+          <button onclick="applyPreset('reset')" class="px-4 py-2 rounded-lg bg-gray-800 text-gray-400 text-xs font-semibold hover:bg-gray-700 transition">↺ Reset</button>
+        </div>
+
+        <div class="grid grid-cols-1 lg:grid-cols-5 gap-5">
+          <!-- LIVE SHEET PREVIEW -->
+          <div class="lg:col-span-3">
+            <p class="text-gray-400 text-xs font-medium mb-2"><i class="fa-solid fa-display text-calc-400 mr-1"></i> LIVE PREVIEW</p>
+            <div class="rounded-lg border border-gray-700 overflow-hidden bg-[#0f172a]">
+              <div class="bg-gray-800/60 px-3 py-1.5 flex items-center justify-between border-b border-gray-700/50">
+                <span class="text-gray-400 text-[10px] flex items-center gap-1"><i class="fa-solid fa-file-spreadsheet text-calc-400"></i> Sheet1</span>
+                <span class="text-gray-600 text-[10px]">Preview</span>
+              </div>
+              <div class="p-3 overflow-x-auto scrollbar-thin">
+                <table class="excel-grid" id="simTable">
+                  <tbody>
+                    <tr id="simTitleRow">
+                      <td class="row-num">1</td>
+                      <td id="simTitle" class="merged" colspan="4">Sales Report Q1</td>
+                    </tr>
+                    <tr>
+                      <td class="row-num">2</td>
+                      <td id="simH1">Product Name</td>
+                      <td id="simH2">Jan</td>
+                      <td id="simH3">Feb</td>
+                      <td id="simH4">Mar</td>
+                    </tr>
+                    <tr>
+                      <td class="row-num">3</td>
+                      <td id="d1" class="left">Widgets</td>
+                      <td id="n1">1,200</td>
+                      <td id="n2">1,450</td>
+                      <td id="n3">1,600</td>
+                    </tr>
+                    <tr>
+                      <td class="row-num">4</td>
+                      <td class="L left">Gadgets</td>
+                      <td id="n4">800</td>
+                      <td id="n5">950</td>
+                      <td id="n6">1,100</td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+            <!-- Custom toggles -->
+            <div class="mt-4 bg-gray-800/30 rounded-lg p-4 border border-gray-700/50">
+              <p class="text-gray-300 text-xs font-medium mb-3">🎛️ Tune it yourself</p>
+              <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+                <div>
+                  <p class="text-gray-500 text-[10px] mb-1">Horizontal</p>
+                  <div class="flex gap-1">
+                    <button onclick="setH('left')" class="px-2 py-1 rounded bg-gray-700 text-gray-300 text-[10px] hover:bg-gray-600" data-h="left">⟵</button>
+                    <button onclick="setH('center')" class="px-2 py-1 rounded bg-gray-700 text-gray-300 text-[10px] hover:bg-gray-600" data-h="center">↔</button>
+                    <button onclick="setH('right')" class="px-2 py-1 rounded bg-gray-700 text-gray-300 text-[10px] hover:bg-gray-600" data-h="right">⟶</button>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-[10px] mb-1">Vertical</p>
+                  <div class="flex gap-1">
+                    <button onclick="setV('top')" class="px-2 py-1 rounded bg-gray-700 text-gray-300 text-[10px] hover:bg-gray-600" data-v="top">↑</button>
+                    <button onclick="setV('middle')" class="px-2 py-1 rounded bg-gray-700 text-gray-300 text-[10px] hover:bg-gray-600" data-v="middle">↕</button>
+                    <button onclick="setV('bottom')" class="px-2 py-1 rounded bg-gray-700 text-gray-300 text-[10px] hover:bg-gray-600" data-v="bottom">↓</button>
+                  </div>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-[10px] mb-1">Bold</p>
+                  <button onclick="toggleBold()" id="boldBtn" class="px-3 py-1 rounded bg-gray-700 text-gray-300 text-[10px] hover:bg-gray-600">B</button>
+                </div>
+                <div>
+                  <p class="text-gray-500 text-[10px] mb-1">Title size</p>
+                  <button onclick="toggleSize()" id="sizeBtn" class="px-3 py-1 rounded bg-gray-700 text-gray-300 text-[10px] hover:bg-gray-600">18pt</button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- RECIPE PANEL -->
+          <div class="lg:col-span-2">
+            <p class="text-gray-400 text-xs font-medium mb-2"><i class="fa-solid fa-receipt text-amber-400 mr-1"></i> WHAT'S APPLIED <span id="recipeName" class="text-calc-300"></span></p>
+            <div class="bg-gray-900/50 rounded-lg p-4 border border-gray-700/50">
+              <ul id="recipeList" class="text-gray-300 text-sm space-y-3"></ul>
+              <div id="recipeHint" class="text-gray-500 text-xs mt-4 border-t border-gray-700/60 pt-3"></div>
+            </div>
+            <!-- The 4 presets as quick cards -->
+            <div class="grid grid-cols-2 gap-2 mt-4">
+              <div class="bg-calc-700/20 rounded-lg p-3 border border-calc-600/40">
+                <span class="text-white text-[11px] font-semibold">🏷️ Title</span>
+                <p class="text-gray-400 text-[10px] mt-1">Center · Middle · Merge · Bold · 14–18pt</p>
+              </div>
+              <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+                <span class="text-white text-[11px] font-semibold">📊 Header</span>
+                <p class="text-gray-400 text-[10px] mt-1">Center · Middle · Wrap · Bold</p>
+              </div>
+              <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+                <span class="text-white text-[11px] font-semibold">🔢 Numbers</span>
+                <p class="text-gray-400 text-[10px] mt-1">Right · Middle</p>
+              </div>
+              <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+                <span class="text-white text-[11px] font-semibold">📝 Text</span>
+                <p class="text-gray-400 text-[10px] mt-1">Left · Middle</p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </section>
+
+    <!-- FOOTER -->
+    <footer class="text-center text-gray-600 text-xs pt-4 border-t border-gray-800">
+      <p>notes made by amit</p>
+    </footer>
+
+  </main>
+
+<script>
+  /* ---------------- Settings Studio ---------------- */
+  var cfg = {
+    title: { h: 'center', v: 'middle', bold: true, big: true, merged: true },
+    head:  { h: 'center', v: 'middle', bold: true, wrap: false },
+    body:  { h: 'right',  v: 'middle', bold: false }
+  };
+  var active = { h: 'center', v: 'middle', bold: true, big: true, merged: true, wrap: false };
+  var group = 'title';
+
+  function $(id){ return document.getElementById(id); }
+
+  function render(){
+    var t = $('simTitle');
+    // title
+    t.colSpan = (active.merged ? 4 : 1);
+    t.style.fontWeight = active.bold ? '700' : '400';
+    t.style.fontSize = (active.big ? '1.15rem' : '0.8rem');
+    var tal = { left:'left', center:'center', right:'right' }[active.h];
+    t.className = 'merged';
+    t.classList.add(tal);
+    t.style.display = (active.merged ? '' : 'none');
+    // if not merged, show single title cell in A1, empty B-D already exist? title row has 1 td; switch to single td
+    // rebuild simply: always one td, toggle colspan
+    // headers
+    var nameEls = [$('simH1'),$('simH2'),$('simH3'),$('simH4')];
+    nameEls.forEach(function(c){
+      c.style.fontWeight = cfg.head.bold ? '700' : '400';
+      c.style.textAlign = {left:'left',center:'center',right:'right'}[cfg.head.h];
+      c.style.whiteSpace = cfg.head.wrap ? 'normal' : 'nowrap';
+    });
+    // body text col (col A rows 3,4): always left-aligned per spec
+    var bodyText = $('d1'); bodyText.style.textAlign='left';
+    // body numbers
+    ['n1','n2','n3','n4','n5','n6'].forEach(function(id){
+      var c=$(id);
+      c.style.fontWeight = cfg.body.bold ? '700' : '400';
+      c.style.textAlign = {left:'left',center:'center',right:'right'}[cfg.body.h];
+    });
+  }
+
+  function setH(h){ active.h=h; cfg[group].h=h; mark(); render(); }
+  function setV(v){ active.v=v; cfg[group].v=v; mark(); render(); }
+  function toggleBold(){ active.bold=!active.bold; cfg[group].bold=active.bold; mark(); render(); }
+  function toggleSize(){ active.big=!active.big; cfg.title.big=active.big; mark(); render(); }
+
+  function mark(){
+    markActive();
+    var recipe = $('recipeList'), name = $('recipeName'), hint = $('recipeHint');
+    var chips = [];
+    (function(){
+      var g = group;
+      var h = cfg[g].h, v = cfg[g].v, b = cfg[g].bold;
+      if (g==='title'){ chips.push('Merge across columns'); chips.push('Horizontal: '+h); chips.push('Vertical: '+v); chips.push('Bold: '+(b?'on':'off')); chips.push('Font: '+ (cfg.title.big?'14–18pt':'default')); hint.textContent='A big, bold, centered heading that spans the table. Set it once, no need to format each cell.'; name.textContent='— Title'; }
+      if (g==='head'){ chips.push('Horizontal: '+h); chips.push('Vertical: '+v); chips.push('Bold: '+(b?'on':'off')); chips.push('Wrap text: '+(cfg.head.wrap?'on':'off')); hint.textContent='Column labels. Keep them short and obvious, or wrap long ones so they stay readable.'; name.textContent='HEADER'; }
+      if (g==='body'){ chips.push('Horizontal: '+h); chips.push('Vertical: '+v); chips.push('Bold: '+(b?'on':'off')); hint.textContent='Numbers align right so the decimal points line up — much easier to scan. Plain words go left.'; name.textContent='BODY'; }
+      recipe.innerHTML = '';
+      chips.forEach(function(ch){
+        var li=document.createElement('li'); li.className='flex items-start gap-2';
+        li.innerHTML='<i class="fa-solid fa-circle-check text-calc-400 mt-0.5"></i><span>'+ch+'</span>';
+        recipe.appendChild(li);
+      });
+    })();
+  }
+
+  function markActive(){
+    document.querySelectorAll('[data-h]').forEach(function(b){
+      var on = b.getAttribute('data-h') === active.h;
+      b.classList.toggle('bg-calc-600', on); b.classList.toggle('text-white', on);
+      b.classList.toggle('bg-gray-700', !on); b.classList.toggle('text-gray-300', !on);
+    });
+    document.querySelectorAll('[data-v]').forEach(function(b){
+      var on = b.getAttribute('data-v') === active.v;
+      b.classList.toggle('bg-calc-600', on); b.classList.toggle('text-white', on);
+      b.classList.toggle('bg-gray-700', !on); b.classList.toggle('text-gray-300', !on);
+    });
+    $('boldBtn').classList.toggle('bg-calc-600', active.bold); $('boldBtn').classList.toggle('text-white', active.bold);
+    $('sizeBtn').textContent = (active.big ? '18pt' : '12pt');
+    $('sizeBtn').classList.toggle('bg-calc-600', active.big); $('sizeBtn').classList.toggle('text-white', active.big);
+  }
+
+  function applyPreset(p){
+    if (p==='reset'){
+      cfg.title={h:'center',v:'middle',bold:true,big:true,merged:true};
+      cfg.head={h:'center',v:'middle',bold:true,wrap:false};
+      cfg.body={h:'right',v:'middle',bold:false};
+      group='title'; active={h:'center',v:'middle',bold:true,big:true,merged:true,wrap:false};
+      mark(); render(); return;
+    }
+    if (p==='title'){ cfg.title={h:'center',v:'middle',bold:true,big:true,merged:true}; group='title'; loadActive(cfg.title,'title'); }
+    if (p==='header'){ cfg.head={h:'center',v:'middle',bold:true,wrap:true}; group='head'; loadActive(cfg.head,'head'); }
+    if (p==='numbers'){ cfg.body={h:'right',v:'middle',bold:false}; group='body'; loadActive(cfg.body,'body'); }
+    if (p==='text'){ cfg.body={h:'left',v:'middle',bold:false}; group='body'; loadActive(cfg.body,'body'); }
+  }
+  function loadActive(c,g){ active={h:c.h,v:c.v,bold:c.bold||false,big:c.big||cfg.title.big,merged:c.merged??cfg.title.merged,wrap:c.wrap||false}; mark(); }
+
+  // init
+  applyPreset('title');
+</script>
+</body>
+</html>

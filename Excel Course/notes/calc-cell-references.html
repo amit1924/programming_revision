@@ -1,0 +1,353 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Cell References — Step-by-Step Revision | LibreOffice Calc</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey, .shortcut-key { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.88rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.glock{ background:#16234a; color:#9ecbff; box-shadow:inset 0 0 0 2px #3b82f6; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .cell { border:1px solid #334155; background:#0f172a; color:#e2e8f0; text-align:right; padding:6px 8px; font-family:'JetBrains Mono',monospace; font-size:.8rem; min-width:64px; cursor:pointer; transition:background .12s; }
+    .cell.axis { background:#1e293b; color:#94a3b8; font-weight:500; text-align:center; min-width:30px; font-size:.7rem; cursor:default; }
+    .cell.lbl { color:#e2e8f0; font-weight:600; text-align:left; }
+    .cell.num { color:#60a5fa; }
+    .cell.form { color:#a3e635; }
+    .cell.blank { color:#334155; }
+    .cell.glocked { background:#16234a; color:#93c5fd; box-shadow:inset 0 0 0 1px #3b82f6; }
+    .cell.picked { outline:2px solid #79c963; outline-offset:-2px; }
+    .toast { transform:translateY(-6px); opacity:0; transition:all .25s; }
+    .toast.show { transform:translateY(0); opacity:1; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:38px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .cell{min-width:52px;padding:5px 6px;font-size:.72rem;} .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g,.cell{font-size:.62rem;} table.g th,table.g td,.cell{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-link text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">LibreOffice Calc — Cell References</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-lock-500/10 text-lock-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-shield-halved"></i><span>The $ sign decides what happens when you copy</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">Cell References</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">Every formula points at cells. When you copy it, does the pointer <b>move</b> (relative) or <b>stay stuck</b> (absolute)? See it on real rows, columns and cells below, one step at a time.</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16322a;box-shadow:inset 0 0 0 2px #79c963"></span> you select / copy</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16234a;box-shadow:inset 0 0 0 2px #3b82f6"></span> locked ($) cell</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#20401f;box-shadow:inset 0 0 0 2px #56af3f"></span> formula cell</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Step-by-Step: Relative references</h2><p class="text-gray-400 text-xs sm:text-sm">Goal: a price list where each row totals its own Qty × Price</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">PART 1</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Put numbers in B and C</p><p class="text-gray-400 text-xs">Fill Qty (B) and Price (C) for each product on rows 2–3.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Item</td><td>Qty</td><td>Price</td><td>Total</td></tr>
+        <tr><td class="rn">2</td><td>Apple</td><td class="h">5</td><td class="h">10</td><td></td></tr>
+        <tr><td class="rn">3</td><td>Banana</td><td>7</td><td>20</td><td></td></tr>
+        </tbody></table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Type the formula in D2</p><p class="text-gray-400 text-xs">Write <span class="fkey">=B2*C2</span> in <span class="fkey">D2</span>. It means "take B2 (5), multiply by C2 (10)". No <span class="fkey">$</span> signs → relative.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Item</td><td>Qty</td><td>Price</td><td>Total</td></tr>
+        <tr><td class="rn">2</td><td>Apple</td><td>5</td><td>10</td><td class="m">=B2*C2</td></tr>
+        <tr><td class="rn">3</td><td>Banana</td><td>7</td><td>20</td><td></td></tr>
+        </tbody></table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Copy D2 down to D3</p><p class="text-gray-400 text-xs">Grab the little square at D2's bottom-right corner and drag it down to D3.</p></div></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Watch it MOVE</p><p class="text-gray-400 text-xs">Because it's relative, everything shifted down one row: D3 auto-becomes <span class="fkey">=B3*C3</span> and shows 7×20=140. It "followed" the new row.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Item</td><td>Qty</td><td>Price</td><td>Total</td></tr>
+        <tr><td class="rn">2</td><td>Apple</td><td>5</td><td>10</td><td class="form">50</td></tr>
+        <tr><td class="rn">3</td><td>Banana</td><td>7</td><td>20</td><td class="m">=B3*C3</td></tr>
+        </tbody></table></div>
+        <div class="tip-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Rule:</strong> no <b>$</b> → the reference shifts with the position you copy to. This is usually exactly what you want for a column of numbers.</p></div></div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Step-by-Step: Absolute references ($)</h2><p class="text-gray-400 text-xs sm:text-sm">Goal: multiply EVERY row by the SAME rate locked in cell G2</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Put the constant rate in G2</p><p class="text-gray-400 text-xs">Type <span class="fkey">0.15</span> (15%) into <span class="fkey">G2</span> — the cell we must NEVER lose when copying.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>D</th><th>E</th><th></th><th>G</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Total</td><td>Tax</td><td></td><td>Rate</td></tr>
+        <tr><td class="rn">2</td><td>50</td><td class="m">=D2*$G$2</td><td></td><td class="glock">0.15</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Type <span class="fkey">=D2*$G$2</span> in the Tax cell (E2)</p><p class="text-gray-400 text-xs">The two <b>$</b> lock column G <b>and</b> row 2 → <span class="fkey">$G$2</span> can never move.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Copy it down to row 3</p><p class="text-gray-400 text-xs">Watch: <span class="fkey">D3</span> changed (relative, moved to D3) but <span class="fkey">$G$2</span> stays glued in place. That's the whole point of $.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>D</th><th>E</th><th></th><th>G</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Total</td><td>Tax</td><td></td><td>Rate</td></tr>
+        <tr><td class="rn">2</td><td>50</td><td class="form">7.5</td><td></td><td class="glock">0.15</td></tr>
+        <tr><td class="rn">3</td><td>140</td><td class="m">=D3*$G$2</td><td></td><td></td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">The bug if you FORGET the $</p><p class="text-gray-400 text-xs">Without $, copying makes it <span class="fkey text-red-300">=D3*G3</span> — but G3 is EMPTY, so the tax silently becomes 0. Story of many broken sheets!</p></div></div></div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-purple-700/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The F4 magic key</h2><p class="text-gray-400 text-xs sm:text-sm">While editing a reference, tap F4 to cycle all four forms — no typing</p></div>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div class="wrap"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+      <tr><td class="rn">1</td><td></td><td>Qty</td><td>Price</td><td>Total</td></tr>
+      <tr><td class="rn">2</td><td></td><td class="m">5</td><td class="m">10</td><td class="m">=B2*C2</td></tr></tbody></table></div>
+      <div class="flex flex-wrap items-center gap-2 mt-4">
+        <span class="fkey">B2</span><span class="text-gray-500 text-xs">→ F4 →</span>
+        <span class="fkey">$B$2</span><span class="text-gray-500 text-xs">→ F4 →</span>
+        <span class="fkey">B$2</span><span class="text-gray-500 text-xs">→ F4 →</span>
+        <span class="fkey">$B2</span><span class="text-gray-500 text-xs">→ F4 → back</span>
+      </div>
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-3 mt-4">
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700"><div class="text-white text-xs font-bold mb-1">B2</div><div class="text-gray-400 text-[11px]">Both move when copied</div></div>
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700"><div class="text-white text-xs font-bold mb-1">$B$2</div><div class="text-gray-400 text-[11px]">Both locked (constant)</div></div>
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700"><div class="text-white text-xs font-bold mb-1">B$2</div><div class="text-gray-400 text-[11px]">Row locked</div></div>
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700"><div class="text-white text-xs font-bold mb-1">$B2</div><div class="text-gray-400 text-[11px]">Column locked</div></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <i class="fa-solid fa-flask text-lock-400 text-xl"></i>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Interactive Lab — try it live</h2><p class="text-gray-400 text-xs sm:text-sm">Click cells to read their formula. Flip Tax between Absolute / Relative and watch the results.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-1 space-y-4">
+        <div class="bg-gray-900/60 rounded-xl border border-gray-700/50 p-4">
+          <p class="text-gray-300 text-xs font-semibold mb-3"><i class="fa-solid fa-equals text-lock-400 mr-1"></i> Tax uses</p>
+          <div class="flex gap-1">
+            <button id="btAbs" onclick="setM('abs')" class="flex-1 px-2 py-2 rounded-lg text-xs font-semibold transition">Absolute <span class="fkey">$G$2</span></button>
+            <button id="btRel" onclick="setM('rel')" class="flex-1 px-2 py-2 rounded-lg text-xs font-semibold transition">Relative <span class="fkey">G2</span></button>
+          </div>
+          <button id="btShow" onclick="toggleF()" class="mt-2 w-full px-2 py-2 rounded-lg bg-gray-800 text-gray-300 text-xs font-semibold hover:bg-gray-700"><i class="fa-solid fa-eye-slash mr-1"></i>Formulas</button>
+        </div>
+        <div class="bg-gray-900/60 rounded-xl border border-gray-700/50 p-4">
+          <p class="text-gray-400 text-xs mb-2">Cell formula bar</p>
+          <div class="flex items-center justify-between text-[11px] rounded-lg border border-gray-700/60 bg-gray-900/50 px-3 py-2">
+            <span id="statusLeft" class="text-gray-300">D2</span>
+            <span id="formulaBar" class="text-calc-300 ml-auto"></span>
+          </div>
+          <p id="mLegend" class="text-gray-500 text-[11px] mt-2"></p>
+        </div>
+      </div>
+      <div class="lg:col-span-2">
+        <div class="rounded-xl border border-gray-800 overflow-hidden bg-[#0f172a] shadow-2xl">
+          <div class="bg-gray-800/70 px-3 py-1.5 flex items-center gap-2 border-b border-gray-700"><i class="fa-solid fa-list-ol text-lock-400 text-xs"></i><span class="text-gray-300 text-xs">Product price list</span></div>
+          <div class="overflow-auto scrollbar-thin"><table id="sheet" class="border-separate" style="border-spacing:0"></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-amber-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800"><i class="fa-solid fa-star text-amber-400 text-lg"></i><h2 class="text-white font-bold text-lg">30-Second Cheat Sheet</h2></div>
+    <div class="p-5 sm:p-8 grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-share-nodes mr-1"></i>Relative</div><p class="text-gray-400 text-xs"><span class="fkey">A1</span> no $ — moves when copied. <em>Default.</em></p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-lock mr-1"></i>Absolute</div><p class="text-gray-400 text-xs"><span class="fkey">$A$1</span> never moves — constants.</p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-lock-open mr-1"></i>Mixed</div><p class="text-gray-400 text-xs"><span class="fkey">A$1</span> row · <span class="fkey">$A1</span> column.</p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-file mr-1"></i>Another sheet</div><p class="text-gray-400 text-xs"><span class="fkey">Budget!B5</span> / <span class="fkey">='My List'!B5</span></p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-vector-square mr-1"></i>A range</div><p class="text-gray-400 text-xs"><span class="fkey">A1:B5</span> · <span class="fkey">B:B</span> · <span class="fkey">2:2</span></p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-keyboard mr-1"></i>Cycle</div><p class="text-gray-400 text-xs"><span class="fkey">F4</span> walks all four forms.</p></div>
+    </div>
+  </section>
+
+  <footer class="text-center text-gray-600 text-xs pt-4 border-t border-gray-800"><p>notes made by amit</p></footer>
+  </main>
+
+  <div id="toast" class="toast fixed bottom-5 left-1/2 -translate-x-1/2 rounded-lg border border-calc-600/50 bg-[#0f172a] px-4 py-3 text-sm text-gray-200 shadow-2xl z-50"><i class="fa-solid fa-circle-info text-calc-400"></i> <span id="toastMsg"></span></div>
+  <script>
+
+    /* ============ state ============ */
+    var L = ['A','B','C','D','E','F','G'];
+    var MODE = 'abs';        // 'abs' | 'rel'
+    var showF = true;        // true = show formulas
+    var sel = { r:2, c:3 };  // starts on D2
+    var RATE = 0.15;
+    var DATA = [
+      null,
+      null,
+      { p:'Apple',  qty:5,  price:10 },
+      { p:'Banana', qty:7,  price:20 },
+      { p:'Carrot', qty:9,  price:15 },
+      { p:'Dates',  qty:11, price:16 }
+    ];
+    var TITLES = { 0:'Product', 1:'Qty', 2:'Price', 3:'Subtotal', 4:'Tax', 5:'Rate', 6:'' };
+
+    function $(id){ return document.getElementById(id); }
+    function rnd(n){ return Math.round(n*100)/100; }
+    function row(r){ return DATA[r]; }
+
+    function subtotal(r){ return row(r).qty * row(r).price; }
+    function rateAt(r){ return (r===2) ? RATE : 0; }            // only G2 holds the rate
+    function taxVal(r){
+      return subtotal(r) * (MODE==='abs' ? RATE : rateAt(r));
+    }
+
+    function taxFormula(r){ return '=D'+r+'*'+(MODE==='abs' ? '$G$2' : 'G'+r); }
+    function subFormula(r){ return '=B'+r+'*C'+r; }
+
+    function isNum(v){ return typeof v === 'number'; }
+
+    /* ------------ cell content ------------ */
+    function cellText(r,c){
+      if (r===1) return TITLES[c] || '';
+      if (c===0) return row(r).p;
+      if (c===1) return row(r).qty;
+      if (c===2) return row(r).price;
+      if (c===3) return showF ? subFormula(r) : rnd(subtotal(r));
+      if (c===4) return showF ? taxFormula(r) : rnd(taxVal(r));
+      if (c===6) return (r===2) ? RATE : '';
+      return '';
+    }
+
+    function cellClass(r,c){
+      var v = cellText(r,c);
+      var cls = 'cell';
+      if (c===0 && r>1) cls += ' lbl';
+      else if (isNum(v)) cls += ' num';
+      else if (showF && (c===3||c===4) && r>1) cls += ' form';
+      else if (v==='') cls += ' blank';
+      if (c===6 && r===2 && MODE==='abs') cls += ' glocked';
+      return cls;
+    }
+
+    /* ============ render ============ */
+    function render(){
+      var tb = $('sheet'); tb.innerHTML='';
+      var head = el('tr');
+      head.appendChild(el('td','cell axis',''));
+      for (var c=0;c<7;c++) head.appendChild(el('td','cell axis',L[c]));
+      tb.appendChild(head);
+      for (var r=1;r<=5;r++){
+        var tr = el('tr');
+        tr.appendChild(el('td','cell axis',String(r)));
+        for (var c=0;c<7;c++){
+          var txt = cellText(r,c);
+          var cls = cellClass(r,c);
+          if (r===sel.r && c===sel.c) cls += ' picked';
+          var td = el('td', cls, txt);
+          (function(rr,cc){ td.onclick = function(){ pick(rr,cc); }; })(r,c);
+          tr.appendChild(td);
+        }
+        tb.appendChild(tr);
+      }
+      $('mLegend').textContent = MODE==='abs'
+        ? 'Tax always multiplies by $G$2 — the flagged rate cell. Copy any row, result is always right.'
+        : 'Tax uses G2 on row 2, but G3/G4/G5 are EMPTY, so rows below come out as 0. That is the typical bug!';
+    }
+
+    function pick(r,c){ sel={r:r,c:c}; render();
+      $('statusLeft').textContent = L[c]+r;
+      $('formulaBar').textContent = formulaOf(r,c);
+    }
+
+    function formulaOf(r,c){
+      if (r===1) return (TITLES[c] ? TITLES[c] : '');
+      if (c===0) return '"'+row(r).p+'"';
+      if (c===1) return String(row(r).qty);
+      if (c===2) return String(row(r).price);
+      if (c===3) return subFormula(r);
+      if (c===4) return taxFormula(r);
+      if (c===6 && r===2) return String(RATE);
+      return '';
+    }
+
+    /* ============ helpers ============ */
+    function el(tag, cls, txt){ var e=document.createElement(tag); e.className=cls||''; e.textContent=(txt===undefined?'':txt); return e; }
+
+    /* ============ controls ============ */
+    function setM(m){
+      MODE = m;
+      var a=$('btAbs'), b=$('btRel');
+      a.className = 'flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition ' + (m==='abs'?'bg-calc-600 text-white':'bg-gray-700 text-gray-200');
+      b.className = 'flex-1 px-3 py-2 rounded-lg text-xs font-semibold transition ' + (m==='rel'?'bg-calc-600 text-white':'bg-gray-700 text-gray-200');
+      render();
+      toast('Tax formula is now '+(m==='abs' ? 'ABSOLUTE ($G$2)' : 'RELATIVE (G-row)'));
+    }
+    function toggleF(){
+      showF = !showF;
+      $('btShow').innerHTML = showF
+        ? '<i class="fa-solid fa-eye-slash mr-1"></i>Hide formulas'
+        : '<i class="fa-solid fa-eye mr-1"></i>Show formulas';
+      render();
+    }
+
+    /* F4 panel */
+    var F4MAP = {
+      rel:['=C5','Both the column (B→C) and the row (2→5) moved with the drag.'],
+      abs:['=$B$5','Fully locked — still points at B2 (shown as B5 here). Copy it anywhere and it never changes.'],
+      row:['=C$5','Row locked (2): column B slid to C, row stays 5.'],
+      col:['=$B5','Column locked (B) — row slid 2→5.']
+    };
+    function f4wrap(k){
+      var o = F4MAP[k];
+      $('f4big').textContent = o[0];
+      $('f4note').textContent = o[1];
+      $('f4big').classList.remove('popin'); void $('f4big').offsetWidth; $('f4big').classList.add('popin');
+      toast('F4 → ' + o[0]);
+    }
+
+    function toast(m){
+      var t=$('toast'); $('toastMsg').textContent=m;
+      t.classList.remove('show'); void t.offsetWidth; t.classList.add('show');
+      setTimeout(function(){ t.classList.remove('show'); },2500);
+    }
+
+    /* init */
+    setM('abs');
+    pick(2,3);   // select D2 first so the user sees a formula immediately
+  
+  </script>
+</body>
+</html>

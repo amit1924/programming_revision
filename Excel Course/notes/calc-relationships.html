@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Connecting Two Tables &amp; Relationships — Step-by-Step Revision | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.88rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.lookup{ background:#1f2c4a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #60a5fa; }
+    table.g td.result{ background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.err{ background:#3a1620; color:#fca5a5; font-weight:700; box-shadow:inset 0 0 0 2px #f87171; }
+    table.g td.grp{ background:#16234a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #3b82f6; }
+    table.g td.dim{ color:#475569; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .formula { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.9rem; color:#a3e635; overflow-x:auto; white-space:nowrap; }
+    .formula .arg { color:#fcd34d; } .formula .fn { color:#93c5fd; font-weight:600; }
+
+    .venn { display:flex; align-items:center; gap:10px; font-family:'JetBrains Mono',monospace; }
+    .venn .set { width:64px; height:64px; border-radius:99px; display:flex; align-items:center; justify-content:center; font-size:.65rem; font-weight:700; border:2px solid; }
+    .venn .set-a { background:#20401f; border-color:#56af3f; color:#86efac; }
+    .venn .set-b { background:#3a2816; border-color:#fbbf24; color:#fcd34d; }
+    .venn .set-both { background:#16322a; border-color:#79c963; color:#a3e635; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:38px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-link text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Excel — Connecting Two Tables &amp; Relationships</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-diagram-project"></i><span>Give two tables a shared key, and they can talk to each other</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">Connecting Two Tables</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">Real data lives in separate tables. To combine them you give them a <b>shared key column</b>, then either <b>merge</b> them (Power Query joins) or <b>relate</b> them (Power Pivot data model). This is how you analyze across tables without VLOOKUPing everything.</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#1f2c4a;box-shadow:inset 0 0 0 2px #60a5fa"></span> shared key / match</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a2816;box-shadow:inset 0 0 0 2px #fbbf24"></span> joined / related result</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a1620;box-shadow:inset 0 0 0 2px #f87171"></span> no match / problem</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 1. THE TWO TABLES -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Real Problem — Two Tables, One Story</h2><p class="text-gray-400 text-xs sm:text-sm">Jobs live in one table, skills live in another. They share a key: job_id.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">START HERE</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <p class="text-white text-sm font-bold mb-2 flex items-center gap-2"><i class="fa-solid fa-table-list text-calc-400"></i> Table A — data_jobs_salary</p>
+          <div class="wrap"><table class="g"><thead><tr><th>job_id</th><th>job_title_short</th><th>salary_year_avg</th></tr></thead><tbody>
+            <tr><td class="lookup">10001</td><td>Data Analyst</td><td>85000</td></tr>
+            <tr><td class="lookup">10002</td><td>Data Engineer</td><td>120000</td></tr>
+            <tr><td class="lookup">10003</td><td>Data Scientist</td><td>150000</td></tr>
+            <tr><td class="lookup">10004</td><td>Data Analyst</td><td>40000</td></tr>
+          </tbody></table></div>
+        </div>
+        <div>
+          <p class="text-white text-sm font-bold mb-2 flex items-center gap-2"><i class="fa-solid fa-table-list text-lock-400"></i> Table B — data_jobs_skills</p>
+          <div class="wrap"><table class="g"><thead><tr><th>job_id</th><th>job_skill</th></tr></thead><tbody>
+            <tr><td class="lookup">10001</td><td>SQL</td></tr>
+            <tr><td class="lookup">10001</td><td>Python</td></tr>
+            <tr><td class="lookup">10001</td><td>Excel</td></tr>
+            <tr><td class="lookup">10002</td><td>Python</td></tr>
+            <tr><td class="lookup">10002</td><td>Spark</td></tr>
+            <tr><td class="lookup">10003</td><td>SQL</td></tr>
+            <tr><td class="lookup">10003</td><td>Machine Learning</td></tr>
+            <tr><td class="lookup">10005</td><td>Power BI</td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-key text-calc-400 mr-1"></i><strong class="text-white">The shared key:</strong> <span class="fkey">job_id</span> appears in BOTH tables. Table A has it once per job (unique); Table B has it many times (one row per skill). That key is the bridge.</p></div>
+      <div class="warn-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">Notice:</strong> job 10004 has <b>no skills</b>, and skill row 10005 has <b>no salary</b>. These gaps matter when we join.</p></div>
+    </div>
+  </section>
+
+  <!-- 2. KEYS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Primary Key vs Foreign Key</h2><p class="text-gray-400 text-xs sm:text-sm">Two roles for the same shared column.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th></th><th>Primary Key</th><th>Foreign Key</th></tr></thead>
+        <tbody>
+          <tr><td>Where</td><td class="grp">Table A (jobs)</td><td>Table B (skills)</td></tr>
+          <tr><td>Values</td><td>UNIQUE — each id appears once</td><td>REPEATED — the same id appears many times</td></tr>
+          <tr><td>Job</td><td>Identifies each row</td><td>Points back to Table A's row</td></tr>
+          <tr><td>Example</td><td class="lookup">10002</td><td class="lookup">10002 → two skill rows</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Memory:</strong> the primary key is the "home address" (unique), the foreign key is a "friend's pointer" to that address (repeats).</p></div>
+    </div>
+  </section>
+
+  <!-- 3. WAY 1 - LOOKUPS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Way 1 — Lookup Formulas (XLOOKUP)</h2><p class="text-gray-400 text-xs sm:text-sm">The manual bridge: fetch a value from another table, row by row.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">ONE SHEET</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Add a column to the skills table</p><p class="text-gray-400 text-xs">For each skill row, look up its job's title in Table A.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>job_id</th><th>job_skill</th><th>job_title_short (added)</th></tr></thead><tbody>
+        <tr><td class="lookup">10001</td><td>SQL</td><td class="result">Data Analyst</td></tr>
+        <tr><td class="lookup">10001</td><td>Python</td><td class="result">Data Analyst</td></tr>
+        <tr><td class="lookup">10003</td><td>SQL</td><td class="result">Data Scientist</td></tr>
+        <tr><td class="lookup">10005</td><td>Power BI</td><td class="err">#N/A</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">The formula in the new column</p><p class="text-gray-400 text-xs">Search job_id in Table A, return job_title_short. Missing ids give #N/A → wrap in IFERROR.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=IFERROR</span>(<span class="fn">XLOOKUP</span>(<span class="arg">A2</span>, <span class="arg">jobs[job_id]</span>, <span class="arg">jobs[job_title_short]</span>), <span class="arg">"No job"</span>)</div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">The catch</p><p class="text-gray-400 text-xs">One formula per row. Great for a small table; painful for 170,000 rows.</p></div></div>
+        <div class="warn-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">When lookups are right:</strong> adding ONE column from a reference table. <strong class="text-white">When they're wrong:</strong> building a whole combined dataset — that's Power Query's job.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 4. WAY 2 - POWER QUERY MERGE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Way 2 — Power Query Merge (Joins)</h2><p class="text-gray-400 text-xs sm:text-sm">Merge two queries on job_id and CHOOSE what to keep. Power Query <b>combines</b> the tables into one.</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">POWER QUERY</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Merge Queries as New</p><p class="text-gray-400 text-xs">Power Query Editor → Home → <span class="fkey">Merge Queries</span> → <span class="fkey">as New</span>. Pick the two queries and the matching column (job_id).</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Choose a Join Kind</p><p class="text-gray-400 text-xs">This decides which rows survive. The shaded area in each circle = what's kept.</p></div></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>Join Kind</th><th>Visual</th><th>Keeps</th><th>Count (jobs: 4, skills: 8)</th></tr></thead>
+          <tbody>
+            <tr><td class="grp">Left Outer</td><td><div class="venn"><span class="set set-a">A</span><span class="set set-both">A∩B</span><span class="set set-b dim">B</span></div></td><td>All of A, matches of B</td><td class="m">8 rows (all 4 jobs, skills where they exist)</td></tr>
+            <tr><td class="grp">Right Outer</td><td><div class="venn"><span class="set set-a dim">A</span><span class="set set-both">A∩B</span><span class="set set-b">B</span></div></td><td>All of B, matches of A</td><td>8 rows (all skills, even 10005's missing job)</td></tr>
+            <tr><td class="grp">Full Outer</td><td><div class="venn"><span class="set set-a">A</span><span class="set set-both">A∩B</span><span class="set set-b">B</span></div></td><td>Everything from both</td><td class="m">9 rows (missing sides become null)</td></tr>
+            <tr><td class="grp">Inner</td><td><div class="venn"><span class="set set-a dim">A</span><span class="set set-both">A∩B</span><span class="set set-b dim">B</span></div></td><td>Only matching rows</td><td>7 rows (no skill-less job, no job-less skill)</td></tr>
+            <tr><td class="grp">Left Anti</td><td><div class="venn"><span class="set set-a">A</span><span class="set set-both dim">A∩B</span><span class="set set-b dim">B</span></div></td><td>Only A rows with NO match</td><td>1 row (job 10004, no skills)</td></tr>
+            <tr><td class="grp">Right Anti</td><td><div class="venn"><span class="set set-a dim">A</span><span class="set set-both dim">A∩B</span><span class="set set-b">B</span></div></td><td>Only B rows with NO match</td><td>1 row (skill 10005, no job)</td></tr>
+          </tbody>
+        </table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Expand the table column</p><p class="text-gray-400 text-xs">After merging you get a nested Table column. Click the expand icon, tick the columns you want (e.g. job_skill), and Power Query repeats the job_id rows for each skill.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>job_id</th><th>job_title_short</th><th>salary_year_avg</th><th>job_skill</th></tr></thead><tbody>
+        <tr><td class="lookup">10001</td><td>Data Analyst</td><td>85000</td><td class="result">SQL</td></tr>
+        <tr><td class="lookup">10001</td><td>Data Analyst</td><td>85000</td><td class="result">Python</td></tr>
+        <tr><td class="lookup">10001</td><td>Data Analyst</td><td>85000</td><td class="result">Excel</td></tr>
+        <tr><td class="lookup">10002</td><td>Data Engineer</td><td>120000</td><td class="result">Python</td></tr>
+        <tr><td class="lookup">10002</td><td>Data Engineer</td><td>120000</td><td class="result">Spark</td></tr>
+        <tr><td class="lookup">10003</td><td>Data Scientist</td><td>150000</td><td class="result">SQL</td></tr>
+        <tr><td class="lookup">10003</td><td>Data Scientist</td><td>150000</td><td class="result">Machine Learning</td></tr>
+        </tbody></table></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i>Inner join → 7 rows. 10001's job data is repeated 3× because it has 3 skills. That's normal in a merged table.</p></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Choosing the join</p><p class="text-gray-400 text-xs">In the course's dataset: a <b>left outer</b> join gave 170,000 rows; an <b>inner</b> join gave 167,000 (dropping the 3,000 jobs that had no skills). Both were valid — it depends on whether you want to keep the empty jobs.</p></div></div>
+        <div class="err-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-circle-info text-red-400 mr-1"></i><strong class="text-white">Rule of thumb:</strong> keep everything from the "main" table → Left Outer. Only complete matches → Inner.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 5. WAY 3 - DATA MODEL RELATIONSHIP -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Way 3 — Data Model Relationship (Power Pivot)</h2><p class="text-gray-400 text-xs sm:text-sm">Don't merge — just DRAW A LINE between the tables. They stay separate; Excel knows they're connected.</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">POWER PIVOT</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Add both tables to the Data Model</p><p class="text-gray-400 text-xs">Power Pivot tab → <span class="fkey">Add to Data Model</span> (or tick it when importing). Both tables now live in the model.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Open Diagram View and drag the key</p><p class="text-gray-400 text-xs">Power Pivot → <span class="fkey">Manage</span> → <span class="fkey">Diagram View</span>. Drag job_id from one table onto job_id in the other. A line appears.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>data_jobs_salary</th><th>↔</th><th>data_jobs_skills</th></tr></thead><tbody>
+        <tr><td class="grp">job_id (1)</td><td class="m">⟷ linked ⟷</td><td class="grp">job_id (many)</td></tr>
+        <tr><td>job_title_short</td><td></td><td>job_skill</td></tr>
+        <tr><td>salary_year_avg</td><td></td><td></td></tr>
+        </tbody></table></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i>The line shows a <strong class="text-lock-300">1</strong> on one side and a <strong class="text-lock-300">★</strong> (many) on the other → a <b>one-to-many</b> relationship.</p></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Use it in a Pivot Table</p><p class="text-gray-400 text-xs">Insert Pivot Table → <span class="fkey">Use this workbook's Data Model</span>. Now drag job_title_short from one table into Rows, and job_skill from the OTHER table into Values — they count together automatically.</p></div></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>job_title_short</th><th>Count of job_skill</th></tr></thead>
+          <tbody>
+            <tr><td class="grp">Data Analyst</td><td class="result">3</td></tr>
+            <tr><td class="grp">Data Engineer</td><td class="result">2</td></tr>
+            <tr><td class="grp">Data Scientist</td><td class="result">2</td></tr>
+          </tbody>
+        </table></div>
+        <p class="text-gray-400 text-xs mt-2">Counts skills per job across two separate tables — no VLOOKUP, no merge, just the relationship.</p></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Filtering flows ONE way — the arrow</p><p class="text-gray-400 text-xs">The arrow on the line shows which table can filter the other. Filtering flows from the "1" side to the "many" side.</p></div></div>
+        <div class="warn-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">Gotcha:</strong> if you drag job_id from the SKILLS table into a measure, the arrow may not flow that way — you'll count 32,672 (all jobs) instead of per-skill counts. In Excel you can't flip the direction (Power BI can).</p></div></div>
+    </div>
+  </section>
+
+  <!-- 6. RELATIONSHIP TYPES -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Relationship Types — 1:1, 1:many, many:many</h2><p class="text-gray-400 text-xs sm:text-sm">The "1" and "★" on the diagram tell you which type you have.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Type</th><th>Means</th><th>Example</th><th>OK?</th></tr></thead>
+        <tbody>
+          <tr><td class="m">One to One</td><td>Each key appears once in BOTH tables</td><td>jobs ↔ job_details</td><td class="m">✅ Fine</td></tr>
+          <tr><td class="m">One to Many</td><td>Key once in A, many times in B</td><td>jobs ↔ skills (one job, many skills)</td><td class="m">✅ Most common</td></tr>
+          <tr><td class="err">Many to Many</td><td>Key repeats in BOTH tables</td><td>skills ↔ companies</td><td class="err">⚠️ Avoid — slow, messy</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Expect to see:</strong> mostly one-to-many. Many-to-many slows the model down and causes double-counting — restructure instead.</p></div>
+    </div>
+  </section>
+
+  <!-- 7. WHICH WAY WHEN -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">7</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Which Way When?</h2><p class="text-gray-400 text-xs sm:text-sm">Three tools, three different goals.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Goal</th><th>Use</th><th>Tables stay separate?</th></tr></thead>
+        <tbody>
+          <tr><td>Add ONE column from another table</td><td class="m">XLOOKUP</td><td>Yes (in-place)</td></tr>
+          <tr><td>Build ONE combined table for analysis</td><td class="m">Power Query Merge</td><td>No — merged into one</td></tr>
+          <tr><td>Query across tables in Pivot Tables, no merge</td><td class="m">Data Model Relationship</td><td>Yes — just linked</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Short version:</strong> formulas = small reference lookups · merge = make one big table · relationship = keep tables and draw a line.</p></div>
+    </div>
+  </section>
+
+  <!-- 8. COMMON PITFALLS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-red-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center text-white font-bold text-sm">8</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Common Pitfalls</h2><p class="text-gray-400 text-xs sm:text-sm">What goes wrong when you connect tables.</p></div>
+      <span class="ml-auto bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-xs hidden sm:inline">DANGER ZONE</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Symptom</th><th>Cause</th><th>Fix</th></tr></thead>
+        <tbody>
+          <tr><td class="err">Duplicated values in the pivot</td><td>Relationship missing / wrong key</td><td>Recreate the link on the right key</td></tr>
+          <tr><td class="err">Same number in every row</td><td>Filter direction: measure on the wrong table</td><td>Use a DAX measure / correct direction</td></tr>
+          <tr><td class="err">Rows missing after merge</td><td>Wrong join kind (e.g. Inner dropped empty jobs)</td><td>Switch to Left Outer to keep them</td></tr>
+          <tr><td class="err">Double counting</td><td>Many-to-many relationship</td><td>Restructure with a bridge table</td></tr>
+          <tr><td class="err">Keys that look the same but don't match</td><td>One is text "10001", other is number 10001</td><td>Fix the data types</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-circle-check text-calc-400 mr-1"></i><strong class="text-white">Test:</strong> if Excel pops up "relationships between tables may be needed", let it autodetect — but always double-check the arrow direction and the key in Diagram View.</p></div>
+    </div>
+  </section>
+
+  <!-- 9. CHEAT SHEET -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">9</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Quick Cheat Sheet</h2><p class="text-gray-400 text-xs sm:text-sm">Key words and where things live.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">MEMORIZE</span>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Term / Action</th><th>Meaning / Where</th></tr></thead>
+        <tbody>
+          <tr><td class="form">Shared key</td><td>The column present in both tables (e.g. job_id)</td></tr>
+          <tr><td class="form">Primary key</td><td>Unique id on the "1" side</td></tr>
+          <tr><td class="form">Foreign key</td><td>Repeated id on the "many" side</td></tr>
+          <tr><td class="form">Merge Queries</td><td>Power Query Editor · Home → Merge</td></tr>
+          <tr><td class="form">Join kinds</td><td>Left/Right/Full Outer · Inner · Left/Right Anti</td></tr>
+          <tr><td class="form">Add to Data Model</td><td>Power Pivot tab · or Data tab when importing</td></tr>
+          <tr><td class="form">Diagram View</td><td>Power Pivot → Manage → Diagram View</td></tr>
+          <tr><td class="form">1 ⟷ ★</td><td>One-to-many relationship (normal)</td></tr>
+          <tr><td class="form">Arrow direction</td><td>Which table filters the other (1 side → many side)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box mt-4"><p class="text-gray-300 text-xs"><i class="fa-solid fa-link text-calc-400 mr-1"></i><strong class="text-white">Remember:</strong> connect tables on ONE shared key → either merge them (Power Query) or relate them (Power Pivot) → check the arrow in Diagram View → query across tables with a Pivot Table.</p></div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-link mr-1 text-calc-500"></i> Connecting Tables Notes — Keys · Merge Joins · Data Model Relationships · Pitfalls</p>
+  </footer>
+
+</body>
+</html>

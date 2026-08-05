@@ -1,0 +1,388 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Combine, Join & Consolidate — Step-by-Step | LibreOffice Calc</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .fkey, .shortcut-key { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .mpath { display:inline-block; background:#1e293b; border:1px solid #475569; border-radius:5px; padding:2px 8px; font-size:.72rem; color:#86efac; font-weight:600; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2323,#0f172a); border-left:4px solid #ef4444; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.82rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.7rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:left; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; text-align:center; min-width:24px; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:600; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.ghost{ color:#94a3b8; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .tbtn { border:1px solid #334155; background:#0f172a; color:#cbd5e1; border-radius:8px; padding:6px 10px; font-size:.72rem; font-family:'JetBrains Mono',monospace; cursor:pointer; transition:all .12s; }
+    .tbtn:hover { border-color:#56af3f; color:#fff; }
+    .tbtn.on { background:#56af3f; color:#06210a; font-weight:700; border-color:#56af3f; }
+    select, input { outline:none; }
+    .outcell { background:#0f172a; border:1px solid #334155; border-radius:8px; padding:10px 12px; }
+
+    @media (max-width:640px){
+      table.g{font-size:.68rem;} table.g th,table.g td{min-width:40px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;} header h1{font-size:1.85rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.6rem;} table.g th,table.g td{min-width:34px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-link text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Combine, Join &amp; Consolidate</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+    <div class="max-w-7xl mx-auto px-4 pb-1 flex gap-1.5 overflow-x-auto scrollbar-thin text-[11px]">
+      <a href="#fill" class="px-3 py-1.5 bg-[#1e293b] text-gray-300 rounded-md whitespace-nowrap">1 Auto-Fill</a>
+      <a href="#concat" class="px-3 py-1.5 bg-[#1e293b] text-gray-300 rounded-md whitespace-nowrap">2 &amp; / CONCAT</a>
+      <a href="#textjoin" class="px-3 py-1.5 bg-[#1e293b] text-gray-300 rounded-md whitespace-nowrap">3 TEXTJOIN</a>
+      <a href="#merge" class="px-3 py-1.5 bg-[#1e293b] text-gray-300 rounded-md whitespace-nowrap">4 Merge (cells)</a>
+      <a href="#consol" class="px-3 py-1.5 bg-[#1e293b] text-gray-300 rounded-md whitespace-nowrap">5 Consolidate</a>
+      <a href="#append" class="px-3 py-1.5 bg-[#1e293b] text-gray-300 rounded-md whitespace-nowrap">6 Append</a>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-600/10 text-calc-300 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-link"></i><span>[  Glue text, stack rows, drag numbers out  ]</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">Join, Auto-Fill &amp; Consolidate</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">Out of separate columns — make one. Out of repeated sheets — make one. This page walks you through joining text (<span class="fkey">&amp;</span>, <span class="fkey">CONCAT</span>, <span class="fkey">TEXTJOIN</span>), dragging fills, and combining whole data ranges (<span class="fkey">Consolidate</span>, <span class="fkey">Append</span>) on real rows and cells.</p>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- ========== 1 AUTO-FILL ========== -->
+  <section id="fill" class="section-card scroll-mt-20">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">"Flash Fill" the LibreOffice way — Auto-Fill</h2><p class="text-gray-400 text-xs sm:text-sm">Type two items, drag the little square, Calc finishes the pattern for you</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Type the first two values</p><p class="text-gray-400 text-xs">Enter <span class="fkey">January</span> in A2 and <span class="fkey">February</span> in A3 so Calc can sense the step.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Month</td></tr>
+        <tr><td class="rn">2</td><td class="h">January</td></tr>
+        <tr><td class="rn">3</td><td class="h">February</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Select A2:A3, drag the fill handle down</p><p class="text-gray-400 text-xs">The tiny square at the block's bottom-right. Drag to A6.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">The pattern continues</p><p class="text-gray-400 text-xs">Calc auto-detects the month list → fills March, April, May.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th></tr></thead><tbody>
+        <tr><td class="rn">2</td><td>January</td></tr>
+        <tr><td class="rn">3</td><td>February</td></tr>
+        <tr><td class="rn">4</td><td class="m">March</td></tr>
+        <tr><td class="rn">5</td><td class="m">April</td></tr>
+        <tr><td class="rn">6</td><td class="m">May</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Numbers &amp; dates follow the same trick</p><p class="text-gray-400 text-xs">{ } 1, 2 → 3, 4 …&nbsp;&nbsp; Mon, Tue → Wed…&nbsp;&nbsp; 01/01, 01/02 → next days. Same handle, calc fills them too. In Excel this "finish the pattern" is called <strong>Flash Fill</strong>; Calc's Auto-Fill is how you reach the same result.</p></div></div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Formulas drag too:</strong> the fill handle is the same one used to copy any formula down a column — it moves <em>relative</em> references with it.</p></div>
+    </div>
+  </section>
+
+  <!-- ========== 2 CONCAT ========== -->
+  <section id="concat" class="section-card scroll-mt-20">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Step-by-Step: join cells into one (&amp; · CONCAT)</h2><p class="text-gray-400 text-xs sm:text-sm">Turn First + Last into a full name column</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">TEXT</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">See the raw columns</p><p class="text-gray-400 text-xs">B = first name, C = last name. We want D = "First Last".</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>First</td><td>Last</td><td>Full name</td></tr>
+        <tr><td class="rn">2</td><td>Alice</td><td>Smith</td><td></td></tr>
+        <tr><td class="rn">3</td><td>Jane</td><td>Doe</td><td></td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Option A — the &amp; operator (shortest)</p><p class="text-gray-400 text-xs">Type <span class="fkey">=B2&amp;" "&amp;C2</span>. The quotes hold a space between the two parts.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">2</td><td>Alice</td><td>Smith</td><td class="m">=B2&amp;" "&amp;C2</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Option B — CONCATENATE / CONCAT</p><p class="text-gray-400 text-xs">Any of these give the identical result:</p>
+        <div class="flex flex-wrap gap-2 mt-2">
+          <span class="fkey">=CONCATENATE(B2," ",C2)</span>
+          <span class="fkey">=CONCAT(B2," ",C2)</span>
+        </div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Fill down → watch D produce every result</p><p class="text-gray-400 text-xs">Drag D2 down. Each row keeps its own B and C.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">2</td><td>Alice</td><td>Smith</td><td class="m">Alice Smith</td></tr>
+        <tr><td class="rn">3</td><td>Jane</td><td>Doe</td><td class="m">Jane Doe</td></tr>
+        </tbody></table></div>
+        <div class="warn-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-circle-exclamation text-red-400 mr-1"></i><strong class="text-white">Numbers lose their look:</strong> <span class="fkey">=A2&" pcs"</span> turns 12 into "12 pcs" — the number becomes text. Format separately if you need the number to stay numeric.</p></div></div></div>
+    </div>
+  </section>
+
+  <!-- ========== 3 TEXTJOIN ========== -->
+  <section id="textjoin" class="section-card scroll-mt-20">
+    <div class="bg-gradient-to-r from-purple-700/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-purple-500 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Step-by-Step: TEXTJOIN a whole range</h2><p class="text-gray-400 text-xs sm:text-sm">Combine many cells with a separator in ONE formula</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Know the recipe</p><p class="text-gray-400 text-xs"><span class="fkey">=TEXTJOIN(sep, ignore_empty, range)</span></p>
+        <ul class="text-gray-400 text-xs mt-2 space-y-1">
+          <li><span class="fkey">sep</span> — the glue between items, in quotes: <span class="fkey">", "</span></li>
+          <li><span class="fkey">ignore_empty</span> — TRUE skips blank cells, FALSE keeps their gaps</li>
+          <li><span class="fkey">range</span> — one or more blocks to join</li>
+        </ul></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Type it next to the block</p><p class="text-gray-400 text-xs">In D7 write <span class="fkey">=TEXTJOIN(", ",TRUE,A7:A10)</span>.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th></tr></thead><tbody>
+        <tr><td class="rn">7</td><td>Sales</td></tr>
+        <tr><td class="rn">8</td><td>IT</td></tr>
+        <tr><td class="rn">9</td><td>Ops</td></tr>
+        <tr><td class="rn">10</td><td>Finance</td></tr>
+        </tbody></table></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">It collapses into one sentence</p><p class="text-gray-400 text-xs">Result: <span class="fkey">Sales, IT, Ops, Finance</span>. Great for a dropdown list, an email recipient string or a summary.</p></div></div>
+        <div class="tip-box mt-1"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">vs CONCAT:</strong> CONCAT joins cells <em>exactly</em> as given; TEXTJOIN inserts your separator and can ignore blanks. Use TEXTJOIN when you want a clean, delimited list.</p></div></div></div>
+    </div>
+  </section>
+
+  <!-- ========== 4 text-merge vs cell merge ========== -->
+  <section id="merge" class="section-card scroll-mt-20">
+    <div class="bg-gradient-to-r from-amber-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">"Merge" means two different things — don't confuse them</h2></div>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <div class="step"><h3 class="text-white text-sm font-semibold mb-2"><i class="fa-solid fa-text-width text-calc-400 mr-1"></i>Merge TEXT (this page)</h3>
+          <p class="text-gray-400 text-xs mb-2">Glue the <em>contents</em> of cells into ONE cell.</p>
+          <div class="flex items-center gap-2 font-mono text-xs mb-2"><span class="fkey">A1</span><span class="text-gray-500">"David"</span> <span class="text-green-400">+</span> <span class="fkey">B1</span><span class="text-gray-500">"Liu"</span> <span class="text-green-400">→</span> <span class="text-calc-300">David Liu</span></div>
+          <div class="fkey block text-center py-2 my-1">=A1&" "&B1</div>
+        </div>
+        <div class="step"><h3 class="text-white text-sm font-semibold mb-2"><i class="fa-solid fa-merge text-lock-400 mr-1"></i>Merge &amp; Center (elsewhere)</h3>
+          <p class="text-gray-400 text-xs mb-2">Joins the <i>cells themselves</i> into one wide cell for a title.</p>
+          <div class="wrap"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td class="m" colspan="3">Sales Report</td></tr>
+          </tbody></table></div>
+          <p class="text-gray-500 text-[11px] mt-2">Only the top-left value survives cell merge.</p>
+        </div>
+      </div>
+      <p class="text-gray-400 text-xs mt-4"><i class="fa-solid fa-circle-info text-lock-400 mr-1"></i>Same word "merge", two jobs. Text merge = keep the words; cell merge = make a big box. Both exist; they don't replace each other.</p>
+    </div>
+  </section>
+
+  <!-- ========== 5 CONSOLIDATE ========== -->
+  <section id="consol" class="section-card scroll-mt-20">
+    <div class="bg-gradient-to-r from-rose-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-rose-500 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Consolidate multiple ranges → one total</h2><p class="text-gray-400 text-xs sm:text-sm">Data &gt; Consolidate — sum 2 sheets' monthly sales into one</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
+        <div class="bg-gray-900/50 rounded-xl border border-gray-700/40 p-3">
+          <p class="text-gray-300 text-[11px] font-semibold mb-2"><i class="fa-solid fa-table mr-1"></i>Sheet "N" (North)</p>
+          <div class="wrap"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td>Product</td><td>Jan</td><td>Feb</td></tr>
+          <tr><td class="rn">2</td><td>Apples</td><td>100</td><td>120</td></tr>
+          <tr><td class="rn">3</td><td>Pears</td><td>80</td><td>90</td></tr>
+          </tbody></table></div>
+        </div>
+        <div class="bg-gray-900/50 rounded-xl border border-gray-700/40 p-3">
+          <p class="text-gray-300 text-[11px] font-semibold mb-2"><i class="fa-solid fa-gear mr-1"></i>Sheet2 (South)</p>
+          <div class="wrap"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td>Product</td><td>Jan</td><td>Feb</td></tr>
+          <tr><td class="rn">2</td><td>Apples</td><td>60</td><td>70</td></tr>
+          <tr><td class="rn">3</td><td>Pears</td><td>40</td><td>50</td></tr>
+          </tbody></table></div>
+        </div>
+      </div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Open Consolidate</p><p class="text-gray-400 text-xs">Menu <span class="mpath">Data &gt; Consolidate</span>. This queues up ranges and a function to merge them.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Pick the function (default = Sum)</p><p class="text-gray-400 text-xs">Leave <span class="fkey">Sum</span>. You can also count, average or find max/min across the sheets.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Add each source range</p><p class="text-gray-400 text-xs">Click into Sheet N → select <span class="fkey">A1:C3</span> → <span class="fkey">Add</span>. Then the same for Sheet2's <span class="fkey">A1:C3</span>. Up to 255 ranges allowed.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Turn on labels</p><p class="text-gray-400 text-xs">Tick <span class="fkey">First column</span> (Product) and <span class="fkey">First row</span> (Jan/Feb) so the totals line up by name — not just by position.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">5</span><div><p class="text-white text-sm font-semibold mb-1">Check the combined result</p><p class="text-gray-400 text-xs">Apples Jan = 100 + 60 = <b>160</b>. Pears Feb = 90 + 50 = <b>140</b>. Your regions are now one table.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Product</td><td>Jan</td><td>Feb</td></tr>
+        <tr><td class="rn">2</td><td>Apples</td><td class="m">160</td><td class="m">190</td></tr>
+        <tr><td class="rn">3</td><td>Pears</td><td class="m">120</td><td class="m">140</td></tr>
+        </tbody></table></div>
+        <p class="text-gray-500 text-[11px] mt-2"><i class="fa-solid fa-link text-lock-400 mr-1"></i>Ranges with the same label are added / summed; labels appearing in only one range still appear.</p></div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Consolidate = additive/aggregating.</strong> It <em>sums values</em> by matching labels. If you instead want to <em>stack rows</em>, use Append (next).</p></div>
+    </div>
+  </section>
+
+  <!-- ========== 6 APPEND ========== -->
+  <section id="append" class="section-card scroll-mt-20">
+    <div class="bg-gradient-to-r from-teal-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-teal-500 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Append / stack rows into one list</h2><p class="text-gray-400 text-xs sm:text-sm">Same columns, more sheets → put the rows one under the other</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Select the source rows</p><p class="text-gray-400 text-xs">On Sheet2, select the data rows (e.g. <span class="fkey">A2:C4</span>) — skip the header, or add it only once to the combined sheet.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Copy them</p><p class="text-gray-400 text-xs">Menu <span class="mpath">Edit &gt; Copy</span> (or <span class="fkey">Ctrl+C</span>).</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Paste right below the existing data</p><p class="text-gray-400 text-xs">Jump to the last filled row + 1, then <span class="mpath">Edit &gt; Paste</span>. The two blocks now form one continuous table; apply filters &amp; formatting to the whole range.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Customer</td><td>Region</td><td>Amount</td></tr>
+        <tr><td class="rn">2</td><td>Mori</td><td>North</td><td class="num">400</td></tr>
+        <tr><td class="rn">3</td><td>Niu</td><td>North</td><td class="num">260</td></tr>
+        <tr><td class="rn">4</td><td>Oka</td><td>South</td><td class="num">390</td></tr>
+        <tr><td class="rn">5</td><td class="ghost">Pine</td><td class="ghost">West</td><td class="ghost num">180</td></tr>
+        <tr><td class="rn">6</td><td class="ghost">Quill</td><td class="ghost">East</td><td class="ghost num">215</td></tr>
+        </tbody></table></div>
+        <p class="text-gray-500 text-[11px] mt-2"><i class="fa-solid fa-ghost text-gray-400 mr-1"></i>Rows 5–6 were appended = pasted in from Sheet2.</p></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Or make it automatic formulas</p><p class="text-gray-400 text-xs">Instead of pasting, reference the cells: in the combined sheet put <span class="fkey">=Sheet2.A2</span> in each row — a "live append" that updates when Sheet2 changes.</p></div></div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Which to use?</strong> Need added totals? → <strong>Consolidate</strong>. Need one long list? → <strong>Append</strong> (stack rows, keep details).</p></div>
+    </div>
+  </section>
+
+  <!-- ========== INTERACTIVE ========== -->
+  <section id="lab" class="section-card scroll-mt-20">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <i class="fa-solid fa-flask text-lock-400 text-xl"></i>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Interactive — join live</h2><p class="text-gray-400 text-xs sm:text-sm">Pick a glue and a style; watch the same grid fill out in real time.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 grid grid-cols-1 lg:grid-cols-3 gap-6">
+      <div class="lg:col-span-1 space-y-3">
+        <div class="bg-gray-900/60 rounded-xl border border-gray-700/50 p-4">
+          <p class="text-gray-300 text-xs font-semibold mb-2">Glue (separator)</p>
+          <div class="flex gap-1.5 flex-wrap" id="glueBtn"></div>
+        </div>
+        <div class="bg-gray-900/60 rounded-xl border border-gray-700/50 p-4">
+          <p class="text-gray-300 text-xs font-semibold mb-2">Method</p>
+          <div class="flex gap-1.5" id="modeBtn"></div>
+        </div>
+        <div class="bg-gray-900/60 rounded-xl border border-gray-700/50 p-4">
+          <p class="text-gray-400 text-xs mb-1">Live whole-range join</p>
+          <div class="outcell font-mono text-sm text-calc-300" id="joinOut">—</div>
+          <p class="text-gray-500 text-[11px] mt-2">TEXTJOIN of the names block.</p>
+        </div>
+      </div>
+      <div class="lg:col-span-2">
+        <div class="rounded-xl border border-gray-800 overflow-hidden bg-[#0f172a] shadow-2xl">
+          <div class="bg-gray-800/70 px-3 py-1.5 flex items-center gap-2 border-b border-gray-700"><i class="fa-solid fa-users text-lock-400 text-xs"></i><span class="text-gray-300 text-xs">Employee list</span></div>
+          <div class="overflow-auto scrollbar-thin"><table class="g border-collapse" style="border-collapse:collapse"><thead><tr><th></th><th>B</th><th>C</th><th>D</th></tr></thead><tbody id="jGrid"></tbody></table></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ========== CHEAT ========== -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-amber-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800"><i class="fa-solid fa-star text-amber-400 text-lg"></i><h2 class="text-white font-bold text-lg">30-Second Cheat Sheet</h2></div>
+    <div class="p-5 sm:p-8 grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-add mr-1"></i>Join cells</div><p class="text-gray-400 text-xs"><span class="fkey">=A1&" "&B1</span> glue in quotes.</p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-bolt mr-1"></i>CONCAT</div><p class="text-gray-400 text-xs"><span class="fkey">=CONCAT(A1,"-",B1)</span></p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-list mr-1"></i>TEXTJOIN</div><p class="text-gray-400 text-xs"><span class="fkey">=TEXTJOIN(", ",TRUE,A1:A5)</span></p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-arrows-up-down mr-1"></i>Auto-Fill</div><p class="text-gray-400 text-xs">Type 2, drag the handle.</p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-cubes mr-1"></i>Consolidate</div><p class="text-gray-400 text-xs"><span class="mpath">Data &gt; Consolidate</span> → sum ranges.</p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-stack mr-1"></i>Append</div><p class="text-gray-400 text-xs">Copy rows → paste below.</p></div>
+    </div>
+  </section>
+
+  <footer class="text-center text-gray-600 text-xs pt-4 border-t border-gray-800"><p>notes made by amit</p></footer>
+  </main>
+
+  <div id="toast" class="toast fixed bottom-5 left-1/2 -translate-x-1/2 rounded-lg border border-calc-600/50 bg-[#0f172a] px-4 py-3 text-sm text-gray-200 shadow-2xl z-50"><i class="fa-solid fa-circle-info text-calc-400"></i> <span id="toastMsg"></span></div>
+  <script>
+
+
+    function $(id){ return document.getElementById(id); }
+    function el(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; if(txt!==undefined) e.textContent=String(txt); return e; }
+    function toast(m){ var t=$('toast'); $('toastMsg').textContent=m; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2200); }
+
+    var PEOPLE=[
+      {b:'Alice', c:'Smith'},
+      {b:'Jane',  c:'Doe'},
+      {b:'Omar',  c:'Okafor'},
+      {b:'Mina',  c:'Lee'}
+    ];
+    var GLUES=[{g:' ',  t:'space'},{g:', ',t:'comma'},{g:' - ',t:'dash'},{g:'',t:'none'}];
+    var MODES=['&','CONCATENATE','TEXTJOIN'];
+    var curGlue=' ', curMode='&';
+
+    function fmt(row){
+      var b=row.b, c=row.c;
+      if(curMode==='TEXTJOIN') return '=TEXTJOIN("'+curGlue+'",TRUE,B'+row.n+':C'+row.n+')';
+      if(curMode==='CONCATENATE') return '=CONCATENATE(B'+row.n+',"'+curGlue+'",C'+row.n+')';
+      return '=B'+row.n+'&"'+curGlue+'"&C'+row.n;
+    }
+    function cell(opts){
+      var td=el('td'); if(opts.cls) td.className=opts.cls; if(opts.txt!==undefined) td.textContent=opts.txt; return td;
+    }
+    function renderGrid(){
+      var tb=$('jGrid'); tb.innerHTML='';
+      PEOPLE.forEach(function(p,i){
+        p.row=i+2;
+        var tr=el('tr');
+        tr.appendChild(cell({txt:i+2,cls:'rn'}));
+        tr.appendChild(cell({txt:p.b}));
+        tr.appendChild(cell({txt:p.c}));
+        var v=p.b+curGlue+p.c;
+        tr.appendChild(cell({txt:curMode==='TEXTJOIN'? v : v, cls:'m'}));
+        tb.appendChild(tr);
+      });
+      // status bar
+      var joined=PEOPLE.map(function(p){return p.b+curGlue+p.c;}).join(curGlue);
+      $('joinOut').textContent='=TEXTJOIN("'+curGlue+'",TRUE,B2:C5)  →  '+joined;
+    }
+    function buildBtns(id, items, onPick, curKey){
+      var box=$(id); box.innerHTML='';
+      items.forEach(function(it){
+        var b=el('button','tbtn');
+        b.textContent=it.label;
+        b.dataset.k=it.k;
+        if(it.k===curKey) b.classList.add('on');
+        b.onclick=function(){ onPick(it); };
+        box.appendChild(b);
+      });
+    }
+    function setGlue(it){ curGlue=it.v; buildBtns(); renderGrid(); toast('Glue "'+curGlue+'"'); }
+    function setMode(it){ curMode=it.k; buildBtns(); renderGrid(); toast('Using '+it.label); }
+    function buildBtns(){
+      buildBtns._glue=buildBtns._glue||0;
+      buildGlue(); buildMode(); highlightActive();
+    }
+    function buildGlue(){
+      var box=$('glueBtn'); box.innerHTML='';
+      GLUE_ITEMS.forEach(function(it){
+        var b=el('button','tbtn'); b.textContent=it.label; b.dataset.k=it.k;
+        if(it.k===curGlue) b.classList.add('on');
+        b.onclick=function(){ curGlue=it.v; buildGlue(); buildMode(); renderGrid(); };
+        box.appendChild(b);
+      });
+    }
+    function buildMode(){
+      var box=$('modeBtn'); box.innerHTML='';
+      MODE_ITEMS.forEach(function(it){
+        var b=el('button','tbtn'); b.textContent=it.label; b.dataset.k=it.k;
+        if(it.k===curMode) b.classList.add('on');
+        b.onclick=function(){ curMode=it.k; buildGlue(); buildMode(); renderGrid(); };
+        box.appendChild(b);
+      });
+    }
+    var GLUE_ITEMS=[
+      {k:' ',label:'space',v:' '},
+      {k:', ',label:'comma',v:', '},
+      {k:' - ',label:'dash',v:' - '},
+      {k:'empty',label:'none',v:''}
+    ];
+    var MODE_ITEMS=[{k:'&',label:'& operator'},{k:'CONCATENATE',label:'CONCATENATE()'},{k:'TEXTJOIN',label:'TEXTJOIN()'}];
+    renderGrid(); buildGlue(); buildMode();
+
+  </script>
+</body>
+</html>

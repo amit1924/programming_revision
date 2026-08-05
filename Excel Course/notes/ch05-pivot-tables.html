@@ -1,0 +1,485 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ch 5 — Pivot Tables | Excel for Data Analytics</title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { ch5: { 50: '#fff7ed', 100: '#ffedd5', 200: '#fed7aa', 300: '#fdba74', 400: '#fb923c', 500: '#f97316', 600: '#ea580c', 700: '#c2410c', 800: '#9a3412', 900: '#7c2d12' } } } } }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .cell-mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: #0f172a; }
+    .excel-tbl { border-collapse: collapse; width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .excel-tbl th { background: #1e293b; color: #94a3b8; font-weight: 500; padding: 4px 10px; border: 1px solid #334155; text-align: center; }
+    .excel-tbl td { padding: 4px 10px; border: 1px solid #334155; text-align: center; color: #e2e8f0; background: #0f172a; transition: all 0.2s; }
+    .excel-tbl .rn { color: #475569; background: #1e293b; font-weight: 500; }
+    .excel-tbl .hl { background: #3d1c04; border-color: #f97316; }
+    .excel-tbl .fml { background: #1a2332; color: #fbbf24; }
+    .excel-tbl .val { color: #fb923c; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; transition: border-color 0.3s; }
+    .card:hover { border-color: #f97316; }
+    .card .hd { background: linear-gradient(135deg, #4a2208, #0f172a); padding: 10px 14px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 8px; }
+    .card .hd .ic { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .badge { font-size: 0.6rem; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+    .btn { cursor: pointer; user-select: none; transition: all 0.15s; }
+    .btn:active { transform: scale(0.92); }
+    .btn.active { background: #ea580c !important; border-color: #fb923c !important; color: #fff !important; }
+    .si { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; outline: none; }
+    .si:focus { border-color: #f97316; }
+    .tg { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 0.75rem; }
+    .tg input { display: none; }
+    .tg .tk { width: 32px; height: 18px; background: #334155; border-radius: 99px; position: relative; transition: 0.2s; }
+    .tg .tk::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #94a3b8; border-radius: 50%; transition: 0.2s; }
+    .tg input:checked + .tk { background: #ea580c; }
+    .tg input:checked + .tk::after { transform: translateX(14px); background: #fff; }
+    .pt-row { cursor: pointer; }
+    .pt-row:hover { background: #1e293b !important; }
+    .pt-row.active { background: #3d1c04 !important; border-color: #f97316 !important; }
+    @keyframes slideDown { from{max-height:0;opacity:0} to{max-height:300px;opacity:1} }
+    .anim-slide { animation: slideDown 0.4s ease; }
+    @media (max-width: 640px) { .excel-tbl { font-size: 0.6rem; } .excel-tbl th,.excel-tbl td { padding: 2px 6px; } }
+  </style>
+</head>
+<body class="dark">
+
+<nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-table-pivot text-ch5-400 text-xl"></i>
+      <span class="font-bold text-white text-sm sm:text-base">Excel for Data Analytics</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-gray-400">
+      <span class="bg-ch5-600/20 text-ch5-300 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-book-open"></i> Ch 5</span>
+    </div>
+  </div>
+</nav>
+
+<header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+  <div class="inline-flex items-center gap-2 bg-ch5-600/10 text-ch5-300 px-4 py-1.5 rounded-full text-sm mb-4">
+    <i class="fa-solid fa-compress"></i>
+    <span>Chapter 5 of 8 — 3 lessons</span>
+  </div>
+  <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">
+    <i class="fa-solid fa-pivot text-ch5-400 mr-2"></i>
+    Pivot Tables
+  </h1>
+  <p class="text-gray-400 max-w-3xl mx-auto text-sm">
+    Summarize millions of rows in seconds. Drag, drop, analyze — <strong class="text-white">the secret weapon</strong> of every data analyst.
+  </p>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 pb-16">
+
+  <!-- LAUNCH: Live Pivot Builder -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <div><span class="text-white text-sm font-semibold">⚡ Pivot Table Builder — Drag to Analyze</span><span class="badge bg-ch5-600/20 text-ch5-300 ml-2">TRY IT</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-3">Click a field below to add it as a <strong class="text-white">Row</strong>, click again for <strong class="text-white">Value</strong>, click a third time to remove. Watch the pivot update instantly.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-4 gap-3">
+          <div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-wider mb-1.5">Fields</div>
+            <div class="space-y-1">
+              <button class="btn w-full text-xs px-2 py-1.5 rounded bg-gray-800 border border-gray-600 text-gray-400 text-left" data-field="title" onclick="pivotFieldClick('title')">🏷️ Job Title</button>
+              <button class="btn w-full text-xs px-2 py-1.5 rounded bg-gray-800 border border-gray-600 text-gray-400 text-left" data-field="country" onclick="pivotFieldClick('country')">🌍 Country</button>
+              <button class="btn w-full text-xs px-2 py-1.5 rounded bg-gray-800 border border-gray-600 text-gray-400 text-left" data-field="type" onclick="pivotFieldClick('type')">💼 Job Type</button>
+              <button class="btn w-full text-xs px-2 py-1.5 rounded bg-gray-800 border border-gray-600 text-gray-400 text-left" data-field="salary" onclick="pivotFieldClick('salary')">💰 Salary</button>
+              <button class="btn w-full text-xs px-2 py-1.5 rounded bg-gray-800 border border-gray-600 text-gray-400 text-left" data-field="skill" onclick="pivotFieldClick('skill')">🧠 Skill</button>
+            </div>
+          </div>
+          <div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-wider mb-1.5">Rows</div>
+            <div id="pv_rows" class="bg-[#0f172a] rounded-lg border border-gray-700 p-2 min-h-[60px] text-xs text-gray-600"></div>
+          </div>
+          <div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-wider mb-1.5">Values</div>
+            <div id="pv_vals" class="bg-[#0f172a] rounded-lg border border-gray-700 p-2 min-h-[60px] text-xs text-gray-600"></div>
+          </div>
+          <div>
+            <div class="text-gray-500 text-[10px] uppercase tracking-wider mb-1.5">Filters</div>
+            <div id="pv_filters" class="bg-[#0f172a] rounded-lg border border-gray-700 p-2 min-h-[60px] text-xs text-gray-600"></div>
+            <div class="mt-2"><button class="btn text-xs px-2 py-1 rounded bg-gray-800 border border-gray-600 text-gray-400 w-full" onclick="clearPivot()">Clear All</button></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pivot Table Result -->
+  <section class="mb-6">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-table"></i></div>
+        <div><span class="text-white text-sm font-semibold">Pivot Table Output</span><span class="badge bg-ch5-600/20 text-ch5-300 ml-2">LIVE</span></div>
+      </div>
+      <div class="p-4 overflow-x-auto" id="pivotResult">
+        <div class="text-gray-500 text-xs text-center py-6">Add fields to Rows and Values to generate the pivot table</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 1: Pivot Table Intro -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch5-500 flex items-center justify-center text-white text-xs font-bold">1</div>
+      <h2 class="text-white font-bold text-lg">Pivot Table Intro</h2>
+      <span class="text-gray-500 text-xs">Insert • Rows • Columns • Values • Filters</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-plus"></i></div><div><span class="text-white text-sm font-semibold">Creating a Pivot Table</span></div></div>
+        <div class="p-4 text-xs text-gray-400 space-y-2">
+          <p><strong class="text-white">Select any cell</strong> in your data → <strong class="text-white">Insert → PivotTable</strong> (or <strong class="text-white">Recommended PivotTables</strong>).</p>
+          <p>Choose <span class="text-ch5-300">New Worksheet</span> or <span class="text-ch5-300">Existing Worksheet</span>.</p>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1">PivotTable Fields pane:</div>
+            <div class="flex items-center gap-2 text-ch5-300">
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-[0.6rem]">Rows</span>
+              <span class="text-gray-400">→</span>
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-[0.6rem]">Columns</span>
+              <span class="text-gray-400">→</span>
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-[0.6rem]">Values</span>
+              <span class="text-gray-400">→</span>
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-[0.6rem]">Filters</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-500"><i class="fa-solid fa-lightbulb text-amber-400"></i> <strong class="text-white">Drag fields</strong> between the four areas to rearrange your analysis.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-gear"></i></div><div><span class="text-white text-sm font-semibold">Value Field Settings</span></div></div>
+        <div class="p-4 text-xs text-gray-400 space-y-2">
+          <p>Right-click any value → <strong class="text-white">Value Field Settings</strong> to change:</p>
+          <div class="space-y-1.5">
+            <div class="bg-[#0f172a] rounded p-2 flex items-center gap-2">
+              <span class="text-ch5-300 font-bold w-14">Sum</span>
+              <span>Adds all values (default for numbers)</span>
+            </div>
+            <div class="bg-[#0f172a] rounded p-2 flex items-center gap-2">
+              <span class="text-ch5-300 font-bold w-14">Count</span>
+              <span>Counts rows (default for text)</span>
+            </div>
+            <div class="bg-[#0f172a] rounded p-2 flex items-center gap-2">
+              <span class="text-ch5-300 font-bold w-14">Average</span>
+              <span>Mean of values</span>
+            </div>
+            <div class="bg-[#0f172a] rounded p-2 flex items-center gap-2">
+              <span class="text-ch5-300 font-bold w-14">Max/Min</span>
+              <span>Highest/lowest value</span>
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-500"><i class="fa-solid fa-lightbulb text-amber-400"></i> Rename the field in the <strong>Custom Name</strong> box for cleaner labels.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-palette"></i></div><div><span class="text-white text-sm font-semibold">PivotTable Design</span></div></div>
+        <div class="p-4 text-xs text-gray-400 space-y-2">
+          <p>When a pivot table is selected, the <strong class="text-white">Design</strong> tab appears with:</p>
+          <div class="bg-[#0f172a] rounded-lg p-2.5">
+            <div class="flex flex-wrap gap-1.5">
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-ch5-300 text-[0.6rem]">Subtotals</span>
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-ch5-300 text-[0.6rem]">Grand Totals</span>
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-ch5-300 text-[0.6rem]">Report Layout</span>
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-ch5-300 text-[0.6rem]">Blank Rows</span>
+              <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-ch5-300 text-[0.6rem]">PivotStyles</span>
+            </div>
+          </div>
+          <p><strong class="text-white">Report Layout</strong> → Show in Tabular Form (spreadsheet-like).</p>
+          <p><strong class="text-white">PivotTable Styles</strong> — Choose a color scheme for banded rows and headers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 2: Advanced Pivot Tables -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch5-500 flex items-center justify-center text-white text-xs font-bold">2</div>
+      <h2 class="text-white font-bold text-lg">Advanced Pivot Tables</h2>
+      <span class="text-gray-500 text-xs">Grouping • % Grand Total • Calculated Fields</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-layer-group"></i></div><div><span class="text-white text-sm font-semibold">Grouping</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Select multiple rows in a pivot → right-click → <strong class="text-white">Group</strong>. Great for bucketing dates or combining small categories.</p>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1">Group by Month:</div>
+            <table class="excel-tbl text-xs">
+              <thead><tr><th>Months</th><th>Job Count</th></tr></thead>
+              <tbody>
+                <tr class="hl"><td class="text-left font-bold text-ch5-300">Q1 (Jan-Mar)</td><td class="val">7,460</td></tr>
+                <tr><td class="text-left pl-4">Jan</td><td>3,420</td></tr>
+                <tr><td class="text-left pl-4">Feb</td><td>1,890</td></tr>
+                <tr><td class="text-left pl-4">Mar</td><td>2,150</td></tr>
+                <tr class="hl"><td class="text-left font-bold text-ch5-300">Q2 (Apr-Jun)</td><td class="val">7,730</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-percent"></i></div><div><span class="text-white text-sm font-semibold">% of Grand Total</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Right-click a value → <strong class="text-white">Show Value As → % of Grand Total</strong>. Shows proportions instead of raw counts.</p>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+            <table class="excel-tbl text-xs">
+              <thead><tr><th class="text-left">Job Title</th><th>Count</th><th>% of Total</th></tr></thead>
+              <tbody>
+                <tr><td class="text-left">Data Analyst</td><td>3,847</td><td class="val">31.2%</td></tr>
+                <tr><td class="text-left">Data Scientist</td><td>2,891</td><td class="val">23.5%</td></tr>
+                <tr><td class="text-left">Data Engineer</td><td>2,456</td><td class="val">19.9%</td></tr>
+                <tr><td class="text-left">BI Analyst</td><td>1,523</td><td class="val">12.4%</td></tr>
+                <tr><td class="text-left">ML Engineer</td><td>1,105</td><td class="val">9.0%</td></tr>
+                <tr><td class="text-left font-bold">Grand Total</td><td class="font-bold">11,822</td><td class="font-bold">100%</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-function"></i></div><div><span class="text-white text-sm font-semibold">Calculated Fields</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Add your own formulas inside a pivot table via <strong class="text-white">PivotTable Analyze → Fields, Items & Sets → Calculated Field</strong>.</p>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1">Example: Bonus = Salary × 10%</div>
+            <table class="excel-tbl text-xs">
+              <thead><tr><th class="text-left">Title</th><th>Avg Salary</th><th class="text-ch5-300">Avg Bonus</th></tr></thead>
+              <tbody>
+                <tr><td class="text-left">Data Analyst</td><td>85,000</td><td class="val">8,500</td></tr>
+                <tr><td class="text-left">Data Scientist</td><td>125,000</td><td class="val">12,500</td></tr>
+                <tr><td class="text-left">Data Engineer</td><td>115,000</td><td class="val">11,500</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Formula: <span class="cell-mono text-amber-400">= Salary * 0.10</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 3: Pivot Charts -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch5-500 flex items-center justify-center text-white text-xs font-bold">3</div>
+      <h2 class="text-white font-bold text-lg">Pivot Charts</h2>
+      <span class="text-gray-500 text-xs">PivotChart • Slicer • Timeline • Combo</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-chart-pie"></i></div><div><span class="text-white text-sm font-semibold">Pivot Chart Basics</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Select a pivot table → <strong class="text-white">Insert → PivotChart</strong> (or <strong class="text-white">PivotTable Analyze → PivotChart</strong>).</p>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <svg viewBox="0 0 400 160" style="width:100%;height:auto">
+              <!-- Axis -->
+              <line x1="50" y1="130" x2="380" y2="130" stroke="#475569" stroke-width="1"/>
+              <line x1="50" y1="15" x2="50" y2="130" stroke="#475569" stroke-width="1"/>
+              <!-- Bars - actual chart representing salary by title -->
+              <rect x="65" y="45" width="40" height="85" fill="#fb923c" rx="2"><title>Data Analyst: 85K</title></rect>
+              <rect x="120" y="18" width="40" height="112" fill="#f97316" rx="2"><title>Data Scientist: 125K</title></rect>
+              <rect x="175" y="28" width="40" height="102" fill="#ea580c" rx="2"><title>Data Engineer: 115K</title></rect>
+              <rect x="230" y="55" width="40" height="75" fill="#c2410c" rx="2"><title>BI Analyst: 78K</title></rect>
+              <rect x="285" y="8" width="40" height="122" fill="#9a3412" rx="2"><title>ML Engineer: 145K</title></rect>
+              <!-- Labels -->
+              <text x="85" y="145" text-anchor="middle" fill="#475569" font-size="6">Analyst</text>
+              <text x="140" y="145" text-anchor="middle" fill="#475569" font-size="6">Scientist</text>
+              <text x="195" y="145" text-anchor="middle" fill="#475569" font-size="6">Engineer</text>
+              <text x="250" y="145" text-anchor="middle" fill="#475569" font-size="6">BI</text>
+              <text x="305" y="145" text-anchor="middle" fill="#475569" font-size="6">ML</text>
+            </svg>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Pivot charts inherit the pivot table's layout. Drag fields directly on the chart to rearrange.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-sliders"></i></div><div><span class="text-white text-sm font-semibold">Slicers & Timelines</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">With a pivot chart selected → <strong class="text-white">PivotChart Analyze → Insert Slicer</strong> (or <strong class="text-white">Timeline</strong>).</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+              <div class="text-gray-500 text-[10px] mb-1">Job Title Slicer</div>
+              <div class="flex flex-wrap gap-1">
+                <span class="px-2 py-0.5 rounded bg-ch5-600/20 text-ch5-300 text-[0.6rem] border border-ch5-500">Data Analyst</span>
+                <span class="px-2 py-0.5 rounded bg-gray-800 text-gray-400 text-[0.6rem] border border-gray-600">Data Scientist</span>
+                <span class="px-2 py-0.5 rounded bg-gray-800 text-gray-400 text-[0.6rem] border border-gray-600">Data Engineer</span>
+              </div>
+              <p class="text-[10px] text-gray-500 mt-1">Click a button → chart filters instantly.</p>
+            </div>
+            <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+              <div class="text-gray-500 text-[10px] mb-1">Timeline</div>
+              <div class="flex items-center gap-1 text-xs text-gray-400">
+                <i class="fa-solid fa-chevron-left text-ch5-300"></i>
+                <span class="bg-gray-800 px-2 py-0.5 rounded">2023</span>
+                <i class="fa-solid fa-chevron-right text-ch5-300"></i>
+              </div>
+              <p class="text-[10px] text-gray-500 mt-1">Filters by date range — slide to zoom in/out.</p>
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Hold <strong class="text-white">Ctrl</strong> to select multiple items in a slicer.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Differences table -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-code-compare"></i></div>
+        <div><span class="text-white text-sm font-semibold">Pivot Tables vs Regular Tables</span></div>
+      </div>
+      <div class="p-4">
+        <div class="overflow-x-auto">
+          <table class="excel-tbl text-xs">
+            <thead><tr><th>Feature</th><th>Regular Table</th><th>Pivot Table</th></tr></thead>
+            <tbody>
+              <tr><td class="text-left">Purpose</td><td>Store & organize data</td><td class="text-ch5-300">Summarize & analyze</td></tr>
+              <tr><td class="text-left">Aggregation</td><td>Manual formulas (SUMIF, AVERAGEIF)</td><td class="text-ch5-300">Drag & drop, instant</td></tr>
+              <tr><td class="text-left">Grouping</td><td>Manual</td><td class="text-ch5-300">Right-click → Group</td></tr>
+              <tr><td class="text-left">Layout</td><td>Fixed columns</td><td class="text-ch5-300">Rows, Columns, Values, Filters</td></tr>
+              <tr><td class="text-left">% of Total</td><td>Manual formula</td><td class="text-ch5-300">Show Value As → % of Grand Total</td></tr>
+              <tr><td class="text-left">Refresh</td><td>Auto</td><td class="text-ch5-300">Right-click → Refresh (or right-click → Refresh on source data change)</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pro Tips -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch5-600/20 text-ch5-300"><i class="fa-solid fa-lightbulb"></i></div>
+        <div><span class="text-white text-sm font-semibold">Pro Tips</span></div>
+      </div>
+      <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-400">
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch5-300 font-bold">Refresh</span> — Pivot tables don't auto-refresh when source data changes. Right-click → Refresh (or <span class="cell-mono text-amber-400">Alt+F5</span>).</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch5-300 font-bold">Formatting</span> — Right-click a value → Number Format to set currency, %, decimals without changing data.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch5-300 font-bold">Defer Layout Update</span> — In the Fields pane check "Defer Layout Update" while you rearrange fields, then click Update.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch5-300 font-bold">Double-click a value</span> — Drills down to show the raw data behind that number on a new sheet.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch5-300 font-bold">Grand Total</span> — Design → Grand Totals → Off for Rows/Columns to hide if redundant.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch5-300 font-bold">Sort by Value</span> — Right-click any value → Sort → Largest to Smallest. Much easier than sorting row labels.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="border-t border-gray-800 py-4 text-center">
+  <p class="text-xs text-gray-600">notes made by amit</p>
+</footer>
+
+<script>
+// ============ PIVOT BUILDER DATA ============
+const PV_DATA = {
+  title: { label: 'Job Title', vals: ['Data Analyst','Data Scientist','Data Engineer','BI Analyst','ML Engineer','Analytics Mgr'] },
+  country: { label: 'Country', vals: ['USA','UK','Canada','Germany','India','Australia'] },
+  type: { label: 'Job Type', vals: ['Full-time','Part-time','Contract','Remote'] },
+  salary: { label: 'Salary', vals: [85000,125000,115000,78000,145000,110000] },
+  skill: { label: 'Skill', vals: ['Excel','Python','SQL','Tableau','Power BI','R','Java','AWS'] }
+};
+
+// Salary by title/country lookup for realistic numbers
+const PV_SALARY_LOOKUP = {
+  'Data Analyst': {USA:95000,UK:82000,Canada:88000,Germany:79000,India:42000,Australia:92000,'Full-time':95000,'Part-time':48000,Contract:72000,Remote:85000},
+  'Data Scientist': {USA:130000,UK:115000,Canada:120000,Germany:108000,India:55000,Australia:125000,'Full-time':130000,'Part-time':65000,Contract:98000,Remote:118000},
+  'Data Engineer': {USA:120000,UK:105000,Canada:112000,Germany:100000,India:50000,Australia:115000,'Full-time':120000,'Part-time':60000,Contract:90000,Remote:108000},
+  'BI Analyst': {USA:85000,UK:72000,Canada:78000,Germany:70000,India:38000,Australia:80000,'Full-time':85000,'Part-time':42000,Contract:64000,Remote:76000},
+  'ML Engineer': {USA:150000,UK:132000,Canada:140000,Germany:125000,India:65000,Australia:142000,'Full-time':150000,'Part-time':75000,Contract:112000,Remote:135000},
+  'Analytics Mgr': {USA:110000,UK:95000,Canada:102000,Germany:92000,India:45000,Australia:105000,'Full-time':110000,'Part-time':55000,Contract:82000,Remote:99000}
+};
+
+const PV_STATE = { rows: [], vals: [], filters: [] };
+
+function pivotFieldClick(field) {
+  const idxR = PV_STATE.rows.indexOf(field);
+  const idxV = PV_STATE.vals.indexOf(field);
+  const idxF = PV_STATE.filters.indexOf(field);
+  if (idxR >= 0) { PV_STATE.rows.splice(idxR,1); }
+  else if (idxV >= 0) { PV_STATE.vals.splice(idxV,1); }
+  else if (idxF >= 0) { PV_STATE.filters.splice(idxF,1); }
+  else if (PV_STATE.rows.length === 0 && field === 'title') { PV_STATE.rows.push(field); }
+  else if (PV_STATE.vals.length === 0 && (field === 'salary' || field === 'title')) { PV_STATE.vals.push(field); }
+  else if (PV_STATE.rows.length <= PV_STATE.vals.length) { PV_STATE.rows.push(field); }
+  else { PV_STATE.vals.push(field); }
+  renderPivot();
+}
+
+function clearPivot() { PV_STATE.rows = []; PV_STATE.vals = []; PV_STATE.filters = []; renderPivot(); }
+
+function renderPivot() {
+  const fields = { title: {icon:'🏷️',label:'Job Title'}, country: {icon:'🌍',label:'Country'}, type: {icon:'💼',label:'Job Type'}, salary: {icon:'💰',label:'Salary'}, skill: {icon:'🧠',label:'Skill'} };
+  const renderBox = (id, arr) => {
+    const el = document.getElementById(id);
+    el.innerHTML = arr.length ? arr.map(f => `<span class="inline-block px-2 py-0.5 rounded bg-ch5-600/20 text-ch5-300 text-[0.6rem] border border-ch5-500 mr-1 mb-1">${fields[f].icon} ${fields[f].label}</span>`).join('') : `<span class="text-gray-600">Drop fields here</span>`;
+  };
+  renderBox('pv_rows', PV_STATE.rows);
+  renderBox('pv_vals', PV_STATE.vals);
+  renderBox('pv_filters', PV_STATE.filters);
+
+  // Generate pivot table output
+  const out = document.getElementById('pivotResult');
+  if (!PV_STATE.rows.length || !PV_STATE.vals.length) {
+    out.innerHTML = '<div class="text-gray-500 text-xs text-center py-6">Add fields to both <strong class="text-white">Rows</strong> and <strong class="text-white">Values</strong> to generate the pivot table</div>';
+    return;
+  }
+
+  // Generate some realistic cross-data
+  const rowField = PV_STATE.rows[0];
+  const valField = PV_STATE.vals[0];
+  const rowVals = PV_DATA[rowField].vals;
+  const lookup = rowField === 'title' ? PV_SALARY_LOOKUP : null;
+
+  let html = '<table class="excel-tbl text-xs"><thead><tr><th class="text-left">' + PV_DATA[rowField].label + '</th>';
+  let aggLabel = valField === 'salary' ? 'Average Salary' : valField === 'title' ? 'Count of Jobs' : (PV_DATA[valField]?.label || 'Value');
+  html += '<th>' + aggLabel + '</th>';
+  if (PV_STATE.rows.length > 1 || PV_STATE.vals.length > 1) html += '<th>More...</th>';
+  html += '</tr></thead><tbody>';
+
+  let grandVal = 0;
+  rowVals.forEach((rv, i) => {
+    if (valField === 'salary') {
+      const base = rowField === 'title' && lookup ? lookup[rv]?.USA || 85000 : 85000;
+      const v = base + Math.floor(Math.random() * 20000 - 10000);
+      grandVal += v;
+      html += `<tr><td class="text-left">${rv}</td><td class="val">$${v.toLocaleString()}</td></tr>`;
+    } else if (valField === 'title') {
+      const count = Math.floor(Math.random() * 3000 + 500);
+      grandVal += count;
+      html += `<tr><td class="text-left">${rv}</td><td class="val">${count.toLocaleString()}</td></tr>`;
+    } else {
+      const v = Math.floor(Math.random() * 2000 + 100);
+      grandVal += v;
+      html += `<tr><td class="text-left">${rv}</td><td class="val">${v.toLocaleString()}</td></tr>`;
+    }
+  });
+
+  html += `<tr class="hl"><td class="text-left font-bold text-ch5-300">Grand Total</td><td class="font-bold val">`;
+  if (valField === 'salary') html += '$' + grandVal.toLocaleString();
+  else html += grandVal.toLocaleString();
+  html += '</td></tr></tbody></table>';
+  out.innerHTML = html;
+
+  // Update field buttons
+  document.querySelectorAll('[data-field]').forEach(b => {
+    const f = b.getAttribute('data-field');
+    const found = PV_STATE.rows.includes(f) || PV_STATE.vals.includes(f) || PV_STATE.filters.includes(f);
+    b.className = found
+      ? 'btn w-full text-xs px-2 py-1.5 rounded bg-ch5-600/20 border border-ch5-500 text-ch5-300 text-left'
+      : 'btn w-full text-xs px-2 py-1.5 rounded bg-gray-800 border border-gray-600 text-gray-400 text-left';
+  });
+}
+</script>
+</body>
+</html>

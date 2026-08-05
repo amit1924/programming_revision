@@ -1,0 +1,425 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VLOOKUP — Step-by-Step Revision | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.88rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.lookup{ background:#1f2c4a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #60a5fa; }
+    table.g td.result{ background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.err{ background:#3a1620; color:#fca5a5; font-weight:700; box-shadow:inset 0 0 0 2px #f87171; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .formula { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.9rem; color:#a3e635; overflow-x:auto; white-space:nowrap; }
+    .formula .arg { color:#fcd34d; } .formula .fn { color:#93c5fd; font-weight:600; }
+    .arg-chip { display:inline-block; background:#273449; border:1px solid #475569; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.72rem; color:#93c5fd; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:38px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-magnifying-glass text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Excel — VLOOKUP (Lookup Functions)</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-binoculars"></i><span>Search the 1st column, grab a value from a column to its right</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">VLOOKUP</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">VLOOKUP = <b>Vertical Lookup</b>. You hand it an ID, it searches the <b>first column</b> of your table, then returns the matching value from <b>any column to the right</b>. See it on real employee data below.</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#1f2c4a;box-shadow:inset 0 0 0 2px #60a5fa"></span> lookup value (what you search)</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16322a;box-shadow:inset 0 0 0 2px #79c963"></span> returned result</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#20401f;box-shadow:inset 0 0 0 2px #56af3f"></span> formula / match</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 1. THE DATABASE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Your Employee Database</h2><p class="text-gray-400 text-xs sm:text-sm">The table lives in A1:D6. Row 1 = headers, rows 2–6 = data.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">THE DATA</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td class="h">Employee ID</td><td class="h">Name</td><td class="h">Department</td><td class="h">Salary</td></tr>
+        <tr><td class="rn">2</td><td>101</td><td>Amit</td><td>IT</td><td>50000</td></tr>
+        <tr><td class="rn">3</td><td>102</td><td>Rahul</td><td>HR</td><td>45000</td></tr>
+        <tr><td class="rn">4</td><td>103</td><td>Priya</td><td>Finance</td><td>60000</td></tr>
+        <tr><td class="rn">5</td><td>104</td><td>Neha</td><td>Sales</td><td>55000</td></tr>
+        <tr><td class="rn">6</td><td>105</td><td>Ravi</td><td>IT</td><td>52000</td></tr>
+      </tbody></table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-info-circle text-calc-400 mr-1"></i><strong class="text-white">Table range:</strong> the block you search is <span class="fkey">A2:D6</span> (data only — no headers). The first column (A) is the one Excel searches.</p></div>
+    </div>
+  </section>
+
+  <!-- 2. WHAT IS A2:D6 -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">What is A2:D6? — Cell Addresses &amp; Ranges</h2><p class="text-gray-400 text-xs sm:text-sm">Before VLOOKUP can search, you must tell it WHERE the table lives.</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">FOUNDATION</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Think of Excel like a city map</p><p class="text-gray-400 text-xs">Columns are named with letters (<span class="fkey">A</span>, <span class="fkey">B</span>, <span class="fkey">C</span>…) and rows are numbered (<span class="fkey">1</span>, <span class="fkey">2</span>, <span class="fkey">3</span>…). So every cell has an address.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td class="h">Employee</td><td class="h">Name</td><td class="h">Dept</td><td class="h">Salary</td></tr>
+        <tr><td class="rn">2</td><td>101</td><td>Amit</td><td>IT</td><td>50000</td></tr>
+        <tr><td class="rn">3</td><td>102</td><td>Rahul</td><td>HR</td><td>45000</td></tr>
+        <tr><td class="rn">4</td><td>103</td><td>Priya</td><td>Finance</td><td>60000</td></tr>
+        <tr><td class="rn">5</td><td>104</td><td>Neha</td><td>Sales</td><td>55000</td></tr>
+        <tr><td class="rn">6</td><td>105</td><td>Ravi</td><td>IT</td><td>52000</td></tr>
+        </tbody></table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Reading an address</p><p class="text-gray-400 text-xs"><span class="fkey">A</span> = column A, <span class="fkey">2</span> = row 2. Together <span class="fkey">A2</span> points at exactly one cell.</p></div></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>Address</th><th>Column</th><th>Row</th><th>Cell contains</th></tr></thead>
+          <tbody>
+            <tr><td class="lookup">A2</td><td>A</td><td>2</td><td class="result">101</td></tr>
+            <tr><td class="lookup">B2</td><td>B</td><td>2</td><td class="result">Amit</td></tr>
+            <tr><td class="lookup">C4</td><td>C</td><td>4</td><td class="result">Finance</td></tr>
+            <tr><td class="lookup">D5</td><td>D</td><td>5</td><td class="result">55000</td></tr>
+          </tbody>
+        </table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Then what does A2:D6 mean?</p><p class="text-gray-400 text-xs">Start at <span class="fkey">A2</span> and include every cell until <span class="fkey">D6</span>. Imagine drawing a rectangle around those cells — everything inside the brackets is the range <span class="fkey">A2:D6</span>.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Employee</td><td>Name</td><td>Dept</td><td>Salary</td></tr>
+        <tr><td class="rn">2</td><td class="h">101</td><td class="h">Amit</td><td class="h">IT</td><td class="h">50000</td></tr>
+        <tr><td class="rn">3</td><td class="h">102</td><td class="h">Rahul</td><td class="h">HR</td><td class="h">45000</td></tr>
+        <tr><td class="rn">4</td><td class="h">103</td><td class="h">Priya</td><td class="h">Finance</td><td class="h">60000</td></tr>
+        <tr><td class="rn">5</td><td class="h">104</td><td class="h">Neha</td><td class="h">Sales</td><td class="h">55000</td></tr>
+        <tr><td class="rn">6</td><td class="h">105</td><td class="h">Ravi</td><td class="h">IT</td><td class="h">52000</td></tr>
+        </tbody></table></div>
+        <div class="tip-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Range =</strong> every cell inside the rectangle from the start address to the end address.</p></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Why does VLOOKUP need A2:D6?</p><p class="text-gray-400 text-xs">Excel reads it like this: 🔍 "Search for 103 inside the table from A2 to D6. When you find it, return the value from the 2nd column."</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">103</span>, <span class="arg">A2:D6</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>)</div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>Column</th><th>Number</th></tr></thead>
+          <tbody>
+            <tr><td>A (Employee ID)</td><td class="form">1</td></tr>
+            <tr><td>B (Name)</td><td class="form">2</td></tr>
+            <tr><td>C (Department)</td><td class="form">3</td></tr>
+            <tr><td>D (Salary)</td><td class="form">4</td></tr>
+          </tbody>
+        </table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">5</span><div><p class="text-white text-sm font-semibold mb-1">Visual animation — imagine Excel thinking</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Employee</td><td>Name</td><td>Dept</td><td>Salary</td></tr>
+        <tr><td class="rn">2</td><td class="err">101 ❌</td><td>Amit</td><td>IT</td><td>50000</td></tr>
+        <tr><td class="rn">3</td><td class="err">102 ❌</td><td>Rahul</td><td>HR</td><td>45000</td></tr>
+        <tr><td class="rn">4</td><td class="m">103 ✅ Found!</td><td class="result">Priya</td><td>Finance</td><td>60000</td></tr>
+        <tr><td class="rn">5</td><td>104</td><td>Neha</td><td>Sales</td><td>55000</td></tr>
+        <tr><td class="rn">6</td><td>105</td><td>Ravi</td><td>IT</td><td>52000</td></tr>
+        </tbody></table></div>
+        <p class="text-gray-300 text-xs mt-3"><i class="fa-solid fa-arrow-right text-calc-400 mr-1"></i>Search finds 103 → move to column 2 → <strong class="text-emerald-300">Priya</strong></p></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">6</span><div><p class="text-white text-sm font-semibold mb-1">Easy memory trick 🧠</p><p class="text-gray-400 text-xs"><span class="fkey">A2</span> = starting cell of the table. <span class="fkey">D6</span> = ending cell of the table. <span class="fkey">A2:D6</span> = the entire table (a rectangular range) that Excel is allowed to search in.</p></div></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>Formula part</th><th>Meaning</th></tr></thead>
+          <tbody>
+            <tr><td class="lookup">103</td><td>Search 103</td></tr>
+            <tr><td>A2:D6</td><td>In the table from A2 to D6</td></tr>
+            <tr><td>2</td><td>Return the 2nd column</td></tr>
+            <tr><td>FALSE</td><td>Use an exact match</td></tr>
+          </tbody>
+        </table></div>
+        <div class="formula mt-3"><span class="fn">=VLOOKUP</span>(<span class="arg">103</span>, <span class="arg">A2:D6</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>)</div></div>
+    </div>
+  </section>
+
+  <!-- 3. THE REAL-LIFE PROBLEM -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Real-Life Example: "Who is Employee 103?"</h2><p class="text-gray-400 text-xs sm:text-sm">Someone types an Employee ID. Excel should auto-return that person's Name.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Someone enters a Search ID</p><p class="text-gray-400 text-xs">The lookup value = <span class="fkey">103</span>.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td class="h">Search ID</td><td class="h">Name</td></tr>
+          <tr><td class="rn">2</td><td class="lookup">103</td><td>?</td></tr>
+        </tbody></table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">The formula that answers it</p><p class="text-gray-400 text-xs">Search for 103 in column A of A2:D6, take the 2nd column of that range (Name), exact match.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">103</span>, <span class="arg">A2:D6</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>)</div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td>Employee ID</td><td>Name</td><td>Department</td><td>Salary</td></tr>
+          <tr><td class="rn">2</td><td>101</td><td>Amit</td><td>IT</td><td>50000</td></tr>
+          <tr><td class="rn">3</td><td>102</td><td>Rahul</td><td>HR</td><td>45000</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">103</td><td class="result">Priya</td><td>Finance</td><td>60000</td></tr>
+          <tr><td class="rn">5</td><td>104</td><td>Neha</td><td>Sales</td><td>55000</td></tr>
+          <tr><td class="rn">6</td><td>105</td><td>Ravi</td><td>IT</td><td>52000</td></tr>
+        </tbody></table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Result</p><p class="text-gray-400 text-xs">Excel jumps to row 4, where ID 103 lives, and hands back cell B4.</p></div></div>
+        <div class="tip-box mt-2"><p class="text-white text-xs"><i class="fa-solid fa-arrow-pointer text-calc-400 mr-1"></i><strong>Priya</strong></p></div></div>
+    </div>
+  </section>
+
+  <!-- 4. SYNTAX BREAKDOWN -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Syntax — What Each Part Means</h2><p class="text-gray-400 text-xs sm:text-sm">Four ingredients, all required.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">=VLOOKUP</span>(<span class="arg">lookup_value</span>, <span class="arg">table_array</span>, <span class="arg">col_index_num</span>, [<span class="arg">range_lookup</span>])</div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Example value</th><th>Part</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="lookup">103</td><td>lookup_value</td><td>What to search for</td></tr>
+          <tr><td>A2:D6</td><td>table_array</td><td>Table containing the data</td></tr>
+          <tr><td>2</td><td>col_index_num</td><td>Return value from the 2nd column (Name)</td></tr>
+          <tr><td>FALSE</td><td>range_lookup</td><td>Find an exact match</td></tr>
+        </tbody>
+      </table></div>
+      <div class="formula"><span class="fn">=VLOOKUP</span>(<span class="arg">103</span>, <span class="arg">A2:D6</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>) → <span class="text-emerald-400">Priya</span></div>
+    </div>
+  </section>
+
+  <!-- 5. UNDERSTANDING COLUMN NUMBERS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Understanding the Column Number</h2><p class="text-gray-400 text-xs sm:text-sm">The number is counted inside the selected table — column A is always #1.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td class="h">Employee ID</td><td class="h">Name</td><td class="h">Department</td><td class="h">Salary</td></tr>
+        <tr><td class="rn">2</td><td>101</td><td>Amit</td><td>IT</td><td>50000</td></tr>
+        <tr><td class="rn">3</td><td>102</td><td>Rahul</td><td>HR</td><td>45000</td></tr>
+        <tr><td class="rn">4</td><td>103</td><td>Priya</td><td>Finance</td><td>60000</td></tr>
+      </tbody></table></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Column</th><th>Number</th></tr></thead>
+        <tbody>
+          <tr><td>Employee ID</td><td class="form">1</td></tr>
+          <tr><td>Name</td><td class="form">2</td></tr>
+          <tr><td>Department</td><td class="form">3</td></tr>
+          <tr><td>Salary</td><td class="form">4</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Rule of thumb:</strong> your col_index_num can never be bigger than the number of columns in the table.</p></div>
+    </div>
+  </section>
+
+  <!-- 6. THREE EXAMPLES, SAME ID -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Example 1 · 2 · 3 — Same ID, Different Column</h2><p class="text-gray-400 text-xs sm:text-sm">One lookup value (104), three different columns to return.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">TRY IT</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-6">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Return Name</p><p class="text-gray-400 text-xs">Column index = 2.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">104</span>, <span class="arg">A2:D6</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>)</div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-arrow-pointer text-calc-400 mr-1"></i><strong>Result:</strong> <span class="text-emerald-300 font-bold">Neha</span></p></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Return Department</p><p class="text-gray-400 text-xs">Column index = 3.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">104</span>, <span class="arg">A2:D6</span>, <span class="arg">3</span>, <span class="arg">FALSE</span>)</div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-arrow-pointer text-calc-400 mr-1"></i><strong>Result:</strong> <span class="text-emerald-300 font-bold">Sales</span></p></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Return Salary</p><p class="text-gray-400 text-xs">Column index = 4.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">104</span>, <span class="arg">A2:D6</span>, <span class="arg">4</span>, <span class="arg">FALSE</span>)</div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-arrow-pointer text-calc-400 mr-1"></i><strong>Result:</strong> <span class="text-emerald-300 font-bold">55000</span></p></div></div>
+    </div>
+  </section>
+
+  <!-- 7. CELL REFERENCE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">7</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Using a Cell Reference — Make It Interactive</h2><p class="text-gray-400 text-xs sm:text-sm">Let the user type the ID in F2; the answer appears in G2.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Database (A:D) + Search area (F:G)</p><p class="text-gray-400 text-xs">Formula in G2 points at the ID typed in F2.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th><th>F</th><th>G</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td>Employee ID</td><td>Name</td><td>Department</td><td>Salary</td><td class="h">Employee ID</td><td class="h">Name</td></tr>
+          <tr><td class="rn">2</td><td>101</td><td>Amit</td><td>IT</td><td>50000</td><td class="lookup">102</td><td class="result">?</td></tr>
+          <tr><td class="rn">3</td><td>102</td><td>Rahul</td><td>HR</td><td>45000</td><td></td><td></td></tr>
+          <tr><td class="rn">4</td><td>103</td><td>Priya</td><td>Finance</td><td>60000</td><td></td><td></td></tr>
+        </tbody></table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Formula in G2</p><p class="text-gray-400 text-xs">Instead of a typed number, reference the cell.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">F2</span>, <span class="arg">A2:D4</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>)</div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Change F2 → answer updates automatically</p></div></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>Type in F2</th><th>G2 shows</th></tr></thead>
+          <tbody>
+            <tr><td class="lookup">101</td><td class="result">Amit</td></tr>
+            <tr><td class="lookup">102</td><td class="result">Rahul</td></tr>
+            <tr><td class="lookup">103</td><td class="result">Priya</td></tr>
+          </tbody>
+        </table></div>
+        <div class="tip-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-arrows-rotate text-calc-400 mr-1"></i><strong class="text-white">Magic:</strong> the same formula is reusable forever — no editing needed each time.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 8. FALSE vs TRUE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">8</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Understanding FALSE vs TRUE</h2><p class="text-gray-400 text-xs sm:text-sm">The 4th argument decides: exact match, or nearest lower match.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-6">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">FALSE — Exact match (Recommended)</p><p class="text-gray-400 text-xs">Finds the ID that is exactly equal. Works even when the table is unsorted. Use this almost always.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">103</span>, <span class="arg">A2:D6</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>) → <span class="text-emerald-300">Priya</span></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>TRUE?</th><th>FALSE?</th></tr></thead>
+          <tbody>
+            <tr><td>Nearest lower match</td><td>Exact match only</td></tr>
+            <tr><td>Rarely used</td><td>Most commonly used</td></tr>
+            <tr><td>Requires sorted 1st column</td><td>Works even if unsorted</td></tr>
+          </tbody>
+        </table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">TRUE — Approximate match (grade example)</p><p class="text-gray-400 text-xs">Searching 82 picks the largest value that is ≤ 82 → 75 → grade B.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">82</span>, <span class="arg">A2:B5</span>, <span class="arg">2</span>, <span class="arg">TRUE</span>)</div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td class="h">Marks</td><td class="h">Grade</td></tr>
+          <tr><td class="rn">2</td><td>0</td><td>Fail</td></tr>
+          <tr><td class="rn">3</td><td>50</td><td>C</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">75</td><td class="result">B</td></tr>
+          <tr><td class="rn">5</td><td>90</td><td>A</td></tr>
+        </tbody></table></div>
+        <div class="warn-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">82 → B</strong>, because 82 falls between 75 and 89. With TRUE the first column <b>must be sorted ascending</b>, or you'll get wrong results.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 9. COMMON ERRORS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-red-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center text-white font-bold text-sm">9</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Common Errors</h2><p class="text-gray-400 text-xs sm:text-sm">Three classic mistakes — and how to fix them.</p></div>
+      <span class="ml-auto bg-red-500/20 text-red-300 px-3 py-1 rounded-full text-xs hidden sm:inline">DANGER ZONE</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-6">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">#N/A — ID not found</p><p class="text-gray-400 text-xs">Employee 999 doesn't exist in the table.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">999</span>, <span class="arg">A2:D6</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>)</div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>Result</th></tr></thead>
+          <tbody><tr><td class="err">#N/A</td></tr></tbody>
+        </table></div>
+        <p class="text-gray-300 text-xs mt-3"><i class="fa-solid fa-wand-magic-sparkles text-calc-400 mr-1"></i><strong class="text-white">Fix it with IFERROR:</strong></p>
+        <div class="formula mt-2"><span class="fn">=IFERROR</span>(<span class="fn">VLOOKUP</span>(<span class="arg">F2</span>, <span class="arg">A2:D6</span>, <span class="arg">2</span>, <span class="arg">FALSE</span>), <span class="arg">"Not Found"</span>)</div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-arrow-pointer text-calc-400 mr-1"></i>Now instead of <span class="err">#N/A</span>, you get the friendly message <strong class="text-amber-300">"Not Found"</strong>.</p></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Wrong column number</p><p class="text-gray-400 text-xs">There is no 7th column inside A2:D6.</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">101</span>, <span class="arg">A2:D6</span>, <span class="arg">7</span>, <span class="arg">FALSE</span>) → <span class="text-red-400">#REF!</span></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">VLOOKUP only looks RIGHT</p><p class="text-gray-400 text-xs">VLOOKUP always searches the <b>first column</b> of the table. If Employee ID is not column 1, it fails.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td class="h">Name</td><td class="h">Employee ID</td></tr>
+          <tr><td class="rn">2</td><td>Amit</td><td>101</td></tr>
+          <tr><td class="rn">3</td><td>Rahul</td><td>102</td></tr>
+        </tbody></table></div>
+        <div class="formula mt-3"><span class="fn">=VLOOKUP</span>(<span class="arg">101</span>, <span class="arg">A2:B3</span>, <span class="arg">1</span>, <span class="arg">FALSE</span>) → <span class="text-red-400">#N/A</span></div>
+        <div class="err-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-circle-xmark text-red-400 mr-1"></i><strong class="text-white">Why?</strong> The first column is <b>Name</b>, so it searches names (Amit, Rahul), not IDs. To fix: put Employee ID in the first column, or use XLOOKUP which can search any column.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 10. PRODUCT PRICE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">10</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Real-Life Example: Product Price Lookup</h2><p class="text-gray-400 text-xs sm:text-sm">A shop catalogue — type a product ID, get its price.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Product table + search cell</p><p class="text-gray-400 text-xs">User enters the product ID in F2.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>F</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td class="h">Product ID</td><td class="h">Product</td><td class="h">Price</td><td class="h">Search Product</td></tr>
+          <tr><td class="rn">2</td><td>P101</td><td>Laptop</td><td>65000</td><td class="lookup">P103</td></tr>
+          <tr><td class="rn">3</td><td>P102</td><td>Mouse</td><td>700</td><td></td></tr>
+          <tr><td class="rn">4</td><td>P103</td><td>Keyboard</td><td>1500</td><td></td></tr>
+          <tr><td class="rn">5</td><td>P104</td><td>Monitor</td><td>12000</td><td></td></tr>
+        </tbody></table></div></div>
+
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Formula</p><p class="text-gray-400 text-xs">Search P103 in column A, return the 3rd column (Price).</p></div></div>
+        <div class="formula mt-2"><span class="fn">=VLOOKUP</span>(<span class="arg">F2</span>, <span class="arg">A2:C5</span>, <span class="arg">3</span>, <span class="arg">FALSE</span>)</div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+          <tr><td class="rn">1</td><td>Product ID</td><td>Product</td><td>Price</td></tr>
+          <tr><td class="rn">2</td><td>P101</td><td>Laptop</td><td>65000</td></tr>
+          <tr><td class="rn">3</td><td>P102</td><td>Mouse</td><td>700</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">P103</td><td>Keyboard</td><td class="result">1500</td></tr>
+          <tr><td class="rn">5</td><td>P104</td><td>Monitor</td><td>12000</td></tr>
+        </tbody></table></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-arrow-pointer text-calc-400 mr-1"></i><strong>Result:</strong> <span class="text-amber-300 font-bold">1500</span></p></div></div>
+    </div>
+  </section>
+
+  <!-- 11. CHEAT SHEET -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">11</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Quick Cheat Sheet</h2><p class="text-gray-400 text-xs sm:text-sm">Copy-paste ready formulas for a table in B2:E20.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">MEMORIZE</span>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Formula</th><th>Purpose</th></tr></thead>
+        <tbody>
+          <tr><td class="form"><span class="fn">=VLOOKUP</span>(A2, B2:E20, 2, FALSE)</td><td>Return the 2nd column value</td></tr>
+          <tr><td class="form"><span class="fn">=VLOOKUP</span>(A2, B2:E20, 3, FALSE)</td><td>Return the 3rd column value</td></tr>
+          <tr><td class="form"><span class="fn">=VLOOKUP</span>(A2, B2:E20, 4, FALSE)</td><td>Return the 4th column value</td></tr>
+          <tr><td class="form"><span class="fn">=IFERROR</span>(<span class="fn">VLOOKUP</span>(A2, B2:E20, 2, FALSE), <span class="arg">"Not Found"</span>)</td><td>Return value, or "Not Found" if missing</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box mt-4"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Remember:</strong> search value in column 1 → grab from any column to its right → use FALSE. And lock your range with <span class="fkey">F4</span> when dragging the formula down.</p></div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-magnifying-glass mr-1 text-calc-500"></i> VLOOKUP Notes — Employee DB · Product Prices · Grades · Errors</p>
+  </footer>
+
+</body>
+</html>

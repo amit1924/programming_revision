@@ -1,0 +1,908 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ch 3 — Charts & Visualizations | Excel for Data Analytics</title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { ch3: { 50: '#faf5ff', 100: '#f3e8ff', 200: '#e9d5ff', 300: '#d8b4fe', 400: '#c084fc', 500: '#a855f7', 600: '#9333ea', 700: '#7e22ce', 800: '#6b21a8', 900: '#581c87' } } } } }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .cell-mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: #0f172a; }
+    .excel-tbl { border-collapse: collapse; width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .excel-tbl th { background: #1e293b; color: #94a3b8; font-weight: 500; padding: 4px 10px; border: 1px solid #334155; text-align: center; }
+    .excel-tbl td { padding: 4px 10px; border: 1px solid #334155; text-align: center; color: #e2e8f0; background: #0f172a; transition: all 0.2s; }
+    .excel-tbl .rn { color: #475569; background: #1e293b; font-weight: 500; }
+    .excel-tbl .hl { background: #2e1a47; border-color: #a855f7; }
+    .excel-tbl .fml { background: #1a2332; color: #fbbf24; }
+    .excel-tbl .val { color: #c084fc; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; transition: border-color 0.3s; }
+    .card:hover { border-color: #a855f7; }
+    .card .hd { background: linear-gradient(135deg, #4a1d6e, #0f172a); padding: 10px 14px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 8px; }
+    .card .hd .ic { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .badge { font-size: 0.6rem; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+    .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .scroll-x::-webkit-scrollbar { height: 4px; }
+    .scroll-x::-webkit-scrollbar-track { background: #1e293b; border-radius: 2px; }
+    .scroll-x::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+    .btn { cursor: pointer; user-select: none; transition: all 0.15s; }
+    .btn:active { transform: scale(0.92); }
+    .btn.active { background: #7e22ce !important; border-color: #c084fc !important; color: #fff !important; }
+    .si { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; width: 80px; outline: none; }
+    .si:focus { border-color: #a855f7; }
+    .sl { -webkit-appearance: none; width: 100px; height: 4px; background: #334155; border-radius: 2px; outline: none; }
+    .sl::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #a855f7; cursor: pointer; }
+    .c3 { color: #a855f7; }
+    .chart-container { position: relative; width: 100%; overflow: hidden; }
+    .chart-container svg { width: 100%; height: auto; display: block; }
+    .bar { transition: all 0.3s; }
+    .bar:hover { opacity: 0.8; }
+    .slice { transition: all 0.3s; cursor: pointer; }
+    .slice:hover { transform: scale(1.03); transform-origin: center; }
+    .spark-cell { display: flex; align-items: flex-end; gap: 1px; height: 30px; padding: 2px 0; }
+    .spark-cell .sp-bar { width: 4px; border-radius: 1px 1px 0 0; transition: height 0.3s; }
+    .dot { transition: all 0.3s; cursor: pointer; }
+    .dot:hover { r: 6; }
+    .tg { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; }
+    .tg input { display: none; }
+    .tg .tk { width: 32px; height: 18px; background: #334155; border-radius: 99px; position: relative; transition: 0.2s; }
+    .tg .tk::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #94a3b8; border-radius: 50%; transition: 0.2s; }
+    .tg input:checked + .tk { background: #7e22ce; }
+    .tg input:checked + .tk::after { transform: translateX(14px); background: #fff; }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+    @keyframes slideDown { from{max-height:0;opacity:0} to{max-height:300px;opacity:1} }
+    .anim-slide { animation: slideDown 0.4s ease; }
+    @media (max-width: 640px) { .excel-tbl { font-size: 0.6rem; } .excel-tbl th,.excel-tbl td { padding: 2px 6px; } }
+    .ttip { position: absolute; background: #1e293b; border: 1px solid #a855f7; color: #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; pointer-events: none; white-space: nowrap; z-index: 10; opacity: 0; transition: opacity 0.15s; }
+    .ttip.show { opacity: 1; }
+  </style>
+</head>
+<body class="dark">
+
+<nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-chart-simple text-ch3-400 text-xl"></i>
+      <span class="font-bold text-white text-sm sm:text-base">Excel for Data Analytics</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-gray-400">
+      <span class="bg-ch3-600/20 text-ch3-300 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-book-open"></i> Ch 3</span>
+    </div>
+  </div>
+</nav>
+
+<header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+  <div class="inline-flex items-center gap-2 bg-ch3-600/10 text-ch3-300 px-4 py-1.5 rounded-full text-sm mb-4">
+    <i class="fa-solid fa-chart-line"></i>
+    <span>Chapter 3 of 8 — 4 lessons</span>
+  </div>
+  <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">
+    <i class="fa-solid fa-chart-pie text-ch3-400 mr-2"></i>
+    Charts & Visualizations
+  </h1>
+  <p class="text-gray-400 max-w-3xl mx-auto text-sm">
+    Turn numbers into stories. Line charts, bar charts, pie charts, histograms, scatter plots, and sparklines — <strong class="text-white">all interactive</strong>.
+  </p>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 pb-16" id="app">
+
+  <!-- LAUNCH SECTION: Chart Type Switcher -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <div><span class="text-white text-sm font-semibold">⚡ Interactive Chart Playground</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">TRY IT</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-sm mb-4">Same data, different charts. Click a chart type to see how the view changes. <strong class="text-white">Every chart on this page is live.</strong></p>
+        <div class="flex flex-wrap gap-2 mb-4">
+          <button class="btn px-3 py-1.5 text-xs rounded-lg border border-ch3-500 text-ch3-300 bg-ch3-600/20 active" onclick="switchDemoChart('bar')" id="dch_btn_bar">📊 Bar</button>
+          <button class="btn px-3 py-1.5 text-xs rounded-lg border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="switchDemoChart('line')" id="dch_btn_line">📈 Line</button>
+          <button class="btn px-3 py-1.5 text-xs rounded-lg border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="switchDemoChart('pie')" id="dch_btn_pie">🥧 Pie</button>
+        </div>
+        <div class="chart-container bg-[#0f172a] rounded-lg border border-gray-700 p-3 sm:p-4" style="min-height:280px">
+          <svg id="demoChart" viewBox="0 0 500 240" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="mt-3 grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs text-gray-500">
+          <div><span class="text-ch3-400 font-bold">Data:</span> Job Postings by Month</div>
+          <div><span class="text-ch3-400 font-bold" id="dch_elems_label">Elements:</span> <span id="dch_elems_val">Bars</span></div>
+          <div><span class="text-ch3-400 font-bold">Highest:</span> <span id="dch_high">Jan (3,420)</span></div>
+          <div><span class="text-ch3-400 font-bold">Lowest:</span> <span id="dch_low">Feb (1,890)</span></div>
+          <div><span class="text-ch3-400 font-bold">Avg:</span> <span id="dch_avg">2,471</span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 1: Chart Basics -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch3-500 flex items-center justify-center text-white text-xs font-bold">1</div>
+      <h2 class="text-white font-bold text-lg">Chart Basics</h2>
+      <span class="text-gray-500 text-xs">Why • When • How</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-4">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-question"></i></div><div><span class="text-white text-sm font-semibold">Why Use Charts?</span></div></div>
+        <div class="p-4 text-gray-400 text-xs space-y-2">
+          <p>Raw tables hide patterns. A chart reveals <strong class="text-white">trends, outliers, proportions</strong> at a glance.</p>
+          <p>Example: In a table of 12 months of data, can you spot the peak in 2 seconds? A line chart makes it obvious.</p>
+          <div class="flex gap-3 mt-2">
+            <div class="flex-1 bg-[#0f172a] rounded p-2 text-center">
+              <div class="text-gray-500 mb-1">Raw Table</div>
+              <table class="excel-tbl text-[0.55rem]"><thead><tr><th>Month</th><th>Jobs</th></tr></thead><tbody>
+                <tr><td>Jan</td><td>3,420</td></tr><tr><td>Feb</td><td>1,890</td></tr><tr><td>Mar</td><td>2,150</td></tr><tr><td>Apr</td><td>2,780</td></tr><tr><td>May</td><td>2,340</td></tr><tr><td>Jun</td><td>2,610</td></tr>
+              </tbody></table>
+            </div>
+            <div class="flex-1 bg-[#0f172a] rounded p-2 text-center">
+              <div class="text-gray-500 mb-1">Line Chart</div>
+              <svg viewBox="0 0 180 80" style="width:100%;height:auto">
+                <polyline points="10,65 30,72 50,62 70,45 90,55 110,48" fill="none" stroke="#a855f7" stroke-width="1.5"/>
+                <circle cx="10" cy="65" r="2" fill="#c084fc"/><circle cx="30" cy="72" r="2" fill="#c084fc"/>
+                <circle cx="50" cy="62" r="2" fill="#c084fc"/><circle cx="70" cy="45" r="2" fill="#c084fc"/>
+                <circle cx="90" cy="55" r="2" fill="#c084fc"/><circle cx="110" cy="48" r="2" fill="#c084fc"/>
+              </svg>
+              <div class="text-ch3-400 text-[0.5rem] mt-1">Peak visible instantly ↗</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-list-check"></i></div><div><span class="text-white text-sm font-semibold">Which Chart to Use?</span></div></div>
+        <div class="p-4">
+          <table class="excel-tbl text-xs">
+            <thead><tr><th>Goal</th><th>Chart</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td class="text-left">Trend over time</td><td><span class="text-ch3-300">Line</span></td><td>Sales by month</td></tr>
+              <tr><td class="text-left">Compare categories</td><td><span class="text-ch3-300">Bar / Column</span></td><td>Salary by job title</td></tr>
+              <tr><td class="text-left">Show proportions</td><td><span class="text-ch3-300">Pie</span></td><td>Market share</td></tr>
+              <tr><td class="text-left">Distribution</td><td><span class="text-ch3-300">Histogram</span></td><td>Salary ranges</td></tr>
+              <tr><td class="text-left">Relationship</td><td><span class="text-ch3-300">Scatter</span></td><td>Salary vs experience</td></tr>
+              <tr><td class="text-left">Mini in-cell</td><td><span class="text-ch3-300">Sparkline</span></td><td>Trend per row</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lesson 1a: Line Chart Demo -->
+    <div class="card mb-3">
+      <div class="hd">
+        <div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-chart-line"></i></div>
+        <div><span class="text-white text-sm font-semibold">Line Chart — Trend Over Time</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 1</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-3">Best for <strong class="text-white">time series</strong>. Hover any point to see the value. Toggle the trendline below.</p>
+        <div class="chart-container bg-[#0f172a] rounded-lg border border-gray-700 p-3" style="min-height:220px">
+          <svg id="lineChart" viewBox="0 0 540 200" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="flex flex-wrap items-center gap-4 mt-3 text-xs text-gray-400">
+          <label class="tg"><input type="checkbox" checked onchange="toggleLineTrendline(this.checked)"><span class="tk"></span> Trendline</label>
+          <label class="tg"><input type="checkbox" checked onchange="toggleLineDots(this.checked)"><span class="tk"></span> Data Points</label>
+          <label class="tg"><input type="checkbox" checked onchange="toggleLineLabels(this.checked)"><span class="tk"></span> Data Labels</label>
+        </div>
+      </div>
+    </div>
+
+    <!-- Lesson 1b: Bar Chart Demo -->
+    <div class="card mb-3">
+      <div class="hd">
+        <div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-chart-column"></i></div>
+        <div><span class="text-white text-sm font-semibold">Bar / Column Chart — Compare Categories</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 1</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-3">Best for <strong class="text-white">comparing values</strong> across categories. Click a bar to see the exact salary. Toggle between bar and column orientation.</p>
+        <div class="flex flex-wrap items-center gap-2 mb-3">
+          <button class="btn text-xs px-2.5 py-1 rounded border border-ch3-500 text-ch3-300 bg-ch3-600/20 active" id="bar_orient_vert" onclick="setBarOrientation('vertical')"><i class="fa-solid fa-chart-column"></i> Column</button>
+          <button class="btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" id="bar_orient_horiz" onclick="setBarOrientation('horizontal')"><i class="fa-solid fa-chart-bar"></i> Bar</button>
+          <button class="btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="sortBars()"><i class="fa-solid fa-arrow-down-a-z"></i> Sort</button>
+        </div>
+        <div class="chart-container bg-[#0f172a] rounded-lg border border-gray-700 p-3" style="min-height:220px">
+          <svg id="barChart" viewBox="0 0 500 220" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="mt-2 text-xs text-gray-500 text-center" id="barSelected">Click a bar to see details</div>
+      </div>
+    </div>
+
+    <!-- Lesson 1c: Pie Chart Demo -->
+    <div class="card mb-3">
+      <div class="hd">
+        <div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-chart-pie"></i></div>
+        <div><span class="text-white text-sm font-semibold">Pie Chart — Parts of a Whole</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 1</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-3">Best for <strong class="text-white">proportions</strong>. Hover a slice to see the percentage. Best when you have ≤5 categories.</p>
+        <div class="chart-container bg-[#0f172a] rounded-lg border border-gray-700 p-3" style="min-height:220px">
+          <svg id="pieChart" viewBox="0 0 400 200" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+        <div class="mt-2 flex flex-wrap gap-3 text-xs text-gray-400 justify-center" id="pieLegend"></div>
+      </div>
+    </div>
+
+    <!-- Lesson 1d: Chart Elements Demo -->
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-sliders"></i></div>
+        <div><span class="text-white text-sm font-semibold">Chart Elements — Toggle On/Off</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 1</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-3">In Excel, the <strong class="text-white">+</strong> icon next to a chart lets you add/remove elements. Try it here:</p>
+        <div class="flex flex-wrap gap-3 mb-3 text-xs">
+          <label class="tg"><input type="checkbox" checked onchange="toggleElem('title')"><span class="tk"></span> Title</label>
+          <label class="tg"><input type="checkbox" checked onchange="toggleElem('legend')"><span class="tk"></span> Legend</label>
+          <label class="tg"><input type="checkbox" checked onchange="toggleElem('grid')"><span class="tk"></span> Gridlines</label>
+          <label class="tg"><input type="checkbox" onchange="toggleElem('labels')"><span class="tk"></span> Data Labels</label>
+          <label class="tg"><input type="checkbox" onchange="toggleElem('axisTitles')"><span class="tk"></span> Axis Titles</label>
+          <label class="tg"><input type="checkbox" onchange="toggleElem('trendline')"><span class="tk"></span> Trendline</label>
+        </div>
+        <div class="chart-container bg-[#0f172a] rounded-lg border border-gray-700 p-3" style="min-height:220px">
+          <svg id="elemChart" viewBox="0 0 500 220" preserveAspectRatio="xMidYMid meet"></svg>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 2: Advanced Charts -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch3-500 flex items-center justify-center text-white text-xs font-bold">2</div>
+      <h2 class="text-white font-bold text-lg">Advanced Charts</h2>
+      <span class="text-gray-500 text-xs">Scatter • Customization</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-scatter-chart"></i></div><div><span class="text-white text-sm font-semibold">Scatter Plot — Relationships</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 2</span></div></div>
+        <div class="p-4 sm:p-6">
+          <p class="text-gray-400 text-xs mb-3">Shows <strong class="text-white">correlation</strong> between two numeric variables. Hover any dot. Toggle trendline to see the relationship direction.</p>
+          <div class="chart-container bg-[#0f172a] rounded-lg border border-gray-700 p-3" style="min-height:220px">
+            <svg id="scatterChart" viewBox="0 0 450 200" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+          <div class="flex flex-wrap items-center gap-4 mt-3 text-xs text-gray-400">
+            <label class="tg"><input type="checkbox" checked onchange="toggleScatterTrendline(this.checked)"><span class="tk"></span> Trendline</label>
+            <div><span class="text-ch3-400">R²</span> <span id="scatterR2" class="text-white">0.72</span> <span class="text-gray-500">(strong correlation)</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-palette"></i></div><div><span class="text-white text-sm font-semibold">Chart Customization</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 2</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-3">Key places to customize in Excel:</p>
+          <div class="space-y-2 text-xs">
+            <div class="bg-[#0f172a] rounded-lg p-3 flex items-start gap-3">
+              <div class="w-6 h-6 rounded bg-ch3-600/20 flex items-center justify-center text-ch3-300 shrink-0"><i class="fa-solid fa-pen"></i></div>
+              <div><span class="text-white font-medium">Chart Design tab</span><span class="text-gray-400"> — Change chart type, colors, quick layouts, add chart elements, switch row/column</span></div>
+            </div>
+            <div class="bg-[#0f172a] rounded-lg p-3 flex items-start gap-3">
+              <div class="w-6 h-6 rounded bg-ch3-600/20 flex items-center justify-center text-ch3-300 shrink-0"><i class="fa-solid fa-paint-brush"></i></div>
+              <div><span class="text-white font-medium">Format tab</span><span class="text-gray-400"> — Shape fill, outline, effects, text formatting for individual chart elements</span></div>
+            </div>
+            <div class="bg-[#0f172a] rounded-lg p-3 flex items-start gap-3">
+              <div class="w-6 h-6 rounded bg-ch3-600/20 flex items-center justify-center text-ch3-300 shrink-0"><i class="fa-solid fa-plus"></i></div>
+              <div><span class="text-white font-medium">+ (Chart Elements)</span><span class="text-gray-400"> — Quick toggle for axes, titles, labels, legend, error bars, trendline, gridlines</span></div>
+            </div>
+            <div class="bg-[#0f172a] rounded-lg p-3 flex items-start gap-3">
+              <div class="w-6 h-6 rounded bg-ch3-600/20 flex items-center justify-center text-ch3-300 shrink-0"><i class="fa-solid fa-palette"></i></div>
+              <div><span class="text-white font-medium">Color Palette</span><span class="text-gray-400"> — Use Monochromatic Palette 8 for clean, professional charts</span></div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 3: Statistical Charts -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch3-500 flex items-center justify-center text-white text-xs font-bold">3</div>
+      <h2 class="text-white font-bold text-lg">Statistical Charts</h2>
+      <span class="text-gray-500 text-xs">Histogram • Box & Whisker</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <!-- Histogram -->
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-chart-simple"></i></div><div><span class="text-white text-sm font-semibold">Histogram — Distribution</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 3</span></div></div>
+        <div class="p-4 sm:p-6">
+          <p class="text-gray-400 text-xs mb-3">Shows the <strong class="text-white">frequency</strong> of values in ranges (bins). Great for understanding salary distribution, age groups, etc.</p>
+          <div class="chart-container bg-[#0f172a] rounded-lg border border-gray-700 p-3" style="min-height:200px">
+            <svg id="histogramChart" viewBox="0 0 460 180" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+          <div class="flex items-center gap-3 mt-2 text-xs text-gray-400">
+            <span>Bin size:</span>
+            <input type="range" min="10" max="50" value="30" class="sl flex-1" oninput="updateHistogramBins(+this.value)">
+            <span id="histBinLabel" class="text-white cell-mono">30</span>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-x-4 gap-y-1 text-xs text-gray-500">
+            <span><span class="text-ch3-400">●</span> Mean: <span class="text-white" id="histMean">115K</span></span>
+            <span><span class="text-ch3-400">●</span> Median: <span class="text-white" id="histMedian">108K</span></span>
+            <span><span class="text-ch3-400">●</span> Skewed right (mean > median → outliers pull up)</span>
+          </div>
+        </div>
+      </div>
+      <!-- Box & Whisker -->
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-box"></i></div><div><span class="text-white text-sm font-semibold">Box & Whisker — Five-Number Summary</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 3</span></div></div>
+        <div class="p-4 sm:p-6">
+          <p class="text-gray-400 text-xs mb-3">Shows <strong class="text-white">min, Q1, median, Q3, max</strong> — and outliers. Perfect for comparing distributions across groups.</p>
+          <div class="chart-container bg-[#0f172a] rounded-lg border border-gray-700 p-3" style="min-height:200px">
+            <svg id="boxChart" viewBox="0 0 460 180" preserveAspectRatio="xMidYMid meet"></svg>
+          </div>
+          <div class="mt-2 grid grid-cols-5 gap-1 text-[0.55rem] text-center text-gray-500">
+            <div><span class="text-ch3-300 block font-bold">Min</span><span class="text-white" id="boxMin">15K</span></div>
+            <div><span class="text-ch3-300 block font-bold">Q1</span><span class="text-white" id="boxQ1">82K</span></div>
+            <div><span class="text-ch3-300 block font-bold">Median</span><span class="text-white" id="boxMedian">108K</span></div>
+            <div><span class="text-ch3-300 block font-bold">Q3</span><span class="text-white" id="boxQ3">145K</span></div>
+            <div><span class="text-ch3-300 block font-bold">Max</span><span class="text-white" id="boxMax">250K</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 4: Sparklines -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch3-500 flex items-center justify-center text-white text-xs font-bold">4</div>
+      <h2 class="text-white font-bold text-lg">Sparklines</h2>
+      <span class="text-gray-500 text-xs">Line • Column • Win/Loss</span>
+    </div>
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-wave-square"></i></div>
+        <div><span class="text-white text-sm font-semibold">Mini Charts Inside Cells</span><span class="badge bg-ch3-600/20 text-ch3-300 ml-2">LESSON 4</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-3"><strong class="text-white">Sparklines</strong> are tiny charts that fit inside a single cell. Found on the <strong class="text-white">Insert tab → Sparklines</strong> group. Three types:</p>
+        <div class="overflow-x-auto">
+          <table class="excel-tbl text-xs">
+            <thead><tr><th class="text-left">Department</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Trend</th><th>Type</th></tr></thead>
+            <tbody id="sparkTableBody">
+              <tr><td class="text-left text-ch3-300">Engineering</td><td class="val" data-s="85">85</td><td class="val" data-s="92">92</td><td class="val" data-s="88">88</td><td class="val" data-s="110">110</td><td id="spl_0"></td><td><span class="text-ch3-400">Line</span></td></tr>
+              <tr><td class="text-left text-ch3-300">Marketing</td><td class="val" data-s="45">45</td><td class="val" data-s="52">52</td><td class="val" data-s="48">48</td><td class="val" data-s="55">55</td><td id="spl_1"></td><td><span class="text-ch3-400">Line</span></td></tr>
+              <tr><td class="text-left text-ch3-300">Sales</td><td class="val" data-s="30">30</td><td class="val" data-s="65">65</td><td class="val" data-s="42">42</td><td class="val" data-s="78">78</td><td id="spl_2"></td><td><span class="text-ch3-400">Line</span></td></tr>
+              <tr><td class="text-left text-ch3-300">Support</td><td class="val" data-s="20">20</td><td class="val" data-s="18">18</td><td class="val" data-s="25">25</td><td class="val" data-s="22">22</td><td id="spl_3"></td><td><span class="text-ch3-400">Line</span></td></tr>
+              <tr><td class="text-left text-ch3-300">HR</td><td class="val" data-s="12">12</td><td class="val" data-s="15">15</td><td class="val" data-s="19">19</td><td class="val" data-s="14">14</td><td id="spl_4"></td><td><span class="text-ch3-400">Line</span></td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex flex-wrap items-center gap-3 mt-3 text-xs text-gray-400">
+          <button class="btn px-3 py-1 rounded border border-ch3-500 text-ch3-300 bg-ch3-600/20 active" onclick="setSparkType('line')" id="spark_line"><i class="fa-solid fa-chart-line"></i> Line</button>
+          <button class="btn px-3 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="setSparkType('column')" id="spark_column"><i class="fa-solid fa-chart-column"></i> Column</button>
+          <button class="btn px-3 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="setSparkType('winloss')" id="spark_winloss"><i class="fa-solid fa-arrow-up"></i> Win/Loss</button>
+          <span>Click cells to edit values &nbsp;|&nbsp; <button class="text-ch3-400 underline" onclick="randomizeSparkData()">🎲 Randomize</button></span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEYBOARD SHORTCUTS / TIPS -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch3-600/20 text-ch3-300"><i class="fa-solid fa-keyboard"></i></div>
+        <div><span class="text-white text-sm font-semibold">Chart Pro Tips</span></div>
+      </div>
+      <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-400">
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch3-300 font-bold">Alt + F1</span> — Instantly create a chart on the current sheet from selected data</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch3-300 font-bold">F11</span> — Create a chart on a new sheet</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch3-300 font-bold">Remove Legend</span> — If you have one data series, the legend is redundant. Remove it for a cleaner look.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch3-300 font-bold">Data Labels</span> — Useful for small datasets. For large ones, keep axis labels only.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch3-300 font-bold">Color Palette</span> — Stick to Monochromatic Palette 1 or 8 for professional, consistent charts.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch3-300 font-bold">Axis Titles</span> — Always label your Y-axis when the unit isn't obvious (e.g., "Salary (USD)").</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="border-t border-gray-800 py-4 text-center">
+  <p class="text-xs text-gray-600">notes made by amit</p>
+</footer>
+
+<script>
+// ============ DATA ============
+const MONTHS = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+const MONTH_VALS = [3420, 1890, 2150, 2780, 2340, 2610, 3050, 4100, 2850, 2200, 1980, 3100];
+const JOB_TITLES = ['Data Analyst','Data Scientist','Data Engineer','BI Analyst','ML Engineer','Analytics Mgr'];
+const JOB_SALARIES = [85000, 125000, 115000, 78000, 145000, 110000];
+const JOB_COLORS = ['#c084fc','#a855f7','#9333ea','#7e22ce','#6b21a8','#581c87'];
+const PIE_LABELS = ['Full-time','Part-time','Contract','Internship','Freelance'];
+const PIE_VALS = [58, 18, 14, 6, 4];
+const PIE_COLORS = ['#c084fc','#a855f7','#9333ea','#7e22ce','#6b21a8'];
+
+// ============ DEMO CHART SWITCHER ============
+function switchDemoChart(type) {
+  document.querySelectorAll('[id^=dch_btn_]').forEach(b => { b.className = 'btn px-3 py-1.5 text-xs rounded-lg border border-gray-600 text-gray-400 bg-[#0f172a]'; });
+  document.getElementById('dch_btn_'+type).className = 'btn px-3 py-1.5 text-xs rounded-lg border border-ch3-500 text-ch3-300 bg-ch3-600/20 active';
+  const svg = document.getElementById('demoChart');
+  const w = 500, h = 240, p = {t:20,b:30,l:45,r:15};
+  const cw = w - p.l - p.r, ch = h - p.t - p.b;
+  const maxV = Math.max(...MONTH_VALS);
+  const barW = cw / MONTHS.length * 0.7;
+
+  if (type === 'bar') {
+    document.getElementById('dch_elems_val').textContent = 'Bars';
+    document.getElementById('dch_high').textContent = 'Aug (4,100)';
+    document.getElementById('dch_low').textContent = 'Feb (1,890)';
+    document.getElementById('dch_avg').textContent = '2,706';
+    let html = '';
+    MONTHS.forEach((m,i) => {
+      const x = p.l + (cw / MONTHS.length) * i + (cw / MONTHS.length - barW) / 2;
+      const bh = (MONTH_VALS[i] / maxV) * ch;
+      html += `<rect class="bar" x="${x}" y="${p.t + ch - bh}" width="${barW}" height="${bh}" fill="${JOB_COLORS[i%JOB_COLORS.length]}" rx="2" onmouseenter="showTip(event,'${m}: ${MONTH_VALS[i].toLocaleString()}')" onmouseleave="hideTip()"></rect>`;
+    });
+    html += `<text x="${p.l + cw/2}" y="${h-6}" text-anchor="middle" fill="#94a3b8" font-size="8">Month</text>`;
+    svg.innerHTML = html;
+  } else if (type === 'line') {
+    document.getElementById('dch_elems_val').textContent = 'Line + Points';
+    document.getElementById('dch_high').textContent = 'Aug (4,100)';
+    document.getElementById('dch_low').textContent = 'Feb (1,890)';
+    document.getElementById('dch_avg').textContent = '2,706';
+    let pts = MONTHS.map((m,i) => {
+      const x = p.l + (cw / (MONTHS.length-1)) * i;
+      const y = p.t + ch - (MONTH_VALS[i] / maxV) * ch;
+      return {x,y,i};
+    });
+    let d = pts.map((pt,j) => (j===0?'M':'L') + pt.x+','+pt.y).join(' ');
+    let html = `<polyline points="${pts.map(p=>p.x+','+p.y).join(' ')}" fill="none" stroke="#a855f7" stroke-width="2"/>`;
+    html += pts.map(pt => `<circle class="dot" cx="${pt.x}" cy="${pt.y}" r="4" fill="#c084fc" stroke="#0f172a" stroke-width="1.5" onmouseenter="showTip(event,'${MONTHS[pt.i]}: ${MONTH_VALS[pt.i].toLocaleString()}')" onmouseleave="hideTip()"/>`).join('');
+    html += `<text x="${p.l + cw/2}" y="${h-6}" text-anchor="middle" fill="#94a3b8" font-size="8">Month</text>`;
+    svg.innerHTML = html;
+  } else if (type === 'pie') {
+    document.getElementById('dch_elems_val').textContent = 'Slices';
+    document.getElementById('dch_high').textContent = 'Jan (3,420)';
+    document.getElementById('dch_low').textContent = 'Feb (1,890)';
+    document.getElementById('dch_avg').textContent = '2,706';
+    const cx = 200, cy = 110, r = 75;
+    const total = MONTH_VALS.reduce((a,b)=>a+b,0);
+    let cumAng = -Math.PI/2;
+    let html = '';
+    MONTHS.forEach((m,i) => {
+      const ang = (MONTH_VALS[i] / total) * 2 * Math.PI;
+      const x1 = cx + r * Math.cos(cumAng), y1 = cy + r * Math.sin(cumAng);
+      const x2 = cx + r * Math.cos(cumAng + ang), y2 = cy + r * Math.sin(cumAng + ang);
+      const large = ang > Math.PI ? 1 : 0;
+      html += `<path class="slice" d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${JOB_COLORS[i%JOB_COLORS.length]}" stroke="#0f172a" stroke-width="1.5" onmouseenter="showTip(event,'${m}: ${MONTH_VALS[i].toLocaleString()} (${(MONTH_VALS[i]/total*100).toFixed(1)}%)')" onmouseleave="hideTip()"></path>`;
+      cumAng += ang;
+    });
+    svg.innerHTML = html;
+  }
+}
+
+// ============ LINE CHART (Lesson 1) ============
+let LINE_OPTS = {trendline:true, dots:true, labels:true};
+const LINE_DATA = [
+  {m:'Jan',v:3200},{m:'Feb',v:2800},{m:'Mar',v:3500},{m:'Apr',v:4100},{m:'May',v:3800},
+  {m:'Jun',v:4200},{m:'Jul',v:4700},{m:'Aug',v:5100},{m:'Sep',v:4600},{m:'Oct',v:4300},
+  {m:'Nov',v:3900},{m:'Dec',v:4500}
+];
+function drawLineChart() {
+  const svg = document.getElementById('lineChart');
+  const w = 540, h = 200, p = {t:15,b:25,l:40,r:15};
+  const cw = w - p.l - p.r, ch = h - p.t - p.b;
+  const maxV = Math.max(...LINE_DATA.map(d=>d.v));
+  const stepX = cw / (LINE_DATA.length - 1);
+  let pts = LINE_DATA.map((d,i) => ({x: p.l + stepX * i, y: p.t + ch - (d.v / maxV) * ch, ...d}));
+  let html = '';
+  // Grid
+  for (let i = 0; i <= 4; i++) {
+    const gy = p.t + (ch / 4) * i;
+    html += `<line x1="${p.l}" y1="${gy}" x2="${p.l+cw}" y2="${gy}" stroke="#1e293b" stroke-width="1"/>`;
+    html += `<text x="${p.l-4}" y="${gy+3}" text-anchor="end" fill="#475569" font-size="7">${Math.round(maxV - (maxV/4)*i).toLocaleString()}</text>`;
+  }
+  // Trendline
+  if (LINE_OPTS.trendline) {
+    const n = LINE_DATA.length;
+    const sumX = LINE_DATA.reduce((s,_,i)=>s+i,0);
+    const sumY = LINE_DATA.reduce((s,d)=>s+d.v,0);
+    const sumXY = LINE_DATA.reduce((s,d,i)=>s + i*d.v,0);
+    const sumX2 = LINE_DATA.reduce((s,_,i)=>s + i*i,0);
+    const slope = (n*sumXY - sumX*sumY)/(n*sumX2 - sumX*sumX);
+    const inter = (sumY - slope*sumX)/n;
+    const y0 = p.t + ch - (inter / maxV) * ch;
+    const yN = p.t + ch - ((slope*(n-1)+inter)/maxV) * ch;
+    html += `<line x1="${p.l}" y1="${y0}" x2="${p.l+cw}" y2="${yN}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.7"/>`;
+  }
+  // Line
+  html += `<polyline points="${pts.map(pt=>pt.x+','+pt.y).join(' ')}" fill="none" stroke="#a855f7" stroke-width="2"/>`;
+  // Fill area
+  const areaPts = pts.map(pt=>pt.x+','+pt.y).join(' ');
+  html += `<polygon points="${pts[0].x},${p.t+ch} ${areaPts} ${pts[pts.length-1].x},${p.t+ch}" fill="url(#lineGrad)" opacity="0.15"/>`;
+  html += `<defs><linearGradient id="lineGrad" x1="0" y1="0" x2="0" y2="1"><stop offset="0%" stop-color="#a855f7"/><stop offset="100%" stop-color="#a855f7" stop-opacity="0"/></linearGradient></defs>`;
+  // X labels
+  LINE_DATA.forEach((d,i) => {
+    html += `<text x="${pts[i].x}" y="${h-5}" text-anchor="middle" fill="#475569" font-size="6.5">${d.m}</text>`;
+  });
+  // Dots
+  if (LINE_OPTS.dots) {
+    html += pts.map(pt => `<circle cx="${pt.x}" cy="${pt.y}" r="3.5" fill="#c084fc" stroke="#0f172a" stroke-width="1.5" onmouseenter="showTip(event,'${pt.m}: ${pt.v.toLocaleString()}')" onmouseleave="hideTip()"/>`).join('');
+  }
+  // Labels
+  if (LINE_OPTS.labels) {
+    html += pts.map(pt => `<text x="${pt.x}" y="${pt.y-8}" text-anchor="middle" fill="#94a3b8" font-size="6">${pt.v.toLocaleString()}</text>`).join('');
+  }
+  svg.innerHTML = html;
+}
+function toggleLineTrendline(v) { LINE_OPTS.trendline = v; drawLineChart(); }
+function toggleLineDots(v) { LINE_OPTS.dots = v; drawLineChart(); }
+function toggleLineLabels(v) { LINE_OPTS.labels = v; drawLineChart(); }
+
+// ============ BAR CHART (Lesson 1) ============
+let BAR_ORDER = JOB_TITLES.map((_,i)=>i);
+let BAR_ORIENT = 'vertical';
+function drawBarChart() {
+  const svg = document.getElementById('barChart');
+  const w = 500, h = 220, p = {t:15,b:30,l:60,r:15};
+  if (BAR_ORIENT === 'horizontal') { p.l = 85; p.b = 30; }
+  const cw = w - p.l - p.r, ch = h - p.t - p.b;
+  const maxV = Math.max(...JOB_SALARIES);
+  const items = BAR_ORDER.map(i => ({title: JOB_TITLES[i], val: JOB_SALARIES[i], color: JOB_COLORS[i], idx: i}));
+  let html = '';
+  // Grid
+  if (BAR_ORIENT === 'vertical') {
+    for (let i = 0; i <= 4; i++) {
+      const gx = p.l + (cw / 4) * i;
+      html += `<line x1="${gx}" y1="${p.t}" x2="${gx}" y2="${p.t+ch}" stroke="#1e293b" stroke-width="1"/>`;
+    }
+    const bw = cw / items.length * 0.65;
+    items.forEach((item,i) => {
+      const x = p.l + (cw / items.length) * i + (cw / items.length - bw) / 2;
+      const bh = (item.val / maxV) * ch;
+      html += `<rect class="bar" x="${x}" y="${p.t+ch-bh}" width="${bw}" height="${bh}" fill="${item.color}" rx="2" onclick="selectBar('${item.title}',${item.val})" onmouseenter="showTip(event,'${item.title}: \$${(item.val/1000).toFixed(0)}K')" onmouseleave="hideTip()"/>`;
+      html += `<text x="${x+bw/2}" y="${p.t+ch+14}" text-anchor="middle" fill="#475569" font-size="6.5" transform="${bw<20?'rotate(-90,'+(x+bw/2)+','+(p.t+ch+14)+')':''}">${item.title}</text>`;
+    });
+    html += `<text x="${p.l + cw/2}" y="${h-4}" text-anchor="middle" fill="#94a3b8" font-size="7">Salary (USD)</text>`;
+    for (let i = 0; i <= 4; i++) {
+      const gy = p.t + ch - (ch / 4) * i;
+      html += `<text x="${p.l-4}" y="${gy+2.5}" text-anchor="end" fill="#475569" font-size="7">\$${Math.round(maxV/4*i/1000)}K</text>`;
+    }
+  } else {
+    for (let i = 0; i <= 4; i++) {
+      const gy = p.t + (ch / 4) * i;
+      html += `<line x1="${p.l}" y1="${gy}" x2="${p.l+cw}" y2="${gy}" stroke="#1e293b" stroke-width="1"/>`;
+    }
+    const bh = ch / items.length * 0.65;
+    items.forEach((item,i) => {
+      const y = p.t + (ch / items.length) * i + (ch / items.length - bh) / 2;
+      const bw = (item.val / maxV) * cw;
+      html += `<rect class="bar" x="${p.l}" y="${y}" width="${bw}" height="${bh}" fill="${item.color}" rx="0 2 2 0" onclick="selectBar('${item.title}',${item.val})" onmouseenter="showTip(event,'${item.title}: \$${(item.val/1000).toFixed(0)}K')" onmouseleave="hideTip()"/>`;
+      html += `<text x="${p.l-4}" y="${y+bh/2+2.5}" text-anchor="end" fill="#475569" font-size="6.5">${item.title}</text>`;
+    });
+  }
+  svg.innerHTML = html;
+}
+function selectBar(title, val) {
+  document.getElementById('barSelected').innerHTML = `<span class="text-ch3-300 font-bold">${title}</span>: <span class="text-white font-bold">\$${val.toLocaleString()}</span>`;
+}
+function setBarOrientation(orient) {
+  BAR_ORIENT = orient;
+  document.getElementById('bar_orient_vert').className = 'btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]' + (orient==='vertical'?' border-ch3-500 text-ch3-300 bg-ch3-600/20 active':'');
+  document.getElementById('bar_orient_horiz').className = 'btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]' + (orient==='horizontal'?' border-ch3-500 text-ch3-300 bg-ch3-600/20 active':'');
+  drawBarChart();
+}
+function sortBars() {
+  BAR_ORDER = [...JOB_TITLES.keys()].sort((a,b) => JOB_SALARIES[b] - JOB_SALARIES[a]);
+  drawBarChart();
+}
+
+// ============ PIE CHART (Lesson 1) ============
+function drawPieChart() {
+  const svg = document.getElementById('pieChart');
+  const w = 400, h = 200, cx = 130, cy = 100, r = 70;
+  const total = PIE_VALS.reduce((a,b)=>a+b,0);
+  let cumAng = -Math.PI/2;
+  let html = '';
+  PIE_LABELS.forEach((lab,i) => {
+    const ang = (PIE_VALS[i] / total) * 2 * Math.PI;
+    const x1 = cx + r * Math.cos(cumAng), y1 = cy + r * Math.sin(cumAng);
+    const x2 = cx + r * Math.cos(cumAng + ang), y2 = cy + r * Math.sin(cumAng + ang);
+    const large = ang > Math.PI ? 1 : 0;
+    const midAng = cumAng + ang/2;
+    const labX = cx + (r+12) * Math.cos(midAng);
+    const labY = cy + (r+12) * Math.sin(midAng);
+    html += `<path class="slice" d="M${cx},${cy} L${x1},${y1} A${r},${r} 0 ${large},1 ${x2},${y2} Z" fill="${PIE_COLORS[i]}" stroke="#0f172a" stroke-width="2" onmouseenter="showTip(event,'${lab}: ${PIE_VALS[i]}%')" onmouseleave="hideTip()"/>`;
+    if (ang > 0.3) {
+      html += `<text x="${labX}" y="${labY+2}" text-anchor="${labX > cx ? 'start' : 'end'}" fill="#e2e8f0" font-size="7" font-weight="600">${PIE_VALS[i]}%</text>`;
+    }
+    cumAng += ang;
+  });
+  svg.innerHTML = html;
+  // Legend
+  document.getElementById('pieLegend').innerHTML = PIE_LABELS.map((l,i) =>
+    `<span><span style="color:${PIE_COLORS[i]}">●</span> ${l} <span class="text-white">${PIE_VALS[i]}%</span></span>`
+  ).join('');
+}
+
+// ============ CHART ELEMENTS (Lesson 1) ============
+let ELEM_STATE = {title:true, legend:true, grid:true, labels:false, axisTitles:false, trendline:false};
+const ELEM_DATA = [
+  {m:'Jan',v:2800},{m:'Feb',v:3200},{m:'Mar',v:2900},{m:'Apr',v:3600},{m:'May',v:3400},{m:'Jun',v:4100}
+];
+function drawElemChart() {
+  const svg = document.getElementById('elemChart');
+  const w = 500, h = 220, p = {t:28,b:25,l:42,r:15};
+  const cw = w - p.l - p.r, ch = h - p.t - p.b;
+  const maxV = Math.max(...ELEM_DATA.map(d=>d.v));
+  const stepX = cw / (ELEM_DATA.length - 1);
+  let pts = ELEM_DATA.map((d,i) => ({x: p.l + stepX * i, y: p.t + ch - (d.v / maxV) * ch, ...d}));
+  let html = '';
+  // Title
+  if (ELEM_STATE.title) {
+    html += `<text x="${w/2}" y="16" text-anchor="middle" fill="#e2e8f0" font-size="10" font-weight="700">Monthly Job Postings</text>`;
+  }
+  // Grid
+  if (ELEM_STATE.grid) {
+    for (let i = 0; i <= 4; i++) {
+      const gy = p.t + (ch / 4) * i;
+      html += `<line x1="${p.l}" y1="${gy}" x2="${p.l+cw}" y2="${gy}" stroke="#1e293b" stroke-width="1"/>`;
+      html += `<text x="${p.l-4}" y="${gy+2.5}" text-anchor="end" fill="#475569" font-size="6.5">${Math.round(maxV - (maxV/4)*i).toLocaleString()}</text>`;
+    }
+  }
+  // Trendline
+  if (ELEM_STATE.trendline) {
+    const n = ELEM_DATA.length;
+    const sumX = ELEM_DATA.reduce((s,_,i)=>s+i,0);
+    const sumY = ELEM_DATA.reduce((s,d)=>s+d.v,0);
+    const sumXY = ELEM_DATA.reduce((s,d,i)=>s + i*d.v,0);
+    const sumX2 = ELEM_DATA.reduce((s,_,i)=>s + i*i,0);
+    const slope = (n*sumXY - sumX*sumY)/(n*sumX2 - sumX*sumX);
+    const inter = (sumY - slope*sumX)/n;
+    const y0 = p.t + ch - (inter / maxV) * ch;
+    const yN = p.t + ch - ((slope*(n-1)+inter)/maxV) * ch;
+    html += `<line x1="${p.l}" y1="${y0}" x2="${p.l+cw}" y2="${yN}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/>`;
+  }
+  // Axis Titles
+  if (ELEM_STATE.axisTitles) {
+    html += `<text x="${p.l-30}" y="${p.t+ch/2}" text-anchor="middle" fill="#94a3b8" font-size="7" transform="rotate(-90,${p.l-30},${p.t+ch/2})">Count</text>`;
+    html += `<text x="${p.l+cw/2}" y="${h-4}" text-anchor="middle" fill="#94a3b8" font-size="7">Month</text>`;
+  }
+  // Line
+  html += `<polyline points="${pts.map(pt=>pt.x+','+pt.y).join(' ')}" fill="none" stroke="#a855f7" stroke-width="2"/>`;
+  // X labels
+  ELEM_DATA.forEach((d,i) => {
+    html += `<text x="${pts[i].x}" y="${h-5}" text-anchor="middle" fill="#475569" font-size="6.5">${d.m}</text>`;
+  });
+  // Data Labels
+  if (ELEM_STATE.labels) {
+    html += pts.map(pt => `<text x="${pt.x}" y="${pt.y-8}" text-anchor="middle" fill="#94a3b8" font-size="6.5">${pt.v.toLocaleString()}</text>`).join('');
+  }
+  // Dots
+  html += pts.map(pt => `<circle cx="${pt.x}" cy="${pt.y}" r="3.5" fill="#c084fc" stroke="#0f172a" stroke-width="1.5"/>`).join('');
+  // Legend
+  if (ELEM_STATE.legend) {
+    html += `<rect x="${w-80}" y="6" width="72" height="16" rx="4" fill="#1e293b" opacity="0.9"/>`;
+    html += `<circle cx="${w-73}" cy="14" r="3" fill="#a855f7"/>`;
+    html += `<text x="${w-67}" y="16.5" fill="#94a3b8" font-size="7">Job Postings</text>`;
+  }
+  svg.innerHTML = html;
+}
+function toggleElem(el) {
+  ELEM_STATE[el] = !ELEM_STATE[el];
+  drawElemChart();
+}
+
+// ============ SCATTER CHART (Lesson 2) ============
+const SCATTER_DATA = [
+  {lab:'Data Analyst', x:3, y:85},{lab:'BI Analyst', x:4, y:78},{lab:'Data Engineer', x:5, y:115},
+  {lab:'Data Scientist', x:6, y:125},{lab:'ML Engineer', x:7, y:145},{lab:'Analytics Mgr', x:8, y:110},
+  {lab:'Sr Analyst', x:9, y:135},{lab:'Sr Engineer', x:10, y:155},{lab:'Sr Scientist', x:11, y:165},
+  {lab:'Director', x:12, y:175},{lab:'Cloud Eng', x:5.5, y:120},{lab:'DB Admin', x:4.5, y:95}
+];
+let SCATTER_TREND = true;
+function drawScatterChart() {
+  const svg = document.getElementById('scatterChart');
+  const w = 450, h = 200, p = {t:15,b:25,l:45,r:15};
+  const cw = w - p.l - p.r, ch = h - p.t - p.b;
+  const maxX = 13, maxY = 190;
+  let pts = SCATTER_DATA.map(d => ({x: p.l + (d.x / maxX) * cw, y: p.t + ch - (d.y / maxY) * ch, ...d}));
+  let html = '';
+  // Grid
+  for (let i = 0; i <= 4; i++) {
+    const gx = p.l + (cw/4)*i, gy = p.t + (ch/4)*i;
+    html += `<line x1="${p.l}" y1="${gy}" x2="${p.l+cw}" y2="${gy}" stroke="#1e293b" stroke-width="1"/>`;
+    html += `<text x="${p.l-4}" y="${gy+2.5}" text-anchor="end" fill="#475569" font-size="6.5">\$${Math.round(maxY/4*(4-i))}K</text>`;
+    html += `<text x="${gx}" y="${h-5}" text-anchor="middle" fill="#475569" font-size="6.5">${Math.round(maxX/4*i)}yr</text>`;
+  }
+  // Axis labels
+  html += `<text x="${p.l-35}" y="${p.t+ch/2}" text-anchor="middle" fill="#94a3b8" font-size="6.5" transform="rotate(-90,${p.l-35},${p.t+ch/2})">Salary (USD)</text>`;
+  html += `<text x="${p.l+cw/2}" y="${h-2}" text-anchor="middle" fill="#94a3b8" font-size="6.5">Experience (years)</text>`;
+  // Trendline
+  if (SCATTER_TREND) {
+    const n = SCATTER_DATA.length;
+    const sumX = SCATTER_DATA.reduce((s,d)=>s+d.x,0);
+    const sumY = SCATTER_DATA.reduce((s,d)=>s+d.y,0);
+    const sumXY = SCATTER_DATA.reduce((s,d)=>s+d.x*d.y,0);
+    const sumX2 = SCATTER_DATA.reduce((s,d)=>s+d.x*d.x,0);
+    const slope = (n*sumXY - sumX*sumY)/(n*sumX2 - sumX*sumX);
+    const inter = (sumY - slope*sumX)/n;
+    const y0 = p.t + ch - (inter / maxY) * ch;
+    const yN = p.t + ch - ((slope*maxX+inter) / maxY) * ch;
+    html += `<line x1="${p.l}" y1="${y0}" x2="${p.l+cw}" y2="${yN}" stroke="#fbbf24" stroke-width="1.5" stroke-dasharray="4,3" opacity="0.8"/>`;
+  }
+  // Dots
+  html += pts.map(pt =>
+    `<circle cx="${pt.x}" cy="${pt.y}" r="4.5" fill="#a855f7" fill-opacity="0.7" stroke="#c084fc" stroke-width="1" onmouseenter="showTip(event,'${pt.lab}: ${pt.y}K salary, ${pt.x}yr exp')" onmouseleave="hideTip()"/>`
+  ).join('');
+  svg.innerHTML = html;
+}
+function toggleScatterTrendline(v) { SCATTER_TREND = v; drawScatterChart(); }
+
+// ============ HISTOGRAM (Lesson 3) ============
+let HIST_BINS = 30;
+function genHistogramData(binSize) {
+  const raw = [];
+  for (let i = 0; i < 500; i++) {
+    let v;
+    if (Math.random() < 0.7) v = 80 + Math.random() * 100;
+    else v = 180 + Math.random() * 120;
+    raw.push(Math.round(v));
+  }
+  const maxV = Math.max(...raw);
+  const numBins = Math.ceil(maxV / binSize);
+  const bins = Array(numBins).fill(0);
+  raw.forEach(v => { bins[Math.floor(v/binSize)]++; });
+  return bins.map((c,i) => ({low: i*binSize, high: (i+1)*binSize, count: c}));
+}
+let HIST_DATA = genHistogramData(30);
+function drawHistogram() {
+  const svg = document.getElementById('histogramChart');
+  const w = 460, h = 180, p = {t:10,b:25,l:40,r:10};
+  const cw = w - p.l - p.r, ch = h - p.t - p.b;
+  const maxC = Math.max(...HIST_DATA.map(d=>d.count));
+  const bw = cw / HIST_DATA.length * 0.9;
+  let html = '';
+  HIST_DATA.forEach((d,i) => {
+    const x = p.l + (cw / HIST_DATA.length) * i + (cw / HIST_DATA.length - bw) / 2;
+    const bh = (d.count / maxC) * ch;
+    html += `<rect class="bar" x="${x}" y="${p.t+ch-bh}" width="${bw}" height="${Math.max(bh,1)}" fill="#9333ea" rx="1" opacity="0.8" onmouseenter="showTip(event,'\$${d.low}K-\$${d.high}K: ${d.count} jobs')" onmouseleave="hideTip()"/>`;
+    if (i % Math.ceil(HIST_DATA.length/6) === 0) {
+      html += `<text x="${x+bw/2}" y="${h-4}" text-anchor="middle" fill="#475569" font-size="5.5">${d.low}K</text>`;
+    }
+  });
+  for (let i = 0; i <= 4; i++) {
+    const gy = p.t + (ch/4)*i;
+    html += `<text x="${p.l-4}" y="${gy+2.5}" text-anchor="end" fill="#475569" font-size="6">${Math.round(maxC/4*(4-i))}</text>`;
+  }
+  svg.innerHTML = html;
+  document.getElementById('histBinLabel').textContent = HIST_BINS;
+}
+function updateHistogramBins(val) {
+  HIST_BINS = val;
+  HIST_DATA = genHistogramData(val);
+  drawHistogram();
+}
+
+// ============ BOX & WHISKER (Lesson 3) ============
+function drawBoxChart() {
+  const svg = document.getElementById('boxChart');
+  const w = 460, h = 180, p = {t:20,b:30,l:60,r:60};
+  const cw = w - p.l - p.r, ch = h - p.t - p.b;
+  const groups = [
+    {name:'Data Analyst', min:45, q1:72, med:95, q3:120, max:160},
+    {name:'Data Scientist', min:60, q1:95, med:130, q3:165, max:220},
+    {name:'Data Engineer', min:55, q1:88, med:118, q3:150, max:200},
+    {name:'ML Engineer', min:70, q1:105, med:145, q3:180, max:250}
+  ];
+  const maxV = 260;
+  const bw = cw / groups.length * 0.5;
+  let html = '';
+  html += `<text x="${w/2}" y="14" text-anchor="middle" fill="#94a3b8" font-size="8">Salary Distribution by Role</text>`;
+  groups.forEach((g,i) => {
+    const cx = p.l + (cw / groups.length) * i + (cw / groups.length) / 2;
+    const toY = v => p.t + ch - (v/maxV)*ch;
+    const lx = cx - bw/2, rx = cx + bw/2;
+    // Whiskers
+    html += `<line x1="${cx}" y1="${toY(g.min)}" x2="${cx}" y2="${toY(g.q1)}" stroke="#475569" stroke-width="1.5"/>`;
+    html += `<line x1="${cx-6}" y1="${toY(g.min)}" x2="${cx+6}" y2="${toY(g.min)}" stroke="#475569" stroke-width="1.5"/>`;
+    html += `<line x1="${cx}" y1="${toY(g.q3)}" x2="${cx}" y2="${toY(g.max)}" stroke="#475569" stroke-width="1.5"/>`;
+    html += `<line x1="${cx-6}" y1="${toY(g.max)}" x2="${cx+6}" y2="${toY(g.max)}" stroke="#475569" stroke-width="1.5"/>`;
+    // Box
+    html += `<rect x="${lx}" y="${toY(g.q3)}" width="${bw}" height="${toY(g.q1)-toY(g.q3)}" fill="#7e22ce" fill-opacity="0.5" stroke="#a855f7" stroke-width="1.5" rx="2"/>`;
+    // Median line
+    html += `<line x1="${lx}" y1="${toY(g.med)}" x2="${rx}" y2="${toY(g.med)}" stroke="#fbbf24" stroke-width="2"/>`;
+    // Label
+    html += `<text x="${cx}" y="${h-5}" text-anchor="middle" fill="#475569" font-size="6.5">${g.name}</text>`;
+  });
+  // Y labels
+  for (let i = 0; i <= 4; i++) {
+    const v = Math.round(maxV/4*i);
+    const gy = p.t + ch - (v/maxV)*ch;
+    html += `<text x="${p.l-5}" y="${gy+2.5}" text-anchor="end" fill="#475569" font-size="6.5">\$${v}K</text>`;
+    html += `<line x1="${p.l-2}" y1="${gy}" x2="${p.l+cw}" y2="${gy}" stroke="#1e293b" stroke-width="1"/>`;
+  }
+  svg.innerHTML = html;
+}
+
+// ============ SPARKLINES (Lesson 4) ============
+let SPARK_TYPE = 'line';
+function drawSparklines() {
+  const rows = document.querySelectorAll('#sparkTableBody tr');
+  rows.forEach((row, ri) => {
+    const vals = [];
+    row.querySelectorAll('td[data-s]').forEach(td => vals.push(parseFloat(td.textContent) || 0));
+    const cell = document.getElementById('spl_'+ri);
+    const maxV = Math.max(...vals, 1);
+    if (SPARK_TYPE === 'line') {
+      const w = 60, h = 24, p = 2;
+      const cw = w - p*2, ch = h - p*2;
+      const pts = vals.map((v,i) => `${p + (cw/(vals.length-1))*i},${p + ch - (v/maxV)*ch}`);
+      cell.innerHTML = `<svg width="60" height="24" viewBox="0 0 60 24"><polyline points="${pts.join(' ')}" fill="none" stroke="#a855f7" stroke-width="1.5"/></svg>`;
+    } else if (SPARK_TYPE === 'column') {
+      const w = 60, h = 24, bw = Math.floor(56 / vals.length);
+      const bars = vals.map((v,i) => `<rect x="${2 + i*(bw+1)}" y="${24 - (v/maxV)*20}" width="${bw}" height="${(v/maxV)*20}" fill="#a855f7" rx="1"/>`);
+      cell.innerHTML = `<svg width="60" height="24" viewBox="0 0 60 24">${bars.join('')}</svg>`;
+    } else if (SPARK_TYPE === 'winloss') {
+      const w = 60, h = 24, bw = Math.floor(56 / vals.length);
+      const bars = vals.map((v,i) => {
+        const up = v >= (i > 0 ? vals[i-1] : v);
+        return `<rect x="${2 + i*(bw+1)}" y="${up ? 4 : 14}" width="${bw}" height="${up ? 18 : 8}" fill="${up ? '#10b981' : '#ef4444'}" rx="1"/>`;
+      });
+      cell.innerHTML = `<svg width="60" height="24" viewBox="0 0 60 24">${bars.join('')}</svg>`;
+    }
+  });
+}
+function setSparkType(type) {
+  SPARK_TYPE = type;
+  document.querySelectorAll('[id^=spark_]').forEach(b => {
+    b.className = 'btn px-3 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]';
+  });
+  document.getElementById('spark_'+type).className = 'btn px-3 py-1 rounded border border-ch3-500 text-ch3-300 bg-ch3-600/20 active';
+  drawSparklines();
+}
+function randomizeSparkData() {
+  document.querySelectorAll('#sparkTableBody tr').forEach(row => {
+    row.querySelectorAll('td[data-s]').forEach(td => {
+      td.textContent = Math.floor(Math.random() * 80 + 10);
+    });
+  });
+  drawSparklines();
+}
+// Make spark cells editable
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('#sparkTableBody td[data-s]').forEach(td => {
+    td.contentEditable = true;
+    td.addEventListener('input', drawSparklines);
+  });
+  drawSparklines();
+});
+
+// ============ TOOLTIP ============
+function showTip(e, text) {
+  let tip = document.querySelector('.ttip');
+  if (!tip) {
+    tip = document.createElement('div');
+    tip.className = 'ttip';
+    document.body.appendChild(tip);
+  }
+  const rect = e.target.getBoundingClientRect();
+  tip.textContent = text;
+  tip.style.left = Math.min(rect.left + rect.width/2 - tip.offsetWidth/2, window.innerWidth - 120) + 'px';
+  tip.style.top = (rect.top - 30) + 'px';
+  tip.classList.add('show');
+}
+function hideTip() {
+  const tip = document.querySelector('.ttip');
+  if (tip) tip.classList.remove('show');
+}
+
+// ============ INIT ============
+document.addEventListener('DOMContentLoaded', () => {
+  switchDemoChart('bar');
+  drawLineChart();
+  drawBarChart();
+  drawPieChart();
+  drawElemChart();
+  drawScatterChart();
+  drawHistogram();
+  drawBoxChart();
+  drawSparklines();
+});
+</script>
+</body>
+</html>

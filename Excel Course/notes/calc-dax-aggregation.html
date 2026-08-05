@@ -1,0 +1,410 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>DAX Aggregate Functions — Step-by-Step Revision | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.88rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.lookup{ background:#1f2c4a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #60a5fa; }
+    table.g td.result{ background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.err{ background:#3a1620; color:#fca5a5; font-weight:700; box-shadow:inset 0 0 0 2px #f87171; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .formula { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.9rem; color:#a3e635; overflow-x:auto; white-space:nowrap; }
+    .formula .arg { color:#fcd34d; } .formula .fn { color:#93c5fd; font-weight:600; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:38px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-database text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Excel — DAX Aggregate Functions</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-cubes-stacked"></i><span>Power Pivot's formula language — squeeze one number out of a whole column or table</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">DAX Aggregate Functions</h1>
+    <p class="text-gray-400 max-w-3xl mx-auto text-sm sm:text-base">DAX (<b>D</b>ata <b>A</b>nalysis e<b>X</b>pressions) is the formula language of Power Pivot. The <b>aggregate</b> functions — SUM, AVERAGE, COUNT, DISTINCTCOUNT, MEDIAN and the iterator X-versions — collapse thousands of rows into a single answer, live inside measures.</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#20401f;box-shadow:inset 0 0 0 2px #56af3f"></span> aggregate result</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a2816;box-shadow:inset 0 0 0 2px #fbbf24"></span> measure / formula</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#1f2c4a;box-shadow:inset 0 0 0 2px #60a5fa"></span> filter context</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a1620;box-shadow:inset 0 0 0 2px #f87171"></span> blank / error</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 1. WHAT ARE THEY -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">What Are DAX Aggregate Functions?</h2><p class="text-gray-400 text-xs sm:text-sm">One number out of many rows — the heartbeat of every measure.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">BIG PICTURE</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Kind</th><th>What it does</th><th>Examples</th></tr></thead>
+        <tbody>
+          <tr><td class="h">Column aggregates</td><td>Scan one column, skip blanks, return a single value</td><td class="form">SUM · AVERAGE · MIN · MAX · MEDIAN · COUNT</td></tr>
+          <tr><td class="h">Counting &amp; distinct</td><td>Count rows or unique values</td><td class="form">COUNTROWS · DISTINCTCOUNT · COUNTA</td></tr>
+          <tr><td class="h">Iterators (X-functions)</td><td>Calculate per row FIRST, then aggregate the results</td><td class="form">SUMX · AVERAGEX · MINX · MAXX · COUNTX</td></tr>
+          <tr><td class="h">Filtered</td><td>Aggregate under a modified filter</td><td class="form">CALCULATE(SUM(…), filter)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-circle-info text-calc-400 mr-1"></i><strong class="text-white">Excel déjà vu:</strong> SUM, AVERAGE, MIN, MAX and COUNT work almost like their Excel twins. The difference — DAX always gets a <b>column</b> or <b>table</b>, and the answer respects <b>filter context</b> (pivot rows/slicers) automatically.</p></div>
+      <div class="formula"><span class="fn">Total Salary :=</span> <span class="fn">SUM</span>(<span class="arg">Jobs[Salary]</span>) → <span class="arg">1,655,000</span></div>
+    </div>
+  </section>
+
+  <!-- 2. CORE FIVE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Core Five — SUM · AVERAGE · MIN · MAX · MEDIAN</h2><p class="text-gray-400 text-xs sm:text-sm">The five aggregates you will use in 95% of measures.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td class="h">Job Title</td><td class="h">Salary</td><td class="h">Country</td></tr>
+        <tr><td class="rn">2</td><td>Data Analyst</td><td>115000</td><td>United States</td></tr>
+        <tr><td class="rn">3</td><td>Data Analyst</td><td>75000</td><td>United States</td></tr>
+        <tr><td class="rn">4</td><td>Data Analyst</td><td>90000</td><td>India</td></tr>
+        <tr><td class="rn">5</td><td>Data Scientist</td><td>95000</td><td>United States</td></tr>
+        <tr><td class="rn">6</td><td>Data Scientist</td><td>960000</td><td>United States</td></tr>
+        <tr><td class="rn">7</td><td>Data Engineer</td><td>120000</td><td>India</td></tr>
+        <tr><td class="rn">8</td><td>Business Analyst</td><td>60000</td><td>United Kingdom</td></tr>
+        <tr><td class="rn">9</td><td>Senior Data Engineer</td><td>140000</td><td>United States</td></tr>
+        </tbody></table></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Function</th><th>Question</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td class="form">=SUM(Jobs[Salary])</td><td>What's the total salary bill?</td><td class="m">1,655,000</td></tr>
+          <tr><td class="form">=AVERAGE(Jobs[Salary])</td><td>What's the mean salary?</td><td class="m">206,875</td></tr>
+          <tr><td class="form">=MEDIAN(Jobs[Salary])</td><td>What's the middle salary?</td><td class="m">105,000</td></tr>
+          <tr><td class="form">=MIN(Jobs[Salary])</td><td>Lowest salary?</td><td class="m">60,000</td></tr>
+          <tr><td class="form">=MAX(Jobs[Salary])</td><td>Highest salary?</td><td class="m">960,000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Blanks:</strong> all five skip empty cells. Only the numbers that are actually there get counted.</p></div>
+    </div>
+  </section>
+
+  <!-- 3. COUNTING FAMILY -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Counting Family — COUNT · COUNTA · COUNTROWS · DISTINCTCOUNT</h2><p class="text-gray-400 text-xs sm:text-sm">Four ways to count, four different answers. Pick the one that matches your question.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">EASY TO MIX UP</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Function</th><th>Counts…</th><th>Counts blanks?</th><th>On our data</th></tr></thead>
+        <tbody>
+          <tr><td class="form">COUNT(col)</td><td>Non-blank <b>numbers</b> (no TRUE/FALSE)</td><td class="err">No</td><td class="m">8</td></tr>
+          <tr><td class="form">COUNTA(col)</td><td>Non-blank values of <b>any type</b> (incl. TRUE/FALSE)</td><td class="err">No</td><td class="m">8</td></tr>
+          <tr><td class="form">COUNTROWS(table)</td><td><b>Rows</b> in the table — even all-blank ones</td><td class="m">Yes</td><td class="m">8</td></tr>
+          <tr><td class="form">DISTINCTCOUNT(col)</td><td>Unique (distinct) values</td><td class="result">Counts the blank once</td><td class="m">5 titles</td></tr>
+        </tbody>
+      </table></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Distinct titles on the job list</p><p class="text-gray-400 text-xs">"Data Analyst" appears 3 times — DISTINCTCOUNT counts it once. 5 unique titles out of 8 rows.</p></div></div>
+        <div class="formula mt-2"><span class="fn">Distinct Titles :=</span> <span class="fn">DISTINCTCOUNT</span>(<span class="arg">Jobs[Job Title]</span>) → <span class="arg">5</span></div></div>
+      <div class="warn-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">COUNT vs COUNTA:</strong> if a column can hold TRUE/FALSE, plain COUNT quietly skips those rows. Use COUNTA when the data type isn't guaranteed.</p></div>
+    </div>
+  </section>
+
+  <!-- 4. MEASURES -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Measures — the := sign and the Calculation Area</h2><p class="text-gray-400 text-xs sm:text-sm">DAX aggregates live in measures, stored in the grey bar under the table grid.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">The course's very first measure</p><p class="text-gray-400 text-xs">Excel couldn't give us a median in a normal pivot — DAX can. The colon-equals <span class="fkey">:=</span> is the mark of a measure.</p></div></div>
+        <div class="formula mt-2"><span class="fn">Median Salary :=</span> <span class="fn">MEDIAN</span>(<span class="arg">Jobs[Salary]</span>)</div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td class="h">Measure</td><td class="h">Result</td></tr>
+        <tr><td class="rn">2</td><td class="form">Median Salary</td><td class="m">105,000</td></tr>
+        <tr><td class="rn">3</td><td class="form">Total Salary</td><td class="m">1,655,000</td></tr>
+        <tr><td class="rn">4</td><td class="form">Job Count</td><td class="m">8</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Measures respond to the pivot</p><p class="text-gray-400 text-xs">Drop Job Title in Rows and every measure recomputes per group automatically — no formulas dragged down.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>Job Title</th><th>Count</th><th>Median Salary</th></tr></thead><tbody>
+        <tr><td>Business Analyst</td><td class="m">1</td><td class="m">60,000</td></tr>
+        <tr><td>Data Analyst</td><td class="m">3</td><td class="m">90,000</td></tr>
+        <tr><td>Data Engineer</td><td class="m">1</td><td class="m">120,000</td></tr>
+        <tr><td>Data Scientist</td><td class="m">2</td><td class="m">527,500</td></tr>
+        <tr><td>Senior Data Engineer</td><td class="m">1</td><td class="m">140,000</td></tr>
+        </tbody></table></div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-key text-calc-400 mr-1"></i><strong class="text-white">One formula, many answers.</strong> A measure isn't one number — it's a recipe that recomputes for whatever the pivot asks. That's why aggregations belong in measures, not calculated columns.</p></div>
+    </div>
+  </section>
+
+  <!-- 5. ITERATORS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Iterators — SUMX · AVERAGEX · MINX · MAXX · COUNTX</h2><p class="text-gray-400 text-xs sm:text-sm">The X versions: walk every row, run a formula on it, then aggregate the results.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">THE X-MEN</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">SUMX</span>(<span class="arg">table</span>, <span class="arg">row-by-row expression</span>)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">A 10% bonus for every job — computed row by row</p><p class="text-gray-400 text-xs">SUM can't do this: there's no bonus column. SUMX computes salary×0.10 for each row, then adds.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>Salary</th><th>Bonus = Salary × 0.10</th></tr></thead><tbody>
+        <tr><td class="rn">2</td><td>115000</td><td class="m">11,500</td></tr>
+        <tr><td class="rn">3</td><td>75000</td><td class="m">7,500</td></tr>
+        <tr><td class="rn">4</td><td>90000</td><td class="m">9,000</td></tr>
+        <tr><td class="rn">5</td><td>95000</td><td class="m">9,500</td></tr>
+        <tr><td class="rn">6</td><td>960000</td><td class="m">96,000</td></tr>
+        <tr><td class="rn">7</td><td>120000</td><td class="m">12,000</td></tr>
+        <tr><td class="rn">8</td><td>60000</td><td class="m">6,000</td></tr>
+        <tr><td class="rn">9</td><td>140000</td><td class="m">14,000</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">The measure</p><p class="text-gray-400 text-xs">Total bonus = 11,500 + 7,500 + 9,000 + 9,500 + 96,000 + 12,000 + 6,000 + 14,000.</p></div></div>
+        <div class="formula mt-2"><span class="fn">Total Bonus :=</span> <span class="fn">SUMX</span>(<span class="arg">Jobs</span>, <span class="arg">Jobs[Salary] * 0.10</span>) → <span class="arg">165,500</span></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>X-function</th><th>Same as…</th><th>Use it for</th></tr></thead><tbody>
+        <tr><td class="form">SUMX</td><td>SUM</td><td>Sum of per-row calculations</td></tr>
+        <tr><td class="form">AVERAGEX</td><td>AVERAGE</td><td>Mean of per-row calculations</td></tr>
+        <tr><td class="form">MINX / MAXX</td><td>MIN / MAX</td><td>Smallest / largest per-row value</td></tr>
+        <tr><td class="form">COUNTX</td><td>COUNT</td><td>Count rows where the expression is a number</td></tr>
+        </tbody></table></div></div>
+    </div>
+  </section>
+
+  <!-- 6. SUM vs SUMX -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">SUM vs SUMX — Pick the Right One</h2><p class="text-gray-400 text-xs sm:text-sm">Same result for plain columns. Different result the moment a per-row calculation is involved.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Case</th><th>SUM(Jobs[Salary])</th><th>SUMX(Jobs, …)</th></tr></thead>
+        <tbody>
+          <tr><td class="h">Column already exists</td><td class="m">1,655,000 ✓</td><td class="m">1,655,000 ✓</td></tr>
+          <tr><td class="h">Need salary × 0.10 first</td><td class="err">❌ No column for it</td><td class="m">165,500 ✓</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Rule of thumb:</strong> need a plain column total? <span class="fkey">SUM</span>. Need to compute something per row before adding (bonus, currency conversion, tax)? <span class="fkey">SUMX</span>. Same logic applies to the whole X family.</p></div>
+      <div class="formula"><span class="fn">Euro Total :=</span> <span class="fn">SUMX</span>(<span class="arg">Jobs</span>, <span class="arg">Jobs[Salary] * 0.85</span>) <span class="text-gray-500">← convert every salary, then sum</span></div>
+    </div>
+  </section>
+
+  <!-- 7. CALCULATE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">7</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">CALCULATE — Aggregates Under a Filter</h2><p class="text-gray-400 text-xs sm:text-sm">The most powerful function in DAX: run an aggregate in a modified filter context.</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">KING OF DAX</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">CALCULATE</span>(<span class="arg">expression</span>, <span class="arg">filter1</span>, <span class="arg">filter2</span>, …)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">"Total US salary only"</p><p class="text-gray-400 text-xs">The aggregate inside runs as if only the United States rows existed.</p></div></div>
+        <div class="formula mt-2"><span class="fn">US Salary :=</span> <span class="fn">CALCULATE</span>(<span class="fn">SUM</span>(<span class="arg">Jobs[Salary]</span>), <span class="arg">Jobs[Country] = "United States"</span>) → <span class="arg">1,385,000</span></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>Country</th><th>Rows</th><th>US Salary</th></tr></thead><tbody>
+        <tr><td>United States</td><td class="m">4</td><td class="m">1,385,000</td></tr>
+        <tr><td>India</td><td class="m">2</td><td class="err">BLANK</td></tr>
+        <tr><td>United Kingdom</td><td class="m">1</td><td class="err">BLANK</td></tr>
+        </tbody></table></div>
+        <div class="tip-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-filter text-calc-400 mr-1"></i><strong class="text-white">The magic:</strong> in a pivot, CALCULATE sees the row's own context (India row → India) <i>and</i> your new filter. The new filter can override the row — which is exactly how "US salary per country" and "% of total" work.</p></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">% of grand total — remove all filters</p><p class="text-gray-400 text-xs">REMOVEFILTERS clears the pivot's row filters so the denominator is the whole table.</p></div></div>
+        <div class="formula mt-2"><span class="fn">Salary % of Total :=</span> <span class="fn">DIVIDE</span>(<span class="fn">SUM</span>(<span class="arg">Jobs[Salary]</span>), <span class="fn">CALCULATE</span>(<span class="fn">SUM</span>(<span class="arg">Jobs[Salary]</span>), <span class="fn">REMOVEFILTERS</span>(<span class="arg">Jobs</span>)))</div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>Country</th><th>Salary</th><th>% of Total</th></tr></thead><tbody>
+        <tr><td>United States</td><td class="m">1,385,000</td><td class="m">83.7%</td></tr>
+        <tr><td>India</td><td class="m">210,000</td><td class="m">12.7%</td></tr>
+        <tr><td>United Kingdom</td><td class="m">60,000</td><td class="m">3.6%</td></tr>
+        </tbody></table></div></div>
+    </div>
+  </section>
+
+  <!-- 8. CONTEXTS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">8</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Row Context vs Filter Context</h2><p class="text-gray-400 text-xs sm:text-sm">The two "worlds" a DAX formula can live in — everything clicks once you see them.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th></th><th>Row Context</th><th>Filter Context</th></tr></thead>
+        <tbody>
+          <tr><td class="h">Sees</td><td>One row at a time</td><td>Many rows, filtered down</td></tr>
+          <tr><td class="h">Created by</td><td>Iterators (SUMX…) and calculated columns</td><td>Pivot rows, columns, slicers, CALCULATE</td></tr>
+          <tr><td class="h">Typical question</td><td>What is THIS row's value?</td><td>What's the total of ALL visible rows?</td></tr>
+          <tr><td class="h">Tool</td><td class="form">Jobs[Salary] * 0.10</td><td class="form">SUM(Jobs[Salary])</td></tr>
+        </tbody>
+      </table></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">An iterator lives in row context… but needs the aggregate</p><p class="text-gray-400 text-xs">Inside SUMX you're in row context. To summarize the whole table from there you must convert context with CALCULATE — called <b>context transition</b>.</p></div></div>
+        <div class="formula mt-2"><span class="fn">:=</span> <span class="fn">SUMX</span>(<span class="arg">Jobs</span>, <span class="arg">CALCULATE( SUM( Jobs[Salary] ) )</span>)</div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Keep it simple:</strong> use column aggregates in measures (filter context), use X-functions when a per-row step is unavoidable, and let CALCULATE bridge the two.</p></div>
+    </div>
+  </section>
+
+  <!-- 9. DISTINCTCOUNT TRAP -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-red-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-red-500 flex items-center justify-center text-white font-bold text-sm">9</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The DISTINCTCOUNT Trap — Totals Don't Add Up</h2><p class="text-gray-400 text-xs sm:text-sm">Distinct counts are not additive. The grand total is almost never the sum of the subtotals.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Distinct companies per country</p><p class="text-gray-400 text-xs">Same company hires in two countries → counted once in each country, but only once in the grand total.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>Country</th><th>Distinct companies</th></tr></thead><tbody>
+        <tr><td>United States</td><td class="m">3</td></tr>
+        <tr><td>India</td><td class="m">2</td></tr>
+        <tr><td class="result">Sum of rows</td><td class="err">5 (looks right)</td></tr>
+        <tr><td class="m">Actual grand total</td><td class="m">4 (one company in both US + India)</td></tr>
+        </tbody></table></div></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-red-400 mr-1"></i><strong class="text-white">Expected behaviour, not a bug.</strong> A value that appears in two categories is counted once per category, but only once overall. If you need totals that add up, use COUNT or COUNTROWS instead — just know they count rows, not unique values.</p></div>
+    </div>
+  </section>
+
+  <!-- 10. BLANKS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">10</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">How Blanks Are Handled</h2><p class="text-gray-400 text-xs sm:text-sm">Each aggregate treats an empty cell its own way — know it before you trust the number.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th></th><th>Salary</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>115000</td></tr>
+        <tr><td class="rn">2</td><td class="err">(blank)</td></tr>
+        <tr><td class="rn">3</td><td>120000</td></tr>
+        <tr><td class="rn">4</td><td>95000</td></tr>
+        </tbody></table></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Function</th><th>Blank behaviour</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td class="form">SUM(Jobs[Salary])</td><td>Skips the blank</td><td class="m">330,000</td></tr>
+          <tr><td class="form">AVERAGE(Jobs[Salary])</td><td>Divides by 3, not 4</td><td class="m">110,000</td></tr>
+          <tr><td class="form">COUNT(Jobs[Salary])</td><td>Counts non-blank only</td><td class="m">3</td></tr>
+          <tr><td class="form">COUNTROWS(Jobs)</td><td>Counts the row anyway</td><td class="m">4</td></tr>
+          <tr><td class="form">MIN / MAX(Jobs[Salary])</td><td>All blank → BLANK (no zero!)</td><td class="m">95,000 / 120,000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="warn-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">The silent trap:</strong> SUM and AVERAGE ignore blanks — so a column full of missing salaries quietly returns 0 instead of telling you it's broken. Guard it: <span class="fkey">=IF(COUNTROWS(Jobs) = COUNT(Jobs[Salary]), SUM(Jobs[Salary]), BLANK())</span></p></div>
+    </div>
+  </section>
+
+  <!-- 11. MEDIAN VS AVERAGE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">11</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Median vs Average — Why DAX MEDIAN Matters</h2><p class="text-gray-400 text-xs sm:text-sm">One monster salary bends the average. The median stays honest. This is why the course builds a median measure.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Salary (sorted)</th><th></th></tr></thead><tbody>
+        <tr><td class="m">60,000</td><td rowspan="8" class="text-gray-500 text-left pl-4 align-middle"><span class="text-gray-300 font-semibold">AVERAGE = 206,875</span><br>pulled up by the 960,000<br><br><span class="text-emerald-300 font-semibold">MEDIAN = 105,000</span><br>middle of the list —<br>unaffected by extremes</td></tr>
+        <tr><td class="m">75,000</td></tr>
+        <tr><td class="m">90,000</td></tr>
+        <tr><td class="m">95,000</td></tr>
+        <tr><td class="m">115,000</td></tr>
+        <tr><td class="m">120,000</td></tr>
+        <tr><td class="m">140,000</td></tr>
+        <tr><td class="result">960,000 ← outlier</td></tr>
+        </tbody></table></div>
+      <div class="formula"><span class="fn">Average :=</span> <span class="fn">AVERAGE</span>(<span class="arg">Jobs[Salary]</span>) → <span class="arg">206,875</span> &nbsp;·&nbsp; <span class="fn">Median :=</span> <span class="fn">MEDIAN</span>(<span class="arg">Jobs[Salary]</span>) → <span class="arg">105,000</span></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-scale-balanced text-calc-400 mr-1"></i><strong class="text-white">Analyst instinct:</strong> for skewed data like salaries (a few huge outliers), report the median. AVERAGE and MEDIAN agree only when data is symmetric.</p></div>
+    </div>
+  </section>
+
+  <!-- 12. RECIPES -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">12</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Real-World Recipes — KPI Dashboard Measures</h2><p class="text-gray-400 text-xs sm:text-sm">The exact set of measures that power a job-market KPI card.</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">PUT IT TOGETHER</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Measure</th><th>Formula</th><th>Result</th></tr></thead>
+        <tbody>
+          <tr><td class="form">Job Count</td><td class="form">=COUNTROWS(Jobs)</td><td class="m">8</td></tr>
+          <tr><td class="form">Total Salary</td><td class="form">=SUM(Jobs[Salary])</td><td class="m">1,655,000</td></tr>
+          <tr><td class="form">Average Salary</td><td class="form">=AVERAGE(Jobs[Salary])</td><td class="m">206,875</td></tr>
+          <tr><td class="form">Median Salary</td><td class="form">=MEDIAN(Jobs[Salary])</td><td class="m">105,000</td></tr>
+          <tr><td class="form">Distinct Titles</td><td class="form">=DISTINCTCOUNT(Jobs[Job Title])</td><td class="m">5</td></tr>
+          <tr><td class="form">US Salary</td><td class="form">=CALCULATE(SUM(Jobs[Salary]), Jobs[Country]="United States")</td><td class="m">1,385,000</td></tr>
+          <tr><td class="form">Bonus Pool</td><td class="form">=SUMX(Jobs, Jobs[Salary]*0.10)</td><td class="m">165,500</td></tr>
+          <tr><td class="form">% of Total</td><td class="form">=DIVIDE(SUM(Jobs[Salary]), CALCULATE(SUM(Jobs[Salary]), REMOVEFILTERS(Jobs)))</td><td class="m">per country</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-wand-magic-sparkles text-calc-400 mr-1"></i><strong class="text-white">KPI pattern:</strong> one <span class="fkey">COUNTROWS</span>, one <span class="fkey">SUM</span>, one <span class="fkey">MEDIAN</span> (for skewed money), one <span class="fkey">DISTINCTCOUNT</span>, one <span class="fkey">CALCULATE</span> for a filtered view, and one <span class="fkey">DIVIDE</span> for a ratio — and you have a whole dashboard.</p></div>
+    </div>
+  </section>
+
+  <!-- 13. CHEAT SHEET -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">13</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Quick Cheat Sheet</h2><p class="text-gray-400 text-xs sm:text-sm">Copy-paste ready DAX aggregates (all written as measures with :=).</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">MEMORIZE</span>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Measure</th><th>Formula</th><th>Use for</th></tr></thead>
+        <tbody>
+          <tr><td class="form">Total :=</td><td class="form">SUM(Table[Column])</td><td>Add up a column</td></tr>
+          <tr><td class="form">Avg :=</td><td class="form">AVERAGE(Table[Column])</td><td>Mean of a column</td></tr>
+          <tr><td class="form">Median :=</td><td class="form">MEDIAN(Table[Column])</td><td>Middle value — skewed data</td></tr>
+          <tr><td class="form">Min / Max :=</td><td class="form">MIN(Table[Column]) / MAX(Table[Column])</td><td>Range edges</td></tr>
+          <tr><td class="form">Rows :=</td><td class="form">COUNTROWS(Table)</td><td>Total rows (counts blanks)</td></tr>
+          <tr><td class="form">NonBlank :=</td><td class="form">COUNT(Table[Column])</td><td>Rows with a number</td></tr>
+          <tr><td class="form">Distinct :=</td><td class="form">DISTINCTCOUNT(Table[Column])</td><td>Unique values (not additive!)</td></tr>
+          <tr><td class="form">Filtered :=</td><td class="form">CALCULATE(SUM(Table[Column]), Table[Country]="US")</td><td>Aggregate under a filter</td></tr>
+          <tr><td class="form">PerRow :=</td><td class="form">SUMX(Table, Table[Column]*0.10)</td><td>Compute per row, then add</td></tr>
+          <tr><td class="form">Ratio :=</td><td class="form">DIVIDE(SUM(Table[Column]), CALCULATE(SUM(Table[Column]), REMOVEFILTERS(Table)))</td><td>% of grand total</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box mt-4"><p class="text-gray-300 text-xs"><i class="fa-solid fa-database text-calc-400 mr-1"></i><strong class="text-white">Remember:</strong> <span class="fkey">:=</span> means measure. Column aggregates + filter context (CALCULATE) handle 90% of jobs. Reach for an X-function only when each row needs its own calculation first. And prefer MEDIAN for anything with outliers.</p></div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-database mr-1 text-calc-500"></i> DAX Aggregate Functions — SUM · AVERAGE · MIN · MAX · MEDIAN · COUNT · COUNTA · COUNTROWS · DISTINCTCOUNT · SUMX · CALCULATE. Based on the DAX reference (Microsoft Learn) and the course's Power Pivot lesson (Median Salary measure).</p>
+  </footer>
+
+</body>
+</html>

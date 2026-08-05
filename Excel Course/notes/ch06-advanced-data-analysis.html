@@ -1,0 +1,405 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ch 6 — Advanced Data Analysis | Excel for Data Analytics</title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { ch6: { 50: '#fff1f2', 100: '#ffe4e6', 200: '#fecdd3', 300: '#fda4af', 400: '#fb7185', 500: '#f43f5e', 600: '#e11d48', 700: '#be123c', 800: '#9f1239', 900: '#881337' } } } } }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .cell-mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: #0f172a; }
+    .excel-tbl { border-collapse: collapse; width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .excel-tbl th { background: #1e293b; color: #94a3b8; font-weight: 500; padding: 4px 10px; border: 1px solid #334155; text-align: center; }
+    .excel-tbl td { padding: 4px 10px; border: 1px solid #334155; text-align: center; color: #e2e8f0; background: #0f172a; transition: all 0.2s; }
+    .excel-tbl .rn { color: #475569; background: #1e293b; font-weight: 500; }
+    .excel-tbl .hl { background: #3b0d1a; border-color: #f43f5e; }
+    .excel-tbl .fml { background: #1a2332; color: #fbbf24; }
+    .excel-tbl .val { color: #fb7185; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; transition: border-color 0.3s; }
+    .card:hover { border-color: #f43f5e; }
+    .card .hd { background: linear-gradient(135deg, #3b0d1a, #0f172a); padding: 10px 14px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 8px; }
+    .card .hd .ic { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .badge { font-size: 0.6rem; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+    .btn { cursor: pointer; user-select: none; transition: all 0.15s; }
+    .btn:active { transform: scale(0.92); }
+    .btn.active { background: #e11d48 !important; border-color: #fb7185 !important; color: #fff !important; }
+    .si { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; outline: none; }
+    .si:focus { border-color: #f43f5e; }
+    .sl { -webkit-appearance: none; height: 4px; background: #334155; border-radius: 2px; outline: none; }
+    .sl::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #f43f5e; cursor: pointer; }
+    .tg { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 0.75rem; }
+    .tg input { display: none; }
+    .tg .tk { width: 32px; height: 18px; background: #334155; border-radius: 99px; position: relative; transition: 0.2s; }
+    .tg .tk::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #94a3b8; border-radius: 50%; transition: 0.2s; }
+    .tg input:checked + .tk { background: #e11d48; }
+    .tg input:checked + .tk::after { transform: translateX(14px); background: #fff; }
+    .fc-line { transition: all 0.3s; }
+    @keyframes slideDown { from{max-height:0;opacity:0} to{max-height:300px;opacity:1} }
+    .anim-slide { animation: slideDown 0.4s ease; }
+    @media (max-width: 640px) { .excel-tbl { font-size: 0.6rem; } .excel-tbl th,.excel-tbl td { padding: 2px 6px; } }
+  </style>
+</head>
+<body class="dark">
+
+<nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-chart-line text-ch6-400 text-xl"></i>
+      <span class="font-bold text-white text-sm sm:text-base">Excel for Data Analytics</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-gray-400">
+      <span class="bg-ch6-600/20 text-ch6-300 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-book-open"></i> Ch 6</span>
+    </div>
+  </div>
+</nav>
+
+<header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+  <div class="inline-flex items-center gap-2 bg-ch6-600/10 text-ch6-300 px-4 py-1.5 rounded-full text-sm mb-4">
+    <i class="fa-solid fa-microchip"></i>
+    <span>Chapter 6 of 8 — 3 lessons</span>
+  </div>
+  <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">
+    <i class="fa-solid fa-brain text-ch6-400 mr-2"></i>
+    Advanced Data Analysis
+  </h1>
+  <p class="text-gray-400 max-w-3xl mx-auto text-sm">
+    Add-ins, forecasting, what-if analysis, Solver, and the Analysis ToolPak. Take Excel's analytical power <strong class="text-white">to the next level</strong>.
+  </p>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 pb-16">
+
+  <!-- LESSON 1: Add-ins & Forecasting -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch6-500 flex items-center justify-center text-white text-xs font-bold">1</div>
+      <h2 class="text-white font-bold text-lg">Add-ins & Forecast Sheet</h2>
+      <span class="text-gray-500 text-xs">Enable • Forecast • Confidence</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-puzzle-piece"></i></div><div><span class="text-white text-sm font-semibold">Enabling Add-ins</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Three types: <strong class="text-white">Web</strong>, <strong class="text-white">Excel</strong> (COM), <strong class="text-white">COM</strong>. The key ones for data analysis:</p>
+          <div class="space-y-2 text-xs">
+            <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+              <i class="fa-solid fa-chart-simple text-ch6-300"></i>
+              <div><span class="text-white font-medium">Analysis ToolPak</span><span class="text-gray-400"> — Statistical tests, histograms, moving averages, regression, sampling</span></div>
+            </div>
+            <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+              <i class="fa-solid fa-calculator text-ch6-300"></i>
+              <div><span class="text-white font-medium">Solver</span><span class="text-gray-400"> — Optimization with constraints, multiple variable inputs</span></div>
+            </div>
+          </div>
+          <div class="mt-3 bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+            <div class="text-gray-500 text-[10px]">How to enable:</div>
+            <div class="text-xs text-gray-400 space-y-0.5 mt-1">
+              <div><strong class="text-white">1.</strong> File → Options</div>
+              <div><strong class="text-white">2.</strong> Add-ins → Manage: Excel Add-ins → Go</div>
+              <div><strong class="text-white">3.</strong> Check <span class="text-ch6-300">Analysis ToolPak</span> and <span class="text-ch6-300">Solver</span> → OK</div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-chart-line"></i></div><div><span class="text-white text-sm font-semibold">Forecast Sheet</span><span class="badge bg-ch6-600/20 text-ch6-300 ml-2">DATA TAB</span></div></div>
+        <div class="p-4 sm:p-6">
+          <p class="text-gray-400 text-xs mb-2">Select your data → <strong class="text-white">Data → Forecast Sheet</strong>. Creates a forecast with <strong class="text-white">confidence bands</strong> automatically.</p>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <svg viewBox="0 0 420 160" style="width:100%;height:auto">
+              <!-- Background confidence band -->
+              <path d="M40,120 L50,115 L60,118 L70,110 L80,108 L90,100 L100,95 L110,90 L120,88 L130,82 L140,78 L150,75 L160,72 L170,65 L180,62 L190,58 L200,55 L210,52 L220,50 L230,48 L240,50 L250,52 L260,55 L270,58 L280,60 L290,65 L300,68 L310,72 L320,75 L330,80 L340,85 L350,90 L360,95 L370,100 L380,105" fill="none" stroke="#fb7185" stroke-width="2"/>
+              <!-- Upper confidence -->
+              <path d="M280,60 L290,68 L300,75 L310,82 L320,88 L330,95 L340,102 L350,108 L360,115 L370,120 L380,125" fill="none" stroke="#f43f5e" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+              <path d="M280,60 L290,55 L300,48 L310,42 L320,38 L330,32 L340,28 L350,22 L360,18 L370,12 L380,8" fill="none" stroke="#f43f5e" stroke-width="1" stroke-dasharray="3,2" opacity="0.5"/>
+              <!-- Fill confidence -->
+              <path d="M280,60 L290,55 L300,48 L310,42 L320,38 L330,32 L340,28 L350,22 L360,18 L370,12 L380,8 L380,125 L370,120 L360,115 L350,108 L340,102 L330,95 L320,88 L310,82 L300,75 L290,68 L280,60 Z" fill="#f43f5e" opacity="0.08"/>
+              <!-- Vertical divider -->
+              <line x1="280" y1="8" x2="280" y2="130" stroke="#475569" stroke-width="1" stroke-dasharray="3,3"/>
+              <text x="270" y="140" text-anchor="end" fill="#475569" font-size="6">Historical</text>
+              <text x="290" y="140" text-anchor="start" fill="#f43f5e" font-size="6">Forecast</text>
+              <!-- X labels -->
+              <text x="380" y="135" text-anchor="end" fill="#475569" font-size="5">Time</text>
+            </svg>
+          </div>
+          <div class="mt-2 text-xs text-gray-500 flex gap-3">
+            <span><span class="text-ch6-300">●</span> Blue: Actual data</span>
+            <span><span class="text-ch6-300">●</span> Orange: Forecast</span>
+            <span><span class="text-ch6-300">─</span> Dotted: Confidence interval</span>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 2: What-If Analysis -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch6-500 flex items-center justify-center text-white text-xs font-bold">2</div>
+      <h2 class="text-white font-bold text-lg">What-If Analysis</h2>
+      <span class="text-gray-500 text-xs">Scenario Mgr • Goal Seek • Solver • Data Tables</span>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-list"></i></div><div><span class="text-white text-sm font-semibold">Scenario Manager</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2"><strong class="text-white">Data → What-If Analysis → Scenario Manager</strong>. Save different sets of input values and compare them side-by-side.</p>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1">Job Offer Scenarios</div>
+            <table class="excel-tbl text-xs">
+              <thead><tr><th>Scenario</th><th>Base Salary</th><th>Bonus</th><th>Annual Raise</th><th>Total (5yr)</th></tr></thead>
+              <tbody>
+                <tr><td class="text-left text-ch6-300 font-bold">Job 1</td><td>85,000</td><td>5,000</td><td>3%</td><td class="val">482,000</td></tr>
+                <tr><td class="text-left text-ch6-300 font-bold">Job 2</td><td>95,000</td><td>8,000</td><td>2%</td><td class="val">520,000</td></tr>
+                <tr><td class="text-left text-ch6-300 font-bold">Job 3</td><td>78,000</td><td>12,000</td><td>5%</td><td class="val">510,000</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Create a <strong>Scenario Summary</strong> report to compare all scenarios in one sheet.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-crosshairs"></i></div><div><span class="text-white text-sm font-semibold">Goal Seek</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2"><strong class="text-white">Data → What-If Analysis → Goal Seek</strong>. Find the input needed to reach a target output. <strong class="text-white">One variable only.</strong></p>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1">Interactive Demo:</div>
+            <div class="flex items-center gap-2 text-xs mb-2">
+              <span class="text-gray-400">Want total of</span>
+              <input type="number" value="550000" class="si w-20" id="gsTarget" oninput="runGoalSeek()">
+              <span class="text-gray-400">over 5 years</span>
+            </div>
+            <table class="excel-tbl text-xs">
+              <thead><tr><th>Variable</th><th>Value</th></tr></thead>
+              <tbody>
+                <tr><td class="text-left">Base Salary</td><td id="gsBase" class="val">95,000</td></tr>
+                <tr><td class="text-left">Bonus</td><td id="gsBonus" class="val">8,000</td></tr>
+                <tr><td class="text-left">Annual Raise</td><td id="gsRaise" class="val">3.2%</td></tr>
+                <tr class="hl"><td class="text-left font-bold text-ch6-300">Total (5yr)</td><td id="gsTotal" class="font-bold val">550,000</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Goal Seek changes the raise % to hit your target total. Change the target above to see it adjust.</p>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-calculator"></i></div><div><span class="text-white text-sm font-semibold">Solver — Multi-Variable Optimization</span><span class="badge bg-ch6-600/20 text-ch6-300 ml-2">DATA TAB</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Like Goal Seek but with <strong class="text-white">multiple variables</strong> and <strong class="text-white">constraints</strong>. Data → Solver.</p>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1">Example: Maximize profit with constraints</div>
+            <table class="excel-tbl text-xs">
+              <thead><tr><th>Variable</th><th>Value</th><th>Constraint</th></tr></thead>
+              <tbody>
+                <tr><td class="text-left">Base Salary</td><td class="val">92,000</td><td>≥ 80,000</td></tr>
+                <tr><td class="text-left">Bonus</td><td class="val">10,000</td><td>≤ 20,000</td></tr>
+                <tr><td class="text-left">Annual Raise</td><td class="val">4.5%</td><td>≤ 10%</td></tr>
+                <tr class="hl"><td class="text-left font-bold text-ch6-300">Total (5yr)</td><td class="font-bold val">547,000</td><td class="text-ch6-300">Target: ≥ 540K</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="mt-2 text-xs text-gray-400 space-y-1">
+            <p><strong class="text-white">Solver parameters:</strong></p>
+            <div class="bg-[#0f172a] rounded p-2 text-[0.6rem]">
+              Set Objective: <span class="text-amber-400 cell-mono">$F$6</span> To: Max<br>
+              By Changing: <span class="text-amber-400 cell-mono">$B$2:$B$4</span><br>
+              Subject to: <span class="text-amber-400 cell-mono">$B$2 >= 80000</span>, <span class="text-amber-400 cell-mono">$B$3 <= 20000</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-table"></i></div><div><span class="text-white text-sm font-semibold">Data Tables</span><span class="badge bg-ch6-600/20 text-ch6-300 ml-2">1 & 2 INPUT</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2"><strong class="text-white">Data → What-If Analysis → Data Table</strong>. See how changing 1 or 2 inputs affects a formula.</p>
+          <div class="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+              <div class="text-gray-500 text-[10px] mb-1">One-Input Table</div>
+              <table class="excel-tbl text-[0.55rem]">
+                <thead><tr><th>Raise %</th><th>Total</th></tr></thead>
+                <tbody>
+                  <tr><td>1%</td><td class="val">478K</td></tr>
+                  <tr><td>2%</td><td class="val">489K</td></tr>
+                  <tr><td>3%</td><td class="val">501K</td></tr>
+                  <tr><td>4%</td><td class="val">513K</td></tr>
+                  <tr><td>5%</td><td class="val">526K</td></tr>
+                </tbody>
+              </table>
+            </div>
+            <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+              <div class="text-gray-500 text-[10px] mb-1">Two-Input Table</div>
+              <table class="excel-tbl text-[0.55rem]">
+                <thead><tr><th></th><th>$75K</th><th>$85K</th><th>$95K</th></tr></thead>
+                <tbody>
+                  <tr><td class="rn">1%</td><td>371K</td><td>421K</td><td>471K</td></tr>
+                  <tr><td class="rn">3%</td><td>398K</td><td>451K</td><td>505K</td></tr>
+                  <tr><td class="rn">5%</td><td>429K</td><td>486K</td><td>543K</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> The formula cell goes in the <strong>top-left</strong> corner. Row input = second variable, Column input = first variable.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 3: Analysis ToolPak -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch6-500 flex items-center justify-center text-white text-xs font-bold">3</div>
+      <h2 class="text-white font-bold text-lg">Analysis ToolPak</h2>
+      <span class="text-gray-500 text-xs">Stats • Histograms • Moving Avg • Correlation</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-cubes"></i></div><div><span class="text-white text-sm font-semibold">Available Tools</span></div></div>
+        <div class="p-4">
+          <div class="grid grid-cols-1 gap-1.5 text-xs text-gray-400">
+            <div class="bg-[#0f172a] rounded p-2">📊 <strong class="text-white">Histogram</strong> — Frequency distribution with bins</div>
+            <div class="bg-[#0f172a] rounded p-2">📈 <strong class="text-white">Moving Average</strong> — Smooth out fluctuations</div>
+            <div class="bg-[#0f172a] rounded p-2">🔢 <strong class="text-white">Rank & Percentile</strong> — Position within data</div>
+            <div class="bg-[#0f172a] rounded p-2">📋 <strong class="text-white">Descriptive Statistics</strong> — Mean, median, mode, std dev, etc.</div>
+            <div class="bg-[#0f172a] rounded p-2">🔗 <strong class="text-white">Correlation</strong> — Relationship between variables</div>
+            <div class="bg-[#0f172a] rounded p-2">📉 <strong class="text-white">Regression</strong> — Linear modeling and prediction</div>
+            <div class="bg-[#0f172a] rounded p-2">🎲 <strong class="text-white">Sampling</strong> — Random or periodic sampling</div>
+            <div class="bg-[#0f172a] rounded p-2">🧪 <strong class="text-white">t-Tests / F-Tests</strong> — Statistical hypothesis testing</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-chart-simple"></i></div><div><span class="text-white text-sm font-semibold">Histogram Example</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Input Range: salary data → Bin Range: bucket boundaries → Output: frequency table + chart.</p>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 border border-gray-700">
+            <div class="flex gap-2">
+              <div class="flex-1">
+                <div class="text-gray-500 text-[10px] mb-1">Input salaries</div>
+                <div class="text-xs text-gray-400">85K, 92K, 78K, 120K, 135K, 110K, 95K...</div>
+              </div>
+              <div class="flex-1">
+                <div class="text-gray-500 text-[10px] mb-1">Output bins</div>
+                <table class="excel-tbl text-[0.55rem]">
+                  <thead><tr><th>Bin</th><th>Freq</th></tr></thead>
+                  <tbody>
+                    <tr><td>80K</td><td>2</td></tr>
+                    <tr><td>100K</td><td class="val">5</td></tr>
+                    <tr><td>120K</td><td>3</td></tr>
+                    <tr><td>140K</td><td>1</td></tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-chart-line"></i></div><div><span class="text-white text-sm font-semibold">Moving Average</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Smooths fluctuations to reveal trends. Input: data range → Interval (e.g., 7 days) → Output range + chart.</p>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <svg viewBox="0 0 300 100" style="width:100%;height:auto">
+              <polyline points="10,80 20,75 30,82 40,70 50,78 60,65 70,72 80,60 90,68 100,55 110,62 120,50 130,58 140,45 150,52 160,42 170,48 180,35 190,45 200,38" fill="none" stroke="#64748b" stroke-width="1.5"/>
+              <polyline points="10,75 30,75 50,72 70,68 90,65 110,58 130,53 150,48 170,42 190,40 200,38" fill="none" stroke="#fb7185" stroke-width="2.5"/>
+              <text x="150" y="22" text-anchor="middle" fill="#64748b" font-size="5">Raw data</text>
+              <text x="150" y="14" text-anchor="middle" fill="#fb7185" font-size="5">Moving avg (smooth)</text>
+            </svg>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Key Differences Table -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-code-compare"></i></div>
+        <div><span class="text-white text-sm font-semibold">What-If Tools Comparison</span></div>
+      </div>
+      <div class="p-4">
+        <div class="overflow-x-auto">
+          <table class="excel-tbl text-xs">
+            <thead><tr><th>Tool</th><th>Variables</th><th>Goal</th><th>Constraints</th><th>Best For</th></tr></thead>
+            <tbody>
+              <tr><td class="text-ch6-300 font-bold">Goal Seek</td><td>1</td><td>Reach target value</td><td>No</td><td>Simple "what if I need X"</td></tr>
+              <tr><td class="text-ch6-300 font-bold">Solver</td><td>Multiple</td><td>Max/Min/Specific</td><td>Yes</td><td>Optimization problems</td></tr>
+              <tr><td class="text-ch6-300 font-bold">Scenario Mgr</td><td>Multiple</td><td>Compare cases</td><td>No</td><td>"What if" comparison</td></tr>
+              <tr><td class="text-ch6-300 font-bold">Data Table</td><td>1-2</td><td>See range of outcomes</td><td>No</td><td>Sensitivity analysis</td></tr>
+              <tr><td class="text-ch6-300 font-bold">Forecast Sheet</td><td>Time series</td><td>Predict future</td><td>No</td><td>Trend forecasting</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pro Tips -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch6-600/20 text-ch6-300"><i class="fa-solid fa-lightbulb"></i></div>
+        <div><span class="text-white text-sm font-semibold">Pro Tips</span></div>
+      </div>
+      <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-400">
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch6-300 font-bold">Add-ins once</span> — Enable Analysis ToolPak and Solver once; they stay active for all workbooks.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch6-300 font-bold">Forecast confidence</span> — Adjust the confidence interval in the Forecast Sheet options. 95% is default.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch6-300 font-bold">Solver constraints</span> — You can add integer constraints (e.g., number of employees must be whole).</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch6-300 font-bold">Data Table speed</span> — Large data tables can slow down Excel. Use <span class="cell-mono text-amber-400">F9</span> to manually recalculate.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch6-300 font-bold">Scenario Summary</span> — Scenario Manager creates a summary sheet with all scenarios and result cells.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch6-300 font-bold">Moving Average interval</span> — An interval of 7 smooths weekly fluctuations; 30 smooths monthly.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="border-t border-gray-800 py-4 text-center">
+  <p class="text-xs text-gray-600">notes made by amit</p>
+</footer>
+
+<script>
+// Goal Seek Demo
+function runGoalSeek() {
+  const target = parseFloat(document.getElementById('gsTarget').value) || 550000;
+  // Simulating: months = (target - base - bonus) / (base * raise)
+  // We iteratively find raise % that yields target
+  const base = 95000;
+  const bonus = 8000;
+  let raise = 0.03;
+  for (let i = 0; i < 50; i++) {
+    let total = 0;
+    let cur = base;
+    for (let y = 0; y < 5; y++) {
+      total += cur + bonus;
+      cur *= (1 + raise);
+    }
+    const diff = total - target;
+    if (Math.abs(diff) < 100) break;
+    raise -= diff / (base * 20);
+    if (raise < 0) raise = 0.001;
+    if (raise > 0.5) raise = 0.5;
+  }
+  document.getElementById('gsBase').textContent = base.toLocaleString();
+  document.getElementById('gsBonus').textContent = bonus.toLocaleString();
+  document.getElementById('gsRaise').textContent = (raise * 100).toFixed(1) + '%';
+  let total = 0;
+  let cur = base;
+  for (let y = 0; y < 5; y++) { total += cur + bonus; cur *= (1 + raise); }
+  document.getElementById('gsTotal').textContent = Math.round(total).toLocaleString();
+}
+runGoalSeek();
+</script>
+</body>
+</html>

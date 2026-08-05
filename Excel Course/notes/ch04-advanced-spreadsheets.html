@@ -1,0 +1,614 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ch 4 — Advanced Spreadsheets | Excel for Data Analytics</title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { ch4: { 50: '#f0fdfa', 100: '#ccfbf1', 200: '#99f6e4', 300: '#5eead4', 400: '#2dd4bf', 500: '#14b8a6', 600: '#0d9488', 700: '#0f766e', 800: '#115e59', 900: '#134e4a' } } } } }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .cell-mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: #0f172a; }
+    .excel-tbl { border-collapse: collapse; width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .excel-tbl th { background: #1e293b; color: #94a3b8; font-weight: 500; padding: 4px 10px; border: 1px solid #334155; text-align: center; }
+    .excel-tbl td { padding: 4px 10px; border: 1px solid #334155; text-align: center; color: #e2e8f0; background: #0f172a; transition: all 0.2s; }
+    .excel-tbl .rn { color: #475569; background: #1e293b; font-weight: 500; }
+    .excel-tbl .hl { background: #0d3d3a; border-color: #14b8a6; }
+    .excel-tbl .fml { background: #1a2332; color: #fbbf24; }
+    .excel-tbl .val { color: #2dd4bf; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; transition: border-color 0.3s; }
+    .card:hover { border-color: #14b8a6; }
+    .card .hd { background: linear-gradient(135deg, #0d3d3a, #0f172a); padding: 10px 14px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 8px; }
+    .card .hd .ic { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .badge { font-size: 0.6rem; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+    .btn { cursor: pointer; user-select: none; transition: all 0.15s; }
+    .btn:active { transform: scale(0.92); }
+    .btn.active { background: #0d9488 !important; border-color: #2dd4bf !important; color: #fff !important; }
+    .si { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; outline: none; }
+    .si:focus { border-color: #14b8a6; }
+    .sl { -webkit-appearance: none; height: 4px; background: #334155; border-radius: 2px; outline: none; }
+    .sl::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #14b8a6; cursor: pointer; }
+    .tg { display: inline-flex; align-items: center; gap: 6px; cursor: pointer; user-select: none; font-size: 0.75rem; }
+    .tg input { display: none; }
+    .tg .tk { width: 32px; height: 18px; background: #334155; border-radius: 99px; position: relative; transition: 0.2s; }
+    .tg .tk::after { content: ''; position: absolute; top: 2px; left: 2px; width: 14px; height: 14px; background: #94a3b8; border-radius: 50%; transition: 0.2s; }
+    .tg input:checked + .tk { background: #0d9488; }
+    .tg input:checked + .tk::after { transform: translateX(14px); background: #fff; }
+    .db-bar { height: 100%; border-radius: 2px; transition: width 0.4s ease; }
+    .cond-db { background: linear-gradient(90deg, #0d9488, #2dd4bf); }
+    @keyframes slideDown { from{max-height:0;opacity:0} to{max-height:300px;opacity:1} }
+    .anim-slide { animation: slideDown 0.4s ease; }
+    @media (max-width: 640px) { .excel-tbl { font-size: 0.6rem; } .excel-tbl th,.excel-tbl td { padding: 2px 6px; } }
+    .prot-btn { width: 14px; height: 14px; border-radius: 3px; border: 1px solid #475569; display: inline-block; vertical-align: middle; }
+    .prot-btn.locked { background: #ef4444; }
+    .prot-btn.unlocked { background: #10b981; }
+    .ttip { position: fixed; background: #1e293b; border: 1px solid #14b8a6; color: #e2e8f0; padding: 4px 8px; border-radius: 6px; font-size: 0.65rem; pointer-events: none; white-space: nowrap; z-index: 100; opacity: 0; transition: opacity 0.15s; }
+    .ttip.show { opacity: 1; }
+  </style>
+</head>
+<body class="dark">
+<div class="ttip" id="tip"></div>
+
+<nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-table text-ch4-400 text-xl"></i>
+      <span class="font-bold text-white text-sm sm:text-base">Excel for Data Analytics</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-gray-400">
+      <span class="bg-ch4-600/20 text-ch4-300 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-book-open"></i> Ch 4</span>
+    </div>
+  </div>
+</nav>
+
+<header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+  <div class="inline-flex items-center gap-2 bg-ch4-600/10 text-ch4-300 px-4 py-1.5 rounded-full text-sm mb-4">
+    <i class="fa-solid fa-layer-group"></i>
+    <span>Chapter 4 of 8 — 3 lessons</span>
+  </div>
+  <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">
+    <i class="fa-solid fa-table-cells-large text-ch4-400 mr-2"></i>
+    Advanced Spreadsheets
+  </h1>
+  <p class="text-gray-400 max-w-3xl mx-auto text-sm">
+    Tables, conditional formatting, data validation, sheet protection, and dashboard building. Everything you need to build <strong class="text-white">production-ready</strong> spreadsheets.
+  </p>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 pb-16">
+
+  <!-- LAUNCH SECTION: Live Dashboard Preview -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-gauge-high"></i></div>
+        <div><span class="text-white text-sm font-semibold">⚡ Mini Dashboard — Salary Explorer</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">TRY IT</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-4">This dashboard uses <strong class="text-white">Data Validation</strong> (dropdowns), <strong class="text-white">Conditional Formatting</strong> (data bars), and <strong class="text-white">Structured References</strong> — all concepts from this chapter.</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-4 mb-4">
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <label class="text-gray-500 text-[10px] uppercase tracking-wider">Job Title</label>
+            <select id="dash_title" class="si w-full mt-1" onchange="updateDashboard()">
+              <option>Data Analyst</option><option>Data Scientist</option><option>Data Engineer</option>
+              <option>BI Analyst</option><option>ML Engineer</option><option>Analytics Mgr</option>
+            </select>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <label class="text-gray-500 text-[10px] uppercase tracking-wider">Country</label>
+            <select id="dash_country" class="si w-full mt-1" onchange="updateDashboard()">
+              <option>United States</option><option>United Kingdom</option><option>Canada</option>
+              <option>Germany</option><option>India</option><option>Australia</option>
+            </select>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <label class="text-gray-500 text-[10px] uppercase tracking-wider">Job Type</label>
+            <select id="dash_type" class="si w-full mt-1" onchange="updateDashboard()">
+              <option>Full-time</option><option>Part-time</option><option>Contract</option><option>Remote</option>
+            </select>
+          </div>
+        </div>
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3 mb-4">
+          <div class="bg-[#0f172a] rounded-lg p-3 text-center border border-gray-700">
+            <div class="text-gray-500 text-[10px]">Median Salary</div>
+            <div class="text-2xl font-bold text-ch4-300" id="dash_med">$95,000</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-3 text-center border border-gray-700">
+            <div class="text-gray-500 text-[10px]">Avg Salary</div>
+            <div class="text-2xl font-bold text-white" id="dash_avg">$98,500</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-3 text-center border border-gray-700">
+            <div class="text-gray-500 text-[10px]">Job Count</div>
+            <div class="text-2xl font-bold text-ch4-300" id="dash_cnt">1,247</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-3 text-center border border-gray-700">
+            <div class="text-gray-500 text-[10px]">Top Platform</div>
+            <div class="text-2xl font-bold text-white" id="dash_plat">LinkedIn</div>
+          </div>
+        </div>
+        <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-gray-500 text-xs font-medium">Salary Distribution</span>
+            <span class="text-ch4-300 text-xs" id="dash_range">$60K — $140K</span>
+          </div>
+          <div class="flex items-end h-20 gap-1" id="dash_bars"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 1: Tables -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch4-500 flex items-center justify-center text-white text-xs font-bold">1</div>
+      <h2 class="text-white font-bold text-lg">Tables</h2>
+      <span class="text-gray-500 text-xs">Ctrl+T • Slicers • Structured References</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-plus"></i></div><div><span class="text-white text-sm font-semibold">Creating a Table</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">Ctrl+T</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2"><strong class="text-white">Select any cell</strong> in your data → <strong class="text-white">Insert → Table</strong> (or <span class="cell-mono text-amber-400">Ctrl+T</span>). Check <strong class="text-white">"My table has headers"</strong>.</p>
+          <table class="excel-tbl text-xs">
+            <thead><tr><th>Job Title</th><th>Salary</th><th>Country</th></tr></thead>
+            <tbody>
+              <tr><td class="text-left">Data Analyst</td><td class="val">85,000</td><td>USA</td></tr>
+              <tr><td class="text-left">Data Scientist</td><td class="val">125,000</td><td>USA</td></tr>
+              <tr><td class="text-left">Data Engineer</td><td class="val">115,000</td><td>UK</td></tr>
+              <tr class="hl"><td class="text-left text-ch4-300 font-bold" colspan="3"><i class="fa-solid fa-arrow-right"></i> New row auto-includes</td></tr>
+            </tbody>
+          </table>
+          <div class="mt-2 text-xs text-gray-500 flex gap-3">
+            <span><span class="text-ch4-300">●</span> Auto-expands with new rows/columns</span>
+            <span><span class="text-ch4-300">●</span> Formulas auto-fill down</span>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-signature"></i></div><div><span class="text-white text-sm font-semibold">Table Design Tab</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">APPEARS ON SELECT</span></div></div>
+        <div class="p-4 text-xs space-y-2 text-gray-400">
+          <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-ch4-600/20 flex items-center justify-center text-ch4-300 shrink-0"><i class="fa-solid fa-tag"></i></span>
+            <div><span class="text-white font-medium">Table Name</span> — Name it (e.g., <span class="cell-mono text-amber-400">jobs</span>) for easy formula references.</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-ch4-600/20 flex items-center justify-center text-ch4-300 shrink-0"><i class="fa-solid fa-palette"></i></span>
+            <div><span class="text-white font-medium">Table Styles</span> — Choose a color scheme. Toggle banded rows, first/last column highlights.</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-ch4-600/20 flex items-center justify-center text-ch4-300 shrink-0"><i class="fa-solid fa-calculator"></i></span>
+            <div><span class="text-white font-medium">Total Row</span> — Adds a bottom row with dropdown for SUM, AVERAGE, COUNT, MIN, MAX, etc.</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+            <span class="w-6 h-6 rounded bg-ch4-600/20 flex items-center justify-center text-ch4-300 shrink-0"><i class="fa-solid fa-filter"></i></span>
+            <div><span class="text-white font-medium">Insert Slicer</span> — Visual filter buttons for easy data exploration.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-at"></i></div><div><span class="text-white text-sm font-semibold">Structured References</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">@ COLUMN</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Instead of <span class="cell-mono text-amber-400">=SUM(A2:A100)</span>, tables let you use column names:</p>
+          <table class="excel-tbl text-xs">
+            <thead><tr><th>Formula</th><th>What it does</th></tr></thead>
+            <tbody>
+              <tr><td class="fml text-left">=SUM(jobs[Salary])</td><td class="text-left">Sum of Salary column in "jobs" table</td></tr>
+              <tr><td class="fml text-left">=jobs[@Salary]</td><td class="text-left">Value from current row's Salary column</td></tr>
+              <tr><td class="fml text-left">=AVERAGE(jobs[Salary])</td><td class="text-left">Average of all salaries</td></tr>
+              <tr><td class="fml text-left">=COUNTIF(jobs[Title],"*Analyst")</td><td class="text-left">Count titles ending in "Analyst"</td></tr>
+            </tbody>
+          </table>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> The <span class="cell-mono text-amber-400">@</span> means "this row". Formulas are much easier to read!</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-sliders"></i></div><div><span class="text-white text-sm font-semibold">Slicers — Visual Filters</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">LESSON 1</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Click a slicer button to filter the table instantly. <strong class="text-white">Multi-select</strong> with <span class="cell-mono text-amber-400">Ctrl+Click</span>.</p>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-2">Job Title Slicer</div>
+            <div class="flex flex-wrap gap-1.5" id="slicer_demo">
+              <button class="btn text-[10px] px-2.5 py-1 rounded bg-ch4-600/20 text-ch4-300 border border-ch4-500 active" onclick="slicerClick(this,'Data Analyst')">Data Analyst</button>
+              <button class="btn text-[10px] px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600" onclick="slicerClick(this,'Data Scientist')">Data Scientist</button>
+              <button class="btn text-[10px] px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600" onclick="slicerClick(this,'Data Engineer')">Data Engineer</button>
+              <button class="btn text-[10px] px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600" onclick="slicerClick(this,'BI Analyst')">BI Analyst</button>
+              <button class="btn text-[10px] px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600" onclick="slicerClick(this,'ML Engineer')">ML Engineer</button>
+            </div>
+            <div class="mt-2 text-xs text-gray-500">Filtered: <span id="slicer_status" class="text-white">Data Analyst</span></div>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Right-click a slicer → <strong class="text-white">Size & Properties</strong> to customize columns and button size.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 2: Formatting -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch4-500 flex items-center justify-center text-white text-xs font-bold">2</div>
+      <h2 class="text-white font-bold text-lg">Formatting & Conditional Formatting</h2>
+      <span class="text-gray-500 text-xs">Cell Styles • Data Bars • Color Scales • Icon Sets</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-palette"></i></div><div><span class="text-white text-sm font-semibold">Cell Styles</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">HOME TAB</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Pre-built styles for <strong class="text-white">headings, calculations, data, titles</strong>. One click formatting.</p>
+          <table class="excel-tbl text-xs">
+            <thead><tr><th>Style</th><th>Use Case</th><th>Example</th></tr></thead>
+            <tbody>
+              <tr><td><span class="text-white font-bold">Heading 1</span></td><td>Sheet title</td><td style="background:#134e4a;color:#5eead4;font-weight:700;font-size:1.1em">Dashboard</td></tr>
+              <tr><td><span class="text-white font-bold">Heading 2</span></td><td>Column headers</td><td style="background:#0d3d3a;color:#2dd4bf;font-weight:600;border-bottom:1px solid #14b8a6">Job Title</td></tr>
+              <tr><td><span class="text-white font-bold">Calculation</span></td><td>Formula cells</td><td class="fml">=SUM(jobs[Salary])</td></tr>
+              <tr><td><span class="text-white font-bold">Output</span></td><td>Result values</td><td class="val">$95,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-paintbrush"></i></div><div><span class="text-white text-sm font-semibold">Conditional Formatting Types</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">3 MAIN</span></div></div>
+        <div class="p-4 text-xs space-y-2 text-gray-400">
+          <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+            <span class="w-6 h-6 rounded flex items-center justify-center shrink-0" style="background:linear-gradient(90deg,#0d9488,#5eead4);color:#fff;"><i class="fa-solid fa-chart-simple"></i></span>
+            <div><span class="text-white font-medium">Data Bars</span> — Gradient bars inside cells. Best for seeing relative magnitude at a glance.</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+            <span class="w-6 h-6 rounded shrink-0" style="background:linear-gradient(90deg,#22c55e,#fef08a,#ef4444);"></span>
+            <div><span class="text-white font-medium">Color Scales</span> — 2-color or 3-color gradients. Red=low, white=middle, green=high (or custom).</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+            <span class="w-6 h-6 rounded flex items-center justify-center shrink-0 text-xs bg-ch4-600/20">🔴🟡🟢</span>
+            <div><span class="text-white font-medium">Icon Sets</span> — Traffic lights, arrows, stars, flags. Quick visual indicators.</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-2.5 flex items-center gap-2">
+            <span class="w-6 h-6 rounded flex items-center justify-center shrink-0 text-xs bg-ch4-600/20"><i class="fa-solid fa-pen"></i></span>
+            <div><span class="text-white font-medium">Highlight Cell Rules</span> — Greater than, less than, between, equal to, text contains, dates, duplicates.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Interactive: Conditional Formatting Demo -->
+    <div class="card mb-3">
+      <div class="hd">
+        <div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+        <div><span class="text-white text-sm font-semibold">Interactive: Conditional Formatting Playground</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">TRY IT</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-3">Click buttons to apply different formatting to the table below. Edit values by clicking them.</p>
+        <div class="flex flex-wrap gap-2 mb-3">
+          <button class="btn text-xs px-2.5 py-1 rounded border border-ch4-500 text-ch4-300 bg-ch4-600/20 active" onclick="applyCondFmt('dataBars')" id="cf_dataBars"><i class="fa-solid fa-chart-simple"></i> Data Bars</button>
+          <button class="btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="applyCondFmt('colorScale')" id="cf_colorScale"><i class="fa-solid fa-fill-drip"></i> Color Scale</button>
+          <button class="btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="applyCondFmt('iconSet')" id="cf_iconSet"><i class="fa-solid fa-icons"></i> Icon Set</button>
+          <button class="btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="applyCondFmt('highlight')" id="cf_highlight"><i class="fa-solid fa-highlighter"></i> Highlight Top</button>
+          <button class="btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="applyCondFmt('clear')" id="cf_clear"><i class="fa-solid fa-eraser"></i> Clear</button>
+        </div>
+        <div class="overflow-x-auto">
+          <table class="excel-tbl text-xs" id="cfTable">
+            <thead><tr><th class="text-left">Job Title</th><th>Q1</th><th>Q2</th><th>Q3</th><th>Q4</th><th>Total</th></tr></thead>
+            <tbody>
+              <tr><td class="text-left text-gray-300">Data Analyst</td><td class="cf-val" data-v="85">85,000</td><td class="cf-val" data-v="92">92,000</td><td class="cf-val" data-v="78">78,000</td><td class="cf-val" data-v="105">105,000</td><td class="cf-total">360,000</td></tr>
+              <tr><td class="text-left text-gray-300">Data Scientist</td><td class="cf-val" data-v="120">120,000</td><td class="cf-val" data-v="135">135,000</td><td class="cf-val" data-v="128">128,000</td><td class="cf-val" data-v="145">145,000</td><td class="cf-total">528,000</td></tr>
+              <tr><td class="text-left text-gray-300">Data Engineer</td><td class="cf-val" data-v="110">110,000</td><td class="cf-val" data-v="108">108,000</td><td class="cf-val" data-v="115">115,000</td><td class="cf-val" data-v="120">120,000</td><td class="cf-total">453,000</td></tr>
+              <tr><td class="text-left text-gray-300">BI Analyst</td><td class="cf-val" data-v="72">72,000</td><td class="cf-val" data-v="78">78,000</td><td class="cf-val" data-v="85">85,000</td><td class="cf-val" data-v="82">82,000</td><td class="cf-total">317,000</td></tr>
+              <tr><td class="text-left text-gray-300">ML Engineer</td><td class="cf-val" data-v="140">140,000</td><td class="cf-val" data-v="145">145,000</td><td class="cf-val" data-v="150">150,000</td><td class="cf-val" data-v="155">155,000</td><td class="cf-total">590,000</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex items-center gap-2 mt-2 text-xs text-gray-500">
+          <span class="text-ch4-300"><i class="fa-solid fa-arrow-pointer"></i></span>
+          <span id="cf_status">Click a cell to see its value</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- Format Painter -->
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-paint-roller"></i></div>
+        <div><span class="text-white text-sm font-semibold">Format Painter</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">HOME TAB</span></div>
+      </div>
+      <div class="p-4">
+        <p class="text-gray-400 text-xs">Select a cell with the formatting you like → click <strong class="text-white">Format Painter</strong> (paintbrush icon) → click the target cell. <strong class="text-white">Double-click</strong> Format Painter to apply to multiple cells.</p>
+        <div class="flex items-center gap-3 mt-3 text-xs">
+          <div class="bg-[#0f172a] rounded p-2 border border-gray-700">
+            <div class="text-gray-500">Source</div>
+            <div class="px-3 py-1 rounded font-bold" style="background:#14b8a6;color:#fff">Formatted</div>
+          </div>
+          <i class="fa-solid fa-arrow-right text-ch4-400"></i>
+          <div class="bg-[#0f172a] rounded p-2 border border-gray-700">
+            <div class="text-gray-500">Target (click to apply)</div>
+            <div id="fmt_painter_target" class="px-3 py-1 rounded bg-gray-800 text-gray-400" onclick="applyFormatPainter()" style="cursor:pointer;">Click me</div>
+          </div>
+        </div>
+        <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> No keyboard shortcut — but it's the fastest way to copy formatting across your sheet.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 3: Collaboration & Protection -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch4-500 flex items-center justify-center text-white text-xs font-bold">3</div>
+      <h2 class="text-white font-bold text-lg">Collaboration & Protection</h2>
+      <span class="text-gray-500 text-xs">Data Validation • Protect Sheet • Hide</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-check-double"></i></div><div><span class="text-white text-sm font-semibold">Data Validation</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">DROP-DOWN</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Restrict what users can enter. Create drop-down lists with <strong class="text-white">Data → Data Validation → List</strong>.</p>
+          <div class="bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1.5">Demo: Pick a skill</div>
+            <select class="si w-full" onchange="document.getElementById('dv_result').textContent=this.value">
+              <option>Select...</option>
+              <option>Excel</option><option>Python</option><option>SQL</option><option>Tableau</option><option>Power BI</option><option>R</option>
+            </select>
+            <div class="mt-2 text-xs text-gray-500">You selected: <span id="dv_result" class="text-ch4-300 font-bold">—</span></div>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Source the list from another sheet with <span class="cell-mono text-amber-400">=Sheet2!$A$1:$A$10</span></p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-lock"></i></div><div><span class="text-white text-sm font-semibold">Protect Sheet</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">REVIEW TAB</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Steps to protect a sheet <strong class="text-white">with one editable cell</strong>:</p>
+          <div class="space-y-1.5 text-xs text-gray-400">
+            <div class="bg-[#0f172a] rounded p-2">1. Select all cells → <span class="cell-mono text-amber-400">Ctrl+1</span> → Protection tab → uncheck <strong class="text-white">Locked</strong></div>
+            <div class="bg-[#0f172a] rounded p-2">2. Select cell you want editable → <span class="cell-mono text-amber-400">Ctrl+1</span> → check <strong class="text-white">Locked</strong></div>
+            <div class="bg-[#0f172a] rounded p-2">3. <strong class="text-white">Review → Protect Sheet</strong> → (optional password) → OK</div>
+            <div class="bg-[#0f172a] rounded p-2 text-ch4-300"><i class="fa-solid fa-check"></i> Result: Only the locked cell can be edited!</div>
+          </div>
+          <div class="mt-3 bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1.5">🔒 Protected Cell Demo</div>
+            <div class="flex gap-2 items-center">
+              <span class="text-xs text-gray-400">Edit me:</span>
+              <input class="si flex-1" value="I am editable" disabled id="prot_demo_input">
+              <span class="text-gray-600 text-[10px]"><span class="prot-btn unlocked"></span> unlocked</span>
+            </div>
+            <div class="flex gap-2 items-center mt-2">
+              <span class="text-xs text-gray-400">Can't touch:</span>
+              <input class="si flex-1" value="Locked cell" disabled style="background:#1e293b;color:#64748b;">
+              <span class="text-gray-600 text-[10px]"><span class="prot-btn locked"></span> locked</span>
+            </div>
+            <div class="mt-2 text-xs"><button class="btn text-ch4-300 underline text-[10px]" onclick="toggleProtDemo()">Toggle protection</button> <span id="prot_status" class="text-ch4-300 ml-1">🔒 Protected</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-eye-slash"></i></div><div><span class="text-white text-sm font-semibold">Hide & Protect Workbook</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">LESSON 3</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Keep your <strong class="text-white">raw data and calculation sheets</strong> hidden from stakeholders.</p>
+          <div class="space-y-2 text-xs text-gray-400">
+            <div class="bg-[#0f172a] rounded p-2.5 flex items-center gap-2">
+              <i class="fa-solid fa-file-circle-minus text-ch4-300"></i>
+              <div><strong class="text-white">Hide Sheet</strong> — Right-click tab → Hide. Unhide via right-click → Unhide.</div>
+            </div>
+            <div class="bg-[#0f172a] rounded p-2.5 flex items-center gap-2">
+              <i class="fa-solid fa-shield text-ch4-300"></i>
+              <div><strong class="text-white">Protect Workbook</strong> — Review → Protect Workbook. Prevents users from unhiding sheets or changing structure.</div>
+            </div>
+            <div class="bg-[#0f172a] rounded p-2.5 flex items-center gap-2">
+              <i class="fa-solid fa-bolt text-ch4-300"></i>
+              <div><strong class="text-white">Very Hidden</strong> — VBA trick: set <span class="cell-mono text-amber-400">xlSheetVeryHidden</span>. Can't unhide through the UI!</div>
+            </div>
+          </div>
+          <div class="mt-3 bg-[#0f172a] rounded-lg p-3 border border-gray-700">
+            <div class="text-gray-500 text-[10px] mb-1.5">Sheet Visibility Demo</div>
+            <div class="flex gap-2 text-xs">
+              <span class="px-2 py-1 rounded bg-ch4-600/20 text-ch4-300 border border-ch4-500">Dashboard</span>
+              <span class="px-2 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600">Raw Data <span class="text-[0.5rem] text-gray-500">(hidden)</span></span>
+              <span class="px-2 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600">Validation <span class="text-[0.5rem] text-gray-500">(hidden)</span></span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Dashboard walkthrough -->
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-gauge"></i></div>
+        <div><span class="text-white text-sm font-semibold">Building the Salary Dashboard (Project 1)</span><span class="badge bg-ch4-600/20 text-ch4-300 ml-2">PROJECT</span></div>
+      </div>
+      <div class="p-4">
+        <p class="text-gray-400 text-xs mb-3">The course project is an <strong class="text-white">interactive salary predictor dashboard</strong> with:</p>
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-xs">
+          <div class="bg-[#0f172a] rounded-lg p-3">
+            <div class="w-8 h-8 rounded-lg bg-ch4-600/20 flex items-center justify-center text-ch4-300 mb-2"><i class="fa-solid fa-list"></i></div>
+            <div class="text-white font-medium mb-1">Data Validation Dropdowns</div>
+            <div class="text-gray-400">Job title, country, and job type selectors using List validation.</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-3">
+            <div class="w-8 h-8 rounded-lg bg-ch4-600/20 flex items-center justify-center text-ch4-300 mb-2"><i class="fa-solid fa-chart-line"></i></div>
+            <div class="text-white font-medium mb-1">Linked Charts</div>
+            <div class="text-gray-400">Three visualizations: salary by title, by region, and by job type — all linked to dropdowns.</div>
+          </div>
+          <div class="bg-[#0f172a] rounded-lg p-3">
+            <div class="w-8 h-8 rounded-lg bg-ch4-600/20 flex items-center justify-center text-ch4-300 mb-2"><i class="fa-solid fa-shield"></i></div>
+            <div class="text-white font-medium mb-1">Protection</div>
+            <div class="text-gray-400">Sheet protected except for input cells. Hidden data sheets. Workbook protected to prevent unhiding.</div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- PRO TIPS -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch4-600/20 text-ch4-300"><i class="fa-solid fa-lightbulb"></i></div>
+        <div><span class="text-white text-sm font-semibold">Pro Tips</span></div>
+      </div>
+      <div class="p-4 grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs text-gray-400">
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch4-300 font-bold">Ctrl+T</span> — Create a table in one keystroke from any selected cell.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch4-300 font-bold">Clear Rules</span> — Conditional Formatting → Clear Rules → Entire Sheet to start over.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch4-300 font-bold">Manage Rules</span> — Conditional Formatting → Manage Rules to view, edit, or delete rules.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch4-300 font-bold">Table Names</span> — Name your tables meaningfully (e.g., <span class="cell-mono text-amber-400">jobs</span>, <span class="cell-mono text-amber-400">salary</span>) for cleaner formulas.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch4-300 font-bold">Multi-column Slicer</span> — Right-click slicer → Size & Properties → change number of columns to 2 or 3.</div>
+        <div class="bg-[#0f172a] rounded-lg p-3"><span class="text-ch4-300 font-bold">Data Validation Error</span> — Uncheck "Show error alert" in Data Validation options for a cleaner user experience.</div>
+      </div>
+    </div>
+  </section>
+
+</main>
+
+<footer class="border-t border-gray-800 py-4 text-center">
+  <p class="text-xs text-gray-600">notes made by amit</p>
+</footer>
+
+<script>
+// ============ DASHBOARD ============
+const DASH_DATA = {
+  'Data Analyst':     { usa: {med:95000, avg:98500, cnt:1247, plat:'LinkedIn', bars:[60,72,85,95,108,120,135,140]}, uk: {med:82000, avg:86000, cnt:423, plat:'Indeed', bars:[55,65,78,88,100,112,125,130]}, canada: {med:88000, avg:91000, cnt:356, plat:'LinkedIn', bars:[58,70,82,92,105,118,130,138]}, germany: {med:79000, avg:83000, cnt:289, plat:'Xing', bars:[50,62,75,85,98,110,122,128]}, india: {med:42000, avg:45000, cnt:892, plat:'Naukri', bars:[25,35,42,50,58,65,72,80]}, australia: {med:92000, avg:95000, cnt:198, plat:'Seek', bars:[62,74,86,96,110,122,135,142]} },
+  'Data Scientist':   { usa: {med:130000, avg:138000, cnt:985, plat:'LinkedIn', bars:[85,100,115,130,145,160,175,190]}, uk: {med:115000, avg:120000, cnt:312, plat:'Indeed', bars:[75,88,102,115,128,142,155,168]}, canada: {med:120000, avg:125000, cnt:245, plat:'LinkedIn', bars:[80,95,108,120,135,148,162,175]}, germany: {med:108000, avg:112000, cnt:210, plat:'Xing', bars:[70,82,95,108,120,132,145,155]}, india: {med:55000, avg:60000, cnt:645, plat:'Naukri', bars:[35,45,52,60,68,75,85,92]}, australia: {med:125000, avg:130000, cnt:145, plat:'Seek', bars:[82,96,110,125,138,152,165,178]} },
+  'Data Engineer':    { usa: {med:120000, avg:125000, cnt:876, plat:'LinkedIn', bars:[75,88,102,118,132,145,158,170]}, uk: {med:105000, avg:110000, cnt:278, plat:'Indeed', bars:[68,80,92,105,118,130,142,152]}, canada: {med:112000, avg:118000, cnt:198, plat:'LinkedIn', bars:[72,85,98,112,125,138,150,162]}, germany: {med:100000, avg:105000, cnt:185, plat:'Xing', bars:[62,75,88,100,112,125,135,148]}, india: {med:50000, avg:55000, cnt:512, plat:'Naukri', bars:[30,38,45,52,60,68,75,82]}, australia: {med:115000, avg:120000, cnt:108, plat:'Seek', bars:[70,84,96,110,122,135,148,158]} },
+  'BI Analyst':       { usa: {med:85000, avg:88000, cnt:534, plat:'LinkedIn', bars:[55,65,75,85,95,105,115,120]}, uk: {med:72000, avg:76000, cnt:189, plat:'Indeed', bars:[48,58,68,78,88,95,105,112]}, canada: {med:78000, avg:82000, cnt:145, plat:'LinkedIn', bars:[50,62,72,82,92,100,110,118]}, germany: {med:70000, avg:74000, cnt:125, plat:'Xing', bars:[42,52,62,72,82,90,100,108]}, india: {med:38000, avg:42000, cnt:423, plat:'Naukri', bars:[22,30,35,42,48,55,62,70]}, australia: {med:80000, avg:84000, cnt:98, plat:'Seek', bars:[52,64,74,84,94,102,112,120]} },
+  'ML Engineer':      { usa: {med:150000, avg:158000, cnt:456, plat:'LinkedIn', bars:[100,115,132,148,165,178,190,205]}, uk: {med:132000, avg:138000, cnt:145, plat:'Indeed', bars:[88,102,118,132,148,160,172,185]}, canada: {med:140000, avg:145000, cnt:112, plat:'LinkedIn', bars:[92,108,125,140,155,168,180,195]}, germany: {med:125000, avg:130000, cnt:98, plat:'Xing', bars:[82,95,110,125,138,150,162,175]}, india: {med:65000, avg:70000, cnt:234, plat:'Naukri', bars:[42,52,58,68,78,85,92,100]}, australia: {med:142000, avg:148000, cnt:65, plat:'Seek', bars:[95,110,128,142,158,170,182,198]} },
+  'Analytics Mgr':    { usa: {med:110000, avg:115000, cnt:345, plat:'LinkedIn', bars:[72,85,95,110,125,135,148,155]}, uk: {med:95000, avg:100000, cnt:112, plat:'Indeed', bars:[62,75,85,98,110,120,132,140]}, canada: {med:102000, avg:108000, cnt:89, plat:'LinkedIn', bars:[68,80,92,105,118,128,140,148]}, germany: {med:92000, avg:96000, cnt:78, plat:'Xing', bars:[58,70,82,92,105,115,128,135]}, india: {med:45000, avg:48000, cnt:156, plat:'Naukri', bars:[28,35,42,48,55,62,68,75]}, australia: {med:105000, avg:110000, cnt:52, plat:'Seek', bars:[65,78,90,102,115,125,138,145]} }
+};
+
+function updateDashboard() {
+  const title = document.getElementById('dash_title').value;
+  const country = document.getElementById('dash_country').value.toLowerCase();
+  const type = document.getElementById('dash_type').value;
+  const d = DASH_DATA[title][country];
+  document.getElementById('dash_med').textContent = '$' + d.med.toLocaleString();
+  document.getElementById('dash_avg').textContent = '$' + d.avg.toLocaleString();
+  document.getElementById('dash_cnt').textContent = d.cnt.toLocaleString();
+  document.getElementById('dash_plat').textContent = d.plat;
+  document.getElementById('dash_range').textContent = '$' + d.bars[0] + 'K — $' + d.bars[d.bars.length-1] + 'K';
+  const bars = document.getElementById('dash_bars');
+  const maxB = Math.max(...d.bars);
+  bars.innerHTML = d.bars.map((v,i) => {
+    const pct = (v/maxB)*100;
+    const colors = ['#14b8a6','#2dd4bf','#5eead4','#2dd4bf','#14b8a6','#0d9488','#0f766e','#115e59'];
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:2px">
+      <div class="db-bar cond-db" style="width:100%;height:${pct}%;background:${colors[i%colors.length]}"></div>
+      <span style="color:#475569;font-size:0.5rem;margin-top:2px">${v}K</span>
+    </div>`;
+  }).join('');
+}
+updateDashboard();
+
+// ============ SLICER DEMO ============
+function slicerClick(btn, label) {
+  document.querySelectorAll('#slicer_demo button').forEach(b => {
+    b.className = 'btn text-[10px] px-2.5 py-1 rounded bg-gray-800 text-gray-400 border border-gray-600';
+  });
+  btn.className = 'btn text-[10px] px-2.5 py-1 rounded bg-ch4-600/20 text-ch4-300 border border-ch4-500 active';
+  document.getElementById('slicer_status').textContent = label;
+}
+
+// ============ CONDITIONAL FORMATTING ============
+function applyCondFmt(type) {
+  document.querySelectorAll('[id^=cf_]').forEach(b => {
+    if (b.id === 'cf_' + type) return;
+    if (b.id.match(/^cf_/)) b.className = 'btn text-xs px-2.5 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]';
+  });
+  const btn = document.getElementById('cf_'+type);
+  if (btn) btn.className = 'btn text-xs px-2.5 py-1 rounded border border-ch4-500 text-ch4-300 bg-ch4-600/20 active';
+  const cells = document.querySelectorAll('.cf-val');
+  const totals = document.querySelectorAll('.cf-total');
+  const all = [...cells, ...totals];
+  all.forEach(c => {
+    c.style.background = '';
+    c.style.color = '';
+    c.style.borderLeft = '';
+    c.innerHTML = c.getAttribute('data-v') ? parseInt(c.getAttribute('data-v')).toLocaleString() : c.textContent;
+  });
+  if (type === 'clear') return;
+  const vals = [...cells].map(c => parseInt(c.getAttribute('data-v'))).filter(v => !isNaN(v));
+  const maxV = Math.max(...vals);
+  const minV = Math.min(...vals);
+  if (type === 'dataBars') {
+    all.forEach(c => {
+      const v = parseInt(c.getAttribute('data-v') || c.textContent.replace(/,/g,''));
+      if (isNaN(v)) return;
+      const pct = (v / 150000) * 100;
+      c.style.background = `linear-gradient(90deg, rgba(45,212,191,0.3) ${pct}%, transparent ${pct}%)`;
+    });
+    document.getElementById('cf_status').textContent = 'Data Bars show relative magnitude — wider = higher salary';
+  } else if (type === 'colorScale') {
+    all.forEach(c => {
+      const v = parseInt(c.getAttribute('data-v') || c.textContent.replace(/,/g,''));
+      if (isNaN(v)) return;
+      const ratio = (v - minV) / (maxV - minV);
+      const r = Math.round(239 * (1-ratio) + 15 * ratio);
+      const g = Math.round(68 * (1-ratio) + 168 * ratio);
+      const b = Math.round(120 * (1-ratio) + 128 * ratio);
+      c.style.background = `rgb(${r},${g},${b})`;
+      c.style.color = ratio > 0.5 ? '#fff' : '#e2e8f0';
+    });
+    document.getElementById('cf_status').textContent = 'Color Scale: red = low, teal = middle, darker teal = high';
+  } else if (type === 'iconSet') {
+    all.forEach(c => {
+      const v = parseInt(c.getAttribute('data-v') || c.textContent.replace(/,/g,''));
+      if (isNaN(v)) return;
+      if (v >= 130000) c.innerHTML = '🟢 ' + c.textContent;
+      else if (v >= 100000) c.innerHTML = '🟡 ' + c.textContent;
+      else c.innerHTML = '🔴 ' + c.textContent;
+    });
+    document.getElementById('cf_status').textContent = 'Icon Set: 🟢 high, 🟡 medium, 🔴 low';
+  } else if (type === 'highlight') {
+    const sorted = [...vals].sort((a,b) => b - a);
+    const top3 = sorted.slice(0, 3);
+    all.forEach(c => {
+      const v = parseInt(c.getAttribute('data-v') || c.textContent.replace(/,/g,''));
+      if (top3.includes(v)) { c.style.background = '#0d3d3a'; c.style.color = '#2dd4bf'; c.style.fontWeight = 'bold'; }
+    });
+    document.getElementById('cf_status').textContent = 'Top 3 values highlighted in teal';
+  }
+}
+
+// Make CF cells clickable + editable
+document.addEventListener('DOMContentLoaded', () => {
+  document.querySelectorAll('.cf-val').forEach(c => {
+    c.addEventListener('click', () => {
+      document.getElementById('cf_status').textContent = 'Value: $' + parseInt(c.getAttribute('data-v')).toLocaleString();
+    });
+    c.contentEditable = true;
+    c.addEventListener('blur', () => {
+      const v = parseInt(c.textContent.replace(/,/g,'')) || 0;
+      c.setAttribute('data-v', v);
+      // Update total
+      const row = c.closest('tr');
+      const vals = [...row.querySelectorAll('.cf-val')].map(td => parseInt(td.getAttribute('data-v')) || 0);
+      const total = row.querySelector('.cf-total');
+      if (total) total.textContent = vals.reduce((a,b) => a + b, 0).toLocaleString();
+    });
+  });
+});
+
+// ============ FORMAT PAINTER ============
+let painterUsed = false;
+function applyFormatPainter() {
+  const target = document.getElementById('fmt_painter_target');
+  target.style.background = '#14b8a6';
+  target.style.color = '#fff';
+  target.style.fontWeight = 'bold';
+  target.textContent = '✓ Formatted!';
+}
+
+// ============ PROTECT DEMO ============
+let protStatus = true;
+function toggleProtDemo() {
+  const inp = document.getElementById('prot_demo_input');
+  const status = document.getElementById('prot_status');
+  protStatus = !protStatus;
+  inp.disabled = protStatus;
+  status.textContent = protStatus ? '🔒 Protected' : '🔓 Unprotected';
+  status.className = protStatus ? 'text-ch4-300 ml-1' : 'text-amber-400 ml-1';
+}
+</script>
+</body>
+</html>

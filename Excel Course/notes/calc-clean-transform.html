@@ -1,0 +1,334 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Clean & Transform Text — Step-by-Step Revision | LibreOffice Calc</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .fkey, .shortcut-key { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2323,#0f172a); border-left:4px solid #ef4444; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.85rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:64px; font-size:.7rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:left; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; text-align:center; min-width:24px; }
+    table.g td.dirty { background:#3a1f1f; color:#fca5a5; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:600; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    /* lab */
+    input { outline:none; }
+    .tbtn { border:1px solid #334155; background:#0f172a; color:#cbd5e1; border-radius:8px; padding:6px 10px; font-size:.72rem; font-family:'JetBrains Mono',monospace; cursor:pointer; transition:all .12s; }
+    .tbtn:hover { border-color:#56af3f; color:#fff; }
+    .tbtn.on { background:#56af3f; color:#06210a; font-weight:700; border-color:#56af3f; }
+    .badge { display:inline-block; padding:1px 8px; border-radius:99px; font-size:.68rem; font-weight:600; }
+    #caseBody td, #dupTable td { border:1px solid #334155; background:#0f172a; color:#dbe3ee; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:44px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;} header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:36px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-wand-magic-sparkles text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">LibreOffice Calc — Clean & Transform Text</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-600/10 text-calc-300 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-broom"></i><span>Raw data is messy. Formulas + buttons make it clean.</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">Clean &amp; Transform Text</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">Spaces, wrong case, duplicates, stray characters. This page shows you, step by step on real rows and cells, how to tidy a column — with the exact Calc formula or menu behind each fix.</p>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- ======= PART 1 what is dirty ======= -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Spot the problem</h2><p class="text-gray-400 text-xs sm:text-sm">A "Client Names" column imported from somewhere. Can you see why sorting & filtering break?</p></div>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div class="wrap"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th></th></tr></thead><tbody>
+      <tr><td class="rn">1</td><td>#</td><td>Client Name (RAW)</td><td>Problem</td></tr>
+      <tr><td class="rn">2</td><td>1</td><td class="dirty">  hello   Smith   !!</td><td>extra spaces</td></tr>
+      <tr><td class="rn">3</td><td>2</td><td class="dirty">JOHN DOE EMAIL</td><td>wrong case</td></tr>
+      <tr><td class="rn">4</td><td>3</td><td class="dirty">MRN-2024-0042</td><td>noise/ID mixed in</td></tr>
+      <tr><td class="rn">5</td><td>4</td><td class="dirty">sales_at_example.com</td><td>symbols</td></tr>
+      </tbody></table></div>
+      <div class="warn-box mt-4"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-red-400 mr-1"></i><strong class="text-white">Why it matters:</strong> <span class="fkey">"John Smith"</span> and <span class="fkey">"john smith"</span> are different cells to Calc. VLOOKUP and PivotTables will miss them. That's what we fix below.</p></div>
+    </div>
+  </section>
+
+  <!-- ======= PART 2 step-by-step TRIM ======= -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Step-by-Step: trim spaces with TRIM</h2><p class="text-gray-400 text-xs sm:text-sm">Fix the leading / middle / trailing spaces in column A</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">CORE</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Put the heading in B1</p><p class="text-gray-400 text-xs">Type <span class="fkey">Cleaned</span> into <span class="fkey">B1</span>.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Type the formula in B2</p><p class="text-gray-400 text-xs">Write <span class="fkey">=TRIM(A2)</span>. It strips the extra spaces around &amp; inside the text in A2.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A (dirty)</th><th>B</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td class="dirty">Raw</td><td>Cleaned</td></tr>
+        <tr><td class="rn">2</td><td class="dirty">  hello   Smith   !!</td><td class="m">=TRIM(A2)</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Press Enter — see the result</p><p class="text-gray-400 text-xs">Double / leading / trailing spaces become a single clean space.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Raw</td><td>Cleaned</td></tr>
+        <tr><td class="rn">2</td><td class="dirty">  hello   Smith   !!</td><td class="m">hello Smith !!</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Copy B2 down the whole column</p><p class="text-gray-400 text-xs">Grab the fill handle and drag down — every row gets its own <span class="fkey">=TRIM(Ax)</span> automatically.</p></div></div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Tip:</strong> to keep only values, later use <span class="fkey">Copy</span> → <span class="mpath">Edit &gt; Paste Special &gt; Paste as text only</span> onto the original column.</p></div>
+    </div>
+  </section>
+
+  <!-- ======= PART 3 case + combine ======= -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Fix the case (UPPER / LOWER / PROPER)</h2><p class="text-gray-400 text-xs sm:text-sm">Then combine every fix into one tidy cell</p></div>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
+        <div class="bg-gray-900/50 rounded-xl border border-gray-700/50 p-4"><div class="text-white text-xs font-bold mb-1"><i class="fa-solid fa-arrow-up text-lock-400 mr-1"></i>UPPER</div><p class="text-gray-400 text-[11px] mb-2">everything → capitals</p><div class="fkey block text-[11px] my-1">=UPPER(A2)</div><div class="fkey block text-calc-300 text-[11px]">HELLO → HELLO</div></div>
+        <div class="bg-gray-800/50 rounded-xl border border-gray-700/50 p-4"><div class="text-xs font-bold mb-1 text-white"><i class="fa-solid fa-arrow-down mr-1"></i>LOWER</div><p class="text-gray-400 text-xs mb-2">everything → small</p><div class="fkey block text-[11px]">=LOWER(A2)</div><div class="fkey block text-calc-300 text-[11px]">HELLO → hello</div></div>
+        <div class="bg-gray-800/40 rounded-xl border border-gray-600/60 p-4"><div class="text-xs font-bold mb-1 text-white"><i class="fa-solid fa-font mr-1"></i>PROPER</div><p class="text-gray-400 text-xs mb-2">each word → capital</p><div class="fkey block text-[11px]">=PROPER(A2)</div><div class="fkey block text-calc-300 text-[11px]">john smith → John Smith</div></div>
+      </div>
+
+      <div class="step mt-4"><div class="flex items-start"><span class="num">5</span><div><p class="text-white text-sm font-semibold mb-1">Combine the fixes in one formula</p><p class="text-gray-400 text-xs">Need spaces AND capitalization gone? Nest them: <span class="fkey">=PROPER(TRIM(A2))</span>. Calc runs TRIM first (innermost), then PROPER.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+        <tr><td class="rn">1</td><td>Raw</td><td class="m">=TRIM(A2)</td><td class="m">=PROPER(TRIM(A2))</td></tr>
+        <tr><td class="rn">2</td><td class="dirty">  john   SMITH  </td><td class="form">john SMITH</td><td class="m">John Smith</td></tr>
+        </tbody></table></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= PART 4 remove duplicates ======= -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-amber-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-amber-500 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Remove duplicate rows (menu)</h2><p class="text-gray-400 text-xs sm:text-sm">A customer list with repeats — remove the extras in a few clicks</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Select the list</p><p class="text-gray-400 text-xs">Select the whole column (click its letter <span class="fkey">A</span>) including the header.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Open the dialog</p><p class="text-gray-400 text-xs">Menu <span class="fkey">Data &gt; More Filters &gt; Standard &gt; (Uncheck duplicates)…</span> or the quick <span class="fkey">Data → Remove Duplicates</span>.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Confirm which columns to compare</p><p class="text-gray-400 text-xs">Calc keeps the FIRST occurrence and removes later repeats. A confirmation tells you how many rows were removed.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Watch 6 rows become 4</p><p class="text-gray-400 text-xs">Because headings differ in case/spaces, clean first (Part 2/3) so <span class="fkey">"acme group"</span> matches <span class="fkey">"ACME Group"</span>.</p></div></div>
+        <div class="tip-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-broom text-calc-400 mr-1"></i><strong class="text-white">Real flow:</strong> TRIM first → PROPER → then remove duplicates. Same "person" always looks identical, so dedupe works.</p></div></div>
+    </div>
+  </section>
+
+  <!-- ======= PART 5 interactive ======= -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <i class="fa-solid fa-flask text-lock-400 text-xl"></i>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Interactive Studio — try live</h2><p class="text-gray-400 text-xs sm:text-sm">Tap a cleaning tool on the sample text, or play with duplicates &amp; case.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-8">
+      <!-- text studio -->
+      <div>
+        <h3 class="text-white font-semibold text-sm mb-3"><i class="fa-solid fa-crop text-calc-400 mr-1"></i>A. Text cleaning tools</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-gray-900/50 rounded-xl border border-gray-700/40 p-4">
+            <label class="text-gray-400 text-[11px]">1) Type or tap an example</label>
+            <input id="srcInput" value="  hello   Smith   !!" class="w-full mt-1 mb-2 bg-[#0f172a] border border-gray-700 rounded-lg px-3 py-2 text-sm text-calc-200" spellcheck="false">
+            <label class="text-gray-400 text-[11px]">2) Tap a cleaning tool</label>
+            <div id="toolButtons" class="flex flex-wrap gap-1.5 mt-1.5 mb-3"></div>
+            <label class="text-gray-400 text-[11px]">Examples to paste</label>
+            <div id="exChips" class="flex flex-wrap gap-1.5 mt-1.5"></div>
+          </div>
+          <div class="bg-gray-800/50 rounded-xl border border-gray-700/40 p-4 flex flex-col">
+            <p class="text-gray-400 text-[11px] mb-2">Result</p>
+            <div id="outResult" class="font-mono text-lg break-words text-calc-200 bg-[#0f172a] border border-gray-700 rounded-lg px-3 py-3 mb-3">—</div>
+            <div class="flex items-center gap-2 text-[11px]"><span class="text-gray-500">Formula</span><span id="outEq" class="fkey text-calc-300"></span></div>
+            <p id="outNote" class="text-gray-400 text-[11px] mt-2"></p>
+          </div>
+        </div>
+      </div>
+
+      <!-- duplicates -->
+      <div class="border-t border-gray-800 pt-6">
+        <h3 class="text-white font-semibold text-sm mb-3"><i class="fa-solid fa-copy text-amber-400 mr-1"></i>B. Remove duplicates</h3>
+        <p id="dupCount" class="text-calc-300 text-xs mb-2"></p>
+        <div class="wrap"><table id="dupTable" class="w-full font-mono text-sm" style="border-collapse:collapse"></table></div>
+        <button onclick="dedupe()" class="mt-3 px-4 py-2 rounded-lg bg-calc-600 hover:bg-calc-500 text-white text-sm font-semibold"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>Toggle Remove Duplicates</button>
+      </div>
+
+      <!-- replace + case -->
+      <div class="border-t border-gray-800 pt-6">
+        <h3 class="text-white font-semibold text-sm mb-3"><i class="fa-solid fa-arrows-rotate text-sky-400 mr-1"></i>C. Replace + change case</h3>
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-4">
+          <div class="bg-gray-800/40 rounded-xl border border-gray-700/40 p-4">
+            <p class="text-gray-400 text-[11px]">Sample (editable by Replace)</p>
+            <span id="repSample" class="block font-mono text-calc-200 text-sm mt-1 mb-3">John Smith John Smith</span>
+            <label class="text-gray-400 text-[11px]">Find</label>
+            <input id="repFrom" value="John" class="w-full mt-1 mb-3 rounded-lg border border-gray-700 bg-[#0f172a] px-3 py-1.5 text-sm text-white font-mono" spellcheck="false">
+            <label class="text-gray-400 text-[11px]">Replace with</label>
+            <input id="repTo" value="J." class="w-full mt-1 rounded-lg border border-gray-700 bg-[#0f172a] px-3 py-1.5 text-sm text-white font-mono" spellcheck="false">
+          </div>
+          <div class="bg-gray-800/50 rounded-xl border border-gray-700/40 p-4 overflow-x-auto">
+            <p class="text-gray-400 text-[11px] mb-2">Original → lower → UPPER → Proper</p>
+            <table id="caseTable" class="w-full font-mono text-xs mt-2 border-separate" style="border-spacing:0"><thead><tr><th class="text-left bg-gray-800 text-gray-400 p-2 border border-gray-700">Original</th><th class="text-left bg-gray-800 text-gray-400 p-2 border border-gray-700">LOWER</th><th class="text-left bg-gray-800 text-gray-400 p-2 border border-gray-700">UPPER</th><th class="text-left bg-gray-800 text-gray-400 p-2 border border-gray-700">PROPER</th></tr></thead><tbody id="caseBody"></tbody></table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======= CHEAT SHEET ======= -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-amber-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800"><i class="fa-solid fa-star text-amber-400 text-lg"></i><h2 class="text-white font-bold text-lg">30-Second Cheat Sheet</h2></div>
+    <div class="p-5 sm:p-8 grid grid-cols-2 md:grid-cols-3 gap-3">
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-broom mr-1"></i>Remove spaces</div><p class="text-gray-400 text-xs"><span class="fkey">=TRIM(A1)</span> fixes gaps.</p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-font mr-1"></i>Fix caps</div><p class="text-gray-400 text-xs"><span class="fkey">=PROPER(A1)</span> · <span class="fkey">=UPPER(A1)</span> · <span class="fkey">=LOWER(A1)</span></p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-cut mr-1"></i>Slice text</div><p class="text-gray-400 text-xs"><span class="fkey">=LEFT(A1,4)</span> · <span class="fkey">=RIGHT(A1,4)</span> · <span class="fkey">=MID(A1,2,3)</span></p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-arrows-rotate mr-1"></i>Swap parts</div><p class="text-gray-400 text-xs"><span class="fkey">=SUBSTITUTE(A1," ","_")</span></p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-1 mr-1"></i>Count</div><p class="text-gray-400 text-xs"><span class="fkey">=LEN(A1)</span> how many chars.</p></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-1"><i class="fa-solid fa-copy mr-1"></i>Dedupe</div><p class="text-gray-400 text-xs"><span class="fkey">Data → Remove Duplicates</span></p></div>
+    </div>
+  </section>
+
+  <footer class="text-center text-gray-600 text-xs pt-4 border-t border-gray-800"><p>notes made by amit</p></footer>
+  </main>
+
+  <div id="toast" class="toast fixed bottom-5 left-1/2 -translate-x-1/2 rounded-lg border border-calc-600/50 bg-[#0f172a] px-4 py-3 text-sm text-gray-200 shadow-2xl z-50"><i class="fa-solid fa-circle-info text-calc-400"></i> <span id="toastMsg"></span></div>
+  <script>
+
+  function $(id){ return document.getElementById(id); }
+  function el(tag,cls,txt){ var e=document.createElement(tag); if(cls) e.className=cls; e.textContent=(txt===undefined?'':String(txt)); return e; }
+  function clean(s){ return String(s).toLowerCase().trim(); }
+  function toast(m){ var t=$('toast'); $('toastMsg').textContent=m; t.classList.remove('show'); void t.offsetWidth; t.classList.add('show'); setTimeout(function(){ t.classList.remove('show'); },2400); }
+  function doProper(s){ return String(s).toLowerCase().replace(/\b[a-z]/g,function(c){ return c.toUpperCase(); }); }
+
+  /* ---------- A. Text studio ---------- */
+  var lastT='trim';
+  var EXS=['  hello   Smith   !!','JOHN DOE EMAIL','MRN-2024-0042','sales_at_example.com','  two  spaces   between '];
+  var TOOLS=[
+    {k:'trim',  label:'TRIM',       eq:'=TRIM(A1)',            note:'Cleared extra spaces (start, middle, end).',                  out:function(s){return s.replace(/\s+/g,' ').trim();}},
+    {k:'UPPER', label:'UPPER',      eq:'=UPPER(A1)',           note:'Every letter became UPPERCASE.',                               out:function(s){return s.toUpperCase();}},
+    {k:'LOWER', label:'lower',      eq:'=LOWER(A1)',           note:'Every letter became lowercase.',                               out:function(s){return s.toLowerCase();}},
+    {k:'PROPER',label:'PROPER',     eq:'=PROPER(A1)',          note:'Each word starts with a capital letter.',                      out:function(s){return doProper(s);}},
+    {k:'LEFT',  label:'LEFT(4)',    eq:'=LEFT(A1,4)',          note:'Kept the first 4 characters.',                                 out:function(s){return s.slice(0,4);}},
+    {k:'RIGHT', label:'RIGHT(4)',   eq:'=RIGHT(A1,4)',         note:'Kept the last 4 characters.',                                  out:function(s){return s.slice(-4);}},
+    {k:'MID',   label:'MID(2,3)',   eq:'=MID(A1,2,3)',         note:'From position 2, grabbed 3 characters.',                       out:function(s){return s.slice(1,4);}},
+    {k:'LEN',   label:'LEN',        eq:'=LEN(A1)',             note:'Counted the characters.',                                      out:function(s){return String(s.length);}},
+    {k:'SUB',   label:'space → _',  eq:'=SUBSTITUTE(A1," ","_")',note:'Swapped each space for an underscore.',                       out:function(s){return s.split(' ').join('_');}},
+    {k:'CLEAN', label:'CLEAN ALL',  eq:'=PROPER(TRIM(A1))',     note:'Trimmed, then capitalized — both fixes at once.',             out:function(s){return doProper(s.replace(/\s+/g,' ').trim());}}
+  ];
+  function applyT(k){
+    lastT=k; var src=$('srcInput').value;
+    var t=TOOLS.filter(function(x){return x.k===k;})[0]; if(!t) return;
+    var out=t.out(src);
+    var btns=$('toolButtons').children;
+    for(var i=0;i<btns.length;i++) btns[i].classList.toggle('on', btns[i].dataset.t===k);
+    $('outResult').textContent=out;
+    $('outEq').textContent=t.eq;
+    $('outNote').textContent=t.note;
+  }
+
+  /* ---------- B. remove duplicates ---------- */
+  var CUSTOMERS=['ACME Group','Beta LLC','ACME Group','Delta R&D','Beta LLC','acme group'];
+  var deduped=false;
+  function uniqueCount(){ var s={}; CUSTOMERS.forEach(function(n){ s[clean(n)]=1; }); return Object.keys(s).length; }
+  function renderDup(){
+    var tb=$('dupTable'); tb.innerHTML='';
+    var head=el('tr'); head.innerHTML='<th style="width:40px">#</th><th>Customer name</th><th>Status</th>'; tb.appendChild(head);
+    var seen={}, bump=0;
+    CUSTOMERS.forEach(function(name,i){
+      var c=clean(name);
+      var isDup=!!seen[c];
+      if(!isDup) seen[c]=1;
+      var tr=el('tr');
+      if(deduped && isDup){ tr.className='dup'; tr.style.opacity='0.45'; }
+      var n=el('td',null,i+1);
+      var nm=el('td',null,name);
+      var st=el('td');
+      var lab = (deduped && isDup) ? 'removed' : 'kept';
+      var badge=el('span','badge '+(lab==='removed'?'bg-red-500/20 text-red-300':'bg-calc-600/20 text-calc-300'), lab);
+      st.appendChild(badge);
+      tr.appendChild(n); tr.appendChild(nm); tr.appendChild(st);
+      tb.appendChild(tr);
+    });
+    $('dupCount').textContent = deduped ? ('went from '+CUSTOMERS.length+' → '+uniqueCount()+' unique ✓') : '';
+  }
+  function uniqueCount(){ var s={}; CUSTOMERS.forEach(function(n){ s[clean(n)]=1; }); return Object.keys(s).length; }
+  function dedupe(){
+    deduped=!deduped;
+    var kept=uniqueCount();
+    if(deduped){ $('dupCount').textContent='went from '+CUSTOMERS.length+' → '+kept+' ✓'; toast('Removed '+(CUSTOMERS.length-kept)+' duplicates · '+kept+' kept.'); }
+    else { $('dupCount').textContent=''; toast('Back to the original messy list.'); }
+    renderDup();
+  }
+
+  /* ---------- C. replace + case ---------- */
+  function doReplace(){
+    var f=$('repFrom').value, r=$('repTo').value, s=$('repSample').textContent;
+    var n=(s.split(f).length-1);
+    $('repSample').textContent=s.split(f).join(r);
+    toast('Replaced "'+f+'" with "'+r+'" — '+n+' occurrence(s).');
+  }
+  var NAMES=['john smith','JANE DOE','alice cooper'];
+  function renderCase(){
+    var tb=$('caseBody'); tb.innerHTML='';
+    NAMES.forEach(function(n){
+      var tr=el('tr');
+      tr.appendChild(el('td',null,n));
+      tr.appendChild(el('td',null,n.toLowerCase()));
+      tr.appendChild(el('td',null,n.toUpperCase()));
+      tr.appendChild(el('td',null,doProper(n)));
+      tb.appendChild(tr);
+    });
+  }
+
+  /* ---------- wire ---------- */
+  function wire(){
+    EXS.forEach(function(ex){
+      var b=el('button','tbtn'); b.textContent=ex;
+      b.onclick=function(){ $('srcInput').value=ex; toast('Example loaded — tap a tool'); applyT(lastT); };
+      $('exChips').appendChild(b);
+    });
+    TOOLS.forEach(function(t){
+      var b=el('button','tbtn'); b.dataset.t=t.k; b.textContent=t.label;
+      b.onclick=function(){ applyT(t.k); }; $('toolButtons').appendChild(b);
+    });
+    $('srcInput').addEventListener('input', function(){ applyT(lastT); });
+    $('repFrom').addEventListener('input', doReplace);
+    $('repTo').addEventListener('input', doReplace);
+    renderDup(); renderCase();
+    applyT('trim');
+  }
+  wire();
+
+  </script>
+</body>
+</html>

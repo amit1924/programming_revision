@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0,maximum-scale=1.0,user-scalable=no">
+<title>50 Excel Formulas for Data Analysis</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+*{font-family:'Inter',sans-serif;box-sizing:border-box}
+body{background:#0a0e17;color:#e2e8f0;min-height:100vh;overflow-x:hidden}
+.mono,.formula-input,.result-box{font-family:'JetBrains Mono',monospace}
+.formula-card{background:linear-gradient(145deg,#131a2b,#0f1625);border:1px solid #1e2a3d;border-radius:16px;transition:all .3s ease}
+.formula-card:hover{border-color:#3b4b6b;transform:translateY(-2px);box-shadow:0 12px 40px rgba(0,0,0,.4)}
+.excel-table{border-collapse:collapse;font-size:13px;width:100%}
+.excel-table th{background:#1a2744;color:#94a3b8;font-weight:500;padding:6px 10px;border:1px solid #1e3050;text-align:center}
+.excel-table td{padding:6px 10px;border:1px solid #1a2744;text-align:center;color:#cbd5e1}
+.excel-table td:first-child{color:#64748b;font-weight:500}
+.formula-input{background:#0d1322;border:1px solid #2a3a55;color:#e2e8f0;padding:10px 14px;border-radius:10px;width:100%;font-size:14px;outline:none;transition:all .2s}
+.formula-input:focus{border-color:#5b7fc7;box-shadow:0 0 0 3px rgba(91,127,199,.2)}
+.result-box{background:#0d1322;border-radius:10px;padding:10px 14px;font-size:14px;min-height:44px;word-break:break-all}
+.result-correct{color:#34d399}
+.result-wrong{color:#f87171}
+.result-neutral{color:#e2e8f0}
+.category-tab{padding:8px 18px;border-radius:20px;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;border:1px solid transparent;white-space:nowrap}
+.category-tab.active{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;border-color:transparent}
+.category-tab:hover:not(.active){border-color:#3b4b6b;color:#e2e8f0}
+.search-input{background:#0d1322;border:1px solid #2a3a55;color:#e2e8f0;padding:10px 16px 10px 40px;border-radius:24px;width:100%;font-size:14px;outline:none;transition:all .2s}
+.search-input:focus{border-color:#5b7fc7;box-shadow:0 0 0 3px rgba(91,127,199,.2)}
+.search-icon{position:absolute;left:14px;top:50%;transform:translateY(-50%);color:#4a5a7a}
+.evaluate-btn{background:linear-gradient(135deg,#2563eb,#7c3aed);color:#fff;padding:8px 18px;border-radius:8px;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;border:none;white-space:nowrap}
+.evaluate-btn:hover{transform:scale(1.03);box-shadow:0 4px 15px rgba(91,127,199,.3)}
+.show-btn{background:transparent;border:1px solid #3b4b6b;color:#94a3b8;padding:8px 14px;border-radius:8px;font-size:12px;cursor:pointer;transition:all .2s}
+.show-btn:hover{background:#1a2744;color:#e2e8f0}
+.correct-answer{background:#0d2818;border:1px solid #34d39933;border-radius:8px;padding:8px 12px;font-size:13px;color:#34d399;display:none}
+::-webkit-scrollbar{width:6px;height:6px}
+::-webkit-scrollbar-track{background:#0a0e17}
+::-webkit-scrollbar-thumb{background:#2a3a55;border-radius:3px}
+.fade-in{animation:fadeIn .4s ease}
+@keyframes fadeIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+#categoryTabs::-webkit-scrollbar{height:2px}
+</style>
+</head>
+<body>
+<div class="max-w-7xl mx-auto px-4 py-4 sm:py-6">
+  <header class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+    <div>
+      <h1 class="text-2xl sm:text-3xl font-extrabold bg-gradient-to-r from-blue-400 via-purple-400 to-pink-400 bg-clip-text text-transparent">
+        <i class="fa-solid fa-calculator mr-2 text-blue-400"></i>50 Excel Formulas
+      </h1>
+      <p class="text-slate-400 text-sm mt-1">Interactive practice for data analysis — type a formula &amp; press Enter to test it</p>
+    </div>
+  </header>
+
+  <div class="flex flex-wrap gap-2 mb-4 overflow-x-auto pb-2" id="categoryTabs">
+    <div class="category-tab active" data-cat="all">All</div>
+    <div class="category-tab" data-cat="math"><i class="fa-solid fa-calculator mr-1.5 text-blue-400"></i>Math &amp; Stats</div>
+    <div class="category-tab" data-cat="logical"><i class="fa-solid fa-toggle-on mr-1.5 text-amber-400"></i>Logical</div>
+    <div class="category-tab" data-cat="lookup"><i class="fa-solid fa-search mr-1.5 text-green-400"></i>Lookup &amp; Ref</div>
+    <div class="category-tab" data-cat="text"><i class="fa-solid fa-font mr-1.5 text-pink-400"></i>Text</div>
+    <div class="category-tab" data-cat="date"><i class="fa-regular fa-calendar mr-1.5 text-cyan-400"></i>Date &amp; Time</div>
+  </div>
+
+  <div class="relative mb-6">
+    <i class="fa-solid fa-search search-icon"></i>
+    <input type="text" id="searchInput" class="search-input" placeholder="Search formulas by name or category..." autocomplete="off">
+  </div>
+
+  <div id="formulaGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4"></div>
+
+  <footer class="mt-8 pt-4 border-t border-slate-800 text-center text-slate-500 text-xs">notes made by amit</footer>
+</div>
+
+<script>
+// ========== FORMULA ENGINE ==========
+const _F = {};
+function reg(name, fn) { _F[name.toUpperCase()] = fn; }
+
+reg('SUM',(...r)=>r.flat(9).reduce((s,v)=>(v=Number(v),isNaN(v)?s:s+v),0));
+reg('AVERAGE',(...r)=>{const a=r.flat(9).map(Number).filter(v=>!isNaN(v));return a.length?a.reduce((s,v)=>s+v,0)/a.length:0});
+reg('COUNT',(...r)=>r.flat(9).filter(v=>typeof v==='number'&&!isNaN(v)).length);
+reg('COUNTA',(...r)=>r.flat(9).filter(v=>v!==undefined&&v!==null&&v!=='').length);
+reg('MAX',(...r)=>Math.max(...r.flat(9).map(Number).filter(v=>!isNaN(v))));
+reg('MIN',(...r)=>Math.min(...r.flat(9).map(Number).filter(v=>!isNaN(v))));
+reg('LARGE',(...r)=>{const a=r.slice(0,-1).flat(9).map(Number).filter(v=>!isNaN(v)).sort((x,y)=>y-x);const k=Math.round(r[r.length-1]);return a[k-1]||0});
+reg('SMALL',(...r)=>{const a=r.slice(0,-1).flat(9).map(Number).filter(v=>!isNaN(v)).sort((x,y)=>x-y);const k=Math.round(r[r.length-1]);return a[k-1]||0});
+reg('RANK',(v,...r)=>{const n=Number(v);const a=r.flat(9).map(Number).filter(x=>!isNaN(x)).sort((x,y)=>y-x);const idx=a.indexOf(n);return idx>=0?idx+1:'#N/A'});
+reg('SUMPRODUCT',(...r)=>{const A=r.map(a=>a.flat(9));if(!A.length)return 0;const L=Math.max(...A.map(a=>a.length));let s=0;for(let i=0;i<L;i++){let p=1;for(let j=0;j<A.length;j++)p*=Number(A[j][i]||0);s+=p}return s});
+reg('SUMIF',(...a)=>{const [r,c,sr]=a;const v=r.flat(9);const sv=sr?sr.flat(9):v;let t=0;for(let i=0;i<v.length;i++){if(m(v[i],c))t+=Number(sv[i]||0)}return t});
+reg('SUMIFS',(...a)=>{const sr=a[0].flat(9);let t=0;for(let i=0;i<sr.length;i++){let ok=true;for(let j=1;j<a.length;j+=2){if(!m(a[j].flat(9)[i],a[j+1])){ok=false;break}}if(ok)t+=Number(sr[i]||0)}return t});
+reg('COUNTIF',(...r)=>r[0].flat(9).filter(v=>m(v,r[1])).length);
+reg('COUNTIFS',(...r)=>{let c=0;const L=r[0].flat(9).length;for(let i=0;i<L;i++){let ok=true;for(let j=0;j<r.length;j+=2){if(!m(r[j].flat(9)[i],r[j+1])){ok=false;break}}if(ok)c++}return c});
+reg('AVERAGEIF',(...r)=>{const v=r[0].flat(9);const ar=r[2]?r[2].flat(9):v;let s=0,c=0;for(let i=0;i<v.length;i++){if(m(v[i],r[1])){s+=Number(ar[i]||0);c++}}return c?s/c:0});
+reg('IF',(c,t,f)=>c?t:f);
+reg('AND',(...r)=>r.every(v=>!!v));
+reg('OR',(...r)=>r.some(v=>!!v));
+reg('NOT',v=>!v);
+reg('IFERROR',(v,d)=>{try{if(v==null||v==='#ERROR!'||(typeof v==='number'&&(isNaN(v)||!isFinite(v))))return d;return v}catch(e){return d}});
+reg('IFNA',(v,d)=>v==='#N/A'?d:v);
+reg('IFS',(...r)=>{for(let i=0;i<r.length;i+=2)if(r[i])return r[i+1];return '#N/A'});
+reg('SWITCH',(...r)=>{for(let i=1;i<r.length-1;i+=2)if(r[i]===r[0])return r[i+1];return r[r.length-1]});
+reg('VLOOKUP',(...r)=>{const[val,tbl,col,exact]=r;for(let i=0;i<tbl.length;i++){const row=tbl[i];if(exact?row[0]===val:String(row[0]).toLowerCase()===String(val).toLowerCase())return row[col-1]}return'#N/A'});
+reg('HLOOKUP',(...r)=>{const[val,tbl,row,exact]=r;const cols=tbl[0]||[];for(let i=0;i<cols.length;i++){if(exact?cols[i]===val:String(cols[i]).toLowerCase()===String(val).toLowerCase()){for(let j=0;j<tbl.length;j++){if(j===row-1)return tbl[j][i]}}}return'#N/A'});
+reg('XLOOKUP',(...r)=>{const[val,from,to,na]=r;const fA=from.flat(9);const tA=to.flat(9);for(let i=0;i<fA.length;i++){if(String(fA[i]).toLowerCase()===String(val).toLowerCase())return tA[i]}return na||'#N/A'});
+reg('INDEX',(...r)=>{const arr=r[0];if(r.length===2)return arr[r[1]-1];if(!Array.isArray(arr[0]))return arr[r[1]-1];const row=arr[r[1]-1];return row?row[r[2]-1]:'#REF!'});
+reg('MATCH',(...r)=>{const[val,arr,type]=r;const a=arr.flat(9);const t=type||0;for(let i=0;i<a.length;i++){if(t===0&&String(a[i]).toLowerCase()===String(val).toLowerCase())return i+1;if(t===1&&Number(a[i])<=Number(val))return i+1;if(t===-1&&Number(a[i])>=Number(val))return i+1}return'#N/A'});
+reg('CHOOSE',(...r)=>{const idx=Math.round(Number(r[0]));return idx>0&&idx<r.length?r[idx]:'#VALUE!'});
+reg('INDIRECT',r=>r);
+reg('OFFSET',(...r)=>`OFFSET(${r[0]},${r[1]},${r[2]},${r[3]||''},${r[4]||''})`);
+reg('LEFT',(t,n)=>String(t).substring(0,n||1));
+reg('RIGHT',(t,n)=>String(t).substring(String(t).length-(n||1)));
+reg('MID',(t,s,n)=>String(t).substring((s||1)-1,(s||1)-1+(n||1)));
+reg('LEN',t=>String(t).length);
+reg('FIND',(sub,t)=>{const p=String(t).indexOf(String(sub));return p>=0?p+1:'#VALUE!'});
+reg('SEARCH',(sub,t)=>{const p=String(t).toLowerCase().indexOf(String(sub).toLowerCase());return p>=0?p+1:'#VALUE!'});
+reg('TRIM',t=>String(t).trim().replace(/\s+/g,' '));
+reg('SUBSTITUTE',(t,o,n,i)=>{if(i){const p=String(t).split(o);if(p.length>i){p[i-1]=n+p[i-1].substring(0);return p.join(o)}return t}return String(t).split(o).join(n)});
+reg('TEXTJOIN',(...r)=>{const d=r[0];const s=r[1];return r.slice(2).flat(9).filter(v=>v!=null&&v!==''||!s).join(d)});
+reg('TEXT',(v,f)=>{const n=Number(v);if(isNaN(n))return String(v);if(f.includes('%'))return(n*100).toFixed(f.split('.')[1]?.length||0)+'%';if(f.includes('0.0'))return n.toFixed(1);if(f.includes('0.00'))return n.toFixed(2);if(f.includes('$'))return'$'+n.toFixed(2);return String(n)});
+reg('CONCAT',(...r)=>r.flat(9).map(v=>v??'').join(''));
+reg('UPPER',t=>String(t).toUpperCase());
+reg('LOWER',t=>String(t).toLowerCase());
+reg('PROPER',t=>String(t).replace(/\w\S*/g,w=>w.charAt(0).toUpperCase()+w.substring(1).toLowerCase()));
+reg('TODAY',()=>new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}));
+reg('NOW',()=>new Date().toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}));
+reg('DATE',(y,m,d)=>{const dt=new Date(y,m-1,d);return dt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})});
+reg('YEAR',d=>new Date(d).getFullYear());
+reg('MONTH',d=>new Date(d).getMonth()+1);
+reg('DAY',d=>new Date(d).getDate());
+reg('EOMONTH',(d,m)=>{const dt=new Date(d);dt.setMonth(dt.getMonth()+m+1,0);return dt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})});
+reg('NETWORKDAYS',(s,e)=>{let c=0;const a=new Date(s),b=new Date(e);for(let d=new Date(a);d<=b;d.setDate(d.getDate()+1)){const w=d.getDay();if(w!==0&&w!==6)c++}return c});
+reg('DATEDIF',(s,e,u)=>{const a=new Date(s),b=new Date(e);switch((u||'D').toUpperCase()){case'Y':return b.getFullYear()-a.getFullYear();case'M':return(b.getFullYear()-a.getFullYear())*12+b.getMonth()-a.getMonth();case'D':return Math.floor((b-a)/864e5);case'YD':{const c=new Date(b);c.setFullYear(a.getFullYear());return Math.floor((c-a)/864e5)}default:return 0}});
+reg('WEEKDAY',(d,t)=>{const w=new Date(d).getDay();return t===2?w||7:w+1});
+reg('EDATE',(d,m)=>{const dt=new Date(d);dt.setMonth(dt.getMonth()+m);return dt.toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'})});
+
+function m(val,crit){
+  if(typeof crit==='string'&&crit.startsWith('>='))return Number(val)>=Number(crit.substring(2));
+  if(typeof crit==='string'&&crit.startsWith('<='))return Number(val)<=Number(crit.substring(2));
+  if(typeof crit==='string'&&crit.startsWith('<>'))return Number(val)!==Number(crit.substring(2));
+  if(typeof crit==='string'&&crit.startsWith('>'))return Number(val)>Number(crit.substring(1));
+  if(typeof crit==='string'&&crit.startsWith('<'))return Number(val)<Number(crit.substring(1));
+  if(typeof crit==='string'&&crit.startsWith('='))return Number(val)===Number(crit.substring(1));
+  return val===crit;
+}
+
+function colToIdx(c){let i=0;for(let j=0;j<c.length;j++)i=i*26+c.charCodeAt(j)-64;return i}
+function idxToCol(i){let c='';while(i>0){i--;c=String.fromCharCode(65+i%26)+c;i=Math.floor(i/26)}return c}
+
+function evalFormula(expr, lookup) {
+  try {
+    let s = expr.trim();
+    if (s.startsWith('=')) s = s.substring(1);
+    if (!s) return '';
+
+    // Save string literals as placeholders
+    const strs = [];
+    s = s.replace(/"([^"\\]*(?:\\.[^"\\]*)*)"/g, m => { strs.push(m); return '__S'+(strs.length-1)+'__'; });
+
+    // Quote bare words FIRST (Excel treats unquoted text like IT as "IT")
+    // Skip function calls (word followed by `(`), cell refs (A1, B2), and safe words
+    const safe = new Set(['lookup','_F','true','false','null','undefined','NaN']);
+    s = s.replace(/(?<!\.)\b([A-Za-z]\w*)\b(?!\s*\()/g, m => {
+      if (safe.has(m)) return m;
+      if (/^[A-Z]+\d+$/.test(m)) return m; // skip cell ref patterns
+      return '"' + m + '"';
+    });
+
+    // Replace ranges with placeholders
+    const rangePhs = [];
+    s = s.replace(/([A-Z]+\d+):([A-Z]+\d+)/g, m => { const id=rangePhs.length; rangePhs[id]=m; return '__R'+id+'__'; });
+
+    // Replace cell refs
+    s = s.replace(/\b([A-Z]+\d+)\b/g, "lookup('$1')");
+
+    // Restore ranges
+    for (let i=0;i<rangePhs.length;i++) s = s.replace('__R'+i+'__', "lookup('"+rangePhs[i]+"')");
+
+    // Replace function names
+    for (const n of Object.keys(_F)) s = s.replace(new RegExp('\\b'+n+'\\\(','g'), '_F.'+n+'(');
+
+    // Replace TRUE/FALSE
+    s = s.replace(/\bTRUE\b(?!\s*\()/g,'true').replace(/\bFALSE\b(?!\s*\()/g,'false');
+
+    // Fix operators
+    s = s.replace(/<>/g,'!==').replace(/(?<![<>])=([^=<>\s,\)])/g,'===$1');
+
+    // Restore strings
+    for (let i=0;i<strs.length;i++) s = s.replace('__S'+i+'__', strs[i]);
+
+    return new Function('_F','lookup','return ('+s+')')(_F,lookup);
+  } catch(e) { return '#ERROR!'; }
+}
+
+// ========== FORMULA DATA ==========
+const formulas = [];
+let fid = 0;
+function addF(cat, name, syntax, desc, data, correctFormula, expected) {
+  formulas.push({ id:++fid, cat, name, syntax, desc, data, correctFormula, expected });
+}
+
+function makeLookup(data) {
+  return function(ref) {
+    if (ref.includes(':')) {
+      const [start, end] = ref.split(':');
+      const sC = start.match(/[A-Z]+/)[0], sR = parseInt(start.match(/\d+/)[0]);
+      const eC = end.match(/[A-Z]+/)[0], eR = parseInt(end.match(/\d+/)[0]);
+      const sci = colToIdx(sC), eci = colToIdx(eC);
+      if (sci !== eci && eR > sR) {
+        const rows = [];
+        for (let r = sR; r <= eR; r++) {
+          const row = [];
+          for (let c = sci; c <= eci; c++) row.push(data[idxToCol(c)+r]);
+          rows.push(row);
+        }
+        return rows;
+      }
+      const vals = [];
+      for (let r = sR; r <= eR; r++)
+        for (let c = sci; c <= eci; c++)
+          vals.push(data[idxToCol(c)+r]);
+      return vals;
+    }
+    return data[ref];
+  };
+}
+
+// ========== MATH & STATS (15) ==========
+addF('math','SUM','=SUM(range)','Adds all numbers in a range.',{A1:'Product',B1:'Sales',A2:'Widget',B2:120,A3:'Gadget',B3:85,A4:'Doohickey',B4:200,A5:'Thingy',B5:45,A6:'Whatsit',B6:150},'=SUM(B2:B6)',600);
+addF('math','AVERAGE','=AVERAGE(range)','Mean of a set of numbers.',{A1:'Month',B1:'Rev',A2:'Jan',B2:4500,A3:'Feb',B3:5200,A4:'Mar',B4:4800,A5:'Apr',B5:5100,A6:'May',B6:4900},'=AVERAGE(B2:B6)',4900);
+addF('math','COUNT','=COUNT(range)','Counts numeric cells only.',{A1:'Emp',B1:'Sales',A2:'A',B2:15,A3:'B',B3:22,A4:'C',B4:'N/A',A5:'D',B5:18,A6:'E',B6:''},'=COUNT(B2:B6)',3);
+addF('math','COUNTA','=COUNTA(range)','Counts all non-empty cells.',{A1:'Name',B1:'RSVP',A2:'John',B2:'Yes',A3:'Sara',B3:'No',A4:'Mike',B4:'',A5:'Lisa',B5:'Yes',A6:'Tom',B6:'Maybe'},'=COUNTA(B2:B6)',4);
+addF('math','MAX','=MAX(range)','Largest value in a range.',{A1:'City',B1:'Temp',A2:'NYC',B2:72,A3:'MIA',B3:95,A4:'CHI',B4:68,A5:'PHX',B5:105,A6:'SEA',B6:58},'=MAX(B2:B6)',105);
+addF('math','MIN','=MIN(range)','Smallest value in a range.',{A1:'City',B1:'Temp',A2:'NYC',B2:72,A3:'MIA',B3:95,A4:'CHI',B4:68,A5:'PHX',B5:105,A6:'SEA',B6:58},'=MIN(B2:B6)',58);
+addF('math','LARGE','=LARGE(range,k)','k-th largest value.',{A1:'S',B1:'Sco',A2:'A',B2:92,A3:'B',B3:78,A4:'C',B4:95,A5:'D',B5:88,A6:'E',B6:84,A7:'F',B7:73},'=LARGE(B2:B7,2)',92);
+addF('math','SMALL','=SMALL(range,k)','k-th smallest value.',{A1:'P',B1:'Pr',A2:'W',B2:12.99,A3:'G',B3:8.5,A4:'D',B4:24.99,A5:'T',B5:5.99,A6:'W',B6:19.99},'=SMALL(B2:B6,3)',19.99);
+addF('math','RANK.EQ','=RANK(number,range)','Rank of a number (1=highest).',{A1:'P',B1:'Sc',A2:'Al',B2:95,A3:'Ba',B3:82,A4:'Ca',B4:95,A5:'Dr',B5:91,A6:'El',B6:78},'=RANK(95,B2:B6)',1);
+addF('math','SUMPRODUCT','=SUMPRODUCT(a1,a2)','Multiplies arrays & sums.',{A1:'I',B1:'Q',C1:'P',A2:'Ap',B2:10,C2:1.5,A3:'Ba',B3:5,C3:.75,A4:'Ch',B4:8,C4:2,A5:'Da',B5:3,C5:3.5},'=SUMPRODUCT(B2:B5,C2:C5)',45.25);
+addF('math','SUMIF','=SUMIF(range,criteria,[sum])','Sums cells with one condition.',{A1:'S',B1:'Amt',A2:'Al',B2:500,A3:'Bo',B3:1200,A4:'Al',B4:800,A5:'Ca',B5:300,A6:'Bo',B6:600},'=SUMIF(A2:A6,"Alice",B2:B6)',1300);
+addF('math','SUMIFS','=SUMIFS(sum,r1,c1,r2,c2,...)','Sums with multiple conditions.',{A1:'P',B1:'R',C1:'S',A2:'W',B2:'N',C2:100,A3:'G',B3:'S',C3:200,A4:'W',B4:'S',C4:150,A5:'G',B5:'N',C5:250,A6:'W',B6:'N',C6:300},'=SUMIFS(C2:C6,A2:A6,"Widget",B2:B6,"North")',400);
+addF('math','COUNTIF','=COUNTIF(range,criteria)','Counts cells with one condition.',{A1:'D',B1:'E',A2:'Sls',B2:'J',A3:'IT',B3:'S',A4:'Sls',B4:'M',A5:'HR',B5:'L',A6:'Sls',B6:'T',A7:'IT',B7:'J'},'=COUNTIF(A2:A7,"Sales")',3);
+addF('math','COUNTIFS','=COUNTIFS(r1,c1,r2,c2,...)','Counts with multiple conditions.',{A1:'C',B1:'Sl',C1:'O',A2:'NY',B2:600,C2:'Y',A3:'NY',B3:400,C3:'N',A4:'LA',B4:700,C4:'Y',A5:'LA',B5:300,C5:'N',A6:'NY',B6:550,C6:'Y'},'=COUNTIFS(A2:A6,"NYC",B2:B6,">500")',2);
+addF('math','AVERAGEIF','=AVERAGEIF(r,c,[ar])','Averages cells with a condition.',{A1:'T',B1:'H',A2:'A',B2:40,A3:'B',B3:35,A4:'A',B4:45,A5:'G',B5:50,A6:'A',B6:38},'=AVERAGEIF(A2:A6,"Alpha",B2:B6)',41);
+
+// ========== LOGICAL (8) ==========
+addF('logical','IF','=IF(test,true,false)','Returns one value if true, another if false.',{A1:'S',B1:'Sc',A2:'E',B2:85,A3:'L',B3:59,A4:'N',B4:73,A5:'O',B5:92,A6:'M',B6:44},'=IF(B2>=60,"Pass","Fail")','Pass');
+addF('logical','AND','=AND(c1,c2,...)','TRUE only if ALL conditions are true.',{A1:'A',B1:'Ex',C1:'Ce',A2:'Al',B2:5,C2:'Y',A3:'Bo',B3:2,C3:'Y',A4:'Ca',B4:7,C4:'N',A5:'Da',B5:3,C5:'Y'},'=AND(B2>=3,C2="Yes")',true);
+addF('logical','OR','=OR(c1,c2,...)','TRUE if ANY condition is true.',{A1:'P',B1:'Pr',C1:'On',A2:'W',B2:100,C2:'N',A3:'G',B3:50,C3:'Y',A4:'D',B4:200,C4:'N',A5:'T',B5:25,C5:'Y'},'=OR(B5<30,C5="Yes")',true);
+addF('logical','IFERROR','=IFERROR(v,fallback)','Catches errors gracefully.',{A1:'N',B1:'D',A2:100,B2:20,A3:50,B3:0,A4:75,B4:25,A5:30,B5:0},'=IFERROR(A2/B2,"Cannot divide")',5);
+addF('logical','IFNA','=IFNA(v,fallback)','Handles #N/A gracefully.',{A1:'ID',B1:'N',A2:101,B2:'A',A3:102,B3:'B',A4:103,B4:'C',A5:105,B5:''},'=IFNA(VLOOKUP(104,A2:B5,2,FALSE),"Not found")','Not found');
+addF('logical','IFS','=IFS(c1,v1,c2,v2,...)','Multiple conditions, clean syntax.',{A1:'Sc',B1:'G',A2:95,A3:82,A4:67,A5:50,A6:73},'=IFS(A2>=90,"A",A2>=80,"B",A2>=70,"C",A2>=60,"D",TRUE,"F")','A');
+addF('logical','SWITCH','=SWITCH(expr,v1,r1,...)','Match expression to values.',{A1:'C',B1:'S',A2:1,B2:'A',A3:2,B3:'P',A4:3,B4:'C',A5:1,A6:4},'=SWITCH(A2,1,"Active",2,"Pending",3,"Closed","Unknown")','Active');
+addF('logical','NOT','=NOT(logical)','Reverses TRUE/FALSE.',{A1:'I',B1:'D',A2:'W',B2:false,A3:'G',B3:true,A4:'D',B4:false,A5:'T',B5:false},'=NOT(B2)',true);
+
+// ========== LOOKUP & REF (9) ==========
+addF('lookup','VLOOKUP','=VLOOKUP(v,table,col,[exact])','Finds value in first column, returns from another column.',{A1:'ID',B1:'N',C1:'S',A2:101,B2:'Al',C2:55e3,A3:102,B3:'Bo',C3:62e3,A4:103,B4:'Ca',C4:48e3,A5:104,B5:'Da',C5:71e3},'=VLOOKUP(103,A2:C5,3,FALSE)',48000);
+addF('lookup','HLOOKUP','=HLOOKUP(v,table,row,[exact])','Finds value in first row, returns from another row.',{A1:'M',B1:'Q1',C1:'Q2',D1:'Q3',E1:'Q4',A2:'Rev',B2:100,C2:120,D2:150,E2:140,A3:'Cost',B3:60,C3:70,D3:80,E3:75,A4:'Pr',B4:30,C4:40,D4:50,E4:45},'=HLOOKUP("Q3",A1:E4,2,FALSE)',150);
+addF('lookup','XLOOKUP','=XLOOKUP(v,from,to,[na])','Modern lookup — searches any direction.',{A1:'P',B1:'Pr',C1:'St',A2:'W',B2:25,C2:100,A3:'G',B3:15,C3:200,A4:'D',B4:50,C4:75,A5:'T',B5:10,C5:500},'=XLOOKUP("Doohickey",A2:A5,B2:B5)',50);
+addF('lookup','INDEX','=INDEX(arr,row,[col])','Returns value at a position in a range.',{A1:'N',B1:'M',C1:'S',D1:'E',A2:'Al',B2:92,C2:85,D2:78,A3:'Bo',B3:80,C3:91,D3:88,A4:'Ca',B4:75,C4:82,D4:95},'=INDEX(B2:D4,2,3)',88);
+addF('lookup','MATCH','=MATCH(v,arr,[type])','Returns position of a value in a range.',{A1:'C',B1:'P',A2:'NY',B2:8.4e6,A3:'LA',B3:3.8e6,A4:'Ch',B4:2.7e6,A5:'Ho',B5:2.3e6,A6:'Ph',B6:1.6e6},'=MATCH("Chicago",A2:A6,0)',3);
+addF('lookup','INDEX+MATCH','=INDEX(r,MATCH(v,l,0))','Powerful combo — more flexible than VLOOKUP.',{A1:'ID',B1:'N',C1:'D',D1:'S',A2:1001,B2:'Al',C2:'Sl',D2:65e3,A3:1002,B3:'Bo',C3:'IT',D3:72e3,A4:1003,B4:'Ca',C4:'HR',D4:58e3,A5:1004,B5:'Da',C5:'IT',D5:83e3},'=INDEX(D2:D5,MATCH(1003,A2:A5,0))',58000);
+addF('lookup','CHOOSE','=CHOOSE(i,v1,v2,...)','Picks from a list by index.',{A1:'R',B1:'M',A2:1,B2:'P',A3:2,B3:'F',A4:3,B4:'G',A5:4,B5:'E',A6:'',B6:3},'=CHOOSE(B6,"Poor","Fair","Good","Excellent")','Good');
+addF('lookup','INDIRECT','=INDIRECT(ref)','Turns text into a cell reference.',{A1:'X',A2:'Val',B1:'Jan',B2:100,C1:'Feb',C2:150,D1:'Mar',D2:200},'=INDIRECT("B2")',100);
+addF('lookup','OFFSET','=OFFSET(ref,rows,cols,[h],[w])','Dynamic range from a starting point.',{A1:'M',B1:'S',A2:'J',B2:500,A3:'F',B3:700,A4:'M',B4:900,A5:'A',B5:600,A6:'M',B6:800,A7:'J',B7:1000,A8:'J',B8:750},'=SUM(OFFSET(B2,0,0,3,1))',2100);
+
+// ========== TEXT (10) ==========
+addF('text','LEFT','=LEFT(text,[n])','First N characters.',{A1:'N',B1:'F',A2:'John Smith',B2:'',A3:'Sarah Johnson',B3:'',A4:'Mike Brown',B4:''},'=LEFT(A2,4)','John');
+addF('text','RIGHT','=RIGHT(text,[n])','Last N characters.',{A1:'E',B1:'D',A2:'alice@co.com',B2:'',A3:'bob@corp.org',B3:'',A4:'carol@web.net',B4:''},'=RIGHT(A2,10)','alice@co.com');
+addF('text','MID','=MID(text,start,n)','Middle characters from a position.',{A1:'Code',B1:'R',A2:'USA-2024-007',B2:'',A3:'EUR-2024-042',B3:'',A4:'APAC-2024-015',B4:''},'=MID(A2,1,3)','USA');
+addF('text','LEN','=LEN(text)','Counts characters in text.',{A1:'E',B1:'L',A2:'Hello World',B2:'',A3:'Data Analysis',B3:'',A4:'Excel',B4:''},'=LEN(A2)',11);
+addF('text','FIND','=FIND(find,within)','Finds position (case-sensitive).',{A1:'E',B1:'@',A2:'alice@gmail.com',B2:'',A3:'bob@yahoo.com',B3:'',A4:'carol@outlook.com',B4:''},'=FIND("@",A2)',6);
+addF('text','TRIM','=TRIM(text)','Removes extra spaces.',{A1:'M',B1:'C',A2:'  Hello   World  ',B2:'',A3:'Data   Analysis   E',B3:'',A4:'  Too   many  spaces ',B4:''},'=TRIM(A2)','Hello World');
+addF('text','SUBSTITUTE','=SUBSTITUTE(t,old,new,[n])','Replaces specific text.',{A1:'Phone',B1:'Fmt',A2:'555-123-4567',B2:'',A3:'555-987-6543',B3:'',A4:'555-555-5555',B4:''},'=SUBSTITUTE(A2,"-"," ")','555 123 4567');
+addF('text','TEXTJOIN','=TEXTJOIN(delim,skip,t1,...)','Joins text with a delimiter.',{A1:'F',B1:'L',C1:'Full',A2:'John',B2:'Smith',C2:'',A3:'Sara',B3:'John',C3:'',A4:'Mike',B4:'Brown',C4:''},'=TEXTJOIN(" ",TRUE,A2:C2)','John Smith');
+addF('text','CONCAT','=CONCAT(t1,t2,...)','Combines text strings.',{A1:'C',B1:', ',C1:'S',D1:'L',A2:'NY',B2:', ',C2:'NY',D2:'',A3:'LA',B3:', ',C3:'CA',D3:'',A4:'Chi',B4:', ',C4:'IL',D4:''},'=CONCAT(A2,B2,C2)','NY, NY');
+addF('text','UPPER/LOWER/PROPER','=UPPER(t)/=LOWER(t)/=PROPER(t)','Change text case.',{A1:'O',B1:'U',C1:'L',D1:'P',A2:'john SMITH',B2:'',C2:'',D2:'',A3:'DATA ANALYSIS',B3:'',C3:'',D3:'',A4:'excel functions',B4:'',C4:'',D4:''},'=PROPER(A2)','John Smith');
+
+// ========== DATE & TIME (8) ==========
+addF('date','TODAY','=TODAY()','Current date — auto-updates.',{A1:'I',B1:'V',A2:'Dt',B2:''},'=TODAY()',new Date().toLocaleDateString('en-US',{year:'numeric',month:'short',day:'numeric'}));
+addF('date','NOW','=NOW()','Current date & time.',{A1:'I',B1:'V',A2:'Ts',B2:''},'=NOW()',new Date().toLocaleString('en-US',{year:'numeric',month:'short',day:'numeric',hour:'2-digit',minute:'2-digit'}));
+addF('date','DATE','=DATE(y,m,d)','Creates a date from parts.',{A1:'Y',B1:'M',C1:'D',D1:'Dt',A2:2024,B2:12,C2:25,D2:'',A3:2025,B3:1,C3:1,D3:'',A4:2024,B4:7,C4:4,D4:''},'=DATE(2024,12,25)','Dec 25, 2024');
+addF('date','YEAR/MONTH/DAY','=YEAR(d)/=MONTH(d)/=DAY(d)','Extracts parts of a date.',{A1:'Dt',B1:'Y',C1:'M',D1:'D',A2:'2024-06-15',B2:'',C2:'',D2:'',A3:'2025-01-01',B3:'',C3:'',D3:'',A4:'2023-12-31',B4:'',C4:'',D4:''},'=YEAR("2024-06-15")',2024);
+addF('date','EOMONTH','=EOMONTH(start,months)','Last day of a month.',{A1:'S',B1:'+1',C1:'+3',A2:'2024-01-15',B2:'',C2:'',A3:'2024-06-20',B3:'',C3:'',A4:'2024-12-01',B4:'',C4:''},'=EOMONTH("2024-01-15",1)','Feb 29, 2024');
+addF('date','NETWORKDAYS','=NETWORKDAYS(start,end)','Working days between dates.',{A1:'S',B1:'E',C1:'W',A2:'2024-01-01',B2:'2024-01-15',C2:'',A3:'2024-06-01',B3:'2024-06-30',C3:'',A4:'2024-12-01',B4:'2024-12-31',C4:''},'=NETWORKDAYS("2024-01-01","2024-01-15")',11);
+addF('date','DATEDIF','=DATEDIF(s,e,"unit")','Difference in Y/M/D.',{A1:'E',B1:'S',C1:'T',D1:'Y',A2:'Al',B2:'2019-06-01',C2:'2024-06-15',D2:'',A3:'Bo',B3:'2022-01-15',C3:'2024-06-15',D3:'',A4:'Ca',B4:'2020-09-30',C4:'2024-06-15',D4:''},'=DATEDIF("2019-06-01","2024-06-15","Y")',5);
+addF('date','WEEKDAY','=WEEKDAY(d,[type])','Day of week as number.',{A1:'Dt',B1:'N',C1:'Nm',A2:'2024-12-25',B2:'',C2:'',A3:'2024-11-28',B3:'',C3:'',A4:'2024-07-04',B4:'',C4:''},'=WEEKDAY("2024-12-25")',4);
+
+// ========== RENDER ==========
+const grid = document.getElementById('formulaGrid');
+const searchInput = document.getElementById('searchInput');
+const categoryTabs = document.querySelectorAll('.category-tab');
+let activeCat = 'all', searchTerm = '';
+
+function getDotColor(cat){return{math:'bg-blue-500',logical:'bg-amber-500',lookup:'bg-green-500',text:'bg-pink-500',date:'bg-cyan-500'}[cat]||'bg-slate-500'}
+function getCatLabel(cat){return{math:'Math & Stats',logical:'Logical',lookup:'Lookup & Ref',text:'Text',date:'Date & Time'}[cat]||cat}
+
+function renderTable(data) {
+  const cols = new Set(), rows = new Set();
+  for (const ref of Object.keys(data)) {
+    const m = ref.match(/^([A-Z]+)(\d+)$/);
+    if (m) { cols.add(m[1]); rows.add(parseInt(m[2])); }
+  }
+  const sC = Array.from(cols).sort((a,b)=>colToIdx(a)-colToIdx(b));
+  const sR = Array.from(rows).sort((a,b)=>a-b);
+  let h = '<table class="excel-table"><thead><tr><th></th>';
+  for (const c of sC) h += '<th>'+c+'</th>';
+  h += '</tr></thead><tbody>';
+  for (const r of sR) {
+    h += '<tr><td>'+r+'</td>';
+    for (const c of sC) {
+      const v = data[c+r];
+      h += '<td>'+(v===undefined?'':v===true?'TRUE':v===false?'FALSE':v)+'</td>';
+    }
+    h += '</tr>';
+  }
+  return h+'</tbody></table>';
+}
+
+function esc(s) { return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function evaluateCard(id) {
+  const input = document.getElementById('input-'+id);
+  const resultText = document.getElementById('result-text-'+id);
+  const f = formulas.find(x=>x.id===id);
+  if (!f) return;
+  const lookup = makeLookup(f.data);
+  const uF = input.value.trim();
+  const uR = evalFormula(uF, lookup);
+  const cR = evalFormula(f.correctFormula, lookup);
+  const fU = formatResult(uR), fC = formatResult(cR);
+  if (String(uR) === String(cR)) {
+    resultText.className = 'result-correct font-semibold';
+    resultText.innerHTML = '&#10003; '+esc(fU);
+  } else if (uR === '#ERROR!' || uR === undefined || uR === null) {
+    resultText.className = 'result-wrong';
+    resultText.innerHTML = '&#10007; '+esc(fU);
+  } else {
+    resultText.className = 'result-wrong';
+    resultText.innerHTML = '&#10007; Got '+esc(fU)+' (expected '+esc(fC)+')';
+  }
+}
+
+function toggleAnswer(id) {
+  const d = document.getElementById('correct-'+id);
+  d.style.display = d.style.display === 'block' ? 'none' : 'block';
+}
+
+function formatResult(v) {
+  if (v === undefined || v === null) return '';
+  if (typeof v === 'boolean') return v ? 'TRUE' : 'FALSE';
+  if (typeof v === 'number') return Number.isInteger(v) ? v.toLocaleString() : v.toFixed(2);
+  return String(v);
+}
+
+function renderFormulaCard(f) {
+  const lookup = makeLookup(f.data);
+  let cR;
+  try { cR = evalFormula(f.correctFormula, lookup); } catch(e) { cR = '#ERROR!'; }
+  const card = document.createElement('div');
+  card.className = 'formula-card p-4 sm:p-5 fade-in';
+  card.id = 'card-'+f.id;
+  const val = esc(f.correctFormula);
+  const syn = esc(f.syntax);
+  const desc = esc(f.desc);
+  const name = esc(f.name);
+  const cat = esc(getCatLabel(f.cat));
+  const res = esc(formatResult(cR));
+  card.innerHTML =
+    '<div class="flex items-start justify-between gap-2 mb-3">'+
+      '<div class="flex items-center gap-2 min-w-0">'+
+        '<span class="w-2.5 h-2.5 rounded-full '+getDotColor(f.cat)+' shrink-0"></span>'+
+        '<h3 class="font-bold text-base sm:text-lg text-white truncate">'+name+'</h3>'+
+        '<span class="text-xs px-2 py-0.5 rounded-full bg-slate-800 text-slate-400 shrink-0">'+cat+'</span>'+
+      '</div>'+
+      '<span class="mono text-xs text-slate-500 bg-slate-800/50 px-2 py-1 rounded shrink-0">#'+f.id+'</span>'+
+    '</div>'+
+    '<div class="mono text-xs sm:text-sm text-blue-300 bg-blue-900/20 px-3 py-2 rounded-lg mb-2 overflow-x-auto">'+syn+'</div>'+
+    '<p class="text-sm text-slate-400 mb-3">'+desc+'</p>'+
+    '<div class="overflow-x-auto mb-3">'+renderTable(f.data)+'</div>'+
+    '<div class="flex gap-2 mb-2">'+
+      '<input type="text" id="input-'+f.id+'" class="formula-input" placeholder="'+val+'" value="'+val+'" spellcheck="false">'+
+    '</div>'+
+    '<div class="flex items-center gap-2 flex-wrap">'+
+      '<button class="evaluate-btn" onclick="evaluateCard('+f.id+')"><i class="fa-solid fa-play mr-1"></i>Evaluate</button>'+
+      '<button class="show-btn" onclick="toggleAnswer('+f.id+')"><i class="fa-regular fa-eye mr-1"></i>Show Answer</button>'+
+      '<span class="text-xs text-slate-500">or <kbd class="px-1 py-0.5 bg-slate-800 rounded text-xs">Enter</kbd></span>'+
+    '</div>'+
+    '<div class="correct-answer mt-2" id="correct-'+f.id+'">'+
+      '<i class="fa-regular fa-lightbulb mr-1"></i> Correct: <span class="mono">'+val+'</span> → <span class="font-semibold">'+res+'</span>'+
+    '</div>'+
+    '<div class="result-box mt-2 flex items-center gap-2" id="result-'+f.id+'">'+
+      '<i class="fa-regular fa-equals text-slate-500"></i>'+
+      '<span class="result-neutral" id="result-text-'+f.id+'">Enter a formula, click Evaluate</span>'+
+    '</div>';
+  card.querySelector('.formula-input').addEventListener('keydown', function(e) {
+    if (e.key === 'Enter') evaluateCard(f.id);
+  });
+  return card;
+}
+
+function renderAll() {
+  grid.innerHTML = '';
+  for (const f of formulas) {
+    const mt = f.name.toLowerCase().includes(searchTerm)
+      || f.syntax.toLowerCase().includes(searchTerm)
+      || getCatLabel(f.cat).toLowerCase().includes(searchTerm)
+      || f.desc.toLowerCase().includes(searchTerm);
+    const mc = activeCat === 'all' || f.cat === activeCat;
+    if (mt && mc) grid.appendChild(renderFormulaCard(f));
+  }
+  if (!grid.children.length) {
+    grid.innerHTML = '<div class="col-span-full text-center py-12 text-slate-500"><i class="fa-regular fa-face-frown text-3xl mb-3"></i><p>No formulas found.</p></div>';
+  }
+}
+
+searchInput.addEventListener('input', function() {
+  searchTerm = this.value.toLowerCase().trim();
+  renderAll();
+});
+
+categoryTabs.forEach(tab => {
+  tab.addEventListener('click', function() {
+    categoryTabs.forEach(t => t.classList.remove('active'));
+    this.classList.add('active');
+    activeCat = this.dataset.cat;
+    searchInput.value = '';
+    searchTerm = '';
+    renderAll();
+  });
+});
+
+renderAll();
+</script>
+</body>
+</html>

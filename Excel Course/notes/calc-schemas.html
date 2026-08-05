@@ -1,0 +1,323 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Star Schema vs Snowflake Schema — Step-by-Step Revision | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.88rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.lookup{ background:#1f2c4a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #60a5fa; }
+    table.g td.result{ background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.err{ background:#3a1620; color:#fca5a5; font-weight:700; box-shadow:inset 0 0 0 2px #f87171; }
+    table.g td.grp{ background:#16234a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #3b82f6; }
+    table.g td.dim{ color:#475569; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .formula { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.9rem; color:#a3e635; overflow-x:auto; white-space:nowrap; }
+    .formula .arg { color:#fcd34d; } .formula .fn { color:#93c5fd; font-weight:600; }
+
+    .schemabox { border:2px solid #3b82f6; border-radius:12px; padding:10px 14px; background:#16234a; text-align:center; font-family:'JetBrains Mono',monospace; font-size:.72rem; color:#93c5fd; }
+    .schemabox.fact { border-color:#fbbf24; background:#3a2816; color:#fcd34d; }
+    .schemabox.dim { border-color:#56af3f; background:#16322a; color:#86efac; }
+    .schemabox .t { font-size:.62rem; display:block; opacity:.7; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:38px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-star text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Excel — Star Schema &amp; Snowflake Schema</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-diagram-project"></i><span>Two classic ways to organize fact + dimension tables in a data model</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">Star Schema · Snowflake Schema</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">Once you have a <b>fact table</b> and several <b>dimension tables</b>, you arrange them in a pattern. The <b>star</b> keeps everything flat and simple; the <b>snowflake</b> normalizes dimensions into more detail. Both live in your data model (Power Pivot) and feed pivot tables.</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a2816;box-shadow:inset 0 0 0 2px #fbbf24"></span> fact table (measures)</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16322a;box-shadow:inset 0 0 0 2px #56af3f"></span> dimension table (attributes)</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16234a;box-shadow:inset 0 0 0 2px #3b82f6"></span> relationship line</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 1. THE BUILDING BLOCKS -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Building Blocks — Fact vs Dimension</h2><p class="text-gray-400 text-xs sm:text-sm">Every schema is built from two kinds of tables.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">FOUNDATION</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div>
+          <p class="text-white text-sm font-bold mb-2 flex items-center gap-2"><i class="fa-solid fa-chart-line text-amber-400"></i> FACT table — what happened</p>
+          <div class="wrap"><table class="g"><thead><tr><th>job_id</th><th>salary</th><th>post_date</th></tr></thead><tbody>
+            <tr><td>10001</td><td class="result">85000</td></tr>
+            <tr><td>10002</td><td class="result">120000</td></tr>
+            <tr><td>10003</td><td class="result">150000</td></tr>
+          </tbody></table></div>
+          <p class="text-gray-400 text-xs mt-2">Numbers, events, measures. <b>Huge</b>, keeps growing, mostly numbers &amp; foreign keys.</p>
+        </div>
+        <div>
+          <p class="text-white text-sm font-bold mb-2 flex items-center gap-2"><i class="fa-solid fa-tag text-calc-400"></i> DIMENSION tables — what it's about</p>
+          <div class="wrap"><table class="g"><thead><tr><th>job_id</th><th>job_title</th><th>company</th></tr></thead><tbody>
+            <tr><td>10001</td><td>Data Analyst</td><td>TikTok</td></tr>
+            <tr><td>10002</td><td>Data Engineer</td><td>Amazon</td></tr>
+            <tr><td>10003</td><td>Data Scientist</td><td>Google</td></tr>
+          </tbody></table></div>
+          <p class="text-gray-400 text-xs mt-2">Labels, categories, attributes. <b>Small</b>, rarely changes, mostly text.</p>
+        </div>
+      </div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Memory:</strong> facts = <b>measures</b> (SUM, AVERAGE). Dimensions = <b>filters</b> (Rows/Columns/Slicers). Facts answer "how much", dimensions answer "by what".</p></div>
+    </div>
+  </section>
+
+  <!-- 2. STAR SCHEMA -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Star Schema</h2><p class="text-gray-400 text-xs sm:text-sm">One fact table in the middle, dimensions around it like the points of a star.</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">SIMPLE</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">The layout</p><p class="text-gray-400 text-xs">Every dimension links DIRECTLY to the fact table. Only ONE hop from fact to any dimension.</p></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center mt-3">
+          <div class="space-y-3">
+            <div class="schemabox dim">DIM<br><span class="t">dim_company<br>company_id · name</span></div>
+            <div class="schemabox dim">DIM<br><span class="t">dim_title<br>title_id · name</span></div>
+          </div>
+          <div class="flex flex-col items-center gap-2">
+            <span class="text-lock-400 text-xs">⟷</span>
+            <div class="schemabox fact">FACT<br><span class="t">fact_jobs<br>job_id · company_id · title_id · salary</span></div>
+            <span class="text-lock-400 text-xs">⟷</span>
+          </div>
+          <div class="space-y-3">
+            <div class="schemabox dim">DIM<br><span class="t">dim_date<br>date_id · date</span></div>
+            <div class="schemabox dim">DIM<br><span class="t">dim_location<br>location_id · city · country</span></div>
+          </div>
+        </div>
+      </div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">One table per topic, denormalized</p><p class="text-gray-400 text-xs">The location dimension already contains city AND country together — no extra tables needed.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>location_id</th><th>city</th><th>country</th></tr></thead><tbody>
+        <tr><td>1</td><td>Mountain View</td><td>United States</td></tr>
+        <tr><td>2</td><td>Bengaluru</td><td>India</td></tr>
+        <tr><td>3</td><td>Seattle</td><td>United States</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Why it's called a star</p><p class="text-gray-400 text-xs">Draw it: fact in the center, lines out to every dimension. It looks like a star.</p></div></div>
+        <div class="tip-box mt-3"><p class="text-white text-xs"><i class="fa-solid fa-star text-amber-400 mr-1"></i><strong>Fast:</strong> every query is one hop away. This is the classic data-warehouse design and what Excel/Power Pivot models are built like.</p></div></div>
+    </div>
+  </section>
+
+  <!-- 3. SNOWFLAKE SCHEMA -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Snowflake Schema</h2><p class="text-gray-400 text-xs sm:text-sm">Dimensions are split into smaller, normalized tables — the star's points grow "branches".</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">NORMALIZED</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">The layout — dimensions chain out</p><p class="text-gray-400 text-xs">dim_location no longer stores country directly. It now links to a separate dim_country table.</p></div></div>
+        <div class="flex flex-col items-center gap-2 mt-3">
+          <div class="schemabox fact">FACT<br><span class="t">fact_jobs<br>job_id · location_id · salary</span></div>
+          <span class="text-lock-400 text-xs">⟷</span>
+          <div class="schemabox dim">DIM_LOCATION<br><span class="t">location_id · city · country_id</span></div>
+          <span class="text-lock-400 text-xs">⟷</span>
+          <div class="schemabox dim">DIM_COUNTRY<br><span class="t">country_id · country · region</span></div>
+        </div>
+        <p class="text-gray-400 text-xs mt-3 text-center">The location dimension has been split: location table + a separate country table.</p></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Normalized — no repeated values</p><p class="text-gray-400 text-xs">"United States" appears ONCE in dim_country, not hundreds of times in every location row.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>country_id</th><th>country</th><th>region</th></tr></thead><tbody>
+        <tr><td>1</td><td>United States</td><td>North America</td></tr>
+        <tr><td>2</td><td>India</td><td>Asia</td></tr>
+        </tbody></table></div>
+        <div class="warn-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">Trade-off:</strong> saving space, but a query now needs 2–3 hops to reach the answer. Slower joins, more complex model.</p></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Why it's called a snowflake</p><p class="text-gray-400 text-xs">The branches make the star look like a snowflake crystal.</p></div></div></div>
+    </div>
+  </section>
+
+  <!-- 4. STAR vs SNOWFLAKE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Star vs Snowflake — Side by Side</h2><p class="text-gray-400 text-xs sm:text-sm">Same business question, two different models.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Feature</th><th>Star Schema</th><th>Snowflake Schema</th></tr></thead>
+        <tbody>
+          <tr><td>Dimensions</td><td class="m">Denormalized (all in one)</td><td>Normalized (split up)</td></tr>
+          <tr><td>Hops from fact</td><td class="m">1 (fast)</td><td>2+ (slower)</td></tr>
+          <tr><td>Storage</td><td>More (repeats values)</td><td class="m">Less (no repetition)</td></tr>
+          <tr><td>Query speed</td><td class="m">Fast</td><td>Slower joins</td></tr>
+          <tr><td>Complexity</td><td class="m">Simple, easy to read</td><td>More tables, more complex</td></tr>
+          <tr><td>Best for</td><td class="m">Excel, Power Pivot, BI reports</td><td>Big data warehouses, ETL</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Excel verdict:</strong> Excel's data model is built for STAR schemas. Keep dimensions denormalized for speed and simplicity — snowflakes rarely pay off inside Power Pivot.</p></div>
+    </div>
+  </section>
+
+  <!-- 5. REAL-WORLD EXAMPLE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Real-World Example — Sales Model</h2><p class="text-gray-400 text-xs sm:text-sm">A typical shop: star-schema tables you'd build and relate in Power Pivot.</p></div>
+      <span class="ml-auto bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full text-xs hidden sm:inline">EXAMPLE</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Fact table — every sale</p><p class="text-gray-400 text-xs">Contains foreign keys into each dimension + the numeric measures.</p></div></div>
+        <div class="wrap mt-3"><table class="g"><thead><tr><th>sale_id</th><th>product_id</th><th>store_id</th><th>date_id</th><th>qty</th><th>revenue</th></tr></thead><tbody>
+        <tr><td>1</td><td>10</td><td>2</td><td>20240115</td><td class="result">2</td><td class="result">3000</td></tr>
+        <tr><td>2</td><td>12</td><td>1</td><td>20240115</td><td class="result">5</td><td class="result">850</td></tr>
+        <tr><td>3</td><td>10</td><td>1</td><td>20240116</td><td class="result">1</td><td class="result">1500</td></tr>
+        </tbody></table></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Dimension tables around it</p><p class="text-gray-400 text-xs">Each one is the "by what" — product, store, date.</p></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div class="wrap"><table class="g"><thead><tr><th>product_id</th><th>name</th><th>category</th></tr></thead><tbody>
+          <tr><td>10</td><td>Laptop</td><td>Electronics</td></tr>
+          <tr><td>12</td><td>Mouse</td><td>Accessories</td></tr>
+          </tbody></table></div>
+          <div class="wrap"><table class="g"><thead><tr><th>store_id</th><th>city</th><th>country</th></tr></thead><tbody>
+          <tr><td>1</td><td>Bengaluru</td><td>India</td></tr>
+          <tr><td>2</td><td>New York</td><td>United States</td></tr>
+          </tbody></table></div>
+          <div class="wrap"><table class="g"><thead><tr><th>date_id</th><th>date</th><th>month</th></tr></thead><tbody>
+          <tr><td>20240115</td><td>2024-01-15</td><td>Jan</td></tr>
+          <tr><td>20240116</td><td>2024-01-16</td><td>Jan</td></tr>
+          </tbody></table></div>
+        </div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Querying across the star</p><p class="text-gray-400 text-xs">A pivot table can now show Revenue BY country, BY category, BY month — because all dimensions link straight to the fact table.</p></div></div>
+        <div class="wrap mt-3"><table class="g">
+          <thead><tr><th>Category</th><th>Sum of revenue</th></tr></thead>
+          <tbody>
+            <tr><td class="grp">Accessories</td><td class="result">850</td></tr>
+            <tr><td class="grp">Electronics</td><td class="result">4500</td></tr>
+          </tbody>
+        </table></div></div>
+    </div>
+  </section>
+
+  <!-- 6. IN POWER PIVOT -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Building It in Power Pivot (Diagram View)</h2><p class="text-gray-400 text-xs sm:text-sm">Load the tables, add them to the data model, drag the keys to draw the star.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Add fact + dimensions to the Data Model</p><p class="text-gray-400 text-xs">Power Pivot tab → <span class="fkey">Add to Data Model</span> for each table.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Draw relationships in Diagram View</p><p class="text-gray-400 text-xs">Power Pivot → <span class="fkey">Manage</span> → <span class="fkey">Diagram View</span>. Drag each dimension's key onto the fact table's foreign key.</p></div></div>
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4 items-center mt-3">
+          <div class="space-y-3">
+            <div class="schemabox dim">dim_product<br><span class="t">product_id (1)</span></div>
+            <div class="schemabox dim">dim_store<br><span class="t">store_id (1)</span></div>
+            <div class="schemabox dim">dim_date<br><span class="t">date_id (1)</span></div>
+          </div>
+          <div class="flex flex-col items-center">
+            <span class="text-lock-400 text-xs">⟷ 1 : many ⟷</span>
+            <div class="schemabox fact">fact_sales<br><span class="t">product_id · store_id · date_id (★)</span></div>
+            <span class="text-lock-400 text-xs">all dimensions point IN</span>
+          </div>
+          <div class="text-gray-400 text-xs space-y-3">
+            <p><i class="fa-solid fa-arrow-right text-calc-400 mr-1"></i>Every dimension is the "1", the fact is the "many".</p>
+            <p><i class="fa-solid fa-arrow-right text-calc-400 mr-1"></i>Arrows all point toward the fact table.</p>
+            <p><i class="fa-solid fa-arrow-right text-calc-400 mr-1"></i>This IS the star schema, ready for pivot tables.</p>
+          </div>
+        </div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">If you see many-to-many lines</strong> (both sides ★), that's a snowflake/messy link — Excel will struggle. Restructure to 1:many so each dimension points at the fact.</p></div>
+    </div>
+  </section>
+
+  <!-- 7. WHICH ONE TO CHOOSE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">7</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Which One Should You Use?</h2><p class="text-gray-400 text-xs sm:text-sm">A quick decision guide.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Situation</th><th>Choose</th><th>Why</th></tr></thead>
+        <tbody>
+          <tr><td>Building reports in Excel / Power BI</td><td class="m">Star</td><td>Fast, simple, made for pivot tables</td></tr>
+          <tr><td>Small-medium data in Power Pivot</td><td class="m">Star</td><td>No storage benefit from snowflake at this size</td></tr>
+          <tr><td>Massive warehouse, storage is a concern</td><td>Snowflake</td><td>Normalization removes repeated values</td></tr>
+          <tr><td>Heavily nested detail data</td><td>Snowflake</td><td>Granular split dimensions make sense</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Default answer:</strong> STAR. Start there, and only go snowflake when storage genuinely matters.</p></div>
+    </div>
+  </section>
+
+  <!-- 8. CHEAT SHEET -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">8</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Quick Cheat Sheet</h2><p class="text-gray-400 text-xs sm:text-sm">The ideas in one glance.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">MEMORIZE</span>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Term</th><th>Meaning</th></tr></thead>
+        <tbody>
+          <tr><td class="form">Fact table</td><td>Events + numbers + foreign keys (the measures)</td></tr>
+          <tr><td class="form">Dimension table</td><td>Labels &amp; attributes (the filters)</td></tr>
+          <tr><td class="form">Star schema</td><td>1 fact, dimensions straight around it, 1 hop</td></tr>
+          <tr><td class="form">Snowflake schema</td><td>Dimensions split into smaller related tables</td></tr>
+          <tr><td class="form">Denormalized</td><td>All details kept together (star)</td></tr>
+          <tr><td class="form">Normalized</td><td>Details split to avoid repetition (snowflake)</td></tr>
+          <tr><td class="form">Diagram View</td><td>Power Pivot → Manage → draw the lines</td></tr>
+          <tr><td class="form">1 : many</td><td>The healthy link: dim (1) → fact (many)</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box mt-4"><p class="text-gray-300 text-xs"><i class="fa-solid fa-star text-calc-400 mr-1"></i><strong class="text-white">Remember:</strong> facts are the numbers you SUM, dimensions are the categories you SLICE BY. Star = flat and fast; snowflake = compact and complex. Excel loves stars.</p></div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-star mr-1 text-calc-500"></i> Star &amp; Snowflake Schema Notes — Fact/Dimension Tables · Diagram View · Pivot Models</p>
+  </footer>
+
+</body>
+</html>

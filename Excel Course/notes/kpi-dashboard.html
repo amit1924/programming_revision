@@ -1,0 +1,288 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPI Dashboard — Learn by Playing | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.85rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g td.h { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.result { background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.grp { background:#16234a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #3b82f6; }
+    table.g td.dim { color:#2a3442; background:#0b1220; }
+    .wrap { max-width:100%; overflow-x:auto; border-radius:8px; }
+
+    .kpirow { display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:14px; }
+    .kpicard { background:linear-gradient(135deg,#1f2c4a,#0f172a); border:2px solid #3b82f6; border-radius:14px; padding:16px 12px; text-align:center; transition:transform .15s; min-width:0; }
+    .kpicard:hover { transform:translateY(-3px); }
+    .kpicard .val { font-family:'JetBrains Mono',monospace; font-size:clamp(.95rem,2.4vw,1.3rem); font-weight:700; color:#fcd34d; white-space:normal; overflow-wrap:anywhere; line-height:1.25; }
+    .kpicard .lbl { font-size:.66rem; color:#93c5fd; margin-top:6px; letter-spacing:.02em; }
+    .kpicard .formula { font-size:.58rem; color:#64748b; margin-top:6px; font-family:'JetBrains Mono',monospace; }
+    .kpicard.green { border-color:#56af3f; background:linear-gradient(135deg,#1d3329,#0f172a); } .kpicard.green .lbl { color:#86efac; }
+    .kpicard.gold { border-color:#fbbf24; background:linear-gradient(135deg,#3a2816,#0f172a); } .kpicard.gold .lbl { color:#fcd34d; }
+
+    .barwrap { display:flex; align-items:flex-end; gap:18px; height:220px; padding:0 6px; }
+    .barcol { flex:1; display:flex; flex-direction:column; align-items:center; gap:8px; min-width:0; height:100%; }
+    .barval { font-size:.62rem; color:#fcd34d; font-family:'JetBrains Mono',monospace; }
+    .bar { width:100%; max-width:74px; border-radius:8px 8px 4px 4px; background:linear-gradient(180deg,#60a5fa,#1f2c4a); transition:height .5s ease; }
+    .bar.active { background:linear-gradient(180deg,#fbbf24,#3a2816); }
+    .barlbl { font-size:.66rem; color:#94a3b8; }
+
+    select { background:#1e293b; border:1px solid #475569; border-radius:8px; color:#fff; padding:8px 12px; font-size:.85rem; }
+    .chip { display:inline-block; background:#1e293b; border:1px solid #475569; border-radius:99px; padding:3px 10px; font-size:.7rem; color:#9aa9bd; font-family:'JetBrains Mono',monospace; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:44px;padding:5px 7px;}
+      header h1{font-size:1.9rem;}
+      .barwrap{height:150px;gap:10px;}
+      .kpirow{gap:10px;grid-template-columns:repeat(auto-fit,minmax(120px,1fr));}
+      .kpicard{padding:12px 8px;}
+      .kpicard .lbl{font-size:.6rem;}
+    }
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-gauge-high text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">KPI Dashboard — Playground</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-wand-magic-sparkles"></i> Live demo</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-bullseye"></i><span>Filter the dummy data — watch every KPI card and chart update instantly</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">A Tiny KPI Dashboard You Can Play With</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">A fake coffee-shop <b>sales table</b> with 16 rows. Change <b class="text-amber-300">Region</b> or <b class="text-amber-300">Product</b> below and the six KPI cards + charts recompute in real time — exactly like a real Excel dashboard driven by slicers.</p>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+    <!-- 1. CONTROLS -->
+    <section class="section-card">
+      <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+        <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm"><i class="fa-solid fa-sliders text-sm"></i></div>
+        <div><h2 class="text-white font-bold text-lg sm:text-xl">Step 1 — Set Your Filters</h2><p class="text-gray-400 text-xs sm:text-sm">These are your Excel slicers / data-validation dropdowns.</p></div>
+      </div>
+      <div class="p-5 sm:p-8 flex flex-wrap items-end gap-6">
+        <div>
+          <label class="block text-gray-400 text-xs mb-2 font-semibold">REGION</label>
+          <select id="selRegion"><option value="">All regions</option><option>North</option><option>South</option><option>East</option><option>West</option></select>
+        </div>
+        <div>
+          <label class="block text-gray-400 text-xs mb-2 font-semibold">PRODUCT</label>
+          <select id="selProduct"><option value="">All products</option><option>Coffee</option><option>Tea</option><option>Cake</option><option>Sandwich</option></select>
+        </div>
+        <button id="btnReset" class="bg-calc-600 hover:bg-calc-500 text-white text-xs font-semibold px-4 py-2.5 rounded-lg transition"><i class="fa-solid fa-rotate-left mr-1"></i>Reset</button>
+        <span id="rowCount" class="chip ml-auto"></span>
+      </div>
+    </section>
+
+    <!-- 2. KPI CARDS -->
+    <section class="section-card">
+      <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+        <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm"><i class="fa-solid fa-bullseye text-sm"></i></div>
+        <div><h2 class="text-white font-bold text-lg sm:text-xl">Step 2 — The KPI Cards</h2><p class="text-gray-400 text-xs sm:text-sm">One headline number per question. Each card shows its Excel formula.</p></div>
+      </div>
+      <div class="p-5 sm:p-8 space-y-6">
+        <div class="kpirow">
+          <div class="kpicard gold"><div class="val" id="kRevenue">–</div><div class="lbl">TOTAL REVENUE</div><div class="formula">= SUM(Revenue)</div></div>
+          <div class="kpicard"><div class="val" id="kOrders">–</div><div class="lbl">TOTAL ORDERS</div><div class="formula">= SUM(Orders)</div></div>
+          <div class="kpicard green"><div class="val" id="kAvg">–</div><div class="lbl">AVG ORDER VALUE</div><div class="formula">= Revenue ÷ Orders</div></div>
+          <div class="kpicard"><div class="val" id="kProfit">–</div><div class="lbl">GROSS PROFIT</div><div class="formula">= SUM(Profit)</div></div>
+          <div class="kpicard"><div class="val" id="kBest">–</div><div class="lbl">BEST PRODUCT</div><div class="formula">= max by Revenue</div></div>
+          <div class="kpicard green"><div class="val" id="kTopRegion">–</div><div class="lbl">TOP REGION</div><div class="formula">= max by Revenue</div></div>
+        </div>
+        <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Read it like a stakeholder:</strong> one glance should answer "how are we doing?" — then the charts below explain <em>why</em>.</p></div>
+      </div>
+    </section>
+
+    <!-- 3. CHARTS -->
+    <section class="section-card">
+      <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+        <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm"><i class="fa-solid fa-chart-column text-sm"></i></div>
+        <div><h2 class="text-white font-bold text-lg sm:text-xl">Step 3 — The "Why" Charts</h2><p class="text-gray-400 text-xs sm:text-sm">Bars show the split behind the headline numbers.</p></div>
+      </div>
+      <div class="p-5 sm:p-8 grid md:grid-cols-2 gap-8">
+        <div>
+          <p class="text-gray-300 text-sm font-semibold mb-4 text-center"><i class="fa-solid fa-map-location-dot text-lock-400 mr-1"></i> Revenue by Region</p>
+          <div class="barwrap" id="chartRegion"></div>
+        </div>
+        <div>
+          <p class="text-gray-300 text-sm font-semibold mb-4 text-center"><i class="fa-solid fa-mug-hot text-amber-300 mr-1"></i> Revenue by Product</p>
+          <div class="barwrap" id="chartProduct"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- 4. THE DATA -->
+    <section class="section-card">
+      <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+        <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm"><i class="fa-solid fa-table-list text-sm"></i></div>
+        <div><h2 class="text-white font-bold text-lg sm:text-xl">Step 4 — The Dummy Data</h2><p class="text-gray-400 text-xs sm:text-sm">Rows currently inside your filter are highlighted; the rest are dimmed.</p></div>
+      </div>
+      <div class="p-5 sm:p-8">
+        <div class="wrap"><table class="g" id="dataTable">
+          <thead><tr><th>Month</th><th>Region</th><th>Product</th><th>Orders</th><th>Revenue</th><th>Profit (40%)</th></tr></thead>
+          <tbody></tbody>
+        </table></div>
+      </div>
+    </section>
+
+    <!-- 5. HOW IT WORKS -->
+    <section class="section-card">
+      <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+        <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm"><i class="fa-solid fa-lightbulb text-sm"></i></div>
+        <div><h2 class="text-white font-bold text-lg sm:text-xl">How Each KPI Is Computed</h2><p class="text-gray-400 text-xs sm:text-sm">Same idea in Excel — these are SUMIFS / XLOOKUP style.</p></div>
+      </div>
+      <div class="p-5 sm:p-8 grid md:grid-cols-2 gap-4">
+        <div class="step">
+          <p class="text-white text-sm font-semibold mb-1"><i class="fa-solid fa-dollar-sign text-amber-300 mr-1"></i>Total Revenue</p>
+          <p class="text-gray-400 text-xs mb-2">Add up Revenue only for the rows that match your filters.</p>
+          <div class="text-emerald-400 font-mono text-xs bg-[#1e293b] border border-gray-700 rounded-lg px-3 py-2">=SUMIFS(Revenue, Region, F2, Product, F3)</div>
+        </div>
+        <div class="step">
+          <p class="text-white text-sm font-semibold mb-1"><i class="fa-solid fa-scale-balanced text-amber-300 mr-1"></i>Avg Order Value</p>
+          <p class="text-gray-400 text-xs mb-2">A derived KPI — two KPIs divided. Revenue ÷ Orders.</p>
+          <div class="text-emerald-400 font-mono text-xs bg-[#1e293b] border border-gray-700 rounded-lg px-3 py-2">=SUM(Revenue) / SUM(Orders)</div>
+        </div>
+        <div class="step">
+          <p class="text-white text-sm font-semibold mb-1"><i class="fa-solid fa-trophy text-amber-300 mr-1"></i>Best Product</p>
+          <p class="text-gray-400 text-xs mb-2">The product with the biggest revenue in the filtered set.</p>
+          <div class="text-emerald-400 font-mono text-xs bg-[#1e293b] border border-gray-700 rounded-lg px-3 py-2">=XLOOKUP(MAX(sums), sums, products)</div>
+        </div>
+        <div class="step">
+          <p class="text-white text-sm font-semibold mb-1"><i class="fa-solid fa-map-location-dot text-amber-300 mr-1"></i>Top Region</p>
+          <p class="text-gray-400 text-xs mb-2">The region with the biggest revenue — "where should we push?"</p>
+          <div class="text-emerald-400 font-mono text-xs bg-[#1e293b] border border-gray-700 rounded-lg px-3 py-2">=SORT(SUMIFS(...), 2, -1) → row 1</div>
+        </div>
+      </div>
+      <div class="px-5 sm:px-8 pb-6">
+        <div class="warn-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">Spot the trap:</strong> click <b>Region = North</b> + <b>Product = Coffee</b> — only 2 rows count, but the Avg Order Value card still works because it divides matching revenue by matching orders. A formula that forgets the filter would divide the whole table and give a wrong KPI.</p></div>
+      </div>
+    </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-gauge-high mr-1 text-calc-500"></i> KPI Dashboard Playground — dummy data · live cards · charts · SUMIFS/XLOOKUP behind every number</p>
+  </footer>
+
+  <script>
+  const DATA = [
+    {m:'Jan',r:'North',p:'Coffee',o:120,rev:1440},
+    {m:'Jan',r:'North',p:'Tea',o:85,rev:680},
+    {m:'Jan',r:'South',p:'Coffee',o:95,rev:1140},
+    {m:'Jan',r:'South',p:'Cake',o:40,rev:960},
+    {m:'Jan',r:'East',p:'Sandwich',o:60,rev:1500},
+    {m:'Jan',r:'East',p:'Coffee',o:110,rev:1320},
+    {m:'Jan',r:'West',p:'Tea',o:70,rev:560},
+    {m:'Jan',r:'West',p:'Cake',o:55,rev:1320},
+    {m:'Feb',r:'North',p:'Coffee',o:130,rev:1560},
+    {m:'Feb',r:'North',p:'Sandwich',o:75,rev:1875},
+    {m:'Feb',r:'South',p:'Coffee',o:105,rev:1260},
+    {m:'Feb',r:'South',p:'Tea',o:60,rev:480},
+    {m:'Feb',r:'East',p:'Coffee',o:120,rev:1440},
+    {m:'Feb',r:'East',p:'Cake',o:65,rev:1560},
+    {m:'Feb',r:'West',p:'Coffee',o:90,rev:1080},
+    {m:'Feb',r:'West',p:'Sandwich',o:45,rev:1125},
+  ].map(d => ({...d, profit: Math.round(d.rev*0.4)}));
+
+  const $ = id => document.getElementById(id);
+  const money = n => '$' + n.toLocaleString('en-US', {maximumFractionDigits:0});
+  const regionSelect = $('selRegion'), productSelect = $('selProduct');
+  const REGIONS = ['North','South','East','West'], PRODUCTS = ['Coffee','Tea','Cake','Sandwich'];
+
+  function filtered() {
+    return DATA.filter(d =>
+      (!regionSelect.value || d.r === regionSelect.value) &&
+      (!productSelect.value || d.p === productSelect.value));
+  }
+
+  function renderTable(rows) {
+    const tb = document.querySelector('#dataTable tbody');
+    tb.innerHTML = rows.map(d => `
+      <tr>
+        <td>${d.m}</td>
+        <td class="${d.r===regionSelect.value||!regionSelect.value?'grp':'dim'}">${d.r}</td>
+        <td class="${d.p===productSelect.value||!productSelect.value?'grp':'dim'}">${d.p}</td>
+        <td>${d.o}</td>
+        <td class="result">$${d.rev.toLocaleString()}</td>
+        <td class="h">$${d.profit.toLocaleString()}</td>
+      </tr>`).join('');
+    $('rowCount').textContent = rows.length + ' rows of ' + DATA.length;
+  }
+
+  function sumBy(rows, key) {
+    const map = {};
+    rows.forEach(r => map[r[key]] = (map[r[key]]||0) + r.rev);
+    return map;
+  }
+
+  function renderChart(id, map, order, activeKey) {
+    const el = $(id);
+    const max = Math.max(1, ...Object.values(map));
+    el.innerHTML = order.map(k => {
+      const v = map[k]||0;
+      const h = Math.round(v/max*100);
+      const active = v>0 && k===activeKey;
+      return `<div class="barcol">
+        <div class="barval">${v?money(v):'–'}</div>
+        <div class="bar ${active?'active':''}" style="height:${h}%"></div>
+        <div class="barlbl">${k}</div>
+      </div>`;
+    }).join('');
+  }
+
+  function update() {
+    const rows = filtered();
+    const revenue = rows.reduce((s,r)=>s+r.rev,0);
+    const orders  = rows.reduce((s,r)=>s+r.o,0);
+    const profit  = rows.reduce((s,r)=>s+r.profit,0);
+
+    $('kRevenue').textContent = money(revenue);
+    $('kOrders').textContent = orders.toLocaleString();
+    $('kAvg').textContent = orders? money(revenue/orders) : '$0';
+    $('kProfit').textContent = money(profit);
+
+    const byP = sumBy(rows,'p');
+    const byR = sumBy(rows,'r');
+    let best='–', topR='–', bestV=0, topV=0;
+    PRODUCTS.forEach(k=>{ if((byP[k]||0)>bestV){bestV=byP[k];best=k;} });
+    REGIONS.forEach(k=>{ if((byR[k]||0)>topV){topV=byR[k];topR=k;} });
+    if(!rows.length){ best='–'; topR='–'; }
+    $('kBest').textContent = best + (best!=='–'?` (${money(bestV)})`:'');
+    $('kTopRegion').textContent = topR + (topR!=='–'?` (${money(topV)})`:'');
+
+    renderChart('chartRegion', byR, REGIONS, regionSelect.value);
+    renderChart('chartProduct', byP, PRODUCTS, productSelect.value);
+    renderTable(rows);
+  }
+
+  regionSelect.addEventListener('change', update);
+  productSelect.addEventListener('change', update);
+  $('btnReset').addEventListener('click', () => { regionSelect.value=''; productSelect.value=''; update(); });
+  update();
+  </script>
+
+</body>
+</html>

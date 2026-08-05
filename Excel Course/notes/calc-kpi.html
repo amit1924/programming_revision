@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>KPIs · KPI Cards &amp; Measures — Step-by-Step Revision | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+    .step { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:16px; }
+    .num { display:inline-flex; width:26px; height:26px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.8rem; margin-right:10px; flex:none; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.88rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:6px 10px; border:1px solid #334155; text-align:center; min-width:56px; font-size:.72rem; }
+    table.g td { padding:7px 10px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; min-width:26px; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    table.g td.m  { background:#20401f; color:#86efac; font-weight:700; box-shadow:inset 0 0 0 2px #56af3f; }
+    table.g td.form{ color:#a3e635; font-weight:600; }
+    table.g td.lookup{ background:#1f2c4a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #60a5fa; }
+    table.g td.result{ background:#3a2816; color:#fcd34d; font-weight:700; box-shadow:inset 0 0 0 2px #fbbf24; }
+    table.g td.err{ background:#3a1620; color:#fca5a5; font-weight:700; box-shadow:inset 0 0 0 2px #f87171; }
+    table.g td.grp{ background:#16234a; color:#93c5fd; font-weight:700; box-shadow:inset 0 0 0 2px #3b82f6; }
+    table.g td.dim{ color:#475569; }
+
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .formula { background:#1e293b; border:1px solid #334155; border-radius:10px; padding:12px 16px; font-family:'JetBrains Mono',monospace; font-size:.9rem; color:#a3e635; overflow-x:auto; white-space:nowrap; }
+    .formula .arg { color:#fcd34d; } .formula .fn { color:#93c5fd; font-weight:600; }
+
+    .kpirow { display:flex; gap:14px; flex-wrap:wrap; }
+    .kpicard { flex:1 1 180px; max-width:260px; background:linear-gradient(135deg,#1f2c4a,#0f172a); border:2px solid #3b82f6; border-radius:14px; padding:16px 12px; text-align:center; }
+    .kpicard .val { font-family:'JetBrains Mono',monospace; font-size:1.35rem; font-weight:700; color:#fcd34d; }
+    .kpicard .lbl { font-size:.66rem; color:#93c5fd; margin-top:6px; letter-spacing:.02em; }
+    .kpicard .tag { font-size:.58rem; color:#64748b; margin-top:4px; font-family:'JetBrains Mono',monospace; }
+    .kpicard.top { border-color:#fbbf24; background:linear-gradient(135deg,#3a2816,#0f172a); }
+    .kpicard.top .val { color:#fcd34d; }
+    .kpicard.top .lbl { color:#fcd34d; }
+    .kpicard.count { border-color:#56af3f; background:linear-gradient(135deg,#1d3329,#0f172a); }
+    .kpicard.count .lbl { color:#86efac; }
+
+    .statusbar { display:flex; gap:4px; height:14px; border-radius:99px; overflow:hidden; }
+    .statusbar .seg { flex:1; background:#1e293b; }
+    .statusbar .seg.red { background:#f87171; } .statusbar .seg.amber { background:#fbbf24; } .statusbar .seg.green { background:#56af3f; }
+
+    @media (max-width:640px){
+      table.g{font-size:.7rem;} table.g th,table.g td{min-width:38px;padding:5px 7px;} table.g .rn{min-width:20px;}
+      .step{padding:12px;}
+      header h1{font-size:1.9rem;}
+      .kpicard{flex:1 1 100%; max-width:none;}
+    }
+    @media (max-width:360px){ table.g{font-size:.62rem;} table.g th,table.g td{min-width:32px;padding:4px;}}
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-gauge-high text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Excel — KPIs · KPI Cards · Measures (Dashboard + Power Pivot)</span>
+      </div>
+      <div class="text-xs sm:text-sm"><span class="bg-lock-500/20 text-lock-400 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-list-ol"></i> Step by step</span></div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-bullseye"></i><span>The headline numbers your dashboard answers — "what's the ONE number to look at?"</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">KPIs · KPI Cards &amp; Measures</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base"><b>KPI</b> = Key Performance Indicator: a single headline number that answers one business question at a glance. In this course you build three KPI cards for the salary dashboard — <b class="text-amber-300">Median Salary</b>, <b class="text-lock-300">Top Job Platform</b> and <b class="text-emerald-300">Job Count</b> — and later turn them into <b>DAX measures + KPIs</b> in Power Pivot.</p>
+    <div class="flex flex-wrap justify-center gap-3 mt-4 text-[11px] text-gray-300">
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#3a2816;box-shadow:inset 0 0 0 2px #fbbf24"></span> the headline value</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16234a;box-shadow:inset 0 0 0 2px #3b82f6"></span> the label / name</span>
+      <span class="flex items-center gap-2"><span class="w-4 h-4 rounded" style="background:#16322a;box-shadow:inset 0 0 0 2px #56af3f"></span> the status (target)</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 1. WHAT IS A KPI -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">What Is a KPI?</h2><p class="text-gray-400 text-xs sm:text-sm">Key Performance Indicator — a number that tells you how you're doing without reading a whole report.</p></div>
+      <span class="ml-auto bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full text-xs hidden sm:inline">THE CONCEPT</span>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>KPI</th><th>Question it answers</th><th>Course example</th><th>Answer</th></tr></thead>
+        <tbody>
+          <tr><td class="result">Median Salary</td><td class="grp">"What does a job pay?"</td><td class="lookup">salary_year_avg</td><td class="m">$95,000 / yr</td></tr>
+          <tr><td class="result">Top Job Platform</td><td class="grp">"Where are jobs posted?"</td><td class="lookup">job_via</td><td class="m">Snagajob</td></tr>
+          <tr><td class="result">Job Count</td><td class="grp">"How many jobs match?"</td><td class="lookup">job_id</td><td class="m">537 jobs</td></tr>
+          <tr><td class="result">Job Rank</td><td class="grp">"Which job is best overall?"</td><td class="lookup">normalized + weighted</td><td class="m">1.00 → top</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">A KPI is one number, not a table.</strong> It's the answer your boss wants before you open the rest of the dashboard. The rest of the workbook exists to explain it.</p></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">Excel has no "KPI card" object</strong> (Power BI and Looker give you cards). So Luke uses a <b class="text-amber-300">backdoor approach</b> — a text box linked to a cell. You'll see exactly that in the next sections.</p></div>
+    </div>
+  </section>
+
+  <!-- 2. ANATOMY OF A KPI CARD -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Anatomy of a KPI Card</h2><p class="text-gray-400 text-xs sm:text-sm">Big value + small label. The value is LIVE — it recomputes when the user changes a filter.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="kpirow">
+        <div class="kpicard top"><div class="val">$95,000</div><div class="lbl">MEDIAN SALARY</div><div class="tag">= XLOOKUP on title</div></div>
+        <div class="kpicard"><div class="val">Snagajob</div><div class="lbl">TOP JOB PLATFORM</div><div class="tag">= count of job_via</div></div>
+        <div class="kpicard count"><div class="val">537</div><div class="lbl">JOB COUNT</div><div class="tag">= COUNTIFS (3 filters)</div></div>
+      </div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">The card is 2 stacked objects</p><p class="text-gray-400 text-xs">A <b class="text-lock-300">text box</b> on top (the number) and a <b class="text-lock-300">rectangle shape</b> behind it (the label + color). Both are Illustrations, not cells.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">The value lives in a cell</p><p class="text-gray-400 text-xs">Each number is calculated in a cell (e.g. named <code class="text-amber-300">median_salary</code>). The text box is just a <b class="text-emerald-300">mirror</b> of that cell — so the card updates automatically.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">It reacts to the dropdowns</p><p class="text-gray-400 text-xs">Change the job title from "Data Analyst" to "Data Scientist" and all three cards recompute — that's what makes it a <b class="text-amber-300">calculator dashboard</b>, not a static picture.</p></div></div></div>
+    </div>
+  </section>
+
+  <!-- 3. STEP 1 — THE VALUE CELL -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Step 1 — Build the Value in a Cell</h2><p class="text-gray-400 text-xs sm:text-sm">The KPI is computed on a helper sheet, named, then shown on the dashboard.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>B</th><th>C</th><th>D</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">1</td><td class="grp">Title selected</td><td class="grp">Median salary</td><td class="grp">Answer</td></tr>
+          <tr><td class="rn">2</td><td class="lookup">Data Analyst</td><td class="form">=XLOOKUP(B2, …)</td><td class="result">$95,000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Rename the cell</p><p class="text-gray-400 text-xs">Click the cell (I2) → type a friendly name in the Name Box → <code class="text-amber-300">median_salary</code>. Now any object can reference it by name.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Format the cell</p><p class="text-gray-400 text-xs">Currency, <b>0 decimal places</b>. The card will inherit this formatting when it links to the cell.</p></div></div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Why name it?</strong> You write <code class="text-amber-300">=median_salary</code> in the text box's formula bar — much clearer than <code class="text-amber-300">=Sheet1!$I$2</code>.</p></div>
+    </div>
+  </section>
+
+  <!-- 4. KPI CARD 1 — MEDIAN SALARY -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">KPI Card #1 — Median Salary</h2><p class="text-gray-400 text-xs sm:text-sm">XLOOKUP pulls the median salary for whichever job title is selected.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A</th><th>B</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">1</td><td class="grp">Job title</td><td class="grp">Median salary</td></tr>
+          <tr><td class="rn">2</td><td class="lookup">Data Analyst</td><td class="m">$95,000</td></tr>
+          <tr><td class="rn">3</td><td class="lookup">Data Scientist</td><td class="m">$120,000</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">Data Engineer</td><td class="m">$105,000</td></tr>
+        </tbody>
+      </table></div>
+      <div class="formula"><span class="fn">=XLOOKUP</span>(<span class="arg">B2</span>, <span class="arg">A2:A4</span>, <span class="arg">B2:B4</span>, <span class="arg">"no results"</span>)</div>
+      <div class="warn-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">Watch for missing titles.</strong> If the selected title isn't in the list, XLOOKUP returns #N/A — pass a <b class="text-amber-300">"no results"</b> message as the 4th argument so the card never shows an error.</p></div>
+      <div class="step"><div class="flex items-start"><span class="num">→</span><div><p class="text-white text-sm font-semibold mb-1">Result</p><p class="text-gray-400 text-xs">Named cell <code class="text-amber-300">median_salary</code> → later linked to a text box as <code class="text-amber-300">=median_salary</code>.</p></div></div></div>
+    </div>
+  </section>
+
+  <!-- 5. KPI CARD 2 — TOP JOB PLATFORM -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">5</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">KPI Card #2 — Top Job Platform</h2><p class="text-gray-400 text-xs sm:text-sm">Count jobs per source (job_via), sort descending, take the winner, clean the "via " prefix.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th class="rn"></th><th>A</th><th>B</th></tr></thead>
+        <tbody>
+          <tr><td class="rn">1</td><td class="grp">Job via</td><td class="grp">Count</td></tr>
+          <tr><td class="rn">2</td><td class="lookup">via Snagajob</td><td class="m">265</td></tr>
+          <tr><td class="rn">3</td><td class="lookup">via LinkedIn</td><td>210</td></tr>
+          <tr><td class="rn">4</td><td class="lookup">via ZipRecruiter</td><td>180</td></tr>
+          <tr><td class="rn">5</td><td class="lookup">via Indeed</td><td>140</td></tr>
+        </tbody>
+      </table></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Count each source</p><p class="text-gray-400 text-xs">A COUNTIF-style formula down the unique <code class="text-amber-300">job_via</code> values — how many jobs came from each platform.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Sort high → low</p><p class="text-gray-400 text-xs">Select all, sort by the count column, <b>descending</b> — the biggest number goes to the top. Row 2 is now the winner: <b class="text-amber-300">Snagajob</b>.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Clean the "via " prefix</p><p class="text-gray-400 text-xs">Values say "via Snagajob" — strip it so the card reads nicely:</p></div></div>
+        <div class="formula mt-3"><span class="fn">=SUBSTITUTE</span>(<span class="arg">A2</span>, <span class="arg">"via "</span>, <span class="arg">""</span>) → <span class="arg">Snagajob</span></div>
+      </div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">Bias-free:</strong> "Top" here means <b>most jobs posted</b>, not highest salary. Pick the metric that answers the question you actually asked.</p></div>
+    </div>
+  </section>
+
+  <!-- 6. KPI CARD 3 — JOB COUNT -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">6</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">KPI Card #3 — Job Count</h2><p class="text-gray-400 text-xs sm:text-sm">COUNTIFS counts jobs matching all the dropdown filters — country, title and job type.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Condition</th><th>Dropdown cell</th><th>Selected</th></tr></thead>
+        <tbody>
+          <tr><td class="grp">Country</td><td class="lookup">$F$2</td><td class="m">United States</td></tr>
+          <tr><td class="grp">Job title</td><td class="lookup">$A$2</td><td class="m">Data Analyst</td></tr>
+          <tr><td class="grp">Job type</td><td class="lookup">$C$2</td><td class="m">Full-time</td></tr>
+        </tbody>
+      </table></div>
+      <div class="formula"><span class="fn">=COUNTIFS</span>(<span class="arg">Country</span>, <span class="arg">$F$2</span>, <span class="arg">Title</span>, <span class="arg">$A$2</span>, <span class="arg">Type</span>, <span class="arg">$C$2</span>) → <span class="arg">537</span></div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Three conditions, three dropdowns</p><p class="text-gray-400 text-xs">Every dropdown selection is <b>absolute-referenced</b> (<code class="text-amber-300">$</code>) so the formula looks at exactly the chosen country, title and type.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Pull it into a named cell</p><p class="text-gray-400 text-xs">Wrap in XLOOKUP to the matching row, or reference directly → name it <code class="text-amber-300">count</code> → link the card to <code class="text-amber-300">=count</code>.</p></div></div></div>
+      <div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-bomb text-red-400 mr-1"></i><strong class="text-white">No results?</strong> A count can hit zero and look broken. Fall back to <b class="text-amber-300">"no results"</b> so the card stays friendly instead of showing 0 or #N/A.</p></div>
+    </div>
+  </section>
+
+  <!-- 7. THE BACKDOOR TRICK — TEXTBOX LINKED TO CELL -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">7</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Backdoor Trick — Text Box = Cell</h2><p class="text-gray-400 text-xs sm:text-sm">Excel has no KPI card object, so a text box becomes the card and a formula bar link makes it live.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Insert a text box</p><p class="text-gray-400 text-xs">Insert → <b>Illustrations</b> → Text Box → drag it onto the dashboard where the card should go.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Link it — DON'T type the value</p><p class="text-gray-400 text-xs">Click the box so there's <b>no blinking cursor inside</b> → click the formula bar → type <code class="text-amber-300">=median_salary</code> → Enter. The box now <b>mirrors the cell</b> and picks up its formatting automatically.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Reformat the box</p><p class="text-gray-400 text-xs">Currency, 0 decimals, bold, centered, bigger font — the box, not the cell, gets the display formatting.</p></div></div></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">"It's a rectangle, not a cell."</strong> The value is technically floating over the sheet, but it is still calculated inside the workbook — so it stays live and correct.</p></div>
+    </div>
+  </section>
+
+  <!-- 8. MAKING IT LOOK LIKE A CARD -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">8</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Making It Look Like a Card</h2><p class="text-gray-400 text-xs sm:text-sm">Add a colored shape behind the number for the label + polish the dashboard.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Shape behind the number</p><p class="text-gray-400 text-xs">Insert → Illustrations → Shapes → Rectangle. Fill it blue, white text — type the label <b class="text-lock-300">MEDIAN SALARY</b>, bold, 20pt, centered.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Send to back</p><p class="text-gray-400 text-xs">Right-click shape → Shape Format → <b>Send Backwards</b> → Send to Back, so the number text box sits on top of the label rectangle.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">3</span><div><p class="text-white text-sm font-semibold mb-1">Clean outlines</p><p class="text-gray-400 text-xs">Text box → remove its outline (<b>No Outline</b>) and stretch it edge-to-edge. Do the same for every card so they blend in.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">4</span><div><p class="text-white text-sm font-semibold mb-1">Reuse with Format Painter</p><p class="text-gray-400 text-xs">Copy the finished card with <b>Format Painter</b> to instantly style the other two, then rename their labels (<b class="text-lock-300">Top Job Platform</b>, <b class="text-emerald-300">Job Count</b>) and re-link each to its own cell.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">5</span><div><p class="text-white text-sm font-semibold mb-1">Dashboard polish</p><p class="text-gray-400 text-xs">Remove gridlines (View → uncheck Gridlines), switch shape outlines to none, widen columns, add a merged title ("Data Science Salary Calculator") with a Heading style, and hide headings for the final look.</p></div></div></div>
+    </div>
+  </section>
+
+  <!-- 9. KPIs & DATA BARS — JOB RANK -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">9</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">A Composite KPI — Job Rank</h2><p class="text-gray-400 text-xs sm:text-sm">Normalize each metric 0→1, weight them to your bias, and rank jobs in one score.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Job title</th><th>Count</th><th>Count norm</th><th>Salary norm</th><th>WFH norm</th><th>Rank (weighted)</th></tr></thead>
+        <tbody>
+          <tr><td class="lookup">Data Analyst</td><td>537</td><td class="m">1.00</td><td class="m">0.72</td><td>0.33</td><td class="result">0.72</td></tr>
+          <tr><td class="lookup">Data Scientist</td><td>90</td><td>0.17</td><td class="m">1.00</td><td class="m">1.00</td><td class="result">0.53</td></tr>
+          <tr><td class="lookup">Data Engineer</td><td>153</td><td>0.29</td><td>0.84</td><td>0.56</td><td class="result">0.47</td></tr>
+          <tr><td class="lookup">Cloud Engineer</td><td>0</td><td>0.00</td><td>0.90</td><td>0.00</td><td class="result">0.27</td></tr>
+        </tbody>
+      </table></div>
+      <div class="formula"><span class="fn">Rank</span> = <span class="arg">0.45</span> × count_norm + <span class="arg">0.30</span> × salary_norm + <span class="arg">0.15</span> × wfh_norm</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Normalize each metric to 0–1</p><p class="text-gray-400 text-xs">Highest value → 1, lowest → 0. This puts "count", "salary" and "WFH %" on the same scale so they can be compared and combined.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Apply YOUR weights</p><p class="text-gray-400 text-xs">Weights are "all my bias" — Luke picks roughly 0.45 / 0.30 / 0.15. This is exactly how KPIs are often built: <b>a weighted blend of metrics</b>.</p></div></div></div>
+      <div class="warn-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-triangle-exclamation text-orange-400 mr-1"></i><strong class="text-white">One metric per color.</strong> Too many conditional-formatting colors at once overwhelms the reader. For a KPI view pick <b>one</b> clear visual: data bars for counts, a color scale for salaries, a highlight rule for "&gt; $100,000".</p></div>
+    </div>
+  </section>
+
+  <!-- 10. POWER PIVOT KPIs & DAX -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">10</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Power Pivot KPIs — Measures in DAX</h2><p class="text-gray-400 text-xs sm:text-sm">In the data model, KPI values become explicit DAX measures you can reuse everywhere.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="formula"><span class="fn">Median Salary</span> <span class="arg">:=</span> <span class="fn">MEDIAN</span>(<span class="arg">data_jobs_salary[salary_year_avg]</span>)</div>
+      <div class="step"><div class="flex items-start"><span class="num">1</span><div><p class="text-white text-sm font-semibold mb-1">Power Pivot tab → Create Measure</p><p class="text-gray-400 text-xs">The Power Pivot ribbon has buttons to <b>create measures and KPIs</b>. Pivot value settings have no "Median" option — DAX adds it: <code class="text-amber-300">:= MEDIAN(…)</code>.</p></div></div></div>
+      <div class="step"><div class="flex items-start"><span class="num">2</span><div><p class="text-white text-sm font-semibold mb-1">Explicit vs implicit measures</p><p class="text-gray-400 text-xs"><b>Explicit</b> = a measure you defined with DAX (shown with an <b class="text-emerald-300">fx</b> icon — reusable, composable). <b>Implicit</b> = the auto-aggregation you get by dragging a field into Values — fast but throwaway.</p></div></div></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Part</th><th>What it is</th><th>Example</th></tr></thead>
+        <tbody>
+          <tr><td class="grp">Measure</td><td class="lookup">the value</td><td class="m">Median Salary</td></tr>
+          <tr><td class="grp">Target</td><td class="lookup">the goal</td><td class="m">$110,000</td></tr>
+          <tr><td class="grp">Status</td><td class="lookup">how close</td><td class="m">green / amber / red</td></tr>
+        </tbody>
+      </table></div>
+      <div class="statusbar"><div class="seg red"></div><div class="seg amber"></div><div class="seg green"></div></div>
+      <div class="tip-box mt-3"><p class="text-gray-300 text-xs"><i class="fa-solid fa-lightbulb text-calc-400 mr-1"></i><strong class="text-white">A real KPI = measure + target + status.</strong> The card on the sheet shows the <b>measure</b>; the Power Pivot KPI adds a <b>target</b> and color <b>status</b> so anyone can see at a glance whether the goal is hit.</p></div>
+    </div>
+  </section>
+
+  <!-- 11. CHEAT SHEET -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">11</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Quick Cheat Sheet</h2><p class="text-gray-400 text-xs sm:text-sm">The whole KPI recipe on one page.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="wrap"><table class="g">
+        <thead><tr><th>KPI</th><th>Formula</th><th>Card link</th></tr></thead>
+        <tbody>
+          <tr><td class="result">Median Salary</td><td class="form">=XLOOKUP(title, titles, medians)</td><td class="lookup">=median_salary</td></tr>
+          <tr><td class="result">Top Job Platform</td><td class="form">count per via + sort + =SUBSTITUTE(via,"via ","")</td><td class="lookup">=platform</td></tr>
+          <tr><td class="result">Job Count</td><td class="form">=COUNTIFS(country,title,type)</td><td class="lookup">=count</td></tr>
+          <tr><td class="result">Job Rank</td><td class="form">=0.45×count_norm + 0.30×salary_norm + 0.15×wfh_norm</td><td class="lookup">weighted blend</td></tr>
+          <tr><td class="result">DAX Measure</td><td class="form">Median Salary := MEDIAN(table[col])</td><td class="lookup">fx in Power Pivot</td></tr>
+        </tbody>
+      </table></div>
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-check text-calc-400 mr-1"></i><strong class="text-white">Golden rule:</strong> KPI = <b>one number, one question</b>. Compute it in a cell → name it → mirror it with a text box → dress it with a shape → let the dropdowns drive it. That's a live dashboard card, the Excel way.</p></div>
+    </div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-gauge-high mr-1 text-calc-500"></i> KPI Notes — KPI Cards · Median Salary · Top Platform · Job Count · Job Rank · DAX Measures</p>
+  </footer>
+
+</body>
+</html>

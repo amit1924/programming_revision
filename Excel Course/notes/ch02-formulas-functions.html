@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Ch 2 — Formulas & Functions | Excel for Data Analytics</title>
+  <script src="https://cdn.tailwindcss.com">
+  </script>
+  <script>
+    tailwind.config = { darkMode: 'class', theme: { extend: { colors: { ch2: { 50: '#ecfdf5', 100: '#d1fae5', 200: '#a7f3d0', 300: '#6ee7b7', 400: '#34d399', 500: '#10b981', 600: '#059669', 700: '#047857', 800: '#065f46', 900: '#064e3b' } } } } }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .cell-mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: #0f172a; }
+    .excel-tbl { border-collapse: collapse; width: 100%; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; }
+    .excel-tbl th { background: #1e293b; color: #94a3b8; font-weight: 500; padding: 4px 10px; border: 1px solid #334155; text-align: center; }
+    .excel-tbl td { padding: 4px 10px; border: 1px solid #334155; text-align: center; color: #e2e8f0; background: #0f172a; transition: all 0.2s; }
+    .excel-tbl .rn { color: #475569; background: #1e293b; font-weight: 500; }
+    .excel-tbl .hl { background: #064e3b; border-color: #10b981; }
+    .excel-tbl .fml { background: #1a2332; color: #fbbf24; }
+    .excel-tbl .val { color: #34d399; }
+    .card { background: #1e293b; border: 1px solid #334155; border-radius: 12px; overflow: hidden; transition: border-color 0.3s; }
+    .card:hover { border-color: #10b981; }
+    .card .hd { background: linear-gradient(135deg, #064e3b, #0f172a); padding: 10px 14px; border-bottom: 1px solid #334155; display: flex; align-items: center; gap: 8px; }
+    .card .hd .ic { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; }
+    .badge { font-size: 0.6rem; padding: 1px 8px; border-radius: 999px; font-weight: 600; }
+    .scroll-x { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+    .scroll-x::-webkit-scrollbar { height: 4px; }
+    .scroll-x::-webkit-scrollbar-track { background: #1e293b; border-radius: 2px; }
+    .scroll-x::-webkit-scrollbar-thumb { background: #475569; border-radius: 2px; }
+    .btn { cursor: pointer; user-select: none; transition: all 0.15s; }
+    .btn:active { transform: scale(0.92); }
+    .btn.active { background: #059669 !important; border-color: #34d399 !important; color: #fff !important; }
+    .si { background: #0f172a; border: 1px solid #334155; color: #e2e8f0; padding: 4px 8px; border-radius: 4px; font-family: 'JetBrains Mono', monospace; font-size: 0.75rem; width: 80px; outline: none; }
+    .si:focus { border-color: #10b981; }
+    .sl { -webkit-appearance: none; width: 100px; height: 4px; background: #334155; border-radius: 2px; outline: none; }
+    .sl::-webkit-slider-thumb { -webkit-appearance: none; width: 14px; height: 14px; border-radius: 50%; background: #10b981; cursor: pointer; }
+    .stat { font-size: 0.6rem; color: #34d399; transition: all 0.3s; }
+    @keyframes pop { 0%{transform:scale(1)} 50%{transform:scale(1.05)} 100%{transform:scale(1)} }
+    @keyframes slideDown { from{max-height:0;opacity:0} to{max-height:200px;opacity:1} }
+    .anim-slide { animation: slideDown 0.3s ease; }
+    @media (max-width: 640px) { .excel-tbl { font-size: 0.6rem; } .excel-tbl th,.excel-tbl td { padding: 2px 6px; } }
+  </style>
+</head>
+<body class="dark">
+
+<nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+  <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+    <div class="flex items-center gap-3">
+      <i class="fa-solid fa-calculator text-ch2-400 text-xl"></i>
+      <span class="font-bold text-white text-sm sm:text-base">Excel for Data Analytics</span>
+    </div>
+    <div class="flex items-center gap-2 text-xs text-gray-400">
+      <span class="bg-ch2-600/20 text-ch2-300 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-book-open"></i> Ch 2</span>
+    </div>
+  </div>
+</nav>
+
+<header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+  <div class="inline-flex items-center gap-2 bg-ch2-600/10 text-ch2-300 px-4 py-1.5 rounded-full text-sm mb-4">
+    <i class="fa-solid fa-flask"></i>
+    <span>Chapter 2 of 8 — 9 lessons</span>
+  </div>
+  <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">
+    <i class="fa-solid fa-equals text-ch2-400 mr-2"></i>
+    Formulas & Functions
+  </h1>
+  <p class="text-gray-400 max-w-3xl mx-auto text-sm">
+    The heart of Excel. Math, logic, lookups, text, dates — all with <strong class="text-white">interactive demos</strong> you can play with.
+  </p>
+</header>
+
+<main class="max-w-7xl mx-auto px-4 pb-16" id="app">
+
+  <!-- LAUNCH SECTION: Formula Builder -->
+  <section class="mb-10">
+    <div class="card">
+      <div class="hd">
+        <div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-play"></i></div>
+        <div><span class="text-white text-sm font-semibold">⚡ Live Formula Builder</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">TRY IT</span></div>
+      </div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-sm mb-4">Type numbers below and watch the formula calculate instantly. <strong class="text-white">Every demo on this page is interactive.</strong></p>
+        <div id="formulaBuilder" class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+          <div>
+            <label class="text-gray-500 text-[10px] uppercase tracking-wider">Number A</label>
+            <input id="fb_a" type="number" value="10" class="si w-full mt-1">
+          </div>
+          <div>
+            <label class="text-gray-500 text-[10px] uppercase tracking-wider">Number B</label>
+            <input id="fb_b" type="number" value="5" class="si w-full mt-1">
+          </div>
+          <div>
+            <label class="text-gray-500 text-[10px] uppercase tracking-wider">Operator</label>
+            <select id="fb_op" class="si w-full mt-1">
+              <option value="+">+ (Add)</option>
+              <option value="-">- (Subtract)</option>
+              <option value="*">* (Multiply)</option>
+              <option value="/">/ (Divide)</option>
+              <option value="^">^ (Power)</option>
+            </select>
+          </div>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center gap-4">
+          <div class="bg-[#0f172a] border border-gray-700 rounded-lg p-3">
+            <div class="text-gray-500 text-[10px]">Formula</div>
+            <div class="cell-mono text-amber-400 text-sm font-bold" id="fb_formula">=A1+B1</div>
+          </div>
+          <div class="bg-ch2-600/10 border border-ch2-600/30 rounded-lg p-3">
+            <div class="text-gray-500 text-[10px]">Result</div>
+            <div class="cell-mono text-ch2-300 text-xl font-bold" id="fb_result">15</div>
+          </div>
+          <div class="bg-[#0f172a] border border-gray-700 rounded-lg p-3">
+            <div class="text-gray-500 text-[10px]">Excel Cell View</div>
+            <table class="excel-tbl mt-1">
+              <thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead>
+              <tbody>
+                <tr><td class="rn">1</td><td id="fb_cell_a" class="hl val">10</td><td id="fb_cell_b" class="hl val">5</td><td id="fb_cell_c" class="hl fml">=A1+B1</td></tr>
+                <tr><td class="rn">2</td><td class="text-gray-500">A</td><td class="text-gray-500">B</td><td id="fb_cell_r" class="text-ch2-300 font-bold">15</td></tr>
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 1: Math Operators -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">1</div>
+      <h2 class="text-white font-bold text-lg">Math Operators</h2>
+      <span class="text-gray-500 text-xs">+ − × ÷ ^</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-plus"></i></div><div><span class="text-white text-sm font-semibold">Addition (+)</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">OPERATOR</span></div></div>
+        <div class="p-4"><p class="text-gray-400 text-xs mb-2">Adds values. <span class="cell-mono text-amber-400">=A1+B1</span></p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="hl val" id="m_add_a">10</td><td class="hl val" id="m_add_b">5</td><td class="hl fml" id="m_add_f">=A1+B1</td></tr>
+            <tr><td class="rn">2</td><td colspan="2" class="text-gray-500">Result →</td><td class="text-ch2-300 font-bold" id="m_add_r">15</td></tr>
+          </tbody></table>
+          <div class="flex gap-2 mt-2"><button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="document.getElementById('m_add_a').textContent=Math.floor(Math.random()*100);updateAdd()">🎲 Roll A</button><button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="document.getElementById('m_add_b').textContent=Math.floor(Math.random()*100);updateAdd()">🎲 Roll B</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-minus"></i></div><div><span class="text-white text-sm font-semibold">Subtraction (−)</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">OPERATOR</span></div></div>
+        <div class="p-4"><p class="text-gray-400 text-xs mb-2">Subtracts values. <span class="cell-mono text-amber-400">=A1-B1</span></p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="hl val" id="m_sub_a">20</td><td class="hl val" id="m_sub_b">7</td><td class="hl fml" id="m_sub_f">=A1-B1</td></tr>
+            <tr><td class="rn">2</td><td colspan="2" class="text-gray-500">Result →</td><td class="text-ch2-300 font-bold" id="m_sub_r">13</td></tr>
+          </tbody></table>
+          <div class="flex gap-2 mt-2"><button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="document.getElementById('m_sub_a').textContent=Math.floor(Math.random()*100);updateSub()">🎲 Roll A</button><button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="document.getElementById('m_sub_b').textContent=Math.floor(Math.random()*100);updateSub()">🎲 Roll B</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-xmark"></i></div><div><span class="text-white text-sm font-semibold">Multiplication (×)</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">OPERATOR</span></div></div>
+        <div class="p-4"><p class="text-gray-400 text-xs mb-2">Multiplies values. <span class="cell-mono text-amber-400">=A1*B1</span></p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="hl val" id="m_mul_a">6</td><td class="hl val" id="m_mul_b">4</td><td class="hl fml" id="m_mul_f">=A1*B1</td></tr>
+            <tr><td class="rn">2</td><td colspan="2" class="text-gray-500">Result →</td><td class="text-ch2-300 font-bold" id="m_mul_r">24</td></tr>
+          </tbody></table>
+          <div class="flex gap-2 mt-2"><button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="document.getElementById('m_mul_a').textContent=Math.floor(Math.random()*20);updateMul()">🎲 Roll A</button><button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="document.getElementById('m_mul_b').textContent=Math.floor(Math.random()*20);updateMul()">🎲 Roll B</button></div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-divide"></i></div><div><span class="text-white text-sm font-semibold">Division (÷)</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">OPERATOR</span></div></div>
+        <div class="p-4"><p class="text-gray-400 text-xs mb-2">Divides values. <span class="cell-mono text-amber-400">=A1/B1</span></p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="hl val" id="m_div_a">15</td><td class="hl val" id="m_div_b">3</td><td class="hl fml" id="m_div_f">=A1/B1</td></tr>
+            <tr><td class="rn">2</td><td colspan="2" class="text-gray-500">Result →</td><td class="text-ch2-300 font-bold" id="m_div_r">5</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-arrow-up"></i></div><div><span class="text-white text-sm font-semibold">Power (^)</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">OPERATOR</span></div></div>
+        <div class="p-4"><p class="text-gray-400 text-xs mb-2">Raises to power. <span class="cell-mono text-amber-400">=A1^2</span> (squared)</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="hl val" id="m_pow_a">3</td><td class="hl fml">=A1^2</td></tr>
+            <tr><td class="rn">2</td><td colspan="1" class="text-gray-500">Result →</td><td class="text-ch2-300 font-bold" id="m_pow_r">9</td></tr>
+          </tbody></table>
+          <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a] mt-2" onclick="const v=Math.floor(Math.random()*10)+1;document.getElementById('m_pow_a').textContent=v;document.getElementById('m_pow_r').textContent=v*v;">🎲 Roll</button>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-list-ol"></i></div><div><span class="text-white text-sm font-semibold">Order of Operations</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">PEMDAS</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Excel follows PEMDAS: <strong class="text-white">P</strong>arentheses, <strong class="text-white">E</strong>xponents, <strong class="text-white">M</strong>ultiplication/<strong class="text-white">D</strong>ivision, <strong class="text-white">A</strong>ddition/<strong class="text-white">S</strong>ubtraction</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="fml">=(2+3)*4</td><td class="val" id="m_ord_1">20</td></tr>
+            <tr><td class="rn">2</td><td class="fml">=2+3*4</td><td class="val" id="m_ord_2">14</td></tr>
+          </tbody></table>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Parentheses <strong class="text-white">matter</strong>! Same numbers, different answers.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 2: Cell Referencing -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">2</div>
+      <h2 class="text-white font-bold text-lg">Cell Referencing</h2>
+      <span class="text-gray-500 text-xs">Relative · Absolute ($) · Mixed · F4</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-arrow-right"></i></div><div><span class="text-white text-sm font-semibold">Relative Reference</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">DEFAULT</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Changes when you drag the formula. <span class="cell-mono text-amber-400">=A1</span> becomes <span class="cell-mono text-amber-400">=A2</span>, <span class="cell-mono text-amber-400">=A3</span>...</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="val">10</td><td class="fml">=A1*2</td><td class="val">20</td></tr>
+            <tr><td class="rn">2</td><td class="val">20</td><td class="fml">=A2*2</td><td class="val">40</td></tr>
+            <tr><td class="rn">3</td><td class="val">30</td><td class="fml">=A3*2</td><td class="val">60</td></tr>
+          </tbody></table>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-arrow-down text-ch2-400"></i> Each row auto-updates to match its row!</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-lock"></i></div><div><span class="text-white text-sm font-semibold">Absolute Reference ($)</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">F4 KEY</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Stays the same no matter where you drag. <span class="cell-mono text-amber-400">=$A$1</span> always points to A1.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="hl val" id="ref_tax">0.08</td><td class="text-gray-400">Tax Rate</td><td class="text-gray-400">Amount</td></tr>
+            <tr><td class="rn">2</td><td class="text-gray-400">Price</td><td class="fml" id="ref_f2">=$A$1*100</td><td class="val" id="ref_r2">8</td></tr>
+            <tr><td class="rn">3</td><td class="text-gray-400">Price</td><td class="fml" id="ref_f3">=$A$1*200</td><td class="val" id="ref_r3">16</td></tr>
+          </tbody></table>
+          <div class="flex gap-2 mt-2">
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a" onclick="document.getElementById('ref_tax').textContent='0.08';document.getElementById('ref_r2').textContent=8;document.getElementById('ref_r3').textContent=16;">◀ Normal</button>
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a" onclick="document.getElementById('ref_tax').textContent='0.10';document.getElementById('ref_r2').textContent=10;document.getElementById('ref_r3').textContent=20;">Change Tax to 10% ▶</button>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lock text-ch2-400"></i> <span class="cell-mono">$A$1</span> stays locked. Change tax rate once, all cells update!</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-link"></i></div><div><span class="text-white text-sm font-semibold">Mixed Reference</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">$A1 or A$1</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Lock only the column OR only the row.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="val">5</td><td class="fml">=A1*$B$1</td><td class="val">15</td></tr>
+            <tr><td class="rn">2</td><td class="val">10</td><td class="fml">=A2*$B$1</td><td class="val">30</td></tr>
+          </tbody></table>
+          <p class="text-[10px] text-gray-500 mt-2">Press <span class="cell-mono text-amber-400">F4</span> (Mac: <span class="cell-mono text-amber-400">Fn+F4</span>) to cycle: <span class="cell-mono">A1</span> → <span class="cell-mono">$A$1</span> → <span class="cell-mono">A$1</span> → <span class="cell-mono">$A1</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 3: Logical Functions -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">3</div>
+      <h2 class="text-white font-bold text-lg">Logical Functions</h2>
+      <span class="text-gray-500 text-xs">IF · AND · OR · IFS · Nested IF</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-arrow-branch"></i></div><div><span class="text-white text-sm font-semibold">IF — "If this, then that"</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">LOGICAL</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2"><span class="cell-mono text-amber-400">=IF(logical_test, value_if_true, value_if_false)</span></p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="text-gray-400">Score</td><td class="text-gray-400">Result</td></tr>
+            <tr><td class="rn">2</td><td class="val" id="if_score">85</td><td class="val fml" id="if_result" style="font-size:11px">=IF(A2>=60,"Pass","Fail")</td></tr>
+          </tbody></table>
+          <div class="flex gap-2 mt-2">
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateIF(85)">Pass (85)</button>
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateIF(42)">Fail (42)</button>
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateIF(60)">Border (60)</button>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2" id="if_explain">85 ≥ 60 → <strong class="text-ch2-300">"Pass"</strong></p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-toggle-on"></i></div><div><span class="text-white text-sm font-semibold">AND / OR</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">LOGICAL</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2"><span class="cell-mono text-amber-400">=AND(cond1, cond2)</span> — ALL must be true. <span class="cell-mono text-amber-400">=OR(cond1, cond2)</span> — ANY can be true.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th><th>D</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="text-gray-400">Exp (yrs)</td><td class="text-gray-400">Salary</td><td class="text-gray-400">AND (both?)</td><td class="text-gray-400">OR (either?)</td></tr>
+            <tr><td class="rn">2</td><td id="and_exp" class="val">5</td><td id="and_sal" class="val">90000</td><td id="and_res" class="val" style="color:#34d399">TRUE</td><td id="or_res" class="val" style="color:#34d399">TRUE</td></tr>
+          </tbody></table>
+          <div class="flex gap-2 mt-2">
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateAND(5,90000)">Both meet</button>
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateAND(3,90000)">Salary only</button>
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateAND(3,50000)">Neither</button>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-layer-group"></i></div><div><span class="text-white text-sm font-semibold">IFS — Multiple Conditions</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">LOGICAL</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Instead of nested IFs, use <span class="cell-mono text-amber-400">=IFS(test1, val1, test2, val2, ...)</span></p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="text-gray-400">Score</td><td class="text-gray-400">Grade</td></tr>
+            <tr><td class="rn">2</td><td id="ifs_score" class="val">85</td><td id="ifs_grade" class="val" style="color:#34d399">B</td></tr>
+          </tbody></table>
+          <div class="flex gap-2 mt-2">
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateGrade(95)">A (95)</button>
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateGrade(85)">B (85)</button>
+            <button class="btn text-[10px] px-2 py-0.5 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="updateGrade(65)">D (65)</button>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2">Formula: <span class="cell-mono" id="ifs_formula">=IFS(A2>=90,"A",A2>=80,"B",A2>=70,"C",A2>=60,"D",TRUE,"F")</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 4: Math & Stats Functions -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">4</div>
+      <h2 class="text-white font-bold text-lg">Math & Statistical Functions</h2>
+      <span class="text-gray-500 text-xs">SUM · AVERAGE · COUNT · MIN · MAX · MEDIAN</span>
+    </div>
+    <div class="card">
+      <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-chart-simple"></i></div><div><span class="text-white text-sm font-semibold">📊 Live Data Analyzer</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">INTERACTIVE</span></div></div>
+      <div class="p-4 sm:p-6">
+        <p class="text-gray-400 text-xs mb-3">Click numbers to edit them. Watch SUM, AVERAGE, MIN, MAX, MEDIAN, COUNT update instantly.</p>
+        <div class="scroll-x">
+          <table class="excel-tbl" id="stats_tbl">
+            <thead><tr><th></th><th>A<br><span class="text-[8px] text-gray-500 font-normal">Values</span></th><th>B<br><span class="text-[8px] text-gray-500 font-normal">Values</span></th></tr></thead>
+            <tbody id="stats_body"></tbody>
+            <thead><tr><th style="background:#064e3b;color:#fff"></th><th style="background:#064e3b;color:#fff">Function</th><th style="background:#064e3b;color:#fff">Result</th></tr></thead>
+            <tbody>
+              <tr><td class="rn">SUM</td><td class="fml">=SUM(A:A)</td><td id="stat_sum" class="val font-bold">—</td></tr>
+              <tr><td class="rn">AVERAGE</td><td class="fml">=AVERAGE(A:A)</td><td id="stat_avg" class="val">—</td></tr>
+              <tr><td class="rn">MEDIAN</td><td class="fml">=MEDIAN(A:A)</td><td id="stat_med" class="val">—</td></tr>
+              <tr><td class="rn">MIN</td><td class="fml">=MIN(A:A)</td><td id="stat_min" class="val">—</td></tr>
+              <tr><td class="rn">MAX</td><td class="fml">=MAX(A:A)</td><td id="stat_max" class="val">—</td></tr>
+              <tr><td class="rn">COUNT</td><td class="fml">=COUNT(A:A)</td><td id="stat_cnt" class="val">—</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="flex gap-2 mt-3">
+          <button class="btn text-xs px-3 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="resetStats()">🔄 Reset Data</button>
+          <button class="btn text-xs px-3 py-1 rounded border border-gray-600 text-gray-400 bg-[#0f172a]" onclick="randomStats()">🎲 Randomize</button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 5: Lookup Functions -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">5</div>
+      <h2 class="text-white font-bold text-lg">Lookup Functions</h2>
+      <span class="text-gray-500 text-xs">VLOOKUP · HLOOKUP · XLOOKUP · MATCH</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-magnifying-glass"></i></div><div><span class="text-white text-sm font-semibold">VLOOKUP — Vertical Find</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">LOOKUP</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Looks up a value in the leftmost column and returns a value to the right.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn" style="font-size:8px;color:#fbbf24">← lookup</td><td class="text-gray-400">Skill</td><td class="text-gray-400">Salary</td><td class="text-gray-400">Level</td></tr>
+            <tr><td class="rn">1</td><td class="val">Excel</td><td class="val">85000</td><td>Intermediate</td></tr>
+            <tr><td class="rn">2</td><td class="val">Python</td><td class="val">120000</td><td>Advanced</td></tr>
+            <tr><td class="rn">3</td><td class="val">SQL</td><td class="val">95000</td><td>Advanced</td></tr>
+          </tbody></table>
+          <div class="mt-2 flex items-center gap-2">
+            <span class="text-[10px] text-gray-500">Lookup:</span>
+            <select class="si text-[10px]" onchange="updateVlookup(this.value)">
+              <option value="Excel">Excel</option>
+              <option value="Python">Python</option>
+              <option value="SQL">SQL</option>
+            </select>
+            <span class="text-[10px] text-gray-500">→ Salary:</span>
+            <span id="vlookup_result" class="cell-mono text-ch2-300 font-bold">85000</span>
+          </div>
+          <p class="text-[10px] text-gray-500 mt-2"><span class="cell-mono text-amber-400">=VLOOKUP("Excel", A:C, 2, FALSE)</span></p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-arrow-right-arrow-left"></i></div><div><span class="text-white text-sm font-semibold">XLOOKUP — The Best</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">LOOKUP</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Search any column, return any column. No restrictions like VLOOKUP.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="text-gray-400">Salary</td><td class="text-gray-400">Company</td><td class="text-gray-400">Title</td></tr>
+            <tr><td class="rn">2</td><td id="xl_sal" class="val">15000</td><td id="xl_co" class="val">Net2Source</td><td id="xl_tl" class="val">Data Engineer</td></tr>
+            <tr><td class="rn">3</td><td class="val">960000</td><td class="val">Amazon</td><td class="val">Data Scientist</td></tr>
+          </tbody></table>
+          <p class="text-[10px] text-gray-500 mt-2"><span class="cell-mono text-amber-400">=XLOOKUP(15000, B:B, C:C)</span> → "Data Engineer"</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-bucket"></i></div><div><span class="text-white text-sm font-semibold">Bucketing with XLOOKUP</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">ADVANCED</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Use XLOOKUP with match mode <span class="cell-mono">-1</span> (next smaller) or <span class="cell-mono">1</span> (next larger) to bucket values.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="text-gray-400">Salary</td><td class="color-ch2-300 fml">=XLOOKUP(A2,$E$2:$E$6,$F$2:$F$6,,-1)</td><td class="val" id="bucket_res">125k-200k</td></tr>
+            <tr><td class="rn">2</td><td class="text-gray-400">Bucket Table:</td><td colspan="1"></td></tr>
+            <tr><td class="rn">3</td><td class="text-gray-400">0 → &lt;50k</td><td class="text-gray-400">125k → 125k-200k</td><td class="text-gray-400">200k+ → &gt;200k</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 6: Text Functions -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">6</div>
+      <h2 class="text-white font-bold text-lg">Text Functions</h2>
+      <span class="text-gray-500 text-xs">TEXTJOIN · TEXTSPLIT · RIGHT · MID · FIND · LEN</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-link"></i></div><div><span class="text-white text-sm font-semibold">TEXTJOIN — Combine</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">TEXT</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2"><span class="cell-mono text-amber-400">=TEXTJOIN(delimiter, ignore_empty, text1, ...)</span></p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="val">John</td><td class="val">Doe</td><td class="fml" id="tj_res">=TEXTJOIN(" ",TRUE,A1,B1)</td></tr>
+            <tr><td class="rn">2</td><td colspan="2" class="text-gray-500">Result →</td><td id="tj_out" class="val">John Doe</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-split"></i></div><div><span class="text-white text-sm font-semibold">TEXTSPLIT — Split</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">TEXT</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Split names or text by a delimiter.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th><th>C</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="val">John,Doe,NY</td><td class="fml" colspan="2">=TEXTSPLIT(A1,",")</td></tr>
+            <tr><td class="rn">2</td><td class="text-gray-400">→</td><td id="ts_1" class="val">John</td><td id="ts_2" class="val">Doe</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-scissors"></i></div><div><span class="text-white text-sm font-semibold">RIGHT / MID / FIND</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">TEXT</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Extract parts of text. Great for cleaning addresses, IDs, codes.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="val">APP_ID-548</td><td class="fml">=RIGHT(A1,3) →</td></tr>
+            <tr><td class="rn">2</td><td class="val">San Francisco, CA 94102</td><td class="fml">=MID(A2,FIND(",",A2)+2,2) → <span id="mid_res" class="val">CA</span></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 7: Date & Time Functions -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">7</div>
+      <h2 class="text-white font-bold text-lg">Date & Time Functions</h2>
+      <span class="text-gray-500 text-xs">MONTH · DAY · YEAR · TODAY · DATEDIF · HOUR</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-calendar"></i></div><div><span class="text-white text-sm font-semibold">Date Parts</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">DATE</span></div></div>
+        <div class="p-4">
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="text-gray-400">Date</td><td class="val" id="dt_val">2/14/2023</td></tr>
+            <tr><td class="rn">2</td><td class="text-gray-400">Month</td><td class="val" id="dt_month">=MONTH(A1) → 2</td></tr>
+            <tr><td class="rn">3</td><td class="text-gray-400">Day</td><td class="val" id="dt_day">=DAY(A1) → 14</td></tr>
+            <tr><td class="rn">4</td><td class="text-gray-400">Year</td><td class="val" id="dt_year">=YEAR(A1) → 2023</td></tr>
+          </tbody></table>
+          <p class="text-[10px] text-gray-500 mt-2">Excel stores dates as numbers. <span class="cell-mono">1</span> = Jan 1, 1900. <span class="cell-mono">45531</span> = Aug 27, 2024.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-clock"></i></div><div><span class="text-white text-sm font-semibold">Time Parts</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">TIME</span></div></div>
+        <div class="p-4">
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="text-gray-400">Date/Time</td><td class="val">2/14/2023 14:30</td></tr>
+            <tr><td class="rn">2</td><td class="text-gray-400">Hour</td><td class="val">=HOUR(A1) → 14</td></tr>
+            <tr><td class="rn">3</td><td class="text-gray-400">Minute</td><td class="val">=MINUTE(A1) → 30</td></tr>
+            <tr><td class="rn">4</td><td class="text-gray-400">AM/PM</td><td class="val" id="dt_ampm">=TEXT(A1,"hh:mm AM/PM") → 02:30 PM</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-hourglass"></i></div><div><span class="text-white text-sm font-semibold">DATEDIF — Days Between</span><span class="badge bg-ch2-600/20 text-ch2-300 ml-2">DATE</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs mb-2">Calculate days, months, or years between two dates.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="val">2/14/2023</td></tr>
+            <tr><td class="rn">2</td><td class="fml">=DATEDIF(A1,TODAY(),"d") → <span id="datedif_res" class="val"></span></td></tr>
+          </tbody></table>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 8: Comparison Operators -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">8</div>
+      <h2 class="text-white font-bold text-lg">Comparison Operators</h2>
+      <span class="text-gray-500 text-xs">=  >  <  >=  <=  <></span>
+    </div>
+    <div class="card">
+      <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-not-equal"></i></div><div><span class="text-white text-sm font-semibold">Comparison Operators — always return TRUE or FALSE</span></div></div>
+      <div class="p-4">
+        <div class="overflow-x-auto">
+          <table class="excel-tbl">
+            <thead><tr><th></th><th>Operator</th><th>Meaning</th><th>Example</th><th>Result</th></tr></thead>
+            <tbody>
+              <tr><td class="rn">1</td><td class="cell-mono text-amber-400">=</td><td>Equal to</td><td class="fml">=5=5</td><td class="val">TRUE</td></tr>
+              <tr><td class="rn">2</td><td class="cell-mono text-amber-400"><></td><td>Not equal to</td><td class="fml">=5<>3</td><td class="val">TRUE</td></tr>
+              <tr><td class="rn">3</td><td class="cell-mono text-amber-400">></td><td>Greater than</td><td class="fml">=10>5</td><td class="val">TRUE</td></tr>
+              <tr><td class="rn">4</td><td class="cell-mono text-amber-400"><</td><td>Less than</td><td class="fml">=5<10</td><td class="val">TRUE</td></tr>
+              <tr><td class="rn">5</td><td class="cell-mono text-amber-400">>=</td><td>Greater than or equal</td><td class="fml">=5>=5</td><td class="val">TRUE</td></tr>
+              <tr><td class="rn">6</td><td class="cell-mono text-amber-400"><=</td><td>Less than or equal</td><td class="fml">=3<=5</td><td class="val">TRUE</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p class="text-[10px] text-gray-500 mt-2"><i class="fa-solid fa-lightbulb text-amber-400"></i> Bonus: TRUE = 1, FALSE = 0 in Excel. So <span class="cell-mono">=TRUE+TRUE</span> = 2!</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- LESSON 9: Error Reference -->
+  <section class="mb-10">
+    <div class="flex items-center gap-3 mb-4 sticky top-14 bg-[#0f172a]/90 backdrop-blur py-2 z-40">
+      <div class="w-7 h-7 rounded-md bg-ch2-500 flex items-center justify-center text-white text-xs font-bold">9</div>
+      <h2 class="text-white font-bold text-lg">Common Errors</h2>
+      <span class="text-gray-500 text-xs">#DIV/0! · #N/A · #VALUE! · #REF! · #NAME?</span>
+    </div>
+    <div class="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-3">
+      <div class="card">
+        <div class="hd"><div class="ic bg-red-500/20 text-red-300"><i class="fa-solid fa-ban"></i></div><div><span class="text-white text-sm font-semibold">#DIV/0!</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs">Dividing by zero. Fix: check your divisor isn't blank or zero.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="fml" style="color:#f87171">=10/0</td><td style="color:#f87171">#DIV/0!</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-red-500/20 text-red-300"><i class="fa-solid fa-circle-exclamation"></i></div><div><span class="text-white text-sm font-semibold">#N/A</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs">Value not found. VLOOKUP/XLOOKUP can't find the lookup value.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="fml" style="color:#f87171">=VLOOKUP("XYZ",A:B,2,FALSE)</td><td style="color:#f87171">#N/A</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-red-500/20 text-red-300"><i class="fa-solid fa-font"></i></div><div><span class="text-white text-sm font-semibold">#VALUE!</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs">Wrong data type. Adding text to a number, or wrong range sizes.</p>
+          <table class="excel-tbl"><thead><tr><th></th><th>A</th><th>B</th></tr></thead><tbody>
+            <tr><td class="rn">1</td><td class="fml" style="color:#f87171">="hello"+5</td><td style="color:#f87171">#VALUE!</td></tr>
+          </tbody></table>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-red-500/20 text-red-300"><i class="fa-solid fa-link-slash"></i></div><div><span class="text-white text-sm font-semibold">#REF!</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs">Cell reference is invalid. Usually happens after deleting a column/row used in a formula.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-red-500/20 text-red-300"><i class="fa-solid fa-question"></i></div><div><span class="text-white text-sm font-semibold">#NAME?</span></div></div>
+        <div class="p-4">
+          <p class="text-gray-400 text-xs">Excel doesn't recognize the function name. Typo like <span class="cell-mono">=SUMM(A1)</span> instead of <span class="cell-mono">=SUM(A1)</span>.</p>
+        </div>
+      </div>
+      <div class="card">
+        <div class="hd"><div class="ic bg-ch2-600/20 text-ch2-300"><i class="fa-solid fa-wrench"></i></div><div><span class="text-white text-sm font-semibold">💡 Fixing Errors</span></div></div>
+        <div class="p-4">
+          <ul class="text-gray-400 text-xs space-y-1">
+            <li>• <strong class="text-white">IFERROR</strong>: <span class="cell-mono text-amber-400">=IFERROR(formula, "fallback")</span></li>
+            <li>• Use <strong class="text-white">Evaluate Formula</strong> (Formulas tab) to step through</li>
+            <li>• <strong class="text-white">Trace Precedents</strong> shows which cells feed in</li>
+            <li>• Ask ChatGPT/Claude: paste the formula + error</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- CHEAT SHEET -->
+  <section class="card mb-10">
+    <div class="hd" style="background:linear-gradient(135deg,#1e3a5f,#0f172a)"><i class="fa-solid fa-star text-amber-400 text-lg"></i><h2 class="text-white font-bold text-lg">Chapter 2 Cheat Sheet</h2></div>
+    <div class="p-4 sm:p-6">
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2 text-xs">
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+          <div class="text-ch2-300 font-semibold mb-1"><i class="fa-solid fa-calculator"></i> Operators</div>
+          <span class="text-gray-400">+ − * / ^ &</span>
+        </div>
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+          <div class="text-ch2-300 font-semibold mb-1"><i class="fa-solid fa-lock"></i> References</div>
+          <span class="text-gray-400"><span class="cell-mono">A1</span> relative · <span class="cell-mono">$A$1</span> absolute · <span class="cell-mono">A$1</span> mixed</span>
+        </div>
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+          <div class="text-ch2-300 font-semibold mb-1"><i class="fa-solid fa-arrow-branch"></i> Logical</div>
+          <span class="text-gray-400">IF · AND · OR · IFS · IFERROR</span>
+        </div>
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+          <div class="text-ch2-300 font-semibold mb-1"><i class="fa-solid fa-chart-simple"></i> Math/Stats</div>
+          <span class="text-gray-400">SUM · AVERAGE · MEDIAN · MIN · MAX · COUNT</span>
+        </div>
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+          <div class="text-ch2-300 font-semibold mb-1"><i class="fa-solid fa-magnifying-glass"></i> Lookups</div>
+          <span class="text-gray-400">VLOOKUP · HLOOKUP · XLOOKUP · MATCH · INDEX</span>
+        </div>
+        <div class="bg-gray-800/40 rounded-lg p-3 border border-gray-700">
+          <div class="text-ch2-300 font-semibold mb-1"><i class="fa-solid fa-font"></i> Text</div>
+          <span class="text-gray-400">TEXTJOIN · TEXTSPLIT · RIGHT · MID · FIND · LEN</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="text-center text-gray-600 text-xs pt-4 border-t border-gray-800"><p>notes made by amit</p></footer>
+</main>
+
+<script>
+// Formula Builder
+function updateFormulaBuilder() {
+  const a = parseFloat(document.getElementById('fb_a').value) || 0;
+  const b = parseFloat(document.getElementById('fb_b').value) || 0;
+  const op = document.getElementById('fb_op').value;
+  let r;
+  switch(op) {
+    case '+': r = a + b; break;
+    case '-': r = a - b; break;
+    case '*': r = a * b; break;
+    case '/': r = b !== 0 ? a / b : 'ERR'; break;
+    case '^': r = Math.pow(a, b); break;
+  }
+  document.getElementById('fb_formula').textContent = `=${a}${op}${b}`;
+  document.getElementById('fb_result').textContent = r;
+  document.getElementById('fb_cell_a').textContent = a;
+  document.getElementById('fb_cell_b').textContent = b;
+  document.getElementById('fb_cell_c').textContent = `=${a}${op}${b}`;
+  document.getElementById('fb_cell_r').textContent = r;
+}
+document.getElementById('fb_a').addEventListener('input', updateFormulaBuilder);
+document.getElementById('fb_b').addEventListener('input', updateFormulaBuilder);
+document.getElementById('fb_op').addEventListener('change', updateFormulaBuilder);
+
+// Math operator helpers
+function updateAdd() { const a=+document.getElementById('m_add_a').textContent,b=+document.getElementById('m_add_b').textContent;document.getElementById('m_add_f').textContent=`=${a}+${b}`;document.getElementById('m_add_r').textContent=a+b; }
+function updateSub() { const a=+document.getElementById('m_sub_a').textContent,b=+document.getElementById('m_sub_b').textContent;document.getElementById('m_sub_f').textContent=`=${a}-${b}`;document.getElementById('m_sub_r').textContent=a-b; }
+function updateMul() { const a=+document.getElementById('m_mul_a').textContent,b=+document.getElementById('m_mul_b').textContent;document.getElementById('m_mul_f').textContent=`=${a}*${b}`;document.getElementById('m_mul_r').textContent=a*b; }
+
+// IF logic
+function updateIF(score) {
+  document.getElementById('if_score').textContent = score;
+  const r = score >= 60 ? 'Pass' : 'Fail';
+  document.getElementById('if_result').textContent = `=IF(A2>=60,"${r}","${r === 'Pass' ? 'Fail' : 'Pass'}")`;
+  document.getElementById('if_result').textContent = r;
+  document.getElementById('if_explain').innerHTML = `${score} ${score >= 60 ? '≥' : '<'} 60 → <strong class="text-ch2-300">"${r}"</strong>`;
+}
+
+// AND/OR
+function updateAND(exp, sal) {
+  const threshExp = 4, threshSal = 80000;
+  document.getElementById('and_exp').textContent = exp;
+  document.getElementById('and_sal').textContent = sal;
+  const and = exp >= threshExp && sal >= threshSal;
+  const or = exp >= threshExp || sal >= threshSal;
+  document.getElementById('and_res').textContent = and ? 'TRUE' : 'FALSE';
+  document.getElementById('and_res').style.color = and ? '#34d399' : '#f87171';
+  document.getElementById('or_res').textContent = or ? 'TRUE' : 'FALSE';
+  document.getElementById('or_res').style.color = or ? '#34d399' : '#f87171';
+}
+
+// Grade (IFS)
+function updateGrade(score) {
+  document.getElementById('ifs_score').textContent = score;
+  let grade;
+  if (score >= 90) grade = 'A';
+  else if (score >= 80) grade = 'B';
+  else if (score >= 70) grade = 'C';
+  else if (score >= 60) grade = 'D';
+  else grade = 'F';
+  document.getElementById('ifs_grade').textContent = grade;
+  document.getElementById('ifs_grade').style.color = grade === 'A' ? '#34d399' : grade === 'F' ? '#f87171' : '#fbbf24';
+}
+
+// Stats table
+function initStats() {
+  const data = [45000, 62000, 38000, 91000, 75000, 53000, 82000, 67000, 44000, 59000];
+  const tbody = document.getElementById('stats_body');
+  tbody.innerHTML = '';
+  data.forEach((v, i) => {
+    const tr = document.createElement('tr');
+    tr.appendChild(Object.assign(document.createElement('td'), {className:'rn', textContent:i+1}));
+    const td = Object.assign(document.createElement('td'), {className:'val hl', textContent:v, contentEditable:true});
+    td.style.outline = 'none';
+    td.addEventListener('input', updateStats);
+    td.addEventListener('blur', () => { if (!td.textContent) td.textContent = '0'; updateStats(); });
+    tr.appendChild(td);
+    tr.appendChild(Object.assign(document.createElement('td'), {className:'val', textContent: Math.floor(v * (0.8 + Math.random() * 0.4))}));
+    tbody.appendChild(tr);
+  });
+  updateStats();
+}
+
+function getStatsData() {
+  const rows = document.querySelectorAll('#stats_body tr');
+  return Array.from(rows).map(r => parseFloat(r.children[1].textContent) || 0);
+}
+
+function updateStats() {
+  const d = getStatsData();
+  document.getElementById('stat_sum').textContent = d.reduce((a,b) => a + b, 0).toLocaleString();
+  document.getElementById('stat_avg').textContent = Math.round(d.reduce((a,b) => a + b, 0) / d.length).toLocaleString();
+  const sorted = [...d].sort((a,b) => a - b);
+  const mid = Math.floor(sorted.length / 2);
+  document.getElementById('stat_med').textContent = sorted.length % 2 ? sorted[mid] : Math.round((sorted[mid-1] + sorted[mid]) / 2);
+  document.getElementById('stat_min').textContent = Math.min(...d).toLocaleString();
+  document.getElementById('stat_max').textContent = Math.max(...d).toLocaleString();
+  document.getElementById('stat_cnt').textContent = d.length;
+}
+
+function resetStats() { initStats(); }
+function randomStats() {
+  const rows = document.querySelectorAll('#stats_body tr');
+  rows.forEach(r => { r.children[1].textContent = Math.floor(Math.random() * 140 + 20) * 1000; });
+  updateStats();
+}
+
+// VLOOKUP
+function updateVlookup(skill) {
+  const data = { Excel: 85000, Python: 120000, SQL: 95000 };
+  document.getElementById('vlookup_result').textContent = data[skill] || '—';
+}
+
+// DATEDIF
+function updateDatedif() {
+  const start = new Date('2023-02-14');
+  const today = new Date();
+  const diff = Math.floor((today - start) / (1000 * 60 * 60 * 24));
+  document.getElementById('datedif_res').textContent = diff + ' days';
+}
+
+// MID demo
+function updateMid() {
+  const addr = document.querySelector('#mid_res').closest('tr').previousElementSibling?.querySelector('.val')?.textContent || 'San Francisco, CA 94102';
+  const match = addr.match(/, ([A-Z]{2}) /);
+  if (match) document.getElementById('mid_res').textContent = match[1];
+}
+
+// Init
+document.addEventListener('DOMContentLoaded', () => {
+  updateFormulaBuilder();
+  initStats();
+  updateDatedif();
+});
+</script>
+</body>
+</html>

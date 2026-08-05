@@ -1,0 +1,376 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Calc Shortcuts — Interactive Playground | LibreOffice</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: { extend: {
+        colors: {
+          calc: { 50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e' }
+        }
+      }}
+    }
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+    * { font-family: 'Inter', sans-serif; }
+    .cell-mono { font-family: 'JetBrains Mono', monospace; }
+    body { background: #0f172a; }
+    .shortcut-key {
+      display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px;
+      border-radius:6px; padding:3px 9px; font-family:'JetBrains Mono',monospace; font-size:.78rem; color:#fbbf24; line-height:1.2;
+    }
+    .menu-path { display:inline-block; background:#1e293b; border:1px solid #475569; border-radius:4px; padding:2px 8px; font-size:.75rem; color:#86efac; font-weight:500; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#20381f,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .scrollbar-thin::-webkit-scrollbar{height:8px;width:8px;}
+    .scrollbar-thin::-webkit-scrollbar-track{background:#1e293b;border-radius:4px;}
+    .scrollbar-thin::-webkit-scrollbar-thumb{background:#475569;border-radius:4px;}
+
+    .cell { border:1px solid #334155; background:#0f172a; color:#e2e8f0; text-align:right; padding:6px 10px; font-family:'JetBrains Mono',monospace; font-size:.8rem; min-width:76px; transition:background .12s; }
+    .cell.num { color:#60a5fa; }
+    .cell.lbl { color:#e2e8f0; font-weight:600; }
+    .cell.empty { color:#334155; }
+    .cell.axis { background:#1e293b; color:#94a3b8; font-weight:500; text-align:center; min-width:34px; font-size:.7rem; }
+    .cell.active { background:#20401f; color:#fff; box-shadow:inset 0 0 0 2px #79c963; }
+    .cell.inSel { background:#1d3329; }
+    .cell.ants { /* marching-ant overlay handled by .block on parent row container isn't needed; dashed outline */ }
+    .cell.boldtext { font-weight:800; }
+    @keyframes antmarch { to { background-position:0 -20px; } }
+    .ants { outline:2px dashed #79c963; outline-offset:-2px; }
+    .region.ants { background-image:linear-gradient(45deg, rgba(121,201,99,.25) 25%,transparent 25%,transparent 50%,rgba(121,201,99,.25) 50%,rgba(121,201,99,.25) 75%,transparent 75%); background-size:20px 20px; }
+    .toast { transform:translateY(-6px); opacity:0; transition:all .25s; }
+    .toast.show { transform:translateY(0); opacity:1; }
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-keyboard text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">LibreOffice Calc — Keyboard Shortcuts</span>
+      </div>
+      <div class="flex items-center gap-3 text-xs sm:text-sm">
+        <span class="bg-calc-600/20 text-calc-300 px-3 py-1 rounded-full font-medium flex items-center gap-1"><i class="fa-solid fa-hand-pointer"></i> Try them live</span>
+      </div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-6 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-600/10 text-calc-300 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-bolt"></i><span>Stop mouse-hunting — get 5x faster</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3"><i class="fa-solid fa-vector-square text-calc-400 mr-2"></i>Essential Calc Shortcuts</h1>
+    <p class="text-gray-400 max-w-2xl mx-auto text-sm sm:text-base">Click any shortcut below and watch what it does on the live sheet. See the result instantly so it actually sticks.</p>
+    <div class="flex flex-wrap justify-center gap-2 mt-4">
+      <span class="bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-xs flex items-center gap-1"><i class="fa-solid fa-gamepad text-calc-400"></i> Interactive</span>
+      <span class="bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-xs flex items-center gap-1"><i class="fa-solid fa-list-check text-calc-400"></i> 30+ shortcuts</span>
+      <span class="bg-gray-800 text-gray-300 px-3 py-1 rounded-full text-xs flex items-center gap-1"><i class="fa-solid fa-star text-calc-400"></i> Beginner friendly</span>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <i class="fa-solid fa-gamepad text-calc-400 text-xl"></i>
+      <div>
+        <h2 class="text-white font-bold text-lg sm:text-xl">Shortcut Playground</h2>
+        <p class="text-gray-400 text-xs sm:text-sm">Pick a category, click a shortcut, watch the sheet react.</p>
+      </div>
+      <button onclick="resetAll()" class="ml-auto text-xs px-3 py-1.5 rounded-lg bg-gray-800 text-gray-300 hover:bg-gray-700 border border-gray-700">↺ Reset sheet</button>
+    </div>
+    <div class="p-5 sm:p-8 grid grid-cols-1 lg:grid-cols-5 gap-6">
+      <div class="lg:col-span-2">
+        <div class="flex flex-wrap gap-1.5 mb-4" id="catTabs"></div>
+        <div id="keyList" class="space-y-2"></div>
+        <div class="mt-4 rounded-lg bg-gray-900/60 border border-gray-700/50 p-4 min-h-[100px]">
+          <p class="text-gray-500 text-[11px] uppercase tracking-wide mb-2">What it does</p>
+          <p id="keyDesc" class="text-gray-300 text-sm">Select a shortcut to see a live demo.</p>
+        </div>
+      </div>
+      <div class="lg:col-span-3">
+        <div id="statusbar" class="mb-3 flex items-center justify-between text-[11px] rounded-lg border border-gray-700/60 bg-gray-900/50 px-3 py-2">
+          <span id="statusLeft" class="text-gray-300 cell-mono">A1</span>
+          <span id="statusMode" class="text-calc-300">Ready</span>
+        </div>
+        <div class="rounded-xl border border-gray-800 overflow-hidden bg-[#0f172a] shadow-2xl">
+          <div class="bg-gray-800/70 px-3 py-1.5 flex items-center gap-2 border-b border-gray-700">
+            <i class="fa-solid fa-file-spreadsheet text-calc-400 text-xs"></i><span class="text-gray-300 text-xs">Sheet1</span>
+            <span class="ml-auto text-gray-500 text-[10px]">fx&nbsp;<span id="formulaBar" class="text-gray-300 cell-mono"></span></span>
+          </div>
+          <div class="overflow-auto scrollbar-thin"><table id="sheet" class="border-separate" style="border-spacing:0"></table></div>
+        </div>
+        <div id="toast" class="toast mt-3 rounded-lg border border-calc-600/50 bg-[#0f172a] px-4 py-3 text-sm text-gray-200 flex items-center gap-2">
+          <i class="fa-solid fa-circle-info text-calc-400"></i><span id="toastMsg">Everything is ready — click a shortcut!</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-amber-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800"><i class="fa-solid fa-list text-amber-400 text-lg"></i><h2 class="text-white font-bold text-lg">Full Shortcut Cheat Sheet</h2></div>
+    <div class="p-5 sm:p-8 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-arrows-up-down-left-right"></i> Moving Around</div>
+        <ul class="text-gray-400 text-xs space-y-2">
+          <li><span class="shortcut-key mr-2">&larr; &rarr; &uarr; &darr;</span> Move one cell</li>
+          <li><span class="shortcut-key mr-2">Ctrl + &larr;</span> Jump to edge of data</li>
+          <li><span class="shortcut-key mr-2">Ctrl + Home</span> Jump to A1</li>
+          <li><span class="shortcut-key mr-2">Ctrl + End</span> Last used cell</li>
+          <li><span class="shortcut-key mr-2">PgUp / PgDn</span> Scroll a screen</li>
+        </ul></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-object-group"></i> Selecting</div>
+        <ul class="text-gray-400 text-xs space-y-2">
+          <li><span class="shortcut-key mr-1">Shift + Arrow</span> Extend select</li>
+          <li><span class="shortcut-key mr-1">Ctrl + A</span> Select all</li>
+          <li><span class="shortcut-key mr-1">Shift + Space</span> Select row</li>
+          <li><span class="shortcut-key mr-1">Ctrl + Space</span> Select column</li>
+        </ul></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-copy"></i> Edit &amp; Clipboard</div>
+        <ul class="text-gray-400 text-xs space-y-2">
+          <li><span class="shortcut-key mr-1">Ctrl + C / X / V</span> Copy · Cut · Paste</li>
+          <li><span class="shortcut-key mr-1">Ctrl + Z / Y</span> Undo / Redo</li>
+          <li><span class="shortcut-key mr-1">F2</span> Edit cell</li>
+          <li><span class="shortcut-key mr-1">Esc</span> Cancel</li>
+        </ul></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-bong"></i> Data &amp; Filling</div>
+        <ul class="text-gray-400 text-xs space-y-2">
+          <li><span class="shortcut-key mr-1">Ctrl + ;</span> Insert date</li>
+          <li><span class="shortcut-key mr-1">Ctrl + Shift + ;</span> Insert time</li>
+          <li><span class="shortcut-key mr-1">Ctrl + D</span> Fill down</li>
+          <li><span class="shortcut-key mr-1">Ctrl + R</span> Fill right</li>
+          <li><span class="shortcut-key mr-1">Ctrl + Enter</span> Fill selection</li>
+        </ul></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-magnifying-glass"></i> Find &amp; Tools</div>
+        <ul class="text-gray-400 text-xs space-y-2">
+          <li><span class="shortcut-key mr-1">Ctrl + F</span> Find</li>
+          <li><span class="shortcut-key mr-1">Ctrl + H</span> Find &amp; Replace</li>
+          <li><span class="shortcut-key mr-1">F4</span> Cycle $ refs</li>
+          <li><span class="shortcut-key mr-1">Ctrl + 1</span> Format Cells</li>
+        </ul></div>
+      <div class="bg-gray-800/40 rounded-lg p-4 border border-gray-700"><div class="text-calc-300 text-sm font-semibold mb-3 flex items-center gap-2"><i class="fa-solid fa-table"></i> Workbook &amp; Sheets</div>
+        <ul class="text-gray-400 text-xs space-y-2">
+          <li><span class="shortcut-key mr-1">Ctrl + N / O / S / P</span> New · Open · Save · Print</li>
+          <li><span class="shortcut-key mr-1">Ctrl + W</span> Close sheet</li>
+          <li><span class="shortcut-key mr-1">Shift + F11</span> New sheet</li>
+          <li><span class="shortcut-key mr-1">Ctrl + PgDn / PgUp</span> Next / Prev sheet</li>
+        </ul></div>
+    </div>
+  </section>
+
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-amber-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800"><i class="fa-solid fa-star text-amber-400 text-lg"></i><h2 class="text-white font-bold text-lg">How to Actually Remember Them</h2></div>
+    <div class="p-5 sm:p-8 tip-box"><p class="text-gray-300 text-sm"><i class="fa-solid fa-fire text-amber-400 mr-1"></i><strong class="text-white">Learn 3 per day, not 30.</strong> Just <strong>10 shortcuts</strong> cover 80% of daily work: <span class="shortcut-key mr-1">Ctrl+C</span><span class="shortcut-key mr-1">Ctrl+V</span><span class="shortcut-key mr-1">Ctrl+Z</span><span class="shortcut-key mr-1">Ctrl+S</span><span class="shortcut-key mr-1">Ctrl+F</span><span class="shortcut-key mr-1">F2</span><span class="shortcut-key mr-1">Ctrl+Enter</span><span class="shortcut-key mr-1">Ctrl+D</span>. Every time you reach for the mouse, force the key instead — <span class="text-calc-300">practice makes permanent.</span></p></div>
+  </section>
+
+  <footer class="text-center text-gray-600 text-xs pt-4 border-t border-gray-800"><p>notes made by amit</p></footer>
+  </main>
+  <script>
+
+
+  var ROWS = 10, COLS = 7;
+  var L = ['A','B','C','D','E','F','G'];
+  var data, isText, bold;
+  var active = { r:0, c:0 };
+  var selA = null, selB = null;
+  var ants = false, block = null, editing = false;
+  var undoStack = [];
+
+  function $(id){ return document.getElementById(id); }
+  function key(r,c){ return r+','+c; }
+
+  /* ---------- sample data ---------- */
+  function buildSample(){
+    var d=[], t={}, b={};
+    for(var r=0;r<ROWS;r++) d.push(new Array(COLS).fill(''));
+    function set(r,c,v,txt){ d[r][c]=String(v); if(txt) t[key(r,c)]=true; }
+    set(0,0,'Month',1); set(0,1,'Units',1); set(0,2,'Price',1);
+    set(1,0,'Jan',1); set(1,1,120); set(1,2,10);
+    set(2,0,'Feb',1); set(2,1,150); set(2,2,12);
+    set(3,0,'Mar',1); set(3,1,140); set(3,2,12);
+    set(4,0,'Apr',1); set(4,1,160); set(4,2,11);
+    set(5,0,'May',1); set(5,1,175); set(5,2,10);
+    return { d:d, t:t, b:b };
+  }
+
+  /* ---------- selection helpers ---------- */
+  function hasSel(){ return !!selA; }
+  function selRows(){ return Math.abs(selB.r-selA.r)+1; }
+  function selCols(){ return Math.abs(selB.c-selA.c)+1; }
+  function minR(){ return Math.min(selA.r,selB.r); } function maxR(){ return Math.max(selA.r,selB.r); }
+  function minC(){ return Math.min(selA.c,selB.c); } function maxC(){ return Math.max(selA.c,selB.c); }
+  function inSel(r,c){ return hasSel() && r>=minR() && r<=maxR() && c>=minC() && c<=maxC(); }
+  function single(){ selA={r:active.r,c:active.c}; selB={r:active.r,c:active.c}; }
+  function lastUsed(){ var mr=0,mc=0; for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++)if(data[r][c]!==''){ if(r>mr)mr=r; if(c>mc)mc=c; } return {r:mr,c:mc}; }
+
+  /* ---------- undo ---------- */
+  function snap(){ return { d:data.map(function(r){return r.slice();}), t:Object.assign({},isText), b:Object.assign({},bold) }; }
+  function pushUndo(){ undoStack.push(snap()); if(undoStack.length>60) undoStack.shift(); }
+  function doUndo(){ if(!undoStack.length) return false; var s=undoStack.pop(); data=s.d; isText=s.t; bold=s.b; return true; }
+
+  /* ---------- toast & status ---------- */
+  function toast(m){ var t=$('toast'); t.classList.add('show'); $('toastMsg').textContent=m; setTimeout(function(){ t.classList.remove('show'); },2600); }
+
+  /* ---------- actions ---------- */
+  function actMove(dr,dc){ var nr=Math.max(0,Math.min(ROWS-1,active.r+dr)); var nc=Math.max(0,Math.min(COLS-1,active.c+dc)); active={r:nr,c:nc}; single(); }
+  var actHome=function(){ active={r:active.r,c:0}; single(); toast('Home → beginning of row'); };
+  var actCtrlHome=function(){ active={r:0,c:0}; single(); toast('Ctrl+Home → A1'); };
+  var actCtrlEnd=function(){ var u=lastUsed(); active={r:u.r,c:u.c}; single(); toast('Ctrl+End → last cell with data'); };
+  var actCtrlUp=function(){ active={r:0,c:active.c}; single(); toast('Ctrl+↑ → top of column'); };
+  var actCtrlDown=function(){ active={r:ROWS-1,c:active.c}; single(); toast('Ctrl+↓ → bottom of column'); };
+  var actCtrlLeft=function(){ active={r:active.r,c:0}; single(); toast('Ctrl+← → far left'); };
+  var actCtrlRight=function(){ var u=lastUsed(); active={r:active.r,c:u.c}; single(); toast('Ctrl+→ → last column with data'); };
+  var actCtrlA=function(){ var u=lastUsed(); selA={r:0,c:0}; selB={r:u.r,c:u.c}; toast('Ctrl+A → selected the used area'); };
+  var actRowSel=function(){ selA={r:active.r,c:0}; selB={r:active.r,c:COLS-1}; toast('Shift+Spacebar → whole row'); };
+  var actColSel=function(){ selA={r:0,c:active.c}; selB={r:ROWS-1,c:active.c}; toast('Ctrl+Spacebar → whole column'); };
+  var actCopy=function(){ if(!hasSel()) single(); block={vals:{},rows:selRows(),cols:selCols()}; for(var r=minR();r<=maxR();r++)for(var c=minC();c<=maxC();c++) block.vals[(r-minR())+','+(c-minC())]=data[r][c]; ants=true; toast('Copied '+block.rows+' × '+block.cols+' — marching ants!'); };
+  var actCut=function(){ pushUndo(); if(!hasSel()) single(); block={vals:{},rows:selRows(),cols:selCols()}; for(var r=minR();r<=maxR();r++)for(var c=minC();c<=maxC();c++){ block.vals[(r-minR())+','+(c-minC())]=data[r][c]; data[r][c]=''; } ants=true; toast('Cut — original cleared, now paste it'); };
+  var actPaste=function(){ if(!block){ toast('Nothing copied yet — press Copy or Cut first.'); return; } pushUndo(); var or=active.r, oc=active.c; for(var rr=0;rr<block.rows;rr++)for(var cc=0;cc<block.cols;cc++){ var tr=or+rr, tc=oc+cc; if(tr<ROWS&&tc<COLS) data[tr][tc]=block.vals[rr+','+cc]; } ants=false; block=null; toast('Pasted block at '+L[oc]+(or+1)); };
+  var actUndo=function(){ if(doUndo()) toast('Undo — went back one step.'); else toast('Nothing to undo yet.'); ants=false; };
+  var actEdit=function(){ editing=true; toast('F2 → type directly in this cell, Enter to commit'); };
+  var actEsc=function(){ editing=false; selA=selB=null; ants=false; toast('Esc → cancelled'); };
+  var actBold=function(){ pushUndo(); var list=[]; if(hasSel()&&(selRows()>1||selCols()>1)){ for(var r=minR();r<=maxR();r++)for(var c=minC();c<=maxC();c++) list.push(key(r,c)); } else list.push(key(active.r,active.c)); list.forEach(function(k){ bold[k]=!bold[k]; }); toast('Ctrl+B → bold toggled on selection'); };
+  var actFind=function(){ var f=false; for(var r=0;r<ROWS;r++)for(var c=0;c<COLS;c++)if(data[r][c]==='Mar') f=true; toast(f?'Find → matched "Mar" in the sheet':'Ctrl+F → Find dialog'); };
+  var actReplace=function(){ toast('Ctrl+H → Find & Replace dialog'); };
+  var actF4=function(){ toast('F4 → reference cycles: =B2 → $B$2 → B$2 → $B2 (adds $ locks)'); };
+  var actFormat=function(){ toast('Ctrl+1 → Format Cells dialog opened'); };
+  var actFillDown=function(){ pushUndo(); if(!hasSel()) single(); for(var c=minC();c<=maxC();c++){ var topr=minR(); for(var r=minR();r<=maxR();r++) data[r][c]=data[topr][c]; } toast('Ctrl+D → filled down from the top cell'); };
+  var actFillRight=function(){ pushUndo(); if(!hasSel()) single(); for(var r=minR();r<=maxR();r++){ var lc=minC(); for(var c=minC();c<=maxC();c++) data[r][c]=data[r][lc]; } toast('Ctrl+R → filled right from the left cell'); };
+  var actFillSel=function(){ pushUndo(); if(!hasSel()) single(); var v=data[active.r][active.c]; for(var r=minR();r<=maxR();r++)for(var c=minC();c<=maxC();c++) data[r][c]=v; editing=false; toast('Ctrl+Enter → filled the whole selection'); };
+  var actDate=function(){ pushUndo(); data[active.r][active.c]=new Date().toLocaleDateString(); toast('Ctrl+; → inserted today\'s date'); };
+  var actTime=function(){ pushUndo(); data[active.r][active.c]=new Date().toLocaleTimeString().slice(0,5); toast('Ctrl+Shift+; → inserted current time'); };
+  var actNew=function(){ toast('Ctrl+N → new workbook'); };
+  var actOpen=function(){ toast('Ctrl+O → Open dialog'); };
+  var actSave=function(){ toast('Ctrl+S → saved!'); };
+  var actPrint=function(){ toast('Ctrl+P → Print dialog'); };
+  var actClose=function(){ toast('Ctrl+W → closed current sheet'); };
+  var actSheet=function(){ toast('Shift+F11 → inserted a new sheet'); };
+  var actNext=function(){ toast('Ctrl+PageDown → next sheet'); };
+  var actPrev=function(){ toast('Ctrl+PageUp → previous sheet'); };
+
+  var ACT = {
+    left:function(){actMove(0,-1);}, right:function(){actMove(0,1);}, up:function(){actMove(-1,0);}, down:function(){actMove(1,0);},
+    home:actHome, ctrlhome:actCtrlHome, ctrlend:actCtrlEnd, ctrlup:actCtrlUp, ctrldown:actCtrlDown, ctrlleft:actCtrlLeft, ctrlright:actCtrlRight,
+    ctrlA:actCtrlA, srow:actRowSel, scol:actColSel,
+    ctrlC:actCopy, ctrlX:actCut, ctrlV:actPaste, ctrlZ:actUndo,
+    f2:actEdit, esc:actEsc, ctrlB:actBold, date:actDate, time:actTime,
+    ctrlF:actFind, ctrlH:actReplace, ctrlD:actFillDown, ctrlR:actFillRight, ctrlenter:actFillSel,
+    ctrlN:actNew, ctrlO:actOpen, ctrlS:actSave, ctrlP:actPrint, ctrlclose:actClose, newsheet:actSheet, nextsheet:actNext, prevsheet:actPrev,
+    ctrlformat:actFormat, f4:actF4
+  };
+
+  var INFO = {
+    left:['←','Move one cell left'], right:['→','Move one cell right'], up:['↑','Move one cell up'], down:['↓','Move one cell down'],
+    home:['Home','Beginning of the row'], ctrlhome:['Ctrl+Home','Jump to A1'], ctrlend:['Ctrl+End','Last cell with data'],
+    ctrlup:['Ctrl+↑','Top of column'], ctrldown:['Ctrl+↓','Bottom of column'], ctrlleft:['Ctrl+←','Far left'], ctrlright:['Ctrl+→','Last data column'],
+    ctrlA:['Ctrl+A','Select all used cells'], srow:['Shift+Spacebar','Select whole row'], scol:['Ctrl+Spacebar','Select whole column'],
+    ctrlC:['Ctrl+C','Copy → marching ants'], ctrlX:['Ctrl+X','Cut → clears original'], ctrlV:['Ctrl+V','Paste'], ctrlZ:['Ctrl+Z','Undo'],
+    f2:['F2','Edit this cell'], esc:['Esc','Cancel & clear'], ctrlB:['Ctrl+B','Bold'], date:['Ctrl+;','Insert date'], time:['Ctrl+Shift+;','Insert time'],
+    ctrlF:['Ctrl+F','Find'], ctrlH:['Ctrl+H','Find & Replace'], ctrlD:['Ctrl+D','Fill down'], ctrlR:['Ctrl+R','Fill right'], ctrlenter:['Ctrl+Enter','Fill selection'],
+    ctrlN:['Ctrl+N','New workbook'], ctrlO:['Ctrl+O','Open'], ctrlS:['Ctrl+S','Save'], ctrlP:['Ctrl+P','Print'], ctrlclose:['Ctrl+W','Close sheet'], newsheet:['Shift+F11','New sheet'], nextsheet:['Ctrl+PgDn','Next sheet'], prevsheet:['Ctrl+PgUp','Previous sheet'],
+    ctrlformat:['Ctrl+1','Format Cells'], f4:['F4','Cycle $ refs']
+  };
+
+  /* ---------- render ---------- */
+  function render(){
+    var tb=$('sheet'); tb.innerHTML='';
+    var hr=document.createElement('tr');
+    var c0=document.createElement('td'); c0.className='cell axis'; hr.appendChild(c0);
+    for(var c=0;c<COLS;c++){ var h=document.createElement('td'); h.className='cell axis'; h.textContent=L[c]; hr.appendChild(h); }
+    tb.appendChild(hr);
+    for(var r=0;r<ROWS;r++){
+      var tr=document.createElement('tr');
+      var rn=document.createElement('td'); rn.className='cell axis'; rn.textContent=r+1; tr.appendChild(rn);
+      for(var c=0;c<COLS;c++){
+        var td=document.createElement('td'); td.className='cell';
+        var k=key(r,c), v=data[r][c];
+        if(isText[k]) td.classList.add('lbl'); else if(v!=='') td.classList.add('num'); else td.classList.add('empty');
+        if(bold[k]) td.classList.add('boldtext');
+        var isA = (r===active.r && c===active.c);
+        var isS = inSel(r,c);
+        if(isA) td.classList.add('active');
+        else if(isS) td.classList.add('inSel');
+        if(isS && ants) td.classList.add('ants');
+        td.textContent=v;
+        tr.appendChild(td);
+      }
+      tb.appendChild(tr);
+    }
+    $('statusLeft').textContent=L[active.c]+(active.r+1);
+    $('formulaBar').textContent = editing ? (data[active.r][active.c]||'')+' |' : (data[active.r][active.c]||'');
+    $('statusMode').textContent = editing ? 'EDIT' : 'Ready';
+  }
+
+  /* ---------- run from chip ---------- */
+  function run(k){
+    if(ACT[k]) ACT[k]();
+    var info=INFO[k];
+    if(info){ $('keyDesc').innerHTML='<span class="shortcut-key mr-2">'+info[0]+'</span> '+info[1]; }
+    render();
+  }
+
+  /* ---------- build the picker UI ---------- */
+  var CATS=[
+    {name:'Move', icon:'fa-up-down-left-right', keys:['left','right','up','down','home','ctrlhome','ctrlend','ctrlup','ctrldown','ctrlleft','ctrlright']},
+    {name:'Select', icon:'fa-mouse-pointer', keys:['ctrlA','srow','scol']},
+    {name:'Clipboard', icon:'fa-copy', keys:['ctrlC','ctrlX','ctrlV','ctrlZ']},
+    {name:'Edit', icon:'fa-pen', keys:['f2','esc','ctrlB','date','time']},
+    {name:'Find & Fill', icon:'fa-magnifying-glass', keys:['ctrlF','ctrlH','ctrlD','ctrlR','ctrlenter']},
+    {name:'Workbook', icon:'fa-file', keys:['ctrlN','ctrlO','ctrlS','ctrlP','ctrlclose','newsheet','nextsheet','prevsheet']},
+    {name:'Format', icon:'fa-palette', keys:['ctrlformat','f4']}
+  ];
+  function buildUI(){
+    var tabs=$('catTabs'), list=$('keyList');
+    CATS.forEach(function(cat,i){
+      var tab=document.createElement('button');
+      tab.className='cat-btn px-3 py-1.5 rounded-lg text-xs font-semibold bg-gray-700 text-gray-300 hover:bg-gray-600 transition';
+      tab.innerHTML='<i class="fa-solid '+cat.icon+' mr-1"></i>'+cat.name;
+      tab.dataset.i=i; tab.dataset.name=cat.name; tab.dataset.ic=cat.icon;
+      tab.onclick=function(){ selTab(i); };
+      tabs.appendChild(tab);
+      cat.keys.forEach(function(k){
+        var chip=document.createElement('button');
+        chip.className='chip w-full flex items-center justify-between bg-gray-800/50 hover:bg-gray-700/50 border border-gray-700 hover:border-calc-500 px-3 py-2 rounded-lg transition text-left';
+        chip.style.display='none';
+        chip.dataset.i=i;
+        var left=document.createElement('span'); left.className='flex items-center gap-3 min-w-0';
+        var kv=document.createElement('span'); kv.className='shortcut-key shrink-0'; kv.textContent=INFO[k][0];
+        var desc=document.createElement('span'); desc.className='text-gray-400 text-xs truncate'; desc.textContent=INFO[k][1];
+        left.appendChild(kv); left.appendChild(desc);
+        var play=document.createElement('i'); play.className='fa-solid fa-play text-calc-400 text-xs shrink-0';
+        chip.appendChild(left); chip.appendChild(play);
+        chip.onclick=function(){ run(k); };
+        list.appendChild(chip);
+      });
+    });
+    selTab(0);
+  }
+  function selTab(i){
+    var tabs=$('catTabs').children;
+    for(var j=0;j<tabs.length;j++){
+      var on = (tabs[j].dataset.i==i);
+      tabs[j].innerHTML = '<i class="fa-solid '+(tabs[j].dataset.ic||'')+' mr-1"></i>'+tabs[j].dataset.name;
+      if(on){ tabs[j].classList.add('bg-calc-600','text-white'); tabs[j].classList.remove('bg-gray-700','text-gray-300'); }
+      else{ tabs[j].classList.remove('bg-calc-600','text-white'); tabs[j].classList.add('bg-gray-700','text-gray-300'); }
+    }
+    var chips=$('keyList').children;
+    for(var k=0;k<chips.length;k++) chips[k].style.display = (chips[k].dataset.i==i)?'':'none';
+  }
+  function resetAll(){
+    var s=buildSample(); data=s.d; isText=s.t; bold=s.b;
+    active={r:0,c:0}; selA=selB=null; ants=false; block=null; editing=false; undoStack=[];
+    render(); toast('Sheet reset to sample data');
+  }
+
+  var initial=buildSample();
+  data=initial.d; isText=initial.t; bold=initial.b;
+  buildUI();
+  render();
+
+
+  </script>
+</body>
+</html>

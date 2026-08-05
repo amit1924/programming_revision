@@ -1,0 +1,802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Formula Playground — Type, Check, Revise | Excel</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script>
+    tailwind.config={darkMode:'class',theme:{extend:{colors:{calc:{50:'#f4fbf2',100:'#e3f5dc',200:'#c8ecba',300:'#a2dd8f',400:'#79c963',500:'#56af3f',600:'#41902e',700:'#357326',800:'#2c5b22',900:'#254b1e'},lock:{400:'#60a5fa',500:'#3b82f6'}}}}}
+  </script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { font-family:'Inter', sans-serif; }
+    body { background:#0f172a; }
+    .cell-mono,.fkey,.mono { font-family:'JetBrains Mono',monospace; }
+    .fkey { display:inline-block; background:#1e293b; border:1px solid #475569; border-bottom-width:3px; border-radius:6px; padding:2px 8px; font-family:'JetBrains Mono',monospace; font-size:.75rem; color:#fbbf24; }
+    .section-card { background:linear-gradient(135deg,#1e293b 0%,#0f172a 100%); border:1px solid #334155; border-radius:16px; overflow:hidden; }
+    .tip-box { background:linear-gradient(135deg,#1d3329,#0f172a); border-left:4px solid #56af3f; border-radius:8px; padding:16px; }
+    .warn-box { background:linear-gradient(135deg,#3a2417,#0f172a); border-left:4px solid #fb923c; border-radius:8px; padding:16px; }
+    .err-box { background:linear-gradient(135deg,#3a1620,#0f172a); border-left:4px solid #f87171; border-radius:8px; padding:16px; }
+
+    table.g { border-collapse:collapse; font-family:'JetBrains Mono',monospace; font-size:.82rem; width:100%; }
+    table.g th { background:#273449; color:#9aa9bd; font-weight:500; padding:5px 8px; border:1px solid #334155; text-align:center; font-size:.7rem; }
+    table.g td { padding:6px 9px; border:1px solid #334155; background:#0f172a; color:#dbe3ee; text-align:center; }
+    table.g .rn { background:#1e293b; color:#64748b; font-weight:500; }
+    table.g td.h  { background:#16322a; box-shadow:inset 0 0 0 2px #79c963; }
+    .wrap { max-width:100%; overflow-x:auto; -webkit-overflow-scrolling:touch; border-radius:8px; }
+
+    .qcard { background:rgba(30,41,59,.45); border:1px solid #334155; border-radius:12px; padding:14px; display:flex; flex-direction:column; gap:10px; }
+    .qnum { display:inline-flex; width:24px; height:24px; align-items:center; justify-content:center; border-radius:99px; background:#41902e; color:#fff; font-weight:700; font-size:.75rem; flex:none; }
+    .qinput { background:#0f172a; border:1px solid #475569; border-radius:8px; padding:8px 10px; color:#a3e635; font-family:'JetBrains Mono',monospace; font-size:.85rem; width:100%; outline:none; }
+    .qinput:focus { border-color:#79c963; }
+    .btn { border-radius:8px; padding:7px 12px; font-size:.8rem; font-weight:600; cursor:pointer; border:none; }
+    .btn-check { background:#41902e; color:#fff; }
+    .btn-check:hover { background:#56af3f; }
+    .btn-ghost { background:#273449; color:#dbe3ee; }
+    .btn-ghost:hover { background:#334155; }
+    .chip { border-radius:999px; padding:4px 12px; font-size:.75rem; font-weight:600; cursor:pointer; border:1px solid #475569; color:#9aa9bd; background:transparent; }
+    .chip.active { background:#41902e; border-color:#41902e; color:#fff; }
+    details.ref { border:1px solid #334155; border-radius:12px; background:rgba(30,41,59,.35); }
+    details.ref summary { cursor:pointer; padding:12px 16px; font-weight:600; color:#e2e8f0; list-style:none; display:flex; align-items:center; gap:10px; }
+    details.ref summary::-webkit-details-marker { display:none; }
+    @media (max-width:640px){ table.g{font-size:.68rem;} }
+  </style>
+</head>
+<body class="dark">
+
+  <nav class="sticky top-0 z-50 bg-[#0f172a]/95 backdrop-blur border-b border-gray-800">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between gap-3">
+      <div class="flex items-center gap-3">
+        <i class="fa-solid fa-gamepad text-calc-500 text-xl"></i>
+        <span class="font-bold text-white text-sm sm:text-base">Formula Playground</span>
+      </div>
+      <div class="flex items-center gap-2 text-xs">
+        <span class="bg-calc-500/15 text-calc-300 px-3 py-1 rounded-full font-medium"><i class="fa-solid fa-check mr-1"></i><span id="score-correct">0</span> correct</span>
+        <span class="bg-red-500/15 text-red-300 px-3 py-1 rounded-full font-medium hidden sm:inline"><i class="fa-solid fa-xmark mr-1"></i><span id="score-wrong">0</span> wrong</span>
+        <span class="bg-lock-500/15 text-lock-400 px-3 py-1 rounded-full font-medium hidden sm:inline"><i class="fa-solid fa-bullseye mr-1"></i><span id="score-total">0</span>/<span id="score-count">38</span></span>
+      </div>
+    </div>
+  </nav>
+
+  <header class="max-w-7xl mx-auto px-4 pt-8 pb-2 text-center">
+    <div class="inline-flex items-center gap-2 bg-calc-500/10 text-calc-400 px-4 py-1.5 rounded-full text-sm mb-4"><i class="fa-solid fa-keyboard"></i><span>Type the formula · get instant Correct / Error feedback · peek at hints when you forget</span></div>
+    <h1 class="text-3xl sm:text-4xl md:text-5xl font-extrabold text-white mb-3">Formula Playground</h1>
+    <p class="text-gray-400 max-w-3xl mx-auto text-sm sm:text-base">A real mini-spreadsheet with dummy data. Type any formula into the <b>Sandbox</b> and watch it compute (errors included!). Then work through <b>38 revision questions</b> — your formula is evaluated against the data and you get <span class="text-emerald-300">Correct</span> or <span class="text-red-300">Error / Not quite</span>. Forgot one? Hit <b>Hint</b> or <b>Reveal</b>.</p>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 pb-16 space-y-10">
+
+  <!-- 1. DUMMY DATA -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">1</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">The Dummy Data</h2><p class="text-gray-400 text-xs sm:text-sm">Three tables on one worksheet. Questions and the sandbox both read from these exact cells.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="tip-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-table text-calc-400 mr-1"></i><strong class="text-white">Jobs</strong> (rows 1–9, cols A–C) · <strong class="text-white">Products</strong> (rows 1–6, cols E–F) · <strong class="text-white">Sales</strong> (rows 12–17, cols A–C). Blank cells are <b>really blank</b> — so <span class="fkey">=C14/B14</span> gives <span class="err">#DIV/0!</span> just like Excel.</p></div>
+      <div class="wrap" id="sheet-grid"></div>
+    </div>
+  </section>
+
+  <!-- 2. SANDBOX -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">2</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Formula Sandbox</h2><p class="text-gray-400 text-xs sm:text-sm">Type anything. If your formula breaks, you'll see the exact error value — just like Excel.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4">
+      <div class="flex flex-col sm:flex-row gap-3">
+        <input id="sandbox-input" type="text" placeholder='e.g. =SUM(B2:B9)   or   =VLOOKUP("Monitor",E2:F6,2,FALSE)' class="qinput flex-1" autocomplete="off" spellcheck="false">
+        <button id="sandbox-run" class="btn btn-check">Run</button>
+      </div>
+      <div id="sandbox-result"></div>
+      <div class="wrap"><table class="g">
+        <thead><tr><th>Try these</th><th>Result you should see</th></tr></thead>
+        <tbody>
+          <tr><td class="form">=SUM(B2:B9)</td><td class="m">1655000</td></tr>
+          <tr><td class="form">=MEDIAN(B2:B9)</td><td class="m">105000</td></tr>
+          <tr><td class="form">=C14/B14</td><td class="err">#DIV/0!</td></tr>
+          <tr><td class="form">=VLOOKUP(999,E2:F6,2,FALSE)</td><td class="err">#N/A</td></tr>
+          <tr><td class="form">="Data"&amp;LEN(A2)</td><td class="m">Data11</td></tr>
+        </tbody>
+      </table></div>
+    </div>
+  </section>
+
+  <!-- 3. QUIZ -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-calc-600/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-calc-600 flex items-center justify-center text-white font-bold text-sm">3</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Revision Quiz — Type the Formula</h2><p class="text-gray-400 text-xs sm:text-sm">38 questions, grouped by category. Press Enter or click Check.</p></div>
+      <div class="ml-auto">
+        <div class="w-32 sm:w-48 bg-gray-800 rounded-full h-2 overflow-hidden"><div id="progress" class="h-full bg-calc-500 transition-all" style="width:0%"></div></div>
+        <p class="text-right text-[10px] text-gray-500 mt-1" id="progress-label">0% mastered</p>
+      </div>
+    </div>
+    <div class="p-5 sm:p-8">
+      <div id="chips" class="flex flex-wrap gap-2 mb-5"></div>
+      <div id="quiz-grid" class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4"></div>
+      <div class="flex gap-3 mt-6">
+        <button id="reset-btn" class="btn btn-ghost"><i class="fa-solid fa-rotate-left mr-1"></i>Reset all</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. REFERENCE -->
+  <section class="section-card">
+    <div class="bg-gradient-to-r from-lock-500/20 to-transparent px-5 sm:px-8 py-4 flex items-center gap-3 border-b border-gray-800">
+      <div class="w-8 h-8 rounded-lg bg-lock-500 flex items-center justify-center text-white font-bold text-sm">4</div>
+      <div><h2 class="text-white font-bold text-lg sm:text-xl">Formula Reference — Revise If You Forgot</h2><p class="text-gray-400 text-xs sm:text-sm">Every formula used in the quiz, with syntax and a worked example. Open a category to refresh your memory.</p></div>
+    </div>
+    <div class="p-5 sm:p-8 space-y-4" id="reference"></div>
+  </section>
+
+  </main>
+
+  <footer class="border-t border-gray-800 py-6 text-center text-xs text-gray-500">
+    <p><i class="fa-solid fa-gamepad mr-1 text-calc-500"></i> Formula Playground — type · check · revise. Mini formula engine: SUM AVERAGE MEDIAN MIN MAX COUNT COUNTA COUNTIF(S) SUMIF(S) AVERAGEIF(S) DISTINCTCOUNT IF IFS AND OR NOT IFERROR IFNA IS* VLOOKUP HLOOKUP XLOOKUP text &amp; math functions.</p>
+  </footer>
+
+<script>
+/* ===================== DUMMY SHEET ===================== */
+const COLS = ['A','B','C','D','E','F'];
+const colIdx = c => COLS.indexOf(c.toUpperCase());
+const cellKey = (c,r) => COLS[c]+r;
+
+const sheet = {};
+const headerCells = new Set();
+
+function put(r,c,rows){
+  rows.forEach((row,ri)=>{
+    row.forEach((v,ci)=>{
+      sheet[cellKey(c+ci, r+ri)] = v;
+      if(ri===0) headerCells.add(cellKey(c+ci, r+ri));
+    });
+  });
+}
+put(1,0,[
+  ['Job Title','Salary','Country'],
+  ['Data Analyst',115000,'United States'],
+  ['Data Analyst',75000,'United States'],
+  ['Data Analyst',90000,'India'],
+  ['Data Scientist',95000,'United States'],
+  ['Data Scientist',960000,'United States'],
+  ['Data Engineer',120000,'India'],
+  ['Business Analyst',60000,'United Kingdom'],
+  ['Senior Data Engineer',140000,'United States'],
+]);
+put(1,4,[
+  ['Product','Price'],
+  ['Laptop',1200],
+  ['Mouse',25],
+  ['Keyboard',60],
+  ['Monitor',300],
+  ['Desk',250],
+]);
+put(12,0,[
+  ['Item','Qty','Total'],
+  ['Pen',10,500],
+  ['Notebook','',300],
+  ['Eraser',5,250],
+  ['Pencil',20,400],
+  ['Stapler','',100],
+]);
+
+/* ===================== FORMULA ENGINE ===================== */
+const ERR = '#ERR';
+function err(code){ return {__err:code}; }
+const isErr = v => v && typeof v==='object' && '__err' in v;
+const errCode = v => v.__err;
+const blank = '';
+
+function tokenize(src){
+  const tokens=[];
+  let i=0;
+  const re=/\s*(?:("(?:[^"]|"")*")|(\d+(?:\.\d+)?)|(\$?[A-Za-z]{1,2}\$?\d+(?::\$?[A-Za-z]{1,2}\$?\d+)?)|(>=|<=|<>|=|<|>|\+|-|\*|\/|\^|&|\(|\)|,)|(TRUE|FALSE)|([A-Za-z_][A-Za-z0-9_.]*))/y;
+  while(i<src.length){
+    re.lastIndex=i;
+    const m=re.exec(src);
+    if(!m){ i++; continue; }
+    i=re.lastIndex;
+    const [,str,num,ref,op,bool,name]=m;
+    if(str!==undefined) tokens.push({type:'str', val:str.slice(1,-1).replace(/""/g,'"')});
+    else if(num!==undefined) tokens.push({type:'num', val:parseFloat(num)});
+    else if(ref!==undefined) tokens.push({type:'ref', val:ref.toUpperCase()});
+    else if(op!==undefined) tokens.push({type:'op', val:op});
+    else if(bool!==undefined) tokens.push({type:'bool', val:bool==='TRUE'});
+    else if(name!==undefined) tokens.push({type:'name', val:name});
+  }
+  return tokens;
+}
+
+function parseRef(s){
+  const m=/^\$?([A-Z]+)\$?(\d+)(?::\$?([A-Z]+)\$?(\d+))?$/.exec(s);
+  if(!m) return null;
+  return { c1:colIdx(m[1]), r1:+m[2], c2:m[3]?colIdx(m[3]):null, r2:m[4]?+m[4]:null };
+}
+
+function parseFormula(src){
+  src=String(src).trim();
+  if(src.charAt(0)==='=') src=src.slice(1);
+  const tokens=tokenize(src);
+  let p=0;
+  const peek=()=>tokens[p];
+  const next=()=>tokens[p++];
+
+  function parseExpr(){ return parseComparison(); }
+  function parseComparison(){
+    let left=parseAddSub();
+    while(peek()&&peek().type==='op'&&['=','<>','<','>','<=','>='].includes(peek().val)){
+      const op=next().val; const right=parseAddSub(); left={t:'binop',op,left,right};
+    }
+    return left;
+  }
+  function parseAddSub(){
+    let left=parseMulDiv();
+    while(peek()&&peek().type==='op'&&['+','-','&'].includes(peek().val)){
+      const op=next().val; const right=parseMulDiv(); left={t:'binop',op,left,right};
+    }
+    return left;
+  }
+  function parseMulDiv(){
+    let left=parseUnary();
+    while(peek()&&peek().type==='op'&&['*','/','^'].includes(peek().val)){
+      const op=next().val; const right=parseUnary(); left={t:'binop',op,left,right};
+    }
+    return left;
+  }
+  function parseUnary(){
+    if(peek()&&peek().type==='op'&&peek().val==='-'){ next(); return {t:'neg',operand:parseUnary()}; }
+    return parsePrimary();
+  }
+  function parsePrimary(){
+    const tk=next();
+    if(!tk) throw err('#VALUE!');
+    if(tk.type==='num') return {t:'lit',v:tk.val};
+    if(tk.type==='str') return {t:'lit',v:tk.val};
+    if(tk.type==='bool') return {t:'lit',v:tk.val};
+    if(tk.type==='op'&&tk.val==='('){ const e=parseExpr(); if(!peek()||peek().type!=='op'||peek().val!==')') throw err('#VALUE!'); next(); return e; }
+    if(tk.type==='ref'){
+      const r=parseRef(tk.val);
+      if(!r) throw err('#REF!');
+      if(r.c2==null) return {t:'cell',c:r.c1,r:r.r1};
+      return {t:'range',c1:r.c1,r1:r.r1,c2:r.c2,r2:r.r2};
+    }
+    if(tk.type==='name'){
+      const fname=tk.val.toUpperCase();
+      const args=[];
+      if(peek()&&peek().type==='op'&&peek().val==='('){
+        next();
+        if(peek()&&peek().type==='op'&&peek().val===')') next();
+        else{
+          args.push(parseExpr());
+          while(peek()&&peek().type==='op'&&peek().val===','){ next(); args.push(parseExpr()); }
+          if(!peek()||peek().type!=='op'||peek().val!==')') throw err('#VALUE!');
+          next();
+        }
+      }
+      return {t:'func',name:fname,args};
+    }
+    throw err('#NAME?');
+  }
+  const ast=parseExpr();
+  if(p<tokens.length) throw err('#VALUE!');
+  return ast;
+}
+
+function getRange2D(node){
+  const grid=[];
+  for(let r=node.r1;r<=node.r2;r++){
+    const row=[];
+    for(let c=node.c1;c<=node.c2;c++){
+      const v=sheet[cellKey(c,r)];
+      row.push(v===undefined?blank:v);
+    }
+    grid.push(row);
+  }
+  return grid;
+}
+function flat(grid){ return [].concat.apply([],grid); }
+
+function evalArg(node){
+  if(node.t==='range') return {isRange:true, grid:getRange2D(node), values:flat(getRange2D(node))};
+  return evaluate(node);
+}
+const scalar = v => v&&v.isRange ? v.values[0] : v;
+function toNum(v){
+  if(v&&v.isRange){ const s=v.values[0]; return toNum(s); }
+  if(isErr(v)) return v;
+  if(typeof v==='number') return v;
+  if(typeof v==='boolean') return v?1:0;
+  if(v===''||v===undefined||v===null) return 0;
+  const n=parseFloat(String(v).replace(/,/g,''));
+  return isNaN(n)?NaN:n;
+}
+function toBool(v){
+  if(v&&v.isRange){ v=v.values[0]; }
+  if(isErr(v)) return v;
+  if(typeof v==='boolean') return v;
+  if(typeof v==='number') return v!==0;
+  if(v===''||v===undefined||v===null) return false;
+  const s=String(v).toUpperCase();
+  if(s==='TRUE') return true;
+  if(s==='FALSE') return false;
+  return v!==0;
+}
+function flatten(args){
+  const out=[];
+  args.forEach(a=>{ if(a&&a.isRange) out.push.apply(out,a.values); else out.push(a); });
+  return out;
+}
+function numericOnly(list){ return list.filter(v=>typeof v==='number'); }
+
+function critOp(c){
+  if(typeof c==='number') return ['=',String(c)];
+  const s=String(c).trim();
+  const m=/^(<=|>=|<>|=|<|>)/.exec(s);
+  if(m) return [m[1], s.slice(m[1].length).trim()];
+  return ['=',s];
+}
+function critMatch(value, crit){
+  const [op,cv]=critOp(crit);
+  const vtxt=String(value===''||value===undefined?'':value).trim();
+  const vnum=(value===''||value===undefined)?null:(typeof value==='number'?value:NaN);
+  const cnum=cv===''?NaN:Number(cv);
+  const bothNum=(value!==''&&value!==undefined&&typeof value==='number'&&!isNaN(cnum))||(!isNaN(vnum)&&!isNaN(cnum));
+  if(op==='='){
+    if(bothNum) return vnum===cnum;
+    if(value!==''&&value!==undefined&&typeof value==='number'&&cv!==''&&!isNaN(cnum)) return vnum===cnum;
+    return vtxt.toLowerCase()===cv.toLowerCase();
+  }
+  if(bothNum){
+    switch(op){case '>':return vnum>cnum;case '>=':return vnum>=cnum;case '<':return vnum<cnum;case '<=':return vnum<=cnum;case '<>':return vnum!==cnum;}
+  }
+  if(op==='<>') return vtxt.toLowerCase()!==cv.toLowerCase();
+  return false;
+}
+
+function evaluate(node){
+  if(!node||node.t===undefined) return blank;
+  switch(node.t){
+    case 'lit': return node.v;
+    case 'cell': { const v=sheet[cellKey(node.c,node.r)]; return v===undefined?blank:v; }
+    case 'range': return {isRange:true, grid:getRange2D(node), values:flat(getRange2D(node))};
+    case 'neg': { const v=evaluate(node.operand); if(isErr(v)) return v; const n=toNum(v); return isNaN(n)?err('#VALUE!'):-n; }
+    case 'binop': {
+      const a=evaluate(node.left), b=evaluate(node.right);
+      if(isErr(a)) return a; if(isErr(b)) return b;
+      if(node.op==='&') return String(scalar(a))+String(scalar(b));
+      if(['=','<>','<','>','<=','>='].includes(node.op)){
+        const av=scalar(a), bv=scalar(b);
+        const an=(typeof av==='number')?av:NaN, bn=(typeof bv==='number')?bv:NaN;
+        let cmp;
+        if(!isNaN(an)&&!isNaN(bn)) cmp=an-bn;
+        else cmp=String(av).toLowerCase().localeCompare(String(bv).toLowerCase());
+        if(node.op==='=') return cmp===0;
+        if(node.op==='<>') return cmp!==0;
+        if(node.op==='<') return cmp<0;
+        if(node.op==='>') return cmp>0;
+        if(node.op==='<=') return cmp<=0;
+        return cmp>=0;
+      }
+      const an=toNum(a), bn=toNum(b);
+      if(isNaN(an)||isNaN(bn)) return err('#VALUE!');
+      switch(node.op){
+        case '+': return an+bn;
+        case '-': return an-bn;
+        case '*': return an*bn;
+        case '/': if(bn===0) return err('#DIV/0!'); return an/bn;
+        case '^': return Math.pow(an,bn);
+      }
+      return err('#VALUE!');
+    }
+    case 'func': return callFunc(node);
+  }
+  return blank;
+}
+
+function argList(node){
+  return node.args.map(a=>evalArg(a));
+}
+
+function callFunc(node){
+  const name=node.name, args=argList(node), A=args;
+  switch(name){
+    /* ---- aggregation ---- */
+    case 'SUM': return numericOnly(flatten(A)).reduce((s,n)=>s+n,0);
+    case 'AVERAGE': { const n=numericOnly(flatten(A)); return n.length? n.reduce((s,x)=>s+x,0)/n.length : err('#DIV/0!'); }
+    case 'MEDIAN': { const n=numericOnly(flatten(A)); if(!n.length) return err('#NUM!'); n.sort((x,y)=>x-y); const m=Math.floor(n.length/2); return n.length%2? n[m] : (n[m-1]+n[m])/2; }
+    case 'MIN': { const n=numericOnly(flatten(A)); return n.length? Math.min.apply(null,n):0; }
+    case 'MAX': { const n=numericOnly(flatten(A)); return n.length? Math.max.apply(null,n):0; }
+    case 'PRODUCT': return numericOnly(flatten(A)).reduce((s,n)=>s*n,1);
+    /* ---- counting ---- */
+    case 'COUNT': return flatten(A).filter(v=>typeof v==='number').length;
+    case 'COUNTA': return flatten(A).filter(v=>v!==''&&v!==undefined&&v!==null).length;
+    case 'COUNTBLANK': return flatten(A).filter(v=>v===''||v===undefined||v===null).length;
+    case 'DISTINCTCOUNT': return new Set(flatten(A).map(v=>String(v))).size;
+    case 'COUNTIF': { const rng=flatten([A[0]]); return rng.filter(v=>critMatch(v,A[1])).length; }
+    case 'COUNTIFS': {
+      let n=0;
+      const rng=flatten([A[0]]);
+      for(let i=0;i<rng.length;i++){
+        let ok=true;
+        for(let k=0;k+1<A.length;k+=2){
+          const r=flatten([A[k]]);
+          if(!critMatch(r[i],A[k+1])){ ok=false; break; }
+        }
+        if(ok) n++;
+      }
+      return n;
+    }
+    case 'SUMIF': {
+      const rng=flatten([A[0]]), sng=A[2]!==undefined?flatten([A[2]]):rng;
+      let t=0;
+      for(let i=0;i<rng.length;i++) if(critMatch(rng[i],A[1])) t+=toNum(sng[i]);
+      return t;
+    }
+    case 'SUMIFS': {
+      const sng=flatten([A[0]]);
+      let t=0;
+      for(let i=0;i<sng.length;i++){
+        let ok=true;
+        for(let k=1;k+1<A.length;k+=2){
+          const r=flatten([A[k]]);
+          if(!critMatch(r[i],A[k+1])){ ok=false; break; }
+        }
+        if(ok) t+=toNum(sng[i]);
+      }
+      return t;
+    }
+    case 'AVERAGEIF': {
+      const rng=flatten([A[0]]), sng=A[2]!==undefined?flatten([A[2]]):rng;
+      const hits=[];
+      for(let i=0;i<rng.length;i++) if(critMatch(rng[i],A[1])) hits.push(toNum(sng[i]));
+      return hits.length? hits.reduce((s,x)=>s+x,0)/hits.length : err('#DIV/0!');
+    }
+    case 'AVERAGEIFS': {
+      const sng=flatten([A[0]]), hits=[];
+      for(let i=0;i<sng.length;i++){
+        let ok=true;
+        for(let k=1;k+1<A.length;k+=2){ const r=flatten([A[k]]); if(!critMatch(r[i],A[k+1])){ ok=false; break; } }
+        if(ok) hits.push(toNum(sng[i]));
+      }
+      return hits.length? hits.reduce((s,x)=>s+x,0)/hits.length : err('#DIV/0!');
+    }
+    /* ---- logical ---- */
+    case 'IF': { const t=toBool(A[0]); if(isErr(t)) return t; return t?A[1]:A[2]; }
+    case 'IFS': { for(let i=0;i+1<A.length;i+=2){ const t=toBool(A[i]); if(isErr(t)) return t; if(t) return A[i+1]; } return err('#N/A'); }
+    case 'AND': { for(let i=0;i<A.length;i++){ const t=toBool(A[i]); if(isErr(t)) return t; if(!t) return false; } return true; }
+    case 'OR': { for(let i=0;i<A.length;i++){ const t=toBool(A[i]); if(isErr(t)) return t; if(t) return true; } return false; }
+    case 'NOT': { const t=toBool(A[0]); return isErr(t)?t:!t; }
+    case 'XOR': { const t=A.filter(x=>{const b=toBool(x); return b===true;}).length; return t%2===1; }
+    case 'TRUE': return true;
+    case 'FALSE': return false;
+    case 'IFERROR': return isErr(A[0])?A[1]:A[0];
+    case 'IFNA': return (isErr(A[0])&&errCode(A[0])==='#N/A')?A[1]:A[0];
+    /* ---- IS family ---- */
+    case 'ISBLANK': return scalar(A[0])==='';
+    case 'ISNUMBER': return typeof scalar(A[0])==='number';
+    case 'ISTEXT': return typeof scalar(A[0])==='string';
+    case 'ISLOGICAL': return typeof scalar(A[0])==='boolean';
+    case 'ISNONTEXT': return typeof scalar(A[0])!=='string';
+    case 'ISERROR': return isErr(A[0]);
+    case 'ISNA': return isErr(A[0])&&errCode(A[0])==='#N/A';
+    case 'ISERR': return isErr(A[0])&&errCode(A[0])!=='#N/A';
+    case 'ISEVEN': { const n=toNum(scalar(A[0])); return !isNaN(n)&&Math.abs(n)%2===0; }
+    case 'ISODD': { const n=toNum(scalar(A[0])); return !isNaN(n)&&Math.abs(n)%2===1; }
+    /* ---- lookup ---- */
+    case 'VLOOKUP': return vlookup(scalar(A[0]), A[1], toNum(A[2]), A[3]!==undefined?toBool(A[3]):true);
+    case 'HLOOKUP': return hlookup(scalar(A[0]), A[1], toNum(A[2]), A[3]!==undefined?toBool(A[3]):true);
+    case 'XLOOKUP': return xlookup(scalar(A[0]), A[1], A[2], A[3]);
+    /* ---- text ---- */
+    case 'LEFT': { const s=String(scalar(A[0])), n=toNum(A[1]); return s.slice(0,n); }
+    case 'RIGHT': { const s=String(scalar(A[0])), n=toNum(A[1]); return s.slice(-n); }
+    case 'MID': { const s=String(scalar(A[0])), st=toNum(A[1]), n=toNum(A[2]); return s.slice(st-1,st-1+n); }
+    case 'LEN': return String(scalar(A[0])).length;
+    case 'UPPER': return String(scalar(A[0])).toUpperCase();
+    case 'LOWER': return String(scalar(A[0])).toLowerCase();
+    case 'PROPER': return String(scalar(A[0])).replace(/\w\S*/g,t=>t[0].toUpperCase()+t.slice(1).toLowerCase());
+    case 'TRIM': return String(scalar(A[0])).trim().replace(/\s+/g,' ');
+    case 'CONCAT': return flatten(A).map(v=>String(v)).join('');
+    case 'CONCATENATE': return flatten(A).map(v=>String(v)).join('');
+    case 'SUBSTITUTE': { const s=String(scalar(A[0])), from=String(scalar(A[1])), to=A[2]!==undefined?String(scalar(A[2])):''; return s.split(from).join(to); }
+    case 'TEXT': { const v=scalar(A[0]); const f=String(A[1]); if(/[#0]/.test(f)&&typeof v==='number'){ const d=(f.match(/0/g)||[]).length; const x=Math.round(v*Math.pow(10,d))/Math.pow(10,d); return String(x); } return String(v); }
+    /* ---- math ---- */
+    case 'ROUND': { const x=toNum(scalar(A[0])), d=toNum(A[1]); const f=Math.pow(10,d); return Math.round(x*f)/f; }
+    case 'ROUNDUP': { const x=toNum(scalar(A[0])), d=toNum(A[1]); const f=Math.pow(10,d); return Math.ceil(x*f)/f; }
+    case 'ROUNDDOWN': { const x=toNum(scalar(A[0])), d=toNum(A[1]); const f=Math.pow(10,d); return Math.floor(x*f)/f; }
+    case 'INT': return Math.floor(toNum(scalar(A[0])));
+    case 'ABS': return Math.abs(toNum(scalar(A[0])));
+    case 'MOD': { const a=toNum(A[0]), b=toNum(A[1]); return ((a%b)+b)%b; }
+    case 'POWER': return Math.pow(toNum(A[0]), toNum(A[1]));
+    case 'SQRT': { const n=toNum(scalar(A[0])); return n<0?err('#NUM!'):Math.sqrt(n); }
+    case 'RAND': return Math.random();
+  }
+  return err('#NAME?');
+}
+
+function vlookup(lookup, table, colIndex, exact){
+  if(!table||!table.isRange) return err('#VALUE!');
+  const grid=table.grid;
+  for(let r=0;r<grid.length;r++){
+    const cell=grid[r][0];
+    if(matchCell(cell,lookup,exact)){ return grid[r][colIndex-1]!==undefined?grid[r][colIndex-1]:err('#REF!'); }
+  }
+  return err('#N/A');
+}
+function hlookup(lookup, table, rowIndex, exact){
+  if(!table||!table.isRange) return err('#VALUE!');
+  const grid=table.grid;
+  const row0=grid[0]||[];
+  for(let c=0;c<row0.length;c++){
+    if(matchCell(row0[c],lookup,exact)){ return grid[rowIndex-1]?grid[rowIndex-1][c]:err('#REF!'); }
+  }
+  return err('#N/A');
+}
+function xlookup(lookup, arr, ret, notfound){
+  if(!arr||!arr.isRange||!ret||!ret.isRange) return err('#VALUE!');
+  const idx=arr.values.findIndex(v=>matchCell(v,lookup,true));
+  if(idx<0) return notfound!==undefined?notfound:err('#N/A');
+  return ret.values[idx];
+}
+function matchCell(cell, lookup, exact){
+  if(typeof cell==='number'&&typeof lookup==='number') return cell===lookup;
+  return String(cell).toLowerCase()===String(lookup).toLowerCase();
+}
+
+function evalFormula(src){
+  try{
+    const ast=parseFormula(src);
+    const result=evaluate(ast);
+    return {ok:true, value:result};
+  }catch(e){
+    return {ok:false, error: isErr(e)?errCode(e):('#VALUE!')};
+  }
+}
+
+function formatValue(v){
+  if(isErr(v)) return v.__err;
+  if(typeof v==='boolean') return v?'TRUE':'FALSE';
+  if(typeof v==='number') return Math.abs(v)>1e6 ? v.toLocaleString('en-US',{maximumFractionDigits:2}) : (Number.isInteger(v)?String(v):String(round6(v)));
+  if(v===''||v===undefined) return '(blank)';
+  return String(v);
+}
+function round6(n){ return Math.round(n*1e6)/1e6; }
+function expectedOf(s){ s=String(s).trim(); if(s==='TRUE') return true; if(s==='FALSE') return false; if(s!==''&&!isNaN(Number(s))) return Number(s); return s; }
+function matches(actual, expectedStr){
+  const e=expectedOf(expectedStr);
+  if(typeof e==='boolean') return typeof actual==='boolean'&&actual===e;
+  if(typeof e==='number') return typeof actual==='number'&&Math.abs(actual-e)<1e-6;
+  return String(actual).trim().toLowerCase()===String(e).trim().toLowerCase();
+}
+
+/* ===================== QUESTIONS ===================== */
+const QUESTIONS=[
+  {cat:'agg', q:'What is the total salary of every job?', data:'Range B2:B9', expected:'1655000', hint:'Add the whole Salary column with SUM.', reveal:'=SUM(B2:B9)'},
+  {cat:'agg', q:'What is the average (mean) salary?', data:'Range B2:B9', expected:'206875', hint:'AVERAGE needs just the salary range.', reveal:'=AVERAGE(B2:B9)'},
+  {cat:'agg', q:'What is the median salary?', data:'Range B2:B9', expected:'105000', hint:'Use MEDIAN — the middle value of the range.', reveal:'=MEDIAN(B2:B9)'},
+  {cat:'agg', q:'What is the LOWEST salary?', data:'Range B2:B9', expected:'60000', hint:'MIN returns the smallest number.', reveal:'=MIN(B2:B9)'},
+  {cat:'agg', q:'What is the HIGHEST salary?', data:'Range B2:B9', expected:'960000', hint:'MAX returns the largest number.', reveal:'=MAX(B2:B9)'},
+  {cat:'agg', q:'Total of all order totals in the Sales table.', data:'Range C13:C17', expected:'1550', hint:'Sum the Total column of the sales rows.', reveal:'=SUM(C13:C17)'},
+  {cat:'cnt', q:'How many salaries are recorded (numbers only)?', data:'Range B2:B9', expected:'8', hint:'COUNT counts numeric entries.', reveal:'=COUNT(B2:B9)'},
+  {cat:'cnt', q:'How many job titles are filled in?', data:'Range A2:A9', expected:'8', hint:'COUNTA counts anything that is not blank.', reveal:'=COUNTA(A2:A9)'},
+  {cat:'cnt', q:'How many jobs are in the United States?', data:'C2:C9, criteria "United States"', expected:'5', hint:'COUNTIF = range, then the condition.', reveal:'=COUNTIF(C2:C9,"United States")'},
+  {cat:'cnt', q:'How many Data Analyst jobs are there?', data:'A2:A9, criteria "Data Analyst"', expected:'3', hint:'COUNTIF with the job title as text criteria.', reveal:'=COUNTIF(A2:A9,"Data Analyst")'},
+  {cat:'cnt', q:'How many Data Analyst jobs are in the US?', data:'Two conditions on A and C', expected:'2', hint:'COUNTIFS lets you stack conditions (AND).', reveal:'=COUNTIFS(A2:A9,"Data Analyst",C2:C9,"United States")'},
+  {cat:'cnt', q:'How many jobs pay MORE than 100,000?', data:'B2:B9, criteria ">100000"', expected:'4', hint:'Put the comparison in quotes as the criteria.', reveal:'=COUNTIF(B2:B9,">100000")'},
+  {cat:'cnt', q:'Sum of all Data Analyst salaries.', data:'Criteria A, sum range B', expected:'280000', hint:'SUMIF: range, criteria, sum_range. Sum range comes LAST.', reveal:'=SUMIF(A2:A9,"Data Analyst",B2:B9)'},
+  {cat:'cnt', q:'Total salary paid to US-based jobs.', data:'Sum B, criteria C = US', expected:'1385000', hint:'SUMIFS puts the SUM range FIRST.', reveal:'=SUMIFS(B2:B9,C2:C9,"United States")'},
+  {cat:'cnt', q:'Average salary of Data Scientists.', data:'Criteria A, avg range B', expected:'527500', hint:'AVERAGEIF averages only matching rows.', reveal:'=AVERAGEIF(A2:A9,"Data Scientist",B2:B9)'},
+  {cat:'cnt', q:'How many UNIQUE job titles are there?', data:'Range A2:A9', expected:'5', hint:'Count each title only once.', reveal:'=DISTINCTCOUNT(A2:A9)'},
+  {cat:'logic', q:'"High" if salary ≥ 100,000, else "Low" — for row 2.', data:'B2 = 115000', expected:'High', hint:'IF(test, value_if_true, value_if_false).', reveal:'=IF(B2>=100000,"High","Low")'},
+  {cat:'logic', q:'Same IF for row 3 (salary 75,000).', data:'B3 = 75000', expected:'Low', hint:'Copy the same shape, change the cell.', reveal:'=IF(B3>=100000,"High","Low")'},
+  {cat:'logic', q:'Is row 2 well-paid AND in the US?', data:'B2 & C2', expected:'TRUE', hint:'AND needs both conditions TRUE.', reveal:'=AND(B2>=85000,C2="United States")'},
+  {cat:'logic', q:'Is row 2 a Data Analyst OR a Business Analyst?', data:'A2', expected:'TRUE', hint:'OR is TRUE if any condition is TRUE.', reveal:'=OR(A2="Data Analyst",A2="Business Analyst")'},
+  {cat:'logic', q:'Is row 3 salary NOT above 85,000?', data:'B3 = 75000', expected:'TRUE', hint:'NOT flips TRUE↔FALSE.', reveal:'=NOT(B3>=85000)'},
+  {cat:'logic', q:'Bucket the 90,000 salary: Above 85k or Below 85k.', data:'B4 = 90000', expected:'Above 85k', hint:'IFS: test, value, test, value… first TRUE wins.', reveal:'=IFS(B4>=85000,"Above 85k",TRUE,"Below 85k")'},
+  {cat:'lookup', q:'What does the Monitor cost?', data:'Products table E2:F6', expected:'300', hint:'VLOOKUP(lookup, table, col_index, FALSE). Price is column 2.', reveal:'=VLOOKUP("Monitor",E2:F6,2,FALSE)'},
+  {cat:'lookup', q:'What is the Data Engineer salary?', data:'A2:A9 → B2:B9', expected:'120000', hint:'XLOOKUP(lookup, lookup_array, return_array).', reveal:'=XLOOKUP("Data Engineer",A2:A9,B2:B9)'},
+  {cat:'lookup', q:'Which country is the Business Analyst in?', data:'A2:A9 → C2:C9', expected:'United Kingdom', hint:'Same XLOOKUP, but return the Country column.', reveal:'=XLOOKUP("Business Analyst",A2:A9,C2:C9)'},
+  {cat:'is', q:'Is the first salary a number?', data:'B2', expected:'TRUE', hint:'ISNUMBER answers TRUE/FALSE about the value.', reveal:'=ISNUMBER(B2)'},
+  {cat:'is', q:'Is the first job title text?', data:'A2', expected:'TRUE', hint:'ISTEXT is TRUE when the value is text.', reveal:'=ISTEXT(A2)'},
+  {cat:'is', q:'Is the Qty cell for Notebook blank?', data:'B14 (Qty of Notebook)', expected:'TRUE', hint:'ISBLANK checks an empty cell.', reveal:'=ISBLANK(B14)'},
+  {cat:'is', q:'Does Notebook price-per-unit produce an error?', data:'C14 ÷ B14', expected:'TRUE', hint:'Blank qty → #DIV/0! → ISERROR is TRUE.', reveal:'=ISERROR(C14/B14)'},
+  {cat:'is', q:'Does a VLOOKUP for 999 give #N/A?', data:'Products table E2:F6', expected:'TRUE', hint:'999 is not in the table → #N/A → ISNA catches it.', reveal:'=ISNA(VLOOKUP(999,E2:F6,2,FALSE))'},
+  {cat:'text', q:'First 4 characters of the first job title.', data:'A2 = "Data Analyst"', expected:'Data', hint:'LEFT(text, num_chars).', reveal:'=LEFT(A2,4)'},
+  {cat:'text', q:'How many characters in "Data Analyst"?', data:'A2', expected:'11', hint:'LEN counts every character, including spaces.', reveal:'=LEN(A2)'},
+  {cat:'text', q:'The first job title in ALL CAPS.', data:'A2', expected:'DATA ANALYST', hint:'UPPER converts to uppercase.', reveal:'=UPPER(A2)'},
+  {cat:'text', q:'Clean up the extra spaces in "  Hello ".', data:'text literal', expected:'Hello', hint:'TRIM removes leading/trailing/multiple spaces.', reveal:'=TRIM("  Hello ")'},
+  {cat:'text', q:'Join the first title and its country with " - ".', data:'A2 and C2', expected:'Data Analyst - United States', hint:'CONCATENATE or CONCAT joins values.', reveal:'=CONCATENATE(A2," - ",C2)'},
+  {cat:'math', q:'Round 3.14159 to 2 decimal places.', data:'literal', expected:'3.14', hint:'ROUND(number, places).', reveal:'=ROUND(3.14159,2)'},
+  {cat:'math', q:'Absolute value of -42.', data:'literal', expected:'42', hint:'ABS removes the minus sign.', reveal:'=ABS(-42)'},
+  {cat:'math', q:'Remainder of 17 ÷ 5.', data:'literal', expected:'2', hint:'MOD gives the remainder.', reveal:'=MOD(17,5)'},
+];
+const CATS=[['all','All'],['agg','Aggregation'],['cnt','Counting'],['logic','Logical'],['lookup','Lookup'],['is','IS / Errors'],['text','Text'],['math','Math']];
+
+/* ===================== RENDER SHEET ===================== */
+(function renderSheet(){
+  const el=document.getElementById('sheet-grid');
+  let html='<table class="g"><thead><tr><th></th>';
+  COLS.forEach(c=>html+='<th>'+c+'</th>');
+  html+='</tr></thead><tbody>';
+  for(let r=1;r<=17;r++){
+    html+='<tr><td class="rn">'+r+'</td>';
+    for(let ci=0;ci<COLS.length;ci++){
+      const v=sheet[cellKey(ci,r)];
+      const disp=(v===undefined||v==='')?'':v;
+      const cls=(v===undefined||v==='')?'':(headerCells.has(cellKey(ci,r))?' h':'');
+      html+='<td class="'+cls+'">'+disp+'</td>';
+    }
+    html+='</tr>';
+  }
+  html+='</tbody></table>';
+  el.innerHTML=html;
+})();
+
+/* ===================== SANDBOX ===================== */
+const sandboxInput=document.getElementById('sandbox-input');
+const sandboxResult=document.getElementById('sandbox-result');
+function runSandbox(){
+  const src=sandboxInput.value.trim();
+  if(!src){ sandboxResult.innerHTML=''; return; }
+  const res=evalFormula(src);
+  if(!res.ok) sandboxResult.innerHTML='<div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-circle-xmark text-red-400 mr-1"></i><strong class="text-white">Error:</strong> that formula gives <span class="err">'+res.error+'</span></p></div>';
+  else if(isErr(res.value)) sandboxResult.innerHTML='<div class="err-box"><p class="text-gray-300 text-xs"><i class="fa-solid fa-circle-xmark text-red-400 mr-1"></i><strong class="text-white">Excel error:</strong> <span class="err">'+res.value.__err+'</span> — your formula evaluates to an error value.</p></div>';
+  else sandboxResult.innerHTML='<div class="tip-box"><p class="text-white text-xs"><i class="fa-solid fa-calculator text-calc-400 mr-1"></i><strong>Result:</strong> <span class="mono text-emerald-300 text-sm font-bold">'+formatValue(res.value)+'</span></p></div>';
+}
+document.getElementById('sandbox-run').addEventListener('click',runSandbox);
+sandboxInput.addEventListener('keydown',e=>{ if(e.key==='Enter') runSandbox(); });
+
+/* ===================== QUIZ ===================== */
+const quizGrid=document.getElementById('quiz-grid');
+const chips=document.getElementById('chips');
+let activeCat='all';
+const state={}; QUESTIONS.forEach((q,i)=>state[i]='idle');
+let correct=0,wrong=0,attempted=0;
+
+function progressBar(){
+  const pct=attempted?Math.round(correct/attempted*100):0;
+  document.getElementById('progress').style.width=pct+'%';
+  document.getElementById('progress-label').textContent=pct+'% mastered';
+  document.getElementById('score-correct').textContent=correct;
+  document.getElementById('score-wrong').textContent=wrong;
+  document.getElementById('score-total').textContent=attempted;
+}
+
+function renderChips(){
+  chips.innerHTML='';
+  CATS.forEach(([id,label])=>{
+    const b=document.createElement('button');
+    b.className='chip'+(id===activeCat?' active':'');
+    b.textContent=label+(id==='all'?'':' ('+QUESTIONS.filter(q=>q.cat===id).length+')');
+    b.onclick=()=>{ activeCat=id; renderChips(); renderQuiz(); };
+    chips.appendChild(b);
+  });
+}
+function renderQuiz(){
+  quizGrid.innerHTML='';
+  QUESTIONS.forEach((q,i)=>{
+    if(activeCat!=='all'&&q.cat!==activeCat) return;
+    const card=document.createElement('div');
+    card.className='qcard';
+    card.id='card-'+i;
+    const catLabel=CATS.find(c=>c[0]===q.cat)[1];
+    card.innerHTML=
+      '<div class="flex items-start gap-2"><span class="qnum">'+(i+1)+'</span>'+
+      '<div class="flex-1"><p class="text-white text-sm font-semibold leading-snug">'+q.q+'</p>'+
+      '<p class="text-gray-500 text-[11px] mt-1"><i class="fa-solid fa-table text-lock-400 mr-1"></i>'+q.data+'</p>'+
+      '<span class="inline-block mt-1 text-[10px] uppercase tracking-wide text-calc-300 bg-calc-500/10 px-2 py-0.5 rounded-full">'+catLabel+'</span></div></div>'+
+      '<div class="flex gap-2"><input id="in-'+i+'" class="qinput" placeholder="Type formula… e.g. =SUM(B2:B9)" autocomplete="off" spellcheck="false">'+
+      '<button id="chk-'+i+'" class="btn btn-check">Check</button></div>'+
+      '<div class="flex gap-2 flex-wrap"><button id="hint-'+i+'" class="btn btn-ghost">Hint</button><button id="rvl-'+i+'" class="btn btn-ghost">Reveal</button></div>'+
+      '<div id="fb-'+i+'"></div>';
+    quizGrid.appendChild(card);
+    const input=card.querySelector('#in-'+i);
+    input.addEventListener('keydown',e=>{ if(e.key==='Enter') check(i); });
+    card.querySelector('#chk-'+i).addEventListener('click',()=>check(i));
+    card.querySelector('#hint-'+i).addEventListener('click',()=>hint(i));
+    card.querySelector('#rvl-'+i).addEventListener('click',()=>reveal(i));
+  });
+}
+function fb(i,html,cls){ document.getElementById('fb-'+i).innerHTML='<div class="'+cls+'"><p class="text-gray-300 text-xs">'+html+'</p></div>'; }
+function check(i){
+  const q=QUESTIONS[i];
+  const input=document.getElementById('in-'+i);
+  const src=input.value.trim();
+  if(!src){ fb(i,'<i class="fa-solid fa-circle-info text-lock-400 mr-1"></i>Type a formula first.', 'warn-box'); return; }
+  const res=evalFormula(src);
+  if(!res.ok){
+    state[i]='wrong'; wrong++; attempted++; fb(i,'<i class="fa-solid fa-circle-xmark text-red-400 mr-1"></i><strong class="text-white">Syntax error</strong> — that formula can\'t be evaluated ('+res.error+'). Check your spelling and quotes.', 'err-box'); progressBar(); return;
+  }
+  if(isErr(res.value)){
+    state[i]='wrong'; wrong++; attempted++; fb(i,'<i class="fa-solid fa-circle-xmark text-red-400 mr-1"></i><strong class="text-white">Excel error:</strong> your formula gives <span class="err">'+res.value.__err+'</span> — not the answer.', 'err-box'); progressBar(); return;
+  }
+  if(matches(res.value,q.expected)){
+    if(state[i]!=='correct'){ state[i]='correct'; correct++; attempted++; }
+    fb(i,'<i class="fa-solid fa-circle-check text-emerald-400 mr-1"></i><strong class="text-emerald-300">Correct!</strong> <span class="mono text-emerald-300">'+formatValue(res.value)+'</span>', 'tip-box');
+  }else{
+    state[i]='wrong'; wrong++; attempted++; fb(i,'<i class="fa-solid fa-circle-xmark text-red-400 mr-1"></i><strong class="text-white">Not quite.</strong> Your formula gives <span class="mono text-amber-300">'+formatValue(res.value)+'</span>, expected <span class="mono text-amber-300">'+q.expected+'</span>.', 'err-box');
+  }
+  progressBar();
+}
+function hint(i){ fb(i,'<i class="fa-solid fa-lightbulb text-amber-300 mr-1"></i><strong class="text-white">Hint:</strong> '+QUESTIONS[i].hint, 'warn-box'); }
+function reveal(i){
+  const q=QUESTIONS[i];
+  document.getElementById('in-'+i).value=q.reveal;
+  fb(i,'<i class="fa-solid fa-eye text-lock-400 mr-1"></i><strong class="text-white">Revealed:</strong> <span class="mono text-emerald-300">'+q.reveal+'</span> — type it yourself next time!', 'warn-box');
+}
+document.getElementById('reset-btn').addEventListener('click',()=>{
+  QUESTIONS.forEach((q,i)=>{ state[i]='idle'; document.getElementById('in-'+i).value=''; document.getElementById('fb-'+i).innerHTML=''; });
+  correct=0;wrong=0;attempted=0; progressBar();
+});
+renderChips(); renderQuiz(); progressBar();
+
+/* ===================== REFERENCE ===================== */
+const REF=[
+  ['Aggregation',[
+    ['SUM','=SUM(range)','Adds all numbers in a range','=SUM(B2:B9) → 1655000'],
+    ['AVERAGE','=AVERAGE(range)','Mean of the numbers (ignores blanks)','=AVERAGE(B2:B9) → 206875'],
+    ['MEDIAN','=MEDIAN(range)','Middle value — great for salaries','=MEDIAN(B2:B9) → 105000'],
+    ['MIN / MAX','=MIN(range)','Smallest / largest value','=MAX(B2:B9) → 960000'],
+  ]],
+  ['Counting',[
+    ['COUNT','=COUNT(range)','Counts numeric entries','=COUNT(B2:B9) → 8'],
+    ['COUNTA','=COUNTA(range)','Counts non-blank entries','=COUNTA(A2:A9) → 8'],
+    ['COUNTIF','=COUNTIF(range, criteria)','Counts rows matching one condition','=COUNTIF(C2:C9,"United States") → 5'],
+    ['COUNTIFS','=COUNTIFS(r1,c1,r2,c2,…)','Counts rows matching ALL conditions','=COUNTIFS(A2:A9,"Data Analyst",C2:C9,"United States") → 2'],
+    ['SUMIF','=SUMIF(range, criteria, [sum_range])','Sums matching rows (sum range LAST)','=SUMIF(A2:A9,"Data Analyst",B2:B9) → 280000'],
+    ['SUMIFS','=SUMIFS(sum_range, r1, c1, …)','Sums rows matching all conditions (sum FIRST)','=SUMIFS(B2:B9,C2:C9,"United States") → 1385000'],
+    ['AVERAGEIF','=AVERAGEIF(range, criteria, [avg_range])','Average of matching rows','=AVERAGEIF(A2:A9,"Data Scientist",B2:B9) → 527500'],
+    ['DISTINCTCOUNT','=DISTINCTCOUNT(col)','Counts unique values','=DISTINCTCOUNT(A2:A9) → 5'],
+  ]],
+  ['Logical',[
+    ['IF','=IF(test, true, false)','Two-way decision','=IF(B2>=100000,"High","Low") → High'],
+    ['IFS','=IFS(t1,v1,t2,v2,…)','Many buckets, first TRUE wins','=IFS(B4>=85000,"Above 85k",TRUE,"Below 85k") → Above 85k'],
+    ['AND / OR / NOT','=AND(t1,t2)','All / any / flip a condition','=AND(B2>=85000,C2="United States") → TRUE'],
+    ['IFERROR / IFNA','=IFERROR(value, fallback)','Replace an error with a friendly value','=IFERROR(C14/B14,0) → 0'],
+  ]],
+  ['IS & Errors',[
+    ['ISNUMBER','=ISNUMBER(value)','TRUE if the value is a number','=ISNUMBER(B2) → TRUE'],
+    ['ISTEXT / ISBLANK','=ISTEXT(value)','TRUE if text / if cell is empty','=ISBLANK(B14) → TRUE'],
+    ['ISERROR / ISNA','=ISERROR(value)','TRUE if any error / if #N/A','=ISNA(VLOOKUP(999,E2:F6,2,FALSE)) → TRUE'],
+  ]],
+  ['Lookup',[
+    ['VLOOKUP','=VLOOKUP(lookup, table, col, [exact])','Find a value, return another column','=VLOOKUP("Monitor",E2:F6,2,FALSE) → 300'],
+    ['XLOOKUP','=XLOOKUP(lookup, arr, return_arr)','Find in one column, return another','=XLOOKUP("Data Engineer",A2:A9,B2:B9) → 120000'],
+    ['HLOOKUP','=HLOOKUP(lookup, table, row, [exact])','Lookup across a row','=HLOOKUP(A2,B1:F2,2,FALSE)'],
+  ]],
+  ['Text',[
+    ['LEFT / RIGHT / MID','=LEFT(text, n)','Pull characters from a string','=LEFT(A2,4) → Data'],
+    ['LEN','=LEN(text)','Length of a string','=LEN(A2) → 11'],
+    ['UPPER / LOWER / PROPER','=UPPER(text)','Change text case','=UPPER(A2) → DATA ANALYST'],
+    ['TRIM','=TRIM(text)','Remove extra spaces','=TRIM("  Hello ") → Hello'],
+    ['CONCAT / CONCATENATE','=CONCAT(a, b)','Join values together','=CONCATENATE(A2," - ",C2) → Data Analyst - United States'],
+  ]],
+  ['Math',[
+    ['ROUND / ROUNDUP / ROUNDDOWN','=ROUND(n, places)','Round a number','=ROUND(3.14159,2) → 3.14'],
+    ['ABS','=ABS(n)','Remove the minus sign','=ABS(-42) → 42'],
+    ['MOD','=MOD(n, divisor)','Remainder after division','=MOD(17,5) → 2'],
+    ['POWER / SQRT','=POWER(n, p)','Powers and square roots','=SQRT(25) → 5'],
+  ]],
+];
+(function renderRef(){
+  const el=document.getElementById('reference');
+  REF.forEach(([title,rows],gi)=>{
+    const d=document.createElement('details');
+    d.className='ref';
+    d.innerHTML='<summary><span class="w-6 h-6 rounded-lg bg-lock-500 flex items-center justify-center text-white text-xs font-bold">'+(gi+1)+'</span><span>'+title+'</span><span class="ml-auto text-gray-500 text-xs"><i class="fa-solid fa-chevron-down"></i></span></summary>';
+    const div=document.createElement('div');
+    div.className='p-4';
+    let h='<div class="wrap"><table class="g"><thead><tr><th>Function</th><th>Syntax</th><th>What it does</th><th>Example</th></tr></thead><tbody>';
+    rows.forEach(r=>{ h+='<tr><td class="form">'+r[0]+'</td><td>'+r[1]+'</td><td class="text-left">'+r[2]+'</td><td class="form">'+r[3]+'</td></tr>'; });
+    h+='</tbody></table></div>';
+    div.innerHTML=h;
+    d.appendChild(div);
+    el.appendChild(d);
+  });
+})();
+</script>
+</body>
+</html>
