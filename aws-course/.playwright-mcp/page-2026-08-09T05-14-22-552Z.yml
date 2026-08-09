@@ -1,0 +1,884 @@
+- generic [active] [ref=f1e1]:
+  - navigation [ref=f1e2]:
+    - generic [ref=f1e3]:
+      - link " Master AWS" [ref=f1e4] [cursor=pointer]:
+        - /url: index.html
+        - generic [ref=f1e5]: 
+        - generic [ref=f1e7]: Master AWS
+      - text:            
+      - button "Menu" [ref=f1e8] [cursor=pointer]:
+        - generic [ref=f1e9]: 
+  - generic [ref=f1e11]:
+    - text:  
+    - generic [ref=f1e12]:
+      - banner [ref=f1e13]:
+        - generic [ref=f1e14]:
+          - generic [ref=f1e15]: 
+          - text: Chapter 10
+        - heading "ECS — Run Containers in the Cloud" [level=1] [ref=f1e16]
+        - paragraph [ref=f1e17]:
+          - text: So far your app ran on
+          - strong [ref=f1e18]: EC2 VMs
+          - text: (Chapter 3). But shipping a whole OS just to run one service is heavy.
+          - strong [ref=f1e19]: Containers
+          - text: package
+          - emphasis [ref=f1e20]: just your app + its dependencies
+          - text: into a portable box that runs anywhere.
+          - strong [ref=f1e21]: ECS
+          - text: (Elastic Container Service) is AWS's service for running those containers at scale — and on
+          - strong [ref=f1e22]: Floci it actually launches real containers
+          - text: ", so you'll see a live web server come up right on your machine."
+        - generic [ref=f1e23]:
+          - generic [ref=f1e24]:
+            - generic [ref=f1e25]: 
+            - text: ~35 min read
+          - generic [ref=f1e26]:
+            - generic [ref=f1e27]: 
+            - text: 6 live command sims
+          - generic [ref=f1e28]:
+            - generic [ref=f1e29]: 
+            - text: Beginner friendly
+          - generic [ref=f1e30]:
+            - generic [ref=f1e31]: 
+            - text: Real containers on Floci
+      - button " Chapter contents" [ref=f1e32] [cursor=pointer]:
+        - generic: 
+        - text: Chapter contents
+      - generic [ref=f1e33]:
+        - heading " Why Containers?" [level=2] [ref=f1e34]:
+          - generic [ref=f1e35]: 
+          - text: Why Containers?
+        - paragraph [ref=f1e37]:
+          - text: On an EC2 VM, your app sits inside a full operating system. A container is different — it's a
+          - strong [ref=f1e38]: package containing your code and everything it needs to run
+          - text: (runtime, libraries, config), sharing the host's OS kernel. Same app, same behavior, everywhere.
+        - generic [ref=f1e39]:
+          - generic [ref=f1e40]:
+            - generic [ref=f1e41]: 
+            - text: VM vs Container
+          - generic [ref=f1e42]: "VIRTUAL MACHINE: CONTAINER: ┌───────────────┐ ┌─────────────┐ │ your app │ │ your app │ ← only the app │ libs+binaries│ │ libs │ + its deps │ GUEST OS │ heavy │ │ ← shares host OS ├───────────────┤ └─────────────┘ │ HYPERVISOR │ ┌─────────────┐ └───────────────┘ │ HOST OS │ ← one kernel Whole OS per app ⚠️ │ kernel │ shared by all └─────────────┘ slow to boot · big tiny · boots in ms · portable"
+        - generic [ref=f1e43]:
+          - generic [ref=f1e44]: 📦
+          - generic [ref=f1e45]:
+            - generic [ref=f1e46]: Image = recipe, Container = running dish
+            - paragraph [ref=f1e47]:
+              - text: A
+              - strong [ref=f1e48]: Docker image
+              - text: is a read-only file that describes your app (like a recipe or a blueprint). A
+              - strong [ref=f1e49]: container
+              - text: is one running instance of that image. You can run 1 container or 100 from the same image — identical every time. That's the "works on my machine" problem, solved forever.
+        - generic [ref=f1e50]:
+          - generic [ref=f1e51]: 
+          - generic [ref=f1e53]:
+            - generic [ref=f1e54]: Why do cloud teams love this?
+            - text: Same image runs on a laptop, a test server, and 10,000 production servers. Deployments are fast (start/stop containers instead of booting OSes), and apps are isolated — one crashing container doesn't take down its neighbors. ECS just runs these images for you in the cloud.
+      - generic [ref=f1e55]:
+        - heading " ECS Building Blocks" [level=2] [ref=f1e56]:
+          - generic [ref=f1e57]: 
+          - text: ECS Building Blocks
+        - paragraph [ref=f1e59]: "ECS (Elastic Container Service) orchestrates containers: it pulls your image, starts containers, keeps them alive, and scales them. Four words carry the whole mental model:"
+        - generic [ref=f1e60]:
+          - generic [ref=f1e61]:
+            - generic [ref=f1e62]: 
+            - text: Cluster → Task → Container
+          - generic [ref=f1e63]: "CLUSTER (amit-cluster) ┌─────────────────────────────────────┐ │ TASK ──► [web container] ← 1 instance of your app │ TASK ──► [web container] ← another copy │ TASK ──► [web container] ← more copies (scaling) │ │ SERVICE watches over the tasks: │ \"always keep exactly N running\" ← reconciliation └─────────────────────────────────────┘"
+        - table [ref=f1e65]:
+          - rowgroup [ref=f1e66]:
+            - row [ref=f1e67]:
+              - columnheader "Piece" [ref=f1e68]
+              - columnheader "What it is" [ref=f1e69]
+          - rowgroup [ref=f1e70]:
+            - row [ref=f1e71]:
+              - cell [ref=f1e72]:
+                - strong [ref=f1e73]: Cluster
+              - cell "The logical home for your containers — a namespace/grouping." [ref=f1e74]
+            - row [ref=f1e75]:
+              - cell [ref=f1e76]:
+                - strong [ref=f1e77]: Task
+              - 'cell "One unit of work: one or more containers running your app." [ref=f1e78]'
+            - row [ref=f1e79]:
+              - cell [ref=f1e80]:
+                - strong [ref=f1e81]: Container
+              - cell "The actual running process from your Docker image." [ref=f1e82]
+            - row [ref=f1e83]:
+              - cell [ref=f1e84]:
+                - strong [ref=f1e85]: Service
+              - cell "A supervisor that keeps a desired number of tasks running (scaling + self-healing)." [ref=f1e86]
+            - row [ref=f1e87]:
+              - cell [ref=f1e88]:
+                - strong [ref=f1e89]: Task definition
+              - cell "The blueprint of a task — image, CPU, memory, ports (see below)." [ref=f1e90]
+        - generic [ref=f1e91]:
+          - generic [ref=f1e92]:
+            - generic [ref=f1e93]: 
+            - text: Task vs Service — say it once, own it forever
+          - code [ref=f1e94]: run-task
+          - text: = "start one task, I'll handle it."
+          - code [ref=f1e95]: create-service
+          - text: = "keep N tasks running forever." A service is a task plus an auto-healing manager. If a task dies, a service starts a replacement. That's the difference between a one-off job and your always-on website.
+      - generic [ref=f1e96]:
+        - heading " ECR — Your Image Warehouse" [level=2] [ref=f1e97]:
+          - generic [ref=f1e98]: 
+          - text: ECR — Your Image Warehouse
+        - paragraph [ref=f1e100]:
+          - text: Your Docker images need to live somewhere ECS can pull them. That's
+          - strong [ref=f1e101]: ECR
+          - text: (Elastic Container Registry) — AWS's private Docker registry, the S3 of images.
+        - generic [ref=f1e102]:
+          - generic [ref=f1e103]: 🏬
+          - generic [ref=f1e104]:
+            - generic [ref=f1e105]: Registry → repository → image
+            - paragraph [ref=f1e106]:
+              - text: ECR hosts
+              - strong [ref=f1e107]: repositories
+              - text: (one per app, like
+              - code [ref=f1e108]: amit-app
+              - text: ). You
+              - code [ref=f1e109]: docker build
+              - text: locally,
+              - code [ref=f1e110]: docker push
+              - text: the image to your repository, and ECS later
+              - code [ref=f1e111]: pulls
+              - text: it to start containers. Each image is tagged (e.g.
+              - code [ref=f1e112]: latest
+              - text: ","
+              - code [ref=f1e113]: v1
+              - text: ", or a git hash) so you can deploy a specific version."
+        - generic [ref=f1e114]:
+          - generic [ref=f1e115]:
+            - generic [ref=f1e116]: 
+            - text: The image pipeline
+          - generic [ref=f1e117]: docker build (your code → image) │ docker tag 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest ▼ docker push (image → ECR repository) │ ▼ ECS pulls it (repository → running container)
+        - generic [ref=f1e118]:
+          - generic [ref=f1e119]: 
+          - generic [ref=f1e121]:
+            - generic [ref=f1e122]: Authentication
+            - text: Real AWS requires a login token to push (
+            - code [ref=f1e123]: ecr get-login-password
+            - text: +
+            - code [ref=f1e124]: docker login
+            - text: ). On Floci the registry on port 5100 is open, so you can push straight away — convenient for learning, just know the real-world login step exists.
+      - generic [ref=f1e125]:
+        - heading " Fargate vs EC2 Launch" [level=2] [ref=f1e126]:
+          - generic [ref=f1e127]: 
+          - text: Fargate vs EC2 Launch
+        - paragraph [ref=f1e129]: ECS can run your tasks on two kinds of infrastructure — this is the "where does the container physically run" question.
+        - table [ref=f1e131]:
+          - rowgroup [ref=f1e132]:
+            - row [ref=f1e133]:
+              - columnheader [ref=f1e134]
+              - columnheader "Fargate (serverless)" [ref=f1e135]
+              - columnheader "EC2 launch type" [ref=f1e136]
+          - rowgroup [ref=f1e137]:
+            - row [ref=f1e138]:
+              - cell [ref=f1e139]:
+                - strong [ref=f1e140]: Who manages servers?
+              - cell "AWS — no servers to touch at all" [ref=f1e141]
+              - cell "You provision & manage EC2 instances" [ref=f1e142]
+            - row [ref=f1e143]:
+              - cell [ref=f1e144]:
+                - strong [ref=f1e145]: Pricing
+              - cell "Pay per task (vCPU + memory used)" [ref=f1e146]
+              - cell "Pay per EC2 instance (fixed)" [ref=f1e147]
+            - row [ref=f1e148]:
+              - cell [ref=f1e149]:
+                - strong [ref=f1e150]: Scaling
+              - cell "Automatic, fast" [ref=f1e151]
+              - cell "You must add/remove instances" [ref=f1e152]
+            - row [ref=f1e153]:
+              - cell [ref=f1e154]:
+                - strong [ref=f1e155]: Good for
+              - cell "Most apps — the modern default" [ref=f1e156]
+              - cell "Large workloads / need control / GPUs" [ref=f1e157]
+        - generic [ref=f1e158]:
+          - generic [ref=f1e159]:
+            - generic [ref=f1e160]: 
+            - text: You pick by adding one flag
+          - text: Fargate is the default choice for beginners —
+          - code [ref=f1e161]: "--launch-type FARGATE"
+          - text: . No instances, no autoscaling groups to babysit. The recipe here stays identical if you later switch to EC2 launch type.
+      - generic [ref=f1e162]:
+        - heading " Task Definitions — The Blueprint" [level=2] [ref=f1e163]:
+          - generic [ref=f1e164]: 
+          - text: Task Definitions — The Blueprint
+        - paragraph [ref=f1e166]:
+          - text: Before ECS runs anything, it needs the
+          - strong [ref=f1e167]: task definition
+          - text: ": a JSON-ish description of your task. Think of it as the \"deployment config\" — a versioned file you register and reference."
+        - generic [ref=f1e168]:
+          - generic [ref=f1e169]: 📋
+          - generic [ref=f1e170]:
+            - generic [ref=f1e171]: What a task definition contains
+            - paragraph [ref=f1e172]:
+              - strong [ref=f1e173]: Image
+              - text: (which container to run),
+              - strong [ref=f1e174]: CPU & memory
+              - text: (how much power each task gets),
+              - strong [ref=f1e175]: network mode
+              - text: (
+              - code [ref=f1e176]: awsvpc
+              - text: = each task gets its own elastic network interface),
+              - strong [ref=f1e177]: port mappings
+              - text: (which container port is exposed), and optionally
+              - strong [ref=f1e178]: env vars
+              - text: ","
+              - strong [ref=f1e179]: logging
+              - text: ", and"
+              - strong [ref=f1e180]: volumes
+              - text: . Every revision is versioned —
+              - code [ref=f1e181]: amit-web:1
+              - text: ","
+              - code [ref=f1e182]: amit-web:2
+              - text: — so you can roll back by pointing at an older revision.
+        - generic [ref=f1e183]:
+          - generic [ref=f1e184]:
+            - generic [ref=f1e185]: 
+            - text: Anatomy of a task definition
+          - generic [ref=f1e186]: "family = amit-web (your app's name) networkMode = awsvpc (each task gets its own ENI) cpu = 256 (¼ of a vCPU) memory = 512 (MB) containerDefinitions = [ { name: \"web\", image: \"…/amit-app:latest\", ← from ECR portMappings: [{ containerPort: 3000 }] } ] ────────────────────────────────────── amit-web:1 = first revision · amit-web:2 = second"
+        - generic [ref=f1e187]:
+          - generic [ref=f1e188]: 
+          - generic [ref=f1e190]:
+            - generic [ref=f1e191]: Why versioned?
+            - text: "A task definition is immutable — you never edit revision 1, you register a new revision 2 and switch the service over. That gives you a perfect audit trail and instant rollback: point the service back at"
+            - code [ref=f1e192]: amit-web:1
+            - text: and you're on the old version.
+      - generic [ref=f1e193]:
+        - heading " Services & Scaling" [level=2] [ref=f1e194]:
+          - generic [ref=f1e195]: 
+          - text: Services & Scaling
+        - paragraph [ref=f1e197]:
+          - text: A
+          - strong [ref=f1e198]: service
+          - text: turns a task definition into an always-on workload with a
+          - strong [ref=f1e199]: desired count
+          - text: — the number of copies you want running.
+        - generic [ref=f1e200]:
+          - generic [ref=f1e201]:
+            - generic [ref=f1e202]: 
+            - text: Desired count = reconciliation
+          - generic [ref=f1e203]: desired count = 3 (what you WANT running) ───────────────────────────────────────────── a task crashes → ECS sees 2 running → starts a 3rd 🔁 you set count to 5 → ECS starts 2 more 🔺 scale up you set count to 1 → ECS stops 4 🔻 scale down ECS constantly reconciles the real state toward your desired state. That self-healing is the whole point of a Service.
+        - generic [ref=f1e204]:
+          - generic [ref=f1e205]: 🚦
+          - generic [ref=f1e206]:
+            - generic [ref=f1e207]: Traffic in front of a service
+            - paragraph [ref=f1e208]:
+              - text: In production you put a
+              - strong [ref=f1e209]: load balancer
+              - text: "(ALB) in front of a service: the ALB spreads requests across all running tasks and takes tasks in/out of rotation as they start and stop. On Floci the"
+              - strong [ref=f1e210]: ALB integration isn't wired up
+              - text: ", so we focus on the core mechanics — which all work live."
+        - generic [ref=f1e211]:
+          - generic [ref=f1e212]:
+            - generic [ref=f1e213]: 
+            - text: Scaling is just changing the number
+          - text: With a service, scaling = changing
+          - code [ref=f1e214]: desiredCount
+          - text: (
+          - code [ref=f1e215]: update-service --desired-count 5
+          - text: ). ECS does the rest. On real AWS you can even set
+          - code [ref=f1e216]: Application Auto Scaling
+          - text: so the count changes automatically with CPU/load (Chapter 6's CloudWatch metrics feed it).
+      - generic [ref=f1e217]:
+        - 'heading " Hands-On: Deploy the amit.com Web Tier with ECS" [level=2] [ref=f1e218]':
+          - generic [ref=f1e219]: 
+          - text: "Hands-On: Deploy the amit.com Web Tier with ECS"
+        - paragraph [ref=f1e221]:
+          - text: We'll containerize and deploy the
+          - strong [ref=f1e222]: www.amit.com
+          - text: web tier — and because Floci runs
+          - emphasis [ref=f1e223]: real
+          - text: containers, you'll see an actual web server come up. Command by command.
+        - generic [ref=f1e224]:
+          - generic [ref=f1e225]:
+            - generic [ref=f1e226]:
+              - generic [ref=f1e227]: "1"
+              - generic [ref=f1e228]:
+                - heading "Create the Cluster" [level=3] [ref=f1e229]
+                - generic [ref=f1e230]: The logical home for all your tasks
+            - generic [ref=f1e231]:
+              - generic [ref=f1e232]:
+                - generic [ref=f1e233]:
+                  - generic [ref=f1e234]: 
+                  - text: Command
+                - generic [ref=f1e235]: awslocal ecs create-cluster --cluster-name amit-cluster
+              - generic [ref=f1e236]:
+                - generic [ref=f1e237]: 🏠
+                - generic [ref=f1e238]:
+                  - generic [ref=f1e239]: What did this just do?
+                  - paragraph [ref=f1e240]:
+                    - text: You created a
+                    - strong [ref=f1e241]: cluster
+                    - text: — the container "neighborhood" for your app. It starts empty (0 running tasks, 0 services). Think of it as the folder that will hold all of amit.com's containers. One cluster can host many services.
+              - generic [ref=f1e242]:
+                - generic [ref=f1e248]:
+                  - generic [ref=f1e249]: 
+                  - text: Run it live
+                - generic [ref=f1e251]:
+                  - button " Run example" [ref=f1e252] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f1e253] [cursor=pointer]
+              - generic [ref=f1e254]:
+                - generic [ref=f1e255]:
+                  - generic [ref=f1e256]: 
+                  - text: Breaking down the command
+                - generic [ref=f1e257]:
+                  - code [ref=f1e258]: ecs create-cluster
+                  - generic [ref=f1e259]: Creates the container home for your tasks.
+                - generic [ref=f1e260]:
+                  - code [ref=f1e261]: "--cluster-name amit-cluster"
+                  - generic [ref=f1e262]: Your cluster's name — used in every later command.
+                - generic [ref=f1e263]:
+                  - code [ref=f1e264]: "status: ACTIVE"
+                  - generic [ref=f1e265]: Ready to accept tasks and services.
+              - generic [ref=f1e266]:
+                - generic [ref=f1e267]:
+                  - generic [ref=f1e268]: 
+                  - text: One cluster per app (or env)
+                - text: Teams often make
+                - code [ref=f1e269]: amit-dev-cluster
+                - text: and
+                - code [ref=f1e270]: amit-prod-cluster
+                - text: to keep environments isolated. It's just a logical grouping — cheap and useful.
+          - generic [ref=f1e271]:
+            - generic [ref=f1e272]:
+              - generic [ref=f1e273]: "2"
+              - generic [ref=f1e274]:
+                - heading "Create the ECR Repo & Push Your Image" [level=3] [ref=f1e275]
+                - generic [ref=f1e276]: Get your app's Docker image into the cloud registry
+            - generic [ref=f1e277]:
+              - generic [ref=f1e278]:
+                - generic [ref=f1e279]:
+                  - generic [ref=f1e280]: 
+                  - text: Commands
+                - generic [ref=f1e281]: awslocal ecr create-repository --repository-name amit-app docker build -t amit-app . docker tag amit-app 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest docker push 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest
+              - generic [ref=f1e282]:
+                - generic [ref=f1e283]: 🏬
+                - generic [ref=f1e284]:
+                  - generic [ref=f1e285]: What did this just do?
+                  - paragraph [ref=f1e286]:
+                    - text: You created an
+                    - strong [ref=f1e287]: ECR repository
+                    - text: named
+                    - code [ref=f1e288]: amit-app
+                    - text: ", then built, tagged, and"
+                    - strong [ref=f1e289]: pushed
+                    - text: your Docker image into it. The
+                    - code [ref=f1e290]: repositoryUri
+                    - text: is the exact address ECS will pull from. On Floci the registry on
+                    - strong [ref=f1e291]: port 5100
+                    - text: is real — the image physically lands there, so ECS can genuinely pull it next step.
+              - generic [ref=f1e292]:
+                - generic [ref=f1e298]:
+                  - generic [ref=f1e299]: 
+                  - text: Run it live
+                - generic [ref=f1e301]:
+                  - button " Run example" [ref=f1e302] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f1e303] [cursor=pointer]
+              - generic [ref=f1e304]:
+                - generic [ref=f1e305]:
+                  - generic [ref=f1e306]: 
+                  - text: Breaking down the commands
+                - generic [ref=f1e307]:
+                  - code [ref=f1e308]: ecr create-repository
+                  - generic [ref=f1e309]: Creates the private image repo (one per app).
+                - generic [ref=f1e310]:
+                  - code [ref=f1e311]: docker build -t amit-app .
+                  - generic [ref=f1e312]: Builds an image from your Dockerfile.
+                - generic [ref=f1e313]:
+                  - code [ref=f1e314]: docker tag ... :latest
+                  - generic [ref=f1e315]: Labels the image with the repo URI + a tag.
+                - generic [ref=f1e316]:
+                  - code [ref=f1e317]: docker push ...
+                  - generic [ref=f1e318]: Uploads the image to your ECR repository.
+              - generic [ref=f1e319]:
+                - generic [ref=f1e320]:
+                  - generic [ref=f1e321]: 
+                  - text: Must-push before you run
+                - text: "On real AWS (and Floci) a task fails if ECS can't pull the image. I tested this live:"
+                - code [ref=f1e322]: run-task
+                - text: with a repo URI that had no image returned
+                - code [ref=f1e323]: STOPPED
+                - text: with a
+                - emphasis [ref=f1e324]: "\"failed to resolve reference\""
+                - text: error. The order matters — build & push first,
+                - emphasis [ref=f1e325]: then
+                - text: run.
+          - generic [ref=f1e326]:
+            - generic [ref=f1e327]:
+              - generic [ref=f1e328]: "3"
+              - generic [ref=f1e329]:
+                - heading "Register the Task Definition" [level=3] [ref=f1e330]
+                - generic [ref=f1e331]: "The blueprint: image, CPU, memory, ports"
+            - generic [ref=f1e332]:
+              - generic [ref=f1e333]:
+                - generic [ref=f1e334]:
+                  - generic [ref=f1e335]: 
+                  - text: Command
+                - generic [ref=f1e336]: "awslocal ecs register-task-definition --family amit-web --network-mode awsvpc --cpu 256 --memory 512 --requires-compatibilities FARGATE --container-definitions '[{\"name\":\"web\",\"image\":\"000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest\",\"portMappings\":[{\"containerPort\":3000,\"protocol\":\"tcp\"}]}]'"
+              - generic [ref=f1e337]:
+                - generic [ref=f1e338]: 📋
+                - generic [ref=f1e339]:
+                  - generic [ref=f1e340]: What did this just do?
+                  - paragraph [ref=f1e341]:
+                    - text: You registered the
+                    - strong [ref=f1e342]: task definition
+                    - code [ref=f1e343]: amit-web:1
+                    - text: "— the recipe for your app. It says: pull"
+                    - code [ref=f1e344]: amit-app:latest
+                    - text: from ECR, give each task 256 CPU + 512 MB, use awsvpc networking, and expose port 3000. Every time you change it, a new revision (
+                    - code [ref=f1e345]: :2
+                    - text: ","
+                    - code [ref=f1e346]: :3
+                    - text: …) is created.
+              - generic [ref=f1e347]:
+                - generic [ref=f1e353]:
+                  - generic [ref=f1e354]: 
+                  - text: Run it live
+                - generic [ref=f1e356]:
+                  - button " Run example" [ref=f1e357] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f1e358] [cursor=pointer]
+              - generic [ref=f1e359]:
+                - generic [ref=f1e360]:
+                  - generic [ref=f1e361]: 
+                  - text: Breaking down the command
+                - generic [ref=f1e362]:
+                  - code [ref=f1e363]: ecs register-task-definition
+                  - generic [ref=f1e364]: Saves a task blueprint (immutable, versioned).
+                - generic [ref=f1e365]:
+                  - code [ref=f1e366]: "--family amit-web"
+                  - generic [ref=f1e367]: The app's name — revisions accumulate under it.
+                - generic [ref=f1e368]:
+                  - code [ref=f1e369]: "--cpu 256 --memory 512"
+                  - generic [ref=f1e370]: ¼ vCPU + 512 MB per task (Fargate sizing).
+                - generic [ref=f1e371]:
+                  - code [ref=f1e372]: "--requires-compatibilities FARGATE"
+                  - generic [ref=f1e373]: Serverless launch — no servers to manage.
+                - generic [ref=f1e374]:
+                  - code [ref=f1e375]: "--container-definitions '[...]'"
+                  - generic [ref=f1e376]: "JSON list: container name, ECR image, port 3000."
+              - generic [ref=f1e377]:
+                - generic [ref=f1e378]:
+                  - generic [ref=f1e379]: 
+                  - text: Revision 1 — but watch the single quotes
+                - text: The whole
+                - code [ref=f1e380]: "--container-definitions"
+                - text: JSON is wrapped in single quotes, and the inner JSON uses double quotes. If your JSON has any single quotes they must be escaped — same lesson as Chapter 4's SQL and every sim in this course.
+          - generic [ref=f1e381]:
+            - generic [ref=f1e382]:
+              - generic [ref=f1e383]: "4"
+              - generic [ref=f1e384]:
+                - heading "Run a Task — Watch a Real Container Start" [level=3] [ref=f1e385]
+                - generic [ref=f1e386]: Floci actually launches the container on your machine
+            - generic [ref=f1e387]:
+              - generic [ref=f1e388]:
+                - generic [ref=f1e389]:
+                  - generic [ref=f1e390]: 
+                  - text: Commands
+                - generic [ref=f1e391]: "awslocal ecs run-task --cluster amit-cluster --task-definition amit-web:1 --launch-type FARGATE --count 1 docker ps --filter \"name=floci-ecs\" # ← see the real container"
+              - generic [ref=f1e392]:
+                - generic [ref=f1e393]: 🚀
+                - generic [ref=f1e394]:
+                  - generic [ref=f1e395]: The best part of this whole course
+                  - paragraph [ref=f1e396]:
+                    - code [ref=f1e397]: run-task
+                    - text: tells ECS to start one instance of your blueprint. On Floci, ECS genuinely pulls the image and launches a
+                    - strong [ref=f1e398]: real Docker container
+                    - text: — I verified it with
+                    - code [ref=f1e399]: docker ps
+                    - text: (a live nginx server appeared, and
+                    - code [ref=f1e400]: curl
+                    - text: inside it returned the real homepage!). The response shows the task's
+                    - strong [ref=f1e401]: ARN
+                    - text: and its
+                    - code [ref=f1e402]: "lastStatus: RUNNING"
+                    - text: .
+              - generic [ref=f1e403]:
+                - generic [ref=f1e409]:
+                  - generic [ref=f1e410]: 
+                  - text: Run it live
+                - generic [ref=f1e412]:
+                  - button " Run example" [ref=f1e413] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f1e414] [cursor=pointer]
+              - generic [ref=f1e415]:
+                - generic [ref=f1e416]:
+                  - generic [ref=f1e417]: 
+                  - text: Breaking down the commands
+                - generic [ref=f1e418]:
+                  - code [ref=f1e419]: ecs run-task
+                  - generic [ref=f1e420]: Start one task right now (a one-off run).
+                - generic [ref=f1e421]:
+                  - code [ref=f1e422]: "--task-definition amit-web:1"
+                  - generic [ref=f1e423]: Which blueprint to run (family:revision).
+                - generic [ref=f1e424]:
+                  - code [ref=f1e425]: "--count 1"
+                  - generic [ref=f1e426]: How many copies to start.
+                - generic [ref=f1e427]:
+                  - code [ref=f1e428]: docker ps --filter "name=floci-ecs"
+                  - generic [ref=f1e429]:
+                    - text: Prove it's real — Floci names its task containers
+                    - code [ref=f1e430]: floci-ecs-<taskid>-<container>
+                    - text: .
+              - generic [ref=f1e431]:
+                - generic [ref=f1e432]:
+                  - generic [ref=f1e433]: 
+                  - text: Verify with describe-tasks
+                - code [ref=f1e434]: awslocal ecs list-tasks --cluster amit-cluster
+                - text: lists task ARNs, and
+                - code [ref=f1e435]: awslocal ecs describe-tasks --cluster amit-cluster --tasks <id>
+                - text: shows full detail (status, launch type, created time). That's your "is it running?" toolkit — mirroring
+                - code [ref=f1e436]: describe-instances
+                - text: from Chapter 3.
+          - generic [ref=f1e437]:
+            - generic [ref=f1e438]:
+              - generic [ref=f1e439]: "5"
+              - generic [ref=f1e440]:
+                - heading "Create a Service — Make It Always-On" [level=3] [ref=f1e441]
+                - generic [ref=f1e442]: "Auto-managed copies: ECS keeps N running forever"
+            - generic [ref=f1e443]:
+              - generic [ref=f1e444]:
+                - generic [ref=f1e445]:
+                  - generic [ref=f1e446]: 
+                  - text: Commands
+                - generic [ref=f1e447]: "awslocal ecs create-service --cluster amit-cluster --service-name amit-web-svc --task-definition amit-web:1 --desired-count 2 --launch-type FARGATE --network-configuration '{\"awsvpcConfiguration\":{\"subnets\":[\"subnet-123\"],\"securityGroups\":[\"sg-123\"]}}' awslocal ecs update-service --cluster amit-cluster --service amit-web-svc --desired-count 4 # scale up"
+              - generic [ref=f1e448]:
+                - generic [ref=f1e449]: 🚦
+                - generic [ref=f1e450]:
+                  - generic [ref=f1e451]: From "one-off" to "always-on"
+                  - paragraph [ref=f1e452]:
+                    - text: You created a
+                    - strong [ref=f1e453]: service
+                    - text: named
+                    - code [ref=f1e454]: amit-web-svc
+                    - text: with
+                    - strong [ref=f1e455]: desired count 2
+                    - text: . ECS now reconciles toward 2 running copies — I verified live that Floci launched
+                    - emphasis [ref=f1e456]: real
+                    - text: containers for services too (same as
+                    - code [ref=f1e457]: run-task
+                    - text: ). Then
+                    - code [ref=f1e458]: update-service --desired-count 4
+                    - text: scales it up to 4 copies. That single command is your scaling mechanism.
+              - generic [ref=f1e459]:
+                - generic [ref=f1e465]:
+                  - generic [ref=f1e466]: 
+                  - text: Run it live
+                - generic [ref=f1e468]:
+                  - button " Run example" [ref=f1e469] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f1e470] [cursor=pointer]
+              - generic [ref=f1e471]:
+                - generic [ref=f1e472]:
+                  - generic [ref=f1e473]: 
+                  - text: Breaking down the commands
+                - generic [ref=f1e474]:
+                  - code [ref=f1e475]: ecs create-service
+                  - generic [ref=f1e476]: Registers an always-on workload.
+                - generic [ref=f1e477]:
+                  - code [ref=f1e478]: "--desired-count 2"
+                  - generic [ref=f1e479]: The number of copies ECS must keep running.
+                - generic [ref=f1e480]:
+                  - code [ref=f1e481]: "--network-configuration '{\"awsvpcConfiguration\":...}'"
+                  - generic [ref=f1e482]: VPC subnets + security groups the tasks join (Chapter 2).
+                - generic [ref=f1e483]:
+                  - code [ref=f1e484]: update-service --desired-count 4
+                  - generic [ref=f1e485]: Scaling = changing this one number.
+                - generic [ref=f1e486]:
+                  - code [ref=f1e487]: "runningCount: 2"
+                  - generic [ref=f1e488]: Real containers launched by Floci for the service.
+              - generic [ref=f1e489]:
+                - generic [ref=f1e490]:
+                  - generic [ref=f1e491]: 
+                  - text: Deleting a service needs --force
+                - text: ECS won't delete a service with active tasks unless you pass
+                - code [ref=f1e492]: "--force"
+                - text: (or first set desired-count to 0). Same "safety rule" family as CloudFront's disable-before-delete. We'll use it in cleanup next.
+          - generic [ref=f1e493]:
+            - generic [ref=f1e494]:
+              - generic [ref=f1e495]: "6"
+              - generic [ref=f1e496]:
+                - heading "Clean Up — Full Teardown" [level=3] [ref=f1e497]
+                - generic [ref=f1e498]: Scale to 0, stop tasks, delete in the right order
+            - generic [ref=f1e499]:
+              - generic [ref=f1e500]:
+                - generic [ref=f1e501]:
+                  - generic [ref=f1e502]: 
+                  - text: Commands
+                - generic [ref=f1e503]: awslocal ecs update-service --cluster amit-cluster --service amit-web-svc --desired-count 0 awslocal ecs delete-service --cluster amit-cluster --service amit-web-svc --force awslocal ecs delete-cluster --cluster amit-cluster awslocal ecs deregister-task-definition --task-definition amit-web:1 awslocal ecr delete-repository --repository-name amit-app --force
+              - generic [ref=f1e504]:
+                - generic [ref=f1e505]: 🧹
+                - generic [ref=f1e506]:
+                  - generic [ref=f1e507]: The teardown rules
+                  - paragraph [ref=f1e508]:
+                    - text: "Cleanup must respect ECS's order:"
+                    - strong [ref=f1e509]: scale the service to 0 → delete the service → stop any stray tasks → delete the cluster → deregister task definitions → delete the ECR repo
+                    - text: ". Each layer depends on the one above being empty. ECS enforces this: I hit"
+                    - code [ref=f1e510]: ClusterContainsTasksException
+                    - text: live when trying to delete a cluster with a task still running.
+              - generic [ref=f1e511]:
+                - generic [ref=f1e517]:
+                  - generic [ref=f1e518]: 
+                  - text: Run it live
+                - generic [ref=f1e520]:
+                  - button " Run example" [ref=f1e521] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f1e522] [cursor=pointer]
+              - generic [ref=f1e523]:
+                - generic [ref=f1e524]:
+                  - generic [ref=f1e525]: 
+                  - text: Breaking down the cleanup
+                - generic [ref=f1e526]:
+                  - code [ref=f1e527]: update-service --desired-count 0
+                  - generic [ref=f1e528]: Drain the service first.
+                - generic [ref=f1e529]:
+                  - code [ref=f1e530]: delete-service --force
+                  - generic [ref=f1e531]: Delete the supervisor (force because it tracks tasks).
+                - generic [ref=f1e532]:
+                  - code [ref=f1e533]: stop-task --task <id>
+                  - generic [ref=f1e534]: Stop any one-off task still running.
+                - generic [ref=f1e535]:
+                  - code [ref=f1e536]: delete-cluster
+                  - generic [ref=f1e537]:
+                    - text: Only succeeds when the cluster is empty —
+                    - code [ref=f1e538]: ClusterContainsTasksException
+                    - text: otherwise.
+                - generic [ref=f1e539]:
+                  - code [ref=f1e540]: deregister-task-definition
+                  - generic [ref=f1e541]: Retire the blueprint (status → INACTIVE).
+                - generic [ref=f1e542]:
+                  - code [ref=f1e543]: ecr delete-repository --force
+                  - generic [ref=f1e544]: Removes the image registry.
+              - generic [ref=f1e545]:
+                - generic [ref=f1e546]:
+                  - generic [ref=f1e547]: 
+                  - text: ClusterContainsTasksException — expect it once
+                - text: Trying to delete a cluster with running tasks returns
+                - code [ref=f1e548]: ClusterContainsTasksException
+                - text: . It's AWS protecting you from accidentally deleting a running app. Stop the tasks, then delete. Same discipline as Route 53's
+                - code [ref=f1e549]: HostedZoneNotEmpty
+                - text: and CloudFront's disable-before-delete.
+        - generic [ref=f1e550]:
+          - generic [ref=f1e551]:
+            - generic [ref=f1e552]: 
+            - text: Complete ECS flow — copy & paste
+            - button " Copy" [ref=f1e553] [cursor=pointer]:
+              - generic [ref=f1e554]: 
+              - text: Copy
+          - code [ref=f1e556]: "# 1. Create the cluster (the container home) awslocal ecs create-cluster --cluster-name amit-cluster # 2. Create the ECR repo and push your image awslocal ecr create-repository --repository-name amit-app docker build -t amit-app . docker tag amit-app 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest docker push 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest # 3. Register the task definition (the blueprint) awslocal ecs register-task-definition --family amit-web --network-mode awsvpc --cpu 256 --memory 512 --requires-compatibilities FARGATE --container-definitions '[{\"name\":\"web\",\"image\":\"000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest\",\"portMappings\":[{\"containerPort\":3000,\"protocol\":\"tcp\"}]}]' # 4. Run a one-off task (real container!) awslocal ecs run-task --cluster amit-cluster --task-definition amit-web:1 --launch-type FARGATE --count 1 awslocal ecs list-tasks --cluster amit-cluster # 5. Create an always-on service and scale it awslocal ecs create-service --cluster amit-cluster --service-name amit-web-svc --task-definition amit-web:1 --desired-count 2 --launch-type FARGATE --network-configuration '{\"awsvpcConfiguration\":{\"subnets\":[\"subnet-123\"],\"securityGroups\":[\"sg-123\"]}}' awslocal ecs update-service --cluster amit-cluster --service amit-web-svc --desired-count 4 # 6. Clean up (scale 0 → delete service → stop tasks → delete cluster → deregister → delete repo) awslocal ecs update-service --cluster amit-cluster --service amit-web-svc --desired-count 0 awslocal ecs delete-service --cluster amit-cluster --service amit-web-svc --force awslocal ecs delete-cluster --cluster amit-cluster awslocal ecs deregister-task-definition --task-definition amit-web:1 awslocal ecr delete-repository --repository-name amit-app --force"
+        - generic [ref=f1e557]:
+          - generic [ref=f1e558]:
+            - generic [ref=f1e559]: 
+            - text: Final mental model — ECS in one picture
+          - generic [ref=f1e560]: ECS = the container orchestrator for your apps. Cluster = the home (amit-cluster) ECR = the image warehouse (docker push) Task def = the blueprint (image + cpu + memory + ports) Task = one running copy of the blueprint Service = "keep N copies running" (self-healing + scaling) Fargate = no servers to manage Build image → push to ECR → register task def → run task / create service → ECS launches real containers.
+        - generic [ref=f1e561]:
+          - generic [ref=f1e562]:
+            - generic [ref=f1e563]: 
+            - text: Honest note — what Floci does & doesn't support
+          - text: This is the most
+          - strong [ref=f1e564]: real
+          - text: "chapter in the course: I tested every command live and ECS on Floci launches"
+          - strong [ref=f1e565]: actual Docker containers
+          - text: —
+          - code [ref=f1e566]: run-task
+          - text: and
+          - code [ref=f1e567]: create-service
+          - text: both started real web servers I could see in
+          - code [ref=f1e568]: docker ps
+          - text: and curl. ECR's registry on port 5100 accepts real
+          - code [ref=f1e569]: docker push
+          - text: es.
+          - strong [ref=f1e570]: "Quirks to know:"
+          - code [ref=f1e571]: ecr describe-images
+          - text: returns
+          - strong [ref=f1e572]: empty output
+          - text: (like CloudFront's list-distributions quirk) even though the push works; the
+          - code [ref=f1e573]: awslogs
+          - text: driver doesn't ship container logs to CloudWatch Logs (use
+          - code [ref=f1e574]: docker logs <container>
+          - text: instead); load-balancer (ALB) wiring isn't emulated; and tasks must reference a pullable image or they stop with a pull error. Everything else — clusters, repos, task definitions, run-task, services, scaling, and the cleanup chain — behaves exactly like real AWS.
+      - generic [ref=f1e575]:
+        - heading " Glossary — Chapter 10" [level=2] [ref=f1e576]:
+          - generic [ref=f1e577]: 
+          - text: Glossary — Chapter 10
+        - generic [ref=f1e579]:
+          - generic [ref=f1e580]: Container
+          - paragraph [ref=f1e581]: A running instance of an image — your app + its dependencies, sharing the host OS.
+        - generic [ref=f1e582]:
+          - generic [ref=f1e583]: Docker image
+          - paragraph [ref=f1e584]: A read-only blueprint of your app that containers are created from.
+        - generic [ref=f1e585]:
+          - generic [ref=f1e586]: ECS
+          - paragraph [ref=f1e587]: Elastic Container Service — AWS's container orchestrator.
+        - generic [ref=f1e588]:
+          - generic [ref=f1e589]: Cluster
+          - paragraph [ref=f1e590]: The logical home for your ECS tasks and services.
+        - generic [ref=f1e591]:
+          - generic [ref=f1e592]: Task
+          - paragraph [ref=f1e593]: One unit of work — one or more containers running your app.
+        - generic [ref=f1e594]:
+          - generic [ref=f1e595]: Task definition
+          - paragraph [ref=f1e596]: "The versioned blueprint: image, CPU, memory, ports, env."
+        - generic [ref=f1e597]:
+          - generic [ref=f1e598]: Service
+          - paragraph [ref=f1e599]: A supervisor that keeps a desired number of task copies running.
+        - generic [ref=f1e600]:
+          - generic [ref=f1e601]: Desired count
+          - paragraph [ref=f1e602]: The number of task copies a service should keep running.
+        - generic [ref=f1e603]:
+          - generic [ref=f1e604]: ECR
+          - paragraph [ref=f1e605]: Elastic Container Registry — AWS's private Docker image registry.
+        - generic [ref=f1e606]:
+          - generic [ref=f1e607]: Repository (ECR)
+          - paragraph [ref=f1e608]: Per-app storage for your pushed images.
+        - generic [ref=f1e609]:
+          - generic [ref=f1e610]: Fargate
+          - paragraph [ref=f1e611]: Serverless ECS launch type — no servers to manage.
+        - generic [ref=f1e612]:
+          - generic [ref=f1e613]: awsvpc
+          - paragraph [ref=f1e614]: Network mode where each task gets its own elastic network interface.
+        - generic [ref=f1e615]:
+          - generic [ref=f1e616]: Reconciliation
+          - paragraph [ref=f1e617]: ECS constantly matching real task count to your desired count.
+      - generic [ref=f1e618]:
+        - heading " Chapter 10 — Check Your Understanding" [level=2] [ref=f1e619]:
+          - generic [ref=f1e620]: 
+          - text: Chapter 10 — Check Your Understanding
+        - paragraph [ref=f1e622]:
+          - text: Pick an answer. Green = right. Red = wrong. No pressure — this is for
+          - emphasis [ref=f1e623]: you
+          - text: .
+        - generic [ref=f1e624]:
+          - generic [ref=f1e625]:
+            - generic [ref=f1e626]: Q1.
+            - text: A
+            - strong [ref=f1e627]: container
+            - text: is...
+          - generic [ref=f1e628]:
+            - generic [ref=f1e629] [cursor=pointer]:
+              - radio "A full virtual machine with its own OS" [ref=f1e630]
+              - text: A full virtual machine with its own OS
+            - generic [ref=f1e631] [cursor=pointer]:
+              - radio "A running instance of your app + its dependencies, sharing the host OS" [ref=f1e632]
+              - text: A running instance of your app + its dependencies, sharing the host OS
+            - generic [ref=f1e633] [cursor=pointer]:
+              - radio "An S3 bucket for executables" [ref=f1e634]
+              - text: An S3 bucket for executables
+        - generic [ref=f1e635]:
+          - generic [ref=f1e636]:
+            - generic [ref=f1e637]: Q2.
+            - text: The
+            - strong [ref=f1e638]: blueprint
+            - text: that describes your app's image, CPU, memory, and ports is the...
+          - generic [ref=f1e639]:
+            - generic [ref=f1e640] [cursor=pointer]:
+              - radio "ECR repository" [ref=f1e641]
+              - text: ECR repository
+            - generic [ref=f1e642] [cursor=pointer]:
+              - radio "Task definition" [ref=f1e643]
+              - text: Task definition
+            - generic [ref=f1e644] [cursor=pointer]:
+              - radio "Cluster" [ref=f1e645]
+              - text: Cluster
+        - generic [ref=f1e646]:
+          - generic [ref=f1e647]:
+            - generic [ref=f1e648]: Q3.
+            - text: What's the difference between a
+            - strong [ref=f1e649]: task
+            - text: and a
+            - strong [ref=f1e650]: service
+            - text: "?"
+          - generic [ref=f1e651]:
+            - generic [ref=f1e652] [cursor=pointer]:
+              - radio "Nothing — they're the same thing" [ref=f1e653]
+              - text: Nothing — they're the same thing
+            - generic [ref=f1e654] [cursor=pointer]:
+              - radio "A task is one run; a service keeps a desired number of copies running" [ref=f1e655]
+              - text: A task is one run; a service keeps a desired number of copies running
+            - generic [ref=f1e656] [cursor=pointer]:
+              - radio "A task is on EC2, a service is on Fargate" [ref=f1e657]
+              - text: A task is on EC2, a service is on Fargate
+        - generic [ref=f1e658]:
+          - generic [ref=f1e659]:
+            - generic [ref=f1e660]: Q4.
+            - text: Where do your Docker images live before ECS can pull them?
+          - generic [ref=f1e661]:
+            - generic [ref=f1e662] [cursor=pointer]:
+              - radio "Directly in the cluster" [ref=f1e663]
+              - text: Directly in the cluster
+            - generic [ref=f1e664] [cursor=pointer]:
+              - radio "In an ECR repository" [ref=f1e665]
+              - text: In an ECR repository
+            - generic [ref=f1e666] [cursor=pointer]:
+              - radio "In a Route 53 hosted zone" [ref=f1e667]
+              - text: In a Route 53 hosted zone
+        - generic [ref=f1e668]:
+          - generic [ref=f1e669]:
+            - generic [ref=f1e670]: Q5.
+            - strong [ref=f1e671]: Fargate
+            - text: means...
+          - generic [ref=f1e672]:
+            - generic [ref=f1e673] [cursor=pointer]:
+              - radio "You manage your own EC2 instances" [ref=f1e674]
+              - text: You manage your own EC2 instances
+            - generic [ref=f1e675] [cursor=pointer]:
+              - radio "AWS runs your containers without you managing servers" [ref=f1e676]
+              - text: AWS runs your containers without you managing servers
+            - generic [ref=f1e677] [cursor=pointer]:
+              - radio "Your app runs in a Lambda function" [ref=f1e678]
+              - text: Your app runs in a Lambda function
+        - generic [ref=f1e679]:
+          - generic [ref=f1e680]:
+            - generic [ref=f1e681]: Q6.
+            - text: You
+            - code [ref=f1e682]: run-task
+            - text: with an image that was never pushed to ECR. What happens?
+          - generic [ref=f1e683]:
+            - generic [ref=f1e684] [cursor=pointer]:
+              - radio "ECS builds the image automatically" [ref=f1e685]
+              - text: ECS builds the image automatically
+            - generic [ref=f1e686] [cursor=pointer]:
+              - radio "The task stops with a \"failed to resolve reference\" pull error" [ref=f1e687]
+              - text: The task stops with a "failed to resolve reference" pull error
+            - generic [ref=f1e688] [cursor=pointer]:
+              - radio "It runs fine — images don't need pushing" [ref=f1e689]
+              - text: It runs fine — images don't need pushing
+        - generic [ref=f1e690]:
+          - generic [ref=f1e691]:
+            - generic [ref=f1e692]: Q7.
+            - code [ref=f1e693]: delete-cluster
+            - text: returns
+            - code [ref=f1e694]: ClusterContainsTasksException
+            - text: . What do you do?
+          - generic [ref=f1e695]:
+            - generic [ref=f1e696] [cursor=pointer]:
+              - radio "Delete the ECR repository first" [ref=f1e697]
+              - text: Delete the ECR repository first
+            - generic [ref=f1e698] [cursor=pointer]:
+              - radio "Stop the running tasks (and drain the service), then delete the cluster" [ref=f1e699]
+              - text: Stop the running tasks (and drain the service), then delete the cluster
+            - generic [ref=f1e700] [cursor=pointer]:
+              - radio "Force-delete with a special flag" [ref=f1e701]
+              - text: Force-delete with a special flag
+        - generic [ref=f1e702]:
+          - 'link " Ch 9: CloudFront — CDN" [ref=f1e703] [cursor=pointer]':
+            - /url: chapter-09.html
+            - generic [ref=f1e704]: 
+            - text: "Ch 9: CloudFront — CDN"
+          - 'link "Next: Serverless — Lambda " [ref=f1e705] [cursor=pointer]':
+            - /url: chapter-11.html
+            - text: "Next: Serverless — Lambda"
+            - generic [ref=f1e706]: 
+  - contentinfo [ref=f1e707]:
+    - paragraph [ref=f1e708]:
+      - generic [ref=f1e709]: 
+      - text: Master AWS · Chapter 10 of 11 · Practice locally with
+      - strong [ref=f1e710]: Floci
+      - text: on port 4566

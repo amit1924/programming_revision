@@ -1,0 +1,872 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 8 — S3: Object Storage | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html" class="active"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 8 — Contents</h4>
+      <a href="#why-s3">Why Object Storage?</a>
+      <a href="#bucket-model">The Bucket Model</a>
+      <a href="#storage-classes">Storage Classes &amp; Lifecycle</a>
+      <a href="#versioning">Versioning</a>
+      <a href="#security">Security — Policies &amp; Access</a>
+      <a href="#website">Static Website Hosting</a>
+      <a href="#hands-on">Hands-On: Your Image Store</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 8 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="8" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-bucket"></i> Chapter 8</span>
+        <h1>S3 — Simple Storage Service</h1>
+        <p class="subtitle">Back in the very first chapter you created an <strong>S3 bucket</strong>. Now you'll actually understand it. S3 is AWS's <strong>object storage</strong> — the place for images, videos, backups, and static files. It's the "image storage" of your <strong>www.amit.com</strong> story, and it's the most-used service in all of AWS.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~35 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 7 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-bucket"></i> The AWS classic</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-s3">Why Object Storage?</a>
+        <a href="#bucket-model">The Bucket Model</a>
+        <a href="#storage-classes">Storage Classes &amp; Lifecycle</a>
+        <a href="#versioning">Versioning</a>
+        <a href="#security">Security — Policies &amp; Access</a>
+        <a href="#website">Static Website Hosting</a>
+        <a href="#hands-on">Hands-On: Your Image Store</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 8 Quiz</a>
+      </div>
+
+      <!-- ============ WHY S3 ============ -->
+      <section class="sec" id="why-s3">
+        <h2><span class="ic"><i class="fa-solid fa-circle-question"></i></span> Why Object Storage?</h2>
+        <p>Your EC2 server has a disk, your RDS database has tables. But websites need another kind of storage: <strong>files that don't change often and just need to be fetched</strong> — product photos, user avatars, videos, backups, PDFs.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> Where does S3 fit in www.amit.com?</div>
+          <pre>   <span class="a-blu">EC2</span>  = the computer (code, apps)
+   <span class="a-blu">RDS</span>  = the database (users, orders)
+   <span class="a-yel">S3</span>   = the warehouse 🏭 (photos, videos, backups)
+        │
+        ├─ product-photos/   (thousands of images)
+        ├─ user-avatars/
+        └─ backups/          (database dumps, old files)</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">📦</div>
+          <div>
+            <b>Object storage vs a hard drive</b>
+            <p>A hard drive works like a folder tree on one computer. <strong>Object storage</strong> is different: every file is a self-contained <strong>object</strong> (data + metadata + a unique key) living in a <strong>bucket</strong>. Buckets are <strong>unlimited in size</strong>, replicated across servers for durability (99.999999999% — "eleven 9s"), and accessible over the internet via a URL. You don't mount S3 like a disk — you <strong>put</strong> and <strong>get</strong> objects.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Why "eleven 9s" matters</b>
+            <code>99.999999999%</code> durability means S3 is designed to lose <strong>essentially nothing, ever</strong>. Files are automatically stored across at least 3 availability zones. For backups and treasured data, this is the entire point.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ BUCKET MODEL ============ -->
+      <section class="sec" id="bucket-model">
+        <h2><span class="ic blue"><i class="fa-solid fa-bucket"></i></span> The Bucket Model</h2>
+        <p>Two levels, that's it: <strong>bucket</strong> (the warehouse) and <strong>object</strong> (one item with a key).</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-bucket"></i> Bucket → folder → object</div>
+          <pre>   <span class="a-yel">Bucket: amit-photos</span>      (globally unique name)
+     └─ <span class="a-blu">hello.txt</span>              (object at the root)
+     └─ <span class="a-blu">notes/readme.md</span>      (object with a "folder" in its key)
+
+   URL: https://amit-photos.s3.amazonaws.com/notes/readme.md</pre>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Concept</th><th>What it means</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Bucket</strong></td><td>The container. Its name is <strong>globally unique</strong> (shared across all AWS accounts). Holds unlimited objects.</td></tr>
+              <tr><td><strong>Key</strong></td><td>The object's "path" — actually just its name. <code>notes/readme.md</code> looks like a folder but it's really one key.</td></tr>
+              <tr><td><strong>Object</strong></td><td>A file plus its metadata. Objects live inside buckets.</td></tr>
+              <tr><td><strong>ETag</strong></td><td>A hash of the object's content — how you verify a copy is identical.</td></tr>
+              <tr><td><strong>VersionId</strong></td><td>An object's version number (appears when versioning is on).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Bucket names are global</b>
+          Because bucket names live in one worldwide namespace, <code>amit-photos</code> must be unique among <strong>every AWS customer on Earth</strong>. If it's taken, pick another. (On Floci, name conflicts work a bit more loosely — but the rule is real AWS fact.)
+        </div>
+      </section>
+
+      <!-- ============ STORAGE CLASSES ============ -->
+      <section class="sec" id="storage-classes">
+        <h2><span class="ic green"><i class="fa-solid fa-temperature-half"></i></span> Storage Classes &amp; Lifecycle</h2>
+        <p>Not all files need the same speed. S3 has <strong>storage classes</strong> — cheaper tiers for data you rarely touch. Same object, same bucket, different cost.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Class</th><th>Access speed</th><th>Cost</th><th>Use for</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>STANDARD</strong></td><td>Instant</td><td>Highest</td><td>Active files — photos people view every day.</td></tr>
+              <tr><td><strong>STANDARD_IA</strong></td><td>Instant</td><td>Lower + retrieval fee</td><td>Rarely read but need fast access (old backups).</td></tr>
+              <tr><td><strong>GLACIER</strong></td><td>Minutes–hours</td><td>Very low</td><td>Long-term archives you rarely open.</td></tr>
+              <tr><td><strong>DEEP_ARCHIVE</strong></td><td>Up to 12 hours</td><td>Lowest</td><td>Compliance archives kept for years.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">⏳</div>
+          <div>
+            <b>Lifecycle rules = auto-declining costs</b>
+            <p>You don't want to manually move 10,000 files between classes. A <strong>lifecycle rule</strong> says: <em>"after 30 days, move everything under <code>notes/</code> to STANDARD_IA; after 90 days, to GLACIER."</em> S3 does it automatically, every day, forever. Set it once, forget it.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ VERSIONING ============ -->
+      <section class="sec" id="versioning">
+        <h2><span class="ic gold"><i class="fa-solid fa-code-branch"></i></span> Versioning — The Undo Button</h2>
+        <p>By default, uploading a file with the same key <strong>replaces</strong> the old one. With <strong>versioning</strong> on, every upload becomes a new <strong>version</strong>, and old versions survive. Overwrote a file by mistake? <strong>Restore the previous version.</strong> Deleted a file? Versioning keeps it (as a <strong>delete marker</strong>) until you want it gone.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-code-branch"></i> Versioning in action</div>
+          <pre>   <span class="a-yel">hello.txt v1</span>  "hello from s3"
+        │  (upload v2)
+        ▼
+   <span class="a-yel">hello.txt v2</span>  "version two"     ← currently served
+        │  (delete)
+        ▼
+   <span class="a-pnk">delete marker</span>  (file disappears, v1+v2 still stored)
+        │  (restore v1)
+        ▼
+   <span class="a-grn">hello.txt v1</span>  "hello from s3"   ← back!</pre>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>The two kinds of "delete"</b>
+          With versioning on, a normal <code>s3 rm</code> only adds a <strong>delete marker</strong> (a tombstone hiding the file). To truly erase a specific version, you delete <em>by version ID</em>. This is why versioned buckets are the safe default for backups — accidents become recoverable.
+        </div>
+      </section>
+
+      <!-- ============ SECURITY ============ -->
+      <section class="sec" id="security">
+        <h2><span class="ic pink"><i class="fa-solid fa-shield-halved"></i></span> Security — Policies &amp; Access</h2>
+        <p>Buckets are <strong>private by default</strong>. Two tools control who gets in (this links straight back to IAM in Chapter 5):</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Mechanism</th><th>Who it applies to</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>IAM policies</strong></td><td>Users/roles (people &amp; services)</td><td>Rahul (IAM user) can read this bucket.</td></tr>
+              <tr><td><strong>Bucket policies</strong></td><td>Anyone — even anonymous <code>*</code></td><td>"Everyone on the internet can GetObject here" (public site).</td></tr>
+              <tr><td><strong>ACLs</strong></td><td>Simple grants on bucket/object</td><td>Give one account write access.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-shield-halved"></i> The two decisions</div>
+          <pre>   "Who is asking?"   →  <span class="a-blu">IAM policy</span>  (is this user allowed?)
+   "What can the public do?" →  <span class="a-yel">bucket policy</span>  (is it world-readable?)
+
+   Both must say yes for the request to succeed (IAM + bucket policy overlap).</pre>
+        </div>
+
+        <div class="highlight err">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Public ≠ private — read carefully</b>
+          A bucket policy with <code>"Principal": "*"</code> and <code>"Action": ["s3:GetObject"]</code> makes objects <strong>public</strong>. That's how static websites work (you want the world to read), but it's also how people accidentally leak private data. Only make public what you truly want public.
+        </div>
+      </section>
+
+      <!-- ============ WEBSITE ============ -->
+      <section class="sec" id="website">
+        <h2><span class="ic gold"><i class="fa-solid fa-window-restore"></i></span> Static Website Hosting</h2>
+        <p>S3 can serve <strong>static websites</strong> — HTML, CSS, JS — for pennies, with no servers at all. You just configure an index document (the home page) and an error document, and S3 turns your bucket into a website.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-window-restore"></i> Static hosting on S3</div>
+          <pre>   Bucket: amit-photos  (website mode ON)
+     └─ index.html   ← visited when you hit /
+     └─ error.html   ← shown when a page is missing
+
+   User → https://amit-photos.s3-website-us-east-1.amazonaws.com → index.html
+
+   No EC2. No servers. S3 just serves the files. 🎉</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🏗️</div>
+          <div>
+            <b>When to use S3 website hosting</b>
+            <p>Perfect for landing pages, docs, single-page apps (the frontend of your app!) — anything with <strong>no backend logic</strong>. In Chapter 9 you'll put CloudFront in front of S3 to make these sites fast worldwide. Static site + S3 + CloudFront = one of the most popular architectures on the internet.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ HANDS-ON ============ -->
+      <section class="sec" id="hands-on">
+        <h2><span class="ic"><i class="fa-solid fa-screwdriver-wrench"></i></span> Hands-On: Your Image Store on Floci</h2>
+        <p>Let's build the warehouse for <strong>www.amit.com</strong> — command by command. Create a bucket, upload, download, turn on versioning, add a website, and clean up.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: CREATE BUCKET ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Create a Bucket</h3>
+                <div class="step-sub">The warehouse for your files</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> s3 mb s3://amit-photos</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🏗️</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p><code>s3 mb</code> = <strong>make bucket</strong> — the friendly CLI shortcut. You created a container named <code>amit-photos</code>. Buckets are free to create (you pay only for what's stored), they're region-specific, and the name must be globally unique on real AWS. The <code>s3://</code> prefix is just the CLI's way of saying "this is an S3 path."</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal s3 mb s3://amit-photos","delay":500},
+                  {"type":"out","text":"make_bucket: amit-photos","color":"ok"},
+                  {"type":"cmd","text":"awslocal s3api list-buckets --query \"Buckets[].[Name,CreationDate]\" --output table","delay":500},
+                  {"type":"out","text":"--------------------------------------------","color":""},
+                  {"type":"out","text":"|              ListBuckets                 |","color":""},
+                  {"type":"out","text":"+--------------+---------------------------+","color":""},
+                  {"type":"out","text":"|  amit-photos |  2026-08-08T07:11:38+00:00 |","color":"ok"},
+                  {"type":"out","text":"+--------------+---------------------------+","color":""},
+                  {"type":"out","text":"# Bucket created — the warehouse is ready","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-bucket"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>s3 mb s3://amit-photos</code><div class="fl-desc"><b>m</b>ake <b>b</b>ucket — the friendly CLI shortcut for <code>s3api create-bucket</code>.</div></div>
+                <div class="flag"><code>s3://amit-photos</code><div class="fl-desc">The S3-style path: scheme + bucket name.</div></div>
+                <div class="flag"><code>s3api list-buckets</code><div class="fl-desc">The API-level command — shows name + creation date.</div></div>
+                <div class="flag"><code>mb vs s3api</code><div class="fl-desc"><code>s3</code> commands are friendly &amp; human; <code>s3api</code> returns raw JSON. You'll use both.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: UPLOAD ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Upload an Object</h3>
+                <div class="step-sub">Put your first file in the warehouse</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> s3 cp hello.txt s3://amit-photos/hello.txt
+<span class="kw">awslocal</span> s3api put-object <span class="fl">--bucket</span> <span class="st">amit-photos</span> <span class="fl">--key</span> <span class="st">notes/readme.md</span> <span class="fl">--body</span> <span class="st">hello.txt</span> <span class="fl">--query</span> <span class="st">"ETag"</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📤</div>
+                <div>
+                  <b>Two ways to upload</b>
+                  <p><code>s3 cp</code> is the friendly copy command — nice progress bar, same syntax as copying files locally. <code>s3api put-object</code> is the low-level API: it returns the object's <strong>ETag</strong> (a hash of the content). Notice <code>notes/readme.md</code> looks like a nested folder — it's really just a <strong>key</strong> with a slash in its name. S3 has no real folders.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"echo \"hello from s3\" > hello.txt","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# a tiny local file to upload","color":"dim"},
+                  {"type":"cmd","text":"awslocal s3 cp hello.txt s3://amit-photos/hello.txt","delay":550},
+                  {"type":"out","text":"Completed 14 Bytes/14 Bytes ...","color":"ok"},
+                  {"type":"out","text":"upload: ./hello.txt to s3://amit-photos/hello.txt","color":""},
+                  {"type":"cmd","text":"awslocal s3api put-object --bucket amit-photos --key notes/readme.md --body hello.txt --query \"ETag\" --output text","delay":550},
+                  {"type":"out","text":"\"cf74de355f44269ca4f70099d922ff8a\"","color":"ok"},
+                  {"type":"cmd","text":"awslocal s3 ls s3://amit-photos/ --recursive","delay":450},
+                  {"type":"out","text":"2026-08-08 12:41:47         14 hello.txt","color":""},
+                  {"type":"out","text":"2026-08-08 12:41:48         14 notes/readme.md","color":"ok"},
+                  {"type":"out","text":"# two objects stored — the warehouse has stock!","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-upload"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>s3 cp hello.txt s3://amit-photos/hello.txt</code><div class="fl-desc">Copy a local file <b>into</b> the bucket. The <code>--recursive</code> flag copies whole folders.</div></div>
+                <div class="flag"><code>s3api put-object --bucket ... --key notes/readme.md --body hello.txt</code><div class="fl-desc">Raw API upload. <code>--key</code> is the object's <b>name/path</b>.</div></div>
+                <div class="flag"><code>ETag</code><div class="fl-desc">A content hash — proves the object uploaded intact.</div></div>
+                <div class="flag"><code>s3 ls s3://amit-photos/ --recursive</code><div class="fl-desc">List everything in the bucket, including "subfolders."</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: DOWNLOAD ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Download an Object</h3>
+                <div class="step-sub">Fetch files back to your machine</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> s3 cp s3://amit-photos/hello.txt downloaded.txt
+<span class="kw">awslocal</span> s3api get-object <span class="fl">--bucket</span> <span class="st">amit-photos</span> <span class="fl">--key</span> <span class="st">hello.txt</span> <span class="fl">--query</span> <span class="st">"ContentLength"</span> <span class="st">file.bin</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📥</div>
+                <div>
+                  <b>The reverse of upload</b>
+                  <p><code>s3 cp s3://... .</code> copies an object back to your local disk. <code>get-object</code> is the API version — you give it a <code>--query</code> to see a field like <code>ContentLength</code> and a local filename to write to. Getting files out of the warehouse is as easy as putting them in.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal s3 cp s3://amit-photos/hello.txt downloaded.txt","delay":550},
+                  {"type":"out","text":"Completed 14 Bytes/14 Bytes ...","color":"ok"},
+                  {"type":"out","text":"download: s3://amit-photos/hello.txt to ./downloaded.txt","color":""},
+                  {"type":"cmd","text":"cat downloaded.txt","delay":400},
+                  {"type":"out","text":"hello from s3","color":"ok"},
+                  {"type":"cmd","text":"awslocal s3api get-object --bucket amit-photos --key hello.txt --query \"ContentLength\" file.bin","delay":500},
+                  {"type":"out","text":"14","color":"ok"},
+                  {"type":"out","text":"# 14 bytes downloaded — round trip complete","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-download"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>s3 cp s3://amit-photos/hello.txt downloaded.txt</code><div class="fl-desc">Copy an object <b>out</b> to your local disk.</div></div>
+                <div class="flag"><code>s3api get-object ... file.bin</code><div class="fl-desc">Raw API download — the last argument is the <b>local filename</b>.</div></div>
+                <div class="flag"><code>ContentLength</code><div class="fl-desc">Metadata showing the object's size in bytes.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: VERSIONING ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Turn On Versioning</h3>
+                <div class="step-sub">Give your warehouse an undo button</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> s3api put-bucket-versioning <span class="fl">--bucket</span> <span class="st">amit-photos</span> <span class="fl">--versioning-configuration</span> <span class="st">Status=Enabled</span>
+<span class="kw">awslocal</span> s3api get-bucket-versioning <span class="fl">--bucket</span> <span class="st">amit-photos</span> <span class="fl">--query</span> <span class="st">"Status"</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🔁</div>
+                <div>
+                  <b>What changed?</b>
+                  <p>Versioning is now <strong>Enabled</strong> for this bucket. From this point, every upload creates a <strong>new version</strong> instead of replacing the old one. Overwrite <code>hello.txt</code>? Both versions exist. Delete it? A <strong>delete marker</strong> hides it, but the file survives. You can even download an old version by its <code>VersionId</code> — a full undo button.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal s3api put-bucket-versioning --bucket amit-photos --versioning-configuration Status=Enabled","delay":500},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = success)","color":"dim"},
+                  {"type":"cmd","text":"awslocal s3api get-bucket-versioning --bucket amit-photos --query \"Status\" --output text","delay":450},
+                  {"type":"out","text":"Enabled","color":"ok"},
+                  {"type":"cmd","text":"echo \"version two\" > v2.txt && awslocal s3 cp v2.txt s3://amit-photos/hello.txt","delay":500},
+                  {"type":"out","text":"Completed ...","color":""},
+                  {"type":"out","text":"upload: ./v2.txt to s3://amit-photos/hello.txt","color":""},
+                  {"type":"cmd","text":"awslocal s3api list-object-versions --bucket amit-photos --prefix hello.txt --query \"Versions[].[VersionId,IsLatest]\" --output table","delay":500},
+                  {"type":"out","text":"------------------------------------------","color":""},
+                  {"type":"out","text":"|        ListObjectVersions                |","color":""},
+                  {"type":"out","text":"+------------------------------------------+","color":""},
+                  {"type":"out","text":"|  80f64f7f-f575-4290-98a0-e1d7c282e6fd  |  True  |","color":"ok"},
+                  {"type":"out","text":"+------------------------------------------+","color":""},
+                  {"type":"out","text":"# versioning is on — old versions are now recoverable","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-code-branch"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>s3api put-bucket-versioning ... Status=Enabled</code><div class="fl-desc">Turns on versioning — one-way on real AWS (you can suspend, not fully undo).</div></div>
+                <div class="flag"><code>s3api get-bucket-versioning</code><div class="fl-desc">Verify the bucket's versioning state.</div></div>
+                <div class="flag"><code>s3api list-object-versions</code><div class="fl-desc">See every version of an object + which is latest.</div></div>
+                <div class="flag"><code>VersionId</code><div class="fl-desc">A unique ID per version — you can <code>get-object --version-id</code> any of them.</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Versioning only protects from this point</b>
+                Objects uploaded <strong>before</strong> versioning was enabled don't get version numbers automatically (they're the "null" version). Turn versioning on for buckets you care about <em>before</em> bad things can happen — it's the classic "wish I'd enabled it" setting.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: STORAGE CLASS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Move an Object to a Cheaper Class</h3>
+                <div class="step-sub">STandard → STANDARD_IA for rarely-read files</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> s3api copy-object <span class="fl">--bucket</span> <span class="st">amit-photos</span> <span class="fl">--copy-source</span> <span class="st">amit-photos/notes/readme.md</span> <span class="fl">--key</span> <span class="st">notes/readme-glacier.md</span> <span class="fl">--storage-class</span> <span class="st">STANDARD_IA</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">💸</div>
+                <div>
+                  <b>Copy to change class</b>
+                  <p>S3 doesn't "edit" an object's class in place — you <strong>copy</strong> it (even onto itself) with <code>--storage-class STANDARD_IA</code>. The result: cheaper storage for data you rarely read. For the classic <code>GLACIER</code> archive tier, you'd use <code>--storage-class GLACIER</code> and accept minutes-to-hours retrieval times.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal s3api copy-object --bucket amit-photos --copy-source amit-photos/notes/readme.md --key notes/readme-glacier.md --storage-class STANDARD_IA","delay":650},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"CopyObjectResult\": {","color":""},
+                  {"type":"out","text":"        \"ETag\": \"\\\"cf74de355f44269ca4f70099d922ff8a\\\"\",","color":""},
+                  {"type":"out","text":"        \"LastModified\": \"2026-08-08T07:26:22+00:00\"","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"awslocal s3api head-object --bucket amit-photos --key notes/readme-glacier.md --query \"[StorageClass,ContentLength]\" --output json","delay":500},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    \"STANDARD_IA\",","color":"ok"},
+                  {"type":"out","text":"    14","color":""},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# the copy lives in the cheaper STANDARD_IA class","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-temperature-half"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>s3api copy-object --copy-source amit-photos/notes/readme.md</code><div class="fl-desc">Copies within the bucket — source path in <code>bucket/key</code> form.</div></div>
+                <div class="flag"><code>--key notes/readme-glacier.md</code><div class="fl-desc">The new object's key (can be same or different).</div></div>
+                <div class="flag"><code>--storage-class STANDARD_IA</code><div class="fl-desc">The cheaper <b>Infrequent Access</b> tier.</div></div>
+                <div class="flag"><code>s3api head-object</code><div class="fl-desc">Fetch an object's metadata without downloading the whole file.</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Automate it with lifecycle rules</b>
+                For thousands of files you'd never run this by hand. A <strong>lifecycle rule</strong> — <code>put-bucket-lifecycle-configuration</code> — says "after 30 days move <code>notes/*</code> to STANDARD_IA" and S3 does the rest automatically. Set once, forget forever.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: WEBSITE + POLICY ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">Turn the Bucket Into a Website</h3>
+                <div class="step-sub">index.html + a public-read policy</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> s3api put-bucket-website <span class="fl">--bucket</span> <span class="st">amit-photos</span> <span class="fl">--website-configuration</span> <span class="st">'{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"error.html"}}'</span>
+<span class="kw">awslocal</span> s3api put-bucket-policy <span class="fl">--bucket</span> <span class="st">amit-photos</span> <span class="fl">--policy</span> <span class="st">'{"Version":"2012-10-17","Statement":[{"Sid":"PublicRead","Effect":"Allow","Principal":"*","Action":["s3:GetObject"],"Resource":["arn:aws:s3:::amit-photos/*"]}]}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🌐</div>
+                <div>
+                  <b>The two pieces of a public website</b>
+                  <p><code>put-bucket-website</code> tells S3 <em>which file is the home page</em> (and which is the error page). But a website is no good if nobody can read it — so <code>put-bucket-policy</code> makes the objects <strong>public</strong> via a bucket policy: <code>Principal: "*"</code> (anyone), <code>Action: s3:GetObject</code> (read). These two together are how S3 serves a static site.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal s3api put-bucket-website --bucket amit-photos --website-configuration \u0027{\"IndexDocument\":{\"Suffix\":\"index.html\"},\"ErrorDocument\":{\"Key\":\"error.html\"}}\u0027","delay":650},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = website config saved)","color":"dim"},
+                  {"type":"cmd","text":"awslocal s3api get-bucket-website --bucket amit-photos","delay":450},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"IndexDocument\": { \"Suffix\": \"index.html\" },","color":"ok"},
+                  {"type":"out","text":"    \"ErrorDocument\": { \"Key\": \"error.html\" }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"awslocal s3api put-bucket-policy --bucket amit-photos --policy \u0027{\"Version\":\"2012-10-17\",\"Statement\":[{\"Sid\":\"PublicRead\",\"Effect\":\"Allow\",\"Principal\":\"*\",\"Action\":[\"s3:GetObject\"],\"Resource\":[\"arn:aws:s3:::amit-photos/*\"]}]}\u0027","delay":650},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = policy applied)","color":"dim"},
+                  {"type":"out","text":"# website config + public read = a working static site","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-window-restore"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>s3api put-bucket-website</code><div class="fl-desc">Sets which object serves as the <b>index (home) page</b> and error page.</div></div>
+                <div class="flag"><code>IndexDocument.Suffix: index.html</code><div class="fl-desc">Visitors hitting <code>/</code> get <code>index.html</code>.</div></div>
+                <div class="flag"><code>s3api put-bucket-policy</code><div class="fl-desc">A JSON permission document on the bucket itself.</div></div>
+                <div class="flag"><code>"Principal": "*"</code><div class="fl-desc">Applies to <b>everyone</b> — this is what makes it public.</div></div>
+                <div class="flag"><code>"Action": ["s3:GetObject"]</code><div class="fl-desc">Only <b>read</b> — nobody can write or delete.</div></div>
+                <div class="flag"><code>"Resource": ["arn:aws:s3:::amit-photos/*"]</code><div class="fl-desc">Applies to every object in the bucket (the <code>*</code> wildcard).</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Remember Chapter 5's IAM lesson</b>
+                This bucket policy is an <strong>Allow</strong> for the whole world. It's correct for a public website — but it's the exact same mechanism people misuse to leak private files. Always ask: <em>"does this data deserve <code>Principal: *</code>?"</em> If not, use IAM roles (Chapter 5) instead.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 7: CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">7</div>
+              <div>
+                <h3 class="step-title">Clean Up — Empty Then Delete</h3>
+                <div class="step-sub">A bucket must be empty before it can be deleted</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> s3api delete-bucket-policy <span class="fl">--bucket</span> <span class="st">amit-photos</span>
+<span class="kw">awslocal</span> s3 rm s3://amit-photos/ <span class="fl">--recursive</span>
+<span class="kw">awslocal</span> s3 rb s3://amit-photos</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>Delete in order</b>
+                  <p>Bucket policies, objects, <em>then</em> the bucket. <code>s3 rm --recursive</code> empties everything, and <code>s3 rb</code> (<b>r</b>emove <b>b</b>ucket) only works on an empty bucket. Same <em>create → use → delete</em> habit, one more time — on real AWS, leftover S3 data quietly bills you forever.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal s3api delete-bucket-policy --bucket amit-photos","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# policy removed","color":"dim"},
+                  {"type":"cmd","text":"awslocal s3 rm s3://amit-photos/ --recursive","delay":500},
+                  {"type":"out","text":"delete: s3://amit-photos/notes/readme-glacier.md","color":""},
+                  {"type":"out","text":"delete: s3://amit-photos/notes/readme.md","color":""},
+                  {"type":"out","text":"delete: s3://amit-photos/hello.txt","color":"ok"},
+                  {"type":"cmd","text":"awslocal s3 rb s3://amit-photos","delay":450},
+                  {"type":"out","text":"remove_bucket: amit-photos","color":"ok"},
+                  {"type":"cmd","text":"awslocal s3 ls","delay":400},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (empty — all cleaned up)","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-trash"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the cleanup</div>
+                <div class="flag"><code>s3api delete-bucket-policy</code><div class="fl-desc">Removes the public-read policy first.</div></div>
+                <div class="flag"><code>s3 rm s3://amit-photos/ --recursive</code><div class="fl-desc">Deletes <b>all objects</b> in the bucket.</div></div>
+                <div class="flag"><code>s3 rb s3://amit-photos</code><div class="fl-desc"><b>R</b>emove <b>b</b>ucket — only succeeds on an <b>empty</b> bucket.</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete S3 flow — copy &amp; paste
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 1. Create a bucket + upload</span>
+awslocal s3 mb s3://amit-photos
+echo "hello from s3" > hello.txt
+awslocal s3 cp hello.txt s3://amit-photos/hello.txt
+awslocal s3api put-object --bucket amit-photos --key notes/readme.md --body hello.txt
+
+<span class="cmt"># 2. Download it back</span>
+awslocal s3 cp s3://amit-photos/hello.txt downloaded.txt
+awslocal s3api get-object --bucket amit-photos --key hello.txt file.bin
+
+<span class="cmt"># 3. Turn on versioning (the undo button)</span>
+awslocal s3api put-bucket-versioning --bucket amit-photos --versioning-configuration Status=Enabled
+echo "version two" > v2.txt
+awslocal s3 cp v2.txt s3://amit-photos/hello.txt
+awslocal s3api list-object-versions --bucket amit-photos --prefix hello.txt
+
+<span class="cmt"># 4. Cheaper storage class for rarely-read files</span>
+awslocal s3api copy-object --bucket amit-photos --copy-source amit-photos/notes/readme.md --key notes/readme-glacier.md --storage-class STANDARD_IA
+awslocal s3api head-object --bucket amit-photos --key notes/readme-glacier.md
+
+<span class="cmt"># 5. Static website: home page + public read</span>
+awslocal s3api put-bucket-website --bucket amit-photos --website-configuration '{"IndexDocument":{"Suffix":"index.html"},"ErrorDocument":{"Key":"error.html"}}'
+awslocal s3api put-bucket-policy --bucket amit-photos --policy '{"Version":"2012-10-17","Statement":[{"Sid":"PublicRead","Effect":"Allow","Principal":"*","Action":["s3:GetObject"],"Resource":["arn:aws:s3:::amit-photos/*"]}]}'
+
+<span class="cmt"># 6. Clean up (policy, objects, then bucket)</span>
+awslocal s3api delete-bucket-policy --bucket amit-photos
+awslocal s3 rm s3://amit-photos/ --recursive
+awslocal s3 rb s3://amit-photos</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — S3 in one picture</div>
+          <pre><span class="y">S3</span> = the <span class="b">unlimited, indestructible warehouse</span> for files.
+
+   <span class="b">Bucket</span>    = the warehouse (globally unique name)
+   <span class="b">Object</span>    = one file + its key + metadata
+   <span class="b">Key</span>       = the file's name (slashes = fake folders)
+   <span class="b">Versioning</span>= the undo button (keep old copies)
+   <span class="b">Classes</span>   = pay less for cold data (STANDARD → GLACIER)
+   <span class="b">Policy</span>    = who can read/write (IAM users + bucket policy)
+
+   Name it, put it, get it. <span class="o">That's S3.</span></pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-flask tip-ic"></i>Honest note — what Floci does &amp; doesn't support</b>
+          I tested this live. S3 on Floci supports <strong>buckets, upload/download, versioning (enable + list versions), delete markers, storage-class copies, static website config, and bucket policies</strong> — every command above ran against the emulator. <strong>Not implemented</strong> on Floci: real <strong>ACLs</strong>, <strong>presigned URLs</strong>, cross-region replication, and true object lifecycle execution (the <em>config</em> saves fine, but objects won't literally move tiers over time offline). Also, since there's no public internet, the static website won't actually respond at a URL here — the config is real, the serving isn't. Commands are 100% accurate for real AWS.
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 8</h2>
+        <div class="term"><span class="t-name">S3</span><p>Simple Storage Service — AWS's object storage (the warehouse for files).</p></div>
+        <div class="term"><span class="t-name">Bucket</span><p>A container for objects, with a globally unique name.</p></div>
+        <div class="term"><span class="t-name">Object</span><p>A file stored in S3: data + metadata + a key.</p></div>
+        <div class="term"><span class="t-name">Key</span><p>The object's name/path (slashes make it look like folders).</p></div>
+        <div class="term"><span class="t-name">ETag</span><p>A content hash used to verify an object copied intact.</p></div>
+        <div class="term"><span class="t-name">Versioning</span><p>Keeps old versions of objects — an undo button for your data.</p></div>
+        <div class="term"><span class="t-name">VersionId</span><p>A unique ID for each version of an object.</p></div>
+        <div class="term"><span class="t-name">Delete marker</span><p>With versioning on, a "delete" just adds a tombstone hiding the file.</p></div>
+        <div class="term"><span class="t-name">Storage class</span><p>The cost/speed tier of an object — STANDARD, STANDARD_IA, GLACIER...</p></div>
+        <div class="term"><span class="t-name">Lifecycle rule</span><p>Automatically moves objects between storage classes over time.</p></div>
+        <div class="term"><span class="t-name">Bucket policy</span><p>A JSON permission document applied to a bucket (can make objects public).</p></div>
+        <div class="term"><span class="t-name">Durability</span><p>"Eleven 9s" — 99.999999999% designed durability via multi-AZ replication.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 8 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> What does <strong>S3</strong> store?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Only database tables</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> Objects — files with a key, unlimited in count and size</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Virtual machines</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> Which is the <strong>friendly CLI command</strong> to create a bucket?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> <code style="color:var(--accent-2)">s3api create-bucket</code></label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> <code style="color:var(--accent-2)">s3 mb s3://amit-photos</code></label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> <code style="color:var(--accent-2)">s3 new amit-photos</code></label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> In S3, <code style="color:var(--accent-2)">notes/readme.md</code> is...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> A real nested folder structure</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> Just an object <b>key</b> with a slash in its name — S3 has no real folders</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> A database table name</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> What does turning on <strong>versioning</strong> do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Deletes old files automatically</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> Keeps every upload as a new version, so old copies can be restored</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Makes the bucket private</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> Which command makes objects in a bucket <strong>publicly readable</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> <code style="color:var(--accent-2)">put-bucket-versioning</code></label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> <code style="color:var(--accent-2)">put-bucket-policy</code> with <code>Principal: "*"</code> and <code>s3:GetObject</code></label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> <code style="color:var(--accent-2)">s3 rb</code></label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> Your rarely-read backups need <strong>cheaper storage</strong>. What do you use?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> A bigger bucket</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> A cheaper <b>storage class</b> (STANDARD_IA / GLACIER) or a lifecycle rule</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Delete the files</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> You try to delete a bucket and it fails. What's the likely reason?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> The bucket name is too long</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> The bucket still contains objects — empty it (<code>s3 rm --recursive</code>) first</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> You need to wait 24 hours</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-07.html"><i class="fa-solid fa-arrow-left"></i> Ch 7: DNS — Route 53</a>
+          <a href="chapter-09.html">Next: CDN — CloudFront <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 8 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

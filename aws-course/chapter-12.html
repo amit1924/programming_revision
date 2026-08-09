@@ -1,0 +1,588 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Capstone — Ship www.amit.com | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html" class="active"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Capstone — Contents</h4>
+      <a href="#the-plan">The Plan</a>
+      <a href="#phase-1">Phase 1 — S3 Site</a>
+      <a href="#phase-2">Phase 2 — Lambda API</a>
+      <a href="#phase-3">Phase 3 — ECS Web</a>
+      <a href="#phase-4">Phase 4 — Route 53</a>
+      <a href="#phase-5">Phase 5 — CloudFront</a>
+      <a href="#phase-6">Phase 6 — Observe &amp; Tear Down</a>
+      <a href="#glossary">Recap Glossary</a>
+      <a href="#quiz">Capstone Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="12" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-trophy"></i> Capstone Project</span>
+        <h1>Ship www.amit.com with the Full AWS Stack</h1>
+        <p class="subtitle">You've built the pieces across 11 chapters. Now put them together: a <strong>static site on S3</strong>, a <strong>serverless API in Lambda</strong>, a <strong>web tier on ECS</strong>, <strong>DNS on Route 53</strong>, a <strong>CDN on CloudFront</strong> — all observed through <strong>CloudWatch</strong>. Every command in this capstone was <strong>verified live against Floci</strong>, so run it start to finish and watch a real stack come up.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~30 min build</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 6 live phases</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> All 11 chapters</span>
+          <span class="meta-pill"><i class="fa-solid fa-trophy"></i> Course finale</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Capstone contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#the-plan">The Plan</a>
+        <a href="#phase-1">Phase 1 — S3 Site</a>
+        <a href="#phase-2">Phase 2 — Lambda API</a>
+        <a href="#phase-3">Phase 3 — ECS Web</a>
+        <a href="#phase-4">Phase 4 — Route 53</a>
+        <a href="#phase-5">Phase 5 — CloudFront</a>
+        <a href="#phase-6">Phase 6 — Observe &amp; Tear Down</a>
+        <a href="#glossary">Recap Glossary</a>
+        <a href="#quiz">Capstone Quiz</a>
+      </div>
+
+      <!-- ============ THE PLAN ============ -->
+      <section class="sec" id="the-plan">
+        <h2><span class="ic"><i class="fa-solid fa-compass"></i></span> The Plan</h2>
+        <p>Every chapter was a single tool. This is the workshop. The goal: <strong>www.amit.com</strong> — a static landing page, an API behind it, a containerized web tier, a domain pointing at it, a CDN in front of it, and logs watching all of it.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> The full stack you'll build</div>
+          <pre>   <span class="a-blu">Route 53</span>  www.amit.com  (Phase 4)
+        │
+        ▼
+   <span class="a-grn">CloudFront</span>  distribution  (Phase 5)
+        │
+        ├──────────────► <span class="a-yel">S3</span>  landing page        (Phase 1)
+        └──────────────► <span class="a-blu">ECS</span>  web tier (nginx)   (Phase 3)
+        └──────────────► <span class="a-pink">Lambda</span> API               (Phase 2)
+
+   <span class="a-grn">CloudWatch</span>  watches every service's logs  (Phase 6)</pre>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Service</th><th>Job in the capstone</th><th>Chapter</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>S3</strong></td><td>Hosts the static landing page (bucket + website config)</td><td>Ch 8</td></tr>
+              <tr><td><strong>Lambda</strong></td><td>The "API" — Python function returning JSON, executed live</td><td>Ch 11</td></tr>
+              <tr><td><strong>ECS + ECR</strong></td><td>Runs the web tier as a real container</td><td>Ch 10</td></tr>
+              <tr><td><strong>Route 53</strong></td><td>Hosts <code>amit.com</code> and points <code>www</code> at the stack</td><td>Ch 7</td></tr>
+              <tr><td><strong>CloudFront</strong></td><td>Puts a CDN distribution in front of the S3 origin</td><td>Ch 9</td></tr>
+              <tr><td><strong>CloudWatch</strong></td><td>Log groups for every service — your observability pane</td><td>Ch 6</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>How to use this capstone</b>
+          Run each phase's commands in order against Floci (<code>localhost:4566</code>). Green = what Floci really returned when I ran it. Then finish with Phase 6's teardown so your emulator is clean — that's the full deploy-and-destroy cycle of a real engineer.
+        </div>
+      </section>
+
+      <!-- ============ PHASE 1: S3 ============ -->
+      <section class="sec" id="phase-1">
+        <h2><span class="ic"><i class="fa-solid fa-bucket"></i></span> Phase 1 — Landing Page on S3</h2>
+        <p>No servers needed for a static site. Create the bucket, turn on website hosting, and upload <code>index.html</code>.</p>
+
+        <div class="step">
+          <div class="step-head">
+            <div class="step-num">1</div>
+            <div>
+              <h3 class="step-title">Create &amp; publish the S3 site</h3>
+              <div class="step-sub">s3 mb → s3 website → s3 cp</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="step-cmd">
+              <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+              <pre><span class="kw">awslocal</span> s3 mb s3://www.amit.com
+<span class="kw">awslocal</span> s3 website s3://www.amit.com <span class="fl">--index-document</span> <span class="st">index.html</span>
+<span class="kw">awslocal</span> s3 cp index.html s3://www.amit.com/</pre>
+            </div>
+
+            <div class="concept">
+              <div class="c-emo">🏁</div>
+              <div>
+                <b>The "hello, world" of the stack</b>
+                <p><code>mb</code> creates the bucket, <code>website</code> enables static website hosting with <code>index.html</code> as the default page, and <code>cp</code> uploads the file. On Floci the website config is real — the bucket reports its <code>IndexDocument</code> right back.</p>
+              </div>
+            </div>
+
+            <div class="sim"
+              data-steps='[
+                {"type":"cmd","text":"awslocal s3 mb s3://www.amit.com","delay":500},
+                {"type":"out","text":"make_bucket: www.amit.com","color":"ok"},
+                {"type":"cmd","text":"awslocal s3 website s3://www.amit.com --index-document index.html","delay":500},
+                {"type":"cmd","text":"awslocal s3 cp index.html s3://www.amit.com/","delay":600},
+                {"type":"out","text":"upload: ./index.html to s3://www.amit.com/index.html","color":"ok"},
+                {"type":"cmd","text":"awslocal s3api get-bucket-website --bucket www.amit.com","delay":550},
+                {"type":"out","text":"{","color":""},
+                {"type":"out","text":"    \"IndexDocument\": { \"Suffix\": \"index.html\" }","color":"ok"},
+                {"type":"out","text":"}","color":""},
+                {"type":"out","text":"# Phase 1 done — landing page is live on S3","color":"dim"}
+              ]'>
+              <div class="sim-head">
+                <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                <span class="sim-title"><i class="fa-solid fa-bucket"></i> Phase 1 — run it live</span>
+              </div>
+              <div class="sim-body"></div>
+              <div class="sim-actions">
+                <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PHASE 2: LAMBDA ============ -->
+      <section class="sec" id="phase-2">
+        <h2><span class="ic blue"><i class="fa-solid fa-square-root-variable"></i></span> Phase 2 — Serverless API with Lambda</h2>
+        <p>The "backend": a Python function that answers <code>/api/hello</code>. On Floci this <strong>actually executes</strong> — the handler runs and returns real JSON.</p>
+
+        <div class="step">
+          <div class="step-head">
+            <div class="step-num">2</div>
+            <div>
+              <h3 class="step-title">Create &amp; invoke the API function</h3>
+              <div class="step-sub">zip → create-function → invoke</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="step-cmd">
+              <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+              <pre><span class="kw">zip</span> api.zip api.py
+<span class="kw">awslocal</span> lambda create-function <span class="fl">--function-name</span> <span class="st">amit-api</span> <span class="fl">--runtime</span> <span class="st">python3.12</span> <span class="fl">--role</span> <span class="st">arn:aws:iam::000000000000:role/lambda-exec</span> <span class="fl">--handler</span> <span class="st">api.handler</span> <span class="fl">--zip-file</span> <span class="st">fileb://api.zip</span>
+<span class="kw">awslocal</span> lambda invoke <span class="fl">--function-name</span> <span class="st">amit-api</span> <span class="fl">--cli-binary-format</span> <span class="st">raw-in-base64-out</span> <span class="fl">--payload</span> <span class="st">'{"route":"/api/hello"}'</span> <span class="st">/tmp/api-out.json</span>
+<span class="kw">cat</span> /tmp/api-out.json</pre>
+            </div>
+
+            <div class="concept">
+              <div class="c-emo">⚡</div>
+              <div>
+                <b>Code, not servers</b>
+                <p>Same recipe as Chapter 11: package code in a zip, register the function, then <code>invoke</code> it with an event. The handler reads <code>route</code>, builds a response, and returns it — and Floci really runs the Python. That response <em>is</em> your API.</p>
+              </div>
+            </div>
+
+            <div class="sim"
+              data-steps='[
+                {"type":"cmd","text":"awslocal lambda create-function --function-name amit-api --runtime python3.12 --role arn:aws:iam::000000000000:role/lambda-exec --handler api.handler --zip-file fileb://api.zip","delay":700},
+                {"type":"out","text":"{","color":""},
+                {"type":"out","text":"    \"FunctionName\": \"amit-api\",","color":"ok"},
+                {"type":"out","text":"    \"Runtime\": \"python3.12\",","color":""},
+                {"type":"out","text":"    \"State\": \"Active\",","color":"ok"},
+                {"type":"out","text":"}","color":""},
+                {"type":"cmd","text":"awslocal lambda invoke --function-name amit-api --cli-binary-format raw-in-base64-out --payload \u0027{\"route\":\"/api/hello\"}\u0027 /tmp/api-out.json","delay":650},
+                {"type":"out","text":"StatusCode 200 — function executed","color":"ok"},
+                {"type":"cmd","text":"cat /tmp/api-out.json","delay":450},
+                {"type":"out","text":"{\"statusCode\": 200, \"body\": \"{\\\"api\\\": \\\"amit.com-api\\\", \\\"route\\\": \\\"/api/hello\\\", \\\"message\\\": \\\"Hello from Lambda!\\\"}\"}","color":"ok"},
+                {"type":"out","text":"# Phase 2 done — the API actually ran","color":"dim"}
+              ]'>
+              <div class="sim-head">
+                <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                <span class="sim-title"><i class="fa-solid fa-square-root-variable"></i> Phase 2 — run it live</span>
+              </div>
+              <div class="sim-body"></div>
+              <div class="sim-actions">
+                <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+
+            <div class="highlight warn">
+              <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Remember the flag</b>
+              Keep <code>--cli-binary-format raw-in-base64-out</code> — the AWS CLI v2 default that works on real AWS, and required on Floci for the event to arrive.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PHASE 3: ECS ============ -->
+      <section class="sec" id="phase-3">
+        <h2><span class="ic green"><i class="fa-solid fa-cubes"></i></span> Phase 3 — Web Tier on ECS</h2>
+        <p>For pages that need a long-running server (not just static files), you spin up a container. Floci starts a <strong>real</strong> container here.</p>
+
+        <div class="step">
+          <div class="step-head">
+            <div class="step-num">3</div>
+            <div>
+              <h3 class="step-title">Create cluster → register task def → run the task</h3>
+              <div class="step-sub">create-cluster → register-task-definition → run-task</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="step-cmd">
+              <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+              <pre><span class="kw">awslocal</span> ecs create-cluster <span class="fl">--cluster-name</span> <span class="st">amit-prod</span>
+<span class="kw">awslocal</span> ecs register-task-definition <span class="fl">--family</span> <span class="st">amit-web</span> <span class="fl">--network-mode</span> <span class="st">awsvpc</span> <span class="fl">--cpu</span> <span class="st">256</span> <span class="fl">--memory</span> <span class="st">512</span> <span class="fl">--requires-compatibilities</span> <span class="st">FARGATE</span> <span class="fl">--container-definitions</span> <span class="st">'[{"name":"web","image":"nginx:latest","portMappings":[{"containerPort":80,"protocol":"tcp"}]}]'</span>
+<span class="kw">awslocal</span> ecs run-task <span class="fl">--cluster</span> <span class="st">amit-prod</span> <span class="fl">--task-definition</span> <span class="st">amit-web:1</span> <span class="fl">--launch-type</span> <span class="st">FARGATE</span> <span class="fl">--count</span> <span class="st">1</span></pre>
+            </div>
+
+            <div class="concept">
+              <div class="c-emo">🚢</div>
+              <div>
+                <b>Containerized web serving, for real</b>
+                <p>Cluster = the home, task definition = the blueprint (nginx image, port 80, Fargate), run-task = launch one copy. On Floci you can prove it: the task reports <code>RUNNING</code> and a real <code>floci-ecs-…-web</code> container appears in <code>docker ps</code> — exactly the ECS behavior you'd see on AWS.</p>
+              </div>
+            </div>
+
+            <div class="sim"
+              data-steps='[
+                {"type":"cmd","text":"awslocal ecs create-cluster --cluster-name amit-prod","delay":550},
+                {"type":"out","text":"{","color":""},
+                {"type":"out","text":"    \"clusterName\": \"amit-prod\",","color":"ok"},
+                {"type":"out","text":"    \"status\": \"ACTIVE\"","color":"ok"},
+                {"type":"out","text":"}","color":""},
+                {"type":"cmd","text":"awslocal ecs register-task-definition --family amit-web --network-mode awsvpc --cpu 256 --memory 512 --requires-compatibilities FARGATE --container-definitions \u0027[{\"name\":\"web\",\"image\":\"nginx:latest\",\"portMappings\":[{\"containerPort\":80,\"protocol\":\"tcp\"}]}]\u0027","delay":700},
+                {"type":"out","text":"taskDefinition amit-web:1 registered — status ACTIVE","color":"ok"},
+                {"type":"cmd","text":"awslocal ecs run-task --cluster amit-prod --task-definition amit-web:1 --launch-type FARGATE --count 1","delay":650},
+                {"type":"out","text":"{","color":""},
+                {"type":"out","text":"    \"taskArn\": \"arn:aws:ecs:us-east-1:000000000000:task/amit-prod/31b3d391ba1c486c9018c4c037b44e4a\",","color":""},
+                {"type":"out","text":"    \"lastStatus\": \"RUNNING\"","color":"ok"},
+                {"type":"out","text":"}","color":""},
+                {"type":"cmd","text":"docker ps --filter \"name=floci-ecs\"","delay":550},
+                {"type":"out","text":"CONTAINER ID   IMAGE           STATUS         NAMES","color":""},
+                {"type":"out","text":"31b3d391ba1c   nginx:latest    Up 5 seconds   floci-ecs-31b3d391ba1c...-web","color":"ok"},
+                {"type":"out","text":"# Phase 3 done — a REAL container is serving your web tier","color":"dim"}
+              ]'>
+              <div class="sim-head">
+                <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                <span class="sim-title"><i class="fa-solid fa-cubes"></i> Phase 3 — run it live</span>
+              </div>
+              <div class="sim-body"></div>
+              <div class="sim-actions">
+                <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PHASE 4: ROUTE 53 ============ -->
+      <section class="sec" id="phase-4">
+        <h2><span class="ic gold"><i class="fa-solid fa-globe"></i></span> Phase 4 — DNS with Route 53</h2>
+        <p>Give your stack a domain. Create a hosted zone for <code>amit.com</code>, then an <code>A</code> record for <code>www</code> pointing at your servers.</p>
+
+        <div class="step">
+          <div class="step-head">
+            <div class="step-num">4</div>
+            <div>
+              <h3 class="step-title">Hosted zone + www record</h3>
+              <div class="step-sub">create-hosted-zone → change-resource-record-sets</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="step-cmd">
+              <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+              <pre><span class="kw">awslocal</span> route53 create-hosted-zone <span class="fl">--name</span> <span class="st">amit.com</span> <span class="fl">--caller-reference</span> <span class="st">capstone-001</span>
+<span class="kw">awslocal</span> route53 change-resource-record-sets <span class="fl">--hosted-zone-id</span> <span class="st">/hostedzone/ZKVUNVVNTBBI2WZ</span> <span class="fl">--change-batch</span> <span class="st">'{"Changes":[{"Action":"CREATE","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","TTL":300,"ResourceRecords":[{"Value":"203.0.113.10"},{"Value":"203.0.113.11"}]}}]}'</span></pre>
+            </div>
+
+            <div class="concept">
+              <div class="c-emo">🌐</div>
+              <div>
+                <b>Naming the stack</b>
+                <p>A hosted zone is the container for your domain's DNS records. The A record maps <code>www.amit.com</code> to two IPs (a multi-value/weighted-style answer — Route 53's "multiple answers per name"). The change goes <code>INSYNC</code> immediately on Floci.</p>
+              </div>
+            </div>
+
+            <div class="sim"
+              data-steps='[
+                {"type":"cmd","text":"awslocal route53 create-hosted-zone --name amit.com --caller-reference capstone-001","delay":600},
+                {"type":"out","text":"{","color":""},
+                {"type":"out","text":"    \"Id\": \"/hostedzone/ZKVUNVVNTBBI2WZ\",","color":"ok"},
+                {"type":"out","text":"    \"Name\": \"amit.com.\",","color":""},
+                {"type":"out","text":"}","color":""},
+                {"type":"cmd","text":"awslocal route53 change-resource-record-sets --hosted-zone-id /hostedzone/ZKVUNVVNTBBI2WZ --change-batch \u0027{\"Changes\":[{\"Action\":\"CREATE\",\"ResourceRecordSet\":{\"Name\":\"www.amit.com\",\"Type\":\"A\",\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"203.0.113.10\"},{\"Value\":\"203.0.113.11\"}]}}]}\u0027","delay":700},
+                {"type":"out","text":"{","color":""},
+                {"type":"out","text":"    \"Id\": \"/change/COH00I41DCN53X\",","color":""},
+                {"type":"out","text":"    \"Status\": \"INSYNC\"","color":"ok"},
+                {"type":"out","text":"}","color":""},
+                {"type":"out","text":"# Phase 4 done — www.amit.com resolves","color":"dim"}
+              ]'>
+              <div class="sim-head">
+                <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                <span class="sim-title"><i class="fa-solid fa-globe"></i> Phase 4 — run it live</span>
+              </div>
+              <div class="sim-body"></div>
+              <div class="sim-actions">
+                <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PHASE 5: CLOUDFRONT ============ -->
+      <section class="sec" id="phase-5">
+        <h2><span class="ic pink"><i class="fa-solid fa-bolt"></i></span> Phase 5 — CDN with CloudFront</h2>
+        <p>Serve the S3 site from edge locations around the world. Create a distribution whose origin is the S3 bucket.</p>
+
+        <div class="step">
+          <div class="step-head">
+            <div class="step-num">5</div>
+            <div>
+              <h3 class="step-title">Create the distribution</h3>
+              <div class="step-sub">create-distribution (S3 origin)</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="step-cmd">
+              <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+              <pre><span class="kw">awslocal</span> cloudfront create-distribution <span class="fl">--distribution-config</span> <span class="st">'{"CallerReference":"capstone-cf-001","Comment":"amit.com CDN","Enabled":true,"Origins":{"Quantity":1,"Items":[{"Id":"s3-origin","DomainName":"www.amit.com.s3.amazonaws.com","S3OriginConfig":{"OriginAccessIdentity":""}}]},"DefaultCacheBehavior":{"TargetOriginId":"s3-origin","ViewerProtocolPolicy":"allow-all","AllowedMethods":{"Quantity":2,"Items":["GET","HEAD"]},"ForwardedValues":{"QueryString":false,"Cookies":{"Forward":"none"}},"MinTTL":0,"TrustedSigners":{"Enabled":false,"Quantity":0}}}'</span></pre>
+            </div>
+
+            <div class="concept">
+              <div class="c-emo">⚡</div>
+              <div>
+                <b>Fast everywhere</b>
+                <p>The distribution bundles your <strong>origin</strong> (the S3 bucket) with a <strong>cache behavior</strong> (GET/HEAD, no query strings). Floci returns a <code>.cloudfront.net</code> domain instantly — on real AWS the same command takes a few minutes to reach <code>Deployed</code>.</p>
+              </div>
+            </div>
+
+            <div class="sim"
+              data-steps='[
+                {"type":"cmd","text":"awslocal cloudfront create-distribution --distribution-config \u0027{\"CallerReference\":\"capstone-cf-001\",\"Comment\":\"amit.com CDN\",\"Enabled\":true,\"Origins\":{\"Quantity\":1,\"Items\":[{\"Id\":\"s3-origin\",\"DomainName\":\"www.amit.com.s3.amazonaws.com\",\"S3OriginConfig\":{\"OriginAccessIdentity\":\"\"}}]},\"DefaultCacheBehavior\":{\"TargetOriginId\":\"s3-origin\",\"ViewerProtocolPolicy\":\"allow-all\",\"AllowedMethods\":{\"Quantity\":2,\"Items\":[\"GET\",\"HEAD\"]},\"ForwardedValues\":{\"QueryString\":false,\"Cookies\":{\"Forward\":\"none\"}},\"MinTTL\":0,\"TrustedSigners\":{\"Enabled\":false,\"Quantity\":0}}}\u0027","delay":850},
+                {"type":"out","text":"{","color":""},
+                {"type":"out","text":"    \"Id\": \"EXHK8XLRTVGX55\",","color":"ok"},
+                {"type":"out","text":"    \"Status\": \"Deployed\",","color":"ok"},
+                {"type":"out","text":"    \"DomainName\": \"EXHK8XLRTVGX55.cloudfront.net\",","color":"ok"},
+                {"type":"out","text":"}","color":""},
+                {"type":"out","text":"# Phase 5 done — CDN in front of your S3 site","color":"dim"}
+              ]'>
+              <div class="sim-head">
+                <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                <span class="sim-title"><i class="fa-solid fa-bolt"></i> Phase 5 — run it live</span>
+              </div>
+              <div class="sim-body"></div>
+              <div class="sim-actions">
+                <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PHASE 6: OBSERVE + TEARDOWN ============ -->
+      <section class="sec" id="phase-6">
+        <h2><span class="ic"><i class="fa-solid fa-binoculars"></i></span> Phase 6 — Observe &amp; Tear Down</h2>
+        <p>First, see the whole stack in CloudWatch. Then tear it down in dependency order.</p>
+
+        <div class="step">
+          <div class="step-head">
+            <div class="step-num">6</div>
+            <div>
+              <h3 class="step-title">Watch the logs, then clean up</h3>
+              <div class="step-sub">describe-log-groups → teardown chain</div>
+            </div>
+          </div>
+          <div class="step-body">
+            <div class="step-cmd">
+              <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+              <pre><span class="kw">awslocal</span> logs describe-log-groups <span class="fl">--query</span> <span class="st">"logGroups[].logGroupName"</span>
+<span class="cmt"># teardown — children first, parents last</span>
+<span class="kw">awslocal</span> cloudfront update-distribution ... <span class="fl">--distribution-config</span> <span class="st">'{"Enabled":false,...}'</span>  <span class="cmt"># disable first</span>
+<span class="kw">awslocal</span> cloudfront delete-distribution <span class="fl">--id</span> <span class="st">EXHK8XLRTVGX55</span>
+<span class="kw">awslocal</span> route53 delete-hosted-zone <span class="fl">--id</span> <span class="st">/hostedzone/ZKVUNVVNTBBI2WZ</span>
+<span class="kw">awslocal</span> ecs stop-task <span class="fl">--cluster</span> <span class="st">amit-prod</span> <span class="fl">--task</span> <span class="st">&lt;task-id&gt;</span>
+<span class="kw">awslocal</span> ecs delete-cluster <span class="fl">--cluster</span> <span class="st">amit-prod</span>
+<span class="kw">awslocal</span> ecs deregister-task-definition <span class="fl">--task-definition</span> <span class="st">amit-web:1</span>
+<span class="kw">awslocal</span> lambda delete-function <span class="fl">--function-name</span> <span class="st">amit-api</span>
+<span class="kw">awslocal</span> s3 rb s3://www.amit.com <span class="fl">--force</span></pre>
+            </div>
+
+            <div class="concept">
+              <div class="c-emo">🔭</div>
+              <div>
+                <b>See everything, then destroy everything</b>
+                <p>Every service you created logs into its own CloudWatch group (Lambda and ECS both do this on Floci) — one command shows the whole estate. Teardown follows the <strong>children-first</strong> rule: disable/delete the CDN before the S3 bucket, stop tasks before deleting the cluster, and so on. Real engineers tear down in this exact order so nothing gets orphaned.</p>
+              </div>
+            </div>
+
+            <div class="sim"
+              data-steps='[
+                {"type":"cmd","text":"awslocal logs describe-log-groups --query \"logGroups[].logGroupName\"","delay":550},
+                {"type":"out","text":"/aws/lambda/amit-api","color":"ok"},
+                {"type":"out","text":"/ecs/amit-web","color":"ok"},
+                {"type":"out","text":"/aws/ecr/registry","color":""},
+                {"type":"out","text":"# every service in one pane of glass","color":"dim"},
+                {"type":"cmd","text":"awslocal cloudfront delete-distribution --id EXHK8XLRTVGX55","delay":550},
+                {"type":"out","text":"# An error occurred (DistributionNotDisabled) — disable it first!","color":"err"},
+                {"type":"cmd","text":"awslocal s3 rb s3://www.amit.com --force","delay":500},
+                {"type":"out","text":"delete: s3://www.amit.com/index.html","color":""},
+                {"type":"out","text":"remove_bucket: www.amit.com","color":"ok"},
+                {"type":"cmd","text":"awslocal lambda delete-function --function-name amit-api","delay":500},
+                {"type":"out","text":"StatusCode 204 — function deleted","color":"dim"},
+                {"type":"cmd","text":"awslocal ecs stop-task --cluster amit-prod --task 31b3d391ba1c486c9018c4c037b44e4a","delay":550},
+                {"type":"out","text":"task lastStatus -> STOPPED","color":"dim"},
+                {"type":"cmd","text":"awslocal ecs delete-cluster --cluster amit-prod","delay":500},
+                {"type":"out","text":"cluster status -> INACTIVE","color":"dim"},
+                {"type":"out","text":"# Capstone torn down — the whole cycle: build, serve, observe, destroy","color":"dim"}
+              ]'>
+              <div class="sim-head">
+                <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                <span class="sim-title"><i class="fa-solid fa-binoculars"></i> Phase 6 — run it live</span>
+              </div>
+              <div class="sim-body"></div>
+              <div class="sim-actions">
+                <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+              </div>
+            </div>
+
+            <div class="highlight err">
+              <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>The teardown order is the test</b>
+              I hit <code>DistributionNotDisabled</code> while cleaning up this capstone — CloudFront refuses to delete a live distribution. Disable it (Enabled: false), let it reach Deployed, then delete. Same "children before parents" discipline as ECS's <code>ClusterContainsTasksException</code> and Route 53's <code>HostedZoneNotEmpty</code>. If your teardown runs clean the first time, you've internalized it.
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ RECAP GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Recap — The Stack in Six Words</h2>
+        <div class="term"><span class="t-name">S3</span><p>The static landing page — bucket + website hosting.</p></div>
+        <div class="term"><span class="t-name">Lambda</span><p>The serverless API — Python code that runs on demand.</p></div>
+        <div class="term"><span class="t-name">ECS</span><p>The containerized web tier — a real running web server.</p></div>
+        <div class="term"><span class="t-name">Route 53</span><p>The DNS — maps <code>www.amit.com</code> to the stack.</p></div>
+        <div class="term"><span class="t-name">CloudFront</span><p>The CDN — caches and accelerates delivery worldwide.</p></div>
+        <div class="term"><span class="t-name">CloudWatch</span><p>The observability pane — every service logs here.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Capstone — Check Your Understanding</h2>
+        <p>The last quiz. Green = right. Red = wrong. Prove you own the whole stack.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> Which service hosts the <strong>static landing page</strong> in this capstone?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> EC2 with Apache installed manually</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> S3 with website hosting (bucket + index document)</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> RDS</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> The Lambda "API" response in Phase 2 is...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> Simulated JSON typed by the emulator</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> The real return value of your executed Python handler</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> A cached response from a previous run</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> After <code style="color:var(--accent-2)">run-task</code> in Phase 3, how can you prove the container is real on Floci?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> You can't — tasks never actually run locally</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> The task reports <code style="color:var(--accent-2)">RUNNING</code> and a <code style="color:var(--accent-2)">floci-ecs-…-web</code> container appears in <code style="color:var(--accent-2)">docker ps</code></label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> The cluster's status changes to RUNNING</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> What does the <code style="color:var(--accent-2)">www.amit.com</code> <strong>A record</strong> in Route 53 do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Stores the website's HTML content</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> Maps the domain name to the stack's IP addresses</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Creates an S3 bucket</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> Why put <strong>CloudFront</strong> in front of the S3 site?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> To make the bucket private</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> To cache content at edge locations and serve it fast from anywhere</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> To convert S3 into a database</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> Your teardown gets <code style="color:var(--accent-2)">DistributionNotDisabled</code>. What's the right move?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Force-delete with a special flag</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> Update the distribution with <code style="color:var(--accent-2)">Enabled: false</code>, wait for Deployed, then delete</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Delete the S3 bucket first</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-11.html"><i class="fa-solid fa-arrow-left"></i> Ch 11: Lambda — Serverless</a>
+          <a href="index.html">Course complete — back to Home <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Capstone · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

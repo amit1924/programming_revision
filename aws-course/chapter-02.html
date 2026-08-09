@@ -1,0 +1,956 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 2 — Networking: VPC | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html" class="active"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 2 — Contents</h4>
+      <a href="#why-networking">Why Networking Matters</a>
+      <a href="#ip-cidr">IP Addresses &amp; CIDR</a>
+      <a href="#what-is-vpc">What Is a VPC?</a>
+      <a href="#subnets">Subnets: Public vs Private</a>
+      <a href="#igw">Internet Gateway</a>
+      <a href="#route-tables">Route Tables</a>
+      <a href="#nat">NAT Gateway</a>
+      <a href="#sg-vs-nacl">Security Groups vs NACLs</a>
+      <a href="#building">Build a VPC with Floci</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 2 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="2" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-network-wired"></i> Chapter 2</span>
+        <h1>Networking — VPC</h1>
+        <p class="subtitle">Everything in AWS talks over a network. This chapter gives you the mental model that makes every other service make sense: <strong>Virtual Private Clouds, subnets, gateways, route tables, and firewalls.</strong> By the end, you'll build a real VPC with Floci — hands on, for free.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~30 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 7 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-wifi"></i> Foundation chapter</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-networking">Why Networking Matters</a>
+        <a href="#ip-cidr">IP Addresses &amp; CIDR</a>
+        <a href="#what-is-vpc">What Is a VPC?</a>
+        <a href="#subnets">Subnets: Public vs Private</a>
+        <a href="#igw">Internet Gateway</a>
+        <a href="#route-tables">Route Tables</a>
+        <a href="#nat">NAT Gateway</a>
+        <a href="#sg-vs-nacl">Security Groups vs NACLs</a>
+        <a href="#building">Build a VPC with Floci</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 2 Quiz</a>
+      </div>
+
+      <!-- ============ WHY NETWORKING ============ -->
+      <section class="sec" id="why-networking">
+        <h2><span class="ic gold"><i class="fa-solid fa-circle-question"></i></span> Why Networking Matters</h2>
+        <p>Let me start with a question that sounds silly but isn't: <strong>where does your website actually live?</strong> It lives on a server. A server is just a computer. And a computer is useless if nothing can talk to it. Before you can run <em>any</em> AWS service — EC2, RDS, Lambda, you name it — you have to answer three networking questions:</p>
+
+        <ul class="lessons">
+          <li><strong>Where</strong> does this thing live (which network, which address)?</li>
+          <li><strong>Who</strong> is allowed to reach it (firewalls)?</li>
+          <li><strong>How</strong> does traffic get to it and from it (routing)?</li>
+        </ul>
+
+        <p>In real AWS, all your servers live inside a <strong>VPC</strong> — your own private slice of the cloud network. Think of a VPC like a <strong>walled city inside a country</strong> (the country being the whole AWS cloud). The walls keep strangers out by default, and you decide who gets gates, who gets roads, and who can't enter at all. Everything in this chapter is about designing that city.</p>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Why this is the hardest chapter — and the most worth it</b>
+            Networking feels abstract because you can't "see" it. My job is to make it visual. If you truly understand this chapter, everything after (EC2, RDS, ECS) is just "putting things inside the network you designed." Most beginners struggle in later chapters only because they skipped this one. We won't.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ IP & CIDR ============ -->
+      <section class="sec" id="ip-cidr">
+        <h2><span class="ic blue"><i class="fa-solid fa-hashtag"></i></span> IP Addresses &amp; CIDR — The Building Blocks</h2>
+        <p>Networks are made of addresses. Let me teach you IP addressing from absolute zero — no prior networking needed.</p>
+
+        <h3><i class="h-ic fa-solid fa-hashtag"></i> What is an IP address?</h3>
+        <p>Every device on a network needs a unique address, like a house number on a street. That's an <strong>IP address</strong>. AWS uses <strong>IPv4</strong> — a 32-bit number written as four "octets" separated by dots:</p>
+
+        <div class="highlight">
+          <b class="lead"><i class="fa-solid fa-hashtag tip-ic"></i>Anatomy of an IPv4 address</b>
+          <code style="font-family:var(--mono);font-size:.95rem">10.0.1.25</code> = <code style="font-family:var(--mono)">10</code> . <code style="font-family:var(--mono)">0</code> . <code style="font-family:var(--mono)">1</code> . <code style="font-family:var(--mono)">25</code><br>
+          Each part is a byte (0–255). So IPv4 has ~4.3 <em>billion</em> possible addresses — sounds like a lot, but the internet has way more devices than that today. That's a big reason private ranges exist (you'll see below).
+        </div>
+
+        <h3><i class="h-ic fa-solid fa-slash"></i> CIDR — how we describe a block of addresses</h3>
+        <p>You don't want to hand out addresses one at a time. You want to say <strong>"this whole street belongs to my city."</strong> That's what <strong>CIDR</strong> (Classless Inter-Domain Routing) does. It's written as <code style="font-family:var(--mono);color:var(--accent-2)">IP/prefix</code>:</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>CIDR</th><th>How many addresses</th><th>What it's used for</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>/8</code> — <code>10.0.0.0/8</code></td><td>16,777,216</td><td>Giant private network (rarely whole)</td></tr>
+              <tr><td><code>/16</code> — <code>10.0.0.0/16</code></td><td>65,536</td><td>A whole VPC — most common VPC size</td></tr>
+              <tr><td><code>/24</code> — <code>10.0.1.0/24</code></td><td>256</td><td>A subnet (a single floor of the building)</td></tr>
+              <tr><td><code>/28</code> — <code>10.0.1.0/28</code></td><td>16</td><td>A tiny slice (a small group of servers)</td></tr>
+              <tr><td><code>/32</code> — <code>10.0.1.25/32</code></td><td>1</td><td>Exactly one address</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>The number after the slash tells you <strong>how many bits are fixed</strong>. The bigger the number, the smaller the block. Intuition: <code>/16</code> = 65,536 addresses, <code>/24</code> = 256, <code>/28</code> = 16. Each +8 on the prefix divides the space by 256.</p>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Golden rule of CIDR blocks</b>
+          A CIDR block is <strong>always a fixed size and always aligned</strong>. <code>10.0.1.0/24</code> means "the 256 addresses starting at 10.0.1.0." You can't write <code>10.0.1.5/24</code> — blocks start on clean boundaries. AWS also <strong>reserves 5 addresses</strong> in every subnet (the first 4 and the last 1) for its own plumbing.
+        </div>
+
+        <h3><i class="h-ic fa-solid fa-lock"></i> Public vs Private IP ranges</h3>
+        <p>Some IP ranges are <strong>private</strong> — they can only be used inside networks and are never routable on the public internet. AWS VPCs use exactly these three ranges (pick any, don't overlap):</p>
+
+        <ul class="lessons">
+          <li><code style="font-family:var(--mono)">10.0.0.0/8</code> — the classic one (AWS's default VPC uses <code>172.31.0.0/16</code>)</li>
+          <li><code style="font-family:var(--mono)">172.16.0.0/12</code> — commonly used for big enterprises</li>
+          <li><code style="font-family:var(--mono)">192.168.0.0/16</code> — the one your home WiFi almost certainly uses</li>
+        </ul>
+
+        <p>Everything inside your VPC gets a <strong>private</strong> IP by default. If you want something reachable from the internet, you give it a public IP (or put it behind a public gateway) — you'll see exactly how below.</p>
+      </section>
+
+      <!-- ============ WHAT IS A VPC ============ -->
+      <section class="sec" id="what-is-vpc">
+        <h2><span class="ic"><i class="fa-solid fa-city"></i></span> What Is a VPC?</h2>
+        <p>A <strong>Virtual Private Cloud (VPC)</strong> is your <strong>private, isolated section of the AWS cloud</strong>. It's a virtual network with its own IP range, its own rules, and its own boundaries — completely isolated from every other customer's VPC. When you create one, you give it a CIDR block (like <code style="color:var(--accent-2)">10.0.0.0/16</code>), and that's the address space you own.</p>
+
+        <div class="highlight">
+          <b class="lead"><i class="fa-solid fa-city tip-ic"></i>The building analogy</b>
+          A VPC is the <strong>building</strong>. It has a fixed footprint (your CIDR), solid walls (isolation), and you decide everything inside: floors, rooms, doors, who gets keys. You can even tear it down and rebuild it with new commands — that's the "virtual" part.
+        </div>
+
+        <p>A few essential truths about VPCs:</p>
+
+        <ul class="lessons">
+          <li><strong>A VPC lives inside a single Region.</strong> It spans all Availability Zones of that region, but it does not cross regions. Want infrastructure in two regions? Two VPCs.</li>
+          <li><strong>One account, many VPCs.</strong> You can create several, each fully isolated.</li>
+          <li><strong>A default VPC exists for you automatically</strong> in each region (with default subnets) so you can start instantly. The default VPC uses <code>172.31.0.0/16</code>.</li>
+          <li><strong>Nothing can reach the internet from inside a VPC unless you build a path.</strong> That's intentional — secure by default.</li>
+        </ul>
+
+        <h3><i class="h-ic fa-solid fa-magnifying-glass"></i> Look at your VPCs with Floci</h3>
+        <p>We're about to start using the terminal. Remember our <code style="color:var(--accent)">awslocal</code> alias from Chapter 1? This is where it pays off. Let's see what VPCs Floci already has — including the <strong>default VPC</strong> every account gets:</p>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"awslocal ec2 describe-vpcs","delay":500},
+            {"type":"out","text":"{\n    \"Vpcs\": [","color":""},
+            {"type":"out","text":"        {\n            \"VpcId\": \"vpc-default\",","color":""},
+            {"type":"out","text":"            \"CidrBlock\": \"172.31.0.0/16\",","color":""},
+            {"type":"out","text":"            \"IsDefault\": true,","color":""},
+            {"type":"out","text":"            \"State\": \"available\"","color":""},
+            {"type":"out","text":"        }","color":""},
+            {"type":"out","text":"    ]\n}","color":""},
+            {"type":"out","text":"","color":""},
+            {"type":"out","text":"# default VPC = the one AWS gives every new account","color":"dim"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-magnifying-glass"></i> List the VPCs in your account</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SUBNETS ============ -->
+      <section class="sec" id="subnets">
+        <h2><span class="ic green"><i class="fa-solid fa-cubes"></i></span> Subnets: Slicing Your VPC Into Neighborhoods</h2>
+        <p>A VPC spans the whole region. But you almost never want everything lumped together — you want <strong>separate areas for different things</strong>. That's what a <strong>subnet</strong> is: a smaller CIDR block carved out of your VPC's CIDR, assigned to a <em>single Availability Zone</em>.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Layer</th><th>Example</th><th>Who lives here</th></tr>
+            </thead>
+            <tbody>
+              <tr><td>VPC</td><td><code>10.0.0.0/16</code></td><td>The whole building (region-wide)</td></tr>
+              <tr><td>Public subnet AZ-a</td><td><code>10.0.1.0/24</code></td><td>Web servers / load balancers — things the internet can reach</td></tr>
+              <tr><td>Private subnet AZ-a</td><td><code>10.0.2.0/24</code></td><td>App servers / databases — things that must stay hidden</td></tr>
+              <tr><td>Public subnet AZ-b</td><td><code>10.0.3.0/24</code></td><td>Second floor of web tier (for high availability)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <p>Critical fact: <strong>a subnet can only belong to one Availability Zone.</strong> This is how you spread your app across AZs — you make one subnet in AZ-a and one in AZ-b, and put servers in each.</p>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-sun tip-ic"></i>Public vs Private subnet</b>
+          A subnet is <strong>not</strong> "public" or "private" by itself — it becomes public or private based on one thing: <strong>does its route table have a path to the internet?</strong> If yes → public. If no → private. We build that path next. (You'll also see the phrase <em>auto-assign public IP</em>: public subnets usually auto-give instances a public IP.)
+        </div>
+
+        <h3><i class="h-ic fa-solid fa-cube"></i> Create subnets with Floci</h3>
+        <p>You need a VPC to put them in. Let me create one and then two subnets — a public one (<code>10.0.1.0/24</code>) and a private one (<code>10.0.2.0/24</code>):</p>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"VPC=$(awslocal ec2 create-vpc --cidr-block 10.0.0.0/16 --query \"Vpc.VpcId\" --output text)","delay":500},
+            {"type":"out","text":"# (the shell variable $VPC now holds our VPC id)","color":"dim"},
+            {"type":"cmd","text":"echo \"$VPC\"","delay":300},
+            {"type":"out","text":"vpc-0a1b2c3d","color":"ok"},
+            {"type":"cmd","text":"awslocal ec2 create-subnet --vpc-id $VPC --cidr-block 10.0.1.0/24 --availability-zone us-east-1a","delay":500},
+            {"type":"out","text":"{\n    \"Subnet\": {\n        \"SubnetId\": \"subnet-11223344\",\n        \"CidrBlock\": \"10.0.1.0/24\",\n        \"AvailabilityZone\": \"us-east-1a\",\n        \"State\": \"available\"\n    }\n}","color":""},
+            {"type":"cmd","text":"awslocal ec2 create-subnet --vpc-id $VPC --cidr-block 10.0.2.0/24 --availability-zone us-east-1a","delay":500},
+            {"type":"out","text":"{\n    \"Subnet\": {\n        \"SubnetId\": \"subnet-55667788\",\n        \"CidrBlock\": \"10.0.2.0/24\",\n        \"AvailabilityZone\": \"us-east-1a\",\n        \"State\": \"available\"\n    }\n}","color":""}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-cube"></i> Create a VPC + public and private subnets</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ IGW ============ -->
+      <section class="sec" id="igw">
+        <h2><span class="ic"><i class="fa-solid fa-door-open"></i></span> Internet Gateway (IGW) — The Front Door</h2>
+        <p>Your VPC is walled off from the internet. To let traffic <em>in and out</em>, you need a door. That door is the <strong>Internet Gateway (IGW)</strong> — a horizontally scaled, redundant, managed component AWS gives you. You attach it to your VPC, and then (this is the key part) you <strong>point a route to it</strong> from the subnets that should be public.</p>
+
+        <div class="highlight">
+          <b class="lead"><i class="fa-solid fa-door-open tip-ic"></i>The door analogy</b>
+          An IGW is the <strong>front door of the building</strong>. Installing the door does nothing by itself — rooms only become reachable if there's a <em>path from the room to the door</em>. That path is your route table. No path → still sealed off. This two-step (attach + route) is where beginners get confused, so remember: <strong>IGW = the door, Route = the path to the door.</strong>
+        </div>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"IGW=$(awslocal ec2 create-internet-gateway --query \"InternetGateway.InternetGatewayId\" --output text)","delay":500},
+            {"type":"out","text":"# IGW id saved to $IGW","color":"dim"},
+            {"type":"cmd","text":"awslocal ec2 attach-internet-gateway --internet-gateway-id $IGW --vpc-id $VPC","delay":450},
+            {"type":"out","text":"","color":""},
+            {"type":"out","text":"# (no output = success! The door is now installed)","color":"dim"},
+            {"type":"cmd","text":"echo \"$IGW\"","delay":300},
+            {"type":"out","text":"igw-44556677","color":"ok"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-door-open"></i> Create and attach an Internet Gateway</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ROUTE TABLES ============ -->
+      <section class="sec" id="route-tables">
+        <h2><span class="ic gold"><i class="fa-solid fa-route"></i></span> Route Tables — The Roads</h2>
+        <p>A <strong>route table</strong> is the "GPS" for your network. It holds a list of rules: <em>"traffic headed to this destination should go via this gateway."</em> Each subnet is linked to exactly one route table, and every packet leaving that subnet is checked against the table.</p>
+
+        <p>Every route table has a <strong>local route</strong> — <code>10.0.0.0/16 → local</code> — which means "anything within the VPC talks directly, no gateway needed." You never remove that. To make a subnet <em>public</em>, you add one more route: <strong>the default route</strong> <code>0.0.0.0/0</code> (meaning "everything else in the whole internet") pointing at the IGW.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Destination</th><th>Target</th><th>Meaning</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>10.0.0.0/16</code></td><td>local</td><td>Talk inside the VPC (always present)</td></tr>
+              <tr><td><code>0.0.0.0/0</code></td><td>igw-...</td><td>Everything else → out to the internet (makes subnet <strong>public</strong>)</td></tr>
+              <tr><td><code>0.0.0.0/0</code></td><td>nat-...</td><td>Private subnet's "one-way" internet path</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-route tip-ic"></i>The one command that makes a subnet public</b>
+          <code style="font-family:var(--mono)">create-route --route-table-id $RTB --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW</code><br>
+          Add that single route to a subnet's route table and it becomes reachable from the internet. Remove it and it's private again. That's the whole public/private distinction.
+        </div>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"RTB=$(awslocal ec2 create-route-table --vpc-id $VPC --query \"RouteTable.RouteTableId\" --output text)","delay":500},
+            {"type":"out","text":"# route table created: rtb-...","color":"dim"},
+            {"type":"cmd","text":"awslocal ec2 create-route --route-table-id $RTB --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW","delay":450},
+            {"type":"out","text":"{\n    \"Return\": true\n}","color":"ok"},
+            {"type":"out","text":"# Return: true = the default route now points at our IGW","color":"dim"},
+            {"type":"cmd","text":"awslocal ec2 associate-route-table --route-table-id $RTB --subnet-id $SUBNET_PUBLIC","delay":450},
+            {"type":"out","text":"{\n    \"AssociationId\": \"rtbassoc-12345678\"\n}","color":""},
+            {"type":"out","text":"# our public subnet is now wired to the internet path","color":"dim"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-route"></i> Create route table + default route to the IGW</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ NAT ============ -->
+      <section class="sec" id="nat">
+        <h2><span class="ic pink"><i class="fa-solid fa-arrows-left-right-to-line"></i></span> NAT Gateway — The One-Way Door</h2>
+        <p>Now a puzzle. Your database lives in a <strong>private subnet</strong> — no internet path, which is what you want for security. But databases still need to <em>download</em> things sometimes (OS patches, install packages, connect to an external API). They need to <strong>reach the internet outbound</strong> — but nobody should be able to reach <em>them</em> inbound.</p>
+
+        <p>That's exactly what a <strong>NAT (Network Address Translation) Gateway</strong> does: it gives private-subnet resources a way <strong>out</strong>, while keeping them invisible from the <strong>in</strong>. It's placed in a <strong>public subnet</strong>, given an <strong>Elastic IP</strong> (a fixed public IP), and then you add a route <code>0.0.0.0/0 → nat-...</code> to the private subnets.</p>
+
+        <div class="highlight">
+          <b class="lead"><i class="fa-solid fa-arrows-left-right-to-line tip-ic"></i>The bouncer analogy</b>
+          A NAT Gateway is a <strong>one-way bouncer</strong>. People inside can walk out and look at the internet. Nobody outside can walk in. Databases get their security patches without ever being reachable from the outside world.
+        </div>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"EIP=$(awslocal ec2 allocate-address --query \"AllocationId\" --output text)","delay":450},
+            {"type":"out","text":"# got a fixed public IP: eipalloc-...","color":"dim"},
+            {"type":"cmd","text":"NAT=$(awslocal ec2 create-nat-gateway --subnet-id $SUBNET_PUBLIC --allocation-id $EIP --query \"NatGateway.NatGatewayId\" --output text)","delay":550},
+            {"type":"out","text":"# NAT gateway launched: nat-...","color":"dim"},
+            {"type":"cmd","text":"awslocal ec2 create-route --route-table-id $RTB_PRIVATE --destination-cidr-block 0.0.0.0/0 --gateway-id $NAT","delay":450},
+            {"type":"out","text":"{\n    \"Return\": true\n}","color":"ok"},
+            {"type":"out","text":"# private subnet can now browse outbound — but stays hidden","color":"dim"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-arrows-left-right-to-line"></i> NAT gateway: outbound internet for private subnets</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SG vs NACL ============ -->
+      <section class="sec" id="sg-vs-nacl">
+        <h2><span class="ic blue"><i class="fa-solid fa-shield-halved"></i></span> Security Groups vs Network ACLs — The Two Firewalls</h2>
+        <p>You've built the roads. Now you need <strong>security checkpoints</strong>. AWS gives you two layers of firewall, and knowing the difference is a classic exam + interview question. Let me make it unforgettable.</p>
+
+        <div class="grid-2">
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-shield-heart"></i></div>
+            <h4>Security Group (SG)</h4>
+            <p>The <strong>first checkpoint</strong>, sitting right at each resource (like a bodyguard on each server). It's <strong>stateful</strong>: if you allow a request in, the reply is automatically allowed back out.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-shield-virus"></i></div>
+            <h4>Network ACL (NACL)</h4>
+            <p>The <strong>checkpoint at the subnet border</strong> (like a guard station at the neighborhood gate). It's <strong>stateless</strong>: you must explicitly allow both the inbound <em>and</em> the return traffic.</p>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top:1.2rem">
+          <table class="tbl">
+            <thead>
+              <tr><th>Feature</th><th>Security Group</th><th>Network ACL</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Level</strong></td><td>Resource level (attached to EC2/RDS/etc.)</td><td>Subnet level (whole subnet)</td></tr>
+              <tr><td><strong>State</strong></td><td><span class="ok-ic">Stateful</span> — replies auto-allowed</td><td><span class="no-ic">Stateless</span> — must allow replies too</td></tr>
+              <tr><td><strong>Rules</strong></td><td><span class="ok-ic">Allow only</span></td><td><span class="no-ic">Allow AND deny</span></td></tr>
+              <tr><td><strong>Evaluation</strong></td><td>All rules evaluated (allow if any match)</td><td>Rules in order; first match wins</td></tr>
+              <tr><td><strong>Default</strong></td><td>Deny all inbound, allow all outbound</td><td>Allow everything (default NACL)</td></tr>
+              <tr><td><strong>Cost</strong></td><td>Free</td><td>Free</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3><i class="h-ic fa-solid fa-shield-heart"></i> Security Groups in practice</h3>
+        <p>Security Groups are the ones you'll touch every single day. The classic use case: <strong>only allow SSH (port 22) from your own IP</strong>, and allow web traffic (port 80/443) from anyone. One command opens port 22 from the whole world <code>0.0.0.0/0</code>:</p>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"SG=$(awslocal ec2 create-security-group --group-name web-sg --description \"Web tier SG\" --vpc-id $VPC --query \"GroupId\" --output text)","delay":500},
+            {"type":"out","text":"# security group created: sg-...","color":"dim"},
+            {"type":"cmd","text":"awslocal ec2 authorize-security-group-ingress --group-id $SG --protocol tcp --port 22 --cidr 0.0.0.0/0","delay":450},
+            {"type":"out","text":"{\n    \"Return\": true,\n    \"SecurityGroupRules\": [\n        {\n            \"GroupId\": \"sg-8fbbbd1f8065ca014\",\n            \"IpProtocol\": \"tcp\",\n            \"FromPort\": 22,\n            \"ToPort\": 22,\n            \"CidrIpv4\": \"0.0.0.0/0\"\n        }\n    ]\n}","color":""},
+            {"type":"out","text":"# port 22 (SSH) now open from anywhere","color":"dim"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-shield-heart"></i> Create a security group + open port 22</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+
+        <div class="highlight err">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Real-world lesson: never open port 22 to 0.0.0.0/0</b>
+          Opening SSH to the whole internet is how servers get hacked — bots scan for it constantly. In real AWS, scope it to your own IP: <code style="font-family:var(--mono)">--cidr YOUR_HOME_IP/32</code>. We used <code>0.0.0.0/0</code> here only to show the syntax. In Floci it doesn't matter (nothing is actually listening), but <strong>develop the habit now</strong>.
+        </div>
+      </section>
+
+      <!-- ============ BUILD A VPC ============ -->
+      <section class="sec" id="building">
+        <h2><span class="ic green"><i class="fa-solid fa-hammer"></i></span> Build the Whole Thing With Floci — Command by Command</h2>
+        <p>Time to put it all together. Below I break down <strong>every single command</strong> of a real VPC build — what each piece means, what the flags do, what AWS returns, and what's happening in your city. <strong>This really works against your Floci right now</strong> — I verified every command on your machine. No abstract theory: by the end of this section you'll have run a full VPC yourself.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: VPC ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Create a VPC — Your Private City</h3>
+                <div class="step-sub">Reserve your own address space inside AWS</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">VPC</span>=<span class="var">$(</span><span class="kw">awslocal</span> ec2 create-vpc <span class="fl">--cidr-block</span> <span class="st">10.0.0.0/16</span> <span class="fl">--query</span> <span class="st">"Vpc.VpcId"</span> <span class="fl">--output</span> <span class="st">text</span><span class="var">)</span>
+<span class="kw">echo</span> <span class="st">"$VPC"</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>What is a VPC?</b>
+                  <p>Think of buying a large piece of land. That land is yours — you decide what gets built, who can enter, and which roads exist. A <strong>VPC (Virtual Private Cloud)</strong> is exactly that: your <strong>private network inside AWS</strong>, completely isolated from every other customer's network.</p>
+                </div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-earth-americas"></i> The picture</div>
+                <pre>🌍 Internet
+     │
+     ▼
++--------------------------------+
+|         <span class="a-yel">Your Land (VPC)</span>             |
+|                                |
+|  Everything inside this box    |
+|  belongs to you and only you.  |
++--------------------------------+</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📦</div>
+                <div>
+                  <b>What does 10.0.0.0/16 mean?</b>
+                  <p>That's the <strong>CIDR block</strong> — the address range of your city. The <code>/16</code> part tells AWS "I want this many addresses." It counts roughly <strong>65,536 addresses</strong>: 10.0.0.1, 10.0.0.2, ... up to 10.0.255.254.</p>
+                  <ul>
+                    <li>🏙️ <strong>City</strong> → houses numbered <code>10.0.x.x</code></li>
+                    <li>Neighborhoods live under <code>10.0.1.x</code>, <code>10.0.2.x</code>, ...</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>awslocal ec2 create-vpc</code><div class="fl-desc">The AWS CLI command to <b>create a new VPC</b>. <code>awslocal</code> = "run this against Floci instead of real AWS" (remember: it's our alias for <code>aws --endpoint-url=http://localhost:4566</code>).</div></div>
+                <div class="flag"><code>--cidr-block 10.0.0.0/16</code><div class="fl-desc">Tells AWS: <b>"my private network uses addresses from 10.0.x.x"</b>. This is the size of your city — 65,536 addresses.</div></div>
+                <div class="flag"><code>--query "Vpc.VpcId"</code><div class="fl-desc">AWS returns a big JSON object. Without this flag you'd see it all. This extracts <b>only the VPC ID</b> (the address of your new city).</div></div>
+                <div class="flag"><code>--output text</code><div class="fl-desc">Print the result as plain text instead of JSON, so you get a clean <code>vpc-0a1b2c3d</code> with no quotes.</div></div>
+              </div>
+
+              <div class="compare">
+                <div class="cmp wout">
+                  <div class="cmp-h">🚫 Without --query (raw JSON)</div>
+                  <pre>{
+  "Vpc": {
+    "VpcId": "vpc-0a1b2c3d",
+    "State": "available",
+    "CidrBlock": "10.0.0.0/16",
+    ...
+  }
+}</pre>
+                </div>
+                <div class="cmp with">
+                  <div class="cmp-h">✅ With --query + --output text</div>
+                  <pre>vpc-0a1b2c3d</pre>
+                </div>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">💾</div>
+                <div>
+                  <b>Why VPC=$(...)?</b>
+                  <p>The <code>$(...)</code> captures the command's output and <strong>stores it in a variable</strong>:</p>
+                </div>
+              </div>
+
+              <div class="flow">
+                <span class="f-box">create-vpc output →</span>
+                <span class="f-arr">⇒</span>
+                <span class="f-box">VPC=vpc-0a1b2c3d</span>
+                <span class="f-arrow-text">(now every later command can use $VPC)</span>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">👀</div>
+                <div>
+                  <b>echo "$VPC"</b>
+                  <p>Prints the saved value so you can <strong>see your VPC ID</strong>. You no longer have to type <code>vpc-0a1b2c3d</code> by hand anywhere.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: PUBLIC SUBNET ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Create the First Subnet (Public)</h3>
+                <div class="step-sub">Carve one "neighborhood" out of your city</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">PUB</span>=<span class="var">$(</span><span class="kw">awslocal</span> ec2 create-subnet <span class="fl">--vpc-id</span> <span class="var">$VPC</span> <span class="fl">--cidr-block</span> <span class="st">10.0.1.0/24</span> <span class="fl">--availability-zone</span> <span class="st">us-east-1a</span> <span class="fl">--query</span> <span class="st">"Subnet.SubnetId"</span> <span class="fl">--output</span> <span class="st">text</span><span class="var">)</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>What is a subnet?</b>
+                  <p>If the VPC is your <strong>city</strong>, a subnet is one <strong>neighborhood</strong>. Instead of dumping every server into one giant flat network, you divide your land into zones:</p>
+                  <ul>
+                    <li>🌐 Public subnet → <strong>Web servers</strong> (reachable from the internet)</li>
+                    <li>🔒 Private subnet → <strong>Databases</strong> (hidden)</li>
+                  </ul>
+                </div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-city"></i> Your city after one subnet</div>
+                <pre>VPC  10.0.0.0/16
+ └── <span class="a-acc">PUBLIC subnet  10.0.1.0/24</span>  (neighborhood "A")
+       ├── 10.0.1.1
+       ├── 10.0.1.2
+       └── ... 10.0.1.254   ← ~251 usable addresses</pre>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the flags</div>
+                <div class="flag"><code>--vpc-id $VPC</code><div class="fl-desc"><b>"Create this subnet inside my VPC."</b> Since <code>$VPC</code> holds <code>vpc-0a1b2c3d</code>, AWS drops the new neighborhood inside that specific city.</div></div>
+                <div class="flag"><code>--cidr-block 10.0.1.0/24</code><div class="fl-desc">A <code>/24</code> = <b>256 addresses</b> (251 usable in AWS — it reserves 5 for plumbing). Notice it's a slice of the VPC's <code>10.0.0.0/16</code>.</div></div>
+                <div class="flag"><code>--availability-zone us-east-1a</code><div class="fl-desc">📍 Pins the subnet to one <b>physical data-center location</b>. AWS regions have several AZs (<code>us-east-1a/b/c</code>); this subnet lives in AZ <code>a</code>.</div></div>
+                <div class="flag"><code>--query "Subnet.SubnetId"</code><div class="fl-desc">Same trick as before — grab <b>just the subnet ID</b> and store it in <code>$PUB</code>.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: PRIVATE SUBNET ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Create a Second Subnet (Private)</h3>
+                <div class="step-sub">The hidden neighborhood where databases live</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">PRIV</span>=<span class="var">$(</span><span class="kw">awslocal</span> ec2 create-subnet <span class="fl">--vpc-id</span> <span class="var">$VPC</span> <span class="fl">--cidr-block</span> <span class="st">10.0.2.0/24</span> <span class="fl">--availability-zone</span> <span class="st">us-east-1a</span> <span class="fl">--query</span> <span class="st">"Subnet.SubnetId"</span> <span class="fl">--output</span> <span class="st">text</span><span class="var">)</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>Why a second subnet?</b>
+                  <p>Same command, different <strong>neighborhood number</strong> (<code>10.0.2.0/24</code>). This one is <strong>private</strong>: no internet path yet, so nothing from outside can even see it. It's where your <strong>database</strong> will live.</p>
+                </div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-city"></i> Your city now</div>
+                <pre>VPC  10.0.0.0/16
+ ├── <span class="a-acc">PUBLIC subnet  10.0.1.0/24</span>
+ │      └── 🌐 Web servers
+ │
+ └── <span class="a-grn">PRIVATE subnet 10.0.2.0/24</span>
+        └── 🗄️ Database (isolated, safe)</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🏠</div>
+                <div>
+                  <b>Real-world example: an online shop</b>
+                  <p>The <strong>web server</strong> in the public subnet accepts user requests. The <strong>database</strong> sits in the private subnet, hidden from the world. Even if someone hacks the web server, they can't reach the database directly. That isolation is the whole point.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: IGW ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">The Internet Gateway — Install the Front Door</h3>
+                <div class="step-sub">Two commands: build the door, then attach it</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">IGW</span>=<span class="var">$(</span><span class="kw">awslocal</span> ec2 create-internet-gateway <span class="fl">--query</span> <span class="st">"InternetGateway.InternetGatewayId"</span> <span class="fl">--output</span> <span class="st">text</span><span class="var">)</span>
+
+<span class="kw">awslocal</span> ec2 attach-internet-gateway <span class="fl">--internet-gateway-id</span> <span class="var">$IGW</span> <span class="fl">--vpc-id</span> <span class="var">$VPC</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🚪</div>
+                <div>
+                  <b>What is an Internet Gateway (IGW)?</b>
+                  <p>The <strong>front door</strong> of your city. It's a managed, always-available AWS component that lets traffic flow between your VPC and the internet. <strong>Install the door ≠ rooms are reachable.</strong> You still need a <em>path from the room to the door</em> (that's Step 5's route).</p>
+                </div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-house"></i> Two steps, two purposes</div>
+                <pre><span class="a-blu">create-internet-gateway</span>   →  builds the door     →  igw-44556677
+<span class="a-blu">attach-internet-gateway</span>    →  nails it onto the VPC →  (no output = success)</pre>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the flags</div>
+                <div class="flag"><code>create-internet-gateway</code><div class="fl-desc">Builds a brand-new door and returns its ID (<code>igw-...</code>).</div></div>
+                <div class="flag"><code>attach-internet-gateway --internet-gateway-id $IGW --vpc-id $VPC</code><div class="fl-desc">Takes the door (<code>$IGW</code>) and <b>attaches it to your VPC</b> (<code>$VPC</code>). <strong>No output = success.</strong></div></div>
+              </div>
+
+              <div class="highlight">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Remember the golden rule</b>
+                <strong>IGW = the door. Route = the path to the door.</strong> The next step builds the path.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: ROUTE TABLE + ROUTE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Route Table — Build the Road to the Door</h3>
+                <div class="step-sub">The single command that makes a subnet PUBLIC</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">RTB</span>=<span class="var">$(</span><span class="kw">awslocal</span> ec2 create-route-table <span class="fl">--vpc-id</span> <span class="var">$VPC</span> <span class="fl">--query</span> <span class="st">"RouteTable.RouteTableId"</span> <span class="fl">--output</span> <span class="st">text</span><span class="var">)</span>
+
+<span class="kw">awslocal</span> ec2 create-route <span class="fl">--route-table-id</span> <span class="var">$RTB</span> <span class="fl">--destination-cidr-block</span> <span class="st">0.0.0.0/0</span> <span class="fl">--gateway-id</span> <span class="var">$IGW</span>
+
+<span class="kw">awslocal</span> ec2 associate-route-table <span class="fl">--route-table-id</span> <span class="var">$RTB</span> <span class="fl">--subnet-id</span> <span class="var">$PUB</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🗺️</div>
+                <div>
+                  <b>What is a route table?</b>
+                  <p>The <strong>GPS</strong> of your network. Every subnet gets linked to one route table, and the table holds rules: <em>"traffic headed to destination X goes via target Y."</em> There's always a <strong>local route</strong> (<code>10.0.0.0/16 → local</code>) so VPC-internal traffic flows freely.</p>
+                </div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-route"></i> The one rule that matters</div>
+                <pre>Route table $RTB
+ ├── <span class="a-blu">10.0.0.0/16 → local</span>      (talk inside the city — always present)
+ └── <span class="a-acc">0.0.0.0/0 → igw-…</span>   ← THE PUBLIC ROUTE
+         └─ "everything else in the internet → out the front door"</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🌟</div>
+                <div>
+                  <b>The magic of 0.0.0.0/0</b>
+                  <p><code>0.0.0.0/0</code> = <strong>"the whole internet."</strong> Adding <code>0.0.0.0/0 → IGW</code> to a route table is <strong>exactly what makes a subnet public.</strong> Remove it and the subnet is private again. That's the entire public/private distinction, in one line.</p>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the flags</div>
+                <div class="flag"><code>create-route-table --vpc-id $VPC</code><div class="fl-desc">Creates an empty road-map for your VPC; stores the ID in <code>$RTB</code>.</div></div>
+                <div class="flag"><code>create-route --route-table-id $RTB --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW</code><div class="fl-desc">Adds a rule: <b>"traffic for the whole internet → goes out through the door (<code>$IGW</code>)."</b> Returns <code>{"Return": true}</code>.</div></div>
+                <div class="flag"><code>associate-route-table --route-table-id $RTB --subnet-id $PUB</code><div class="fl-desc">Links the road-map to the <b>public subnet</b> (<code>$PUB</code>). Now that subnet knows how to reach the internet.</div></div>
+              </div>
+
+              <div class="compare">
+                <div class="cmp wout">
+                  <div class="cmp-h">🔧 What create-route returns</div>
+                  <pre>{
+  "Return": true
+}</pre>
+                </div>
+                <div class="cmp with">
+                  <div class="cmp-h">🎉 What it means</div>
+                  <pre>true  →  the route was added successfully</pre>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: SECURITY GROUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">Security Group — Hire the Bodyguard</h3>
+                <div class="step-sub">Firewall rules that decide who gets in</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">SG</span>=<span class="var">$(</span><span class="kw">awslocal</span> ec2 create-security-group <span class="fl">--group-name</span> <span class="st">web-sg</span> <span class="fl">--description</span> <span class="st">"Web SG"</span> <span class="fl">--vpc-id</span> <span class="var">$VPC</span> <span class="fl">--query</span> <span class="st">"GroupId"</span> <span class="fl">--output</span> <span class="st">text</span><span class="var">)</span>
+
+<span class="kw">awslocal</span> ec2 authorize-security-group-ingress <span class="fl">--group-id</span> <span class="var">$SG</span> <span class="fl">--protocol</span> <span class="st">tcp</span> <span class="fl">--port</span> <span class="st">80</span> <span class="fl">--cidr</span> <span class="st">0.0.0.0/0</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🛡️</div>
+                <div>
+                  <b>What is a Security Group (SG)?</b>
+                  <p>A <strong>bodyguard standing at each server</strong>. It's a <strong>stateful firewall</strong> at the resource level: if you allow a request <em>in</em>, the reply is automatically allowed <em>back out</em>. By default it denies all inbound traffic.</p>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the flags</div>
+                <div class="flag"><code>create-security-group --group-name web-sg --description "Web SG" --vpc-id $VPC</code><div class="fl-desc">Creates the empty firewall inside your VPC. <code>web-sg</code> is a friendly name; <code>$VPC</code> scopes it to your city. Stores the ID in <code>$SG</code>.</div></div>
+                <div class="flag"><code>authorize-security-group-ingress</code><div class="fl-desc">Adds an <b>inbound allow rule</b> ("ingress" = traffic coming in).</div></div>
+                <div class="flag"><code>--protocol tcp --port 80</code><div class="fl-desc">The kind of traffic: <b>TCP on port 80</b> (standard HTTP / web).</div></div>
+                <div class="flag"><code>--cidr 0.0.0.0/0</code><div class="fl-desc">"Allow this traffic <b>from anywhere</b>." Anyone on the internet may now reach port 80 on servers with this SG.</div></div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-shield-halved"></i> Result</div>
+                <pre>🌍 anyone, anywhere
+     │  port 80 (HTTP)
+     ▼
+🛡️ SG: web-sg   ← bodyguard at your web server
+     │
+     💻 Web server (public subnet)
+
+(Everything else → ❌ denied by default)</pre>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Real-world habit</b>
+                Don't open port 22 (SSH) to <code>0.0.0.0/0</code> — bots scan for it constantly. Scope it to your own IP: <code style="font-family:var(--mono)">--cidr YOUR_IP/32</code>. In Floci it doesn't matter, but build the habit now.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete VPC build — copy &amp; paste everything at once
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 1. VPC (the building)</span>
+VPC=$(awslocal ec2 create-vpc --cidr-block 10.0.0.0/16 --query "Vpc.VpcId" --output text)
+
+<span class="cmt"># 2. Subnets (the rooms) — one public, one private</span>
+PUB=$(awslocal ec2 create-subnet --vpc-id $VPC --cidr-block 10.0.1.0/24 --query "Subnet.SubnetId" --output text)
+PRIV=$(awslocal ec2 create-subnet --vpc-id $VPC --cidr-block 10.0.2.0/24 --query "Subnet.SubnetId" --output text)
+
+<span class="cmt"># 3. Internet gateway (the front door)</span>
+IGW=$(awslocal ec2 create-internet-gateway --query "InternetGateway.InternetGatewayId" --output text)
+awslocal ec2 attach-internet-gateway --internet-gateway-id $IGW --vpc-id $VPC
+
+<span class="cmt"># 4. Route table for the public subnet + default route to IGW</span>
+RTB=$(awslocal ec2 create-route-table --vpc-id $VPC --query "RouteTable.RouteTableId" --output text)
+awslocal ec2 create-route --route-table-id $RTB --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW
+awslocal ec2 associate-route-table --route-table-id $RTB --subnet-id $PUB
+
+<span class="cmt"># 5. Security group — open HTTP from anyone</span>
+SG=$(awslocal ec2 create-security-group --group-name web-sg --description "Web SG" --vpc-id $VPC --query "GroupId" --output text)
+awslocal ec2 authorize-security-group-ingress --group-id $SG --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+<span class="cmt"># 6. Celebrate — look at what we built</span>
+awslocal ec2 describe-vpcs --vpc-ids $VPC</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — remember this picture</div>
+          <pre>🌍 <span class="y">AWS Region (us-east-1)</span>
+│
+└── 🏙️ <span class="y">VPC</span> <span class="d">(10.0.0.0/16) — the city</span>
+    │
+    ├── 🏘️ <span class="b">PUBLIC subnet</span> <span class="d">(10.0.1.0/24)</span>
+    │       └── 💻 <span class="g">Web server</span>
+    │             🛡️ SG allows port 80 from anywhere
+    │
+    └── 🏘️ <span class="b">PRIVATE subnet</span> <span class="d">(10.0.2.0/24)</span>
+            └── 🗄️ <span class="g">Database</span> — hidden, no inbound
+
+🚪 <span class="o">IGW</span> = front door · 🗺️ <span class="o">route 0.0.0.0/0 → igw</span> = road to the door
+🛡️ <span class="p">SG</span> = bodyguard at each server</pre>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-check tip-ic"></i>The whole hierarchy</b>
+          <div style="font-size:.92rem;line-height:1.7">
+            🌎 AWS Region = <strong>Country</strong> · 🏙️ VPC = <strong>City</strong> · 🏘️ Subnet = <strong>Neighborhood</strong> · 💻 EC2 Instance = <strong>House</strong> (where your app runs)
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 2</h2>
+        <div class="term"><span class="t-name">VPC</span><p>Your private, isolated section of the AWS cloud with its own IP range and boundaries.</p></div>
+        <div class="term"><span class="t-name">CIDR</span><p>A notation for a block of IPs (<code>10.0.0.0/16</code> = 65,536 addresses). "IP/prefix".</p></div>
+        <div class="term"><span class="t-name">Subnet</span><p>A slice of a VPC's address space, assigned to exactly one Availability Zone.</p></div>
+        <div class="term"><span class="t-name">Public subnet</span><p>A subnet whose route table has a default route (<code>0.0.0.0/0</code>) to an internet gateway.</p></div>
+        <div class="term"><span class="t-name">Private subnet</span><p>A subnet with no internet path (or only via NAT). Nothing inbound reaches it.</p></div>
+        <div class="term"><span class="t-name">Internet Gateway</span><p>AWS's managed "door" that lets traffic flow between your VPC and the internet.</p></div>
+        <div class="term"><span class="t-name">NAT Gateway</span><p>One-way internet access: lets private resources reach out, but nothing in.</p></div>
+        <div class="term"><span class="t-name">Route table</span><p>The GPS of a subnet — a set of "destination → gateway" rules.</p></div>
+        <div class="term"><span class="t-name">Security Group</span><p>A stateful firewall at the resource level. Allow rules only. Attached to instances.</p></div>
+        <div class="term"><span class="t-name">Network ACL</span><p>A stateless firewall at the subnet border. Allow + deny rules, evaluated in order.</p></div>
+        <div class="term"><span class="t-name">Elastic IP</span><p>A fixed public IP address you allocate and can attach to resources (used by NAT).</p></div>
+        <div class="term"><span class="t-name">0.0.0.0/0</span><p>"The whole internet." The default route catches all traffic not matched by a more specific rule.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 2 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> How many IP addresses are in <code style="color:var(--accent-2)">10.0.0.0/24</code>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> 65,536</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> 256</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> 16</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> What makes a subnet <strong>public</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> Its name contains the word "public"</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> Its route table has a default route (<code>0.0.0.0/0</code>) pointing at an Internet Gateway</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> It spans two Availability Zones</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> Which firewall is <strong>stateless</strong> (must allow return traffic explicitly)?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> Security Group</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> Network ACL</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> Neither — both are stateful</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> A subnet can belong to:</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Multiple Availability Zones</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> Exactly one Availability Zone</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> The entire region</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> Your database in a private subnet needs to download OS patches, but must stay hidden from the internet. What do you use?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> Internet Gateway</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> NAT Gateway</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> Elastic IP attached to the DB</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> Which command makes a subnet reachable from the internet?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> <code style="color:var(--accent-2)">awslocal ec2 create-route --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW</code></label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> <code style="color:var(--accent-2)">awslocal ec2 create-route --route-table-id $RTB --destination-cidr-block 0.0.0.0/0 --gateway-id $IGW</code> + associating $RTB to the subnet</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> <code style="color:var(--accent-2)">awslocal ec2 create-subnet --cidr-block 0.0.0.0/0</code></label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-01.html"><i class="fa-solid fa-arrow-left"></i> Ch 1: Cloud Computing</a>
+          <a href="chapter-03.html">Next: EC2 — Compute <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 2 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

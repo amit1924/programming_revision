@@ -1,0 +1,1540 @@
+hat's actually the best way to learn AWS. Let's forget the abstract networking and build your own company.
+
+We'll assume you own the website:
+
+🌐 www.amit.com
+
+Imagine you're launching Amazon, Flipkart, or Swiggy, but it's your own company.
+
+Your website has:
+
+🌍 Website → www.amit.com
+💻 Backend API
+🗄️ Database
+📷 Image storage
+
+Everything runs inside AWS.
+
+👨‍💼 Day 1 — You buy land in AWS
+
+Before building anything, you first need land.
+
+In AWS, the land is called a VPC.
+
+Real world
+Delhi
+│
+└── Amit buys 10 acres of land
+
+AWS equivalent
+
+AWS Cloud
+
+        Amazon's Huge Land
++--------------------------------------+
+
+          Your Land
+      (VPC 10.0.0.0/16)
+
++--------------------------------------+
+
+Command
+
+VPC=$(awslocal ec2 create-vpc \
+--cidr-block 10.0.0.0/16 \
+--query "Vpc.VpcId" \
+--output text)
+
+This means
+
+🏡 "AWS, give me my own private land."
+
+AWS replies
+
+vpc-123456
+
+Now your company owns this land.
+
+👨‍💻 Day 2 — You hire developers
+
+Your developers ask:
+
+Where should we put the website?
+
+You don't put everything in one place.
+
+Instead, you divide your land.
+
+Just like a real city.
+
+Amit's Company Campus
+
++--------------------------------------+
+
+Reception
+
+Office
+
+Warehouse
+
+Parking
+
++--------------------------------------+
+
+AWS does the same thing.
+
+Instead of buildings...
+
+AWS creates subnets.
+
+First Subnet
+
+Command
+
+awslocal ec2 create-subnet \
+--vpc-id $VPC \
+--cidr-block 10.0.1.0/24
+
+Think of it like this.
+
+Amit Company
+
++----------------------------------------+
+
+🏢 Office Building
+
+Employees work here
+
++----------------------------------------+
+
+AWS
+
+VPC
+
++---------------------------------------+
+
+🌐 Public Subnet
+
+10.0.1.0/24
+
++---------------------------------------+
+
+This is where your website server will live.
+
+www.amit.com
+
+↓
+
+EC2 Web Server
+Why is it called PUBLIC?
+
+Because customers need to visit it.
+
+Imagine someone opens Chrome.
+
+https://www.amit.com
+
+The request comes from anywhere.
+
+👩 USA
+
+↓
+
+🌍 Internet
+
+↓
+
+🌐 Public Subnet
+
+↓
+
+💻 Web Server
+
+Everyone must be able to reach it.
+
+That's why it's public.
+
+Second Subnet
+
+Now create another subnet.
+
+awslocal ec2 create-subnet \
+--vpc-id $VPC \
+--cidr-block 10.0.2.0/24
+
+This is NOT for customers.
+
+This is for your database.
+
+VPC
+
++--------------------------------------+
+
+🌐 Public Subnet
+      │
+      └── Web Server
+
+🔒 Private Subnet
+      │
+      └── Database
+
++--------------------------------------+
+Why not keep database with website?
+
+Imagine if your bank kept all customer records in the reception.
+
+😱 Anyone could steal them.
+
+Instead,
+
+Office
+
+↓
+
+Security Door
+
+↓
+
+Record Room
+
+↓
+
+Locker
+
+↓
+
+Customer Data
+
+Exactly the same in AWS.
+
+Public Subnet
+
+↓
+
+Backend
+
+↓
+
+Private Subnet
+
+↓
+
+MySQL Database
+
+Customers NEVER reach the database directly.
+
+What happens when someone visits your website?
+
+Suppose Rahul opens
+
+www.amit.com
+
+The journey looks like this:
+
+Rahul
+
+↓
+
+Internet
+
+↓
+
+AWS
+
+↓
+
+Your VPC
+
+↓
+
+Public Subnet
+
+↓
+
+EC2
+
+↓
+
+Nginx
+
+↓
+
+React App
+
+React needs product data.
+
+So it asks:
+
+React
+
+↓
+
+Backend API
+
+↓
+
+Database
+
+Database replies.
+
+Database
+
+↓
+
+Backend
+
+↓
+
+React
+
+↓
+
+Rahul's Browser
+
+Notice something?
+
+Rahul NEVER talks directly to the database.
+
+Why create TWO subnets?
+
+Imagine your company.
+
+Reception
+
+Anyone can enter.
+
+-------------------------
+
+CEO Room
+
+Only employees.
+
+-------------------------
+
+Vault
+
+Only CEO.
+
+AWS equivalent
+
+Public Subnet
+
+Everyone can enter.
+
+------------------------
+
+Private Subnet
+
+Only your servers.
+
+------------------------
+
+Database
+
+Nobody from internet.
+What do these IPs actually mean?
+
+Your VPC
+
+10.0.0.0/16
+
+Think of it as
+
+Amit City
+
+Inside Amit City,
+
+you create areas.
+
+Amit City
+
+10.0.0.0/16
+
+│
+
+├── Web Area
+
+│      10.0.1.x
+
+│
+
+├── Database Area
+
+│      10.0.2.x
+
+│
+
+├── Future Area
+
+│      10.0.3.x
+
+│
+
+└── AI Servers
+
+10.0.4.x
+
+Every server gets one house number.
+
+Example
+
+Web Server
+
+10.0.1.15
+
+Database
+
+10.0.2.45
+
+Redis
+
+10.0.2.70
+
+Just like houses have addresses.
+
+Where does www.amit.com fit?
+
+Many beginners think:
+
+www.amit.com
+
+↓
+
+VPC
+
+❌ Wrong.
+
+Actually,
+
+www.amit.com
+
+↓
+
+DNS (Route 53)
+
+↓
+
+Public IP
+
+↓
+
+EC2 Web Server
+
+↓
+
+Inside Public Subnet
+
+↓
+
+Inside VPC
+
+So the complete picture becomes:
+
+                         🌍 Internet
+
+                              │
+
+                      www.amit.com
+
+                              │
+
+                     DNS (Route 53)
+
+                              │
+
+                      Public IP
+
+                              │
+
+                 +----------------------+
+                 |      Your VPC        |
+                 |   10.0.0.0/16        |
+                 |                      |
+                 | 🌐 Public Subnet     |
+                 | 10.0.1.0/24          |
+                 |                      |
+                 | 💻 EC2 Web Server    |
+                 |      │               |
+                 |      ▼               |
+                 | 🔒 Private Subnet    |
+                 | 10.0.2.0/24          |
+                 |                      |
+                 | 🗄️ MySQL Database    |
+                 +----------------------+
+🎯 The one thing I want you to remember
+
+Whenever you build any website—whether it's www.amit.com, Facebook, Amazon, or Flipkart—the architecture always starts with the same idea:
+
+🏡 VPC = Your company's private land.
+🏘️ Public Subnet = Where web servers that users visit live.
+🔒 Private Subnet = Where databases and internal services live.
+🌍 Internet = Customers access only the public part.
+🗄️ Database = Hidden behind the web server, never exposed directly.
+
+This "company campus" mental model is the foundation for understanding AWS networking and matches the way the chapter explains VPCs, subnets, gateways, and routing.
+
+
+////////////////////////////////////////////////////////////////////////////////////////////////
+Awesome! Now let's continue the same story of www.amit.com. Last time we built the office (VPC). Now we're going to buy the actual computer (EC2) that will run your website. This matches the concepts introduced in Chapter 3 about EC2, AMIs, instance types, key pairs, and security groups.
+
+🎯 Goal
+
+You own:
+
+www.amit.com
+
+When someone visits it:
+
+https://www.amit.com
+
+You want them to see:
+
+Welcome to Amit's Website 🚀
+
+But...
+
+👉 Where is this HTML file stored?
+
+Answer:
+
+On a computer.
+
+In AWS, that computer is called EC2.
+
+🏢 What have we built so far?
+
+Previously we built this:
+
+🌍 AWS
+
+┌──────────────────────────────────────────────┐
+│                  Your VPC                    │
+│                                              │
+│  🌐 Public Subnet                            │
+│                                              │
+│                                              │
+│  🔒 Private Subnet                           │
+│                                              │
+└──────────────────────────────────────────────┘
+
+Notice something...
+
+❌ There is no computer yet.
+
+It's just an empty office building.
+
+💻 Today we're buying a computer
+
+Imagine you're opening a startup.
+
+You rent an office.
+
+Now employees ask
+
+"Where should we work?"
+
+You buy computers.
+
+Like this.
+
+Office
+
+┌────────────────────┐
+
+🖥️ Computer
+
+└────────────────────┘
+
+AWS calls this computer
+
+EC2
+
+Think:
+
+EC2 = Computer
+
+That's all.
+
+🌍 What happens when Rahul opens your website?
+
+Rahul types
+
+www.amit.com
+
+The request travels like this
+
+Rahul
+
+↓
+
+Internet
+
+↓
+
+AWS
+
+↓
+
+Your VPC
+
+↓
+
+🌐 Public Subnet
+
+↓
+
+💻 EC2
+
+↓
+
+Website
+
+Without EC2...
+
+Rahul
+
+↓
+
+Internet
+
+↓
+
+???
+
+
+Nothing exists.
+
+Your website cannot open.
+
+Real Example
+
+Suppose your website is
+
+www.amit.com
+
+Inside EC2
+
+you install
+
+Ubuntu Linux
+
+↓
+
+Nginx
+
+↓
+
+React App
+
+↓
+
+Your Website Files
+
+So the server becomes
+
+💻 EC2
+
+├── Ubuntu
+
+├── Nginx
+
+├── React
+
+└── index.html
+
+Now Rahul can open
+
+www.amit.com
+What exactly is EC2?
+
+Imagine Amazon has a huge data center.
+
+Amazon Data Center
+
++-----------------------------------+
+
+🖥️🖥️🖥️🖥️🖥️🖥️🖥️🖥️🖥️
+
+Thousands of computers
+
++-----------------------------------+
+
+You don't buy one.
+
+You rent one.
+
+AWS says
+
+Which computer do you want?
+
+You reply
+
+Give me one Ubuntu server.
+
+AWS creates
+
+💻 EC2 Instance
+
+within seconds.
+
+That's why the chapter describes an EC2 instance as a virtual computer that you launch inside the VPC and subnet you created.
+
+🧑‍🍳 What is an AMI?
+
+Now AWS asks
+
+Which operating system should I install?
+
+Exactly like buying a laptop.
+
+The shop asks
+
+Windows?
+
+Ubuntu?
+
+macOS?
+
+AWS asks
+
+Ubuntu?
+
+Amazon Linux?
+
+Windows Server?
+
+The operating system template is called an AMI.
+
+Think like cooking.
+
+Recipe
+
+↓
+
+Bake Cake
+
+↓
+
+Cake Ready
+
+AWS
+
+AMI
+
+↓
+
+Create EC2
+
+↓
+
+Server Ready
+
+Suppose you choose Ubuntu.
+
+AMI
+
+↓
+
+Ubuntu 22.04
+
+↓
+
+EC2
+
+↓
+
+Ubuntu Server
+🚀 Instance Type
+
+Now AWS asks another question.
+
+How powerful should this computer be?
+
+Exactly like buying a laptop.
+
+Cheap laptop
+Intel i3
+
+8 GB RAM
+Gaming laptop
+Intel i9
+
+64 GB RAM
+
+AWS equivalent
+
+t2.micro
+
+↓
+
+1 CPU
+
+1 GB RAM
+
+or
+
+m5.large
+
+↓
+
+2 CPUs
+
+8 GB RAM
+
+So
+
+Instance Type
+
+=
+
+Computer Size
+
+The chapter uses t2.micro as the classic beginner choice.
+
+🔑 Key Pair
+
+Imagine you buy a new office.
+
+The builder gives you
+
+Office Key
+
+Without it
+
+you cannot enter.
+
+AWS does exactly the same.
+
+It creates
+
+demo-key.pem
+Laptop
+
+↓
+
+demo-key.pem
+
+↓
+
+SSH
+
+↓
+
+EC2
+
+If you lose
+
+demo-key.pem
+
+you can't log in using SSH.
+
+That's why AWS only shows the private key once when it's created.
+
+🛡️ Security Group
+
+Now imagine your office has a security guard.
+
+Someone comes.
+
+Visitor
+
+↓
+
+Security Guard
+
+↓
+
+Office
+
+The guard asks
+
+Why are you here?
+
+Exactly the same thing happens in AWS.
+
+Internet
+
+↓
+
+Security Group
+
+↓
+
+EC2
+
+The security group checks
+
+Can this person enter?
+
+Suppose Rahul visits
+
+www.amit.com
+
+Browser uses
+
+Port 80
+
+Security Group
+
+✔ Allow Port 80
+
+Rahul enters.
+
+Suppose a hacker tries
+
+Port 3306
+
+(Security group has no rule.)
+
+❌ Access Denied
+
+The server is protected.
+
+The chapter explains that security groups are stateful firewalls and you explicitly open ports like 22 (SSH) and 80 (HTTP).
+
+🚀 Launch EC2
+
+Finally AWS has enough information.
+
+It knows
+
+Which OS?
+
+Ubuntu
+
+✔
+
+Which Computer?
+
+t2.micro
+
+✔
+
+Which Firewall?
+
+web-sg
+
+✔
+
+Which Key?
+
+demo-key
+
+✔
+
+Now AWS builds your server.
+
+awslocal ec2 run-instances ...
+
+Think of it like ordering a pizza.
+
+Pizza Size
+
+Large
+
+Crust
+
+Thin
+
+Cheese
+
+Extra
+
+↓
+
+Pizza Ready
+
+AWS
+
+AMI
+
+Ubuntu
+
+Type
+
+t2.micro
+
+Security Group
+
+web-sg
+
+Key Pair
+
+demo-key
+
+↓
+
+💻 EC2 Ready
+
+That's exactly what run-instances does—it combines the AMI, instance type, key pair, and security group to create your virtual server.
+
+🎉 Final Picture
+                     🌍 Internet
+
+                          │
+
+                  www.amit.com
+
+                          │
+
+                     DNS (Route53)
+
+                          │
+
+                   Public IP Address
+
+                          │
+
+                🛡️ Security Group
+             (Allow HTTP/HTTPS only)
+
+                          │
+
+              ┌─────────────────────┐
+              │      EC2 Server     │
+              │                     │
+              │ Ubuntu Linux        │
+              │ Nginx               │
+              │ React App           │
+              │ index.html          │
+              └─────────────────────┘
+                          │
+                          ▼
+                  🔒 Private Subnet
+                          │
+                     MySQL Database
+🧠 One sentence to remember
+
+When someone visits www.amit.com, they never connect to "AWS" directly. Their request reaches your EC2 server, which is just a rented computer inside your VPC. That computer runs your web server (like Nginx or Apache), serves your website, and securely communicates with your database in the private subnet.
+
+//////////////////////////////////////////////////////////////////////////////////////////////////
+Perfect! Let's continue the same company story instead of memorizing AWS terms.
+
+So far, you've built:
+
+🏢 Office = VPC
+🏘️ Reception = Public Subnet
+💻 Computer = EC2
+🌐 Website = www.amit.com
+
+Now the next question is...
+
+🤔 Where will your users' data be stored?
+
+The answer is RDS (Relational Database Service). This chapter explains why applications need a database, how RDS differs from running a database on EC2, how to create one, connect to it using its endpoint, and run SQL.
+
+🛒 Imagine Your Website
+
+Suppose your website is:
+
+www.amit.com
+
+It is an online shopping website.
+
+Rahul visits:
+
+www.amit.com
+
+He signs up.
+
+Name : Rahul
+
+Email : rahul@gmail.com
+
+Password : ********
+
+Question...
+
+Where should this information be saved?
+
+Inside EC2?
+
+❌ No.
+
+If EC2 crashes...
+
+Everything is lost.
+
+Instead...
+
+We store it inside a Database.
+
+🏢 Your Company
+
+Imagine your company office.
+
+                Amit Pvt Ltd
+
+        ┌──────────────────────────┐
+
+        🧑 Reception
+
+        👨 Developers
+
+        👨 HR
+
+        📦 Warehouse
+
+        🗄️ Record Room
+
+        └──────────────────────────┘
+
+The record room stores
+
+Employee files
+Customer records
+Bills
+Orders
+
+In AWS
+
+that record room is
+
+🗄️ RDS
+
+Think
+
+Record Room
+
+=
+
+RDS Database
+Complete Picture
+                     🌍 Internet
+
+                          │
+
+                    www.amit.com
+
+                          │
+
+                    EC2 Server 💻
+
+                          │
+
+                          ▼
+
+                  🗄️ RDS Database
+
+Website shows pages.
+
+Database stores data.
+
+Example
+
+Rahul creates an account.
+
+Browser sends
+
+Name = Rahul
+
+Email = rahul@gmail.com
+
+EC2 receives it.
+
+Internet
+
+↓
+
+EC2
+
+Now EC2 asks database
+
+Please save Rahul.
+
+Database stores
+
+Users Table
+
++----+--------+------------------+
+
+1 Rahul rahul@gmail.com
+
++----+--------+------------------+
+
+Exactly like Chapter 4's explanation of relational databases storing information in tables.
+
+Why not save data inside EC2?
+
+Imagine your laptop.
+
+You save
+
+customers.xlsx
+
+Now...
+
+💥 Laptop dies.
+
+File gone.
+
+Exactly same problem.
+
+EC2
+
+↓
+
+Crash
+
+↓
+
+Customer Data Lost 😭
+
+Instead
+
+EC2
+
+↓
+
+RDS
+
+↓
+
+Customer Data Safe
+🤔 What is RDS?
+
+Imagine hiring a database administrator.
+
+His job is
+
+✅ Install PostgreSQL
+
+✅ Backup database
+
+✅ Update database
+
+✅ Fix crashes
+
+✅ Monitor performance
+
+That costs money.
+
+AWS says
+
+Don't worry.
+
+We'll hire that person for you.
+
+That service is called
+
+RDS
+
+The chapter describes RDS as a managed database service where AWS handles installation, backups, patches, and failover while you focus on your data.
+
+Restaurant Example 🍕
+
+Imagine opening a pizza shop.
+
+Option 1
+
+Buy land
+
+Build kitchen
+
+Hire chef
+
+Buy oven
+
+
+Lots of work.
+
+Option 2
+
+Rent cloud kitchen
+
+Start selling pizza
+
+Easy.
+
+RDS is the cloud kitchen.
+
+AWS manages it.
+
+You only cook (store/query data).
+
+Create Database
+
+Now you tell AWS
+
+I need one PostgreSQL database.
+
+Command
+
+awslocal rds create-db-instance \
+--db-instance-identifier mydb \
+--engine postgres
+
+AWS starts building
+
+🗄️ PostgreSQL Database
+
+Name
+
+mydb
+
+The chapter's full command also lets you choose the database size, admin username, password, and storage.
+
+Real Story
+
+Your website
+
+www.amit.com
+
+needs
+
+Users
+
+Products
+
+Orders
+
+Payments
+
+AWS creates
+
+mydb
+
+↓
+
+PostgreSQL
+
+Inside
+
+Tables
+
+Users
+
+Orders
+
+Products
+
+Payments
+Database Engine
+
+AWS asks
+
+Which database software?
+
+Like buying a phone.
+
+Android?
+
+iPhone?
+
+AWS asks
+
+PostgreSQL?
+
+MySQL?
+
+Aurora?
+
+Oracle?
+
+Suppose you choose
+
+PostgreSQL
+
+Then AWS installs PostgreSQL for you.
+
+You don't have to install anything.
+
+Endpoint
+
+Now your database is ready.
+
+Question...
+
+How will EC2 find it?
+
+Suppose your friend's house.
+
+House
+
+↓
+
+Address
+
+↓
+
+Delhi
+
+Without address
+
+you cannot visit.
+
+Database also has an address.
+
+AWS calls it
+
+Endpoint
+172.17.0.2:7001
+
+Think
+
+Database Address
+
+=
+
+Endpoint
+
+The endpoint is the host and port your application uses to connect to the database.
+
+Journey
+
+Rahul buys shoes.
+
+Browser
+
+↓
+
+EC2
+
+↓
+
+Database Endpoint
+
+↓
+
+PostgreSQL
+
+↓
+
+Save Order
+
+Nobody connects directly to database.
+
+Only EC2 does.
+
+Running SQL
+
+Suppose Rahul signs up.
+
+EC2 sends SQL
+
+INSERT INTO users
+
+(name,email)
+
+VALUES
+
+('Rahul','rahul@gmail.com');
+
+Database stores
+
+Users
+
+1 Rahul
+
+rahul@gmail.com
+
+Suppose Rahul logs in.
+
+EC2 sends
+
+SELECT *
+
+FROM users
+
+WHERE email='rahul@gmail.com';
+
+Database replies
+
+Found Rahul
+
+✔ Login Success
+
+These are the same kinds of SQL operations shown in the chapter when connecting to the PostgreSQL server started by Floci.
+
+Delete Database
+
+Suppose your project is finished.
+
+You don't want to pay.
+
+Delete Database
+
+↓
+
+Money Stops
+
+Command
+
+awslocal rds delete-db-instance \
+--db-instance-identifier mydb
+
+Just like deleting an EC2 server when you're done, the chapter recommends deleting a test database after use.
+
+🎯 Final Architecture of www.amit.com
+                    👨 Rahul
+
+                       │
+
+                       ▼
+
+                🌍 Internet
+
+                       │
+
+                       ▼
+
+                www.amit.com
+
+                       │
+
+                       ▼
+
+               💻 EC2 Server
+          (Runs Nginx + React + API)
+
+                       │
+          SQL Queries (SELECT, INSERT)
+
+                       ▼
+
+            🗄️ RDS PostgreSQL
+        ┌──────────────────────────┐
+        │ Users Table              │
+        │ Products Table           │
+        │ Orders Table             │
+        │ Payments Table           │
+        └──────────────────────────┘
+🧠 Super Easy Memory Trick
+Real Life 🏢	AWS ☁️
+Office Building	🏙️ VPC
+Reception	🌐 Public Subnet
+Office Computer	💻 EC2
+Record Room	🗄️ RDS
+Office Address	📍 Endpoint
+Register Book	📋 Database Table
+Employee Record	📄 Row
+Columns (Name, Email, Phone)	📑 Table Columns
+🚀 Complete Journey of www.amit.com
+👨 Rahul
+
+↓
+
+🌍 Internet
+
+↓
+
+www.amit.com
+
+↓
+
+💻 EC2
+(Runs your website)
+
+↓
+
+📍 RDS Endpoint
+
+↓
+
+🗄️ PostgreSQL Database
+
+↓
+
+💾 Store Rahul's account safely
+
+This is the complete flow you'll use in almost every real web application: the browser talks to your EC2 application, and the EC2 application talks to the RDS database.

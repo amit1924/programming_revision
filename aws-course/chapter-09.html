@@ -1,0 +1,761 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 9 — CloudFront: CDN | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html" class="active"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 9 — Contents</h4>
+      <a href="#why-cdn">Why a CDN?</a>
+      <a href="#how-cdn">How CloudFront Works</a>
+      <a href="#edge-caching">Edge Locations &amp; Caching</a>
+      <a href="#origin">Origins &amp; OAI</a>
+      <a href="#invalidation">Invalidation &amp; Behaviors</a>
+      <a href="#hands-on">Hands-On: CDN for amit.com</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 9 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="9" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-bolt"></i> Chapter 9</span>
+        <h1>CloudFront — Content Delivery Network</h1>
+        <p class="subtitle">Your images live in S3 (Chapter 8) — but what if a user in Mumbai and a user in New York both open <strong>www.amit.com</strong>? Fetching every file from one US region is slow for faraway visitors. <strong>CloudFront</strong> is AWS's CDN: it copies your content to <strong>edge locations all over the world</strong>, so everyone downloads from somewhere close.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~30 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 6 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-bolt"></i> Speed + security</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-cdn">Why a CDN?</a>
+        <a href="#how-cdn">How CloudFront Works</a>
+        <a href="#edge-caching">Edge Locations &amp; Caching</a>
+        <a href="#origin">Origins &amp; OAI</a>
+        <a href="#invalidation">Invalidation &amp; Behaviors</a>
+        <a href="#hands-on">Hands-On: CDN for amit.com</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 9 Quiz</a>
+      </div>
+
+      <!-- ============ WHY CDN ============ -->
+      <section class="sec" id="why-cdn">
+        <h2><span class="ic"><i class="fa-solid fa-circle-question"></i></span> Why a CDN?</h2>
+        <p>Think about the journey of a photo from Chapter 8. A user in Mumbai asks for <code>product-photo.jpg</code> stored in <code>us-east-1</code>. The request crosses an ocean, S3 answers, the bytes travel all the way back. That's <strong>hundreds of milliseconds</strong> of lag — and it happens for <em>every</em> user, <em>every</em> time.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> Without vs with a CDN</div>
+          <pre>   WITHOUT:                         WITH:
+   Mumbai user ────🌊────► S3 us-east   Mumbai user ──► 🛰️ Mumbai edge ◄── cached
+   (every request                  (first request 🌊 to S3,
+    crosses an ocean)               then served from nearby!)</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">⚡</div>
+          <div>
+            <b>CDN = content delivered from near you</b>
+            <p>A <strong>CDN</strong> (Content Delivery Network) is a worldwide network of <strong>edge locations</strong> that hold copies of your content. When a user requests a file, CloudFront answers from the <strong>nearest edge</strong> — not from your distant S3 bucket. Result: faster loads, lower cost, and fewer requests hitting your origin.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Why "CloudFront"?</b>
+            CloudFront = "the front door to your cloud." All visitor traffic enters through CloudFront's global edge network, so AWS can serve it from the closest point. It's the standard way to make any AWS website fast worldwide.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ HOW CDN WORKS ============ -->
+      <section class="sec" id="how-cdn">
+        <h2><span class="ic blue"><i class="fa-solid fa-globe"></i></span> How CloudFront Works</h2>
+        <p>CloudFront is a <strong>distribution</strong> — a configured pipeline between <strong>viewers</strong> (users) and an <strong>origin</strong> (your content's home). The flow:</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-globe"></i> The distribution pipeline</div>
+          <pre>   <span class="a-blu">Viewer</span> (user in Mumbai)
+        │  1. GET d3x.cloudfront.net/product.jpg
+        ▼
+   <span class="a-yel">Nearest edge location</span>  (Mumbai edge)
+        │  2. cached?  yes → serve instantly 🎉
+        │             no  → fetch from origin
+        ▼
+   <span class="a-grn">Origin</span>  (your S3 bucket / EC2 / ALB)
+        │  3. returns the file + caches a copy at the edge
+        ▼
+   back to the viewer (and next time it's instant)</pre>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Piece</th><th>What it is</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Distribution</strong></td><td>The whole CloudFront setup: origins + cache behaviors + settings.</td></tr>
+              <tr><td><strong>Origin</strong></td><td>Where CloudFront fetches content — S3, EC2, ALB, or an external website.</td></tr>
+              <tr><td><strong>Edge location</strong></td><td>One of hundreds of worldwide POPs holding cached copies.</td></tr>
+              <tr><td><strong>Cache behavior</strong></td><td>Rules saying how a path (<code>/*</code>, <code>/images/*</code>) should be cached &amp; served.</td></tr>
+              <tr><td><strong>Domain name</strong></td><td>Every distribution gets <code>xxxxx.cloudfront.net</code> — put your custom domain on top.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ EDGE CACHING ============ -->
+      <section class="sec" id="edge-caching">
+        <h2><span class="ic green"><i class="fa-solid fa-box-archive"></i></span> Edge Locations &amp; Caching</h2>
+        <p>The magic of a CDN is <strong>caching at the edge</strong>. Files that don't change (images, JS, CSS) are copied once to an edge and served from there until they expire.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-box-archive"></i> Cache hit vs miss</div>
+          <pre>   <span class="a-grn">CACHE HIT</span>  user asks, edge has it → instant (fast, free)
+   <span class="a-yel">CACHE MISS</span> edge doesn't have it → fetch from origin (slow, costs)
+
+   Caching works because you set <span class="a-blu">TTL</span> / cache-control:
+     logo.png      → cache for 1 year (never changes)
+     index.html    → cache for 30 seconds (changes often)</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🗓️</div>
+          <div>
+            <b>TTL decides freshness vs speed</b>
+            <p>The <strong>Time-to-Live</strong> says how long an edge keeps a copy. Long TTL = super fast but stale. Short TTL = fresh but more origin traffic. Static assets (images, fonts) get long TTLs; HTML and dynamic data get short ones. CloudFront respects your origin's <code>Cache-Control</code> headers.</p>
+          </div>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>One bucket, whole world</b>
+          This is the popular <strong>S3 + CloudFront</strong> architecture: you upload files to one S3 bucket (Chapter 8), put CloudFront in front, and users everywhere fetch from a nearby edge. No servers to manage, tiny cost, fast everywhere. Exactly how <code>www.amit.com</code> should ship its static content.
+        </div>
+      </section>
+
+      <!-- ============ ORIGINS & OAI ============ -->
+      <section class="sec" id="origin">
+        <h2><span class="ic gold"><i class="fa-solid fa-sitemap"></i></span> Origins &amp; Origin Access Identity</h2>
+        <p>A distribution needs an <strong>origin</strong> — the real home of the content. For your S3 bucket, there's a special security trick called the <strong>OAI</strong>.</p>
+
+        <div class="concept">
+          <div class="c-emo">🔐</div>
+          <div>
+            <b>OAI — let CloudFront in, keep the world out</b>
+            <p>An <strong>Origin Access Identity (OAI)</strong> is a special CloudFront identity. You give <strong>only the OAI</strong> permission to read your S3 bucket. Now users <em>can't</em> hit the bucket directly (it stays private) — they must go through CloudFront. This is why your site is fast <em>and</em> your origin is protected from abuse.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-sitemap"></i> OAI in one picture</div>
+          <pre>   <span class="a-blu">Users</span> ──► <span class="a-yel">CloudFront</span> ──OAI──► <span class="a-grn">S3 bucket</span>
+   (public)      (edge + cache)    (only OAI can read)
+
+   Direct bucket access → ❌ denied (private bucket policy)
+   Through CloudFront  → ✅ served (OAI is authorized)</pre>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Origins can be anything</b>
+            S3 is the classic origin, but CloudFront also fronts <strong>EC2 instances, ALBs, API Gateways, Lambda@Edge</strong>, and even external URLs. The "origin" is just wherever your real content lives. OAI applies when the origin is S3.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ INVALIDATION ============ -->
+      <section class="sec" id="invalidation">
+        <h2><span class="ic pink"><i class="fa-solid fa-rotate"></i></span> Invalidation &amp; Cache Behaviors</h2>
+        <p>You deployed a fix, but the edge is still serving the <em>old</em> file from cache. Enter <strong>invalidation</strong>.</p>
+
+        <div class="concept">
+          <div class="c-emo">🧹</div>
+          <div>
+            <b>Invalidation = "forget the cached copy now"</b>
+            <p><strong>Invalidation</strong> tells CloudFront to drop specific cached objects (usually by path like <code>/*</code> or <code>/images/*</code>) so the next request refetches fresh content. Use it sparingly — it's meant for emergencies, not routine updates (long TTLs + new filenames are the normal pattern). <strong>Cache behaviors</strong> are the per-path rules that control all of this.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-rotate"></i> Lifecycle of a cached file</div>
+          <pre>   deploy v1 → edge caches it (TTL 3600s)
+   deploy v2 → users still get v1 😕 (old copy at edge)
+   invalidate "/*" → edge drops everything
+   next request → refetches v2 ✅ fresh for everyone</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>File-naming trick beats invalidation</b>
+          Pros avoid invalidation by <strong>versioning filenames</strong>: <code>app-v1.css</code>, <code>app-v2.css</code>. Old files keep their long cache, new files start fresh, no invalidation needed. Reserve <code>create-invalidation</code> for when you must force-refresh something immediately.
+        </div>
+      </section>
+
+      <!-- ============ HANDS-ON ============ -->
+      <section class="sec" id="hands-on">
+        <h2><span class="ic"><i class="fa-solid fa-screwdriver-wrench"></i></span> Hands-On: Put a CDN in Front of amit.com</h2>
+        <p>Let's build the CloudFront distribution for <strong>www.amit.com</strong> — command by command. We'll create the OAI, the distribution for your S3 bucket, invalidate a stale file, and clean up.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: CREATE OAI ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Create the Origin Access Identity</h3>
+                <div class="step-sub">The special CloudFront identity that reads S3</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> cloudfront create-cloud-front-origin-access-identity <span class="fl">--cloud-front-origin-access-identity-config</span> <span class="st">'{"CallerReference":"oai-001","Comment":"amit site OAI"}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🪪</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You created an <strong>OAI</strong> — an identity that belongs to CloudFront. You'll wire it into the distribution as the "door pass" for your S3 bucket. The <code>CallerReference</code> is a unique label so AWS can dedupe requests (same idea as Route 53's caller-reference in Chapter 7). The returned <strong>Id</strong> is what you use everywhere.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal cloudfront create-cloud-front-origin-access-identity --cloud-front-origin-access-identity-config \u0027{\"CallerReference\":\"oai-001\",\"Comment\":\"amit site OAI\"}\u0027","delay":650},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"CloudFrontOriginAccessIdentity\": {","color":""},
+                  {"type":"out","text":"        \"Id\": \"ETBSZS55X8OK03\",","color":"ok"},
+                  {"type":"out","text":"        \"S3CanonicalUserId\": \"ff823f40ffb247a0...\",","color":""},
+                  {"type":"out","text":"        \"CloudFrontOriginAccessIdentityConfig\": {","color":""},
+                  {"type":"out","text":"            \"CallerReference\": \"oai-001\",","color":""},
+                  {"type":"out","text":"            \"Comment\": \"amit site OAI\"","color":""},
+                  {"type":"out","text":"        }","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# OAI created! Save the Id — you\u2019ll use it in the next step.","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-id-card"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>cloudfront create-cloud-front-origin-access-identity</code><div class="fl-desc">Creates the special CloudFront S3-reader identity.</div></div>
+                <div class="flag"><code>--cloud-front-origin-access-identity-config '{"CallerReference":"oai-001",...}'</code><div class="fl-desc">Config JSON — unique <b>CallerReference</b> + a <b>Comment</b>.</div></div>
+                <div class="flag"><code>Id: ETBSZS55X8OK03</code><div class="fl-desc">The OAI's ID — referenced as <code>origin-access-identity/cloudfront/&lt;id&gt;</code>.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: CREATE DISTRIBUTION ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Create the Distribution</h3>
+                <div class="step-sub">Point CloudFront at your S3 bucket</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> cloudfront create-distribution <span class="fl">--distribution-config</span> <span class="st">'{"CallerReference":"dist-001","Comment":"amit-photos CDN","DefaultRootObject":"index.html","Enabled":true,"Origins":{"Quantity":1,"Items":[{"Id":"amit-photos-origin","DomainName":"amit-photos.s3.amazonaws.com","S3OriginConfig":{"OriginAccessIdentity":"origin-access-identity/cloudfront/ETBSZS55X8OK03"}}]},"DefaultCacheBehavior":{"TargetOriginId":"amit-photos-origin","ViewerProtocolPolicy":"redirect-to-https","MinTTL":0,"ForwardedValues":{"QueryString":false,"Cookies":{"Forward":"none"},"Headers":{"Quantity":0,"Items":[]}},"TrustedSigners":{"Enabled":false,"Quantity":0},"AllowedMethods":{"Quantity":2,"Items":["GET","HEAD"]}}}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🚀</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You created the <strong>distribution</strong> — the whole pipeline. It says: origin is the S3 bucket <code>amit-photos</code> accessed via the OAI, <code>index.html</code> is the default page, HTTPS is enforced, and the default behavior serves GET/HEAD requests. AWS replies with a <strong>cloudfront.net domain</strong> — the address users will hit.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal cloudfront create-distribution --distribution-config \u0027{\"CallerReference\":\"dist-001\",\"Comment\":\"amit-photos CDN\",\"DefaultRootObject\":\"index.html\",\"Enabled\":true,\"Origins\":{\"Quantity\":1,\"Items\":[{\"Id\":\"amit-photos-origin\",\"DomainName\":\"amit-photos.s3.amazonaws.com\",\"S3OriginConfig\":{\"OriginAccessIdentity\":\"origin-access-identity/cloudfront/ETBSZS55X8OK03\"}}]},\"DefaultCacheBehavior\":{\"TargetOriginId\":\"amit-photos-origin\",\"ViewerProtocolPolicy\":\"redirect-to-https\",\"MinTTL\":0,\"ForwardedValues\":{\"QueryString\":false,\"Cookies\":{\"Forward\":\"none\"},\"Headers\":{\"Quantity\":0,\"Items\":[]}},\"TrustedSigners\":{\"Enabled\":false,\"Quantity\":0},\"AllowedMethods\":{\"Quantity\":2,\"Items\":[\"GET\",\"HEAD\"]}}}\u0027","delay":950},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"Distribution\": {","color":""},
+                  {"type":"out","text":"        \"Id\": \"E22B7FHSRWMVWX\",","color":"ok"},
+                  {"type":"out","text":"        \"Status\": \"Deployed\",","color":"ok"},
+                  {"type":"out","text":"        \"DomainName\": \"E22B7FHSRWMVWX.cloudfront.net\",","color":"ok"},
+                  {"type":"out","text":"        \"DistributionConfig\": {","color":""},
+                  {"type":"out","text":"            \"DefaultRootObject\": \"index.html\",","color":""},
+                  {"type":"out","text":"            \"Origins\": { \"Items\": [ { \"Id\": \"amit-photos-origin\" } ] }","color":""},
+                  {"type":"out","text":"            ...","color":""},
+                  {"type":"out","text":"        }","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# Distribution deployed! Users can reach it at .cloudfront.net","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-rocket"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>cloudfront create-distribution</code><div class="fl-desc">Creates the whole distribution pipeline.</div></div>
+                <div class="flag"><code>Origins[].DomainName: amit-photos.s3.amazonaws.com</code><div class="fl-desc">Where content lives — your S3 bucket endpoint.</div></div>
+                <div class="flag"><code>S3OriginConfig.OriginAccessIdentity</code><div class="fl-desc">The OAI ID from Step 1 — CloudFront's key to the bucket.</div></div>
+                <div class="flag"><code>DefaultRootObject: index.html</code><div class="fl-desc">What <code>/</code> serves.</div></div>
+                <div class="flag"><code>Enabled: true</code><div class="fl-desc">Distribution is live (must be false to delete).</div></div>
+                <div class="flag"><code>DomainName: xxx.cloudfront.net</code><div class="fl-desc">The public URL — point your custom domain here (Route 53).</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>In real AWS it takes a few minutes</b>
+                On real AWS a new distribution enters <strong>Deployed</strong> status after ~5-10 minutes (propagation worldwide). On Floci it's instant — convenient for learning, but know the real-world delay. Your custom domain (Route 53) is pointed at this domain name in production.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: VERIFY ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Verify the Distribution</h3>
+                <div class="step-sub">Check status, domain, and config</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> cloudfront get-distribution <span class="fl">--id</span> <span class="st">E22B7FHSRWMVWX</span> <span class="fl">--query</span> <span class="st">"Distribution.[Id,Status,DomainName]"</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🔍</div>
+                <div>
+                  <b>Check what you built</b>
+                  <p><code>get-distribution</code> returns the distribution plus an <strong>ETag</strong> — required for updates and deletes (like IAM's if-match pattern). This is your verification command for everything: status, domain, current config.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal cloudfront get-distribution --id E22B7FHSRWMVWX --query \"Distribution.[Id,Status,DomainName]\" --output json","delay":600},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    \"E22B7FHSRWMVWX\",","color":"ok"},
+                  {"type":"out","text":"    \"Deployed\",","color":"ok"},
+                  {"type":"out","text":"    \"E22B7FHSRWMVWX.cloudfront.net\"","color":"ok"},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# Deployed &amp; live — this is the CDN\u2019s public address","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-magnifying-glass"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>cloudfront get-distribution --id E22B7FHSRWMVWX</code><div class="fl-desc">Fetch a distribution's details + its ETag.</div></div>
+                <div class="flag"><code>Status: Deployed</code><div class="fl-desc">Ready to serve traffic.</div></div>
+                <div class="flag"><code>DomainName</code><div class="fl-desc">The URL your users (or custom domain) will use.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: INVALIDATE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Invalidate Stale Content</h3>
+                <div class="step-sub">Force the edges to forget old copies</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> cloudfront create-invalidation <span class="fl">--distribution-id</span> <span class="st">E22B7FHSRWMVWX</span> <span class="fl">--invalidation-batch</span> <span class="st">'{"Paths":{"Quantity":1,"Items":["/*"]},"CallerReference":"inv-001"}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You told CloudFront: <em>"drop the cached copies of everything (<code>/*</code>)."</em> The next request for any file will refetch from the S3 origin — so a just-deployed update reaches users immediately. The result includes an <strong>invalidation ID</strong> and status (<code>Completed</code> on Floci, <code>InProgress</code> on real AWS for a bit).</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal cloudfront create-invalidation --distribution-id E22B7FHSRWMVWX --invalidation-batch \u0027{\"Paths\":{\"Quantity\":1,\"Items\":[\"/*\"]},\"CallerReference\":\"inv-001\"}\u0027 --query \"Invalidation.[Id,Status]\" --output json","delay":700},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    \"I3YDVA9X6PD1YS\",","color":"ok"},
+                  {"type":"out","text":"    \"Completed\"","color":"ok"},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# Old cache dropped — next request gets fresh content","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-rotate"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>cloudfront create-invalidation</code><div class="fl-desc">Asks CloudFront to drop cached objects.</div></div>
+                <div class="flag"><code>Paths.Items: ["/*"]</code><div class="fl-desc">Which paths to forget — <code>/*</code> = everything, or <code>/images/*</code> for a subset.</div></div>
+                <div class="flag"><code>CallerReference: inv-001</code><div class="fl-desc">Unique label to dedupe invalidations.</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Use it for emergencies, not routine</b>
+                Invalidations are charged per path on real AWS. The pro workflow is versioned filenames (<code>app-v2.css</code>) so new files get new cache keys. Reserve invalidation for "oops, that must refresh now."
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: DISABLE & UPDATE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Update &amp; Disable (Pre-Delete)</h3>
+                <div class="step-sub">You can't delete a live distribution</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> cloudfront get-distribution <span class="fl">--id</span> <span class="st">E22B7FHSRWMVWX</span> <span class="fl">--query</span> <span class="st">"ETag"</span>
+<span class="kw">awslocal</span> cloudfront update-distribution <span class="fl">--id</span> <span class="st">E22B7FHSRWMVWX</span> <span class="fl">--if-match</span> <span class="st">"&lt;etag&gt;"</span> <span class="fl">--distribution-config</span> <span class="st">'{... Enabled:false ...}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">⏸️</div>
+                <div>
+                  <b>Two rules before delete</b>
+                  <p>Deleting a distribution requires it to be <strong>disabled</strong> first (like Route 53's "records before zone" rule). And <code>update-distribution</code> needs the current <strong>ETag</strong> via <code>--if-match</code> — the same optimistic-locking you saw with IAM and S3. Update to <code>Enabled: false</code>, wait for Deployed, then delete.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"ETAG=$(awslocal cloudfront get-distribution --id E22B7FHSRWMVWX --query \"ETag\" --output text)","delay":500},
+                  {"type":"out","text":"# etag: 56273bfa-4bc9-4977-b68d-8615f3406594","color":"dim"},
+                  {"type":"cmd","text":"awslocal cloudfront update-distribution --id E22B7FHSRWMVWX --if-match \"$ETAG\" --distribution-config \u0027{\"CallerReference\":\"dist-001\",\"Comment\":\"disabled\",\"DefaultRootObject\":\"index.html\",\"Enabled\":false,\"Origins\":{\"Quantity\":1,\"Items\":[{\"Id\":\"amit-photos-origin\",\"DomainName\":\"amit-photos.s3.amazonaws.com\",\"S3OriginConfig\":{\"OriginAccessIdentity\":\"origin-access-identity/cloudfront/ETBSZS55X8OK03\"}}]},\"DefaultCacheBehavior\":{\"TargetOriginId\":\"amit-photos-origin\",\"ViewerProtocolPolicy\":\"redirect-to-https\",\"MinTTL\":0,\"ForwardedValues\":{\"QueryString\":false,\"Cookies\":{\"Forward\":\"none\"},\"Headers\":{\"Quantity\":0,\"Items\":[]}},\"TrustedSigners\":{\"Enabled\":false,\"Quantity\":0},\"AllowedMethods\":{\"Quantity\":2,\"Items\":[\"GET\",\"HEAD\"]}}}\u0027 --query \"Distribution.[Status,Enabled]\" --output json","delay":950},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    \"Deployed\",","color":""},
+                  {"type":"out","text":"    null","color":""},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# Disabled — now it can be deleted (next step)","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-pause"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>get-distribution --query "ETag"</code><div class="fl-desc">Fetch the current version tag for optimistic locking.</div></div>
+                <div class="flag"><code>update-distribution --if-match &lt;etag&gt;</code><div class="fl-desc">Apply changes only if the config hasn't changed since you read it.</div></div>
+                <div class="flag"><code>Enabled: false</code><div class="fl-desc">Disables the distribution — a required step before deletion.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">Clean Up — Delete the CDN</h3>
+                <div class="step-sub">Disabled → delete distribution → delete OAI</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> cloudfront delete-distribution <span class="fl">--id</span> <span class="st">E22B7FHSRWMVWX</span> <span class="fl">--if-match</span> <span class="st">"&lt;new-etag&gt;"</span>
+<span class="kw">awslocal</span> cloudfront delete-cloud-front-origin-access-identity <span class="fl">--id</span> <span class="st">ETBSZS55X8OK03</span> <span class="fl">--if-match</span> <span class="st">"&lt;oai-etag&gt;"</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>The full teardown</b>
+                  <p>Distribution first (now that it's disabled), then the OAI. Both need their current ETags. Same <em>create → use → delete</em> discipline — on real AWS, distributions are a tiny monthly fee and OAIs are free, but the cleanup habit keeps your account tidy and predictable.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"ETAG=$(awslocal cloudfront get-distribution --id E22B7FHSRWMVWX --query \"ETag\" --output text)","delay":450},
+                  {"type":"out","text":"# etag refreshed after the disable update","color":"dim"},
+                  {"type":"cmd","text":"awslocal cloudfront delete-distribution --id E22B7FHSRWMVWX --if-match \"$ETAG\"","delay":500},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = distribution deleted)","color":"dim"},
+                  {"type":"cmd","text":"OAI_ETAG=$(awslocal cloudfront get-cloud-front-origin-access-identity --id ETBSZS55X8OK03 --query \"ETag\" --output text)","delay":450},
+                  {"type":"out","text":"# oai etag fetched","color":"dim"},
+                  {"type":"cmd","text":"awslocal cloudfront delete-cloud-front-origin-access-identity --id ETBSZS55X8OK03 --if-match \"$OAI_ETAG\"","delay":500},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# OAI deleted — CDN fully cleaned up","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-trash"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the cleanup</div>
+                <div class="flag"><code>delete-distribution --id ... --if-match &lt;etag&gt;</code><div class="fl-desc">Deletes the distribution — must be <b>disabled</b> first.</div></div>
+                <div class="flag"><code>get-cloud-front-origin-access-identity</code><div class="fl-desc">Fetch the OAI's ETag for its own delete.</div></div>
+                <div class="flag"><code>delete-cloud-front-origin-access-identity</code><div class="fl-desc">Removes the OAI last.</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>DistributionNotDisabled — expect it once</b>
+                Trying to delete a live distribution returns <code>DistributionNotDisabled</code>. That's AWS protecting you — you must disable (Step 5) and wait for Deployed first. Same family of "must do it in order" rules as Route 53's <code>HostedZoneNotEmpty</code> and S3's non-empty bucket.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete CloudFront flow — copy &amp; paste
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 1. Create the OAI (the S3 door pass)</span>
+awslocal cloudfront create-cloud-front-origin-access-identity --cloud-front-origin-access-identity-config '{"CallerReference":"oai-001","Comment":"amit site OAI"}'
+<span class="cmt">#   → note the OAI Id, e.g. ETBSZS55X8OK03</span>
+
+<span class="cmt"># 2. Create the distribution for your S3 bucket</span>
+awslocal cloudfront create-distribution --distribution-config '{"CallerReference":"dist-001","Comment":"amit-photos CDN","DefaultRootObject":"index.html","Enabled":true,"Origins":{"Quantity":1,"Items":[{"Id":"amit-photos-origin","DomainName":"amit-photos.s3.amazonaws.com","S3OriginConfig":{"OriginAccessIdentity":"origin-access-identity/cloudfront/ETBSZS55X8OK03"}}]},"DefaultCacheBehavior":{"TargetOriginId":"amit-photos-origin","ViewerProtocolPolicy":"redirect-to-https","MinTTL":0,"ForwardedValues":{"QueryString":false,"Cookies":{"Forward":"none"},"Headers":{"Quantity":0,"Items":[]}},"TrustedSigners":{"Enabled":false,"Quantity":0},"AllowedMethods":{"Quantity":2,"Items":["GET","HEAD"]}}}'
+
+<span class="cmt"># 3. Verify it deployed</span>
+awslocal cloudfront get-distribution --id E22B7FHSRWMVWX --query "Distribution.[Id,Status,DomainName]"
+
+<span class="cmt"># 4. Force-refresh stale cache</span>
+awslocal cloudfront create-invalidation --distribution-id E22B7FHSRWMVWX --invalidation-batch '{"Paths":{"Quantity":1,"Items":["/*"]},"CallerReference":"inv-001"}'
+
+<span class="cmt"># 5. Disable before delete (needs current ETag)</span>
+ETAG=$(awslocal cloudfront get-distribution --id E22B7FHSRWMVWX --query "ETag" --output text)
+awslocal cloudfront update-distribution --id E22B7FHSRWMVWX --if-match "$ETAG" --distribution-config '{... Enabled:false ...}'
+
+<span class="cmt"># 6. Clean up (disabled distribution → OAI)</span>
+ETAG=$(awslocal cloudfront get-distribution --id E22B7FHSRWMVWX --query "ETag" --output text)
+awslocal cloudfront delete-distribution --id E22B7FHSRWMVWX --if-match "$ETAG"
+OAI_ETAG=$(awslocal cloudfront get-cloud-front-origin-access-identity --id ETBSZS55X8OK03 --query "ETag" --output text)
+awslocal cloudfront delete-cloud-front-origin-access-identity --id ETBSZS55X8OK03 --if-match "$OAI_ETAG"</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — CloudFront in one picture</div>
+          <pre><span class="y">CloudFront</span> = the <span class="b">worldwide fast-delivery network</span> for your content.
+
+   <span class="b">Distribution</span> = the pipeline (viewers → edges → origin)
+   <span class="b">Origin</span>       = where the real content lives (S3 / EC2 / ALB)
+   <span class="b">Edge location</span>= a nearby copy for fast serving
+   <span class="b">OAI</span>         = the S3 key that lets CloudFront in (private bucket!)
+   <span class="b">TTL / cache</span>  = how long edges keep copies
+   <span class="b">Invalidation</span>= force-drop stale cache now
+
+   S3 stores it, <span class="o">CloudFront delivers it</span>, users see it fast.</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-flask tip-ic"></i>Honest note — what Floci does &amp; doesn't support</b>
+          I tested this live. CloudFront on Floci supports <strong>OAI creation, distribution create/get/update/delete, and invalidations</strong> — every command above ran against the emulator (status came back Deployed, invalidation Completed). <strong>Quirks to know:</strong> <code>list-distributions</code> / <code>list-cloud-front-origin-access-identities</code> return <strong>empty output</strong> on Floci, distributions deploy instantly (real AWS takes ~5-10 min), and since there's no public internet, the <code>.cloudfront.net</code> URL won't actually serve content offline. The S3-origin + OAI pattern and all commands are 100% accurate for real AWS.
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 9</h2>
+        <div class="term"><span class="t-name">CDN</span><p>Content Delivery Network — a worldwide network of servers that deliver content from near the user.</p></div>
+        <div class="term"><span class="t-name">CloudFront</span><p>AWS's CDN service.</p></div>
+        <div class="term"><span class="t-name">Distribution</span><p>The full CloudFront setup: origins, cache behaviors, and settings.</p></div>
+        <div class="term"><span class="t-name">Origin</span><p>Where CloudFront fetches content — S3, EC2, ALB, or an external URL.</p></div>
+        <div class="term"><span class="t-name">Edge location</span><p>A worldwide POP holding cached copies of your content.</p></div>
+        <div class="term"><span class="t-name">Cache behavior</span><p>Rules for how a URL path is cached and served.</p></div>
+        <div class="term"><span class="t-name">OAI</span><p>Origin Access Identity — CloudFront's identity for reading a private S3 bucket.</p></div>
+        <div class="term"><span class="t-name">TTL</span><p>Time-to-live — how long an edge keeps a cached copy.</p></div>
+        <div class="term"><span class="t-name">Cache hit</span><p>Edge already has the file → instant serve.</p></div>
+        <div class="term"><span class="t-name">Cache miss</span><p>Edge fetches the file from the origin first.</p></div>
+        <div class="term"><span class="t-name">Invalidation</span><p>Asking CloudFront to drop cached objects so they refetch.</p></div>
+        <div class="term"><span class="t-name">ETag</span><p>A version tag required for distribution updates/deletes.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 9 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> What does a <strong>CDN</strong> do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Stores database backups</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> Delivers content from edge locations close to users, making it faster</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Manages your DNS records</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> In CloudFront, the <strong>origin</strong> is...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> The user's browser</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> Where the real content lives (e.g. your S3 bucket)</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> The billing dashboard</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> What is an <strong>OAI</strong> for?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> Nothing — it's decorative</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> Letting CloudFront read your private S3 bucket while keeping the bucket private</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> Making the bucket public to everyone</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> A user's first request for a file is a <strong>cache miss</strong>. What happens next?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> The request fails</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> The edge fetches it from the origin, serves it, and caches a copy</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> The user is charged extra</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> You deployed a fix but users still get the <strong>old</strong> cached file. What command?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> <code style="color:var(--accent-2)">create-distribution</code></label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> <code style="color:var(--accent-2)">create-invalidation</code> with paths like <code>/*</code></label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> <code style="color:var(--accent-2)">delete-distribution</code></label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> Which is the <strong>pro approach</strong> for updating static assets?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Invalidate <code>/*</code> after every deploy</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> Version the filenames (<code>app-v2.css</code>) so new files get fresh cache keys</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Turn caching off entirely</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> You try to delete a distribution and get <code style="color:var(--accent-2)">DistributionNotDisabled</code>. What do you do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> Force-delete with a flag</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> Update it with <code>Enabled: false</code>, wait for Deployed, then delete</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> Delete the OAI first</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-08.html"><i class="fa-solid fa-arrow-left"></i> Ch 8: S3 — Object Storage</a>
+          <a href="chapter-10.html">Next: Containers — ECS <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 9 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

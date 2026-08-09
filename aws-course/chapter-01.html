@@ -1,0 +1,985 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 1 — Cloud Computing | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html" class="active"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 1 — Contents</h4>
+      <a href="#intro">Welcome &amp; The Big Picture</a>
+      <a href="#what-is-cloud">What Is Cloud Computing?</a>
+      <a href="#onprem-vs-cloud">On-Premises vs Cloud</a>
+      <a href="#service-models">The 3 Service Models</a>
+      <a href="#deployment">Deployment Models</a>
+      <a href="#aws-global">AWS Global Infrastructure</a>
+      <a href="#shared">Shared Responsibility Model</a>
+      <a href="#why-aws">Why AWS? Key Benefits</a>
+      <a href="#pricing">How AWS Pricing Works</a>
+      <a href="#aws-cli">Meet the AWS CLI + Floci</a>
+      <a href="#quiz">Chapter 1 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="1" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-cloud"></i> Chapter 1</span>
+        <h1>Cloud Computing</h1>
+        <p class="subtitle">Welcome to the cloud. In this chapter we answer the most important question of the entire course: <strong>what is cloud computing, and why does it change everything about how software is built and run?</strong></p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~26 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 5 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-layer-group"></i> Foundation chapter</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#intro">Welcome &amp; The Big Picture</a>
+        <a href="#what-is-cloud">What Is Cloud Computing?</a>
+        <a href="#onprem-vs-cloud">On-Premises vs Cloud</a>
+        <a href="#service-models">The 3 Service Models</a>
+        <a href="#deployment">Deployment Models</a>
+        <a href="#aws-global">AWS Global Infrastructure</a>
+        <a href="#shared">Shared Responsibility Model</a>
+        <a href="#why-aws">Why AWS? Key Benefits</a>
+        <a href="#pricing">How AWS Pricing Works</a>
+        <a href="#aws-cli">Meet the AWS CLI + Floci</a>
+        <a href="#quiz">Chapter 1 Quiz</a>
+      </div>
+
+      <!-- ============ INTRO ============ -->
+      <section class="sec" id="intro">
+        <h2><span class="ic gold"><i class="fa-solid fa-flag-checkered"></i></span> Welcome &amp; The Big Picture</h2>
+        <p>Before we touch a single command, let me tell you a story — because <strong>every single thing in this course exists to solve a real problem that somebody had</strong>. If you understand the problem, the technology becomes obvious. If you don't, it's just a pile of confusing acronyms.</p>
+
+        <p>Close your eyes for a moment and imagine it's the year <strong>2005</strong>. You are a developer building a website. Your website starts to get popular — thousands, then millions of users. To handle the traffic, you need servers. So you go to a computer hardware store, buy physical machines, install them in a room at your office (or a "data center"), plug in the power, configure the network, install an operating system, and then <em>finally</em> install your application. Congratulations — you are now also a full-time electrician, network engineer, and hardware technician.</p>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>The pain of the old world</b>
+          This whole process takes <strong>weeks</strong>. And then one day your startup fails or your app goes viral — and you need 10x more servers immediately. What do you do? Wait weeks again. Or maybe your app flops, and you now own a room full of expensive hardware doing nothing. This is the problem cloud computing solves.
+        </div>
+
+        <p>Now imagine instead: you open a website (or run a single command), and within <strong>seconds</strong> a fully-working server is handed to you — already networked, already secured, already running an operating system. You pay only for it while you use it. When you need 10,000 more, they appear in seconds too. When you're done, you release them and <em>stop paying</em>.</p>
+
+        <p>That is the cloud. <strong>Renting someone else's computers, over the internet, on demand, paying only for what you use.</strong> Amazon, Google, and Microsoft built enormous networks of computers in massive data centers all over the world, and let anyone rent tiny slices of them. Amazon's version of this service is called <strong>AWS — Amazon Web Services</strong>.</p>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Think of it like electricity</b>
+            Before the electric grid, every factory had to build and maintain its own power generator. After the grid, they just "plug in" and pay for what they use. Cloud computing does the same for computing power. You don't build a power plant; you don't build a server room. You plug in and pay per use.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ WHAT IS CLOUD ============ -->
+      <section class="sec" id="what-is-cloud">
+        <h2><span class="ic"><i class="fa-solid fa-cloud-arrow-up"></i></span> What Exactly Is Cloud Computing?</h2>
+        <p>Let me give you the <strong>official definition</strong> (from NIST, the U.S. standards body) and then translate it into human language — because the official one is dense but worth knowing.</p>
+
+        <div class="highlight">
+          <b class="lead"><i class="fa-solid fa-book-open tip-ic"></i>The official definition</b>
+          "Cloud computing is a model for enabling <strong>ubiquitous, convenient, on-demand network access</strong> to a <strong>shared pool of configurable computing resources</strong> (networks, servers, storage, applications, and services) that can be <strong>rapidly provisioned and released with minimal management effort</strong> or service provider interaction."
+        </div>
+
+        <p>Let's unpack the five key phrases, because each one is a promise the cloud makes:</p>
+
+        <div class="grid-2" style="margin-top:1rem">
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-bolt"></i></div>
+            <h4>1. On-demand network access</h4>
+            <p>You get resources over the internet, <strong>when you want them</strong> — with a command or an API call, not a purchase order. No phone calls, no contracts, no waiting for shipping.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-boxes-stacked"></i></div>
+            <h4>2. Shared pool of resources</h4>
+            <p>Millions of customers share the same physical hardware. Your virtual server is a slice of a big machine. This sharing is what makes it cheap — the provider's machines are always busy.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic o"><i class="fa-solid fa-gauge-high"></i></div>
+            <h4>3. Rapid provisioning</h4>
+            <p>Resources appear in <strong>seconds or minutes</strong>, not weeks. Need 50 servers before lunch? Done. This speed is the superpower that enables modern DevOps.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic p"><i class="fa-solid fa-hand-holding-dollar"></i></div>
+            <h4>4. Pay only for what you use</h4>
+            <p>If you use a server for 1 hour, you pay for 1 hour. Turn it off, and the meter stops. This is called <strong>OPEX</strong> (operational expense) instead of CAPEX (capital expense).</p>
+          </div>
+          <div class="card">
+            <div class="c-ic y"><i class="fa-solid fa-gauge"></i></div>
+            <h4>5. Measured service</h4>
+            <p>The provider meters your usage (CPU hours, gigabytes stored, requests made) and bills you precisely. You can even use that metering for your own cost controls.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic o"><i class="fa-solid fa-infinity"></i></div>
+            <h4>6. Essentially unlimited</h4>
+            <p>Want a million servers? The cloud has them. You never "run out" — you just keep scaling. Small startups now have the same hardware access as giant corporations.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ON-PREM VS CLOUD ============ -->
+      <section class="sec" id="onprem-vs-cloud">
+        <h2><span class="ic blue"><i class="fa-solid fa-arrows-to-circle"></i></span> On-Premises vs Cloud — The Full Comparison</h2>
+        <p>This is the core trade-off that defines all cloud decisions. Let me walk you through exactly what changes when you move from running your own hardware ("on-premises") to the cloud.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Concern</th>
+                <th>On-Premises (your hardware)</th>
+                <th>Cloud (AWS)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Time to get a server</strong></td>
+                <td>Weeks — order, ship, rack, wire, install</td>
+                <td>Seconds — run a command</td>
+              </tr>
+              <tr>
+                <td><strong>Cost model</strong></td>
+                <td>CAPEX — big upfront hardware bill</td>
+                <td>OPEX — small ongoing usage bill</td>
+              </tr>
+              <tr>
+                <td><strong>Scaling up</strong></td>
+                <td>Buy &amp; install more hardware (slow)</td>
+                <td>Click / command — instant elasticity</td>
+              </tr>
+              <tr>
+                <td><strong>Scaling down</strong></td>
+                <td>Stuck with expensive idle hardware</td>
+                <td>Release resources, stop paying instantly</td>
+              </tr>
+              <tr>
+                <td><strong>Hardware maintenance</strong></td>
+                <td>You — broken disks, dead power supplies</td>
+                <td>AWS — invisible, handled for you</td>
+              </tr>
+              <tr>
+                <td><strong>Geographic reach</strong></td>
+                <td>Limited to your buildings</td>
+                <td>Data centers on every continent</td>
+              </tr>
+              <tr>
+                <td><strong>Disaster recovery</strong></td>
+                <td>Build expensive backup sites yourself</td>
+                <td>Replicate across regions with a few clicks</td>
+              </tr>
+              <tr>
+                <td><strong>Security responsibility</strong></td>
+                <td>Physical + logical, all yours</td>
+                <td>Split — AWS secures hardware, you secure your data</td>
+              </tr>
+              <tr>
+                <td><strong>Getting started</strong></td>
+                <td>Months and big budget</td>
+                <td>Free tier, start today</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-check tip-ic"></i>Why this matters for DevOps</b>
+          DevOps is all about <strong>moving fast and automating everything</strong>. You cannot automate "ordering a physical server." You can absolutely automate "creating a cloud server" — it's just an API call. That's why cloud computing and DevOps grew up together. The cloud made infrastructure <em>programmable</em>.
+        </div>
+      </section>
+
+      <!-- ============ SERVICE MODELS ============ -->
+      <section class="sec" id="service-models">
+        <h2><span class="ic green"><i class="fa-solid fa-layer-group"></i></span> The 3 Service Models: IaaS, PaaS, SaaS</h2>
+        <p>Here's a mental model I want you to keep forever. Imagine the whole "stack" of running software as a layer cake:</p>
+
+        <div class="highlight">
+          <b class="lead"><i class="fa-solid fa-list-ol tip-ic"></i>The full stack (top to bottom)</b>
+          <div style="font-family:var(--mono);line-height:1.9">
+            App/Data &nbsp;← you write this<br>
+            Runtime &nbsp;&nbsp;&nbsp;← Node, Python, Java running your app<br>
+            OS &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← Linux/Windows on the machine<br>
+            Virtualization ← the hypervisor<br>
+            Server &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← physical hardware (CPU, RAM, disk)<br>
+            Network &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;← cables, switches, routers<br>
+            Data Center &nbsp;&nbsp;← power, cooling, the building
+          </div>
+        </div>
+
+        <p>The three service models are simply <strong>different "cut points" in this cake</strong> — how much of the stack the cloud provider manages for you vs how much you manage yourself.</p>
+
+        <div class="grid-3" style="margin-top:1rem">
+          <div class="card">
+            <div class="c-ic o"><i class="fa-solid fa-server"></i></div>
+            <h4>IaaS — Infrastructure as a Service</h4>
+            <p><strong>You rent raw hardware:</strong> virtual servers, storage, networks. You install and manage the OS, runtime, and app yourself. Max flexibility, max control.</p>
+            <p style="margin-top:.5rem"><span class="badge-mini orange">AWS EC2</span> <span class="badge-mini orange">AWS S3</span></p>
+          </div>
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-cubes"></i></div>
+            <h4>PaaS — Platform as a Service</h4>
+            <p><strong>You rent a managed platform.</strong> The provider handles the OS, runtime, scaling, and maintenance. You just deploy your code. Less control, way less work.</p>
+            <p style="margin-top:.5rem"><span class="badge-mini blue">AWS Elastic Beanstalk</span> <span class="badge-mini blue">AWS RDS</span></p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-user-check"></i></div>
+            <h4>SaaS — Software as a Service</h4>
+            <p><strong>You rent a finished product.</strong> The whole app is managed for you — you just use it through a browser or API. Gmail, Slack, Microsoft 365.</p>
+            <p style="margin-top:.5rem"><span class="badge-mini green">Gmail</span> <span class="badge-mini green">Slack</span></p>
+          </div>
+        </div>
+
+        <div class="table-wrap" style="margin-top:1.5rem">
+          <table class="tbl">
+            <thead>
+              <tr>
+                <th>Layer of the cake</th>
+                <th>IaaS</th>
+                <th>PaaS</th>
+                <th>SaaS</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr><td>App / Data</td><td>You</td><td>You</td><td>Provider</td></tr>
+              <tr><td>Runtime</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+              <tr><td>OS</td><td>You</td><td>Provider</td><td>Provider</td></tr>
+              <tr><td>Virtualization</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+              <tr><td>Server</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+              <tr><td>Network</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+              <tr><td>Data Center</td><td>Provider</td><td>Provider</td><td>Provider</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Teacher's analogy</b>
+            IaaS is like <strong>renting an apartment</strong> (you bring furniture, electricity bill is yours). PaaS is like <strong>a fully-furnished rental</strong> (you just move in with your stuff). SaaS is like <strong>living in a hotel</strong> (someone else runs everything, you just enjoy the room). In this course, we mostly live in the IaaS and PaaS apartments — because learning them teaches you how the whole machine works.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ DEPLOYMENT MODELS ============ -->
+      <section class="sec" id="deployment">
+        <h2><span class="ic pink"><i class="fa-solid fa-diagram-project"></i></span> Deployment Models: Public, Private, Hybrid</h2>
+        <p>"Cloud" doesn't have to mean "someone else's data center." There are three ways you can run a cloud, and companies often mix them.</p>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-earth-americas"></i></div>
+            <h4>Public Cloud</h4>
+            <p>You rent from a provider (AWS, Azure, GCP) over the public internet. Resources are shared but isolated. <strong>This is what this course teaches.</strong></p>
+          </div>
+          <div class="card">
+            <div class="c-ic o"><i class="fa-solid fa-vault"></i></div>
+            <h4>Private Cloud</h4>
+            <p>You build cloud-style infrastructure on hardware <em>you own</em>, usually for security/compliance (banks, hospitals, governments). Same tech, your building.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-scale-balanced"></i></div>
+            <h4>Hybrid Cloud</h4>
+            <p>You connect your private data center to the public cloud (via a private network like AWS Direct Connect). Sensitive data stays home; burst workloads go to the cloud.</p>
+          </div>
+        </div>
+
+        <p style="margin-top:1rem">There's also a fourth that's become the default for modern apps: <strong>multi-cloud</strong> — using several public providers at once (AWS for compute, GCP for AI, etc.). For learning, we focus 100% on public AWS, which is what this course (and most of the real world) uses.</p>
+      </section>
+
+      <!-- ============ AWS GLOBAL INFRA ============ -->
+      <section class="sec" id="aws-global">
+        <h2><span class="ic"><i class="fa-solid fa-earth-asia"></i></span> AWS Global Infrastructure</h2>
+        <p>AWS isn't one giant computer — it's a <strong>network of huge data centers scattered across the planet</strong>, organized into three nested layers you must memorize: <strong>Regions → Availability Zones (AZs) → Edge Locations</strong>.</p>
+
+        <h3><i class="h-ic fa-solid fa-map-location-dot"></i> Regions</h3>
+        <p>A <strong>Region</strong> is a physical geographic area (e.g., <code style="color:var(--accent-2)">us-east-1</code> = North Virginia, <code style="color:var(--accent-2)">ap-south-1</code> = Mumbai, <code style="color:var(--accent-2)">eu-west-1</code> = Ireland). Each Region is a completely independent set of data centers. There are ~30+ regions worldwide.</p>
+
+        <ul class="lessons">
+          <li><strong>Independence:</strong> Regions are isolated from each other. A disaster in one Region never affects another. This is how AWS survives huge outages.</li>
+          <li><strong>Latency:</strong> Put your servers close to your users. Serving India? Use <code style="color:var(--accent-2)">ap-south-1</code>, not <code style="color:var(--accent-2)">us-east-1</code>.</li>
+          <li><strong>Compliance:</strong> Some data must stay in a specific country by law (GDPR, banking regulations). Region choice is often a legal requirement.</li>
+          <li><strong>Pricing:</strong> Prices differ per Region. Some Regions cost more than others.</li>
+        </ul>
+
+        <h3><i class="h-ic fa-solid fa-city"></i> Availability Zones (AZs)</h3>
+        <p>Inside each Region, AWS builds <strong>multiple Availability Zones</strong> — usually 3 or more. An AZ is <em>one or more data centers</em> with independent power, cooling, and networking, located close enough to talk to each other but far enough apart that a flood or fire won't take out more than one.</p>
+
+        <div class="highlight">
+          <b class="lead"><i class="fa-solid fa-shield-halved tip-ic"></i>Why AZs are the heart of AWS reliability</b>
+          Real AWS engineers spread their servers across <strong>at least 2–3 AZs</strong>. If one AZ's data center catches fire, the app in the other AZs keeps running. This "design for failure" mindset is <em>the</em> AWS cultural principle — <strong>everything fails all the time; good architecture survives it.</strong>
+        </div>
+
+        <h3><i class="h-ic fa-solid fa-bolt"></i> Edge Locations / CDN</h3>
+        <p><strong>Edge Locations</strong> are small servers in <em>hundreds</em> of cities worldwide that <strong>cache copies of your content</strong> close to users (this powers CloudFront, Chapter 9). They don't run your app — they serve copies of static content super fast. We'll cover this deeply later.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Concept</th><th>What it is</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Region</strong></td>
+                <td>A physical area with several data centers</td>
+                <td><code>us-east-1</code> (Virginia), <code>ap-south-1</code> (Mumbai)</td>
+              </tr>
+              <tr>
+                <td><strong>Availability Zone</strong></td>
+                <td>A set of independent data centers inside a Region</td>
+                <td><code>us-east-1a</code>, <code>us-east-1b</code>, <code>us-east-1c</code></td>
+              </tr>
+              <tr>
+                <td><strong>Edge Location</strong></td>
+                <td>A caching server in a city, near users</td>
+                <td>CloudFront PoPs worldwide</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ SHARED RESPONSIBILITY ============ -->
+      <section class="sec" id="shared">
+        <h2><span class="ic gold"><i class="fa-solid fa-handshake"></i></span> The Shared Responsibility Model</h2>
+        <p>This is the single most important <strong>security</strong> concept in all of AWS. The exam asks about it; interviewers ask about it; real-world breaches happen because people misunderstand it.</p>
+
+        <p>Simply put: <strong>AWS is responsible for security OF the cloud. You are responsible for security IN the cloud.</strong></p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>AWS handles (of the cloud)</th><th>You handle (in the cloud)</th></tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td>Physical data center security</td>
+                <td>Your IAM users, passwords &amp; keys</td>
+              </tr>
+              <tr>
+                <td>Host hardware (CPU, RAM, disks)</td>
+                <td>Your data — encryption, access controls</td>
+              </tr>
+              <tr>
+                <td>Networking &amp; virtualization layer</td>
+                <td>Your OS patches &amp; config (for IaaS)</td>
+              </tr>
+              <tr>
+                <td>Hypervisor isolation</td>
+                <td>Your application code &amp; its vulnerabilities</td>
+              </tr>
+              <tr>
+                <td>Power, cooling, redundancy</td>
+                <td>Your firewall &amp; security group rules</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight err">
+          <b class="lead"><i class="fa-solid fa-bomb tip-ic"></i>The classic misunderstanding</b>
+          "AWS is secure, so my data is automatically secure!" <strong>Wrong.</strong> AWS protects the building; it does not protect your data inside it. A customer's S3 bucket left public with sensitive data is the customer's fault, not AWS's. AWS is secure <em>by design</em> — but only <strong>you</strong> can make <em>your account</em> secure.
+        </div>
+      </section>
+
+      <!-- ============ WHY AWS ============ -->
+      <section class="sec" id="why-aws">
+        <h2><span class="ic blue"><i class="fa-solid fa-trophy"></i></span> Why AWS? The Key Benefits</h2>
+        <p>AWS is the oldest and largest cloud provider (launched 2006), with the most services (~200+) and the biggest market share. But "most popular" isn't the whole story — here are the six concrete benefits that matter to an engineer:</p>
+
+        <div class="grid-3">
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-stopwatch"></i></div>
+            <h4>Trade capital expense for variable expense</h4>
+            <p>No huge upfront hardware bills. You pay a small bill that changes with your actual usage.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-chart-line"></i></div>
+            <h4>Massive economies of scale</h4>
+            <p>AWS buys power and hardware in bulk nobody else can match. Those savings pass to you — you rent servers cheaper than you could self-host.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic o"><i class="fa-solid fa-arrows-up-down-left-right"></i></div>
+            <h4>Stop guessing capacity</h4>
+            <p>You don't predict demand years ahead. You scale up/down <em>instantly</em>, paying only for what you run.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic p"><i class="fa-solid fa-bolt"></i></div>
+            <h4>Speed and agility</h4>
+            <p>New environments in minutes, not months. Developers experiment freely — create, test, destroy, repeat. This fuels the DevOps loop.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic y"><i class="fa-solid fa-database"></i></div>
+            <h4>Stop spending money running data centers</h4>
+            <p>No more facilities teams, hardware procurement, or weekend power-outage callouts. That time and money goes to building your product.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-globe"></i></div>
+            <h4>Go global in minutes</h4>
+            <p>Deploy the same app in 30+ regions and serve the whole planet from locations near each user. Physically impossible on your own hardware.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ PRICING ============ -->
+      <section class="sec" id="pricing">
+        <h2><span class="ic pink"><i class="fa-solid fa-coins"></i></span> How AWS Pricing Works</h2>
+        <p>Understanding pricing helps you understand <em>why</em> the cloud works the way it does. Four simple principles:</p>
+
+        <ul class="lessons">
+          <li><strong>Pay-as-you-go:</strong> Pay only for resources actually used, per second or per hour.</li>
+          <li><strong>Save when you reserve:</strong> Commit to 1–3 years of usage and get up to ~70% off (Reserved Instances / Savings Plans).</li>
+          <li><strong>Pay less by using more:</strong> Volume discounts on storage, data transfer, etc.</li>
+          <li><strong>Free tier:</strong> New AWS accounts get a generous free allowance for 12 months to learn with.</li>
+        </ul>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-gift tip-ic"></i>Good news for this course</b>
+          You don't need any of that — we run everything against <strong>Floci</strong>, a free local AWS emulator. Every command in this course costs you <strong>$0.00</strong> and works offline. When you're ready for the real thing, AWS's free tier + pay-as-you-go has your back.
+        </div>
+      </section>
+
+      <!-- ============ AWS CLI + FLOCI ============ -->
+      <section class="sec" id="aws-cli">
+        <h2><span class="ic green"><i class="fa-solid fa-terminal"></i></span> Meet the AWS CLI — Command by Command</h2>
+        <p>Everything you do in the AWS web console, you can also do from the terminal with the <strong>AWS Command Line Interface (CLI)</strong>. For DevOps, the CLI is where the real work happens — because it can be <strong>scripted and automated</strong>. Below I break down <strong>every single command</strong> you'll run in this chapter: what each piece means, what it returns, and why it matters. No abstract theory — you'll run every one of these against Floci.</p>
+
+        <div class="codeblock">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> The universal AWS CLI pattern — memorize this
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># Pattern: aws &lt;service&gt; &lt;action&gt; [options]</span>
+<span class="kw">aws</span> s3 ls                     <span class="cmt"># service=s3, action=ls (list)</span>
+<span class="kw">aws</span> ec2 describe-instances    <span class="cmt"># service=ec2, action=describe-instances</span>
+<span class="kw">aws</span> lambda list-functions     <span class="cmt"># service=lambda, action=list-functions</span>
+
+<span class="cmt"># Against Floci, we add the endpoint flag (or use the awslocal alias):</span>
+<span class="kw">awslocal</span> s3 ls                <span class="cmt"># alias = aws --endpoint-url=http://localhost:4566</span></code></pre>
+        </div>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: floci status ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Check That Floci Is Running</h3>
+                <div class="step-sub">Your very first command — is the emulator alive?</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">floci</span> status
+
+<span class="kw">curl</span> -s http://localhost:4566/_floci/health</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>Why check first?</b>
+                  <p>Real DevOps engineers check service health <strong>before</strong> doing anything else — no point running commands against a server that's down. <code>floci status</code> tells you if your local AWS emulator is up, and the health endpoint returns a tiny JSON with <strong>live stats</strong>.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"floci status","delay":400},
+                  {"type":"out","text":"Floci AWS Status","color":"dim"},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"  Container:  floci    running","color":""},
+                  {"type":"out","text":"  Endpoint:   http://localhost:4566","color":""},
+                  {"type":"out","text":"  Version:    1.6.0","color":""},
+                  {"type":"cmd","text":"curl -s http://localhost:4566/_floci/health","delay":400},
+                  {"type":"out","text":"{\"status\":\"healthy\",\"services\":69,\"uptime\":\"3m 12s\"}","color":"ok"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-heart-pulse"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>floci status</code><div class="fl-desc">The Floci CLI itself. <code>status</code> prints whether the container is <b>running</b>, its <b>endpoint</b> (port 4566), and its <b>version</b>.</div></div>
+                <div class="flag"><code>curl -s http://localhost:4566/_floci/health</code><div class="fl-desc"><code>curl</code> = a command-line web browser. It makes an HTTP request to Floci's health endpoint. <code>-s</code> = silent (no progress bar). <b>"services": 69</b> = Floci can emulate 69 AWS services.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: awslocal alias ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Create the <code style="color:var(--accent)">awslocal</code> Alias</h3>
+                <div class="step-sub">The one-time setup that makes every future command shorter</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">aws</span> <span class="fl">--endpoint-url</span>=http://localhost:4566 s3 ls
+
+<span class="kw">alias</span> <span class="st">awslocal="aws --endpoint-url=http://localhost:4566"</span>
+
+<span class="kw">awslocal</span> s3 ls</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>Why do we need this?</b>
+                  <p>Real AWS talks to <code>https://aws.amazon.com</code>. Floci talks to <code>http://localhost:4566</code>. The <strong>only</strong> difference is one flag: <code>--endpoint-url=http://localhost:4566</code>. Typing that on every command is painful — so we wrap it in a shell <strong>alias</strong> named <code>awslocal</code> (same convention as LocalStack). Set it once, use it forever.</p>
+                </div>
+              </div>
+
+              <div class="flow">
+                <span class="f-box">aws</span>
+                <span class="f-arr">+</span>
+                <span class="f-box">--endpoint-url=http://localhost:4566</span>
+                <span class="f-arr">⇒</span>
+                <span class="f-box">awslocal</span>
+                <span class="f-arrow-text">(same thing, shorter)</span>
+              </div>
+
+              <div class="compare">
+                <div class="cmp wout">
+                  <div class="cmp-h">❌ Without the alias (every time)</div>
+                  <pre>aws --endpoint-url=http://localhost:4566 s3 ls</pre>
+                </div>
+                <div class="cmp with">
+                  <div class="cmp-h">✅ With the alias</div>
+                  <pre>awslocal s3 ls</pre>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"aws --endpoint-url=http://localhost:4566 s3 ls","delay":450},
+                  {"type":"out","text":"2026-08-07 10:07:09  my-first-bucket","color":""},
+                  {"type":"cmd","text":"alias awslocal=\"aws --endpoint-url=http://localhost:4566\"","delay":350},
+                  {"type":"out","text":"","color":""},
+                  {"type":"cmd","text":"awslocal s3 ls","delay":400},
+                  {"type":"out","text":"2026-08-07 10:07:09  my-first-bucket","color":""},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# same output, way shorter to type!","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-key"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>aws s3 ls</code><div class="fl-desc">The real AWS CLI listing your S3 buckets. <code>ls</code> = "list".</div></div>
+                <div class="flag"><code>--endpoint-url=http://localhost:4566</code><div class="fl-desc">The magic flag: <b>"don't talk to real AWS — talk to Floci on my machine instead."</b></div></div>
+                <div class="flag"><code>alias awslocal="..."</code><div class="fl-desc">Tells your shell: whenever you type <code>awslocal</code>, replace it with the full command. It's just a <b>typing shortcut</b>.</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Aliases are temporary in your current terminal</b>
+                That <code style="font-family:var(--mono)">alias</code> only lives in the shell where you typed it. New terminal? Gone. To keep it forever on Linux/macOS, add this line to your <code style="font-family:var(--mono)">~/.zshrc</code>: <code style="font-family:var(--mono)">alias awslocal="aws --endpoint-url=http://localhost:4566"</code>. Then every terminal has it, always. (We already added it for you in Chapter 1 setup.)
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: S3 bucket ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Your First Resource: an S3 Bucket</h3>
+                <div class="step-sub">One command = one live piece of cloud infrastructure</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> s3 mb <span class="st">s3://test-bucket</span>
+
+<span class="kw">awslocal</span> s3 ls</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>What is an S3 bucket?</b>
+                  <p><strong>S3 (Simple Storage Service)</strong> is AWS's object storage — think of it as a cloud file cabinet. A <strong>bucket</strong> is the top-level folder you create in it. <code>mb</code> = <strong>"make bucket"</strong> (that's the official abbreviation).</p>
+                </div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-bucket"></i> What you just made</div>
+                <pre>S3 (the whole storage cloud)
+ └── <span class="a-yel">s3://test-bucket</span>  ← your new bucket (a folder for files)
+        └── (empty for now)</pre>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>awslocal s3 mb s3://test-bucket</code><div class="fl-desc"><code>s3</code> = the service. <code>mb</code> = "make bucket". <code>s3://test-bucket</code> = the bucket's address and name. Returns <b>make_bucket: test-bucket</b> on success.</div></div>
+                <div class="flag"><code>awslocal s3 ls</code><div class="fl-desc">Lists every bucket in your account with its <b>creation date</b>. You'll see <code>test-bucket</code> now appear.</div></div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal s3 mb s3://test-bucket","delay":450},
+                  {"type":"out","text":"make_bucket: test-bucket","color":"ok"},
+                  {"type":"cmd","text":"awslocal s3 ls","delay":400},
+                  {"type":"out","text":"2026-08-07 10:07:09  my-first-bucket","color":""},
+                  {"type":"out","text":"2026-08-07 10:08:41  test-bucket","color":""}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-bucket"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🎉</div>
+                <div>
+                  <b>Why this moment matters</b>
+                  <p>You just created a real, working piece of cloud infrastructure <strong>in seconds, with one command</strong>. No purchase order, no waiting. That is the entire magic of the cloud — and you'll feel it in your fingers by the end of this course.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: DynamoDB ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Peek at DynamoDB (NoSQL Database)</h3>
+                <div class="step-sub">Prove the same pattern works for ANY service</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> dynamodb list-tables</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>What is DynamoDB?</b>
+                  <p>AWS's <strong>NoSQL database</strong> — fast, serverless, key-value storage (we meet it properly in a later chapter). We haven't created any tables, so it returns an <strong>empty list</strong>. But look at the pattern: <code>awslocal &lt;service&gt; &lt;action&gt;</code> works for <em>every</em> AWS service.</p>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>awslocal dynamodb list-tables</code><div class="fl-desc"><code>dynamodb</code> = the service. <code>list-tables</code> = the action. Floci understands it exactly like real AWS — that's the whole point of the emulator.</div></div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal dynamodb list-tables","delay":450},
+                  {"type":"out","text":"{\n    \"TableNames\": []\n}","color":""},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# no tables yet — expect an empty list","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-table"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: STS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Who Am I? (STS)</h3>
+                <div class="step-sub">The sanity check every AWS engineer runs constantly</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> sts get-caller-identity</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>What is STS?</b>
+                  <p><strong>STS (Security Token Service)</strong> answers the question: <em>"who am I right now, and what account will my commands affect?"</em> Before running anything important, real engineers confirm their identity with this exact command.</p>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>sts</code><div class="fl-desc">The service name for <b>Security Token Service</b>.</div></div>
+                <div class="flag"><code>get-caller-identity</code><div class="fl-desc">The action: "tell me who I am." Returns the <b>UserId</b>, <b>Account</b>, and <b>Arn</b> you're acting as.</div></div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal sts get-caller-identity","delay":500},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"UserId\":  \"000000000000\","},
+                  {"type":"out","text":"    \"Account\": \"000000000000\","},
+                  {"type":"out","text":"    \"Arn\":     \"arn:aws:iam::000000000000:root\"","color":"ok"},
+                  {"type":"out","text":"}","color":""}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-user-check"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🔖</div>
+                <div>
+                  <b>What is that "arn" thing?</b>
+                  <p>An <strong>ARN (Amazon Resource Name)</strong> is the unique address of every resource in AWS. Pattern: <code>arn:aws:service:region:account:resource</code>. So <code>arn:aws:iam::000000000000:root</code> means "the root user of account 000000000000 in the IAM service." You'll see ARNs everywhere for the rest of the course — get comfortable with them now.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: describe-regions ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">List AWS Regions</h3>
+                <div class="step-sub">Remember those Regions from earlier? Here they are, live</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> ec2 describe-regions</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>What does this tell us?</b>
+                  <p>Lists every AWS Region worldwide, with its <strong>opt-in status</strong>. Some regions need you to explicitly enable them before using; others (like <code>us-east-1</code>) are available by default. It's a great way to see the whole planet of AWS data centers.</p>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>ec2</code><div class="fl-desc">The service for <b>Elastic Compute Cloud</b>. Region listing lives under EC2's API because regions are a network/compute concept.</div></div>
+                <div class="flag"><code>describe-regions</code><div class="fl-desc">The action: "show me all regions." Pattern: <code>describe-X</code> = "show me X". (You'll see <code>describe-vpcs</code>, <code>describe-instances</code> and friends later.)</div></div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ec2 describe-regions","delay":500},
+                  {"type":"out","text":"{\n    \"Regions\": [","color":""},
+                  {"type":"out","text":"        {\"RegionName\": \"af-south-1\", \"OptInStatus\": \"opt-in-not-required\"},"},
+                  {"type":"out","text":"        {\"RegionName\": \"ap-south-1\", \"OptInStatus\": \"opt-in-not-required\"},"},
+                  {"type":"out","text":"        {\"RegionName\": \"us-east-1\",  \"OptInStatus\": \"opt-in-not-required\"},"},
+                  {"type":"out","text":"        ... 30+ more regions worldwide ...","color":"dim"},
+                  {"type":"out","text":"    ]\n}","color":""}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-earth-asia"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — the one pattern to never forget</div>
+          <pre><span class="y">aws/awslocal</span>  <span class="b">SERVICE</span>  <span class="g">ACTION</span>  <span class="o">[OPTIONS]</span>
+
+   awslocal     s3        ls          --endpoint-url=...
+   awslocal     ec2       describe-vpcs
+   awslocal     sts       get-caller-identity
+
+<span class="d">Every AWS command in this whole course fits this shape.
+awslocal = "run it against Floci". Service = "which API".
+Action   = "what do I want". Options = "how".</span></pre>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-check tip-ic"></i>You just did it</b>
+          <div style="font-size:.92rem;line-height:1.7">
+            A few minutes ago you had never touched the cloud. You've now <strong>checked service health</strong>, created the <strong>awslocal alias</strong>, <strong>created an S3 bucket</strong>, peeked at DynamoDB, verified your identity, and listed regions — all locally, all free. That's the pace of this entire course. <a href="chapter-02.html" class="inline">Next up: Networking — VPCs, where your cloud lives. →</a>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 1 — Check Your Understanding</h2>
+        <p>Pick an answer. It turns green if you're right. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> Which of these is the <strong>core promise</strong> of cloud computing?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Buying your own physical servers for maximum control</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> On-demand, pay-as-you-go access to shared computing resources over the internet</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> A single giant computer everyone shares</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> When you rent a virtual machine (OS + app installed by you), which service model are you using?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> IaaS</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> SaaS</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> PaaS</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> What is an <strong>Availability Zone (AZ)</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> A city with caching servers near users</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> One or more independent data centers inside a Region, with separate power and cooling</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> A single server rack in a data center</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> Under the Shared Responsibility Model, who is responsible for your IAM passwords and access keys?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> AWS</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> You (the customer)</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Both equally</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> The AWS CLI command pattern is: <code style="color:var(--accent-2)">aws &lt;???&gt; &lt;???&gt;</code></div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> aws &lt;service&gt; &lt;action&gt;</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> aws &lt;action&gt; &lt;service&gt;</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> aws &lt;region&gt; &lt;service&gt;</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> What does the <code style="color:var(--accent-2)">awslocal</code> alias actually do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> Runs <code style="color:var(--accent-2)">aws</code> but points it at Floci via <code style="color:var(--accent-2)">--endpoint-url=http://localhost:4566</code></label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Gives you a free AWS account automatically</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Downloads the AWS SDK for Python</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> Which ARN is correct for "the root user of account 123456789012"?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> arn:aws:s3::123456789012:root</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> arn:aws:iam::123456789012:root</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> arn:iam:aws::123456789012:root</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="index.html" class="disabled" style="opacity:.4"><i class="fa-solid fa-arrow-left"></i> Home</a>
+          <a href="chapter-02.html">Next: Networking — VPC <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 1 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

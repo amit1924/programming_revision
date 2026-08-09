@@ -1,0 +1,884 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 7 — Route 53: DNS | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html" class="active"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 7 — Contents</h4>
+      <a href="#why-dns">Why DNS?</a>
+      <a href="#how-dns">How DNS Works</a>
+      <a href="#record-types">Record Types</a>
+      <a href="#hosted-zones">Hosted Zones</a>
+      <a href="#routing">Routing Policies</a>
+      <a href="#health-checks">Health Checks &amp; Failover</a>
+      <a href="#hands-on">Hands-On: Point www.amit.com</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 7 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="7" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-globe"></i> Chapter 7</span>
+        <h1>Route 53 — DNS &amp; Domains</h1>
+        <p class="subtitle">Since Chapter 2, your website has had an IP address — but nobody visits an IP. <strong>Route 53</strong> is AWS's DNS service: it turns <code>www.amit.com</code> into the IP address of your EC2 server, and it does the smart routing that keeps a global website fast and available.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~35 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 7 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-globe"></i> Domains + routing</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-dns">Why DNS?</a>
+        <a href="#how-dns">How DNS Works</a>
+        <a href="#record-types">Record Types</a>
+        <a href="#hosted-zones">Hosted Zones</a>
+        <a href="#routing">Routing Policies</a>
+        <a href="#health-checks">Health Checks &amp; Failover</a>
+        <a href="#hands-on">Hands-On: Point www.amit.com</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 7 Quiz</a>
+      </div>
+
+      <!-- ============ WHY DNS ============ -->
+      <section class="sec" id="why-dns">
+        <h2><span class="ic"><i class="fa-solid fa-circle-question"></i></span> Why DNS?</h2>
+        <p>Remember the final picture from earlier chapters? Rahul opens Chrome and types <code>www.amit.com</code>. Somewhere in that journey, <strong>a name has to become an IP address</strong> — that's DNS's job.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> The missing piece in our story</div>
+          <pre>   Rahul types <span class="a-yel">www.amit.com</span>
+        │
+        ▼
+   <span class="a-blu">DNS</span>  (the phone book of the internet)
+        │  "www.amit.com → 1.2.3.4"
+        ▼
+   Rahul's browser connects to <span class="a-acc">1.2.3.4</span>  (your EC2 server)
+        │
+        ▼
+   <span class="a-grn">www.amit.com</span> loads 🎉</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">☎️</div>
+          <div>
+            <b>DNS = the internet's phone book</b>
+            <p>Computers find each other by <strong>IP address</strong> (like a phone number). Humans remember <strong>names</strong> (like a contact name). <strong>DNS</strong> (Domain Name System) is the lookup service in between. You can memorize 8.8.8.8, but nobody memorizes all of AWS's IPs — names are the interface.</p>
+          </div>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Why the name "Route 53"?</b>
+          DNS is the classic port <strong>53</strong>. Route 53 = "the routing service on port 53." AWS is full of fun little puns like this. (You won't see port 53 in this chapter — the name is just history.)
+        </div>
+      </section>
+
+      <!-- ============ HOW DNS ============ -->
+      <section class="sec" id="how-dns">
+        <h2><span class="ic blue"><i class="fa-solid fa-route"></i></span> How DNS Works — The Journey</h2>
+        <p>When Rahul's browser asks for <code>www.amit.com</code>, it doesn't ask one machine — it walks a chain of servers, like asking for directions from several people:</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-route"></i> The DNS resolution chain</div>
+          <pre>   Rahul's browser
+        │  "who is www.amit.com?"
+        ▼
+   <span class="a-blu">1. DNS Resolver</span>  (your ISP / 8.8.8.8 — starts the search)
+        │  "I don't know, but the root servers do..."
+        ▼
+   <span class="a-blu">2. Root server</span>  ("amit.com? ask the .com TLD server")
+        ▼
+   <span class="a-blu">3. .com TLD server</span>  ("amit.com lives at Route 53's nameservers")
+        ▼
+   <span class="a-acc">4. Route 53 nameservers</span>  ("www.amit.com → 1.2.3.4" ✅)
+        ▼
+   Rahul's browser connects to 1.2.3.4</pre>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Player</th><th>Job</th><th>Analogy</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Root server</strong></td><td>Points to the right TLD server</td><td>"Start at the country's directory."</td></tr>
+              <tr><td><strong>TLD server</strong></td><td>Points to the domain's nameservers</td><td>"Look up the business directory."</td></tr>
+              <tr><td><strong>Authoritative server</strong></td><td>Holds the actual records (Route 53)</td><td>"The business itself — it has the phone number."</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>The one idea to remember</b>
+            Route 53 is the <strong>authoritative</strong> server for your domain. When the internet asks "who owns amit.com and where is www?", <strong>Route 53 answers with the truth</strong>. Everything before it (root, TLD) is just navigation to find you.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ RECORD TYPES ============ -->
+      <section class="sec" id="record-types">
+        <h2><span class="ic green"><i class="fa-solid fa-table-list"></i></span> DNS Record Types</h2>
+        <p>A <strong>record</strong> is one line in the phone book: <em>name → value</em>. Different record types answer different kinds of questions.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Record</th><th>Points to</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>A</strong></td><td>An IPv4 address</td><td><code>www.amit.com → 1.2.3.4</code></td></tr>
+              <tr><td><strong>AAAA</strong></td><td>An IPv6 address</td><td><code>www.amit.com → 2001:db8::1</code></td></tr>
+              <tr><td><strong>CNAME</strong></td><td>Another domain name (an alias)</td><td><code>blog.amit.com → www.amit.com</code></td></tr>
+              <tr><td><strong>MX</strong></td><td>Mail servers for email</td><td><code>amit.com → mail.amit.com (priority 10)</code></td></tr>
+              <tr><td><strong>TXT</strong></td><td>Arbitrary text (SPF, verification)</td><td><code>amit.com → "v=spf1 include:amazonaws.com"</code></td></tr>
+              <tr><td><strong>NS</strong></td><td>Nameservers (who's authoritative)</td><td>created automatically with your zone</td></tr>
+              <tr><td><strong>SOA</strong></td><td>The zone's start of authority (metadata)</td><td>created automatically with your zone</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>A (Address) vs CNAME (Alias)</b>
+          Use an <strong>A record</strong> when you know the server's IP (your EC2). Use a <strong>CNAME</strong> to point a name at <em>another name</em> (e.g. blog → www) so you don't duplicate IPs. In Chapter 9 you'll see <strong>Alias records</strong> that point at AWS resources (like CloudFront) for free — that's a Route 53 special feature.
+        </div>
+      </section>
+
+      <!-- ============ HOSTED ZONES ============ -->
+      <section class="sec" id="hosted-zones">
+        <h2><span class="ic gold"><i class="fa-solid fa-folder"></i></span> Hosted Zones — Your Domain's Folder</h2>
+        <p>A <strong>hosted zone</strong> is the container that holds all records for a domain. Think of it as the domain's own phone-book folder. When you create a hosted zone for <code>amit.com</code>, AWS gives you <strong>nameservers</strong> (like <code>ns-1.awsdns-01.org</code>) and creates the <strong>NS + SOA</strong> records automatically.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-folder"></i> One zone, many records</div>
+          <pre>   <span class="a-yel">Hosted zone: amit.com</span>   (folder)
+     ├─ NS   ns-1.awsdns-01.org        (auto)
+     ├─ SOA  ... metadata              (auto)
+     ├─ A    www.amit.com → 1.2.3.4
+     ├─ CNAME blog.amit.com → www
+     ├─ MX   amit.com → mail ...
+     └─ TXT  amit.com → "v=spf1 ..."</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🔗</div>
+          <div>
+            <b>Pointing the domain at your zone</b>
+            <p>Creating a hosted zone is only half the job. Your domain registrar (where you bought amit.com) must be told to use <strong>your zone's nameservers</strong>. That "glue" step is done in the registrar's console — Route 53 gives you the NS addresses, and you update the domain's settings to use them. On Floci we skip that (there's no real registrar) and just manage the records.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ROUTING POLICIES ============ -->
+      <section class="sec" id="routing">
+        <h2><span class="ic pink"><i class="fa-solid fa-compass"></i></span> Routing Policies — Smart DNS</h2>
+        <p>DNS doesn't just translate names — Route 53 can <strong>route traffic intelligently</strong> across multiple servers. Five policies you'll meet:</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Policy</th><th>What it does</th><th>Use case</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Simple</strong></td><td>One record, one answer</td><td>The default — most of the time.</td></tr>
+              <tr><td><strong>Weighted</strong></td><td>Sends X% of traffic to each target</td><td>A/B testing, canary deploys (90% v1, 10% v2).</td></tr>
+              <tr><td><strong>Latency</strong></td><td>Sends users to the closest/fastest region</td><td>Global website: India → ap-south, USA → us-east.</td></tr>
+              <tr><td><strong>Failover</strong></td><td>Primary + backup; if primary's health check fails, send to backup</td><td>Disaster recovery.</td></tr>
+              <tr><td><strong>Geolocation</strong></td><td>Routes based on the user's country</td><td>Region-specific content or compliance.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-compass"></i> Weighted routing — 80 / 20</div>
+          <pre>        <span class="a-blu">www.amit.com</span>
+         /         \
+        /           \
+   80% /             \ 20%
+      v               v
+  <span class="a-grn">10.0.1.15</span>   (primary)   <span class="a-yel">10.0.1.16</span>  (backup)
+  (SetIdentifier: primary)  (SetIdentifier: backup)</pre>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>The SetIdentifier secret</b>
+          For weighted/latency/failover policies, <strong>every record must have a unique <code>SetIdentifier</code></strong> — that's how Route 53 tells the copies apart. No SetIdentifier = Simple routing. Remember this when you see <code>SetIdentifier</code> in the commands below.
+        </div>
+      </section>
+
+      <!-- ============ HEALTH CHECKS ============ -->
+      <section class="sec" id="health-checks">
+        <h2><span class="ic gold"><i class="fa-solid fa-heart-circle-check"></i></span> Health Checks &amp; Failover</h2>
+        <p>Route 53 can <strong>watch your servers</strong> and route around failures. A <strong>health check</strong> is a probe: Route 53 tries to reach <code>http://www.amit.com/</code> every 30 seconds and records pass/fail.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-heart-circle-check"></i> Failover in action</div>
+          <pre>        <span class="a-blu">users</span>
+         │
+         ▼
+   <span class="a-yel">PRIMARY www.amit.com</span>  ◄── health check: <span class="a-grn">healthy</span>
+         │  💥 dies
+         ▼
+   Route 53 notices → fails over
+         ▼
+   <span class="a-grn">BACKUP www.amit.com</span>  users never notice 🎉</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🩺</div>
+          <div>
+            <b>Health check config</b>
+            <p>A health check has a <strong>Type</strong> (HTTP/HTTPS/TCP), the <strong>domain or IP</strong> to probe, a <strong>port</strong> (80/443), and an optional <strong>path</strong> (<code>/</code> or <code>/health</code>). Combined with a failover routing policy, an unhealthy server is automatically removed from rotation — a tiny piece of self-healing infrastructure.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ HANDS-ON ============ -->
+      <section class="sec" id="hands-on">
+        <h2><span class="ic"><i class="fa-solid fa-screwdriver-wrench"></i></span> Hands-On: Point www.amit.com</h2>
+        <p>Let's set up DNS for <strong>www.amit.com</strong> on Floci — command by command. We'll create a hosted zone, add records, try weighted routing, make a health check, and clean up.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: CREATE ZONE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Create a Hosted Zone</h3>
+                <div class="step-sub">The folder for your domain's records</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> route53 create-hosted-zone <span class="fl">--name</span> <span class="st">amit.com</span> <span class="fl">--caller-reference</span> <span class="st">ref-001</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📁</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You created the hosted zone <code>amit.com</code> on Route 53. AWS returned a <strong>zone ID</strong> (<code>/hostedzone/ZMVXU693P44HTWT</code>) and the zone's <strong>nameservers</strong>. The NS and SOA records already exist inside (you'll see them in the next step). The <code>--caller-reference</code> is just a unique label AWS uses to detect duplicate requests.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal route53 list-hosted-zones","delay":450},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"HostedZones\": []","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# (no zones yet)","color":"dim"},
+                  {"type":"cmd","text":"awslocal route53 create-hosted-zone --name amit.com --caller-reference ref-001 --query \"HostedZone.[Id,Name,ResourceRecordSetCount]\" --output json","delay":650},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    \"/hostedzone/ZMVXU693P44HTWT\",","color":"ok"},
+                  {"type":"out","text":"    \"amit.com.\",","color":""},
+                  {"type":"out","text":"    2","color":""},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# Zone created! Id + name + record count (2 = NS + SOA)","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-folder-plus"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>route53 create-hosted-zone</code><div class="fl-desc">Service + action: <b>"make a DNS zone for a domain."</b></div></div>
+                <div class="flag"><code>--name amit.com</code><div class="fl-desc">The <b>domain</b> this zone manages.</div></div>
+                <div class="flag"><code>--caller-reference ref-001</code><div class="fl-desc">A unique label so AWS can <b>dedupe</b> repeated requests.</div></div>
+                <div class="flag"><code>/hostedzone/ZMVXU693P44HTWT</code><div class="fl-desc">The zone's <b>ID</b> — you'll use it in every record command.</div></div>
+                <div class="flag"><code>ResourceRecordSetCount: 2</code><div class="fl-desc">NS + SOA records were <b>created automatically</b>.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: LOOK AT DEFAULT RECORDS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Look at the Automatic Records</h3>
+                <div class="step-sub">NS and SOA come free with every zone</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> route53 list-resource-record-sets <span class="fl">--hosted-zone-id</span> <span class="st">ZMVXU693P44HTWT</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">👀</div>
+                <div>
+                  <b>What are these?</b>
+                  <p><strong>NS</strong> (Nameserver) records announce <em>"the authority for amit.com lives at these nameservers."</em> <strong>SOA</strong> (Start of Authority) holds metadata like the refresh intervals. Both are created automatically — you almost never touch them. <code>list-resource-record-sets</code> is your way to <em>see</em> what's in a zone, which is your debugging tool all chapter.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"ZONE_ID=$(awslocal route53 list-hosted-zones --query \"HostedZones[0].Id\" --output text)","delay":450},
+                  {"type":"out","text":"# ZONE_ID = /hostedzone/ZMVXU693P44HTWT","color":"dim"},
+                  {"type":"cmd","text":"awslocal route53 list-resource-record-sets --hosted-zone-id \"$ZONE_ID\" --query \"ResourceRecordSets[].[Name,Type]\" --output table","delay":550},
+                  {"type":"out","text":"-------------------------------------","color":""},
+                  {"type":"out","text":"|        ListResourceRecordSets     |","color":""},
+                  {"type":"out","text":"+---------------+------+            |","color":""},
+                  {"type":"out","text":"|  amit.com.    |  NS  |","color":"ok"},
+                  {"type":"out","text":"|  amit.com.    |  SOA |","color":"ok"},
+                  {"type":"out","text":"+---------------+------+","color":""},
+                  {"type":"out","text":"# NS + SOA = auto-created. Now add real records.","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-list"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>route53 list-resource-record-sets</code><div class="fl-desc">Lists every record in a hosted zone.</div></div>
+                <div class="flag"><code>--hosted-zone-id ZMVXU693P44HTWT</code><div class="fl-desc">Which zone to inspect.</div></div>
+                <div class="flag"><code>--query "ResourceRecordSets[].[Name,Type]"</code><div class="fl-desc">Show just <b>name + type</b> — a clean table.</div></div>
+                <div class="flag"><code>ZONE_ID=$(...)</code><div class="fl-desc">Save the zone ID into a shell variable so commands stay short — same trick you used with VPC IDs in Chapter 2.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: ADD AN A RECORD ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Add an A Record — www → EC2</h3>
+                <div class="step-sub">The core DNS act: name to IP</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> route53 change-resource-record-sets <span class="fl">--hosted-zone-id</span> <span class="st">ZMVXU693P44HTWT</span> <span class="fl">--change-batch</span> <span class="st">'{"Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","TTL":300,"ResourceRecords":[{"Value":"1.2.3.4"}]}}]}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🔗</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You told Route 53: <em>"www.amit.com answers to 1.2.3.4"</em> — a classic <strong>A record</strong> (1.2.3.4 being your EC2 server's IP). <code>change-resource-record-sets</code> is <strong>the</strong> command for all record work: <code>UPSERT</code> creates or updates, <code>DELETE</code> removes. The <code>--change-batch</code> is a JSON list of changes — you can do many in one call.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal route53 change-resource-record-sets --hosted-zone-id ZMVXU693P44HTWT --change-batch \u0027{\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"www.amit.com\",\"Type\":\"A\",\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"1.2.3.4\"}]}}]}\u0027 --query \"ChangeInfo.[Status,Id]\" --output json","delay":700},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    \"INSYNC\",","color":"ok"},
+                  {"type":"out","text":"    \"/change/CLHDREC6ZHVSQO\"","color":""},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# INSYNC = the record is live and applied","color":"dim"},
+                  {"type":"cmd","text":"awslocal route53 list-resource-record-sets --hosted-zone-id ZMVXU693P44HTWT --query \"ResourceRecordSets[?Type==\u0027A\u0027].[Name,Type,ResourceRecords[0].Value,TTL]\" --output json","delay":500},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    [","color":""},
+                  {"type":"out","text":"        \"www.amit.com.\",","color":"ok"},
+                  {"type":"out","text":"        \"A\",","color":""},
+                  {"type":"out","text":"        \"1.2.3.4\",","color":""},
+                  {"type":"out","text":"        300","color":""},
+                  {"type":"out","text":"    ]","color":""},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# www.amit.com now resolves to 1.2.3.4","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-link"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>route53 change-resource-record-sets</code><div class="fl-desc">The <b>one command</b> for adding/updating/deleting records.</div></div>
+                <div class="flag"><code>--change-batch '{...}'</code><div class="fl-desc">A JSON list of changes — <code>UPSERT</code> (add/update) or <code>DELETE</code>.</div></div>
+                <div class="flag"><code>Name: www.amit.com</code><div class="fl-desc">The <b>hostname</b> users type.</div></div>
+                <div class="flag"><code>Type: A</code><div class="fl-desc">Record type — here an <b>IPv4 address</b>.</div></div>
+                <div class="flag"><code>TTL: 300</code><div class="fl-desc"><b>Time-to-live</b> in seconds — how long resolvers cache this answer.</div></div>
+                <div class="flag"><code>ResourceRecords: [{"Value":"1.2.3.4"}]</code><div class="fl-desc">The <b>answer</b> — your EC2's IP.</div></div>
+                <div class="flag"><code>Status: INSYNC</code><div class="fl-desc">The change was <b>applied</b>. (PENDING → INSYNC in seconds.)</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: ADD A CNAME ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Add a CNAME — Point an Alias</h3>
+                <div class="step-sub">blog.amit.com → www.amit.com</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> route53 change-resource-record-sets <span class="fl">--hosted-zone-id</span> <span class="st">ZMVXU693P44HTWT</span> <span class="fl">--change-batch</span> <span class="st">'{"Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"blog.amit.com","Type":"CNAME","TTL":300,"ResourceRecords":[{"Value":"www.amit.com"}]}}]}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🔀</div>
+                <div>
+                  <b>Why a CNAME?</b>
+                  <p>Instead of copying the IP everywhere, <code>blog.amit.com</code> points <em>at the name</em> <code>www.amit.com</code>. When the website moves to a new IP, you update <strong>one</strong> A record and blog follows automatically. CNAME = "this name is really that name." (One rule: a CNAME can't be used at the bare apex <code>amit.com</code> — that's what Alias records solve in real AWS.)</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal route53 change-resource-record-sets --hosted-zone-id ZMVXU693P44HTWT --change-batch \u0027{\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"blog.amit.com\",\"Type\":\"CNAME\",\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"www.amit.com\"}]}}]}\u0027 --query \"ChangeInfo.Status\" --output text","delay":700},
+                  {"type":"out","text":"INSYNC","color":"ok"},
+                  {"type":"cmd","text":"awslocal route53 list-resource-record-sets --hosted-zone-id ZMVXU693P44HTWT --query \"ResourceRecordSets[].[Name,Type,ResourceRecords[0].Value]\" --output table","delay":500},
+                  {"type":"out","text":"--------------------------------------------","color":""},
+                  {"type":"out","text":"|        ListResourceRecordSets            |","color":""},
+                  {"type":"out","text":"+----------------+--------+----------------+","color":""},
+                  {"type":"out","text":"|  amit.com.     |  NS    |  ns-1.awsdns-01.org.  |","color":""},
+                  {"type":"out","text":"|  amit.com.     |  SOA   |  ns-1.awsdns-01.org ...|","color":""},
+                  {"type":"out","text":"|  blog.amit.com.|  CNAME |  www.amit.com          |","color":"ok"},
+                  {"type":"out","text":"|  www.amit.com. |  A     |  1.2.3.4               |","color":"ok"},
+                  {"type":"out","text":"+----------------+--------+----------------+","color":""},
+                  {"type":"out","text":"# Now 4 records in the zone. Your phone book is filling up!","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-diagram-project"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>Type: CNAME</code><div class="fl-desc">Alias record type — points <b>to another name</b>, not an IP.</div></div>
+                <div class="flag"><code>Value: www.amit.com</code><div class="fl-desc">The target name it aliases.</div></div>
+                <div class="flag"><code>list-resource-record-sets</code><div class="fl-desc">See the whole zone — NS, SOA, CNAME, A all in one view.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: WEIGHTED ROUTING ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Weighted Routing — 80% Primary, 20% Backup</h3>
+                <div class="step-sub">Two records, same name, different weights</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> route53 change-resource-record-sets <span class="fl">--hosted-zone-id</span> <span class="st">ZMVXU693P44HTWT</span> <span class="fl">--change-batch</span> <span class="st">'{"Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","SetIdentifier":"primary","Weight":80,"TTL":300,"ResourceRecords":[{"Value":"10.0.1.15"}]}},{"Action":"UPSERT","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","SetIdentifier":"backup","Weight":20,"TTL":300,"ResourceRecords":[{"Value":"10.0.1.16"}]}}]}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">⚖️</div>
+                <div>
+                  <b>What's different here?</b>
+                  <p>Two records share the <strong>same name</strong> (<code>www.amit.com</code>) and <strong>type</strong> (A), but each has a unique <code>SetIdentifier</code> and a <code>Weight</code>. Route 53 now answers with <code>10.0.1.15</code> roughly 80% of the time and <code>10.0.1.16</code> 20%. That's how you A/B test a new version (canary deployment) or slowly shift traffic.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal route53 change-resource-record-sets --hosted-zone-id ZMVXU693P44HTWT --change-batch \u0027{\"Changes\":[{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"www.amit.com\",\"Type\":\"A\",\"SetIdentifier\":\"primary\",\"Weight\":80,\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"10.0.1.15\"}]}},{\"Action\":\"UPSERT\",\"ResourceRecordSet\":{\"Name\":\"www.amit.com\",\"Type\":\"A\",\"SetIdentifier\":\"backup\",\"Weight\":20,\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"10.0.1.16\"}]}}]}\u0027 --query \"ChangeInfo.Status\" --output text","delay":800},
+                  {"type":"out","text":"INSYNC","color":"ok"},
+                  {"type":"cmd","text":"awslocal route53 list-resource-record-sets --hosted-zone-id ZMVXU693P44HTWT --query \"ResourceRecordSets[?Type==\u0027A\u0027].[Name,SetIdentifier,Weight,ResourceRecords[0].Value]\" --output table","delay":500},
+                  {"type":"out","text":"----------------------------------------------","color":""},
+                  {"type":"out","text":"|         ListResourceRecordSets             |","color":""},
+                  {"type":"out","text":"+---------------+----------+-------+-----------+","color":""},
+                  {"type":"out","text":"|  www.amit.com.|  primary |  80   |  10.0.1.15 |","color":"ok"},
+                  {"type":"out","text":"|  www.amit.com.|  backup  |  20   |  10.0.1.16 |","color":"ok"},
+                  {"type":"out","text":"+---------------+----------+-------+-----------+","color":""},
+                  {"type":"out","text":"# 80/20 split — Route 53 sends most users to primary","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-scale-balanced"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>SetIdentifier: primary / backup</code><div class="fl-desc">Each copy of a weighted name needs a <b>unique ID</b>.</div></div>
+                <div class="flag"><code>Weight: 80 / Weight: 20</code><div class="fl-desc">Relative traffic split — 80% to primary, 20% to backup.</div></div>
+                <div class="flag"><code>two UPSERT entries, one call</code><div class="fl-desc"><code>--change-batch</code> can hold <b>many changes at once</b>.</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Same name + no SetIdentifier = conflict</b>
+                Two records with the same name/type <strong>must</strong> have different <code>SetIdentifier</code>s when using weighted (or latency/failover) routing. That's how Route 53 keeps them separate. Simple routing can't have duplicates at all.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: HEALTH CHECK ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">Create a Health Check</h3>
+                <div class="step-sub">Route 53 starts watching your site</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> route53 create-health-check <span class="fl">--caller-reference</span> <span class="st">hc-001</span> <span class="fl">--health-check-config</span> <span class="st">'{"Type":"HTTP","FullyQualifiedDomainName":"www.amit.com","Port":80,"ResourcePath":"/","RequestInterval":30}'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🩺</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You created a probe that <strong>checks www.amit.com:80 every 30 seconds</strong>. If <code>GET /</code> succeeds, the site is healthy; if it fails repeatedly, the check goes unhealthy. In a <strong>failover</strong> routing policy, that flips traffic to the backup automatically. This is the "self-healing" piece of DNS.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal route53 create-health-check --caller-reference hc-001 --health-check-config \u0027{\"Type\":\"HTTP\",\"FullyQualifiedDomainName\":\"www.amit.com\",\"Port\":80,\"ResourcePath\":\"/\",\"RequestInterval\":30}\u0027 --query \"HealthCheck.Id\" --output text","delay":750},
+                  {"type":"out","text":"8c95b7c6-a223-4023-9f5b-213da493d33a","color":"ok"},
+                  {"type":"cmd","text":"awslocal route53 get-health-check --health-check-id 8c95b7c6-a223-4023-9f5b-213da493d33a --query \"HealthCheck.HealthCheckConfig\" --output json","delay":500},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"Port\": 80,","color":""},
+                  {"type":"out","text":"    \"Type\": \"HTTP\",","color":"ok"},
+                  {"type":"out","text":"    \"ResourcePath\": \"/\",","color":""},
+                  {"type":"out","text":"    \"FullyQualifiedDomainName\": \"www.amit.com\",","color":"ok"},
+                  {"type":"out","text":"    \"RequestInterval\": 30","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# A probe watching www.amit.com every 30 seconds","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-heart-pulse"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>route53 create-health-check</code><div class="fl-desc">Creates a probe Route 53 runs against your site.</div></div>
+                <div class="flag"><code>Type: HTTP</code><div class="fl-desc">Probe over <b>HTTP</b> (also HTTPS/TCP).</div></div>
+                <div class="flag"><code>FullyQualifiedDomainName: www.amit.com</code><div class="fl-desc">What to probe.</div></div>
+                <div class="flag"><code>Port: 80, ResourcePath: /</code><div class="fl-desc">Where to probe — port and URL path.</div></div>
+                <div class="flag"><code>RequestInterval: 30</code><div class="fl-desc">Check every <b>30 seconds</b>.</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Wire it to failover</b>
+                On real AWS, you'd attach this health check to a <strong>failover</strong> record (primary + secondary). The health check watches the primary; if it dies, Route 53 answers with the secondary. Health check + failover = automatic disaster recovery.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 7: CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">7</div>
+              <div>
+                <h3 class="step-title">Clean Up — Records Before Zone</h3>
+                <div class="step-sub">A zone only deletes when it's empty</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> route53 delete-health-check <span class="fl">--health-check-id</span> <span class="st">8c95b7c6-a223-4023-9f5b-213da493d33a</span>
+<span class="kw">awslocal</span> route53 change-resource-record-sets <span class="fl">--hosted-zone-id</span> <span class="st">ZMVXU693P44HTWT</span> <span class="fl">--change-batch</span> <span class="st">'{"Changes":[{"Action":"DELETE","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","TTL":300,"ResourceRecords":[{"Value":"1.2.3.4"}]}}]}'</span>
+<span class="kw">awslocal</span> route53 delete-hosted-zone <span class="fl">--id</span> <span class="st">ZMVXU693P44HTWT</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>Delete in the right order</b>
+                  <p>Route 53 refuses to delete a hosted zone that still contains records (<code>HostedZoneNotEmpty</code>). So: delete health checks, delete your custom records (NS/SOA stay auto-managed), <em>then</em> delete the zone. Same <em>create → use → delete</em> discipline you've built all course.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal route53 delete-health-check --health-check-id 8c95b7c6-a223-4023-9f5b-213da493d33a","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# health check deleted","color":"dim"},
+                  {"type":"cmd","text":"awslocal route53 change-resource-record-sets --hosted-zone-id ZMVXU693P44HTWT --change-batch \u0027{\"Changes\":[{\"Action\":\"DELETE\",\"ResourceRecordSet\":{\"Name\":\"www.amit.com\",\"Type\":\"A\",\"TTL\":300,\"ResourceRecords\":[{\"Value\":\"1.2.3.4\"}]}}]}\u0027 --query \"ChangeInfo.Status\" --output text","delay":600},
+                  {"type":"out","text":"INSYNC","color":"ok"},
+                  {"type":"out","text":"# records deleted","color":"dim"},
+                  {"type":"cmd","text":"awslocal route53 delete-hosted-zone --id ZMVXU693P44HTWT --query \"ChangeInfo.Status\" --output text","delay":500},
+                  {"type":"out","text":"INSYNC","color":"ok"},
+                  {"type":"cmd","text":"awslocal route53 list-hosted-zones --query \"HostedZones[].Name\" --output text","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (empty — all cleaned up)","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-trash"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the cleanup</div>
+                <div class="flag"><code>delete-health-check --health-check-id ...</code><div class="fl-desc">Removes the probe.</div></div>
+                <div class="flag"><code>change-resource-record-sets ... Action: DELETE</code><div class="fl-desc">Deletes your custom records (must include exact Name/Type/Value).</div></div>
+                <div class="flag"><code>delete-hosted-zone --id ZMVXU693P44HTWT</code><div class="fl-desc">Deletes the zone — <b>only after</b> it's empty (NS/SOA auto-remove).</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Remember the HostedZoneNotEmpty gotcha</b>
+                If you try to delete a zone with records still in it, AWS rejects it. This isn't a bug — it's protecting you from accidentally nuking your domain config. Delete records first, then the zone.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete Route 53 flow — copy &amp; paste
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 1. Create the hosted zone (grab the ID from the output)</span>
+awslocal route53 create-hosted-zone --name amit.com --caller-reference ref-001
+ZONE_ID=$(awslocal route53 list-hosted-zones --query "HostedZones[0].Id" --output text | sed 's|/hostedzone/||')
+
+<span class="cmt"># 2. See the auto-created NS + SOA records</span>
+awslocal route53 list-resource-record-sets --hosted-zone-id "$ZONE_ID"
+
+<span class="cmt"># 3. Add an A record: www.amit.com → 1.2.3.4</span>
+awslocal route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" --change-batch '{"Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","TTL":300,"ResourceRecords":[{"Value":"1.2.3.4"}]}}]}'
+
+<span class="cmt"># 4. Add a CNAME alias: blog.amit.com → www.amit.com</span>
+awslocal route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" --change-batch '{"Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"blog.amit.com","Type":"CNAME","TTL":300,"ResourceRecords":[{"Value":"www.amit.com"}]}}]}'
+
+<span class="cmt"># 5. Weighted routing: 80% primary, 20% backup (same name, SetIdentifier each)</span>
+awslocal route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" --change-batch '{"Changes":[{"Action":"UPSERT","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","SetIdentifier":"primary","Weight":80,"TTL":300,"ResourceRecords":[{"Value":"10.0.1.15"}]}},{"Action":"UPSERT","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","SetIdentifier":"backup","Weight":20,"TTL":300,"ResourceRecords":[{"Value":"10.0.1.16"}]}}]}'
+
+<span class="cmt"># 6. Health check: probe www.amit.com every 30s</span>
+awslocal route53 create-health-check --caller-reference hc-001 --health-check-config '{"Type":"HTTP","FullyQualifiedDomainName":"www.amit.com","Port":80,"ResourcePath":"/","RequestInterval":30}'
+
+<span class="cmt"># 7. Clean up (records before zone!)</span>
+awslocal route53 delete-health-check --health-check-id &lt;hc-id&gt;
+awslocal route53 change-resource-record-sets --hosted-zone-id "$ZONE_ID" --change-batch '{"Changes":[{"Action":"DELETE","ResourceRecordSet":{"Name":"www.amit.com","Type":"A","TTL":300,"ResourceRecords":[{"Value":"1.2.3.4"}]}}]}'
+awslocal route53 delete-hosted-zone --id "$ZONE_ID"</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — Route 53 in one picture</div>
+          <pre><span class="y">Route 53</span> = the <span class="b">phone book + traffic controller</span> of your domain.
+
+   <span class="b">Hosted zone</span> = the domain's folder (amit.com)
+   <span class="b">A record</span>     = "www → 1.2.3.4"  (name to IP)
+   <span class="b">CNAME</span>        = "blog → www"     (name to name)
+   <span class="b">Weighted</span>     = 80% this, 20% that (A/B testing)
+   <span class="b">Health check</span>= a probe: is www.amit.com alive?
+   <span class="b">NS/SOA</span>      = automatic zone metadata
+
+   "Names are for humans, IPs are for computers, <span class="o">DNS is the translator</span>."</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-flask tip-ic"></i>Honest note — what Floci does &amp; doesn't support</b>
+          I tested this live. Route 53 on Floci fully supports <strong>hosted zones, A/CNAME/AAAA records, weighted routing, and health checks</strong> — every command above ran against the emulator. <strong>Not implemented</strong> on Floci: real domain registration, <strong>latency</strong> and <strong>geolocation</strong> routing policies, and Alias-to-AWS-resource records (all work on real AWS exactly as described). Also, since there's no real internet, <strong>a health check here won't actually go green</strong> — the records and config are real, the probe's verdict isn't. Practice the commands freely; they're 100% accurate.
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 7</h2>
+        <div class="term"><span class="t-name">DNS</span><p>Domain Name System — translates human-friendly names into IP addresses.</p></div>
+        <div class="term"><span class="t-name">Route 53</span><p>AWS's DNS and domain service, named after the classic DNS port 53.</p></div>
+        <div class="term"><span class="t-name">Hosted zone</span><p>The container that holds all DNS records for a domain.</p></div>
+        <div class="term"><span class="t-name">A record</span><p>Maps a name to an IPv4 address.</p></div>
+        <div class="term"><span class="t-name">CNAME</span><p>Alias — maps a name to another domain name.</p></div>
+        <div class="term"><span class="t-name">NS record</span><p>Nameserver record — who is authoritative for the domain.</p></div>
+        <div class="term"><span class="t-name">SOA record</span><p>Start of Authority — zone metadata, auto-created.</p></div>
+        <div class="term"><span class="t-name">TTL</span><p>Time-to-live — how long resolvers cache a DNS answer.</p></div>
+        <div class="term"><span class="t-name">SetIdentifier</span><p>A unique label distinguishing records that share a name/type.</p></div>
+        <div class="term"><span class="t-name">Weighted routing</span><p>Sends a percentage of traffic to each target (A/B, canary).</p></div>
+        <div class="term"><span class="t-name">Latency routing</span><p>Sends users to the fastest/lowest-latency region.</p></div>
+        <div class="term"><span class="t-name">Failover routing</span><p>Primary + backup; switches when a health check fails.</p></div>
+        <div class="term"><span class="t-name">Health check</span><p>A probe that verifies a site/service is up.</p></div>
+        <div class="term"><span class="t-name">Registrar</span><p>Where you buy a domain (Route 53 can be one on real AWS).</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 7 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> What is <strong>DNS</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> A firewall for web traffic</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> The system that translates domain names into IP addresses</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> A database for storing websites</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> Which record maps <code style="color:var(--accent-2)">www.amit.com</code> to an IPv4 address?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> CNAME</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> MX</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> A</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> You want <code style="color:var(--accent-2)">blog.amit.com</code> to point at <code style="color:var(--accent-2)">www.amit.com</code>. Which record?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> Another A record</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> CNAME (a name → name alias)</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> SOA</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> When a hosted zone is created, which records appear <strong>automatically</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> A and AAAA</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> NS and SOA</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> MX and TXT</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> Two weighted records share the name <code style="color:var(--accent-2)">www.amit.com</code>. What must differ?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> The TTL</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> The SetIdentifier (e.g. "primary" vs "backup")</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> Nothing — duplicates are fine</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> What does a <strong>health check</strong> do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Backs up your DNS records</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> Probes a site periodically to confirm it's up</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Charges more for premium domains</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> You try to delete a hosted zone and get <code style="color:var(--accent-2)">HostedZoneNotEmpty</code>. What do you do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> Force-delete with a flag</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> Delete the zone's custom records first, then delete the zone</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> Wait 24 hours and retry</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-06.html"><i class="fa-solid fa-arrow-left"></i> Ch 6: Monitoring — CloudWatch</a>
+          <a href="chapter-08.html">Next: S3 — Object Storage <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 7 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

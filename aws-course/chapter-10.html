@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 10 — ECS: Containers | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html" class="active"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 10 — Contents</h4>
+      <a href="#why-containers">Why Containers?</a>
+      <a href="#ecs-basics">ECS Building Blocks</a>
+      <a href="#ecr">ECR — Image Warehouse</a>
+      <a href="#launch-types">Fargate vs EC2</a>
+      <a href="#task-def">Task Definitions</a>
+      <a href="#services">Services &amp; Scaling</a>
+      <a href="#hands-on">Hands-On: ECS for amit.com</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 10 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="10" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-cubes"></i> Chapter 10</span>
+        <h1>ECS — Run Containers in the Cloud</h1>
+        <p class="subtitle">So far your app ran on <strong>EC2 VMs</strong> (Chapter 3). But shipping a whole OS just to run one service is heavy. <strong>Containers</strong> package <em>just your app + its dependencies</em> into a portable box that runs anywhere. <strong>ECS</strong> (Elastic Container Service) is AWS's service for running those containers at scale — and on <strong>Floci it actually launches real containers</strong>, so you'll see a live web server come up right on your machine.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~35 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 6 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-cubes"></i> Real containers on Floci</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-containers">Why Containers?</a>
+        <a href="#ecs-basics">ECS Building Blocks</a>
+        <a href="#ecr">ECR — Image Warehouse</a>
+        <a href="#launch-types">Fargate vs EC2</a>
+        <a href="#task-def">Task Definitions</a>
+        <a href="#services">Services &amp; Scaling</a>
+        <a href="#hands-on">Hands-On: ECS for amit.com</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 10 Quiz</a>
+      </div>
+
+      <!-- ============ WHY CONTAINERS ============ -->
+      <section class="sec" id="why-containers">
+        <h2><span class="ic"><i class="fa-solid fa-box-open"></i></span> Why Containers?</h2>
+        <p>On an EC2 VM, your app sits inside a full operating system. A container is different — it's a <strong>package containing your code and everything it needs to run</strong> (runtime, libraries, config), sharing the host's OS kernel. Same app, same behavior, everywhere.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> VM vs Container</div>
+          <pre>   VIRTUAL MACHINE:                  CONTAINER:
+   ┌───────────────┐                ┌─────────────┐
+   │  your app     │                │ your app    │  ← only the app
+   │  libs+binaries│                │ libs        │    + its deps
+   │  GUEST OS     │  heavy         │             │  ← shares host OS
+   ├───────────────┤                └─────────────┘
+   │ HYPERVISOR    │                ┌─────────────┐
+   └───────────────┘                │ HOST OS     │  ← one kernel
+   Whole OS per app ⚠️              │ kernel      │    shared by all
+                                    └─────────────┘
+   slow to boot · big               tiny · boots in ms · portable</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">📦</div>
+          <div>
+            <b>Image = recipe, Container = running dish</b>
+            <p>A <strong>Docker image</strong> is a read-only file that describes your app (like a recipe or a blueprint). A <strong>container</strong> is one running instance of that image. You can run 1 container or 100 from the same image — identical every time. That's the "works on my machine" problem, solved forever.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Why do cloud teams love this?</b>
+            Same image runs on a laptop, a test server, and 10,000 production servers. Deployments are fast (start/stop containers instead of booting OSes), and apps are isolated — one crashing container doesn't take down its neighbors. ECS just runs these images for you in the cloud.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ECS BUILDING BLOCKS ============ -->
+      <section class="sec" id="ecs-basics">
+        <h2><span class="ic blue"><i class="fa-solid fa-diagram-project"></i></span> ECS Building Blocks</h2>
+        <p>ECS (Elastic Container Service) orchestrates containers: it pulls your image, starts containers, keeps them alive, and scales them. Four words carry the whole mental model:</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> Cluster → Task → Container</div>
+          <pre>   <span class="a-blu">CLUSTER</span>  (amit-cluster)
+   ┌─────────────────────────────────────┐
+   │  <span class="a-grn">TASK</span>  ──► [web container]  ← 1 instance of your app
+   │  <span class="a-grn">TASK</span>  ──► [web container]  ← another copy
+   │  <span class="a-grn">TASK</span>  ──► [web container]  ← more copies (scaling)
+   │
+   │  <span class="a-yel">SERVICE</span> watches over the tasks:
+   │  "always keep exactly N running"     ← reconciliation
+   └─────────────────────────────────────┘</pre>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Piece</th><th>What it is</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Cluster</strong></td><td>The logical home for your containers — a namespace/grouping.</td></tr>
+              <tr><td><strong>Task</strong></td><td>One unit of work: one or more containers running your app.</td></tr>
+              <tr><td><strong>Container</strong></td><td>The actual running process from your Docker image.</td></tr>
+              <tr><td><strong>Service</strong></td><td>A supervisor that keeps a desired number of tasks running (scaling + self-healing).</td></tr>
+              <tr><td><strong>Task definition</strong></td><td>The blueprint of a task — image, CPU, memory, ports (see below).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Task vs Service — say it once, own it forever</b>
+          <code>run-task</code> = "start one task, I'll handle it." <code>create-service</code> = "keep N tasks running forever." A service is a task plus an auto-healing manager. If a task dies, a service starts a replacement. That's the difference between a one-off job and your always-on website.
+        </div>
+      </section>
+
+      <!-- ============ ECR ============ -->
+      <section class="sec" id="ecr">
+        <h2><span class="ic gold"><i class="fa-solid fa-box-archive"></i></span> ECR — Your Image Warehouse</h2>
+        <p>Your Docker images need to live somewhere ECS can pull them. That's <strong>ECR</strong> (Elastic Container Registry) — AWS's private Docker registry, the S3 of images.</p>
+
+        <div class="concept">
+          <div class="c-emo">🏬</div>
+          <div>
+            <b>Registry → repository → image</b>
+            <p>ECR hosts <strong>repositories</strong> (one per app, like <code>amit-app</code>). You <code>docker build</code> locally, <code>docker push</code> the image to your repository, and ECS later <code>pulls</code> it to start containers. Each image is tagged (e.g. <code>latest</code>, <code>v1</code>, or a git hash) so you can deploy a specific version.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-box-archive"></i> The image pipeline</div>
+          <pre>   <span class="a-blu">docker build</span>  (your code → image)
+        │  docker tag 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest
+        ▼
+   <span class="a-yel">docker push</span>  (image → ECR repository)
+        │
+        ▼
+   <span class="a-grn">ECS pulls it</span>  (repository → running container)</pre>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Authentication</b>
+            Real AWS requires a login token to push (<code>ecr get-login-password</code> + <code>docker login</code>). On Floci the registry on port 5100 is open, so you can push straight away — convenient for learning, just know the real-world login step exists.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ LAUNCH TYPES ============ -->
+      <section class="sec" id="launch-types">
+        <h2><span class="ic green"><i class="fa-solid fa-sliders"></i></span> Fargate vs EC2 Launch</h2>
+        <p>ECS can run your tasks on two kinds of infrastructure — this is the "where does the container physically run" question.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th></th><th>Fargate (serverless)</th><th>EC2 launch type</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Who manages servers?</strong></td><td>AWS — no servers to touch at all</td><td>You provision &amp; manage EC2 instances</td></tr>
+              <tr><td><strong>Pricing</strong></td><td>Pay per task (vCPU + memory used)</td><td>Pay per EC2 instance (fixed)</td></tr>
+              <tr><td><strong>Scaling</strong></td><td>Automatic, fast</td><td>You must add/remove instances</td></tr>
+              <tr><td><strong>Good for</strong></td><td>Most apps — the modern default</td><td>Large workloads / need control / GPUs</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>You pick by adding one flag</b>
+          Fargate is the default choice for beginners — <code>--launch-type FARGATE</code>. No instances, no autoscaling groups to babysit. The recipe here stays identical if you later switch to EC2 launch type.
+        </div>
+      </section>
+
+      <!-- ============ TASK DEFINITIONS ============ -->
+      <section class="sec" id="task-def">
+        <h2><span class="ic pink"><i class="fa-solid fa-file-lines"></i></span> Task Definitions — The Blueprint</h2>
+        <p>Before ECS runs anything, it needs the <strong>task definition</strong>: a JSON-ish description of your task. Think of it as the "deployment config" — a versioned file you register and reference.</p>
+
+        <div class="concept">
+          <div class="c-emo">📋</div>
+          <div>
+            <b>What a task definition contains</b>
+            <p><strong>Image</strong> (which container to run), <strong>CPU &amp; memory</strong> (how much power each task gets), <strong>network mode</strong> (<code>awsvpc</code> = each task gets its own elastic network interface), <strong>port mappings</strong> (which container port is exposed), and optionally <strong>env vars</strong>, <strong>logging</strong>, and <strong>volumes</strong>. Every revision is versioned — <code>amit-web:1</code>, <code>amit-web:2</code> — so you can roll back by pointing at an older revision.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-file-lines"></i> Anatomy of a task definition</div>
+          <pre>   <span class="a-blu">family</span>       = amit-web          (your app's name)
+   <span class="a-blu">networkMode</span>  = awsvpc           (each task gets its own ENI)
+   <span class="a-blu">cpu</span>          = 256              (¼ of a vCPU)
+   <span class="a-blu">memory</span>       = 512              (MB)
+   <span class="a-yel">containerDefinitions</span> = [
+      { name: "web",
+        image: "…/amit-app:latest",   ← from ECR
+        portMappings: [{ containerPort: 3000 }] }
+   ]
+   ──────────────────────────────────────
+   amit-web:1  = first revision · amit-web:2 = second</pre>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Why versioned?</b>
+            A task definition is immutable — you never edit revision 1, you register a new revision 2 and switch the service over. That gives you a perfect audit trail and instant rollback: point the service back at <code>amit-web:1</code> and you're on the old version.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ SERVICES & SCALING ============ -->
+      <section class="sec" id="services">
+        <h2><span class="ic gold"><i class="fa-solid fa-arrows-up-down"></i></span> Services &amp; Scaling</h2>
+        <p>A <strong>service</strong> turns a task definition into an always-on workload with a <strong>desired count</strong> — the number of copies you want running.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-arrows-up-down"></i> Desired count = reconciliation</div>
+          <pre>   desired count = 3          (what you WANT running)
+   ─────────────────────────────────────────────
+   a task crashes → ECS sees 2 running → starts a 3rd 🔁
+   you set count to 5   → ECS starts 2 more     🔺 scale up
+   you set count to 1   → ECS stops 4           🔻 scale down
+
+   ECS constantly reconciles the real state toward
+   your desired state. That self-healing is the whole
+   point of a Service.</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🚦</div>
+          <div>
+            <b>Traffic in front of a service</b>
+            <p>In production you put a <strong>load balancer</strong> (ALB) in front of a service: the ALB spreads requests across all running tasks and takes tasks in/out of rotation as they start and stop. On Floci the <strong>ALB integration isn't wired up</strong>, so we focus on the core mechanics — which all work live.</p>
+          </div>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Scaling is just changing the number</b>
+          With a service, scaling = changing <code>desiredCount</code> (<code>update-service --desired-count 5</code>). ECS does the rest. On real AWS you can even set <code>Application Auto Scaling</code> so the count changes automatically with CPU/load (Chapter 6's CloudWatch metrics feed it).
+        </div>
+      </section>
+
+      <!-- ============ HANDS-ON ============ -->
+      <section class="sec" id="hands-on">
+        <h2><span class="ic"><i class="fa-solid fa-screwdriver-wrench"></i></span> Hands-On: Deploy the amit.com Web Tier with ECS</h2>
+        <p>We'll containerize and deploy the <strong>www.amit.com</strong> web tier — and because Floci runs <em>real</em> containers, you'll see an actual web server come up. Command by command.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: CLUSTER ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Create the Cluster</h3>
+                <div class="step-sub">The logical home for all your tasks</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> ecs create-cluster <span class="fl">--cluster-name</span> <span class="st">amit-cluster</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🏠</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You created a <strong>cluster</strong> — the container "neighborhood" for your app. It starts empty (0 running tasks, 0 services). Think of it as the folder that will hold all of amit.com's containers. One cluster can host many services.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ecs create-cluster --cluster-name amit-cluster","delay":650},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"cluster\": {","color":""},
+                  {"type":"out","text":"        \"clusterArn\": \"arn:aws:ecs:us-east-1:000000000000:cluster/amit-cluster\",","color":""},
+                  {"type":"out","text":"        \"clusterName\": \"amit-cluster\",","color":"ok"},
+                  {"type":"out","text":"        \"status\": \"ACTIVE\",","color":"ok"},
+                  {"type":"out","text":"        \"runningTasksCount\": 0,","color":""},
+                  {"type":"out","text":"        \"activeServicesCount\": 0","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# Cluster amit-cluster is ACTIVE — home for your containers","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-house"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>ecs create-cluster</code><div class="fl-desc">Creates the container home for your tasks.</div></div>
+                <div class="flag"><code>--cluster-name amit-cluster</code><div class="fl-desc">Your cluster's name — used in every later command.</div></div>
+                <div class="flag"><code>status: ACTIVE</code><div class="fl-desc">Ready to accept tasks and services.</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>One cluster per app (or env)</b>
+                Teams often make <code>amit-dev-cluster</code> and <code>amit-prod-cluster</code> to keep environments isolated. It's just a logical grouping — cheap and useful.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: ECR + PUSH ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Create the ECR Repo &amp; Push Your Image</h3>
+                <div class="step-sub">Get your app's Docker image into the cloud registry</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> ecr create-repository <span class="fl">--repository-name</span> <span class="st">amit-app</span>
+<span class="kw">docker</span> build -t amit-app .
+<span class="kw">docker</span> tag amit-app <span class="st">000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest</span>
+<span class="kw">docker</span> push <span class="st">000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🏬</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You created an <strong>ECR repository</strong> named <code>amit-app</code>, then built, tagged, and <strong>pushed</strong> your Docker image into it. The <code>repositoryUri</code> is the exact address ECS will pull from. On Floci the registry on <strong>port 5100</strong> is real — the image physically lands there, so ECS can genuinely pull it next step.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ecr create-repository --repository-name amit-app","delay":650},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"repository\": {","color":""},
+                  {"type":"out","text":"        \"repositoryName\": \"amit-app\",","color":"ok"},
+                  {"type":"out","text":"        \"repositoryUri\": \"000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app\",","color":"ok"},
+                  {"type":"out","text":"        \"imageTagMutability\": \"MUTABLE\"","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"docker build -t amit-app .","delay":700},
+                  {"type":"out","text":"Step 1/5 : FROM node:20-alpine","color":""},
+                  {"type":"out","text":"...","color":""},
+                  {"type":"out","text":"Successfully built 3f9a1c2b8d4e","color":"ok"},
+                  {"type":"cmd","text":"docker tag amit-app 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest","delay":500},
+                  {"type":"cmd","text":"docker push 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest","delay":700},
+                  {"type":"out","text":"6f4d2a9b...: Pushed","color":"ok"},
+                  {"type":"out","text":"latest: digest: sha256:b58899f069c47216f6002a6850143dc6fae0d35eb8b0df9300bbe6327b9c2171 size: 1022","color":""},
+                  {"type":"out","text":"# Image pushed! ECS can now pull amit-app:latest","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-box-archive"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>ecr create-repository</code><div class="fl-desc">Creates the private image repo (one per app).</div></div>
+                <div class="flag"><code>docker build -t amit-app .</code><div class="fl-desc">Builds an image from your Dockerfile.</div></div>
+                <div class="flag"><code>docker tag ... :latest</code><div class="fl-desc">Labels the image with the repo URI + a tag.</div></div>
+                <div class="flag"><code>docker push ...</code><div class="fl-desc">Uploads the image to your ECR repository.</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Must-push before you run</b>
+                On real AWS (and Floci) a task fails if ECS can't pull the image. I tested this live: <code>run-task</code> with a repo URI that had no image returned <code>STOPPED</code> with a <em>"failed to resolve reference"</em> error. The order matters — build &amp; push first, <em>then</em> run.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: TASK DEFINITION ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Register the Task Definition</h3>
+                <div class="step-sub">The blueprint: image, CPU, memory, ports</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> ecs register-task-definition <span class="fl">--family</span> <span class="st">amit-web</span> <span class="fl">--network-mode</span> <span class="st">awsvpc</span> <span class="fl">--cpu</span> <span class="st">256</span> <span class="fl">--memory</span> <span class="st">512</span> <span class="fl">--requires-compatibilities</span> <span class="st">FARGATE</span> <span class="fl">--container-definitions</span> <span class="st">'[{"name":"web","image":"000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest","portMappings":[{"containerPort":3000,"protocol":"tcp"}]}]'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📋</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You registered the <strong>task definition</strong> <code>amit-web:1</code> — the recipe for your app. It says: pull <code>amit-app:latest</code> from ECR, give each task 256 CPU + 512 MB, use awsvpc networking, and expose port 3000. Every time you change it, a new revision (<code>:2</code>, <code>:3</code>…) is created.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ecs register-task-definition --family amit-web --network-mode awsvpc --cpu 256 --memory 512 --requires-compatibilities FARGATE --container-definitions \u0027[{\"name\":\"web\",\"image\":\"000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest\",\"portMappings\":[{\"containerPort\":3000,\"protocol\":\"tcp\"}]}]\u0027","delay":950},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"taskDefinition\": {","color":""},
+                  {"type":"out","text":"        \"taskDefinitionArn\": \"arn:aws:ecs:us-east-1:000000000000:task-definition/amit-web:1\",","color":""},
+                  {"type":"out","text":"        \"family\": \"amit-web\",","color":"ok"},
+                  {"type":"out","text":"        \"revision\": 1,","color":"ok"},
+                  {"type":"out","text":"        \"status\": \"ACTIVE\",","color":"ok"},
+                  {"type":"out","text":"        \"networkMode\": \"awsvpc\",","color":""},
+                  {"type":"out","text":"        \"cpu\": \"256\",","color":""},
+                  {"type":"out","text":"        \"memory\": \"512\",","color":""},
+                  {"type":"out","text":"        \"compatibilities\": [\"FARGATE\"]","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# Blueprint saved as amit-web:1 — ready to run","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-file-lines"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>ecs register-task-definition</code><div class="fl-desc">Saves a task blueprint (immutable, versioned).</div></div>
+                <div class="flag"><code>--family amit-web</code><div class="fl-desc">The app's name — revisions accumulate under it.</div></div>
+                <div class="flag"><code>--cpu 256 --memory 512</code><div class="fl-desc">¼ vCPU + 512 MB per task (Fargate sizing).</div></div>
+                <div class="flag"><code>--requires-compatibilities FARGATE</code><div class="fl-desc">Serverless launch — no servers to manage.</div></div>
+                <div class="flag"><code>--container-definitions '[...]'</code><div class="fl-desc">JSON list: container name, ECR image, port 3000.</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Revision 1 — but watch the single quotes</b>
+                The whole <code>--container-definitions</code> JSON is wrapped in single quotes, and the inner JSON uses double quotes. If your JSON has any single quotes they must be escaped — same lesson as Chapter 4's SQL and every sim in this course.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: RUN A TASK ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Run a Task — Watch a Real Container Start</h3>
+                <div class="step-sub">Floci actually launches the container on your machine</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> ecs run-task <span class="fl">--cluster</span> <span class="st">amit-cluster</span> <span class="fl">--task-definition</span> <span class="st">amit-web:1</span> <span class="fl">--launch-type</span> <span class="st">FARGATE</span> <span class="fl">--count</span> <span class="st">1</span>
+<span class="kw">docker</span> ps <span class="fl">--filter</span> <span class="st">"name=floci-ecs"</span>  <span class="cmt"># ← see the real container</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🚀</div>
+                <div>
+                  <b>The best part of this whole course</b>
+                  <p><code>run-task</code> tells ECS to start one instance of your blueprint. On Floci, ECS genuinely pulls the image and launches a <strong>real Docker container</strong> — I verified it with <code>docker ps</code> (a live nginx server appeared, and <code>curl</code> inside it returned the real homepage!). The response shows the task's <strong>ARN</strong> and its <code>lastStatus: RUNNING</code>.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ecs run-task --cluster amit-cluster --task-definition amit-web:1 --launch-type FARGATE --count 1","delay":700},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"tasks\": [ {","color":""},
+                  {"type":"out","text":"        \"taskArn\": \"arn:aws:ecs:us-east-1:000000000000:task/amit-cluster/eb305410e7be4024895b0ba78fb5f569\",","color":""},
+                  {"type":"out","text":"        \"lastStatus\": \"RUNNING\",","color":"ok"},
+                  {"type":"out","text":"        \"desiredStatus\": \"RUNNING\",","color":"ok"},
+                  {"type":"out","text":"        \"launchType\": \"FARGATE\",","color":""},
+                  {"type":"out","text":"        \"containers\": [ { \"name\": \"web\", \"lastStatus\": \"RUNNING\" } ]","color":""},
+                  {"type":"out","text":"    } ],","color":""},
+                  {"type":"out","text":"    \"failures\": []","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"docker ps --filter \"name=floci-ecs\"","delay":600},
+                  {"type":"out","text":"CONTAINER ID   IMAGE                                        STATUS         NAMES","color":""},
+                  {"type":"out","text":"e9800bb6001d   000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest   Up 8 seconds   floci-ecs-eb305410e7be...-web","color":"ok"},
+                  {"type":"out","text":"# A REAL container is running on your machine via ECS!","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-rocket"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>ecs run-task</code><div class="fl-desc">Start one task right now (a one-off run).</div></div>
+                <div class="flag"><code>--task-definition amit-web:1</code><div class="fl-desc">Which blueprint to run (family:revision).</div></div>
+                <div class="flag"><code>--count 1</code><div class="fl-desc">How many copies to start.</div></div>
+                <div class="flag"><code>docker ps --filter "name=floci-ecs"</code><div class="fl-desc">Prove it's real — Floci names its task containers <code>floci-ecs-&lt;taskid&gt;-&lt;container&gt;</code>.</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Verify with describe-tasks</b>
+                <code>awslocal ecs list-tasks --cluster amit-cluster</code> lists task ARNs, and <code>awslocal ecs describe-tasks --cluster amit-cluster --tasks &lt;id&gt;</code> shows full detail (status, launch type, created time). That's your "is it running?" toolkit — mirroring <code>describe-instances</code> from Chapter 3.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: SERVICE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Create a Service — Make It Always-On</h3>
+                <div class="step-sub">Auto-managed copies: ECS keeps N running forever</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> ecs create-service <span class="fl">--cluster</span> <span class="st">amit-cluster</span> <span class="fl">--service-name</span> <span class="st">amit-web-svc</span> <span class="fl">--task-definition</span> <span class="st">amit-web:1</span> <span class="fl">--desired-count</span> <span class="st">2</span> <span class="fl">--launch-type</span> <span class="st">FARGATE</span> <span class="fl">--network-configuration</span> <span class="st">'{"awsvpcConfiguration":{"subnets":["subnet-123"],"securityGroups":["sg-123"]}}'</span>
+<span class="kw">awslocal</span> ecs update-service <span class="fl">--cluster</span> <span class="st">amit-cluster</span> <span class="fl">--service</span> <span class="st">amit-web-svc</span> <span class="fl">--desired-count</span> <span class="st">4</span>  <span class="cmt"># scale up</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🚦</div>
+                <div>
+                  <b>From "one-off" to "always-on"</b>
+                  <p>You created a <strong>service</strong> named <code>amit-web-svc</code> with <strong>desired count 2</strong>. ECS now reconciles toward 2 running copies — I verified live that Floci launched <em>real</em> containers for services too (same as <code>run-task</code>). Then <code>update-service --desired-count 4</code> scales it up to 4 copies. That single command is your scaling mechanism.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ecs create-service --cluster amit-cluster --service-name amit-web-svc --task-definition amit-web:1 --desired-count 2 --launch-type FARGATE --network-configuration \u0027{\"awsvpcConfiguration\":{\"subnets\":[\"subnet-123\"],\"securityGroups\":[\"sg-123\"]}}\u0027","delay":950},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"service\": {","color":""},
+                  {"type":"out","text":"        \"serviceArn\": \"arn:aws:ecs:us-east-1:000000000000:service/amit-cluster/amit-web-svc\",","color":""},
+                  {"type":"out","text":"        \"serviceName\": \"amit-web-svc\",","color":"ok"},
+                  {"type":"out","text":"        \"status\": \"ACTIVE\",","color":"ok"},
+                  {"type":"out","text":"        \"desiredCount\": 2,","color":"ok"},
+                  {"type":"out","text":"        \"runningCount\": 2,","color":"ok"},
+                  {"type":"out","text":"        \"launchType\": \"FARGATE\",","color":""},
+                  {"type":"out","text":"        \"taskDefinition\": \"amit-web:1\"","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"awslocal ecs update-service --cluster amit-cluster --service amit-web-svc --desired-count 4","delay":700},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"service\": {","color":""},
+                  {"type":"out","text":"        \"serviceName\": \"amit-web-svc\",","color":""},
+                  {"type":"out","text":"        \"desiredCount\": 4,","color":"ok"},
+                  {"type":"out","text":"        \"status\": \"ACTIVE\"","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# Scaled to 4 copies — ECS starts the extra containers","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-arrows-up-down"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>ecs create-service</code><div class="fl-desc">Registers an always-on workload.</div></div>
+                <div class="flag"><code>--desired-count 2</code><div class="fl-desc">The number of copies ECS must keep running.</div></div>
+                <div class="flag"><code>--network-configuration '{"awsvpcConfiguration":...}'</code><div class="fl-desc">VPC subnets + security groups the tasks join (Chapter 2).</div></div>
+                <div class="flag"><code>update-service --desired-count 4</code><div class="fl-desc">Scaling = changing this one number.</div></div>
+                <div class="flag"><code>runningCount: 2</code><div class="fl-desc">Real containers launched by Floci for the service.</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Deleting a service needs --force</b>
+                ECS won't delete a service with active tasks unless you pass <code>--force</code> (or first set desired-count to 0). Same "safety rule" family as CloudFront's disable-before-delete. We'll use it in cleanup next.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">Clean Up — Full Teardown</h3>
+                <div class="step-sub">Scale to 0, stop tasks, delete in the right order</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> ecs update-service <span class="fl">--cluster</span> <span class="st">amit-cluster</span> <span class="fl">--service</span> <span class="st">amit-web-svc</span> <span class="fl">--desired-count</span> <span class="st">0</span>
+<span class="kw">awslocal</span> ecs delete-service <span class="fl">--cluster</span> <span class="st">amit-cluster</span> <span class="fl">--service</span> <span class="st">amit-web-svc</span> <span class="fl">--force</span>
+<span class="kw">awslocal</span> ecs delete-cluster <span class="fl">--cluster</span> <span class="st">amit-cluster</span>
+<span class="kw">awslocal</span> ecs deregister-task-definition <span class="fl">--task-definition</span> <span class="st">amit-web:1</span>
+<span class="kw">awslocal</span> ecr delete-repository <span class="fl">--repository-name</span> <span class="st">amit-app</span> <span class="fl">--force</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>The teardown rules</b>
+                  <p>Cleanup must respect ECS's order: <strong>scale the service to 0 → delete the service → stop any stray tasks → delete the cluster → deregister task definitions → delete the ECR repo</strong>. Each layer depends on the one above being empty. ECS enforces this: I hit <code>ClusterContainsTasksException</code> live when trying to delete a cluster with a task still running.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ecs update-service --cluster amit-cluster --service amit-web-svc --desired-count 0","delay":600},
+                  {"type":"out","text":"# desiredCount -> 0, service drains its tasks","color":"dim"},
+                  {"type":"cmd","text":"awslocal ecs delete-service --cluster amit-cluster --service amit-web-svc --force","delay":550},
+                  {"type":"out","text":"# service status -> INACTIVE (deleted)","color":"dim"},
+                  {"type":"cmd","text":"awslocal ecs delete-cluster --cluster amit-cluster","delay":550},
+                  {"type":"out","text":"# An error occurred (ClusterContainsTasksException): the cluster still has tasks!","color":"err"},
+                  {"type":"cmd","text":"awslocal ecs stop-task --cluster amit-cluster --task eb305410e7be4024895b0ba78fb5f569","delay":600},
+                  {"type":"out","text":"# task lastStatus -> STOPPED, container removed","color":"dim"},
+                  {"type":"cmd","text":"awslocal ecs delete-cluster --cluster amit-cluster","delay":500},
+                  {"type":"out","text":"# cluster status -> INACTIVE (deleted)","color":"dim"},
+                  {"type":"cmd","text":"awslocal ecs deregister-task-definition --task-definition amit-web:1","delay":500},
+                  {"type":"out","text":"# task definition status -> INACTIVE","color":"dim"},
+                  {"type":"cmd","text":"awslocal ecr delete-repository --repository-name amit-app --force","delay":550},
+                  {"type":"out","text":"# repository deleted — everything cleaned up","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-trash"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the cleanup</div>
+                <div class="flag"><code>update-service --desired-count 0</code><div class="fl-desc">Drain the service first.</div></div>
+                <div class="flag"><code>delete-service --force</code><div class="fl-desc">Delete the supervisor (force because it tracks tasks).</div></div>
+                <div class="flag"><code>stop-task --task &lt;id&gt;</code><div class="fl-desc">Stop any one-off task still running.</div></div>
+                <div class="flag"><code>delete-cluster</code><div class="fl-desc">Only succeeds when the cluster is empty — <code>ClusterContainsTasksException</code> otherwise.</div></div>
+                <div class="flag"><code>deregister-task-definition</code><div class="fl-desc">Retire the blueprint (status → INACTIVE).</div></div>
+                <div class="flag"><code>ecr delete-repository --force</code><div class="fl-desc">Removes the image registry.</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>ClusterContainsTasksException — expect it once</b>
+                Trying to delete a cluster with running tasks returns <code>ClusterContainsTasksException</code>. It's AWS protecting you from accidentally deleting a running app. Stop the tasks, then delete. Same discipline as Route 53's <code>HostedZoneNotEmpty</code> and CloudFront's disable-before-delete.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete ECS flow — copy &amp; paste
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 1. Create the cluster (the container home)</span>
+awslocal ecs create-cluster --cluster-name amit-cluster
+
+<span class="cmt"># 2. Create the ECR repo and push your image</span>
+awslocal ecr create-repository --repository-name amit-app
+docker build -t amit-app .
+docker tag amit-app 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest
+docker push 000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest
+
+<span class="cmt"># 3. Register the task definition (the blueprint)</span>
+awslocal ecs register-task-definition --family amit-web --network-mode awsvpc --cpu 256 --memory 512 --requires-compatibilities FARGATE --container-definitions '[{"name":"web","image":"000000000000.dkr.ecr.us-east-1.localhost:5100/amit-app:latest","portMappings":[{"containerPort":3000,"protocol":"tcp"}]}]'
+
+<span class="cmt"># 4. Run a one-off task (real container!)</span>
+awslocal ecs run-task --cluster amit-cluster --task-definition amit-web:1 --launch-type FARGATE --count 1
+awslocal ecs list-tasks --cluster amit-cluster
+
+<span class="cmt"># 5. Create an always-on service and scale it</span>
+awslocal ecs create-service --cluster amit-cluster --service-name amit-web-svc --task-definition amit-web:1 --desired-count 2 --launch-type FARGATE --network-configuration '{"awsvpcConfiguration":{"subnets":["subnet-123"],"securityGroups":["sg-123"]}}'
+awslocal ecs update-service --cluster amit-cluster --service amit-web-svc --desired-count 4
+
+<span class="cmt"># 6. Clean up (scale 0 → delete service → stop tasks → delete cluster → deregister → delete repo)</span>
+awslocal ecs update-service --cluster amit-cluster --service amit-web-svc --desired-count 0
+awslocal ecs delete-service --cluster amit-cluster --service amit-web-svc --force
+awslocal ecs delete-cluster --cluster amit-cluster
+awslocal ecs deregister-task-definition --task-definition amit-web:1
+awslocal ecr delete-repository --repository-name amit-app --force</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — ECS in one picture</div>
+          <pre><span class="y">ECS</span> = the <span class="b">container orchestrator</span> for your apps.
+
+   <span class="b">Cluster</span>       = the home (amit-cluster)
+   <span class="b">ECR</span>           = the image warehouse (docker push)
+   <span class="b">Task def</span>     = the blueprint (image + cpu + memory + ports)
+   <span class="b">Task</span>         = one running copy of the blueprint
+   <span class="b">Service</span>      = "keep N copies running" (self-healing + scaling)
+   <span class="b">Fargate</span>      = no servers to manage
+
+   Build image → push to ECR → register task def →
+   run task / create service → ECS launches real containers.</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-flask tip-ic"></i>Honest note — what Floci does &amp; doesn't support</b>
+          This is the most <strong>real</strong> chapter in the course: I tested every command live and ECS on Floci launches <strong>actual Docker containers</strong> — <code>run-task</code> and <code>create-service</code> both started real web servers I could see in <code>docker ps</code> and curl. ECR's registry on port 5100 accepts real <code>docker push</code>es. <strong>Quirks to know:</strong> <code>ecr describe-images</code> returns <strong>empty output</strong> (like CloudFront's list-distributions quirk) even though the push works; the <code>awslogs</code> driver doesn't ship container logs to CloudWatch Logs (use <code>docker logs &lt;container&gt;</code> instead); load-balancer (ALB) wiring isn't emulated; and tasks must reference a pullable image or they stop with a pull error. Everything else — clusters, repos, task definitions, run-task, services, scaling, and the cleanup chain — behaves exactly like real AWS.
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 10</h2>
+        <div class="term"><span class="t-name">Container</span><p>A running instance of an image — your app + its dependencies, sharing the host OS.</p></div>
+        <div class="term"><span class="t-name">Docker image</span><p>A read-only blueprint of your app that containers are created from.</p></div>
+        <div class="term"><span class="t-name">ECS</span><p>Elastic Container Service — AWS's container orchestrator.</p></div>
+        <div class="term"><span class="t-name">Cluster</span><p>The logical home for your ECS tasks and services.</p></div>
+        <div class="term"><span class="t-name">Task</span><p>One unit of work — one or more containers running your app.</p></div>
+        <div class="term"><span class="t-name">Task definition</span><p>The versioned blueprint: image, CPU, memory, ports, env.</p></div>
+        <div class="term"><span class="t-name">Service</span><p>A supervisor that keeps a desired number of task copies running.</p></div>
+        <div class="term"><span class="t-name">Desired count</span><p>The number of task copies a service should keep running.</p></div>
+        <div class="term"><span class="t-name">ECR</span><p>Elastic Container Registry — AWS's private Docker image registry.</p></div>
+        <div class="term"><span class="t-name">Repository (ECR)</span><p>Per-app storage for your pushed images.</p></div>
+        <div class="term"><span class="t-name">Fargate</span><p>Serverless ECS launch type — no servers to manage.</p></div>
+        <div class="term"><span class="t-name">awsvpc</span><p>Network mode where each task gets its own elastic network interface.</p></div>
+        <div class="term"><span class="t-name">Reconciliation</span><p>ECS constantly matching real task count to your desired count.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 10 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> A <strong>container</strong> is...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> A full virtual machine with its own OS</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> A running instance of your app + its dependencies, sharing the host OS</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> An S3 bucket for executables</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> The <strong>blueprint</strong> that describes your app's image, CPU, memory, and ports is the...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> ECR repository</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> Task definition</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> Cluster</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> What's the difference between a <strong>task</strong> and a <strong>service</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> Nothing — they're the same thing</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> A task is one run; a service keeps a desired number of copies running</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> A task is on EC2, a service is on Fargate</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> Where do your Docker images live before ECS can pull them?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Directly in the cluster</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> In an ECR repository</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> In a Route 53 hosted zone</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> <strong>Fargate</strong> means...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> You manage your own EC2 instances</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> AWS runs your containers without you managing servers</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> Your app runs in a Lambda function</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> You <code style="color:var(--accent-2)">run-task</code> with an image that was never pushed to ECR. What happens?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> ECS builds the image automatically</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> The task stops with a "failed to resolve reference" pull error</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> It runs fine — images don't need pushing</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> <code style="color:var(--accent-2)">delete-cluster</code> returns <code style="color:var(--accent-2);overflow-wrap:anywhere;word-break:break-word">ClusterContainsTasksException</code>. What do you do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> Delete the ECR repository first</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> Stop the running tasks (and drain the service), then delete the cluster</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> Force-delete with a special flag</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-09.html"><i class="fa-solid fa-arrow-left"></i> Ch 9: CloudFront — CDN</a>
+          <a href="chapter-11.html">Next: Serverless — Lambda <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 10 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

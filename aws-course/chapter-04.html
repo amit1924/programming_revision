@@ -1,0 +1,712 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 4 — RDS: Databases | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html" class="active"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 4 — Contents</h4>
+      <a href="#why-db">Why a Database?</a>
+      <a href="#rds-vs-ec2">RDS vs Running Your Own DB</a>
+      <a href="#engines">Database Engines</a>
+      <a href="#create">Create a Database</a>
+      <a href="#endpoint">The Endpoint — How Apps Connect</a>
+      <a href="#real-sql">Run Real SQL on Floci</a>
+      <a href="#high-avail">Multi-AZ &amp; Read Replicas</a>
+      <a href="#backups">Backups &amp; Snapshots</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 4 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="4" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-database"></i> Chapter 4</span>
+        <h1>RDS — Relational Databases</h1>
+        <p class="subtitle">Every app needs a place to store its data. This chapter makes you comfortable with <strong>managed relational databases</strong> — PostgreSQL, MySQL, and the auto-scaling Aurora — and shows you how to <strong>create a real database and run real SQL against it</strong>. Best part: Floci gives you an <strong>actual PostgreSQL server</strong>, so this chapter is 100% hands-on.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~35 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 6 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-database"></i> Real SQL included</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-db">Why a Database?</a>
+        <a href="#rds-vs-ec2">RDS vs Running Your Own DB</a>
+        <a href="#engines">Database Engines</a>
+        <a href="#create">Create a Database</a>
+        <a href="#endpoint">The Endpoint — How Apps Connect</a>
+        <a href="#real-sql">Run Real SQL on Floci</a>
+        <a href="#high-avail">Multi-AZ &amp; Read Replicas</a>
+        <a href="#backups">Backups &amp; Snapshots</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 4 Quiz</a>
+      </div>
+
+      <!-- ============ WHY DB ============ -->
+      <section class="sec" id="why-db">
+        <h2><span class="ic"><i class="fa-solid fa-circle-question"></i></span> Why a Database?</h2>
+        <p>You learned to launch servers in Chapter 3. But a server alone is useless for an app like a shop or a social network — <strong>where does the data live?</strong> Users, orders, posts, payments: all of it needs to be stored, searched, and updated safely. That's a <strong>database</strong>'s job.</p>
+
+        <div class="concept" style="margin-top:1.2rem">
+          <div class="c-emo">🗄️</div>
+          <div>
+            <b>Relational databases = tables + relationships</b>
+            <p>A <strong>relational database</strong> stores data in <strong>tables</strong> (like spreadsheets) with rows and columns, and links tables by keys. This is the classic SQL model — <strong>S</strong>tructured <strong>Q</strong>uery <strong>L</strong>anguage — and it's been the backbone of software for 50 years.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-table"></i> A tiny relational database</div>
+          <pre><span class="a-yel">users</span>
++----+--------+------------------+
+| id | name   | email            |
++----+--------+------------------+
+| 1  | Amit   | amit@example.com |
+| 2  | Maria  | maria@example.com|
++----+--------+------------------+
+
+<span class="a-blu">orders</span>  →  references users by user_id  (the "relation")
++----+---------+---------+
+| id | user_id | amount  |
++----+---------+---------+
+| 1  | 2       | 49.99   |
++----+---------+---------+</pre>
+        </div>
+
+        <p>You <em>could</em> install a database yourself on an EC2 instance (that's what Chapter 3 taught you how to do). But for production, that means you're on call for backups, patches, failover, and tuning. AWS's answer is <strong>RDS</strong>.</p>
+      </section>
+
+      <!-- ============ RDS VS EC2 ============ -->
+      <section class="sec" id="rds-vs-ec2">
+        <h2><span class="ic blue"><i class="fa-solid fa-scale-balanced"></i></span> RDS vs Running Your Own Database</h2>
+        <p><strong>RDS (Relational Database Service)</strong> is a <strong>managed</strong> database: AWS runs the database software for you and handles the boring, critical stuff. Compare the two worlds:</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Concern</th><th>Database on EC2 (DIY)</th><th>RDS (managed)</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Install &amp; config</strong></td><td>You install the DB software yourself</td><td>AWS does it — pick engine, done</td></tr>
+              <tr><td><strong>Backups</strong></td><td>You write the cron jobs &amp; test them</td><td><span class="ok-ic">Automatic</span>, built-in</td></tr>
+              <tr><td><strong>Patches</strong></td><td>You schedule &amp; test OS/DB updates</td><td>AWS maintains the engine version</td></tr>
+              <tr><td><strong>Failover</strong></td><td>You build a whole HA setup</td><td>Multi-AZ failover is one checkbox</td></tr>
+              <tr><td><strong>Monitoring</strong></td><td>You wire up metrics yourself</td><td>CloudWatch metrics out of the box</td></tr>
+              <tr><td><strong>Control</strong></td><td>Full root access to the machine</td><td>No OS access — managed by design</td></tr>
+              <tr><td><strong>Cost</strong></td><td>Cheaper compute, expensive your-time</td><td>Includes the management premium</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>The rule of thumb</b>
+            RDS is the default choice for any real app. Run your own DB on EC2 <strong>only</strong> when you truly need OS-level control or a special engine. RDS = "buy the managed pizza, not the recipe." That's the shared-responsibility model from Chapter 1: AWS runs <em>of</em> the database, you run <em>in</em> it (your data, schemas, credentials).
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ ENGINES ============ -->
+      <section class="sec" id="engines">
+        <h2><span class="ic green"><i class="fa-solid fa-bezier-curve"></i></span> The Database Engines RDS Offers</h2>
+        <p>RDS doesn't force one database on you — it <strong>manages six different engines</strong>. You pick the engine when you create the instance, exactly like picking the AMI for EC2.</p>
+
+        <div class="grid-3" style="margin-top:1rem">
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-elephant"></i></div>
+            <h4>PostgreSQL</h4>
+            <p>The open-source darling — powerful, standard-compliant, loved by developers. <strong>Our chapter's choice.</strong></p>
+          </div>
+          <div class="card">
+            <div class="c-ic o"><i class="fa-solid fa-fish"></i></div>
+            <h4>MySQL</h4>
+            <p>The classic LAMP-stack database. Huge ecosystem, runs almost everywhere.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic p"><i class="fa-solid fa-rocket"></i></div>
+            <h4>Aurora</h4>
+            <p>AWS's own engine — MySQL/Postgres-compatible but cloud-optimized. Auto-scales, massively fast.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-database"></i></div>
+            <h4>MariaDB</h4>
+            <p>A community fork of MySQL — drop-in compatible, extra features.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic y"><i class="fa-solid fa-box"></i></div>
+            <h4>Oracle</h4>
+            <p>Enterprise heavyweight — used where licensing/legacy demands it.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-server"></i></div>
+            <h4>Microsoft SQL Server</h4>
+            <p>The Windows-ecosystem database, for .NET shops.</p>
+          </div>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Which should you learn?</b>
+          <strong>PostgreSQL</strong>. It's free, standard, and the one AWS pushes hardest (even Aurora is built on it). If you know PostgreSQL, MySQL is a small hop. On Floci, the emulator literally runs a real <strong>PostgreSQL 16</strong> server for you — so we use it.
+        </div>
+      </section>
+
+      <!-- ============ CREATE ============ -->
+      <section class="sec" id="create">
+        <h2><span class="ic"><i class="fa-solid fa-plus"></i></span> Create a Database — Command by Command</h2>
+        <p>Creating a database is a single CLI call. Let me show you the exact command, then break down every flag — exactly like Chapter 3's EC2 launch.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: CREATE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Create the Database Instance</h3>
+                <div class="step-sub">One command = a fully managed database</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> rds create-db-instance <span class="fl">--db-instance-identifier</span> <span class="st">mydb</span> <span class="fl">--db-instance-class</span> <span class="st">db.t3.micro</span> <span class="fl">--engine</span> <span class="st">postgres</span> <span class="fl">--master-username</span> <span class="st">admin</span> <span class="fl">--master-user-password</span> <span class="st">adminpass123</span> <span class="fl">--allocated-storage</span> <span class="st">20</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You asked AWS (via Floci) to provision a database. Behind the scenes it <strong>started a real PostgreSQL server</strong>, created a master user, and set aside disk. On Floci that means an actual <code>postgres:16</code> container appears — you'll connect to it for real in a few steps.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal rds describe-db-instances --query \"DBInstances[].DBInstanceIdentifier\" --output text","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (empty — no databases yet)","color":"dim"},
+                  {"type":"cmd","text":"awslocal rds create-db-instance --db-instance-identifier mydb --db-instance-class db.t3.micro --engine postgres --master-username admin --master-user-password adminpass123 --allocated-storage 20","delay":600},
+                  {"type":"out","text":"{\n    \"DBInstance\": {\n        \"DBInstanceIdentifier\": \"mydb\",\n        \"Engine\": \"postgres\",\n        \"DBInstanceStatus\": \"creating\"\n    }\n}","color":""},
+                  {"type":"out","text":"# status: creating…","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-plus"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>rds create-db-instance</code><div class="fl-desc">The service + action: "provision a new managed database."</div></div>
+                <div class="flag"><code>--db-instance-identifier mydb</code><div class="fl-desc">A friendly <b>name</b> for the database (like your EC2 key-name).</div></div>
+                <div class="flag"><code>--db-instance-class db.t3.micro</code><div class="fl-desc">The <b>size of the database machine</b> — same family naming as EC2 (<code>t3.micro</code> = small/free-tier).</div></div>
+                <div class="flag"><code>--engine postgres</code><div class="fl-desc">Which <b>database software</b> to run (postgres / mysql / mariadb / aurora / oracle / sqlserver).</div></div>
+                <div class="flag"><code>--master-username admin</code><div class="fl-desc">The <b>superuser name</b> RDS creates for you to log in with.</div></div>
+                <div class="flag"><code>--master-user-password adminpass123</code><div class="fl-desc">That user's <b>password</b>. (In real AWS, never hardcode this in a command — use secrets management. We do it here for learning.)</div></div>
+                <div class="flag"><code>--allocated-storage 20</code><div class="fl-desc">Disk space in <b>gigabytes</b> (20 GB for us).</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Two commands to know by heart</b>
+                <code style="font-family:var(--mono)">create-db-instance</code> = make a database. <code style="font-family:var(--mono)">describe-db-instances</code> = check on your databases (like <code>describe-instances</code> for EC2). You'll use this pair constantly.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: DESCRIBE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Check Your Database Is Ready</h3>
+                <div class="step-sub">Watch it go from "creating" to "available"</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> rds describe-db-instances <span class="fl">--query</span> <span class="st">"DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus]"</span> <span class="fl">--output</span> <span class="st">table</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">⏳</div>
+                <div>
+                  <b>Databases take a moment</b>
+                  <p>Unlike a simple key pair, a database has to actually boot a database engine. It goes <code>creating</code> → <code>available</code>. The <code>describe</code> command is how you watch it — a real operator's habit.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal rds describe-db-instances --query \"DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus]\" --output table","delay":500},
+                  {"type":"out","text":"-------------------------------------","color":""},
+                  {"type":"out","text":"|     DescribeDBInstances            |","color":""},
+                  {"type":"out","text":"+----------+----------+-------------+","color":""},
+                  {"type":"out","text":"|  Engine  |    ID    |   Status    |","color":""},
+                  {"type":"out","text":"+----------+----------+-------------+","color":""},
+                  {"type":"out","text":"| postgres |   mydb   |  available  |","color":"ok"},
+                  {"type":"out","text":"+----------+----------+-------------+","color":""},
+                  {"type":"out","text":"# available = your database is alive and ready","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-heart-pulse"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>rds describe-db-instances</code><div class="fl-desc">Lists all your RDS databases with full details.</div></div>
+                <div class="flag"><code>--query "DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus]"</code><div class="fl-desc">Shows only 3 columns: <b>ID, engine, status</b> — a clean table instead of a wall of JSON.</div></div>
+                <div class="flag"><code>--output table</code><div class="fl-desc">Pretty-prints the result as an ASCII table.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: ENDPOINT ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Grab the Endpoint — Your Database's Address</h3>
+                <div class="step-sub">Every app connects to a database via its endpoint</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> rds describe-db-instances <span class="fl">--query</span> <span class="st">"DBInstances[].Endpoint"</span> <span class="fl">--output</span> <span class="st">json</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📍</div>
+                <div>
+                  <b>What is an endpoint?</b>
+                  <p>A database is a service, so your app doesn't type an IP — it connects to a <strong>host:port</strong> called the <strong>endpoint</strong>. RDS gives every database one automatically. On Floci it's the address+port of the real postgres container it spun up for you.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal rds describe-db-instances --query \"DBInstances[].Endpoint\" --output json","delay":500},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    {","color":""},
+                  {"type":"out","text":"        \"Address\": \"172.17.0.2\",","color":""},
+                  {"type":"out","text":"        \"Port\": 7001","color":"ok"},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# your app will connect to 172.17.0.2:7001","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-location-dot"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>describe-db-instances --query "DBInstances[].Endpoint"</code><div class="fl-desc">Extracts the <b>Endpoint</b> object (address + port) from each database.</div></div>
+                <div class="flag"><code>--output json</code><div class="fl-desc">Prints it as JSON so you can copy the exact <b>host</b> and <b>port</b>.</div></div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-link"></i> How an app connects</div>
+                <pre><span class="a-blu">Your app</span> ──────────→ <span class="a-acc">172.17.0.2:7001</span> (endpoint)
+                                │
+                                ▼
+                          <span class="a-yel">PostgreSQL 16</span> (RDS-managed)
+                         user=admin  db=postgres</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: REAL SQL ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Run Real SQL Against Your Database</h3>
+                <div class="step-sub">The coolest part — it's a REAL postgres server</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Connect &amp; run SQL</div>
+                <pre>PGPASSWORD=adminpass123 <span class="kw">psql</span> <span class="fl">-h</span> 172.17.0.2 <span class="fl">-p</span> 7001 <span class="fl">-U</span> admin <span class="fl">-d</span> postgres
+
+<span class="kw">CREATE TABLE</span> users (id serial PRIMARY KEY, name text, email text);
+<span class="kw">INSERT INTO</span> users (name, email) <span class="kw">VALUES</span> ('Amit', 'amit@example.com');
+<span class="kw">SELECT</span> * <span class="kw">FROM</span> users;</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🎯</div>
+                <div>
+                  <b>Why this is a big deal</b>
+                  <p>This is not a simulation. Floci starts a <strong>real PostgreSQL container</strong>, so when you run these SQL commands you're talking to an actual database. You can create tables, insert rows, query — the exact skills you'd use on real AWS, for free, locally.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"psql -h 172.17.0.2 -p 7001 -U admin -d postgres","delay":400},
+                  {"type":"out","text":"Password for user admin:","color":"dim"},
+                  {"type":"out","text":"psql (16.3)","color":""},
+                  {"type":"out","text":"postgres=&gt; ","color":""},
+                  {"type":"cmd","text":"CREATE TABLE users (id serial PRIMARY KEY, name text, email text);","delay":450},
+                  {"type":"out","text":"CREATE TABLE","color":"ok"},
+                  {"type":"cmd","text":"INSERT INTO users (name, email) VALUES (&#39;Amit&#39;, &#39;amit@example.com&#39;);","delay":450},
+                  {"type":"out","text":"INSERT 0 1","color":"ok"},
+                  {"type":"cmd","text":"SELECT * FROM users;","delay":400},
+                  {"type":"out","text":" id | name |     email     ","color":""},
+                  {"type":"out","text":"----+------+---------------+","color":""},
+                  {"type":"out","text":"  1 | Amit | amit@example.com","color":"ok"},
+                  {"type":"out","text":"(1 row)","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-database"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the connection string</div>
+                <div class="flag"><code>psql</code><div class="fl-desc">The PostgreSQL command-line client.</div></div>
+                <div class="flag"><code>-h 172.17.0.2 -p 7001</code><div class="fl-desc"><b>Host</b> and <b>port</b> — the endpoint you grabbed in Step 3.</div></div>
+                <div class="flag"><code>-U admin -d postgres</code><div class="fl-desc">Log in as user <b>admin</b>, into the <b>postgres</b> database.</div></div>
+                <div class="flag"><code>PGPASSWORD=...</code><div class="fl-desc">Passes the password without typing it at the prompt.</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Need psql? Here's how</b>
+                On Linux: <code style="font-family:var(--mono)">sudo apt install postgresql-client</code>. On macOS: <code style="font-family:var(--mono)">brew install libpq</code>. If you don't have it, don't worry — the sim above shows the full flow, and the SQL concepts are identical in any tool.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Delete the Database</h3>
+                <div class="step-sub">Release it — remember, every running thing costs money</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> rds delete-db-instance <span class="fl">--db-instance-identifier</span> <span class="st">mydb</span> <span class="fl">--skip-final-snapshot</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>Why skip the final snapshot?</b>
+                  <p>By default, RDS takes a final backup before deleting (so you can restore later). We pass <code>--skip-final-snapshot</code> because this is a throwaway test database — no backup needed. Same habit as <code>terminate-instances</code> in Chapter 3: <em>create → use → delete</em>.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal rds delete-db-instance --db-instance-identifier mydb --skip-final-snapshot","delay":500},
+                  {"type":"out","text":"{\n    \"DBInstance\": {\n        \"DBInstanceIdentifier\": \"mydb\",\n        \"DBInstanceStatus\": \"deleting\"\n    }\n}","color":""},
+                  {"type":"out","text":"# deleting… the real postgres container is being stopped","color":"dim"},
+                  {"type":"cmd","text":"awslocal rds describe-db-instances --query \"DBInstances[].DBInstanceIdentifier\" --output text","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (empty again — all cleaned up)","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-trash"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>delete-db-instance --db-instance-identifier mydb</code><div class="fl-desc">Deletes the database named <code>mydb</code>.</div></div>
+                <div class="flag"><code>--skip-final-snapshot</code><div class="fl-desc">Don't take a final backup — we want it fully gone.</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete RDS flow — copy &amp; paste
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 1. Create a PostgreSQL database</span>
+awslocal rds create-db-instance --db-instance-identifier mydb --db-instance-class db.t3.micro --engine postgres --master-username admin --master-user-password adminpass123 --allocated-storage 20
+
+<span class="cmt"># 2. Watch it become available</span>
+awslocal rds describe-db-instances --query "DBInstances[].[DBInstanceIdentifier,Engine,DBInstanceStatus]" --output table
+
+<span class="cmt"># 3. Grab the endpoint (address:port)</span>
+awslocal rds describe-db-instances --query "DBInstances[].Endpoint" --output json
+
+<span class="cmt"># 4. Connect and run real SQL (replace host:port with your endpoint)</span>
+PGPASSWORD=adminpass123 psql -h 172.17.0.2 -p 7001 -U admin -d postgres
+<span class="cmt">#   then inside psql:
+#   CREATE TABLE users (id serial PRIMARY KEY, name text, email text);
+#   INSERT INTO users (name, email) VALUES ('Amit', 'amit@example.com');
+#   SELECT * FROM users;</span>
+
+<span class="cmt"># 5. Clean up</span>
+awslocal rds delete-db-instance --db-instance-identifier mydb --skip-final-snapshot</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — RDS in one picture</div>
+          <pre><span class="y">RDS</span> = a database <span class="b">hotel</span>, not a database <span class="o">tool shed</span>.
+
+   You bring:   the data, the schema, the SQL, the users
+   AWS brings:  the engine, patches, backups, failover, monitoring
+
+   <span class="b">create-db-instance</span>   → check in (pick engine + size)
+   <span class="b">describe-db-instances</span> → peek at the front desk (status/endpoint)
+   <span class="b">Endpoint</span>            → your room key (host:port)
+   <span class="b">psql</span>                → actually using the room (SQL)
+   <span class="b">delete-db-instance</span>  → check out</pre>
+        </div>
+      </section>
+
+      <!-- ============ HIGH AVAILABILITY ============ -->
+      <section class="sec" id="high-avail">
+        <h2><span class="ic gold"><i class="fa-solid fa-heart-circle-check"></i></span> Multi-AZ &amp; Read Replicas — Availability</h2>
+        <p>Two RDS features you'll hear constantly. They solve two different problems:</p>
+
+        <div class="grid-2" style="margin-top:1rem">
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-shield-heart"></i></div>
+            <h4>Multi-AZ — survive a disaster</h4>
+            <p>AWS runs a <strong>synchronous standby copy in a second Availability Zone</strong>. If the main database fails, AWS <strong>fails over automatically</strong> — your app keeps working, you do nothing. One checkbox at creation.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-clone"></i></div>
+            <h4>Read Replicas — scale reads</h4>
+            <p>Copy the data to more instances for <strong>read-only traffic</strong> (reports, analytics, dashboards). The main database stays focused on writes. Spreads load and improves performance.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-shield-heart"></i> Multi-AZ failover</div>
+          <pre>                <span class="a-acc">us-east-1a</span>              <span class="a-blu">us-east-1b</span>
+                 ┌──────────┐          ┌──────────┐
+                 │  PRIMARY │          │ STANDBY  │
+                 │  (writes)│ ────────→ │ (sync)   │
+                 └──────────┘  replica  └──────────┘
+                      │                      │
+                      └──── 💥 fails ────────┘
+                                   │
+                                   ▼
+              <span class="a-yel">AWS auto-fails-over → standby becomes primary</span>
+              Your app never noticed.</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Note for our course</b>
+          On Floci, <strong>read replicas</strong> and <strong>snapshots</strong> aren't implemented (I tested them). They work on real AWS exactly as described — but the core create/connect/SQL flow we practiced is 100% live here. Don't let the missing bonus features slow you down.
+        </div>
+      </section>
+
+      <!-- ============ BACKUPS ============ -->
+      <section class="sec" id="backups">
+        <h2><span class="ic green"><i class="fa-solid fa-cloud-arrow-up"></i></span> Backups &amp; Snapshots</h2>
+        <p>Data loss is the scariest thing in software. RDS protects you two ways:</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Feature</th><th>What it is</th><th>Automatic?</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Automated backups</strong></td><td>Daily snapshots + transaction logs for point-in-time recovery (restore to any second)</td><td><span class="ok-ic">Yes</span>, on by default (7 days retention by default)</td></tr>
+              <tr><td><strong>DB snapshots</strong></td><td>A manual, full backup you trigger yourself</td><td>You run it (<code>create-db-snapshot</code>)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🛟</div>
+          <div>
+            <b>Why this matters</b>
+            <p>A database is your source of truth — you can rebuild servers (Chapter 3), but you can't rebuild lost customer data. RDS's automatic backups mean a "oops I deleted the wrong row" moment is recoverable. On real AWS, always keep them on.</p>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 4</h2>
+        <div class="term"><span class="t-name">RDS</span><p>Relational Database Service — AWS's managed relational database offering.</p></div>
+        <div class="term"><span class="t-name">Relational database</span><p>Stores data in tables with rows/columns, linked by keys, queried with SQL.</p></div>
+        <div class="term"><span class="t-name">SQL</span><p>Structured Query Language — the language used to talk to relational databases.</p></div>
+        <div class="term"><span class="t-name">DB instance</span><p>A single managed database ("mydb"), like an EC2 instance but for data.</p></div>
+        <div class="term"><span class="t-name">Endpoint</span><p>The <code>host:port</code> your app uses to connect to the database.</p></div>
+        <div class="term"><span class="t-name">Engine</span><p>The database software: postgres, mysql, mariadb, aurora, oracle, sqlserver.</p></div>
+        <div class="term"><span class="t-name">Multi-AZ</span><p>Synchronous standby in another AZ with automatic failover (availability).</p></div>
+        <div class="term"><span class="t-name">Read replica</span><p>A read-only copy to spread read traffic and scale.</p></div>
+        <div class="term"><span class="t-name">Snapshot</span><p>A manual, full backup you can restore from.</p></div>
+        <div class="term"><span class="t-name">Aurora</span><p>AWS's cloud-native database engine, MySQL/Postgres compatible.</p></div>
+        <div class="term"><span class="t-name">Master user</span><p>The superuser account RDS creates when you provision the database.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 4 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> What does <strong>RDS</strong> give you over running a database yourself on EC2?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Root SSH access to the database machine</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> Managed backups, patches, and failover — AWS runs the database for you</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Free unlimited storage</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> Which flag chooses the database software (e.g. postgres)?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> <code style="color:var(--accent-2)">--image-id</code></label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> <code style="color:var(--accent-2)">--engine</code></label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> <code style="color:var(--accent-2)">--instance-type</code></label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> How does your app <strong>find</strong> the database to connect to?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> It guesses by name</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> Via the <strong>endpoint</strong> (host:port) returned by <code>describe-db-instances</code></label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> By scanning the VPC</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> Which feature gives you <strong>automatic failover</strong> if your database fails?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> A read replica</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> Multi-AZ deployment</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> A bigger instance class</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> What's the difference between a <strong>read replica</strong> and <strong>Multi-AZ</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> They're the same thing</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> Read replica scales reads; Multi-AZ provides automatic failover</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> Multi-AZ is faster for queries</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> Why is <code style="color:var(--accent-2)">--skip-final-snapshot</code> safe for a test database?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Because snapshots are always kept anyway</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> Because the database is throwaway — we don't need to restore it later</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> It speeds up the database</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-03.html"><i class="fa-solid fa-arrow-left"></i> Ch 3: EC2 — Compute</a>
+          <a href="chapter-05.html">Next: IAM — Identity &amp; Access <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 4 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

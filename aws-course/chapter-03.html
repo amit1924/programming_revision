@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 3 — EC2: Compute | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html" class="active"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 3 — Contents</h4>
+      <a href="#what-is-ec2">What Is EC2?</a>
+      <a href="#ami">AMIs — the Recipe</a>
+      <a href="#types">Instance Types</a>
+      <a href="#key-pairs">Key Pairs — Your Keys</a>
+      <a href="#sg">Security Groups (recap)</a>
+      <a href="#user-data">User Data — Auto-Setup</a>
+      <a href="#pricing">Pricing Models</a>
+      <a href="#building">Launch an EC2 with Floci</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 3 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="3" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-server"></i> Chapter 3</span>
+        <h1>EC2 — Elastic Compute Cloud</h1>
+        <p class="subtitle">This is where the cloud stops being a theory and becomes a machine you own. <strong>EC2 gives you virtual servers</strong> — computers running Linux or Windows — that appear in seconds, cost pennies, and scale forever. By the end, you'll launch your first real instance on Floci and SSH into it.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~35 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 7 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-bolt"></i> The heart of AWS</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#what-is-ec2">What Is EC2?</a>
+        <a href="#ami">AMIs — the Recipe</a>
+        <a href="#types">Instance Types</a>
+        <a href="#key-pairs">Key Pairs — Your Keys</a>
+        <a href="#sg">Security Groups (recap)</a>
+        <a href="#user-data">User Data — Auto-Setup</a>
+        <a href="#pricing">Pricing Models</a>
+        <a href="#building">Launch an EC2 with Floci</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 3 Quiz</a>
+      </div>
+
+      <!-- ============ WHAT IS EC2 ============ -->
+      <section class="sec" id="what-is-ec2">
+        <h2><span class="ic"><i class="fa-solid fa-server"></i></span> What Is EC2?</h2>
+        <p><strong>EC2 (Elastic Compute Cloud)</strong> is AWS's virtual server service. You ask AWS for a computer, and it hands you one — an <strong>instance</strong> — with the CPU, memory, and disk you chose, running the operating system you chose, placed in the network you built in Chapter 2. In seconds.</p>
+
+        <div class="concept" style="margin-top:1.2rem">
+          <div class="c-emo">💻</div>
+          <div>
+            <b>Instance = a virtual machine</b>
+            <p>An instance is a computer running on AWS's physical hardware, isolated from all other customers. It behaves exactly like a real machine: it has an OS, you can install software, run services, open ports — but it's created with a command and destroyed with a command.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-house"></i> Where an EC2 lives (from Chapter 2)</div>
+          <pre>🌍 Region (us-east-1)
+ └── 🏙️ VPC 10.0.0.0/16
+      └── 🏘️ Public subnet 10.0.1.0/24
+           └── <span class="a-acc">💻 EC2 instance</span>  ← the computer you rent
+                ├── CPU + RAM (you pick the size)
+                ├── OS (Amazon Linux / Ubuntu / Windows)
+                └── 🛡️ Security Group (who can reach it)</pre>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Why "Elastic"?</b>
+            You can <strong>scale up</strong> (bigger instance), <strong>scale out</strong> (more instances), and <strong>scale down</strong> (fewer / smaller) — any time, automatically or by hand. Elastic = your computing can stretch like a rubber band, and you only pay for the stretched amount.
+          </div>
+        </div>
+
+        <h3><i class="h-ic fa-solid fa-magnifying-glass"></i> Look at your instances with Floci</h3>
+        <p>Right now your account has zero instances. Let me prove it:</p>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"awslocal ec2 describe-instances","delay":500},
+            {"type":"out","text":"{\n    \"Reservations\": []\n}","color":""},
+            {"type":"out","text":"","color":""},
+            {"type":"out","text":"# empty = no servers running yet. Let us fix that.","color":"dim"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-server"></i> List your EC2 instances (none yet)</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ AMI ============ -->
+      <section class="sec" id="ami">
+        <h2><span class="ic blue"><i class="fa-solid fa-receipt"></i></span> AMIs — the Recipe for Your Server</h2>
+        <p>When you create an EC2 instance, AWS needs to know <strong>what operating system and software to install</strong>. You answer that with an <strong>AMI — Amazon Machine Image</strong>. Think of it as a <strong>recipe + photo of the hard drive</strong>: "a fresh Amazon Linux 2 with these settings."</p>
+
+        <div class="concept">
+          <div class="c-emo">🧑‍🍳</div>
+          <div>
+            <b>The recipe analogy</b>
+            <p>An AMI is like a baking recipe card. The <strong>instance</strong> is the cake you bake using it. The same AMI can bake any number of cakes (instances), each an exact copy. AWS pre-bakes many popular AMIs: Amazon Linux, Ubuntu, Windows Server — or you can save your own customized AMI and re-use it.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-receipt"></i> AMI → Instances</div>
+          <pre><span class="a-yel">AMI (the recipe)</span>
+ amzn2-ami-...-x86_64-gp2
+ │
+ ├── 🎂 Instance 1   (same OS, same settings)
+ ├── 🎂 Instance 2
+ └── 🎂 Instance 3  ...as many as you want</pre>
+        </div>
+
+        <h3><i class="h-ic fa-solid fa-magnifying-glass"></i> See the AMIs Floci gives you</h3>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"awslocal ec2 describe-images --query \"Images[:3].[ImageId,Name]\" --output text","delay":500},
+            {"type":"out","text":"ami-0abcdef1234567890    amzn2-ami-hvm-2.0.20230404.0-x86_64-gp2","color":""},
+            {"type":"out","text":"ami-0abcdef1234567891    al2023-ami-2023.0.20230315.0-kernel-6.1-x86_64","color":""},
+            {"type":"out","text":"ami-0abcdef1234567892    ubuntu/images/hvm-ssd/ubuntu-focal-20.04-amd64-server","color":""},
+            {"type":"out","text":"","color":""},
+            {"type":"out","text":"# 3 ready-made operating systems to choose from","color":"dim"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-receipt"></i> List available AMIs</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+
+        <div class="flags">
+          <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+          <div class="flag"><code>describe-images</code><div class="fl-desc">The action: "show me all the AMIs I can launch."</div></div>
+          <div class="flag"><code>--query "Images[:3].[ImageId,Name]"</code><div class="fl-desc">Take the first 3 images (<code>[:3]</code>), and for each show just the <b>ImageId</b> and <b>Name</b> — a table, not a huge JSON blob.</div></div>
+          <div class="flag"><code>--output text</code><div class="fl-desc">Print as clean text columns.</div></div>
+        </div>
+      </section>
+
+      <!-- ============ INSTANCE TYPES ============ -->
+      <section class="sec" id="types">
+        <h2><span class="ic green"><i class="fa-solid fa-microchip"></i></span> Instance Types — Picking the Engine Size</h2>
+        <p>An AMI says <em>what OS</em>. The <strong>instance type</strong> says <em>how big the computer is</em> — how many CPUs, how much RAM, what kind of storage. AWS names them like <code style="color:var(--accent-2)">t2.micro</code>: a <strong>family letter</strong> + <strong>generation number</strong> + <strong>size</strong>.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Name part</th><th>Meaning</th><th>Example</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>t</code> / <code>m</code> / <code>c</code> / <code>r</code></td><td>Family: t=cheap "burst", m=general, c=compute-heavy, r=RAM-heavy</td><td><code>t2</code>, <code>m5</code>, <code>c5</code>, <code>r6</code></td></tr>
+              <tr><td><code>2</code>/<code>3</code>/<code>5</code>/<code>6</code></td><td>Generation (newer = better hardware)</td><td><code>t2</code> vs <code>t3</code></td></tr>
+              <tr><td><code>micro</code>/<code>small</code>/<code>large</code></td><td>Size = how much CPU/RAM</td><td><code>micro</code> = 1 vCPU, 1 GB</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-star tip-ic"></i>The one you'll use forever: t2.micro</b>
+          <code style="font-family:var(--mono)">t2.micro</code> = 1 vCPU + 1 GB RAM — the smallest, cheapest, and the classic <strong>AWS free-tier</strong> instance. Perfect for learning. Every course and tutorial uses it.
+        </div>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"awslocal ec2 describe-instance-types --query \"InstanceTypes[:3].InstanceType\" --output text","delay":500},
+            {"type":"out","text":"t2.micro","color":""},
+            {"type":"out","text":"t3.micro","color":""},
+            {"type":"out","text":"t3.small","color":""},
+            {"type":"out","text":"","color":""},
+            {"type":"out","text":"# Floci offers real AWS instance types","color":"dim"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-microchip"></i> List available instance types</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ KEY PAIRS ============ -->
+      <section class="sec" id="key-pairs">
+        <h2><span class="ic gold"><i class="fa-solid fa-key"></i></span> Key Pairs — the Key to Your Server</h2>
+        <p>Your server needs to know <strong>who you are</strong> when you connect over SSH. Instead of passwords (which bots brute-force), Linux servers use <strong>key pair authentication</strong>: a matched pair of files.</p>
+
+        <div class="grid-2" style="margin-top:1rem">
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-key"></i></div>
+            <h4>Private key</h4>
+            <p>The file AWS <strong>downloads for you</strong> (<code style="font-family:var(--mono)">demo-key.pem</code>). You keep it secret. It proves "I am me."</p>
+          </div>
+          <div class="card">
+            <div class="c-ic o"><i class="fa-solid fa-lock-open"></i></div>
+            <h4>Public key</h4>
+            <p>AWS <strong>installs this on the server</strong> at launch. The server checks your private key against it when you try to log in.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-key"></i> How SSH key auth works</div>
+          <pre>You                          Server (EC2)
+ │  private key demo-key.pem    │  has your public key
+ │                              │
+ │  ssh -i demo-key.pem ...     │
+ │ ────────────────────────────→ │  "prove you have the
+ │ ←──────────────────────────── │   matching private key"
+ │  (only the real private key   │
+ │   can answer correctly)       │
+ ✓  Connected, safe, no password</pre>
+        </div>
+
+        <div class="highlight err">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Two rules to never break</b>
+          <strong>1.</strong> AWS shows the private key only <em>once</em> at creation — if you lose it, you can't SSH in. <strong>2.</strong> On Linux/macOS set permissions <code style="font-family:var(--mono)">chmod 400 demo-key.pem</code> or SSH refuses to use the key. We'll do both.
+        </div>
+
+        <h3><i class="h-ic fa-solid fa-key"></i> Create a key pair with Floci</h3>
+        <p>This is Step 1 of every server you'll ever build in AWS:</p>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"awslocal ec2 create-key-pair --key-name demo-key --query \"KeyMaterial\" --output text > demo-key.pem","delay":500},
+            {"type":"out","text":"","color":""},
+            {"type":"out","text":"# the private key was written to demo-key.pem","color":"dim"},
+            {"type":"cmd","text":"chmod 400 demo-key.pem","delay":350},
+            {"type":"out","text":"","color":""},
+            {"type":"cmd","text":"awslocal ec2 describe-key-pairs --query \"KeyPairs[].KeyName\" --output text","delay":450},
+            {"type":"out","text":"demo-key","color":"ok"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-key"></i> Create a key pair (create → chmod → verify)</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+
+        <div class="flags">
+          <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+          <div class="flag"><code>create-key-pair --key-name demo-key</code><div class="fl-desc">Creates a new key pair named <code>demo-key</code> and returns the <b>private key text</b>.</div></div>
+          <div class="flag"><code>--query "KeyMaterial" --output text &gt; demo-key.pem</code><div class="fl-desc">Extracts just the private key (<code>KeyMaterial</code>) and <b>redirects it into a file</b> with <code>&gt;</code>.</div></div>
+          <div class="flag"><code>chmod 400 demo-key.pem</code><div class="fl-desc">Makes the file <b>read-only by you</b>. SSH refuses keys that are too permissive (security).</div></div>
+        </div>
+      </section>
+
+      <!-- ============ SG ============ -->
+      <section class="sec" id="sg">
+        <h2><span class="ic blue"><i class="fa-solid fa-shield-halved"></i></span> Security Groups — Who Can Reach Your Server</h2>
+        <p>Remember the bodyguard from Chapter 2? Now it protects your actual server. A security group attached to your instance decides <strong>which ports are open from where</strong>. By default: <strong>nothing in, everything out</strong>. You must explicitly open the ports you need.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Port</th><th>Service</th><th>Why you open it</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>22</code></td><td>SSH</td><td>Log into a Linux server (NEVER to 0.0.0.0/0 in real life)</td></tr>
+              <tr><td><code>80</code></td><td>HTTP</td><td>Serve a website to the world</td></tr>
+              <tr><td><code>443</code></td><td>HTTPS</td><td>Serve a secure website</td></tr>
+              <tr><td><code>3306</code></td><td>MySQL</td><td>Database access (usually restricted to specific IPs)</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sim"
+          data-steps='[
+            {"type":"cmd","text":"SG=$(awslocal ec2 create-security-group --group-name web-sg --description \"Web SG\" --query \"GroupId\" --output text)","delay":500},
+            {"type":"out","text":"# security group created: sg-...","color":"dim"},
+            {"type":"cmd","text":"awslocal ec2 authorize-security-group-ingress --group-id $SG --protocol tcp --port 22 --cidr 0.0.0.0/0","delay":450},
+            {"type":"out","text":"{\n    \"Return\": true\n}","color":"ok"},
+            {"type":"cmd","text":"awslocal ec2 authorize-security-group-ingress --group-id $SG --protocol tcp --port 80 --cidr 0.0.0.0/0","delay":450},
+            {"type":"out","text":"{\n    \"Return\": true\n}","color":"ok"},
+            {"type":"out","text":"# port 22 (SSH) + port 80 (HTTP) now open","color":"dim"}
+          ]'>
+          <div class="sim-head">
+            <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+            <span class="sim-title"><i class="fa-solid fa-shield-halved"></i> Create a SG and open SSH + HTTP</span>
+          </div>
+          <div class="sim-body"></div>
+          <div class="sim-actions">
+            <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+            <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ USER DATA ============ -->
+      <section class="sec" id="user-data">
+        <h2><span class="ic green"><i class="fa-solid fa-wand-magic-sparkles"></i></span> User Data — Auto-Configure Your Server</h2>
+        <p>A fresh server is empty. You don't want to log in and manually install everything every time. <strong>User data</strong> is a script AWS runs <strong>automatically the first time your instance boots</strong>. It turns "launch a server" into "launch a server that is already set up."</p>
+
+        <div class="concept">
+          <div class="c-emo">🎁</div>
+          <div>
+            <b>The one-time startup script</b>
+            <p>You pass a shell script as <strong>user data</strong>. On the first boot, the OS runs it as root. This is how modern teams bake configuration into instances — no manual clicking. (We'll meet this again in ECS and with tools like <strong>Terraform</strong>, where whole servers are built this way.)</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-wand-magic-sparkles"></i> What user data does</div>
+          <pre>  awslocal ec2 run-instances \
+     --user-data <span class="a-yel">"#!/bin/bash
+     yum install -y httpd
+     echo hello &gt; /var/www/html/index.html"</span>
+     │
+     ▼  (instance boots)
+┌──────────────────────────────┐
+│  1. Server starts up         │
+│  2. AWS runs your script     │  ← automatic
+│  3. Apache installed ✅      │
+│  4. Website content written  │
+└──────────────────────────────┘
+  Ready to serve — no manual steps!</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Note for our course</b>
+          User data works on <strong>real EC2</strong>. On Floci the script is <strong>accepted</strong> (the instance remembers it) but the OS inside isn't actually booted, so the install doesn't run. The commands and outputs are real; the script is the real-world setup you'd use on AWS. We teach the exact syntax now so it's yours forever.
+        </div>
+      </section>
+
+      <!-- ============ PRICING ============ -->
+      <section class="sec" id="pricing">
+        <h2><span class="ic pink"><i class="fa-solid fa-tags"></i></span> EC2 Pricing Models</h2>
+        <p>EC2 pricing is a classic interview + exam topic. Four main ways to pay for a server:</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Model</th><th>Pay</th><th>Best for</th><th>Cost</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>On-Demand</strong></td><td>Per second/hour, no commitment</td><td>Short, unpredictable workloads; learning</td><td>Highest per-hour</td></tr>
+              <tr><td><strong>Reserved / Savings Plan</strong></td><td>1–3 year commitment</td><td>Steady, predictable servers</td><td>Up to ~70% cheaper</td></tr>
+              <tr><td><strong>Spot</strong></td><td>Bid on spare capacity</td><td>Fault-tolerant batch jobs (2am render jobs)</td><td>Up to ~90% cheaper (can be reclaimed anytime)</td></tr>
+              <tr><td><strong>Dedicated Host</strong></td><td>Rent a whole physical server</td><td>Licensing / compliance needs</td><td>Most expensive</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-gift tip-ic"></i>For this course</b>
+          You'll use <strong>On-Demand</strong> against Floci — and it costs <strong>$0.00</strong>, because Floci emulates everything locally. When you try real AWS, the free tier gives you <strong>750 hours of t2.micro</strong> every month for a year — basically free forever for learning.
+        </div>
+      </section>
+
+      <!-- ============ BUILD ============ -->
+      <section class="sec" id="building">
+        <h2><span class="ic gold"><i class="fa-solid fa-hammer"></i></span> Launch Your First EC2 — Command by Command</h2>
+        <p>Time to combine everything. We'll create a key pair, open SSH+HTTP, and <strong>launch an actual instance</strong> on Floci — exactly the 4 steps you'd take on real AWS. Every command below works against your Floci right now (I verified them).</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: KEY PAIR ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Create Your Key Pair</h3>
+                <div class="step-sub">The key that lets you SSH into the server</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> ec2 create-key-pair <span class="fl">--key-name</span> <span class="st">demo-key</span> <span class="fl">--query</span> <span class="st">"KeyMaterial"</span> <span class="fl">--output</span> <span class="st">text</span> <span class="fl">&gt;</span> demo-key.pem
+
+<span class="kw">chmod</span> <span class="st">400</span> demo-key.pem</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🤔</div>
+                <div>
+                  <b>What is a key pair?</b>
+                  <p>A matched pair of cryptographic keys. AWS keeps the <strong>public key</strong> (installed on your server), and you keep the <strong>private key</strong> (in <code>demo-key.pem</code>). When you SSH in, your private key proves you're allowed — no password needed.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ec2 create-key-pair --key-name demo-key --query \"KeyMaterial\" --output text > demo-key.pem","delay":500},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# private key saved to demo-key.pem (shown to you only ONCE)","color":"dim"},
+                  {"type":"cmd","text":"chmod 400 demo-key.pem","delay":350},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# permissions locked down — SSH will now accept the key","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-key"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>awslocal ec2 create-key-pair --key-name demo-key</code><div class="fl-desc">Asks AWS to create a new key pair called <code>demo-key</code> and <b>return the private key text</b>.</div></div>
+                <div class="flag"><code>--query "KeyMaterial" --output text &gt; demo-key.pem</code><div class="fl-desc">Grabs just the private key (<code>KeyMaterial</code>) and redirects it (<code>&gt;</code>) into a file. This is the <b>only time</b> AWS shows it.</div></div>
+                <div class="flag"><code>chmod 400 demo-key.pem</code><div class="fl-desc">Sets file permissions to <b>read-only, owner only</b>. SSH refuses loose permissions — this is mandatory.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: SECURITY GROUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Create a Security Group</h3>
+                <div class="step-sub">The bodyguard deciding who can knock on the door</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">SG</span>=<span class="var">$(</span><span class="kw">awslocal</span> ec2 create-security-group <span class="fl">--group-name</span> <span class="st">web-sg</span> <span class="fl">--description</span> <span class="st">"Web SG"</span> <span class="fl">--query</span> <span class="st">"GroupId"</span> <span class="fl">--output</span> <span class="st">text</span><span class="var">)</span>
+
+<span class="kw">awslocal</span> ec2 authorize-security-group-ingress <span class="fl">--group-id</span> <span class="var">$SG</span> <span class="fl">--protocol</span> <span class="st">tcp</span> <span class="fl">--port</span> <span class="st">22</span> <span class="fl">--cidr</span> <span class="st">0.0.0.0/0</span>
+<span class="kw">awslocal</span> ec2 authorize-security-group-ingress <span class="fl">--group-id</span> <span class="var">$SG</span> <span class="fl">--protocol</span> <span class="st">tcp</span> <span class="fl">--port</span> <span class="st">80</span> <span class="fl">--cidr</span> <span class="st">0.0.0.0/0</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🛡️</div>
+                <div>
+                  <b>What is a security group?</b>
+                  <p>A firewall attached to your instance. It's <strong>stateful</strong>: allowed-in traffic's replies flow back automatically. Default: deny all inbound. We open <strong>port 22 (SSH)</strong> so we can log in, and <strong>port 80 (HTTP)</strong> so the server can serve a website.</p>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>create-security-group --group-name web-sg --description "Web SG"</code><div class="fl-desc">Creates the empty firewall in your account. Returns a <code>GroupId</code> (sg-...) stored in <code>$SG</code>.</div></div>
+                <div class="flag"><code>authorize-security-group-ingress --group-id $SG</code><div class="fl-desc">Adds an inbound rule ("ingress" = incoming) to the group <code>$SG</code>.</div></div>
+                <div class="flag"><code>--protocol tcp --port 22 --cidr 0.0.0.0/0</code><div class="fl-desc">"Allow TCP <b>port 22</b> from <b>anywhere</b>." (<code>0.0.0.0/0</code> = the whole internet.)</div></div>
+                <div class="flag"><code>--port 80 ... --cidr 0.0.0.0/0</code><div class="fl-desc">Second rule: allow <b>port 80 (HTTP)</b> from anywhere — so browsers can load your site.</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Real-world habit</b>
+                Never open port 22 to <code>0.0.0.0/0</code> on a real server — bots scan the whole internet for open SSH. Use <code style="font-family:var(--mono)">--cidr YOUR_IP/32</code> instead. We open it here only to show syntax; on Floci nothing is listening anyway.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: LAUNCH INSTANCE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Launch the Instance</h3>
+                <div class="step-sub">The magic moment — a real server, in seconds</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">IID</span>=<span class="var">$(</span><span class="kw">awslocal</span> ec2 run-instances <span class="fl">--image-id</span> <span class="st">ami-0abcdef1234567890</span> <span class="fl">--instance-type</span> <span class="st">t2.micro</span> <span class="fl">--key-name</span> <span class="st">demo-key</span> <span class="fl">--security-group-ids</span> <span class="var">$SG</span> <span class="fl">--query</span> <span class="st">"Instances[0].InstanceId"</span> <span class="fl">--output</span> <span class="st">text</span><span class="var">)</span>
+
+<span class="kw">echo</span> <span class="st">"$IID"</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🚀</div>
+                <div>
+                  <b>What does run-instances do?</b>
+                  <p>This is the one command that <strong>creates your server</strong>. It takes the AMI (which OS), the instance type (how big), the key pair (who can log in), and the security group (who can reach it) — and hands you a running computer. AWS returns an <strong>instance ID</strong> (<code>i-...</code>).</p>
+                </div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-cube"></i> What you just assembled</div>
+                <pre><span class="a-blu">AMI</span>     ami-0abcdef1234567890  (Amazon Linux 2)
+<span class="a-blu">Type</span>    t2.micro               (1 vCPU / 1 GB — free tier)
+<span class="a-blu">Key</span>     demo-key               (your SSH login key)
+<span class="a-blu">SG</span>      web-sg                 (SSH + HTTP open)
+   │
+   ▼
+<span class="a-acc">💻 i-0a1b2c3d...</span>  ← your server, launching now</pre>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ec2 run-instances --image-id ami-0abcdef1234567890 --instance-type t2.micro --key-name demo-key --security-group-ids $SG --query \"Instances[0].InstanceId\" --output text","delay":600},
+                  {"type":"out","text":"i-a889ff5593aae7e14","color":"ok"},
+                  {"type":"out","text":"# your instance ID — every future command uses $IID","color":"dim"},
+                  {"type":"cmd","text":"awslocal ec2 describe-instances --instance-ids $IID --query \"Reservations[].Instances[].[InstanceId,State.Name,InstanceType]\" --output text","delay":500},
+                  {"type":"out","text":"i-a889ff5593aae7e14    pending    t2.micro","color":""},
+                  {"type":"out","text":"# state = pending, becoming running…","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-rocket"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>run-instances</code><div class="fl-desc">The action: "launch a new server." It's the EC2 equivalent of "power on a machine."</div></div>
+                <div class="flag"><code>--image-id ami-0abcdef1234567890</code><div class="fl-desc">Which <b>AMI</b> (operating system) to use — here Amazon Linux 2.</div></div>
+                <div class="flag"><code>--instance-type t2.micro</code><div class="fl-desc">How big: <b>1 vCPU + 1 GB RAM</b>, the classic free-tier size.</div></div>
+                <div class="flag"><code>--key-name demo-key</code><div class="fl-desc">Which <b>key pair</b> to install so you can SSH in.</div></div>
+                <div class="flag"><code>--security-group-ids $SG</code><div class="fl-desc">Which <b>firewall</b> to attach (the one we opened for SSH + HTTP).</div></div>
+                <div class="flag"><code>--query "Instances[0].InstanceId"</code><div class="fl-desc">The response lists instances; grab the <b>first one's ID</b> and store it in <code>$IID</code>.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: VERIFY + CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Verify, Then Clean Up</h3>
+                <div class="step-sub">Check your server — then release it so you stop "paying"</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> ec2 describe-instances <span class="fl">--instance-ids</span> <span class="var">$IID</span> <span class="fl">--query</span> <span class="st">"Reservations[].Instances[].[InstanceId,State.Name,PublicIpAddress]"</span> <span class="fl">--output</span> <span class="st">text</span>
+
+<span class="kw">awslocal</span> ec2 terminate-instances <span class="fl">--instance-ids</span> <span class="var">$IID</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>Why clean up?</b>
+                  <p>Every running instance is a meter that keeps counting. The cloud's promise is <strong>pay only for what you run</strong> — so when you're done, <strong>terminate</strong>. On Floci it's free anyway, but the habit is the same: <em>launch → use → terminate</em>.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal ec2 describe-instances --instance-ids $IID --query \"Reservations[].Instances[].[InstanceId,State.Name,PublicIpAddress]\" --output text","delay":500},
+                  {"type":"out","text":"i-a889ff5593aae7e14    running    None","color":"ok"},
+                  {"type":"out","text":"# state = running! Your server is alive.","color":"dim"},
+                  {"type":"cmd","text":"awslocal ec2 terminate-instances --instance-ids $IID","delay":500},
+                  {"type":"out","text":"{\n    \"TerminatingInstances\": [\n        {\n            \"CurrentState\": {\"Name\": \"shutting-down\"}\n        }\n    ]\n}","color":""},
+                  {"type":"out","text":"# shutting down — the meter is stopping","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-circle-check"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>describe-instances --instance-ids $IID</code><div class="fl-desc">"Tell me about this specific server." We read off its <b>state</b> (pending → running) and <b>public IP</b>.</div></div>
+                <div class="flag"><code>terminate-instances --instance-ids $IID</code><div class="fl-desc">Permanently deletes the server. On real AWS this <b>stops the bill</b>. There is no "undo" — but that's the point of the cloud.</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-check tip-ic"></i>Your mental architecture now</b>
+                <div style="font-family:var(--mono);font-size:.86rem;line-height:1.8;margin-top:.4rem">
+                  KEY PAIR (demo-key.pem)  →  who can log in<br>
+                  SECURITY GROUP (web-sg)   →  SSH(22) + HTTP(80) open<br>
+                  AMI (Amazon Linux 2)      →  the operating system<br>
+                  TYPE (t2.micro)           →  the engine size<br>
+                  &nbsp;&nbsp;│<br>
+                  &nbsp;&nbsp;▼<br>
+                  💻 INSTANCE (i-...)  →  your server, alive &amp; billable
+                </div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete EC2 build — copy &amp; paste everything at once
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 1. Key pair (your SSH key)</span>
+awslocal ec2 create-key-pair --key-name demo-key --query "KeyMaterial" --output text > demo-key.pem
+chmod 400 demo-key.pem
+
+<span class="cmt"># 2. Security group — open SSH + HTTP</span>
+SG=$(awslocal ec2 create-security-group --group-name web-sg --description "Web SG" --query "GroupId" --output text)
+awslocal ec2 authorize-security-group-ingress --group-id $SG --protocol tcp --port 22 --cidr 0.0.0.0/0
+awslocal ec2 authorize-security-group-ingress --group-id $SG --protocol tcp --port 80 --cidr 0.0.0.0/0
+
+<span class="cmt"># 3. Launch the instance</span>
+IID=$(awslocal ec2 run-instances --image-id ami-0abcdef1234567890 --instance-type t2.micro --key-name demo-key --security-group-ids $SG --query "Instances[0].InstanceId" --output text)
+echo "$IID"
+
+<span class="cmt"># 4. Check it's running, then clean up</span>
+awslocal ec2 describe-instances --instance-ids $IID --query "Reservations[].Instances[].[InstanceId,State.Name]" --output text
+awslocal ec2 terminate-instances --instance-ids $IID</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — an EC2 is a pizza, ordered by command</div>
+          <pre><span class="y">AMI</span>         = the recipe (Amazon Linux / Ubuntu / Windows)
+<span class="y">Instance</span>     = the pizza (your server)
+<span class="y">Type</span>         = the size (t2.micro = small, m5.large = big)
+<span class="y">Key pair</span>    = the key to the delivery box (SSH)
+<span class="y">Security grp</span> = who's allowed at the door (firewall)
+<span class="y">User data</span>   = the note "extra cheese" (startup script)
+<span class="y">Terminate</span>    = eating it (you stop paying!)</pre>
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 3</h2>
+        <div class="term"><span class="t-name">EC2</span><p>AWS's virtual server service. "Elastic Compute Cloud."</p></div>
+        <div class="term"><span class="t-name">Instance</span><p>A single virtual machine you rent, with chosen CPU, RAM, OS.</p></div>
+        <div class="term"><span class="t-name">AMI</span><p>Amazon Machine Image — a snapshot/recipe of an OS you launch instances from.</p></div>
+        <div class="term"><span class="t-name">Instance type</span><p>The size of the machine (CPU/RAM), e.g. <code>t2.micro</code>.</p></div>
+        <div class="term"><span class="t-name">Key pair</span><p>A private/public key pair used for SSH login without passwords.</p></div>
+        <div class="term"><span class="t-name">Security Group</span><p>A stateful firewall attached to instances. Allow rules only.</p></div>
+        <div class="term"><span class="t-name">User data</span><p>A shell script AWS runs automatically on the instance's first boot.</p></div>
+        <div class="term"><span class="t-name">On-Demand</span><p>Pay per second/hour with no commitment. Most flexible, most expensive.</p></div>
+        <div class="term"><span class="t-name">Spot Instance</span><p>Bid on spare capacity for up to ~90% off; AWS can reclaim anytime.</p></div>
+        <div class="term"><span class="t-name">SSH</span><p>Secure Shell — the protocol to securely log into a Linux server.</p></div>
+        <div class="term"><span class="t-name">Instance ID</span><p>Unique identifier for your server (<code>i-...</code>), used in every command.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 3 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> What does <strong>EC2</strong> provide?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> A managed NoSQL database</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> Virtual servers (instances) you rent and configure yourself</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> A content delivery network</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> An <strong>AMI</strong> is best described as:</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> The CPU model of your server</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> A recipe/snapshot of an operating system you launch instances from</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> A firewall rule</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> Which is the smallest / free-tier classic instance type?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> m5.large</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> t2.micro</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> c5.24xlarge</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> What do you need to SSH into a Linux EC2 instance?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Just a username and password</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> The private key file (demo-key.pem) matching the key pair you chose at launch</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> A public IP assigned by the DNS server</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> By default, a security group attached to an instance allows:</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> All inbound traffic</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> No inbound traffic (you open ports explicitly)</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> Only HTTPS traffic</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> <strong>User data</strong> is:</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Data you store in a database for users</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> A script AWS runs automatically the first time your instance boots</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> A backup of your instance's hard drive</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> Which command <strong>launches</strong> an EC2 instance?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> <code style="color:var(--accent-2)">awslocal ec2 create-instance</code></label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> <code style="color:var(--accent-2)">awslocal ec2 run-instances --image-id ... --instance-type t2.micro</code></label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> <code style="color:var(--accent-2)">awslocal ec2 start-machine</code></label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-02.html"><i class="fa-solid fa-arrow-left"></i> Ch 2: Networking — VPC</a>
+          <a href="chapter-04.html">Next: RDS — Databases <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 3 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

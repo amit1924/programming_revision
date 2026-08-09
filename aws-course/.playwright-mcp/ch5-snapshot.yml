@@ -1,0 +1,981 @@
+- generic [active] [ref=e1]:
+  - navigation [ref=e2]:
+    - generic [ref=e3]:
+      - link " Master AWS" [ref=e4] [cursor=pointer]:
+        - /url: index.html
+        - generic [ref=e5]: 
+        - generic [ref=e7]: Master AWS
+      - generic [ref=e8]:
+        - link " Home" [ref=e9] [cursor=pointer]:
+          - /url: index.html
+          - generic [ref=e10]: 
+          - text: Home
+        - link " Ch 1" [ref=e11] [cursor=pointer]:
+          - /url: chapter-01.html
+          - generic [ref=e12]: 
+          - text: Ch 1
+        - link " Ch 2" [ref=e13] [cursor=pointer]:
+          - /url: chapter-02.html
+          - generic [ref=e14]: 
+          - text: Ch 2
+        - link " Ch 3" [ref=e15] [cursor=pointer]:
+          - /url: chapter-03.html
+          - generic [ref=e16]: 
+          - text: Ch 3
+        - link " Ch 4" [ref=e17] [cursor=pointer]:
+          - /url: chapter-04.html
+          - generic [ref=e18]: 
+          - text: Ch 4
+        - link " Ch 5" [ref=e19] [cursor=pointer]:
+          - /url: chapter-05.html
+          - generic [ref=e20]: 
+          - text: Ch 5
+        - link " Ch 6" [ref=e21] [cursor=pointer]:
+          - /url: chapter-06.html
+          - generic [ref=e22]: 
+          - text: Ch 6
+        - link " Ch 7" [ref=e23] [cursor=pointer]:
+          - /url: chapter-07.html
+          - generic [ref=e24]: 
+          - text: Ch 7
+        - link " Ch 8" [ref=e25] [cursor=pointer]:
+          - /url: chapter-08.html
+          - generic [ref=e26]: 
+          - text: Ch 8
+        - link " Ch 9" [ref=e27] [cursor=pointer]:
+          - /url: chapter-09.html
+          - generic [ref=e28]: 
+          - text: Ch 9
+        - link " Ch 10" [ref=e29] [cursor=pointer]:
+          - /url: chapter-10.html
+          - generic [ref=e30]: 
+          - text: Ch 10
+        - link " Ch 11" [ref=e31] [cursor=pointer]:
+          - /url: chapter-11.html
+          - generic [ref=e32]: 
+          - text: Ch 11
+      - text: 
+  - generic [ref=e34]:
+    - text:  
+    - generic [ref=e35]:
+      - banner [ref=e36]:
+        - generic [ref=e37]:
+          - generic [ref=e38]: 
+          - text: Chapter 5
+        - heading "IAM — Identity & Access Management" [level=1] [ref=e39]
+        - paragraph [ref=e40]:
+          - text: So far you've built servers (EC2) and databases (RDS). But
+          - strong [ref=e41]: who is allowed to touch them?
+          - text: This chapter is about
+          - strong [ref=e42]: security identity
+          - text: ": users, groups, roles, and the JSON policies that decide who can do what. IAM is the"
+          - strong [ref=e43]: single most tested AWS topic
+          - text: — and the thing your company would be hacked without.
+        - generic [ref=e44]:
+          - generic [ref=e45]:
+            - generic [ref=e46]: 
+            - text: ~35 min read
+          - generic [ref=e47]:
+            - generic [ref=e48]: 
+            - text: 7 live command sims
+          - generic [ref=e49]:
+            - generic [ref=e50]: 
+            - text: Beginner friendly
+          - generic [ref=e51]:
+            - generic [ref=e52]: 
+            - text: Security essentials
+      - button " Chapter contents" [ref=e53] [cursor=pointer]:
+        - generic: 
+        - text: Chapter contents
+      - generic [ref=e54]:
+        - heading " Why IAM?" [level=2] [ref=e55]:
+          - generic [ref=e56]: 
+          - text: Why IAM?
+        - paragraph [ref=e58]:
+          - text: Continue the story of
+          - strong [ref=e59]: www.amit.com
+          - text: ". You now own a VPC (office), an EC2 server (computer), and an RDS database (record room). You hire a team:"
+        - list [ref=e60]:
+          - listitem [ref=e61]:
+            - strong [ref=e62]: Amit
+            - text: — the owner, needs full access.
+          - listitem [ref=e63]:
+            - strong [ref=e64]: Rahul
+            - text: — a developer, needs EC2 + code access but
+            - strong [ref=e65]: not
+            - text: the billing.
+          - listitem [ref=e66]:
+            - strong [ref=e67]: Maria
+            - text: — an analyst, needs to
+            - strong [ref=e68]: read
+            - text: the database reports but never delete them.
+        - generic [ref=e69]:
+          - generic [ref=e70]:
+            - generic [ref=e71]: 
+            - text: The company ID-card problem
+          - generic [ref=e72]: Without IAM With IAM ┌─────────────────┐ ┌─────────────────┐ │ Everyone has │ │ Amit → full │ │ the MASTER KEY │ │ Rahul → dev │ │ to the vault │ │ Maria → read │ │ 😱 total chaos │ │ ✅ controlled │ └─────────────────┘ └─────────────────┘
+        - generic [ref=e73]:
+          - generic [ref=e74]: 🪪
+          - generic [ref=e75]:
+            - generic [ref=e76]: IAM = the ID-card system for your AWS account
+            - paragraph [ref=e77]:
+              - strong [ref=e78]: IAM
+              - text: (Identity & Access Management) is a free AWS service that lets you create
+              - strong [ref=e79]: identities
+              - text: (who) and decide what they can
+              - strong [ref=e80]: do
+              - text: (access). Every action in AWS — every
+              - code [ref=e81]: ec2 run-instances
+              - text: ", every"
+              - code [ref=e82]: rds describe-db-instances
+              - text: you ran in earlier chapters — runs as
+              - emphasis [ref=e83]: some
+              - text: identity, and IAM decides if it's allowed.
+        - generic [ref=e84]:
+          - generic [ref=e85]: 
+          - generic [ref=e87]:
+            - generic [ref=e88]: Why this chapter matters more than the rest
+            - text: "The #1 cause of hacked AWS accounts is bad IAM: someone leaves a master key lying around. Learn IAM once, and you'll"
+            - strong [ref=e89]: automatically secure every service
+            - text: you've already built. On the exam, IAM is everywhere.
+      - generic [ref=e90]:
+        - heading " The 4 Building Blocks of IAM" [level=2] [ref=e91]:
+          - generic [ref=e92]: 
+          - text: The 4 Building Blocks of IAM
+        - paragraph [ref=e94]: Everything in IAM is built from just four ideas. Master these and the whole service makes sense.
+        - generic [ref=e95]:
+          - generic [ref=e96]:
+            - generic [ref=e97]: 
+            - heading "User" [level=4] [ref=e99]
+            - paragraph [ref=e100]:
+              - text: A
+              - strong [ref=e101]: person
+              - text: (or app) that needs access. Has a name, an optional password, and optional
+              - strong [ref=e102]: access keys
+              - text: for programs.
+              - emphasis [ref=e103]: Rahul
+              - text: is a user.
+          - generic [ref=e104]:
+            - generic [ref=e105]: 
+            - heading "Group" [level=4] [ref=e107]
+            - paragraph [ref=e108]:
+              - text: A
+              - strong [ref=e109]: collection of users
+              - text: that share permissions. You attach policies to the group, and every member inherits them.
+              - emphasis [ref=e110]: developers
+              - text: is a group.
+          - generic [ref=e111]:
+            - generic [ref=e112]: 
+            - heading "Role" [level=4] [ref=e114]
+            - paragraph [ref=e115]:
+              - text: A
+              - strong [ref=e116]: temporary identity for machines
+              - text: (EC2, Lambda) or federated users. It's assumed, not logged into.
+              - emphasis [ref=e117]: Your EC2 server
+              - text: can assume a role.
+          - generic [ref=e118]:
+            - generic [ref=e119]: 
+            - heading "Policy" [level=4] [ref=e121]
+            - paragraph [ref=e122]:
+              - text: The
+              - strong [ref=e123]: permission document
+              - text: — a JSON file that says
+              - emphasis [ref=e124]: who can do what on which resource
+              - text: . This is the heart; the next section dives in.
+        - generic [ref=e125]:
+          - generic [ref=e126]:
+            - generic [ref=e127]: 
+            - text: How the pieces fit
+          - generic [ref=e128]: "Policies (the rules) ──attach──► Groups ◄──join── Users │ ▲ ▲ │ │ │ └─────────────attach────────────────┘ │ │ Roles ◄──assume── EC2 / Lambda / apps │ your company: users have IDs, groups share rules, roles drive machines"
+      - generic [ref=e129]:
+        - heading " Policies — The Heart of IAM" [level=2] [ref=e130]:
+          - generic [ref=e131]: 
+          - text: Policies — The Heart of IAM
+        - paragraph [ref=e133]:
+          - text: A
+          - strong [ref=e134]: policy
+          - text: "is just JSON. It says: \"allow or deny these"
+          - strong [ref=e135]: actions
+          - text: on these
+          - strong [ref=e136]: resources
+          - text: ." Read a policy top to bottom, and you know exactly what it permits.
+        - generic [ref=e137]:
+          - generic [ref=e138]:
+            - generic [ref=e139]: 
+            - text: An IAM policy document (JSON)
+            - button " Copy" [ref=e140] [cursor=pointer]:
+              - generic [ref=e141]: 
+              - text: Copy
+          - code [ref=e143]: "// Give read access to any S3 bucket { \"Version\": \"2012-10-17\", \"Statement\": [ { \"Effect\": \"Allow\", \"Action\": \"s3:ListAllMyBuckets\", \"Resource\": \"*\" } ] }"
+        - table [ref=e145]:
+          - rowgroup [ref=e146]:
+            - row [ref=e147]:
+              - columnheader "Key" [ref=e148]
+              - columnheader "What it means" [ref=e149]
+          - rowgroup [ref=e150]:
+            - row [ref=e151]:
+              - cell [ref=e152]:
+                - code [ref=e153]: Effect
+              - cell [ref=e154]:
+                - text: Allow or Deny. If a request matches any
+                - strong [ref=e155]: Deny
+                - text: ", it's denied — even if an Allow matches too."
+            - row [ref=e156]:
+              - cell [ref=e157]:
+                - code [ref=e158]: Action
+              - cell [ref=e159]:
+                - text: The API call(s), written as
+                - code [ref=e160]: service:operation
+                - text: — e.g.
+                - code [ref=e161]: s3:GetObject
+                - text: ","
+                - code [ref=e162]: ec2:RunInstances
+                - text: ", or"
+                - code [ref=e163]: "*"
+                - text: for everything.
+            - row [ref=e164]:
+              - cell [ref=e165]:
+                - code [ref=e166]: Resource
+              - cell [ref=e167]:
+                - text: Which thing the action applies to, written as an
+                - strong [ref=e168]: ARN
+                - text: (see below).
+                - code [ref=e169]: "*"
+                - text: = all.
+            - row [ref=e170]:
+              - cell [ref=e171]:
+                - code [ref=e172]: Version
+              - cell [ref=e173]:
+                - text: Policy language version. Always
+                - code [ref=e174]: 2012-10-17
+                - text: — just leave it.
+        - generic [ref=e175]:
+          - generic [ref=e176]: 🔖
+          - generic [ref=e177]:
+            - generic [ref=e178]: ARN — the address of every AWS resource
+            - paragraph [ref=e179]:
+              - text: An
+              - strong [ref=e180]: ARN
+              - text: (Amazon Resource Name) is the universal ID for anything in AWS. They look like
+              - code [ref=e181]: arn:aws:s3:::my-bucket
+              - text: or
+              - code [ref=e182]: arn:aws:ec2:us-east-1:123456789012:instance/i-abc
+              - text: . Policies use ARNs to point at exactly which resource you're allowed to touch.
+        - generic [ref=e183]:
+          - generic [ref=e184]: 
+          - generic [ref=e186]:
+            - generic [ref=e187]: The evaluation rule (memorize this)
+            - text: "Every request is checked against all policies. AWS evaluates them as:"
+            - strong [ref=e188]: explicit Deny → Allow → default Deny
+            - text: . Explicit
+            - strong [ref=e189]: Deny always wins
+            - text: ", everything not explicitly allowed is denied by default. AWS = \"default to locked.\""
+      - generic [ref=e190]:
+        - heading " Who Am I? Root User vs IAM User" [level=2] [ref=e191]:
+          - generic [ref=e192]: 
+          - text: Who Am I? Root User vs IAM User
+        - paragraph [ref=e194]:
+          - text: The very first identity in every AWS account is the
+          - strong [ref=e195]: root user
+          - text: "— the account you signed up with. It's like being the building owner: you can do literally everything."
+        - generic [ref=e196]:
+          - generic [ref=e197]:
+            - generic [ref=e198]: 
+            - text: Root vs IAM user
+          - generic [ref=e199]: ROOT USER (the account itself) IAM USERS (the people/machines) ┌─────────────────────────────┐ ┌──────────────────────────────┐ │ full access to everything │ │ rahul → limited per policy │ │ can delete the whole AWS │ │ maria → read-only reports │ │ account 😱 │ │ billing → maybe not even │ │ only used to make IAM users │ │ safest way to do real work │ └─────────────────────────────┘ └──────────────────────────────┘
+        - generic [ref=e200]:
+          - generic [ref=e201]:
+            - generic [ref=e202]: 
+            - text: "The #1 security rule in AWS"
+          - strong [ref=e203]: Never use the root user for daily work.
+          - text: Create an IAM user with just the permissions you need, and use that. On Floci, the account is emulated — you'll see the emulator's own "root" identity when you check
+          - code [ref=e204]: sts get-caller-identity
+          - text: .
+        - generic [ref=e205]:
+          - generic [ref=e206]:
+            - generic [ref=e207]: 
+            - text: Who does what? The IAM triangle
+          - strong [ref=e208]: Authentication
+          - text: = who are you? (username/password or access keys).
+          - strong [ref=e209]: Authorization
+          - text: = what may you do? (policies).
+          - strong [ref=e210]: Identity
+          - text: = who do your actions appear as in logs? (your user/role ARN). IAM handles all three.
+      - generic [ref=e211]:
+        - 'heading " Hands-On: Build Your First IAM User" [level=2] [ref=e212]':
+          - generic [ref=e213]: 
+          - text: "Hands-On: Build Your First IAM User"
+        - paragraph [ref=e215]:
+          - text: Enough theory. Let's actually
+          - strong [ref=e216]: create Rahul's identity
+          - text: on Floci, command by command — exactly the way you'd do it on real AWS.
+        - generic [ref=e217]:
+          - generic [ref=e218]:
+            - generic [ref=e219]:
+              - generic [ref=e220]: "1"
+              - generic [ref=e221]:
+                - heading "Who Am I Right Now?" [level=3] [ref=e222]
+                - generic [ref=e223]: Check the identity behind your CLI
+            - generic [ref=e224]:
+              - generic [ref=e225]:
+                - generic [ref=e226]:
+                  - generic [ref=e227]: 
+                  - text: Command
+                - generic [ref=e228]: awslocal sts get-caller-identity
+              - generic [ref=e229]:
+                - generic [ref=e230]: 🕵️
+                - generic [ref=e231]:
+                  - generic [ref=e232]: What did this just do?
+                  - paragraph [ref=e233]:
+                    - strong [ref=e234]: STS
+                    - text: "(Security Token Service) answers one question:"
+                    - emphasis [ref=e235]: "\"who am I?\""
+                    - text: It returns the identity behind your access keys. On Floci you're the emulated
+                    - strong [ref=e236]: root user
+                    - text: (
+                    - code [ref=e237]: ...:root
+                    - text: ). On real AWS this would show your account number and role/user ARN. Run this before any other IAM work — it tells you who you're acting as.
+              - generic [ref=e238]:
+                - generic [ref=e244]:
+                  - generic [ref=e245]: 
+                  - text: Run it live
+                - generic [ref=e247]:
+                  - button " Run example" [ref=e248] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=e249] [cursor=pointer]
+              - generic [ref=e250]:
+                - generic [ref=e251]:
+                  - generic [ref=e252]: 
+                  - text: Breaking down the command
+                - generic [ref=e253]:
+                  - code [ref=e254]: sts get-caller-identity
+                  - generic [ref=e255]: "The service + action: \"tell me who is making this call.\""
+                - generic [ref=e256]:
+                  - code [ref=e257]: UserId
+                  - generic [ref=e258]: A unique ID for the identity making the call.
+                - generic [ref=e259]:
+                  - code [ref=e260]: Account
+                  - generic [ref=e261]: Your 12-digit AWS account number.
+                - generic [ref=e262]:
+                  - code [ref=e263]: Arn
+                  - generic [ref=e264]: The full identity address — here the root user of the account.
+          - generic [ref=e265]:
+            - generic [ref=e266]:
+              - generic [ref=e267]: "2"
+              - generic [ref=e268]:
+                - heading "Create a User — Welcome Rahul" [level=3] [ref=e269]
+                - generic [ref=e270]: Make an identity with no permissions yet
+            - generic [ref=e271]:
+              - generic [ref=e272]:
+                - generic [ref=e273]:
+                  - generic [ref=e274]: 
+                  - text: Command
+                - generic [ref=e275]: awslocal iam create-user --user-name rahul
+              - generic [ref=e276]:
+                - generic [ref=e277]: 🧑‍💻
+                - generic [ref=e278]:
+                  - generic [ref=e279]: What did this just do?
+                  - paragraph [ref=e280]:
+                    - text: You created an
+                    - strong [ref=e281]: IAM user
+                    - text: named
+                    - code [ref=e282]: rahul
+                    - text: in your account. A brand-new user has
+                    - strong [ref=e283]: zero permissions
+                    - text: — like handing someone a blank ID card. The output gives the user a
+                    - strong [ref=e284]: UserId
+                    - text: and its
+                    - strong [ref=e285]: ARN
+                    - text: (
+                    - code [ref=e286]: ...:user/rahul
+                    - text: ). Rahul can't do anything yet — that comes later with policies.
+              - generic [ref=e287]:
+                - generic [ref=e293]:
+                  - generic [ref=e294]: 
+                  - text: Run it live
+                - generic [ref=e296]:
+                  - button " Run example" [ref=e297] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=e298] [cursor=pointer]
+              - generic [ref=e299]:
+                - generic [ref=e300]:
+                  - generic [ref=e301]: 
+                  - text: Breaking down the command
+                - generic [ref=e302]:
+                  - code [ref=e303]: iam create-user
+                  - generic [ref=e304]: "Service + action: \"create a new identity.\""
+                - generic [ref=e305]:
+                  - code [ref=e306]: "--user-name rahul"
+                  - generic [ref=e307]: The identity's name — must be unique in your account.
+                - generic [ref=e308]:
+                  - code [ref=e309]: arn:aws:iam::000000000000:user/rahul
+                  - generic [ref=e310]: Rahul's ARN — his permanent address in AWS. Policies and logs reference it.
+              - generic [ref=e311]:
+                - generic [ref=e312]:
+                  - generic [ref=e313]: 
+                  - text: A new user = no access
+                - text: By default a fresh IAM user can't do anything — not even list buckets. That's the security model working. Permissions are added only when you attach a
+                - strong [ref=e314]: policy
+                - text: . This "least privilege by default" is exactly what you want.
+          - generic [ref=e315]:
+            - generic [ref=e316]:
+              - generic [ref=e317]: "3"
+              - generic [ref=e318]:
+                - heading "Give Rahul a Key Pair — For Programs" [level=3] [ref=e319]
+                - generic [ref=e320]: How a script logs in as a user
+            - generic [ref=e321]:
+              - generic [ref=e322]:
+                - generic [ref=e323]:
+                  - generic [ref=e324]: 
+                  - text: Command
+                - generic [ref=e325]: awslocal iam create-access-key --user-name rahul
+              - generic [ref=e326]:
+                - generic [ref=e327]: 🗝️
+                - generic [ref=e328]:
+                  - generic [ref=e329]: What is an access key?
+                  - paragraph [ref=e330]:
+                    - text: People log in to the AWS console with a
+                    - strong [ref=e331]: username + password
+                    - text: . But your code (AWS CLI, SDKs) can't type a password — it uses an
+                    - strong [ref=e332]: access key
+                    - text: "instead: an"
+                    - code [ref=e333]: AccessKeyId
+                    - text: (like a login) and a
+                    - code [ref=e334]: SecretAccessKey
+                    - text: (like a password). Note it's for the
+                    - emphasis [ref=e335]: rahul
+                    - text: user, not root — good practice.
+              - generic [ref=e336]:
+                - generic [ref=e342]:
+                  - generic [ref=e343]: 
+                  - text: Run it live
+                - generic [ref=e345]:
+                  - button " Run example" [ref=e346] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=e347] [cursor=pointer]
+              - generic [ref=e348]:
+                - generic [ref=e349]:
+                  - generic [ref=e350]: 
+                  - text: Breaking down the command
+                - generic [ref=e351]:
+                  - code [ref=e352]: iam create-access-key
+                  - generic [ref=e353]: Generates a programmatic login for a user.
+                - generic [ref=e354]:
+                  - code [ref=e355]: "--user-name rahul"
+                  - generic [ref=e356]: Which user the key belongs to.
+                - generic [ref=e357]:
+                  - code [ref=e358]: AccessKeyId
+                  - generic [ref=e359]: The public half — identifies who you are.
+                - generic [ref=e360]:
+                  - code [ref=e361]: SecretAccessKey
+                  - generic [ref=e362]: The private half — proves it's you. Shown once only. Never share it.
+              - generic [ref=e363]:
+                - generic [ref=e364]:
+                  - generic [ref=e365]: 
+                  - text: The biggest mistake beginners make
+                - text: The
+                - code [ref=e366]: SecretAccessKey
+                - text: is printed
+                - strong [ref=e367]: only once
+                - text: at creation. If you lose it, you must generate a new key. And never commit it to GitHub — that's how AWS accounts get hacked in hours. (Rotate keys periodically; delete old ones with
+                - code [ref=e368]: delete-access-key
+                - text: .)
+          - generic [ref=e369]:
+            - generic [ref=e370]:
+              - generic [ref=e371]: "4"
+              - generic [ref=e372]:
+                - heading "Group Rahul with the Developers" [level=3] [ref=e373]
+                - generic [ref=e374]: Permissions once, shared by many
+            - generic [ref=e375]:
+              - generic [ref=e376]:
+                - generic [ref=e377]:
+                  - generic [ref=e378]: 
+                  - text: Commands
+                - generic [ref=e379]: awslocal iam create-group --group-name developers awslocal iam add-user-to-group --group-name developers --user-name rahul
+              - generic [ref=e380]:
+                - generic [ref=e381]: 👥
+                - generic [ref=e382]:
+                  - generic [ref=e383]: Why groups?
+                  - paragraph [ref=e384]:
+                    - text: Instead of giving every developer the same permission one-by-one (and updating them one-by-one forever), you make a
+                    - strong [ref=e385]: developers
+                    - text: group, attach the permissions to the
+                    - strong [ref=e386]: group
+                    - text: ", and add users to it. New dev joins → add to group → done. Permissions update once → everyone gets it. This is how real companies manage teams."
+              - generic [ref=e387]:
+                - generic [ref=e393]:
+                  - generic [ref=e394]: 
+                  - text: Run it live
+                - generic [ref=e396]:
+                  - button " Run example" [ref=e397] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=e398] [cursor=pointer]
+              - generic [ref=e399]:
+                - generic [ref=e400]:
+                  - generic [ref=e401]: 
+                  - text: Breaking down the commands
+                - generic [ref=e402]:
+                  - code [ref=e403]: iam create-group --group-name developers
+                  - generic [ref=e404]: Creates the team container.
+                - generic [ref=e405]:
+                  - code [ref=e406]: iam add-user-to-group --group-name developers --user-name rahul
+                  - generic [ref=e407]: Adds Rahul as a member of the team.
+                - generic [ref=e408]:
+                  - code [ref=e409]: iam get-group
+                  - generic [ref=e410]: Lists who's in a group — your verification tool.
+              - generic [ref=e411]:
+                - generic [ref=e412]:
+                  - generic [ref=e413]: 
+                  - text: The rule of thumb
+                - text: Put people in
+                - strong [ref=e414]: groups
+                - text: ", attach policies to"
+                - strong [ref=e415]: groups
+                - text: ", never attach policies directly to users. Groups are the standard pattern for humans. Roles (next step) are the standard pattern for machines."
+          - generic [ref=e416]:
+            - generic [ref=e417]:
+              - generic [ref=e418]: "5"
+              - generic [ref=e419]:
+                - heading "Attach a Policy — Rahul Can Now Read S3" [level=3] [ref=e420]
+                - generic [ref=e421]: The moment permissions actually exist
+            - generic [ref=e422]:
+              - generic [ref=e423]:
+                - generic [ref=e424]:
+                  - generic [ref=e425]: 
+                  - text: Command
+                - generic [ref=e426]: awslocal iam attach-user-policy --user-name rahul --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+              - generic [ref=e427]:
+                - generic [ref=e428]: 📜
+                - generic [ref=e429]:
+                  - generic [ref=e430]: AWS managed policies — ready-made permissions
+                  - paragraph [ref=e431]:
+                    - text: Instead of writing JSON by hand, AWS ships hundreds of
+                    - strong [ref=e432]: managed policies
+                    - text: .
+                    - code [ref=e433]: AmazonS3ReadOnlyAccess
+                    - text: is one — it already contains the JSON that allows every S3 read action (
+                    - code [ref=e434]: s3:GetObject
+                    - text: ","
+                    - code [ref=e435]: s3:ListBucket
+                    - text: ", ...) and denies nothing else. You just attach it by its"
+                    - strong [ref=e436]: ARN
+                    - text: . You'll find them all under
+                    - code [ref=e437]: arn:aws:iam::aws:policy/...
+                    - text: .
+              - generic [ref=e438]:
+                - generic [ref=e444]:
+                  - generic [ref=e445]: 
+                  - text: Run it live
+                - generic [ref=e447]:
+                  - button " Run example" [ref=e448] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=e449] [cursor=pointer]
+              - generic [ref=e450]:
+                - generic [ref=e451]:
+                  - generic [ref=e452]: 
+                  - text: Breaking down the command
+                - generic [ref=e453]:
+                  - code [ref=e454]: iam attach-user-policy
+                  - generic [ref=e455]: Attaches a policy document to a user.
+                - generic [ref=e456]:
+                  - code [ref=e457]: "--user-name rahul"
+                  - generic [ref=e458]: Who receives the permission.
+                - generic [ref=e459]:
+                  - code [ref=e460]: "--policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+                  - generic [ref=e461]: The ARN of the ready-made policy to attach.
+                - generic [ref=e462]:
+                  - code [ref=e463]: list-attached-user-policies
+                  - generic [ref=e464]: Verify — shows which policies a user has.
+              - generic [ref=e465]:
+                - generic [ref=e466]:
+                  - generic [ref=e467]: 
+                  - text: What just happened
+                - generic [ref=e468]: "AmazonS3ReadOnlyAccess (policy) │ attach ▼ rahul (user) ── member of ──► developers (group) │ ▼ ✅ can: s3:GetObject, s3:ListBucket, s3:ListAllMyBuckets ... ❌ cannot: ec2:* , rds:* , iam:* , s3:PutObject ..."
+          - generic [ref=e469]:
+            - generic [ref=e470]:
+              - generic [ref=e471]: "6"
+              - generic [ref=e472]:
+                - heading "Roles — Give Permissions to Machines" [level=3] [ref=e473]
+                - generic [ref=e474]: Never put keys in code. Let EC2 assume a role instead.
+            - generic [ref=e475]:
+              - generic [ref=e476]:
+                - generic [ref=e477]:
+                  - generic [ref=e478]: 
+                  - text: Commands
+                - generic [ref=e479]: "awslocal iam create-role --role-name ec2-app-role --assume-role-policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ec2.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}' awslocal iam attach-role-policy --role-name ec2-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess"
+              - generic [ref=e480]:
+                - generic [ref=e481]: 🎭
+                - generic [ref=e482]:
+                  - generic [ref=e483]: Why roles instead of access keys for machines?
+                  - paragraph [ref=e484]:
+                    - text: You
+                    - emphasis [ref=e485]: could
+                    - text: create a user, make an access key, and hardcode it into your EC2 server's code. Bad idea — the secret lives in code and gets stolen. Instead, AWS roles let a service
+                    - strong [ref=e486]: assume a temporary identity
+                    - text: ": your EC2 instance gets short-lived credentials"
+                    - emphasis [ref=e487]: automatically
+                    - text: ", no secrets stored anywhere. The"
+                    - strong [ref=e488]: trust policy
+                    - text: says
+                    - emphasis [ref=e489]: "\"who may wear this hat\""
+                    - text: "(here: EC2), and the"
+                    - strong [ref=e490]: permission policy
+                    - text: (attached after) says
+                    - emphasis [ref=e491]: "\"what the hat may do.\""
+              - generic [ref=e492]:
+                - generic [ref=e498]:
+                  - generic [ref=e499]: 
+                  - text: Run it live
+                - generic [ref=e501]:
+                  - button " Run example" [ref=e502] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=e503] [cursor=pointer]
+              - generic [ref=e504]:
+                - generic [ref=e505]:
+                  - generic [ref=e506]: 
+                  - text: Breaking down the commands
+                - generic [ref=e507]:
+                  - code [ref=e508]: iam create-role --role-name ec2-app-role
+                  - generic [ref=e509]:
+                    - text: Creates a machine identity called
+                    - code [ref=e510]: ec2-app-role
+                    - text: .
+                - generic [ref=e511]:
+                  - code [ref=e512]: "--assume-role-policy-document '{...}'"
+                  - generic [ref=e513]:
+                    - text: The trust policy — JSON that declares
+                    - emphasis [ref=e514]: who may assume this role
+                    - text: "(here: the EC2 service)."
+                - generic [ref=e515]:
+                  - code [ref=e516]: "\"Principal\": {\"Service\": \"ec2.amazonaws.com\"}"
+                  - generic [ref=e517]: The trust target — the EC2 service is allowed to take this hat.
+                - generic [ref=e518]:
+                  - code [ref=e519]: "\"Action\": \"sts:AssumeRole\""
+                  - generic [ref=e520]: The action of switching into the role.
+                - generic [ref=e521]:
+                  - code [ref=e522]: iam attach-role-policy ... AmazonS3ReadOnlyAccess
+                  - generic [ref=e523]: The permission policy — what the role may do once assumed.
+              - generic [ref=e524]:
+                - generic [ref=e525]:
+                  - generic [ref=e526]: 
+                  - text: Role flow
+                - generic [ref=e527]: "EC2 instance ──assume──► ec2-app-role │ (trust: ec2.amazonaws.com) ▼ AmazonS3ReadOnlyAccess (permission policy) │ ▼ ✅ reads S3 buckets ❌ no keys, no secrets in code"
+          - generic [ref=e528]:
+            - generic [ref=e529]:
+              - generic [ref=e530]: "7"
+              - generic [ref=e531]:
+                - heading "Clean Up — Delete What You Made" [level=3] [ref=e532]
+                - generic [ref=e533]: Tidy account, safe account
+            - generic [ref=e534]:
+              - generic [ref=e535]:
+                - generic [ref=e536]:
+                  - generic [ref=e537]: 
+                  - text: Commands
+                - generic [ref=e538]: awslocal iam delete-access-key --user-name rahul --access-key-id AKIAR3UEMIZ4OMH97RRY awslocal iam detach-user-policy --user-name rahul --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess awslocal iam remove-user-from-group --group-name developers --user-name rahul awslocal iam delete-user --user-name rahul awslocal iam delete-group --group-name developers awslocal iam detach-role-policy --role-name ec2-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess awslocal iam delete-role --role-name ec2-app-role
+              - generic [ref=e539]:
+                - generic [ref=e540]: 🧹
+                - generic [ref=e541]:
+                  - generic [ref=e542]: Deleting needs the right order
+                  - paragraph [ref=e543]:
+                    - text: "IAM enforces order: you must"
+                    - strong [ref=e544]: detach
+                    - text: policies and
+                    - strong [ref=e545]: remove
+                    - text: users from groups before you can
+                    - strong [ref=e546]: delete
+                    - text: "them. Same habit you learned in Chapters 3 & 4:"
+                    - emphasis [ref=e547]: create → use → delete
+                    - text: . Real AWS is pay-as-you-go, and an unused account with old keys is a security risk — always tidy up.
+              - generic [ref=e548]:
+                - generic [ref=e554]:
+                  - generic [ref=e555]: 
+                  - text: Run it live
+                - generic [ref=e557]:
+                  - button " Run example" [ref=e558] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=e559] [cursor=pointer]
+              - generic [ref=e560]:
+                - generic [ref=e561]:
+                  - generic [ref=e562]: 
+                  - text: Breaking down the cleanup
+                - generic [ref=e563]:
+                  - code [ref=e564]: delete-access-key / detach-user-policy / remove-user-from-group
+                  - generic [ref=e565]: Remove the user's credentials, permissions, and group membership first.
+                - generic [ref=e566]:
+                  - code [ref=e567]: delete-user
+                  - generic [ref=e568]: Only now can the user be deleted.
+                - generic [ref=e569]:
+                  - code [ref=e570]: delete-group / delete-role
+                  - generic [ref=e571]: Delete the group and role once nothing references them.
+        - generic [ref=e572]:
+          - generic [ref=e573]:
+            - generic [ref=e574]: 
+            - text: Complete IAM flow — copy & paste
+            - button " Copy" [ref=e575] [cursor=pointer]:
+              - generic [ref=e576]: 
+              - text: Copy
+          - code [ref=e578]: "# 0. Who am I? awslocal sts get-caller-identity # 1. Create a user awslocal iam create-user --user-name rahul # 2. Programmatic access key (secret shown once!) awslocal iam create-access-key --user-name rahul # 3. Put the user in a group awslocal iam create-group --group-name developers awslocal iam add-user-to-group --group-name developers --user-name rahul # 4. Give permission via a managed policy awslocal iam attach-user-policy --user-name rahul --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess # 5. Roles for machines (no keys in code!) awslocal iam create-role --role-name ec2-app-role --assume-role-policy-document '{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ec2.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}' awslocal iam attach-role-policy --role-name ec2-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess # 6. Clean up (detach/remove before delete) awslocal iam detach-user-policy --user-name rahul --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess awslocal iam remove-user-from-group --group-name developers --user-name rahul awslocal iam delete-user --user-name rahul awslocal iam delete-group --group-name developers awslocal iam detach-role-policy --role-name ec2-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess awslocal iam delete-role --role-name ec2-app-role"
+        - generic [ref=e579]:
+          - generic [ref=e580]:
+            - generic [ref=e581]: 
+            - text: Final mental model — IAM in one picture
+          - generic [ref=e582]: "IAM = the building's ID-card + lock system. User = a person (or app) → rahul Group = a team sharing rules → developers Policy = the list of allowed actions → s3 read-only Role = a hat machines can wear → ec2-app-role Access key= username+password for code ARN = the address of any identity/resource Remember: default deny. Explicit deny beats allow. Never use root for daily work. Put humans in groups, give machines roles."
+        - generic [ref=e583]:
+          - generic [ref=e584]:
+            - generic [ref=e585]: 
+            - text: Honest note — what Floci does & doesn't enforce
+          - text: I tested this live. Floci fully supports IAM
+          - strong [ref=e586]: identity management
+          - text: ": users, groups, roles, policies, access keys, and"
+          - code [ref=e587]: sts get-caller-identity
+          - text: all work exactly as shown.
+          - strong [ref=e588]: But
+          - text: like real AWS's free local emulators, Floci does
+          - strong [ref=e589]: not enforce permissions
+          - text: — I attached only
+          - code [ref=e590]: AmazonS3ReadOnlyAccess
+          - text: to a user and that user could still create EC2 instances and S3 buckets. So practice the commands here freely (they're 100% accurate), but understand that
+          - emphasis [ref=e591]: permission enforcement
+          - text: only happens on real AWS. On real AWS, an S3-read-only user would genuinely be blocked from everything else.
+      - generic [ref=e592]:
+        - heading " Security Best Practices — IAM Edition" [level=2] [ref=e593]:
+          - generic [ref=e594]: 
+          - text: Security Best Practices — IAM Edition
+        - paragraph [ref=e596]: "The official AWS \"well-architected\" advice for IAM, boiled down to what actually matters:"
+        - table [ref=e598]:
+          - rowgroup [ref=e599]:
+            - row [ref=e600]:
+              - columnheader "Practice" [ref=e601]
+              - columnheader "Why" [ref=e602]
+          - rowgroup [ref=e603]:
+            - row [ref=e604]:
+              - cell [ref=e605]:
+                - strong [ref=e606]: Never use the root user daily
+              - cell "Root can delete the whole account. Create IAM users for everything." [ref=e607]
+            - row [ref=e608]:
+              - cell [ref=e609]:
+                - strong [ref=e610]: Enable MFA on the root user
+              - cell "A second factor (phone/app) stops password thieves from owning your account." [ref=e611]
+            - row [ref=e612]:
+              - cell [ref=e613]:
+                - strong [ref=e614]: Least privilege
+              - cell [ref=e615]:
+                - text: Give the
+                - emphasis [ref=e616]: minimum
+                - text: permission needed. Read-only where possible. You can always grant more later.
+            - row [ref=e617]:
+              - cell [ref=e618]:
+                - strong [ref=e619]: Use groups, not per-user policies
+              - cell "One change updates the whole team. Simpler to audit." [ref=e620]
+            - row [ref=e621]:
+              - cell [ref=e622]:
+                - strong [ref=e623]: Use roles for machines
+              - cell "EC2/Lambda assume roles. Never hardcode access keys in code or config." [ref=e624]
+            - row [ref=e625]:
+              - cell [ref=e626]:
+                - strong [ref=e627]: Rotate & delete old access keys
+              - 'cell "Stolen keys are the #1 breach vector. Regular rotation limits the damage." [ref=e628]'
+            - row [ref=e629]:
+              - cell [ref=e630]:
+                - strong [ref=e631]: Monitor with CloudTrail
+              - cell "Log every API call so you can see who did what (Chapter 6 territory)." [ref=e632]
+        - generic [ref=e633]:
+          - generic [ref=e634]: 
+          - generic [ref=e636]:
+            - generic [ref=e637]: Shared responsibility, again (from Chapter 1)
+            - text: AWS secures the cloud
+            - emphasis [ref=e638]: of
+            - text: the platform;
+            - strong [ref=e639]: you
+            - text: secure what's
+            - emphasis [ref=e640]: in
+            - text: it — and IAM is how you do that. Even a perfect VPC, EC2, and RDS setup is worthless if one leaked access key unlocks it all. IAM is your front door.
+      - generic [ref=e641]:
+        - heading " Glossary — Chapter 5" [level=2] [ref=e642]:
+          - generic [ref=e643]: 
+          - text: Glossary — Chapter 5
+        - generic [ref=e645]:
+          - generic [ref=e646]: IAM
+          - paragraph [ref=e647]: Identity & Access Management — AWS's free service for users, groups, roles, and policies.
+        - generic [ref=e648]:
+          - generic [ref=e649]: User
+          - paragraph [ref=e650]: An identity for a person or application. Has login credentials and optional access keys.
+        - generic [ref=e651]:
+          - generic [ref=e652]: Group
+          - paragraph [ref=e653]: A collection of users that share the same permissions.
+        - generic [ref=e654]:
+          - generic [ref=e655]: Role
+          - paragraph [ref=e656]: A temporary identity that services (EC2, Lambda) can assume — no stored secrets.
+        - generic [ref=e657]:
+          - generic [ref=e658]: Policy
+          - paragraph [ref=e659]: A JSON document defining allowed/denied actions and resources.
+        - generic [ref=e660]:
+          - generic [ref=e661]: Access key
+          - paragraph [ref=e662]: AccessKeyId + SecretAccessKey used by code to authenticate (shown once).
+        - generic [ref=e663]:
+          - generic [ref=e664]: ARN
+          - paragraph [ref=e665]: Amazon Resource Name — the unique address of any AWS resource or identity.
+        - generic [ref=e666]:
+          - generic [ref=e667]: STS
+          - paragraph [ref=e668]:
+            - text: Security Token Service —
+            - code [ref=e669]: sts get-caller-identity
+            - text: answers "who am I?".
+        - generic [ref=e670]:
+          - generic [ref=e671]: Root user
+          - paragraph [ref=e672]: The account owner with unlimited access. Never use it for daily work.
+        - generic [ref=e673]:
+          - generic [ref=e674]: Least privilege
+          - paragraph [ref=e675]: Give only the minimum permissions needed — the core IAM security principle.
+        - generic [ref=e676]:
+          - generic [ref=e677]: MFA
+          - paragraph [ref=e678]: Multi-factor authentication — a second verification step that blocks stolen passwords.
+        - generic [ref=e679]:
+          - generic [ref=e680]: Trust policy
+          - paragraph [ref=e681]: The part of a role that declares who is allowed to assume it.
+      - generic [ref=e682]:
+        - heading " Chapter 5 — Check Your Understanding" [level=2] [ref=e683]:
+          - generic [ref=e684]: 
+          - text: Chapter 5 — Check Your Understanding
+        - paragraph [ref=e686]:
+          - text: Pick an answer. Green = right. Red = wrong. No pressure — this is for
+          - emphasis [ref=e687]: you
+          - text: .
+        - generic [ref=e688]:
+          - generic [ref=e689]:
+            - generic [ref=e690]: Q1.
+            - text: What does
+            - strong [ref=e691]: IAM
+            - text: actually manage?
+          - generic [ref=e692]:
+            - generic [ref=e693] [cursor=pointer]:
+              - radio "Only network firewalls" [ref=e694]
+              - text: Only network firewalls
+            - generic [ref=e695] [cursor=pointer]:
+              - radio "Identities (users, groups, roles) and what they're allowed to do" [ref=e696]
+              - text: Identities (users, groups, roles) and what they're allowed to do
+            - generic [ref=e697] [cursor=pointer]:
+              - radio "Database backups" [ref=e698]
+              - text: Database backups
+        - generic [ref=e699]:
+          - generic [ref=e700]:
+            - generic [ref=e701]: Q2.
+            - text: A fresh IAM user can do... what?
+          - generic [ref=e702]:
+            - generic [ref=e703] [cursor=pointer]:
+              - radio "Everything — IAM users are like root" [ref=e704]
+              - text: Everything — IAM users are like root
+            - generic [ref=e705] [cursor=pointer]:
+              - radio "Nothing — permissions come only from attached policies" [ref=e706]
+              - text: Nothing — permissions come only from attached policies
+            - generic [ref=e707] [cursor=pointer]:
+              - radio "Only S3, by default" [ref=e708]
+              - text: Only S3, by default
+        - generic [ref=e709]:
+          - generic [ref=e710]:
+            - generic [ref=e711]: Q3.
+            - text: Which JSON key decides whether a policy
+            - strong [ref=e712]: allows
+            - text: or
+            - strong [ref=e713]: blocks
+            - text: "?"
+          - generic [ref=e714]:
+            - generic [ref=e715] [cursor=pointer]:
+              - radio "Resource" [ref=e716]
+              - code [ref=e717]: Resource
+            - generic [ref=e718] [cursor=pointer]:
+              - radio "Action" [ref=e719]
+              - code [ref=e720]: Action
+            - generic [ref=e721] [cursor=pointer]:
+              - radio "Effect" [ref=e722]
+              - code [ref=e723]: Effect
+        - generic [ref=e724]:
+          - generic [ref=e725]:
+            - generic [ref=e726]: Q4.
+            - text: If one policy
+            - strong [ref=e727]: allows
+            - text: an action and another
+            - strong [ref=e728]: denies
+            - text: it, what happens?
+          - generic [ref=e729]:
+            - generic [ref=e730] [cursor=pointer]:
+              - radio "Allow wins — more permissive" [ref=e731]
+              - text: Allow wins — more permissive
+            - generic [ref=e732] [cursor=pointer]:
+              - radio "Deny always wins" [ref=e733]
+              - text: Deny always wins
+            - generic [ref=e734] [cursor=pointer]:
+              - radio "It depends on the service" [ref=e735]
+              - text: It depends on the service
+        - generic [ref=e736]:
+          - generic [ref=e737]:
+            - generic [ref=e738]: Q5.
+            - text: What should a running
+            - strong [ref=e739]: EC2 server
+            - text: use to access S3 securely?
+          - generic [ref=e740]:
+            - generic [ref=e741] [cursor=pointer]:
+              - radio "Hardcoded access keys in the app code" [ref=e742]
+              - text: Hardcoded access keys in the app code
+            - generic [ref=e743] [cursor=pointer]:
+              - radio "An IAM role it assumes automatically" [ref=e744]
+              - text: An IAM
+              - strong [ref=e745]: role
+              - text: it assumes automatically
+            - generic [ref=e746] [cursor=pointer]:
+              - radio "The root user's password" [ref=e747]
+              - text: The root user's password
+        - generic [ref=e748]:
+          - generic [ref=e749]:
+            - generic [ref=e750]: Q6.
+            - text: Why do you attach policies to a
+            - strong [ref=e751]: group
+            - text: instead of each user?
+          - generic [ref=e752]:
+            - generic [ref=e753] [cursor=pointer]:
+              - radio "Groups are faster to type" [ref=e754]
+              - text: Groups are faster to type
+            - generic [ref=e755] [cursor=pointer]:
+              - radio "Change once, every member gets it — simpler to manage" [ref=e756]
+              - text: Change once, every member gets it — simpler to manage
+            - generic [ref=e757] [cursor=pointer]:
+              - radio "Groups get more permission than users" [ref=e758]
+              - text: Groups get more permission than users
+        - generic [ref=e759]:
+          - generic [ref=e760]:
+            - generic [ref=e761]: Q7.
+            - text: What is the
+            - strong [ref=e762]: SecretAccessKey
+            - text: best compared to?
+          - generic [ref=e763]:
+            - generic [ref=e764] [cursor=pointer]:
+              - radio "The user's public ID" [ref=e765]
+              - text: The user's public ID
+            - generic [ref=e766] [cursor=pointer]:
+              - radio "A password — keep it secret, shown only once" [ref=e767]
+              - text: A password — keep it secret, shown only once
+            - generic [ref=e768] [cursor=pointer]:
+              - radio "A firewall rule" [ref=e769]
+              - text: A firewall rule
+        - generic [ref=e770]:
+          - 'link " Ch 4: RDS — Databases" [ref=e771] [cursor=pointer]':
+            - /url: chapter-04.html
+            - generic [ref=e772]: 
+            - text: "Ch 4: RDS — Databases"
+          - 'link "Next: Monitoring — CloudWatch " [ref=e773] [cursor=pointer]':
+            - /url: chapter-06.html
+            - text: "Next: Monitoring — CloudWatch"
+            - generic [ref=e774]: 
+  - contentinfo [ref=e775]:
+    - paragraph [ref=e776]:
+      - generic [ref=e777]: 
+      - text: Master AWS · Chapter 5 of 11 · Practice locally with
+      - strong [ref=e778]: Floci
+      - text: on port 4566

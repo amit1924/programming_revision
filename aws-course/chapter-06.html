@@ -1,0 +1,870 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 6 — CloudWatch: Monitoring | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html" class="active"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 6 — Contents</h4>
+      <a href="#why-monitor">Why Monitor?</a>
+      <a href="#metrics">Metrics — The Numbers</a>
+      <a href="#alarms">Alarms — Wake You Up</a>
+      <a href="#logs">Logs — The Story</a>
+      <a href="#hands-on">Hands-On: Observe Your App</a>
+      <a href="#cloudtrail">CloudTrail — The Audit Trail</a>
+      <a href="#best-practices">Best Practices</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 6 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="6" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-chart-line"></i> Chapter 6</span>
+        <h1>CloudWatch — Monitoring &amp; Observability</h1>
+        <p class="subtitle">You've built the office (VPC), the computer (EC2), the record room (RDS), and the ID cards (IAM). Now the scary question: <strong>how do you know it's alive at 3 AM?</strong> This chapter is about <strong>observability</strong> — metrics, alarms, and logs — so you find out about problems <strong>before</strong> your users do.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~35 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 7 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-heart-pulse"></i> Metrics + Logs + Alarms</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-monitor">Why Monitor?</a>
+        <a href="#metrics">Metrics — The Numbers</a>
+        <a href="#alarms">Alarms — Wake You Up</a>
+        <a href="#logs">Logs — The Story</a>
+        <a href="#hands-on">Hands-On: Observe Your App</a>
+        <a href="#cloudtrail">CloudTrail — The Audit Trail</a>
+        <a href="#best-practices">Best Practices</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 6 Quiz</a>
+      </div>
+
+      <!-- ============ WHY MONITOR ============ -->
+      <section class="sec" id="why-monitor">
+        <h2><span class="ic"><i class="fa-solid fa-circle-question"></i></span> Why Monitor?</h2>
+        <p>Continue the story of <strong>www.amit.com</strong>. It's 2:47 AM. Your server has been fine for months. Then, quietly, the database starts answering slower and slower. At 3 AM the site dies. Nobody is watching.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-chart-line"></i> The two realities</div>
+          <pre>      WITHOUT monitoring          WITH monitoring
+   ┌───────────────────────┐   ┌───────────────────────┐
+   │ 3 AM: site dies       │   │ 9 PM: CPU climbs 90%  │
+   │ 9 AM: users complain  │   │ 9:01 PM: ALARM 🔔     │
+   │ you find out LAST     │   │ you fix it while      │
+   │ 😱 angry customers    │   │ sleeping is an option │
+   └───────────────────────┘   └───────────────────────┘</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">📡</div>
+          <div>
+            <b>Observability = knowing what your cloud is doing</b>
+            <p>AWS gives you <strong>CloudWatch</strong> (pronounced "cloud-watch") for exactly this. It collects <strong>metrics</strong> (numbers like CPU, latency), stores <strong>logs</strong> (the text your app prints), fires <strong>alarms</strong> (notifications when things break), and — together with CloudTrail — records <strong>who did what</strong>. It's free tier friendly, and it's how every AWS engineer stays calm.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>The engineer's motto</b>
+            "If you can't measure it, you can't fix it." You already built the infrastructure in Chapters 3-5. Now you give it <strong>eyes and ears</strong>. Monitoring is not a bonus feature — it's how you sleep.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ METRICS ============ -->
+      <section class="sec" id="metrics">
+        <h2><span class="ic blue"><i class="fa-solid fa-gauge-high"></i></span> Metrics — The Numbers</h2>
+        <p>A <strong>metric</strong> is a number measured over time. Think of a car dashboard: speed, fuel, temperature. CloudWatch metrics are the same — CPU %, memory, latency, error counts.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Concept</th><th>What it means</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Namespace</strong></td><td>The "folder" a metric lives in. AWS services use <code>AWS/EC2</code>, <code>AWS/RDS</code>... your own app can use anything (e.g. <code>AmitSite</code>).</td></tr>
+              <tr><td><strong>Metric name</strong></td><td>What the number measures — <code>CPUUtilization</code>, <code>PageViews</code>, <code>LatencyMs</code>.</td></tr>
+              <tr><td><strong>Dimensions</strong></td><td>Optional labels that slice a metric — e.g. <code>InstanceId=i-123</code> or <code>Page=/home</code>.</td></tr>
+              <tr><td><strong>Statistic</strong></td><td>How you summarize a period: <code>Average</code>, <code>Maximum</code>, <code>Minimum</code>, <code>Sum</code>, <code>p99</code>.</td></tr>
+              <tr><td><strong>Period</strong></td><td>The time bucket (in seconds) each statistic covers — 60s, 300s, 3600s.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-gauge-high"></i> Namespace → Metric → Data points</div>
+          <pre>   <span class="a-yel">Namespace: AmitSite</span>   (the dashboard)
+     └─ <span class="a-blu">PageViews</span>   ──► [150, 210, 178, 320, ...]  (data points)
+     └─ <span class="a-blu">LatencyMs</span>  ──► [82,  95,  60,  120, ...]
+     └─ <span class="a-blu">Errors</span>    ──► [0,   0,   1,   0,   ...]</pre>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Free stuff first</b>
+          AWS gives you basic metrics (CPU, disk, network) for EC2/RDS <strong>for free</strong> every minute-ish. Custom metrics you push yourself (<code>PageViews</code>, latency) cost a tiny amount on real AWS — free here on Floci. The most important metric in the world? <strong>Latency</strong> and <strong>error rate</strong>. Users forgive slowness but never forgive errors.
+        </div>
+      </section>
+
+      <!-- ============ ALARMS ============ -->
+      <section class="sec" id="alarms">
+        <h2><span class="ic green"><i class="fa-solid fa-bell"></i></span> Alarms — Wake You Up</h2>
+        <p>A metric is just a number. An <strong>alarm</strong> turns that number into an action: <em>"if this metric crosses this threshold, do something."</em> Like a smoke detector: it watches silently, then screams.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-bell"></i> Alarm anatomy</div>
+          <pre>   <span class="a-blu">LatencyMs average > 100</span>   (metric + threshold)
+        │  for 1 period
+        ▼
+   <span class="a-yel">ALARM state</span>  ──►  send SNS email / SMS / stop EC2
+        ▲
+        │  falls back below
+        ▼
+   <span class="a-grn">OK state</span>      (all clear, alarm cools down)</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🚨</div>
+          <div>
+            <b>Alarm states</b>
+            <p>An alarm lives in one of three states: <strong>OK</strong> (all good), <strong>ALARM</strong> (threshold breached — your notification fires), or <strong>INSUFFICIENT_DATA</strong> (not enough numbers yet to decide). That third state is what you'll see right after creating an alarm on Floci — it needs a few data points before it can judge.</p>
+          </div>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Alarms are only as smart as you make them</b>
+          One bad alarm is worse than none — it trains you to ignore the noise. Start with a handful of <strong>meaningful</strong> alarms: high CPU, high latency, error rate above zero, disk nearly full. Then make them actually do something (an SNS notification to your phone).
+        </div>
+      </section>
+
+      <!-- ============ LOGS ============ -->
+      <section class="sec" id="logs">
+        <h2><span class="ic gold"><i class="fa-solid fa-list-check"></i></span> Logs — The Story</h2>
+        <p>Metrics tell you <em>something</em> is wrong ("CPU 95%!"). <strong>Logs</strong> tell you <em>why</em>. Every app prints text — errors, requests, warnings. CloudWatch <strong>Logs</strong> collects that text in one searchable place.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-list-check"></i> Log structure</div>
+          <pre>   <span class="a-yel">Log group</span>  = a named collection   (e.g. /amitsite/app)
+      └─ <span class="a-blu">Log stream</span> = one source inside it (e.g. web-1)
+           └─ <span class="a-grn">Log events</span> = the actual lines
+              "Rahul visited /home"
+              "ERROR connection refused on DB"</pre>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Piece</th><th>Real-life analogy</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Log group</strong></td><td>A filing cabinet for one app (one group per app/service).</td></tr>
+              <tr><td><strong>Log stream</strong></td><td>A drawer per server/instance (each EC2 instance has its own stream).</td></tr>
+              <tr><td><strong>Log event</strong></td><td>A single entry with a timestamp + message — the actual paperwork.</td></tr>
+              <tr><td><strong>Filter pattern</strong></td><td>A search term (<code>ERROR</code>, <code>Exception</code>) to find trouble fast.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Search is the superpower</b>
+          In real life you <code>grep</code> a log file on a server. CloudWatch Logs does the same but <strong>for every server at once</strong>, from one console/CLI. Your app prints <code>ERROR</code>, you search <code>filter-pattern "ERROR"</code>, and you see every error across the whole fleet. Debugging becomes minutes, not hours.
+        </div>
+      </section>
+
+      <!-- ============ HANDS-ON ============ -->
+      <section class="sec" id="hands-on">
+        <h2><span class="ic"><i class="fa-solid fa-screwdriver-wrench"></i></span> Hands-On: Observe Your App on Floci</h2>
+        <p>Let's give <strong>www.amit.com</strong> eyes and ears — command by command, exactly like Chapters 3-5. We'll push metrics, create an alarm, and write + search logs.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: PUSH METRICS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Push Custom Metrics</h3>
+                <div class="step-sub">Report numbers from your app to CloudWatch</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> cloudwatch put-metric-data <span class="fl">--namespace</span> <span class="st">AmitSite</span> <span class="fl">--metric-name</span> <span class="st">PageViews</span> <span class="fl">--value</span> <span class="st">150</span> <span class="fl">--unit</span> <span class="st">Count</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📈</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>Your app (or you, for practice) just told CloudWatch: <em>"the PageViews metric in the AmitSite namespace just had value 150."</em> That's exactly what your website's code calls every time someone loads a page. On real AWS you'd send dozens of these per minute; here we send a few by hand to learn the plumbing.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal cloudwatch list-metrics --namespace \"AmitSite\" --query \"Metrics[].MetricName\" --output text","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (empty — no metrics yet)","color":"dim"},
+                  {"type":"cmd","text":"awslocal cloudwatch put-metric-data --namespace AmitSite --metric-name PageViews --value 150 --unit Count","delay":500},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = success)","color":"dim"},
+                  {"type":"cmd","text":"awslocal cloudwatch put-metric-data --namespace AmitSite --metric-name LatencyMs --value 82 --unit Milliseconds","delay":500},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# PageViews and LatencyMs are now being recorded","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-gauge-high"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>cloudwatch put-metric-data</code><div class="fl-desc">Service + action: <b>"report a data point."</b></div></div>
+                <div class="flag"><code>--namespace AmitSite</code><div class="fl-desc">Your app's <b>folder</b> for metrics. AWS uses <code>AWS/EC2</code> etc.; you choose yours.</div></div>
+                <div class="flag"><code>--metric-name PageViews</code><div class="fl-desc">The <b>name</b> of the number you're reporting.</div></div>
+                <div class="flag"><code>--value 150</code><div class="fl-desc">The <b>actual number</b> for this data point.</div></div>
+                <div class="flag"><code>--unit Count</code><div class="fl-desc">The <b>unit</b> — Count, Milliseconds, Percent, Bytes, etc.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: READ METRICS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Read Metrics Back</h3>
+                <div class="step-sub">List what you've got and grab statistics</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> cloudwatch list-metrics <span class="fl">--namespace</span> <span class="st">AmitSite</span>
+<span class="kw">awslocal</span> cloudwatch get-metric-statistics <span class="fl">--namespace</span> <span class="st">AmitSite</span> <span class="fl">--metric-name</span> <span class="st">PageViews</span> <span class="fl">--start-time</span> <span class="st">2026-08-07T00:00:00Z</span> <span class="fl">--end-time</span> <span class="st">2026-08-09T00:00:00Z</span> <span class="fl">--period</span> <span class="st">3600</span> <span class="fl">--statistics</span> <span class="st">Maximum</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🔍</div>
+                <div>
+                  <b>list vs get statistics</b>
+                  <p><code>list-metrics</code> shows <strong>which metrics exist</strong> (the names). <code>get-metric-statistics</code> does the real math — it buckets the data points by a <strong>period</strong> and returns a <strong>statistic</strong> (here: the Maximum PageViews in each hour). This is the query behind every CloudWatch graph.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal cloudwatch list-metrics --namespace AmitSite --output json","delay":450},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"Metrics\": [","color":""},
+                  {"type":"out","text":"        { \"Namespace\": \"AmitSite\", \"MetricName\": \"PageViews\", \"Dimensions\": [] },","color":"ok"},
+                  {"type":"out","text":"        { \"Namespace\": \"AmitSite\", \"MetricName\": \"LatencyMs\", \"Dimensions\": [] }","color":"ok"},
+                  {"type":"out","text":"    ]","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"awslocal cloudwatch get-metric-statistics --namespace AmitSite --metric-name PageViews --start-time 2026-08-07T00:00:00Z --end-time 2026-08-09T00:00:00Z --period 3600 --statistics Maximum","delay":600},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"Datapoints\": [","color":""},
+                  {"type":"out","text":"        {","color":""},
+                  {"type":"out","text":"            \"Timestamp\": \"2026-08-08T10:30:00+05:30\",","color":""},
+                  {"type":"out","text":"            \"Maximum\": 150.0,","color":"ok"},
+                  {"type":"out","text":"            \"Unit\": \"Count\"","color":""},
+                  {"type":"out","text":"        }","color":""},
+                  {"type":"out","text":"    ]","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# 150 = the max PageViews in that hour bucket","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-chart-simple"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>cloudwatch list-metrics --namespace AmitSite</code><div class="fl-desc">Shows <b>which metrics</b> exist in a namespace.</div></div>
+                <div class="flag"><code>cloudwatch get-metric-statistics</code><div class="fl-desc">Computes <b>statistics</b> from stored data points.</div></div>
+                <div class="flag"><code>--start-time / --end-time</code><div class="fl-desc">The <b>time window</b> to analyze.</div></div>
+                <div class="flag"><code>--period 3600</code><div class="fl-desc">Bucket size in <b>seconds</b> (3600 = hourly buckets).</div></div>
+                <div class="flag"><code>--statistics Maximum</code><div class="fl-desc">Which summary per bucket — Max / Min / Average / Sum / pXX.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: ALARM ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Create an Alarm</h3>
+                <div class="step-sub">Turn a metric into a smoke detector</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> cloudwatch put-metric-alarm <span class="fl">--alarm-name</span> <span class="st">HighLatency</span> <span class="fl">--metric-name</span> <span class="st">LatencyMs</span> <span class="fl">--namespace</span> <span class="st">AmitSite</span> <span class="fl">--statistic</span> <span class="st">Average</span> <span class="fl">--period</span> <span class="st">60</span> <span class="fl">--evaluation-periods</span> <span class="st">1</span> <span class="fl">--threshold</span> <span class="st">100</span> <span class="fl">--comparison-operator</span> <span class="st">GreaterThanThreshold</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🚨</div>
+                <div>
+                  <b>Read the alarm like a sentence</b>
+                  <p>"If the <strong>average</strong> <code>LatencyMs</code> in <code>AmitSite</code>, over a <strong>60s period</strong>, is <strong>greater than 100</strong> for <strong>1 period</strong> — fire the alarm." Once it fires, on real AWS you'd attach an SNS notification so your phone buzzes. On Floci we'll just watch it enter ALARM state.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal cloudwatch put-metric-alarm --alarm-name HighLatency --metric-name LatencyMs --namespace AmitSite --statistic Average --period 60 --evaluation-periods 1 --threshold 100 --comparison-operator GreaterThanThreshold","delay":650},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = alarm created)","color":"dim"},
+                  {"type":"cmd","text":"awslocal cloudwatch describe-alarms --alarm-names HighLatency --query \"MetricAlarms[].[AlarmName,StateValue,ComparisonOperator,Threshold]\" --output table","delay":500},
+                  {"type":"out","text":"---------------------------------------------------","color":""},
+                  {"type":"out","text":"|            DescribeAlarms                       |","color":""},
+                  {"type":"out","text":"+-------------+---------------------+----------+--------+","color":""},
+                  {"type":"out","text":"|  HighLatency|  INSUFFICIENT_DATA  |  GreaterThanThreshold |  100.0 |","color":"ok"},
+                  {"type":"out","text":"+-------------+---------------------+----------+--------+","color":""},
+                  {"type":"out","text":"# INSUFFICIENT_DATA = not enough numbers yet to judge","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-bell"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>cloudwatch put-metric-alarm</code><div class="fl-desc">Creates (or updates) an alarm.</div></div>
+                <div class="flag"><code>--alarm-name HighLatency</code><div class="fl-desc">A name you'll recognize later.</div></div>
+                <div class="flag"><code>--statistic Average --period 60</code><div class="fl-desc">Evaluate the <b>average</b> over <b>60-second</b> buckets.</div></div>
+                <div class="flag"><code>--evaluation-periods 1</code><div class="fl-desc">How many consecutive bad buckets before firing (1 = instant).</div></div>
+                <div class="flag"><code>--threshold 100 --comparison-operator GreaterThanThreshold</code><div class="fl-desc">Fire when the value is <b>&gt; 100ms</b>.</div></div>
+                <div class="flag"><code>describe-alarms</code><div class="fl-desc">Check an alarm's current <b>state</b> — your verification tool.</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>INSUFFICIENT_DATA is normal</b>
+                An alarm starts life unsure — it hasn't seen enough data points to decide. Give it real traffic (or a few more <code>put-metric-data</code> calls) and it'll flip to OK or ALARM. Don't panic when you see this state on a fresh alarm.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: LOG GROUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Create a Log Group &amp; Stream</h3>
+                <div class="step-sub">The filing cabinet for your app's story</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> logs create-log-group <span class="fl">--log-group-name</span> <span class="st">/amitsite/app</span>
+<span class="kw">awslocal</span> logs create-log-stream <span class="fl">--log-group-name</span> <span class="st">/amitsite/app</span> <span class="fl">--log-stream-name</span> <span class="st">web-1</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🗂️</div>
+                <div>
+                  <b>Group first, then stream</b>
+                  <p>The <strong>log group</strong> is the app's cabinet (<code>/amitsite/app</code> — the slash-prefixed path is convention, not required). Inside it you create <strong>log streams</strong>, one per source — here <code>web-1</code>, your first web server. When you add a second server later, you add another stream, not another group.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal logs create-log-group --log-group-name /amitsite/app","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = group created)","color":"dim"},
+                  {"type":"cmd","text":"awslocal logs create-log-stream --log-group-name /amitsite/app --log-stream-name web-1","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = stream created)","color":"dim"},
+                  {"type":"cmd","text":"awslocal logs describe-log-groups --query \"logGroups[].logGroupName\" --output text","delay":450},
+                  {"type":"out","text":"/amitsite/app","color":"ok"},
+                  {"type":"out","text":"# the group exists and is ready for events","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-folder-plus"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>logs create-log-group --log-group-name /amitsite/app</code><div class="fl-desc">Creates the app's <b>log group</b>.</div></div>
+                <div class="flag"><code>logs create-log-stream --log-stream-name web-1</code><div class="fl-desc">Adds a <b>stream</b> (a server/source) inside that group.</div></div>
+                <div class="flag"><code>logs describe-log-groups</code><div class="fl-desc">Lists your groups — verification.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: WRITE LOG EVENTS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Write Log Events</h3>
+                <div class="step-sub">The lines your app prints, stored in the cloud</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> logs put-log-events <span class="fl">--log-group-name</span> <span class="st">/amitsite/app</span> <span class="fl">--log-stream-name</span> <span class="st">web-1</span> <span class="fl">--log-events</span> <span class="st">timestamp=$(date +%s000),message='Rahul visited /home'</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">✍️</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You wrote one <strong>log event</strong> — the line <em>"Rahul visited /home"</em> — with a timestamp, into the <code>web-1</code> stream. In a real app, your code does this on every request (the CloudWatch agent or SDK handles it automatically). On Floci you type it by hand to learn the plumbing. Note the timestamp must be in <strong>milliseconds</strong> — <code>$(date +%s000)</code> generates one.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"TS=$(date +%s000)","delay":350},
+                  {"type":"out","text":"# TS holds a millisecond timestamp","color":"dim"},
+                  {"type":"cmd","text":"awslocal logs put-log-events --log-group-name /amitsite/app --log-stream-name web-1 --log-events timestamp=$TS,message=&#39;Rahul visited /home&#39; timestamp=$((TS+1000)),message=&#39;Database query took 250ms&#39; timestamp=$((TS+2000)),message=&#39;ERROR connection refused on DB&#39;","delay":650},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"nextSequenceToken\": \"e2a164a0-6d56-4b59-88d5-7d3c19c19b1a\"","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# 3 events written to /amitsite/app :: web-1","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-pen"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>logs put-log-events</code><div class="fl-desc">Writes one or more log events.</div></div>
+                <div class="flag"><code>--log-group-name /amitsite/app --log-stream-name web-1</code><div class="fl-desc"><b>Where</b> the events go — cabinet + drawer.</div></div>
+                <div class="flag"><code>timestamp=... ,message='...'</code><div class="fl-desc">Each event = a <b>timestamp (ms)</b> plus the <b>message</b>. Separate multiple events with a space.</div></div>
+                <div class="flag"><code>nextSequenceToken</code><div class="fl-desc">CloudWatch's ordering marker for the stream (auto-handled in real apps).</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: SEARCH LOGS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">Search Your Logs</h3>
+                <div class="step-sub">Find the errors without reading everything</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> logs filter-log-events <span class="fl">--log-group-name</span> <span class="st">/amitsite/app</span> <span class="fl">--filter-pattern</span> <span class="st">"ERROR"</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🎯</div>
+                <div>
+                  <b>This is the debugging superpower</b>
+                  <p>Instead of scrolling thousands of lines, you search. <code>filter-log-events</code> with <code>--filter-pattern "ERROR"</code> returns <strong>only the events containing ERROR</strong> — across your whole app. Three-line debugging: something broke → search for ERROR → read the exact message.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal logs filter-log-events --log-group-name /amitsite/app --query \"events[].[message]\" --output json","delay":550},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    [\"Rahul visited /home\"],","color":""},
+                  {"type":"out","text":"    [\"Database query took 250ms\"],","color":""},
+                  {"type":"out","text":"    [\"ERROR connection refused on DB\"]","color":"warn"},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"cmd","text":"awslocal logs filter-log-events --log-group-name /amitsite/app --filter-pattern \"ERROR\" --query \"events[].message\" --output text","delay":500},
+                  {"type":"out","text":"ERROR connection refused on DB","color":"ok"},
+                  {"type":"out","text":"# only the ERROR lines — instant triage","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-magnifying-glass"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>logs filter-log-events</code><div class="fl-desc">Reads and filters events in a log group.</div></div>
+                <div class="flag"><code>--filter-pattern "ERROR"</code><div class="fl-desc">Only return events whose message <b>matches</b> this text.</div></div>
+                <div class="flag"><code>--query "events[].message" --output text</code><div class="fl-desc">Clean output — just the messages, no JSON wrapping.</div></div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-magnifying-glass"></i> From chaos to clarity</div>
+                <pre>   <span class="a-cmt"># all events</span>            <span class="a-grn"># filtered: "ERROR"</span>
+   Rahul visited /home       ERROR connection refused on DB
+   DB query took 250ms
+   ERROR conn refused  ←-    <span class="a-yel">(the one line you needed)</span>
+   Rahul visited /cart</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 7: CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">7</div>
+              <div>
+                <h3 class="step-title">Clean Up</h3>
+                <div class="step-sub">Delete the alarm and logs — tidy account, safe account</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> cloudwatch delete-alarms <span class="fl">--alarm-names</span> <span class="st">HighLatency</span>
+<span class="kw">awslocal</span> logs delete-log-stream <span class="fl">--log-group-name</span> <span class="st">/amitsite/app</span> <span class="fl">--log-stream-name</span> <span class="st">web-1</span>
+<span class="kw">awslocal</span> logs delete-log-group <span class="fl">--log-group-name</span> <span class="st">/amitsite/app</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>Same habit, one more time</b>
+                  <p><em>Create → use → delete.</em> Alarms and log groups are free here but the habit matters on real AWS (log storage costs money over time). Stream first, then group — and you're clean. (Custom metric data points expire on their own — no delete command needed.)</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal cloudwatch delete-alarms --alarm-names HighLatency","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# alarm deleted","color":"dim"},
+                  {"type":"cmd","text":"awslocal logs delete-log-stream --log-group-name /amitsite/app --log-stream-name web-1","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# stream deleted","color":"dim"},
+                  {"type":"cmd","text":"awslocal logs delete-log-group --log-group-name /amitsite/app","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"cmd","text":"awslocal logs describe-log-groups --query \"logGroups[].logGroupName\" --output text","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (empty — all cleaned up)","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-trash"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the cleanup</div>
+                <div class="flag"><code>cloudwatch delete-alarms --alarm-names HighLatency</code><div class="fl-desc">Removes the alarm.</div></div>
+                <div class="flag"><code>logs delete-log-stream</code><div class="fl-desc">Deletes the stream first (it lives inside the group).</div></div>
+                <div class="flag"><code>logs delete-log-group</code><div class="fl-desc">Deletes the whole cabinet last.</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete CloudWatch flow — copy &amp; paste
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 1. Push custom metrics</span>
+awslocal cloudwatch put-metric-data --namespace AmitSite --metric-name PageViews --value 150 --unit Count
+awslocal cloudwatch put-metric-data --namespace AmitSite --metric-name LatencyMs --value 82 --unit Milliseconds
+
+<span class="cmt"># 2. Read them back</span>
+awslocal cloudwatch list-metrics --namespace AmitSite --output json
+awslocal cloudwatch get-metric-statistics --namespace AmitSite --metric-name PageViews --start-time 2026-08-07T00:00:00Z --end-time 2026-08-09T00:00:00Z --period 3600 --statistics Maximum
+
+<span class="cmt"># 3. Create an alarm (latency &gt; 100ms)</span>
+awslocal cloudwatch put-metric-alarm --alarm-name HighLatency --metric-name LatencyMs --namespace AmitSite --statistic Average --period 60 --evaluation-periods 1 --threshold 100 --comparison-operator GreaterThanThreshold
+awslocal cloudwatch describe-alarms --alarm-names HighLatency
+
+<span class="cmt"># 4. Log group + stream</span>
+awslocal logs create-log-group --log-group-name /amitsite/app
+awslocal logs create-log-stream --log-group-name /amitsite/app --log-stream-name web-1
+
+<span class="cmt"># 5. Write log events (timestamp must be in milliseconds)</span>
+awslocal logs put-log-events --log-group-name /amitsite/app --log-stream-name web-1 --log-events timestamp=$(date +%s000),message='Rahul visited /home' timestamp=$(( $(date +%s000) + 1000 )),message='ERROR connection refused on DB'
+
+<span class="cmt"># 6. Search logs</span>
+awslocal logs filter-log-events --log-group-name /amitsite/app --filter-pattern "ERROR" --query "events[].message" --output text
+
+<span class="cmt"># 7. Clean up</span>
+awslocal cloudwatch delete-alarms --alarm-names HighLatency
+awslocal logs delete-log-stream --log-group-name /amitsite/app --log-stream-name web-1
+awslocal logs delete-log-group --log-group-name /amitsite/app</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — CloudWatch in one picture</div>
+          <pre><span class="y">CloudWatch</span> = the <span class="b">control room</span> of your AWS company.
+
+   <span class="b">Metrics</span>  = the gauges   (CPU, latency, pageviews)
+   <span class="b">Alarms</span>   = the smoke detectors (threshold → notify)
+   <span class="b">Logs</span>     = the security camera footage (searchable text)
+   <span class="b">CloudTrail</span>= the sign-in ledger (who did what, when)
+
+   Ask yourself before shipping any app:
+   "If this breaks at 3 AM, <span class="o">how will I know</span>?"
+   The answer is CloudWatch.</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-flask tip-ic"></i>Honest note — what Floci does &amp; doesn't support</b>
+          I tested this live. CloudWatch <strong>metrics, alarms, and logs work fully</strong> on Floci — every command above ran against the real emulator. <strong>Dashboards are NOT implemented</strong> (<code>put-dashboard</code> / <code>list-dashboards</code> return UnsupportedOperation), and metric data points expire on their own (there's no manual delete). On real AWS, dashboards work exactly as described — but here, the CLI metrics/alarms/logs flow you practiced is 100% live.
+        </div>
+      </section>
+
+      <!-- ============ CLOUDTRAIL ============ -->
+      <section class="sec" id="cloudtrail">
+        <h2><span class="ic pink"><i class="fa-solid fa-file-shield"></i></span> CloudTrail — The Audit Trail</h2>
+        <p>CloudWatch answers <em>"is it healthy?"</em> <strong>CloudTrail</strong> answers <em>"who did what?"</em> It records <strong>every API call</strong> made in your account — the API call, the identity (remember IAM ARNs from Chapter 5?), the source IP, and the time.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-file-shield"></i> CloudTrail in one line</div>
+          <pre>   Who  (IAM user/role ARN)
+   Did  (ec2:RunInstances, iam:CreateUser, ...)
+   What (which resource)
+   When (exact timestamp)
+   From (IP address)
+         ──────────────────────────────►  stored as JSON events</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🕵️</div>
+          <div>
+            <b>Why you need it</b>
+            <p>A server misbehaves at 3 AM. CloudWatch shows the CPU spike; <strong>CloudTrail shows who changed the security group at 2:58</strong>. Security incident? CloudTrail is the forensic evidence. In real accounts, CloudTrail is enabled by default on the <strong>management events</strong> of all AWS services — you don't have to turn it on for the basics.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>CloudWatch vs CloudTrail — don't mix them up</b>
+            CloudWatch = <strong>performance &amp; logs</strong> (metrics, alarms, app output). CloudTrail = <strong>audit &amp; security</strong> (who called which API). One watches the machinery, the other watches the people. Together they make your account fully observable.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ BEST PRACTICES ============ -->
+      <section class="sec" id="best-practices">
+        <h2><span class="ic green"><i class="fa-solid fa-shield-halved"></i></span> Monitoring Best Practices</h2>
+        <p>What a senior engineer actually does (boiled down):</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Practice</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Monitor the "golden signals"</strong></td><td>Latency, error rate, traffic, saturation (CPU/disk). These four tell you almost everything about a service.</td></tr>
+              <tr><td><strong>Alarm on errors &amp; latency</strong></td><td>Not just CPU. If errors spike or latency climbs, users are affected — that's what matters.</td></tr>
+              <tr><td><strong>Set alarms to actually notify</strong></td><td>An alarm that doesn't reach you (SNS → email/SMS) is just a number nobody reads.</td></tr>
+              <tr><td><strong>Log everything, search the rest</strong></td><td>Have a consistent log format (timestamps + request IDs) so <code>filter-log-events</code> actually works.</td></tr>
+              <tr><td><strong>Keep CloudTrail on</strong></td><td>Free management-event logging is your audit trail for security and debugging.</td></tr>
+              <tr><td><strong>Don't alert on every tiny thing</strong></td><td>Alert fatigue is real. Fewer, meaningful alarms beat 50 noisy ones.</td></tr>
+              <tr><td><strong>Practice the cleanup habit</strong></td><td>Delete test alarms/log groups when done — tidy accounts are debuggable accounts.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 6</h2>
+        <div class="term"><span class="t-name">CloudWatch</span><p>AWS's monitoring service: metrics, alarms, and logs.</p></div>
+        <div class="term"><span class="t-name">Metric</span><p>A number measured over time (CPU%, latency, page views).</p></div>
+        <div class="term"><span class="t-name">Namespace</span><p>The folder a metric lives in — <code>AWS/EC2</code> or your own like <code>AmitSite</code>.</p></div>
+        <div class="term"><span class="t-name">Dimension</span><p>A label that slices a metric, e.g. <code>InstanceId</code> or <code>Page</code>.</p></div>
+        <div class="term"><span class="t-name">Statistic</span><p>How a period is summarized: Average, Maximum, Minimum, Sum, p99.</p></div>
+        <div class="term"><span class="t-name">Period</span><p>The time bucket (seconds) each statistic covers.</p></div>
+        <div class="term"><span class="t-name">Alarm</span><p>Watches a metric and fires when it crosses a threshold.</p></div>
+        <div class="term"><span class="t-name">SNS</span><p>Simple Notification Service — how alarms send email/SMS. (Chapter 6 bonus.)</p></div>
+        <div class="term"><span class="t-name">Log group</span><p>A named collection of log streams — the cabinet for one app.</p></div>
+        <div class="term"><span class="t-name">Log stream</span><p>One source inside a group — typically one server/instance.</p></div>
+        <div class="term"><span class="t-name">Log event</span><p>A single timestamped log line.</p></div>
+        <div class="term"><span class="t-name">Filter pattern</span><p>A search term used to find matching log events.</p></div>
+        <div class="term"><span class="t-name">CloudTrail</span><p>The audit trail of every API call — who did what, when, from where.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 6 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> What does <strong>CloudWatch</strong> do?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Stores files and images</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> Collects metrics, logs, and fires alarms so you know your app's health</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Runs your database</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> Which command <strong>reports a new data point</strong> to CloudWatch?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> <code style="color:var(--accent-2)">get-metric-statistics</code></label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> <code style="color:var(--accent-2)">filter-log-events</code></label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> <code style="color:var(--accent-2)">put-metric-data</code></label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> A fresh alarm usually starts in which state?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> ALARM — something is already broken</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> INSUFFICIENT_DATA — not enough numbers to judge yet</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> OK — everything is fine</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> In CloudWatch Logs, the <strong>filing cabinet</strong> for one app is a...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> log event</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> log group</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> filter pattern</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> You want to see <strong>only the error lines</strong> from thousands of logs. Which flag?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> <code style="color:var(--accent-2)">--statistics</code></label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> <code style="color:var(--accent-2)">--filter-pattern "ERROR"</code></label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> <code style="color:var(--accent-2)">--unit</code></label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> Which service answers <strong>"who changed that security group at 2:58 AM?"</strong></div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> CloudWatch metrics</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> CloudTrail — the API-call audit trail</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> RDS</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> What's the difference between <strong>CloudWatch</strong> and <strong>CloudTrail</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> They're identical</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> CloudWatch = health (metrics/logs/alarms); CloudTrail = audit (who did what)</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> CloudTrail stores files, CloudWatch stores databases</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-05.html"><i class="fa-solid fa-arrow-left"></i> Ch 5: IAM — Identity &amp; Access</a>
+          <a href="chapter-07.html">Next: DNS — Route 53 <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 6 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

@@ -1,0 +1,918 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 5 — IAM: Identity &amp; Access | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html" class="active"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 5 — Contents</h4>
+      <a href="#why-iam">Why IAM?</a>
+      <a href="#building-blocks">The 4 Building Blocks</a>
+      <a href="#policies">Policies — The Heart of IAM</a>
+      <a href="#whoami">Who Am I? Root vs IAM User</a>
+      <a href="#hands-on">Hands-On: Build a User</a>
+      <a href="#groups">Groups &amp; Access Keys</a>
+      <a href="#roles">Roles — Give to Machines</a>
+      <a href="#best-practices">Security Best Practices</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 5 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="5" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-key"></i> Chapter 5</span>
+        <h1>IAM — Identity &amp; Access Management</h1>
+        <p class="subtitle">So far you've built servers (EC2) and databases (RDS). But <strong>who is allowed to touch them?</strong> This chapter is about <strong>security identity</strong>: users, groups, roles, and the JSON policies that decide who can do what. IAM is the <strong>single most tested AWS topic</strong> — and the thing your company would be hacked without.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~35 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 7 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-key"></i> Security essentials</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-iam">Why IAM?</a>
+        <a href="#building-blocks">The 4 Building Blocks</a>
+        <a href="#policies">Policies — The Heart of IAM</a>
+        <a href="#whoami">Who Am I? Root vs IAM User</a>
+        <a href="#hands-on">Hands-On: Build a User</a>
+        <a href="#groups">Groups &amp; Access Keys</a>
+        <a href="#roles">Roles — Give to Machines</a>
+        <a href="#best-practices">Security Best Practices</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 5 Quiz</a>
+      </div>
+
+      <!-- ============ WHY IAM ============ -->
+      <section class="sec" id="why-iam">
+        <h2><span class="ic"><i class="fa-solid fa-circle-question"></i></span> Why IAM?</h2>
+        <p>Continue the story of <strong>www.amit.com</strong>. You now own a VPC (office), an EC2 server (computer), and an RDS database (record room). You hire a team:</p>
+
+        <ul class="lessons">
+          <li><strong>Amit</strong> — the owner, needs full access.</li>
+          <li><strong>Rahul</strong> — a developer, needs EC2 + code access but <strong>not</strong> the billing.</li>
+          <li><strong>Maria</strong> — an analyst, needs to <strong>read</strong> the database reports but never delete them.</li>
+        </ul>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-id-card"></i> The company ID-card problem</div>
+          <pre>      Without IAM            With IAM
+   ┌─────────────────┐    ┌─────────────────┐
+   │  Everyone has   │    │  Amit  → full    │
+   │  the MASTER KEY │    │  Rahul → dev     │
+   │  to the vault   │    │  Maria → read    │
+   │  😱 total chaos │    │  ✅ controlled  │
+   └─────────────────┘    └─────────────────┘</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🪪</div>
+          <div>
+            <b>IAM = the ID-card system for your AWS account</b>
+            <p><strong>IAM</strong> (Identity &amp; Access Management) is a free AWS service that lets you create <strong>identities</strong> (who) and decide what they can <strong>do</strong> (access). Every action in AWS — every <code>ec2 run-instances</code>, every <code>rds describe-db-instances</code> you ran in earlier chapters — runs as <em>some</em> identity, and IAM decides if it's allowed.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Why this chapter matters more than the rest</b>
+            The #1 cause of hacked AWS accounts is bad IAM: someone leaves a master key lying around. Learn IAM once, and you'll <strong>automatically secure every service</strong> you've already built. On the exam, IAM is everywhere.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ BUILDING BLOCKS ============ -->
+      <section class="sec" id="building-blocks">
+        <h2><span class="ic blue"><i class="fa-solid fa-cubes"></i></span> The 4 Building Blocks of IAM</h2>
+        <p>Everything in IAM is built from just four ideas. Master these and the whole service makes sense.</p>
+
+        <div class="grid-2" style="margin-top:1rem">
+          <div class="card">
+            <div class="c-ic o"><i class="fa-solid fa-user"></i></div>
+            <h4>User</h4>
+            <p>A <strong>person</strong> (or app) that needs access. Has a name, an optional password, and optional <strong>access keys</strong> for programs. <em>Rahul</em> is a user.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic b"><i class="fa-solid fa-users"></i></div>
+            <h4>Group</h4>
+            <p>A <strong>collection of users</strong> that share permissions. You attach policies to the group, and every member inherits them. <em>developers</em> is a group.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic g"><i class="fa-solid fa-user-shield"></i></div>
+            <h4>Role</h4>
+            <p>A <strong>temporary identity for machines</strong> (EC2, Lambda) or federated users. It's assumed, not logged into. <em>Your EC2 server</em> can assume a role.</p>
+          </div>
+          <div class="card">
+            <div class="c-ic p"><i class="fa-solid fa-scroll"></i></div>
+            <h4>Policy</h4>
+            <p>The <strong>permission document</strong> — a JSON file that says <em>who can do what on which resource</em>. This is the heart; the next section dives in.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> How the pieces fit</div>
+          <pre>       <span class="a-pnk">Policies (the rules)</span>  ──attach──►  <span class="a-blu">Groups</span>  ◄──join──  <span class="a-yel">Users</span>
+           │                                   ▲                  ▲
+           │                                   │                  │
+           └─────────────attach────────────────┘                  │
+                                                                  │
+       <span class="a-grn">Roles</span>  ◄──assume──  <span class="a-acc">EC2 / Lambda / apps</span>          │
+                                                                   
+       <span class="a-blu">your company</span>: users have IDs, groups share rules, roles drive machines</pre>
+        </div>
+      </section>
+
+      <!-- ============ POLICIES ============ -->
+      <section class="sec" id="policies">
+        <h2><span class="ic green"><i class="fa-solid fa-scroll"></i></span> Policies — The Heart of IAM</h2>
+        <p>A <strong>policy</strong> is just JSON. It says: "allow or deny these <strong>actions</strong> on these <strong>resources</strong>." Read a policy top to bottom, and you know exactly what it permits.</p>
+
+        <div class="codeblock">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-file-code"></i> An IAM policy document (JSON)
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt">// Give read access to any S3 bucket</span>
+{
+  <span class="fl">"Version"</span>: <span class="str">"2012-10-17"</span>,
+  <span class="fl">"Statement"</span>: [
+    {
+      <span class="fl">"Effect"</span>: <span class="str">"Allow"</span>,
+      <span class="fl">"Action"</span>: <span class="str">"s3:ListAllMyBuckets"</span>,
+      <span class="fl">"Resource"</span>: <span class="str">"*"</span>
+    }
+  ]
+}</code></pre>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Key</th><th>What it means</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><code>Effect</code></td><td><span class="ok-ic">Allow</span> or <span class="no-ic">Deny</span>. If a request matches any <strong>Deny</strong>, it's denied — even if an Allow matches too.</td></tr>
+              <tr><td><code>Action</code></td><td>The API call(s), written as <code>service:operation</code> — e.g. <code>s3:GetObject</code>, <code>ec2:RunInstances</code>, or <code>*</code> for everything.</td></tr>
+              <tr><td><code>Resource</code></td><td>Which thing the action applies to, written as an <strong>ARN</strong> (see below). <code>*</code> = all.</td></tr>
+              <tr><td><code>Version</code></td><td>Policy language version. Always <code>2012-10-17</code> — just leave it.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🔖</div>
+          <div>
+            <b>ARN — the address of every AWS resource</b>
+            <p>An <strong>ARN</strong> (Amazon Resource Name) is the universal ID for anything in AWS. They look like <code>arn:aws:s3:::my-bucket</code> or <code>arn:aws:ec2:us-east-1:123456789012:instance/i-abc</code>. Policies use ARNs to point at exactly which resource you're allowed to touch.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>The evaluation rule (memorize this)</b>
+            Every request is checked against all policies. AWS evaluates them as: <strong>explicit Deny → Allow → default Deny</strong>. Explicit <strong>Deny always wins</strong>, everything not explicitly allowed is denied by default. AWS = "default to locked."
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ WHO AM I ============ -->
+      <section class="sec" id="whoami">
+        <h2><span class="ic gold"><i class="fa-solid fa-fingerprint"></i></span> Who Am I? Root User vs IAM User</h2>
+        <p>The very first identity in every AWS account is the <strong>root user</strong> — the account you signed up with. It's like being the building owner: you can do literally everything.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-key"></i> Root vs IAM user</div>
+          <pre>   <span class="a-acc">ROOT USER</span> (the account itself)          <span class="a-blu">IAM USERS</span> (the people/machines)
+   ┌─────────────────────────────┐    ┌──────────────────────────────┐
+   │ full access to everything   │    │ rahul    → limited per policy │
+   │ can delete the whole AWS    │    │ maria    → read-only reports  │
+   │ account 😱                   │    │ billing  → maybe not even    │
+   │ only used to make IAM users │    │ safest way to do real work   │
+   └─────────────────────────────┘    └──────────────────────────────┘</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>The #1 security rule in AWS</b>
+          <strong>Never use the root user for daily work.</strong> Create an IAM user with just the permissions you need, and use that. On Floci, the account is emulated — you'll see the emulator's own "root" identity when you check <code>sts get-caller-identity</code>.
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Who does what? The IAM triangle</b>
+          <strong>Authentication</strong> = who are you? (username/password or access keys). <strong>Authorization</strong> = what may you do? (policies). <strong>Identity</strong> = who do your actions appear as in logs? (your user/role ARN). IAM handles all three.
+        </div>
+      </section>
+
+      <!-- ============ HANDS-ON ============ -->
+      <section class="sec" id="hands-on">
+        <h2><span class="ic"><i class="fa-solid fa-screwdriver-wrench"></i></span> Hands-On: Build Your First IAM User</h2>
+        <p>Enough theory. Let's actually <strong>create Rahul's identity</strong> on Floci, command by command — exactly the way you'd do it on real AWS.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: WHOAMI ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Who Am I Right Now?</h3>
+                <div class="step-sub">Check the identity behind your CLI</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> sts get-caller-identity</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🕵️</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p><strong>STS</strong> (Security Token Service) answers one question: <em>"who am I?"</em> It returns the identity behind your access keys. On Floci you're the emulated <strong>root user</strong> (<code>...:root</code>). On real AWS this would show your account number and role/user ARN. Run this before any other IAM work — it tells you who you're acting as.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal sts get-caller-identity","delay":500},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"UserId\": \"000000000000\",","color":""},
+                  {"type":"out","text":"    \"Account\": \"000000000000\",","color":""},
+                  {"type":"out","text":"    \"Arn\": \"arn:aws:iam::000000000000:root\"","color":"ok"},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# The root user. Everything you run is \u201cas root\u201d right now.","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-fingerprint"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>sts get-caller-identity</code><div class="fl-desc">The service + action: <b>"tell me who is making this call."</b></div></div>
+                <div class="flag"><code>UserId</code><div class="fl-desc">A unique ID for the identity making the call.</div></div>
+                <div class="flag"><code>Account</code><div class="fl-desc">Your 12-digit AWS account number.</div></div>
+                <div class="flag"><code>Arn</code><div class="fl-desc">The full identity address — here the <b>root</b> user of the account.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: CREATE USER ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Create a User — Welcome Rahul</h3>
+                <div class="step-sub">Make an identity with no permissions yet</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> iam create-user <span class="fl">--user-name</span> <span class="st">rahul</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧑‍💻</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You created an <strong>IAM user</strong> named <code>rahul</code> in your account. A brand-new user has <strong>zero permissions</strong> — like handing someone a blank ID card. The output gives the user a <strong>UserId</strong> and its <strong>ARN</strong> (<code>...:user/rahul</code>). Rahul can't do anything yet — that comes later with policies.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal iam list-users --query \"Users[].UserName\" --output text","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (empty — no users yet)","color":"dim"},
+                  {"type":"cmd","text":"awslocal iam create-user --user-name rahul","delay":600},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"User\": {","color":""},
+                  {"type":"out","text":"        \"Path\": \"/\",","color":""},
+                  {"type":"out","text":"        \"UserName\": \"rahul\",","color":"ok"},
+                  {"type":"out","text":"        \"UserId\": \"AIDAYGY7UAI5LGBEY0UI\",","color":""},
+                  {"type":"out","text":"        \"Arn\": \"arn:aws:iam::000000000000:user/rahul\",","color":""},
+                  {"type":"out","text":"        \"CreateDate\": \"2026-08-08T05:17:47+00:00\"","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# Rahul exists. But he can do NOTHING yet.","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-user-plus"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>iam create-user</code><div class="fl-desc">Service + action: <b>"create a new identity."</b></div></div>
+                <div class="flag"><code>--user-name rahul</code><div class="fl-desc">The identity's <b>name</b> — must be unique in your account.</div></div>
+                <div class="flag"><code>arn:aws:iam::000000000000:user/rahul</code><div class="fl-desc">Rahul's <b>ARN</b> — his permanent address in AWS. Policies and logs reference it.</div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>A new user = no access</b>
+                By default a fresh IAM user can't do anything — not even list buckets. That's the security model working. Permissions are added only when you attach a <strong>policy</strong>. This "least privilege by default" is exactly what you want.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: ACCESS KEY ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Give Rahul a Key Pair — For Programs</h3>
+                <div class="step-sub">How a script logs in as a user</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> iam create-access-key <span class="fl">--user-name</span> <span class="st">rahul</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🗝️</div>
+                <div>
+                  <b>What is an access key?</b>
+                  <p>People log in to the AWS console with a <strong>username + password</strong>. But your code (AWS CLI, SDKs) can't type a password — it uses an <strong>access key</strong> instead: an <code>AccessKeyId</code> (like a login) and a <code>SecretAccessKey</code> (like a password). Note it's for the <em>rahul</em> user, not root — good practice.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal iam create-access-key --user-name rahul","delay":500},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"AccessKey\": {","color":""},
+                  {"type":"out","text":"        \"UserName\": \"rahul\",","color":""},
+                  {"type":"out","text":"        \"AccessKeyId\": \"AKIAR3UEMIZ4OMH97RRY\",","color":"ok"},
+                  {"type":"out","text":"        \"Status\": \"Active\",","color":""},
+                  {"type":"out","text":"        \"SecretAccessKey\": \"EHNmNeyXs2cMoNZMixgW0cl41cAF9TrFrfcDXbGK\",","color":"ok"},
+                  {"type":"out","text":"        \"CreateDate\": \"2026-08-08T05:17:55+00:00\"","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# SAVE THIS! The secret is shown only once.","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-key"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>iam create-access-key</code><div class="fl-desc">Generates a <b>programmatic login</b> for a user.</div></div>
+                <div class="flag"><code>--user-name rahul</code><div class="fl-desc">Which user the key belongs to.</div></div>
+                <div class="flag"><code>AccessKeyId</code><div class="fl-desc">The public half — identifies <b>who</b> you are.</div></div>
+                <div class="flag"><code>SecretAccessKey</code><div class="fl-desc">The private half — <b>proves</b> it's you. <b>Shown once only.</b> Never share it.</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>The biggest mistake beginners make</b>
+                The <code>SecretAccessKey</code> is printed <strong>only once</strong> at creation. If you lose it, you must generate a new key. And never commit it to GitHub — that's how AWS accounts get hacked in hours. (Rotate keys periodically; delete old ones with <code>delete-access-key</code>.)
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: GROUPS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Group Rahul with the Developers</h3>
+                <div class="step-sub">Permissions once, shared by many</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> iam create-group <span class="fl">--group-name</span> <span class="st">developers</span>
+<span class="kw">awslocal</span> iam add-user-to-group <span class="fl">--group-name</span> <span class="st">developers</span> <span class="fl">--user-name</span> <span class="st">rahul</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">👥</div>
+                <div>
+                  <b>Why groups?</b>
+                  <p>Instead of giving every developer the same permission one-by-one (and updating them one-by-one forever), you make a <strong>developers</strong> group, attach the permissions to the <strong>group</strong>, and add users to it. New dev joins → add to group → done. Permissions update once → everyone gets it. This is how real companies manage teams.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal iam create-group --group-name developers","delay":500},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"Group\": {","color":""},
+                  {"type":"out","text":"        \"Path\": \"/\",","color":""},
+                  {"type":"out","text":"        \"GroupName\": \"developers\",","color":"ok"},
+                  {"type":"out","text":"        \"GroupId\": \"AGPAG6FMP9KL7X6XWKE5\",","color":""},
+                  {"type":"out","text":"        \"Arn\": \"arn:aws:iam::000000000000:group/developers\",","color":""},
+                  {"type":"out","text":"        \"CreateDate\": \"2026-08-08T05:17:56+00:00\"","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"awslocal iam add-user-to-group --group-name developers --user-name rahul","delay":500},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = success)","color":"dim"},
+                  {"type":"cmd","text":"awslocal iam get-group --group-name developers --query \"Users[].UserName\" --output text","delay":450},
+                  {"type":"out","text":"rahul","color":"ok"},
+                  {"type":"out","text":"# Rahul is now a member of the developers group","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-users"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>iam create-group --group-name developers</code><div class="fl-desc">Creates the <b>team container</b>.</div></div>
+                <div class="flag"><code>iam add-user-to-group --group-name developers --user-name rahul</code><div class="fl-desc">Adds Rahul as a <b>member</b> of the team.</div></div>
+                <div class="flag"><code>iam get-group</code><div class="fl-desc">Lists who's in a group — your verification tool.</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>The rule of thumb</b>
+                Put people in <strong>groups</strong>, attach policies to <strong>groups</strong>, never attach policies directly to users. Groups are the standard pattern for humans. Roles (next step) are the standard pattern for machines.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: ATTACH POLICY ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Attach a Policy — Rahul Can Now Read S3</h3>
+                <div class="step-sub">The moment permissions actually exist</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Command</div>
+                <pre><span class="kw">awslocal</span> iam attach-user-policy <span class="fl">--user-name</span> <span class="st">rahul</span> <span class="fl">--policy-arn</span> <span class="st">arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📜</div>
+                <div>
+                  <b>AWS managed policies — ready-made permissions</b>
+                  <p>Instead of writing JSON by hand, AWS ships hundreds of <strong>managed policies</strong>. <code>AmazonS3ReadOnlyAccess</code> is one — it already contains the JSON that allows every S3 read action (<code>s3:GetObject</code>, <code>s3:ListBucket</code>, ...) and denies nothing else. You just attach it by its <strong>ARN</strong>. You'll find them all under <code>arn:aws:iam::aws:policy/...</code>.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal iam attach-user-policy --user-name rahul --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess","delay":550},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (no output = success)","color":"dim"},
+                  {"type":"cmd","text":"awslocal iam list-attached-user-policies --user-name rahul --query \"AttachedPolicies[].[PolicyName,PolicyArn]\" --output table","delay":500},
+                  {"type":"out","text":"---------------------------------------------","color":""},
+                  {"type":"out","text":"|    ListAttachedUserPolicies               |","color":""},
+                  {"type":"out","text":"+-------------------------+------------------+","color":""},
+                  {"type":"out","text":"|  AmazonS3ReadOnlyAccess |  arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess |","color":"ok"},
+                  {"type":"out","text":"+-------------------------+------------------+","color":""},
+                  {"type":"out","text":"# Rahul can now read any S3 bucket. And only that.","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-scroll"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>iam attach-user-policy</code><div class="fl-desc">Attaches a policy document to a user.</div></div>
+                <div class="flag"><code>--user-name rahul</code><div class="fl-desc">Who receives the permission.</div></div>
+                <div class="flag"><code>--policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess</code><div class="fl-desc">The <b>ARN</b> of the ready-made policy to attach.</div></div>
+                <div class="flag"><code>list-attached-user-policies</code><div class="fl-desc">Verify — shows which policies a user has.</div></div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> What just happened</div>
+                <pre>   <span class="a-yel">AmazonS3ReadOnlyAccess</span> (policy)
+        │  attach
+        ▼
+   <span class="a-blu">rahul</span> (user)  ── member of ──►  <span class="a-blu">developers</span> (group)
+        │
+        ▼
+   ✅ can:  s3:GetObject, s3:ListBucket, s3:ListAllMyBuckets ...
+   ❌ cannot: ec2:* , rds:* , iam:* , s3:PutObject ...</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: ROLES ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">Roles — Give Permissions to Machines</h3>
+                <div class="step-sub">Never put keys in code. Let EC2 assume a role instead.</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> iam create-role <span class="fl">--role-name</span> <span class="st">ec2-app-role</span> <span class="fl">--assume-role-policy-document</span> <span class="st">'{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}'</span>
+<span class="kw">awslocal</span> iam attach-role-policy <span class="fl">--role-name</span> <span class="st">ec2-app-role</span> <span class="fl">--policy-arn</span> <span class="st">arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🎭</div>
+                <div>
+                  <b>Why roles instead of access keys for machines?</b>
+                  <p>You <em>could</em> create a user, make an access key, and hardcode it into your EC2 server's code. Bad idea — the secret lives in code and gets stolen. Instead, AWS roles let a service <strong>assume a temporary identity</strong>: your EC2 instance gets short-lived credentials <em>automatically</em>, no secrets stored anywhere. The <strong>trust policy</strong> says <em>"who may wear this hat"</em> (here: EC2), and the <strong>permission policy</strong> (attached after) says <em>"what the hat may do."</em></p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal iam create-role --role-name ec2-app-role --assume-role-policy-document \u0027{\"Version\":\"2012-10-17\",\"Statement\":[{\"Effect\":\"Allow\",\"Principal\":{\"Service\":\"ec2.amazonaws.com\"},\"Action\":\"sts:AssumeRole\"}]}\u0027","delay":700},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"Role\": {","color":""},
+                  {"type":"out","text":"        \"RoleName\": \"ec2-app-role\",","color":"ok"},
+                  {"type":"out","text":"        \"RoleId\": \"AROAKX5D7H7G4CXIGNQI\",","color":""},
+                  {"type":"out","text":"        \"Arn\": \"arn:aws:iam::000000000000:role/ec2-app-role\",","color":""},
+                  {"type":"out","text":"        \"AssumeRolePolicyDocument\": {","color":""},
+                  {"type":"out","text":"            \"Statement\": [","color":""},
+                  {"type":"out","text":"                {\"Effect\": \"Allow\", \"Principal\": {\"Service\": \"ec2.amazonaws.com\"}, \"Action\": \"sts:AssumeRole\"}","color":""},
+                  {"type":"out","text":"            ]","color":""},
+                  {"type":"out","text":"        }","color":""},
+                  {"type":"out","text":"    }","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"awslocal iam attach-role-policy --role-name ec2-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess","delay":500},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# ec2-app-role exists and can be assumed by EC2. No keys involved.","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-mask"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>iam create-role --role-name ec2-app-role</code><div class="fl-desc">Creates a machine identity called <code>ec2-app-role</code>.</div></div>
+                <div class="flag"><code>--assume-role-policy-document '{...}'</code><div class="fl-desc">The <b>trust policy</b> — JSON that declares <em>who may assume this role</em> (here: the EC2 service).</div></div>
+                <div class="flag"><code>"Principal": {"Service": "ec2.amazonaws.com"}</code><div class="fl-desc">The trust target — the EC2 service is allowed to take this hat.</div></div>
+                <div class="flag"><code>"Action": "sts:AssumeRole"</code><div class="fl-desc">The action of <b>switching into the role</b>.</div></div>
+                <div class="flag"><code>iam attach-role-policy ... AmazonS3ReadOnlyAccess</code><div class="fl-desc">The <b>permission policy</b> — what the role may do once assumed.</div></div>
+              </div>
+
+              <div class="ascii-box">
+                <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> Role flow</div>
+                <pre>   <span class="a-blu">EC2 instance</span> ──assume──►  <span class="a-yel">ec2-app-role</span>
+                                     │  (trust: ec2.amazonaws.com)
+                                     ▼
+                           <span class="a-grn">AmazonS3ReadOnlyAccess</span> (permission policy)
+                                     │
+                                     ▼
+                             ✅ reads S3 buckets
+                             ❌ no keys, no secrets in code</pre>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 7: CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">7</div>
+              <div>
+                <h3 class="step-title">Clean Up — Delete What You Made</h3>
+                <div class="step-sub">Tidy account, safe account</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> iam delete-access-key <span class="fl">--user-name</span> <span class="st">rahul</span> <span class="fl">--access-key-id</span> <span class="st">AKIAR3UEMIZ4OMH97RRY</span>
+<span class="kw">awslocal</span> iam detach-user-policy <span class="fl">--user-name</span> <span class="st">rahul</span> <span class="fl">--policy-arn</span> <span class="st">arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess</span>
+<span class="kw">awslocal</span> iam remove-user-from-group <span class="fl">--group-name</span> <span class="st">developers</span> <span class="fl">--user-name</span> <span class="st">rahul</span>
+<span class="kw">awslocal</span> iam delete-user <span class="fl">--user-name</span> <span class="st">rahul</span>
+<span class="kw">awslocal</span> iam delete-group <span class="fl">--group-name</span> <span class="st">developers</span>
+<span class="kw">awslocal</span> iam detach-role-policy <span class="fl">--role-name</span> <span class="st">ec2-app-role</span> <span class="fl">--policy-arn</span> <span class="st">arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess</span>
+<span class="kw">awslocal</span> iam delete-role <span class="fl">--role-name</span> <span class="st">ec2-app-role</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>Deleting needs the right order</b>
+                  <p>IAM enforces order: you must <strong>detach</strong> policies and <strong>remove</strong> users from groups before you can <strong>delete</strong> them. Same habit you learned in Chapters 3 &amp; 4: <em>create → use → delete</em>. Real AWS is pay-as-you-go, and an unused account with old keys is a security risk — always tidy up.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal iam detach-user-policy --user-name rahul --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess","delay":400},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# detached policy","color":"dim"},
+                  {"type":"cmd","text":"awslocal iam remove-user-from-group --group-name developers --user-name rahul","delay":400},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# removed from group","color":"dim"},
+                  {"type":"cmd","text":"awslocal iam delete-user --user-name rahul","delay":400},
+                  {"type":"out","text":"","color":""},
+                  {"type":"cmd","text":"awslocal iam delete-group --group-name developers","delay":400},
+                  {"type":"out","text":"","color":""},
+                  {"type":"cmd","text":"awslocal iam list-users --query \"Users[].UserName\" --output text","delay":450},
+                  {"type":"out","text":"","color":""},
+                  {"type":"out","text":"# (empty — all cleaned up)","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-trash"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the cleanup</div>
+                <div class="flag"><code>delete-access-key / detach-user-policy / remove-user-from-group</code><div class="fl-desc">Remove the user's <b>credentials, permissions, and group membership</b> first.</div></div>
+                <div class="flag"><code>delete-user</code><div class="fl-desc">Only now can the <b>user</b> be deleted.</div></div>
+                <div class="flag"><code>delete-group / delete-role</code><div class="fl-desc">Delete the <b>group</b> and <b>role</b> once nothing references them.</div></div>
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete IAM flow — copy &amp; paste
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># 0. Who am I?</span>
+awslocal sts get-caller-identity
+
+<span class="cmt"># 1. Create a user</span>
+awslocal iam create-user --user-name rahul
+
+<span class="cmt"># 2. Programmatic access key (secret shown once!)</span>
+awslocal iam create-access-key --user-name rahul
+
+<span class="cmt"># 3. Put the user in a group</span>
+awslocal iam create-group --group-name developers
+awslocal iam add-user-to-group --group-name developers --user-name rahul
+
+<span class="cmt"># 4. Give permission via a managed policy</span>
+awslocal iam attach-user-policy --user-name rahul --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+<span class="cmt"># 5. Roles for machines (no keys in code!)</span>
+awslocal iam create-role --role-name ec2-app-role --assume-role-policy-document '{"Version":"2012-10-17","Statement":[{"Effect":"Allow","Principal":{"Service":"ec2.amazonaws.com"},"Action":"sts:AssumeRole"}]}'
+awslocal iam attach-role-policy --role-name ec2-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+
+<span class="cmt"># 6. Clean up (detach/remove before delete)</span>
+awslocal iam detach-user-policy --user-name rahul --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+awslocal iam remove-user-from-group --group-name developers --user-name rahul
+awslocal iam delete-user --user-name rahul
+awslocal iam delete-group --group-name developers
+awslocal iam detach-role-policy --role-name ec2-app-role --policy-arn arn:aws:iam::aws:policy/AmazonS3ReadOnlyAccess
+awslocal iam delete-role --role-name ec2-app-role</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — IAM in one picture</div>
+          <pre><span class="y">IAM</span> = the building's <span class="b">ID-card + lock system</span>.
+
+   <span class="b">User</span>      = a person (or app)        →  rahul
+   <span class="b">Group</span>     = a team sharing rules       →  developers
+   <span class="b">Policy</span>    = the list of allowed actions  →  s3 read-only
+   <span class="b">Role</span>      = a hat machines can wear    →  ec2-app-role
+   <span class="b">Access key</span>= username+password for code
+   <span class="b">ARN</span>       = the address of any identity/resource
+
+   Remember: default <span class="o">deny</span>. Explicit <span class="o">deny</span> beats <span class="g">allow</span>.
+   Never use <span class="p">root</span> for daily work. Put humans in <span class="b">groups</span>, give machines <span class="b">roles</span>.</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-flask tip-ic"></i>Honest note — what Floci does &amp; doesn't enforce</b>
+          I tested this live. Floci fully supports IAM <strong>identity management</strong>: users, groups, roles, policies, access keys, and <code>sts get-caller-identity</code> all work exactly as shown. <strong>But</strong> like real AWS's free local emulators, Floci does <strong>not enforce permissions</strong> — I attached only <code>AmazonS3ReadOnlyAccess</code> to a user and that user could still create EC2 instances and S3 buckets. So practice the commands here freely (they're 100% accurate), but understand that <em>permission enforcement</em> only happens on real AWS. On real AWS, an S3-read-only user would genuinely be blocked from everything else.
+        </div>
+      </section>
+
+      <!-- ============ BEST PRACTICES ============ -->
+      <section class="sec" id="best-practices">
+        <h2><span class="ic green"><i class="fa-solid fa-shield-halved"></i></span> Security Best Practices — IAM Edition</h2>
+        <p>The official AWS "well-architected" advice for IAM, boiled down to what actually matters:</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Practice</th><th>Why</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Never use the root user daily</strong></td><td>Root can delete the whole account. Create IAM users for everything.</td></tr>
+              <tr><td><strong>Enable MFA on the root user</strong></td><td>A second factor (phone/app) stops password thieves from owning your account.</td></tr>
+              <tr><td><strong>Least privilege</strong></td><td>Give the <em>minimum</em> permission needed. Read-only where possible. You can always grant more later.</td></tr>
+              <tr><td><strong>Use groups, not per-user policies</strong></td><td>One change updates the whole team. Simpler to audit.</td></tr>
+              <tr><td><strong>Use roles for machines</strong></td><td>EC2/Lambda assume roles. Never hardcode access keys in code or config.</td></tr>
+              <tr><td><strong>Rotate &amp; delete old access keys</strong></td><td>Stolen keys are the #1 breach vector. Regular rotation limits the damage.</td></tr>
+              <tr><td><strong>Monitor with CloudTrail</strong></td><td>Log every API call so you can see who did what (Chapter 6 territory).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Shared responsibility, again (from Chapter 1)</b>
+            AWS secures the cloud <em>of</em> the platform; <strong>you</strong> secure what's <em>in</em> it — and IAM is how you do that. Even a perfect VPC, EC2, and RDS setup is worthless if one leaked access key unlocks it all. IAM is your front door.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 5</h2>
+        <div class="term"><span class="t-name">IAM</span><p>Identity &amp; Access Management — AWS's free service for users, groups, roles, and policies.</p></div>
+        <div class="term"><span class="t-name">User</span><p>An identity for a person or application. Has login credentials and optional access keys.</p></div>
+        <div class="term"><span class="t-name">Group</span><p>A collection of users that share the same permissions.</p></div>
+        <div class="term"><span class="t-name">Role</span><p>A temporary identity that services (EC2, Lambda) can assume — no stored secrets.</p></div>
+        <div class="term"><span class="t-name">Policy</span><p>A JSON document defining allowed/denied actions and resources.</p></div>
+        <div class="term"><span class="t-name">Access key</span><p>AccessKeyId + SecretAccessKey used by code to authenticate (shown once).</p></div>
+        <div class="term"><span class="t-name">ARN</span><p>Amazon Resource Name — the unique address of any AWS resource or identity.</p></div>
+        <div class="term"><span class="t-name">STS</span><p>Security Token Service — <code>sts get-caller-identity</code> answers "who am I?".</p></div>
+        <div class="term"><span class="t-name">Root user</span><p>The account owner with unlimited access. Never use it for daily work.</p></div>
+        <div class="term"><span class="t-name">Least privilege</span><p>Give only the minimum permissions needed — the core IAM security principle.</p></div>
+        <div class="term"><span class="t-name">MFA</span><p>Multi-factor authentication — a second verification step that blocks stolen passwords.</p></div>
+        <div class="term"><span class="t-name">Trust policy</span><p>The part of a role that declares who is allowed to assume it.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 5 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> What does <strong>IAM</strong> actually manage?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Only network firewalls</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> Identities (users, groups, roles) and what they're allowed to do</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> Database backups</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> A fresh IAM user can do... what?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> Everything — IAM users are like root</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> Nothing — permissions come only from attached policies</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> Only S3, by default</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> Which JSON key decides whether a policy <strong>allows</strong> or <strong>blocks</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> <code style="color:var(--accent-2)">Resource</code></label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> <code style="color:var(--accent-2)">Action</code></label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> <code style="color:var(--accent-2)">Effect</code></label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> If one policy <strong>allows</strong> an action and another <strong>denies</strong> it, what happens?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Allow wins — more permissive</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> Deny always wins</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> It depends on the service</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> What should a running <strong>EC2 server</strong> use to access S3 securely?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> Hardcoded access keys in the app code</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> An IAM <strong>role</strong> it assumes automatically</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> The root user's password</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> Why do you attach policies to a <strong>group</strong> instead of each user?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Groups are faster to type</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> Change once, every member gets it — simpler to manage</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Groups get more permission than users</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> What is the <strong>SecretAccessKey</strong> best compared to?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> The user's public ID</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> A password — keep it secret, shown only once</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> A firewall rule</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-04.html"><i class="fa-solid fa-arrow-left"></i> Ch 4: RDS — Databases</a>
+          <a href="chapter-06.html">Next: Monitoring — CloudWatch <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 5 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>

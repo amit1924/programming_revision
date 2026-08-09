@@ -1,0 +1,804 @@
+- generic [active] [ref=f3e1]:
+  - navigation [ref=f3e2]:
+    - generic [ref=f3e3]:
+      - link " Master AWS" [ref=f3e4] [cursor=pointer]:
+        - /url: index.html
+        - generic [ref=f3e5]: 
+        - generic [ref=f3e7]: Master AWS
+      - text:            
+      - button "Menu" [ref=f3e8] [cursor=pointer]:
+        - generic [ref=f3e9]: 
+  - generic [ref=f3e11]:
+    - text:  
+    - generic [ref=f3e12]:
+      - banner [ref=f3e13]:
+        - generic [ref=f3e14]:
+          - generic [ref=f3e15]: 
+          - text: Chapter 11
+        - heading "Lambda — Serverless Functions" [level=1] [ref=f3e16]
+        - paragraph [ref=f3e17]:
+          - text: ECS (Chapter 10) still needs containers running somewhere.
+          - strong [ref=f3e18]: Lambda
+          - text: "removes even that: you upload a"
+          - strong [ref=f3e19]: function
+          - text: ", and AWS runs it"
+          - emphasis [ref=f3e20]: only when an event happens
+          - text: — then scales it out to thousands of copies automatically, and you pay only for the milliseconds it actually runs. On
+          - strong [ref=f3e21]: Floci it genuinely executes your Python code
+          - text: ", so you'll write a function, call it, and read its real return value."
+        - generic [ref=f3e22]:
+          - generic [ref=f3e23]:
+            - generic [ref=f3e24]: 
+            - text: ~35 min read
+          - generic [ref=f3e25]:
+            - generic [ref=f3e26]: 
+            - text: 6 live command sims
+          - generic [ref=f3e27]:
+            - generic [ref=f3e28]: 
+            - text: Beginner friendly
+          - generic [ref=f3e29]:
+            - generic [ref=f3e30]: 
+            - text: Code, run, pay per call
+      - button " Chapter contents" [ref=f3e31] [cursor=pointer]:
+        - generic: 
+        - text: Chapter contents
+      - generic [ref=f3e32]:
+        - heading " Why Serverless?" [level=2] [ref=f3e33]:
+          - generic [ref=f3e34]: 
+          - text: Why Serverless?
+        - paragraph [ref=f3e36]:
+          - text: With EC2 you rent servers. With ECS you rent containers running on servers. With
+          - strong [ref=f3e37]: serverless
+          - text: you rent
+          - emphasis [ref=f3e38]: executions
+          - text: "— you never think about servers at all. The \"server\" is invisible: AWS runs your code on demand and disappears when done."
+        - generic [ref=f3e39]:
+          - generic [ref=f3e40]:
+            - generic [ref=f3e41]: 
+            - text: The evolution of "where does my code run?"
+          - generic [ref=f3e42]: EC2 rent a VM → you manage the OS (patch, secure, scale) ECS run containers → AWS runs them, you pick the size LAMBDA run a function → AWS runs it only when called 🔥 No EC2 → no servers to patch or secure No ECS cluster → nothing running when idle (pay $0) Still scales → 1 call or 1 million, AWS handles it
+        - generic [ref=f3e43]:
+          - generic [ref=f3e44]: ⚡
+          - generic [ref=f3e45]:
+            - generic [ref=f3e46]: Event-driven = code that only exists when needed
+            - paragraph [ref=f3e47]:
+              - text: Lambda runs your function in response to an
+              - strong [ref=f3e48]: event
+              - text: ": an S3 upload (Chapter 8), an HTTP request, a database change, a message in a queue. The function executes, returns a result, and its container goes away. Idle time costs nothing, and a traffic spike just means AWS starts more copies — automatically, in milliseconds."
+        - generic [ref=f3e49]:
+          - generic [ref=f3e50]: 
+          - generic [ref=f3e52]:
+            - generic [ref=f3e53]: "\"Serverless\" doesn't mean no servers"
+            - text: It means
+            - emphasis [ref=f3e54]: you don't manage any
+            - text: ". AWS has thousands of servers running your functions; you just never see them. The trade-off: no control over the runtime, and a per-request billing model instead of a flat rate."
+      - generic [ref=f3e55]:
+        - heading " What Is Lambda?" [level=2] [ref=f3e56]:
+          - generic [ref=f3e57]: 
+          - text: What Is Lambda?
+        - paragraph [ref=f3e59]:
+          - strong [ref=f3e60]: AWS Lambda
+          - text: is the serverless function service. You upload code, tell Lambda which language runtime to use and how much memory to give it, and AWS takes care of everything else.
+        - generic [ref=f3e61]:
+          - generic [ref=f3e62]:
+            - generic [ref=f3e63]: 
+            - text: The Lambda lifecycle
+          - generic [ref=f3e64]: Event arrives (S3 upload / HTTP request / queue message) │ ▼ Lambda finds a free container with your code (or cold-starts one) │ calls handler(event, context) ▼ Your function runs → returns a result │ ▼ container reused for next event, then recycled when idle
+        - table [ref=f3e66]:
+          - rowgroup [ref=f3e67]:
+            - row [ref=f3e68]:
+              - columnheader "Piece" [ref=f3e69]
+              - columnheader "What it is" [ref=f3e70]
+          - rowgroup [ref=f3e71]:
+            - row [ref=f3e72]:
+              - cell [ref=f3e73]:
+                - strong [ref=f3e74]: Function
+              - cell "Your code + its configuration (runtime, memory, timeout)." [ref=f3e75]
+            - row [ref=f3e76]:
+              - cell [ref=f3e77]:
+                - strong [ref=f3e78]: Runtime
+              - cell "The language Lambda runs — Python, Node, Java, Go, etc." [ref=f3e79]
+            - row [ref=f3e80]:
+              - cell [ref=f3e81]:
+                - strong [ref=f3e82]: Handler
+              - cell [ref=f3e83]:
+                - text: The entry point Lambda calls, e.g.
+                - code [ref=f3e84]: index.handler
+                - text: .
+            - row [ref=f3e85]:
+              - cell [ref=f3e86]:
+                - strong [ref=f3e87]: Event
+              - cell "The JSON input that triggers the function." [ref=f3e88]
+            - row [ref=f3e89]:
+              - cell [ref=f3e90]:
+                - strong [ref=f3e91]: Invocation
+              - cell "One execution of the function in response to an event." [ref=f3e92]
+            - row [ref=f3e93]:
+              - cell [ref=f3e94]:
+                - strong [ref=f3e95]: Execution role
+              - cell "IAM role giving the function permissions (S3, DynamoDB…)." [ref=f3e96]
+        - generic [ref=f3e97]:
+          - generic [ref=f3e98]:
+            - generic [ref=f3e99]: 
+            - text: Lambda = the "glue" of AWS
+          - text: "Lambda is how AWS services talk to each other in code: an S3 upload triggers a Lambda that resizes an image, an API Gateway request triggers a Lambda that queries DynamoDB. It's small, focused functions wired to events — the backbone of modern serverless apps."
+      - generic [ref=f3e100]:
+        - heading " Anatomy of a Function" [level=2] [ref=f3e101]:
+          - generic [ref=f3e102]: 
+          - text: Anatomy of a Function
+        - paragraph [ref=f3e104]: "Every Lambda function is defined by a handful of settings. The three that matter most on day one:"
+        - generic [ref=f3e105]:
+          - generic [ref=f3e106]:
+            - generic [ref=f3e107]: 
+            - text: Your code + three settings
+          - generic [ref=f3e108]: CODE index.py → def handler(event, context) RUNTIME python3.12 (which language) ROLE arn:aws:iam::…:role/lambda-exec (what it may touch) MEMORY/TIME 128 MB · 3s (how big, how patient)
+        - generic [ref=f3e109]:
+          - generic [ref=f3e110]: 🎛️
+          - generic [ref=f3e111]:
+            - generic [ref=f3e112]: Handler = the function Lambda calls
+            - paragraph [ref=f3e113]:
+              - code [ref=f3e114]: "--handler index.handler"
+              - text: means "in file
+              - code [ref=f3e115]: index.py
+              - text: ", call the function named"
+              - code [ref=f3e116]: handler
+              - text: ." Lambda passes it an
+              - strong [ref=f3e117]: event
+              - text: (the input JSON) and a
+              - strong [ref=f3e118]: context
+              - text: object (request ID, timeout, etc.). Whatever the handler returns becomes the invocation's response.
+        - generic [ref=f3e119]:
+          - generic [ref=f3e120]: 
+          - generic [ref=f3e122]:
+            - generic [ref=f3e123]: Memory ≠ RAM only — it sets CPU too
+            - text: Higher memory gives more CPU and more network bandwidth (and costs proportionally more). 128 MB is the floor; bumping to 256/512 MB often makes a function
+            - emphasis [ref=f3e124]: finish faster
+            - text: than raising only the timeout would. Lambda is "serverless," but configuration still matters.
+      - generic [ref=f3e125]:
+        - heading " Triggers & Events" [level=2] [ref=f3e126]:
+          - generic [ref=f3e127]: 
+          - text: Triggers & Events
+        - paragraph [ref=f3e129]:
+          - text: A Lambda alone does nothing — it needs something to fire it. That "something" is a
+          - strong [ref=f3e130]: trigger
+          - text: (event source). Each trigger delivers an event with a different JSON shape.
+        - table [ref=f3e132]:
+          - rowgroup [ref=f3e133]:
+            - row [ref=f3e134]:
+              - columnheader "Trigger" [ref=f3e135]
+              - columnheader "When it fires" [ref=f3e136]
+              - columnheader "Event contains" [ref=f3e137]
+          - rowgroup [ref=f3e138]:
+            - row [ref=f3e139]:
+              - cell [ref=f3e140]:
+                - strong [ref=f3e141]: S3
+              - cell "File uploaded/deleted" [ref=f3e142]
+              - cell "Bucket name, object key, size" [ref=f3e143]
+            - row [ref=f3e144]:
+              - cell [ref=f3e145]:
+                - strong [ref=f3e146]: API Gateway
+              - cell "HTTP request" [ref=f3e147]
+              - cell "HTTP method, path, headers, body" [ref=f3e148]
+            - row [ref=f3e149]:
+              - cell [ref=f3e150]:
+                - strong [ref=f3e151]: DynamoDB Streams
+              - cell "Table row changes" [ref=f3e152]
+              - cell "New/old values of changed records" [ref=f3e153]
+            - row [ref=f3e154]:
+              - cell [ref=f3e155]:
+                - strong [ref=f3e156]: SQS / SNS
+              - cell "Message arrives" [ref=f3e157]
+              - cell "The message body & metadata" [ref=f3e158]
+            - row [ref=f3e159]:
+              - cell [ref=f3e160]:
+                - strong [ref=f3e161]: Scheduled (EventBridge)
+              - cell "On a cron/rate" [ref=f3e162]
+              - cell "Timestamp of the schedule" [ref=f3e163]
+        - generic [ref=f3e164]:
+          - generic [ref=f3e165]:
+            - generic [ref=f3e166]: 
+            - text: Wire them with event-source mappings
+          - generic [ref=f3e167]: S3 upload ──► event-source mapping ──► your Lambda queue msg ─► event-source mapping ──► your Lambda The mapping tells Lambda "watch this source, run my function for every event" (a create-event-source-mapping).
+        - generic [ref=f3e168]:
+          - generic [ref=f3e169]:
+            - generic [ref=f3e170]: 
+            - text: Real triggers fire automatically; Floci's are limited
+          - text: On real AWS, a trigger invokes your function by itself (upload to S3 → function runs, no manual call). Floci supports
+          - code [ref=f3e171]: create-event-source-mapping
+          - text: only for
+          - strong [ref=f3e172]: SQS, Kinesis, and DynamoDB Streams
+          - text: — S3 triggers are rejected — and the mapping doesn't auto-fire events the way real AWS does. So on Floci we
+          - strong [ref=f3e173]: invoke manually
+          - text: to see our code run, which is exactly how you'd test a function on real AWS anyway.
+      - generic [ref=f3e174]:
+        - heading " Pricing & Limits" [level=2] [ref=f3e175]:
+          - generic [ref=f3e176]: 
+          - text: Pricing & Limits
+        - paragraph [ref=f3e178]:
+          - text: "Lambda's billing is the purest expression of serverless:"
+          - strong [ref=f3e179]: you pay for executions, not for idle capacity
+          - text: .
+        - generic [ref=f3e180]:
+          - generic [ref=f3e181]: 💰
+          - generic [ref=f3e182]:
+            - generic [ref=f3e183]: "Two meters: requests × time"
+            - paragraph [ref=f3e184]:
+              - text: You're charged per
+              - strong [ref=f3e185]: request
+              - text: (first 1 million/month are free) and per
+              - strong [ref=f3e186]: compute time
+              - text: — the milliseconds your code runs, priced by your chosen memory. A function that runs 100 ms and then sleeps forever costs almost nothing. A constant-load EC2 instance would bill for every idle hour by comparison.
+        - generic [ref=f3e187]:
+          - generic [ref=f3e188]:
+            - generic [ref=f3e189]: 
+            - text: What makes the bill bigger
+          - generic [ref=f3e190]: "more requests → more per-request charges more memory → higher per-ms rate longer timeouts → more compute seconds per call free tier (real AWS): 1M requests + 400,000 GB-seconds / month idle time → $0 (nothing is running!)"
+        - generic [ref=f3e191]:
+          - generic [ref=f3e192]:
+            - generic [ref=f3e193]: 
+            - text: Quick mental math
+          - text: A 128 MB function handling 1M short requests a month is comfortably inside the free tier on real AWS. That's the "serverless is cheap when idle" story — perfect for small projects, cron-like jobs, and event glue.
+      - generic [ref=f3e194]:
+        - 'heading " Hands-On: Build & Run Your First Lambda" [level=2] [ref=f3e195]':
+          - generic [ref=f3e196]: 
+          - text: "Hands-On: Build & Run Your First Lambda"
+        - paragraph [ref=f3e198]:
+          - text: We'll write a Python function, upload it, and — the exciting part —
+          - strong [ref=f3e199]: actually execute it
+          - text: against Floci and read its real return value. Command by command.
+        - generic [ref=f3e200]:
+          - generic [ref=f3e201]:
+            - generic [ref=f3e202]:
+              - generic [ref=f3e203]: "1"
+              - generic [ref=f3e204]:
+                - heading "Create the Function" [level=3] [ref=f3e205]
+                - generic [ref=f3e206]: Zip your code, upload it with a runtime & handler
+            - generic [ref=f3e207]:
+              - generic [ref=f3e208]:
+                - generic [ref=f3e209]:
+                  - generic [ref=f3e210]: 
+                  - text: Commands
+                - generic [ref=f3e211]: "# index.py — your handler def handler(event, context): name = event.get(\"name\", \"world\") return {\"statusCode\": 200, \"body\": f'{{\"message\": \"Hello, {name}!\"}}'} # zip it up and upload zip function.zip index.py awslocal lambda create-function --function-name amit-hello --runtime python3.12 --role arn:aws:iam::000000000000:role/lambda-exec --handler index.handler --zip-file fileb://function.zip"
+              - generic [ref=f3e212]:
+                - generic [ref=f3e213]: 📦
+                - generic [ref=f3e214]:
+                  - generic [ref=f3e215]: What did this just do?
+                  - paragraph [ref=f3e216]:
+                    - text: "You told Lambda: \"here's my code (zipped), run it with"
+                    - strong [ref=f3e217]: Python 3.12
+                    - text: ", call"
+                    - strong [ref=f3e218]:
+                      - code [ref=f3e219]: index.handler
+                    - text: as the entry point, and use this IAM role." The response confirms the function is
+                    - strong [ref=f3e220]: Active
+                    - text: — created and waiting for its first event. Code must be packaged as a zip (the
+                    - code [ref=f3e221]: fileb://
+                    - text: prefix tells the CLI it's a binary file).
+              - generic [ref=f3e222]:
+                - generic [ref=f3e228]:
+                  - generic [ref=f3e229]: 
+                  - text: Run it live
+                - generic [ref=f3e231]:
+                  - button " Run example" [ref=f3e232] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f3e233] [cursor=pointer]
+              - generic [ref=f3e234]:
+                - generic [ref=f3e235]:
+                  - generic [ref=f3e236]: 
+                  - text: Breaking down the command
+                - generic [ref=f3e237]:
+                  - code [ref=f3e238]: lambda create-function
+                  - generic [ref=f3e239]: Creates the serverless function.
+                - generic [ref=f3e240]:
+                  - code [ref=f3e241]: "--runtime python3.12"
+                  - generic [ref=f3e242]: The language runtime (Python/Node/Java/Go…).
+                - generic [ref=f3e243]:
+                  - code [ref=f3e244]: "--role arn:aws:iam::…:role/lambda-exec"
+                  - generic [ref=f3e245]: IAM execution role — what the function may touch (Chapter 5).
+                - generic [ref=f3e246]:
+                  - code [ref=f3e247]: "--handler index.handler"
+                  - generic [ref=f3e248]:
+                    - text: "Entry point:"
+                    - code [ref=f3e249]: index.py
+                    - text: → function
+                    - code [ref=f3e250]: handler
+                    - text: .
+                - generic [ref=f3e251]:
+                  - code [ref=f3e252]: "--zip-file fileb://function.zip"
+                  - generic [ref=f3e253]: Your packaged code (binary file upload).
+              - generic [ref=f3e254]:
+                - generic [ref=f3e255]:
+                  - generic [ref=f3e256]: 
+                  - text: Handler vs runtime — same idea as ECS task defs
+                - text: The handler is like the
+                - code [ref=f3e257]: CMD
+                - text: "/entrypoint of a container, and the runtime is like the base image. Lambda packages those two ideas more tightly: one runtime + one handler per function."
+          - generic [ref=f3e258]:
+            - generic [ref=f3e259]:
+              - generic [ref=f3e260]: "2"
+              - generic [ref=f3e261]:
+                - heading "Invoke It — Watch Your Code Really Run" [level=3] [ref=f3e262]
+                - generic [ref=f3e263]: Send an event, get a real return value
+            - generic [ref=f3e264]:
+              - generic [ref=f3e265]:
+                - generic [ref=f3e266]:
+                  - generic [ref=f3e267]: 
+                  - text: Commands
+                - generic [ref=f3e268]: "awslocal lambda invoke --function-name amit-hello --cli-binary-format raw-in-base64-out --payload '{\"name\":\"Amit\"}' /tmp/out.json cat /tmp/out.json"
+              - generic [ref=f3e269]:
+                - generic [ref=f3e270]: 🚀
+                - generic [ref=f3e271]:
+                  - generic [ref=f3e272]: The payoff of the whole course
+                  - paragraph [ref=f3e273]:
+                    - code [ref=f3e274]: invoke
+                    - text: triggers the function with an
+                    - strong [ref=f3e275]: event
+                    - text: — here
+                    - code [ref=f3e276]: "{\"name\":\"Amit\"}"
+                    - text: . Floci
+                    - strong [ref=f3e277]: genuinely executes your Python code
+                    - text: ": the handler reads the event, builds the message, and the function's return value lands in"
+                    - code [ref=f3e278]: /tmp/out.json
+                    - text: . I verified it live — the file contained the real
+                    - code [ref=f3e279]: Hello, Amit!
+                    - text: response. StatusCode 200 = success.
+              - generic [ref=f3e280]:
+                - generic [ref=f3e286]:
+                  - generic [ref=f3e287]: 
+                  - text: Run it live
+                - generic [ref=f3e289]:
+                  - button " Run example" [ref=f3e290] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f3e291] [cursor=pointer]
+              - generic [ref=f3e292]:
+                - generic [ref=f3e293]:
+                  - generic [ref=f3e294]: 
+                  - text: Breaking down the commands
+                - generic [ref=f3e295]:
+                  - code [ref=f3e296]: lambda invoke --function-name amit-hello
+                  - generic [ref=f3e297]: Triggers the function (synchronous by default).
+                - generic [ref=f3e298]:
+                  - code [ref=f3e299]: "--cli-binary-format raw-in-base64-out"
+                  - generic [ref=f3e300]: Sends the payload correctly — this is the AWS CLI v2 default; without it Floci fails to read the event.
+                - generic [ref=f3e301]:
+                  - code [ref=f3e302]: "--payload '{\"name\":\"Amit\"}'"
+                  - generic [ref=f3e303]: The JSON event delivered to your handler.
+                - generic [ref=f3e304]:
+                  - code [ref=f3e305]: /tmp/out.json
+                  - generic [ref=f3e306]: The response file — your function's return value.
+                - generic [ref=f3e307]:
+                  - code [ref=f3e308]: cat /tmp/out.json
+                  - generic [ref=f3e309]:
+                    - text: "Prints the actual result:"
+                    - code [ref=f3e310]: Hello, Amit!
+              - generic [ref=f3e311]:
+                - generic [ref=f3e312]:
+                  - generic [ref=f3e313]: 
+                  - text: "Floci quirk: keep the --cli-binary-format flag"
+                - text: The AWS CLI v2 already defaults to
+                - code [ref=f3e314]: raw-in-base64-out
+                - text: ", so this command is identical on real AWS. But on Floci, dropping the flag makes invoke fail with"
+                - emphasis [ref=f3e315]: "\"Unable to unmarshal input\""
+                - text: — I hit that live. Include it explicitly and the exact same command works everywhere.
+          - generic [ref=f3e316]:
+            - generic [ref=f3e317]:
+              - generic [ref=f3e318]: "3"
+              - generic [ref=f3e319]:
+                - heading "Inspect & Tune the Function" [level=3] [ref=f3e320]
+                - generic [ref=f3e321]: Read its config, then bump memory & timeout
+            - generic [ref=f3e322]:
+              - generic [ref=f3e323]:
+                - generic [ref=f3e324]:
+                  - generic [ref=f3e325]: 
+                  - text: Commands
+                - generic [ref=f3e326]: awslocal lambda get-function-configuration --function-name amit-hello awslocal lambda update-function-configuration --function-name amit-hello --memory-size 256 --timeout 10
+              - generic [ref=f3e327]:
+                - generic [ref=f3e328]: 🎛️
+                - generic [ref=f3e329]:
+                  - generic [ref=f3e330]: Configuration is versionless — code is versioned
+                  - paragraph [ref=f3e331]:
+                    - code [ref=f3e332]: get-function-configuration
+                    - text: shows the current runtime, handler, memory, timeout.
+                    - code [ref=f3e333]: update-function-configuration
+                    - text: changes settings
+                    - emphasis [ref=f3e334]: without
+                    - text: "touching your code. The classic serverless tuning loop: bump memory (which adds CPU) until the function runs fast enough, and raise the timeout so long jobs don't get killed."
+              - generic [ref=f3e335]:
+                - generic [ref=f3e341]:
+                  - generic [ref=f3e342]: 
+                  - text: Run it live
+                - generic [ref=f3e344]:
+                  - button " Run example" [ref=f3e345] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f3e346] [cursor=pointer]
+              - generic [ref=f3e347]:
+                - generic [ref=f3e348]:
+                  - generic [ref=f3e349]: 
+                  - text: Breaking down the commands
+                - generic [ref=f3e350]:
+                  - code [ref=f3e351]: get-function-configuration
+                  - generic [ref=f3e352]: Show current runtime, handler, memory, timeout.
+                - generic [ref=f3e353]:
+                  - code [ref=f3e354]: update-function-configuration
+                  - generic [ref=f3e355]: Change settings without redeploying code.
+                - generic [ref=f3e356]:
+                  - code [ref=f3e357]: "--memory-size 256"
+                  - generic [ref=f3e358]: Double the RAM (also more CPU).
+                - generic [ref=f3e359]:
+                  - code [ref=f3e360]: "--timeout 10"
+                  - generic [ref=f3e361]: Allow up to 10s per invocation.
+          - generic [ref=f3e362]:
+            - generic [ref=f3e363]:
+              - generic [ref=f3e364]: "4"
+              - generic [ref=f3e365]:
+                - heading "Redeploy New Code" [level=3] [ref=f3e366]
+                - generic [ref=f3e367]: Change the handler, re-zip, update-function-code
+            - generic [ref=f3e368]:
+              - generic [ref=f3e369]:
+                - generic [ref=f3e370]:
+                  - generic [ref=f3e371]: 
+                  - text: Commands
+                - generic [ref=f3e372]: "# new index.py def handler(event, context): return {\"statusCode\": 200, \"body\": \"Hello from the new version!\"} zip function.zip index.py awslocal lambda update-function-code --function-name amit-hello --zip-file fileb://function.zip"
+              - generic [ref=f3e373]:
+                - generic [ref=f3e374]: 🔄
+                - generic [ref=f3e375]:
+                  - generic [ref=f3e376]: Deploying a fix = uploading new code
+                  - paragraph [ref=f3e377]:
+                    - code [ref=f3e378]: update-function-code
+                    - text: replaces the function's code while keeping its configuration. Re-invoking afterwards runs the new version. (Real AWS gives every deploy a version number like
+                    - code [ref=f3e379]: :1
+                    - text: ","
+                    - code [ref=f3e380]: :2
+                    - text: and lets you point aliases at them — same versioning idea as ECS task definitions in Chapter 10.)
+              - generic [ref=f3e381]:
+                - generic [ref=f3e387]:
+                  - generic [ref=f3e388]: 
+                  - text: Run it live
+                - generic [ref=f3e390]:
+                  - button " Run example" [ref=f3e391] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f3e392] [cursor=pointer]
+              - generic [ref=f3e393]:
+                - generic [ref=f3e394]:
+                  - generic [ref=f3e395]: 
+                  - text: Breaking down the commands
+                - generic [ref=f3e396]:
+                  - code [ref=f3e397]: update-function-code --zip-file
+                  - generic [ref=f3e398]: Replace the function's code (config unchanged).
+                - generic [ref=f3e399]:
+                  - code [ref=f3e400]: CodeSha256
+                  - generic [ref=f3e401]: A checksum of the uploaded code — proof it changed.
+                - generic [ref=f3e402]:
+                  - code [ref=f3e403]: "invoke --payload '{}'"
+                  - generic [ref=f3e404]: Re-run with an empty event — now returns the new message.
+          - generic [ref=f3e405]:
+            - generic [ref=f3e406]:
+              - generic [ref=f3e407]: "5"
+              - generic [ref=f3e408]:
+                - heading "Watch the Logs" [level=3] [ref=f3e409]
+                - generic [ref=f3e410]: Lambda auto-logs to CloudWatch — inspect the errors
+            - generic [ref=f3e411]:
+              - generic [ref=f3e412]:
+                - generic [ref=f3e413]:
+                  - generic [ref=f3e414]: 
+                  - text: Commands
+                - generic [ref=f3e415]: awslocal logs describe-log-groups --query "logGroups[].logGroupName" awslocal logs filter-log-events --log-group-name /aws/lambda/amit-hello --query "events[0].message"
+              - generic [ref=f3e416]:
+                - generic [ref=f3e417]: 📜
+                - generic [ref=f3e418]:
+                  - generic [ref=f3e419]: Every Lambda logs to CloudWatch automatically
+                  - paragraph [ref=f3e420]:
+                    - text: Lambda writes to a log group named
+                    - code [ref=f3e421]: /aws/lambda/<function>
+                    - text: "— no setup needed (the execution role gets Logs permission). On Floci this works too: creating and invoking the function created the group, and my earlier \"bad payload\" invocations left"
+                    - strong [ref=f3e422]:
+                      - text: real
+                      - code [ref=f3e423]: Runtime.UnmarshalError
+                      - text: traces
+                    - text: in the log events (Chapter 6's CloudWatch skills pay off here).
+              - generic [ref=f3e424]:
+                - generic [ref=f3e430]:
+                  - generic [ref=f3e431]: 
+                  - text: Run it live
+                - generic [ref=f3e433]:
+                  - button " Run example" [ref=f3e434] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f3e435] [cursor=pointer]
+              - generic [ref=f3e436]:
+                - generic [ref=f3e437]:
+                  - generic [ref=f3e438]: 
+                  - text: Breaking down the commands
+                - generic [ref=f3e439]:
+                  - code [ref=f3e440]: logs describe-log-groups
+                  - generic [ref=f3e441]: Lists CloudWatch log groups — Lambda\u2019s group appears.
+                - generic [ref=f3e442]:
+                  - code [ref=f3e443]: logs filter-log-events --log-group-name /aws/lambda/amit-hello
+                  - generic [ref=f3e444]: Reads the function's log messages.
+                - generic [ref=f3e445]:
+                  - code [ref=f3e446]: Runtime.UnmarshalError
+                  - generic [ref=f3e447]: Real error from an invoke — proof logs flow end-to-end.
+              - generic [ref=f3e448]:
+                - generic [ref=f3e449]:
+                  - generic [ref=f3e450]: 
+                  - text: print() is your debugger
+                - text: On real AWS, every
+                - code [ref=f3e451]: print()
+                - text: inside your handler appears in this log group — the first place you look when a function misbehaves. Monitoring (Chapter 6) + Lambda logs = serverless debugging.
+          - generic [ref=f3e452]:
+            - generic [ref=f3e453]:
+              - generic [ref=f3e454]: "6"
+              - generic [ref=f3e455]:
+                - heading "Clean Up" [level=3] [ref=f3e456]
+                - generic [ref=f3e457]: Delete the function and confirm it's gone
+            - generic [ref=f3e458]:
+              - generic [ref=f3e459]:
+                - generic [ref=f3e460]:
+                  - generic [ref=f3e461]: 
+                  - text: Commands
+                - generic [ref=f3e462]: awslocal lambda delete-function --function-name amit-hello awslocal lambda list-functions
+              - generic [ref=f3e463]:
+                - generic [ref=f3e464]: 🧹
+                - generic [ref=f3e465]:
+                  - generic [ref=f3e466]: One command, no dangling servers
+                  - paragraph [ref=f3e467]:
+                    - text: Unlike EC2 and ECS, Lambda cleanup is trivial — there are no servers or clusters to stop.
+                    - code [ref=f3e468]: delete-function
+                    - text: removes the code and config instantly (204 No Content), and
+                    - code [ref=f3e469]: list-functions
+                    - text: confirms an empty list. The log group remains until you delete it, which is fine — that's the only trace left.
+              - generic [ref=f3e470]:
+                - generic [ref=f3e476]:
+                  - generic [ref=f3e477]: 
+                  - text: Run it live
+                - generic [ref=f3e479]:
+                  - button " Run example" [ref=f3e480] [cursor=pointer]:
+                    - generic: 
+                    - text: Run example
+                  - button "" [ref=f3e481] [cursor=pointer]
+              - generic [ref=f3e482]:
+                - generic [ref=f3e483]:
+                  - generic [ref=f3e484]: 
+                  - text: Breaking down the cleanup
+                - generic [ref=f3e485]:
+                  - code [ref=f3e486]: lambda delete-function
+                  - generic [ref=f3e487]: Removes code + config (204 No Content).
+                - generic [ref=f3e488]:
+                  - code [ref=f3e489]: lambda list-functions
+                  - generic [ref=f3e490]: Confirms nothing remains.
+              - generic [ref=f3e491]:
+                - generic [ref=f3e492]:
+                  - generic [ref=f3e493]: 
+                  - text: Compare the cleanup
+                - text: Lambda's one-command teardown is the polar opposite of ECS's five-step chain (scale → delete service → stop tasks → delete cluster). That contrast
+                - emphasis [ref=f3e494]: is
+                - text: "the serverless story: no infrastructure to dismantle, because there was no infrastructure to begin with."
+        - generic [ref=f3e495]:
+          - generic [ref=f3e496]:
+            - generic [ref=f3e497]: 
+            - text: Complete Lambda flow — copy & paste
+            - button " Copy" [ref=f3e498] [cursor=pointer]:
+              - generic [ref=f3e499]: 
+              - text: Copy
+          - code [ref=f3e501]: "# index.py — your handler def handler(event, context): name = event.get(\"name\", \"world\") return {\"statusCode\": 200, \"body\": f'{{\"message\": \"Hello, {name}!\"}}'} # 1. Package and create the function zip function.zip index.py awslocal lambda create-function --function-name amit-hello --runtime python3.12 --role arn:aws:iam::000000000000:role/lambda-exec --handler index.handler --zip-file fileb://function.zip # 2. Invoke it — REAL execution (keep --cli-binary-format on Floci) awslocal lambda invoke --function-name amit-hello --cli-binary-format raw-in-base64-out --payload '{\"name\":\"Amit\"}' /tmp/out.json cat /tmp/out.json # 3. Inspect and tune awslocal lambda get-function-configuration --function-name amit-hello awslocal lambda update-function-configuration --function-name amit-hello --memory-size 256 --timeout 10 # 4. Redeploy new code zip function.zip index.py awslocal lambda update-function-code --function-name amit-hello --zip-file fileb://function.zip # 5. Logs land in CloudWatch automatically awslocal logs filter-log-events --log-group-name /aws/lambda/amit-hello --query \"events[0].message\" # 6. Clean up — one command awslocal lambda delete-function --function-name amit-hello awslocal lambda list-functions"
+        - generic [ref=f3e502]:
+          - generic [ref=f3e503]:
+            - generic [ref=f3e504]: 
+            - text: Final mental model — Lambda in one picture
+          - generic [ref=f3e505]: Lambda = code that runs only when an event fires. Function = code + runtime + handler + role + memory/timeout Event = JSON input (from S3, API, queue, schedule…) Invoke = one execution → real return value Logs = /aws/lambda/<fn> in CloudWatch, automatic Scaling = 1 call or 1M calls, AWS handles it Billing = requests + compute ms — nothing when idle Write a function → zip → create-function → invoke → done. No servers, no clusters, pay only for what runs.
+        - generic [ref=f3e506]:
+          - generic [ref=f3e507]:
+            - generic [ref=f3e508]: 
+            - text: Honest note — what Floci does & doesn't support
+          - text: "The big win: I verified live that"
+          - strong [ref=f3e509]: Floci genuinely executes Lambda functions
+          - text: —
+          - code [ref=f3e510]: create-function
+          - text: with Python 3.12, real
+          - code [ref=f3e511]: invoke
+          - text: returning the handler's actual output (
+          - code [ref=f3e512]: Hello, Amit!
+          - text: ), config updates, code redeploys, and
+          - strong [ref=f3e513]: automatic CloudWatch Logs
+          - text: (the
+          - code [ref=f3e514]: /aws/lambda/amit-hello
+          - text: group appeared by itself and recorded real
+          - code [ref=f3e515]: Runtime.UnmarshalError
+          - text: traces — unlike ECS, Lambda-to-Logs works here).
+          - strong [ref=f3e516]: "Quirks to know:"
+          - text: plain
+          - code [ref=f3e517]: "--payload '{\"x\":1}'"
+          - text: fails on Floci unless you include
+          - code [ref=f3e518]: "--cli-binary-format raw-in-base64-out"
+          - text: (the AWS CLI v2 default, so the same command works on real AWS);
+          - code [ref=f3e519]: create-event-source-mapping
+          - text: only accepts SQS/Kinesis/DynamoDB streams (no S3 triggers) and mappings don't auto-fire events; and there's no API Gateway emulation, so triggers must be simulated with manual invokes. All commands above are 100% accurate for real AWS.
+      - generic [ref=f3e520]:
+        - heading " Glossary — Chapter 11" [level=2] [ref=f3e521]:
+          - generic [ref=f3e522]: 
+          - text: Glossary — Chapter 11
+        - generic [ref=f3e524]:
+          - generic [ref=f3e525]: Serverless
+          - paragraph [ref=f3e526]: Running code without managing servers — pay per execution, not per server.
+        - generic [ref=f3e527]:
+          - generic [ref=f3e528]: Lambda
+          - paragraph [ref=f3e529]: AWS's serverless function service.
+        - generic [ref=f3e530]:
+          - generic [ref=f3e531]: Function
+          - paragraph [ref=f3e532]: Your code plus its configuration (runtime, memory, timeout, role).
+        - generic [ref=f3e533]:
+          - generic [ref=f3e534]: Runtime
+          - paragraph [ref=f3e535]: The language Lambda runs your code in (Python, Node, Java, Go…).
+        - generic [ref=f3e536]:
+          - generic [ref=f3e537]: Handler
+          - paragraph [ref=f3e538]:
+            - text: The entry point Lambda calls, e.g.
+            - code [ref=f3e539]: index.handler
+            - text: .
+        - generic [ref=f3e540]:
+          - generic [ref=f3e541]: Event
+          - paragraph [ref=f3e542]: The JSON input delivered to your function when it's triggered.
+        - generic [ref=f3e543]:
+          - generic [ref=f3e544]: Invocation
+          - paragraph [ref=f3e545]: One execution of the function in response to an event.
+        - generic [ref=f3e546]:
+          - generic [ref=f3e547]: Execution role
+          - paragraph [ref=f3e548]: The IAM role granting your function permissions (Chapter 5).
+        - generic [ref=f3e549]:
+          - generic [ref=f3e550]: Trigger / event source
+          - paragraph [ref=f3e551]: Something that fires your function (S3 upload, API call, queue message).
+        - generic [ref=f3e552]:
+          - generic [ref=f3e553]: Event-source mapping
+          - paragraph [ref=f3e554]: The wiring that connects a trigger source to your Lambda.
+        - generic [ref=f3e555]:
+          - generic [ref=f3e556]: Cold start
+          - paragraph [ref=f3e557]: The delay when Lambda spins up a fresh container for a new invocation.
+        - generic [ref=f3e558]:
+          - generic [ref=f3e559]: CodeSha256
+          - paragraph [ref=f3e560]: A checksum proving which version of your code is deployed.
+      - generic [ref=f3e561]:
+        - heading " Chapter 11 — Check Your Understanding" [level=2] [ref=f3e562]:
+          - generic [ref=f3e563]: 
+          - text: Chapter 11 — Check Your Understanding
+        - paragraph [ref=f3e565]:
+          - text: Pick an answer. Green = right. Red = wrong. No pressure — this is for
+          - emphasis [ref=f3e566]: you
+          - text: .
+        - generic [ref=f3e567]:
+          - generic [ref=f3e568]:
+            - generic [ref=f3e569]: Q1.
+            - text: What does
+            - strong [ref=f3e570]: serverless
+            - text: mean in practice?
+          - generic [ref=f3e571]:
+            - generic [ref=f3e572] [cursor=pointer]:
+              - radio "You rent idle servers and manage them yourself" [ref=f3e573]
+              - text: You rent idle servers and manage them yourself
+            - generic [ref=f3e574] [cursor=pointer]:
+              - radio "Your code runs on demand and you don't manage servers — pay per execution" [ref=f3e575]
+              - text: Your code runs on demand and you don't manage servers — pay per execution
+            - generic [ref=f3e576] [cursor=pointer]:
+              - radio "There are no servers anywhere" [ref=f3e577]
+              - text: There are no servers anywhere
+        - generic [ref=f3e578]:
+          - generic [ref=f3e579]:
+            - generic [ref=f3e580]: Q2.
+            - text: In
+            - code [ref=f3e581]: "--handler index.handler"
+            - text: ","
+            - strong [ref=f3e582]: handler
+            - text: means...
+          - generic [ref=f3e583]:
+            - generic [ref=f3e584] [cursor=pointer]:
+              - radio "The name of your zip file" [ref=f3e585]
+              - text: The name of your zip file
+            - generic [ref=f3e586] [cursor=pointer]:
+              - radio "The function Lambda calls — handler inside index.py" [ref=f3e587]
+              - text: The function Lambda calls —
+              - code [ref=f3e588]: handler
+              - text: inside
+              - code [ref=f3e589]: index.py
+            - generic [ref=f3e590] [cursor=pointer]:
+              - radio "The IAM role name" [ref=f3e591]
+              - text: The IAM role name
+        - generic [ref=f3e592]:
+          - generic [ref=f3e593]:
+            - generic [ref=f3e594]: Q3.
+            - text: What's the difference between a
+            - strong [ref=f3e595]: trigger
+            - text: and an
+            - strong [ref=f3e596]: invocation
+            - text: "?"
+          - generic [ref=f3e597]:
+            - generic [ref=f3e598] [cursor=pointer]:
+              - radio "They're the same thing" [ref=f3e599]
+              - text: They're the same thing
+            - generic [ref=f3e600] [cursor=pointer]:
+              - radio "A trigger is the event source that fires the function; an invocation is one execution of it" [ref=f3e601]
+              - text: A trigger is the event source that fires the function; an invocation is one execution of it
+            - generic [ref=f3e602] [cursor=pointer]:
+              - radio "A trigger is a setting, an invocation is a billing feature" [ref=f3e603]
+              - text: A trigger is a setting, an invocation is a billing feature
+        - generic [ref=f3e604]:
+          - generic [ref=f3e605]:
+            - generic [ref=f3e606]: Q4.
+            - text: How do you make a deployed Lambda function's
+            - strong [ref=f3e607]: code
+            - text: new without changing its settings?
+          - generic [ref=f3e608]:
+            - generic [ref=f3e609] [cursor=pointer]:
+              - radio "update-function-configuration" [ref=f3e610]
+              - code [ref=f3e611]: update-function-configuration
+            - generic [ref=f3e612] [cursor=pointer]:
+              - radio "update-function-code with a fresh zip" [ref=f3e613]
+              - code [ref=f3e614]: update-function-code
+              - text: with a fresh zip
+            - generic [ref=f3e615] [cursor=pointer]:
+              - radio "Create a brand-new function from scratch" [ref=f3e616]
+              - text: Create a brand-new function from scratch
+        - generic [ref=f3e617]:
+          - generic [ref=f3e618]:
+            - generic [ref=f3e619]: Q5.
+            - text: You bump
+            - code [ref=f3e620]: "--memory-size"
+            - text: from 128 to 512. What else does Lambda give you?
+          - generic [ref=f3e621]:
+            - generic [ref=f3e622] [cursor=pointer]:
+              - radio "Nothing — it's purely a billing number" [ref=f3e623]
+              - text: Nothing — it's purely a billing number
+            - generic [ref=f3e624] [cursor=pointer]:
+              - radio "More CPU and network, so the function often finishes faster" [ref=f3e625]
+              - text: More CPU and network, so the function often finishes faster
+            - generic [ref=f3e626] [cursor=pointer]:
+              - radio "A guarantee of no cold starts" [ref=f3e627]
+              - text: A guarantee of no cold starts
+        - generic [ref=f3e628]:
+          - generic [ref=f3e629]:
+            - generic [ref=f3e630]: Q6.
+            - text: Where do your Lambda errors and
+            - code [ref=f3e631]: print()
+            - text: statements appear automatically?
+          - generic [ref=f3e632]:
+            - generic [ref=f3e633] [cursor=pointer]:
+              - radio "Nowhere unless you configure it" [ref=f3e634]
+              - text: Nowhere unless you configure it
+            - generic [ref=f3e635] [cursor=pointer]:
+              - radio "In a CloudWatch Logs group named /aws/lambda/<function>" [ref=f3e636]
+              - text: In a CloudWatch Logs group named
+              - code [ref=f3e637]: /aws/lambda/<function>
+            - generic [ref=f3e638] [cursor=pointer]:
+              - radio "In an S3 bucket" [ref=f3e639]
+              - text: In an S3 bucket
+        - generic [ref=f3e640]:
+          - generic [ref=f3e641]:
+            - generic [ref=f3e642]: Q7.
+            - text: Compared to ECS cleanup, deleting a Lambda is...
+          - generic [ref=f3e643]:
+            - generic [ref=f3e644] [cursor=pointer]:
+              - radio "A five-step chain (scale → delete service → stop tasks → delete cluster)" [ref=f3e645]
+              - text: A five-step chain (scale → delete service → stop tasks → delete cluster)
+            - generic [ref=f3e646] [cursor=pointer]:
+              - radio "One command — there are no servers or clusters to dismantle" [ref=f3e647]
+              - text: One command — there are no servers or clusters to dismantle
+            - generic [ref=f3e648] [cursor=pointer]:
+              - radio "Impossible — functions can't be deleted" [ref=f3e649]
+              - text: Impossible — functions can't be deleted
+        - generic [ref=f3e650]:
+          - 'link " Ch 10: ECS — Containers" [ref=f3e651] [cursor=pointer]':
+            - /url: chapter-10.html
+            - generic [ref=f3e652]: 
+            - text: "Ch 10: ECS — Containers"
+          - link "Course complete — back to Home " [ref=f3e653] [cursor=pointer]:
+            - /url: index.html
+            - text: Course complete — back to Home
+            - generic [ref=f3e654]: 
+  - contentinfo [ref=f3e655]:
+    - paragraph [ref=f3e656]:
+      - generic [ref=f3e657]: 
+      - text: Master AWS · Chapter 11 of 11 · Practice locally with
+      - strong [ref=f3e658]: Floci
+      - text: on port 4566

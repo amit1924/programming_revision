@@ -1,0 +1,815 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Chapter 11 — Lambda: Serverless | Master AWS</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.2/css/all.min.css">
+<link rel="stylesheet" href="style.css">
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        fontFamily: {
+          sans: ['Inter', 'sans-serif'],
+          mono: ['JetBrains Mono', 'monospace'],
+        }
+      }
+    }
+  }
+</script>
+</head>
+<body>
+<div class="progress-bar" id="progress-bar"></div>
+
+<nav class="navbar">
+  <div class="nav-inner">
+    <a href="index.html" class="nav-logo">
+      <span class="logo-badge"><i class="fa-solid fa-cloud"></i></span>
+      <span>Master <span style="color:var(--accent)">AWS</span></span>
+    </a>
+    <div class="nav-links" id="nav-links">
+      <a href="index.html"><i class="fa-solid fa-house"></i> Home</a>
+      <a href="chapter-01.html"><i class="fa-solid fa-cloud"></i> Ch 1</a>
+      <a href="chapter-02.html"><i class="fa-solid fa-network-wired"></i> Ch 2</a>
+      <a href="chapter-03.html"><i class="fa-solid fa-server"></i> Ch 3</a>
+      <a href="chapter-04.html"><i class="fa-solid fa-database"></i> Ch 4</a>
+      <a href="chapter-05.html"><i class="fa-solid fa-key"></i> Ch 5</a>
+      <a href="chapter-06.html"><i class="fa-solid fa-chart-line"></i> Ch 6</a>
+      <a href="chapter-07.html"><i class="fa-solid fa-globe"></i> Ch 7</a>
+      <a href="chapter-08.html"><i class="fa-solid fa-bucket"></i> Ch 8</a>
+      <a href="chapter-09.html"><i class="fa-solid fa-bolt"></i> Ch 9</a>
+      <a href="chapter-10.html"><i class="fa-solid fa-cubes"></i> Ch 10</a>
+      <a href="chapter-11.html" class="active"><i class="fa-solid fa-square-root-variable"></i> Ch 11</a>
+      <a href="chapter-12.html"><i class="fa-solid fa-trophy"></i> Final</a>
+    </div>
+    <button class="nav-burger" id="nav-burger" aria-label="Menu"><i class="fa-solid fa-bars"></i></button>
+  </div>
+</nav>
+
+<div class="container-wide">
+  <div class="chapter-grid">
+    <!-- TOC -->
+    <aside class="toc">
+      <h4><i class="fa-solid fa-list"></i> Chapter 11 — Contents</h4>
+      <a href="#why-serverless">Why Serverless?</a>
+      <a href="#what-is-lambda">What Is Lambda?</a>
+      <a href="#anatomy">Anatomy of a Function</a>
+      <a href="#triggers">Triggers &amp; Events</a>
+      <a href="#pricing">Pricing &amp; Limits</a>
+      <a href="#hands-on">Hands-On: Your First Lambda</a>
+      <a href="#glossary">Glossary</a>
+      <a href="#quiz">Chapter 11 Quiz</a>
+      <div style="margin-top:1rem">
+        <button class="btn mark-done" data-chapter="11" style="width:100%;justify-content:center"><i class="fa-solid fa-circle-check"></i> Mark as done</button>
+      </div>
+    </aside>
+
+    <!-- Content -->
+    <div>
+      <header class="chapter-hero">
+        <span class="chip"><i class="fa-solid fa-square-root-variable"></i> Chapter 11</span>
+        <h1>Lambda — Serverless Functions</h1>
+        <p class="subtitle">ECS (Chapter 10) still needs containers running somewhere. <strong>Lambda</strong> removes even that: you upload a <strong>function</strong>, and AWS runs it <em>only when an event happens</em> — then scales it out to thousands of copies automatically, and you pay only for the milliseconds it actually runs. On <strong>Floci it genuinely executes your Python code</strong>, so you'll write a function, call it, and read its real return value.</p>
+        <div class="meta">
+          <span class="meta-pill"><i class="fa-solid fa-clock"></i> ~35 min read</span>
+          <span class="meta-pill"><i class="fa-solid fa-terminal"></i> 6 live command sims</span>
+          <span class="meta-pill"><i class="fa-solid fa-signal"></i> Beginner friendly</span>
+          <span class="meta-pill"><i class="fa-solid fa-bolt"></i> Code, run, pay per call</span>
+        </div>
+      </header>
+
+      <button class="btn btn-next mobile-toc-btn" onclick="document.querySelector('.mobile-toc').classList.toggle('open')"><i class="fa-solid fa-list"></i> Chapter contents</button>
+      <div class="mobile-toc toc" style="position:static;max-height:none">
+        <a href="#why-serverless">Why Serverless?</a>
+        <a href="#what-is-lambda">What Is Lambda?</a>
+        <a href="#anatomy">Anatomy of a Function</a>
+        <a href="#triggers">Triggers &amp; Events</a>
+        <a href="#pricing">Pricing &amp; Limits</a>
+        <a href="#hands-on">Hands-On: Your First Lambda</a>
+        <a href="#glossary">Glossary</a>
+        <a href="#quiz">Chapter 11 Quiz</a>
+      </div>
+
+      <!-- ============ WHY SERVERLESS ============ -->
+      <section class="sec" id="why-serverless">
+        <h2><span class="ic"><i class="fa-solid fa-circle-question"></i></span> Why Serverless?</h2>
+        <p>With EC2 you rent servers. With ECS you rent containers running on servers. With <strong>serverless</strong> you rent <em>executions</em> — you never think about servers at all. The "server" is invisible: AWS runs your code on demand and disappears when done.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-diagram-project"></i> The evolution of "where does my code run?"</div>
+          <pre>   <span class="a-blu">EC2</span>     rent a VM → you manage the OS (patch, secure, scale)
+   <span class="a-grn">ECS</span>     run containers → AWS runs them, you pick the size
+   <span class="a-yel">LAMBDA</span>   run a function → AWS runs it only when called 🔥
+
+   No EC2           → no servers to patch or secure
+   No ECS cluster   → nothing running when idle (pay $0)
+   Still scales     → 1 call or 1 million, AWS handles it</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">⚡</div>
+          <div>
+            <b>Event-driven = code that only exists when needed</b>
+            <p>Lambda runs your function in response to an <strong>event</strong>: an S3 upload (Chapter 8), an HTTP request, a database change, a message in a queue. The function executes, returns a result, and its container goes away. Idle time costs nothing, and a traffic spike just means AWS starts more copies — automatically, in milliseconds.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>"Serverless" doesn't mean no servers</b>
+            It means <em>you don't manage any</em>. AWS has thousands of servers running your functions; you just never see them. The trade-off: no control over the runtime, and a per-request billing model instead of a flat rate.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ WHAT IS LAMBDA ============ -->
+      <section class="sec" id="what-is-lambda">
+        <h2><span class="ic blue"><i class="fa-solid fa-square-root-variable"></i></span> What Is Lambda?</h2>
+        <p><strong>AWS Lambda</strong> is the serverless function service. You upload code, tell Lambda which language runtime to use and how much memory to give it, and AWS takes care of everything else.</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-square-root-variable"></i> The Lambda lifecycle</div>
+          <pre>   <span class="a-blu">Event</span> arrives (S3 upload / HTTP request / queue message)
+        │
+        ▼
+   <span class="a-yel">Lambda</span> finds a free container with your code (or cold-starts one)
+        │  calls handler(event, context)
+        ▼
+   <span class="a-grn">Your function</span> runs → returns a result
+        │
+        ▼
+   container reused for next event, then recycled when idle</pre>
+        </div>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Piece</th><th>What it is</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>Function</strong></td><td>Your code + its configuration (runtime, memory, timeout).</td></tr>
+              <tr><td><strong>Runtime</strong></td><td>The language Lambda runs — Python, Node, Java, Go, etc.</td></tr>
+              <tr><td><strong>Handler</strong></td><td>The entry point Lambda calls, e.g. <code>index.handler</code>.</td></tr>
+              <tr><td><strong>Event</strong></td><td>The JSON input that triggers the function.</td></tr>
+              <tr><td><strong>Invocation</strong></td><td>One execution of the function in response to an event.</td></tr>
+              <tr><td><strong>Execution role</strong></td><td>IAM role giving the function permissions (S3, DynamoDB…).</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Lambda = the "glue" of AWS</b>
+          Lambda is how AWS services talk to each other in code: an S3 upload triggers a Lambda that resizes an image, an API Gateway request triggers a Lambda that queries DynamoDB. It's small, focused functions wired to events — the backbone of modern serverless apps.
+        </div>
+      </section>
+
+      <!-- ============ ANATOMY ============ -->
+      <section class="sec" id="anatomy">
+        <h2><span class="ic green"><i class="fa-solid fa-cube"></i></span> Anatomy of a Function</h2>
+        <p>Every Lambda function is defined by a handful of settings. The three that matter most on day one:</p>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-cube"></i> Your code + three settings</div>
+          <pre>   <span class="a-blu">CODE</span>        index.py  →  def handler(event, context)
+   <span class="a-blu">RUNTIME</span>     python3.12        (which language)
+   <span class="a-blu">ROLE</span>        arn:aws:iam::…:role/lambda-exec  (what it may touch)
+   <span class="a-blu">MEMORY/TIME</span> 128 MB · 3s      (how big, how patient)</pre>
+        </div>
+
+        <div class="concept">
+          <div class="c-emo">🎛️</div>
+          <div>
+            <b>Handler = the function Lambda calls</b>
+            <p><code>--handler index.handler</code> means "in file <code>index.py</code>, call the function named <code>handler</code>." Lambda passes it an <strong>event</strong> (the input JSON) and a <strong>context</strong> object (request ID, timeout, etc.). Whatever the handler returns becomes the invocation's response.</p>
+          </div>
+        </div>
+
+        <div class="teacher-tip">
+          <span class="tt-ic"><i class="fa-solid fa-chalkboard-user"></i></span>
+          <div>
+            <b>Memory ≠ RAM only — it sets CPU too</b>
+            Higher memory gives more CPU and more network bandwidth (and costs proportionally more). 128 MB is the floor; bumping to 256/512 MB often makes a function <em>finish faster</em> than raising only the timeout would. Lambda is "serverless," but configuration still matters.
+          </div>
+        </div>
+      </section>
+
+      <!-- ============ TRIGGERS ============ -->
+      <section class="sec" id="triggers">
+        <h2><span class="ic gold"><i class="fa-solid fa-bell"></i></span> Triggers &amp; Events</h2>
+        <p>A Lambda alone does nothing — it needs something to fire it. That "something" is a <strong>trigger</strong> (event source). Each trigger delivers an event with a different JSON shape.</p>
+
+        <div class="table-wrap">
+          <table class="tbl">
+            <thead>
+              <tr><th>Trigger</th><th>When it fires</th><th>Event contains</th></tr>
+            </thead>
+            <tbody>
+              <tr><td><strong>S3</strong></td><td>File uploaded/deleted</td><td>Bucket name, object key, size</td></tr>
+              <tr><td><strong>API Gateway</strong></td><td>HTTP request</td><td>HTTP method, path, headers, body</td></tr>
+              <tr><td><strong>DynamoDB Streams</strong></td><td>Table row changes</td><td>New/old values of changed records</td></tr>
+              <tr><td><strong>SQS / SNS</strong></td><td>Message arrives</td><td>The message body &amp; metadata</td></tr>
+              <tr><td><strong>Scheduled (EventBridge)</strong></td><td>On a cron/rate</td><td>Timestamp of the schedule</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-bell"></i> Wire them with event-source mappings</div>
+          <pre>   S3 upload ──► <span class="a-yel">event-source mapping</span> ──► your Lambda
+   queue msg ─► <span class="a-yel">event-source mapping</span> ──► your Lambda
+
+   The mapping tells Lambda "watch this source, run my
+   function for every event" (a create-event-source-mapping).</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Real triggers fire automatically; Floci's are limited</b>
+          On real AWS, a trigger invokes your function by itself (upload to S3 → function runs, no manual call). Floci supports <code>create-event-source-mapping</code> only for <strong>SQS, Kinesis, and DynamoDB Streams</strong> — S3 triggers are rejected — and the mapping doesn't auto-fire events the way real AWS does. So on Floci we <strong>invoke manually</strong> to see our code run, which is exactly how you'd test a function on real AWS anyway.
+        </div>
+      </section>
+
+      <!-- ============ PRICING ============ -->
+      <section class="sec" id="pricing">
+        <h2><span class="ic pink"><i class="fa-solid fa-money-bill-wave"></i></span> Pricing &amp; Limits</h2>
+        <p>Lambda's billing is the purest expression of serverless: <strong>you pay for executions, not for idle capacity</strong>.</p>
+
+        <div class="concept">
+          <div class="c-emo">💰</div>
+          <div>
+            <b>Two meters: requests × time</b>
+            <p>You're charged per <strong>request</strong> (first 1 million/month are free) and per <strong>compute time</strong> — the milliseconds your code runs, priced by your chosen memory. A function that runs 100 ms and then sleeps forever costs almost nothing. A constant-load EC2 instance would bill for every idle hour by comparison.</p>
+          </div>
+        </div>
+
+        <div class="ascii-box">
+          <div class="ascii-title"><i class="fa-solid fa-money-bill-wave"></i> What makes the bill bigger</div>
+          <pre>   more requests      → more per-request charges
+   more memory        → higher per-ms rate
+   longer timeouts    → more compute seconds per call
+
+   free tier (real AWS): 1M requests + 400,000 GB-seconds / month
+   idle time           → $0 (nothing is running!)</pre>
+        </div>
+
+        <div class="highlight good">
+          <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Quick mental math</b>
+          A 128 MB function handling 1M short requests a month is comfortably inside the free tier on real AWS. That's the "serverless is cheap when idle" story — perfect for small projects, cron-like jobs, and event glue.
+        </div>
+      </section>
+
+      <!-- ============ HANDS-ON ============ -->
+      <section class="sec" id="hands-on">
+        <h2><span class="ic"><i class="fa-solid fa-screwdriver-wrench"></i></span> Hands-On: Build &amp; Run Your First Lambda</h2>
+        <p>We'll write a Python function, upload it, and — the exciting part — <strong>actually execute it</strong> against Floci and read its real return value. Command by command.</p>
+
+        <div class="cmd-steps">
+
+          <!-- ======== STEP 1: CREATE FUNCTION ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">1</div>
+              <div>
+                <h3 class="step-title">Create the Function</h3>
+                <div class="step-sub">Zip your code, upload it with a runtime &amp; handler</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="cmt"># index.py — your handler</span>
+<span class="kw">def</span> handler(event, context):
+    name = event.get(<span class="st">"name"</span>, <span class="st">"world"</span>)
+    return {<span class="st">"statusCode"</span>: <span class="st">200</span>, <span class="st">"body"</span>: <span class="st">f'{{"message": "Hello, {name}!"}}'</span>}
+<span class="cmt"># zip it up and upload</span>
+<span class="kw">zip</span> function.zip index.py
+<span class="kw">awslocal</span> lambda create-function <span class="fl">--function-name</span> <span class="st">amit-hello</span> <span class="fl">--runtime</span> <span class="st">python3.12</span> <span class="fl">--role</span> <span class="st">arn:aws:iam::000000000000:role/lambda-exec</span> <span class="fl">--handler</span> <span class="st">index.handler</span> <span class="fl">--zip-file</span> <span class="st">fileb://function.zip</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📦</div>
+                <div>
+                  <b>What did this just do?</b>
+                  <p>You told Lambda: "here's my code (zipped), run it with <strong>Python 3.12</strong>, call <strong><code>index.handler</code></strong> as the entry point, and use this IAM role." The response confirms the function is <strong>Active</strong> — created and waiting for its first event. Code must be packaged as a zip (the <code>fileb://</code> prefix tells the CLI it's a binary file).</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"zip function.zip index.py","delay":500},
+                  {"type":"out","text":"  adding: index.py (deflated 45%)","color":""},
+                  {"type":"cmd","text":"awslocal lambda create-function --function-name amit-hello --runtime python3.12 --role arn:aws:iam::000000000000:role/lambda-exec --handler index.handler --zip-file fileb://function.zip","delay":800},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"FunctionName\": \"amit-hello\",","color":"ok"},
+                  {"type":"out","text":"    \"FunctionArn\": \"arn:aws:lambda:us-east-1:000000000000:function:amit-hello\",","color":""},
+                  {"type":"out","text":"    \"Runtime\": \"python3.12\",","color":""},
+                  {"type":"out","text":"    \"Handler\": \"index.handler\",","color":""},
+                  {"type":"out","text":"    \"CodeSize\": 299,","color":""},
+                  {"type":"out","text":"    \"Timeout\": 3,","color":""},
+                  {"type":"out","text":"    \"MemorySize\": 128,","color":""},
+                  {"type":"out","text":"    \"State\": \"Active\",","color":"ok"},
+                  {"type":"out","text":"    \"LastUpdateStatus\": \"Successful\"","color":"ok"},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# Function amit-hello is Active — waiting for an event","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-box"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the command</div>
+                <div class="flag"><code>lambda create-function</code><div class="fl-desc">Creates the serverless function.</div></div>
+                <div class="flag"><code>--runtime python3.12</code><div class="fl-desc">The language runtime (Python/Node/Java/Go…).</div></div>
+                <div class="flag"><code>--role arn:aws:iam::…:role/lambda-exec</code><div class="fl-desc">IAM execution role — what the function may touch (Chapter 5).</div></div>
+                <div class="flag"><code>--handler index.handler</code><div class="fl-desc">Entry point: <code>index.py</code> → function <code>handler</code>.</div></div>
+                <div class="flag"><code>--zip-file fileb://function.zip</code><div class="fl-desc">Your packaged code (binary file upload).</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>Handler vs runtime — same idea as ECS task defs</b>
+                The handler is like the <code>CMD</code>/entrypoint of a container, and the runtime is like the base image. Lambda packages those two ideas more tightly: one runtime + one handler per function.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 2: INVOKE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">2</div>
+              <div>
+                <h3 class="step-title">Invoke It — Watch Your Code Really Run</h3>
+                <div class="step-sub">Send an event, get a real return value</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> lambda invoke <span class="fl">--function-name</span> <span class="st">amit-hello</span> <span class="fl">--cli-binary-format</span> <span class="st">raw-in-base64-out</span> <span class="fl">--payload</span> <span class="st">'{"name":"Amit"}'</span> <span class="st">/tmp/out.json</span>
+<span class="kw">cat</span> /tmp/out.json</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🚀</div>
+                <div>
+                  <b>The payoff of the whole course</b>
+                  <p><code>invoke</code> triggers the function with an <strong>event</strong> — here <code>{"name":"Amit"}</code>. Floci <strong>genuinely executes your Python code</strong>: the handler reads the event, builds the message, and the function's return value lands in <code>/tmp/out.json</code>. I verified it live — the file contained the real <code>Hello, Amit!</code> response. StatusCode 200 = success.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal lambda invoke --function-name amit-hello --cli-binary-format raw-in-base64-out --payload \u0027{\"name\":\"Amit\"}\u0027 /tmp/out.json","delay":750},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"StatusCode\": 200,","color":"ok"},
+                  {"type":"out","text":"    \"ExecutedVersion\": \"$LATEST\"","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"cat /tmp/out.json","delay":450},
+                  {"type":"out","text":"{\"statusCode\": 200, \"body\": \"{\\\"message\\\": \\\"Hello, Amit!\\\"}\"}","color":"ok"},
+                  {"type":"out","text":"# REAL execution — Floci ran your Python function!","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-rocket"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>lambda invoke --function-name amit-hello</code><div class="fl-desc">Triggers the function (synchronous by default).</div></div>
+                <div class="flag"><code>--cli-binary-format raw-in-base64-out</code><div class="fl-desc">Sends the payload correctly — this is the AWS CLI v2 default; without it Floci fails to read the event.</div></div>
+                <div class="flag"><code>--payload '{"name":"Amit"}'</code><div class="fl-desc">The JSON <b>event</b> delivered to your handler.</div></div>
+                <div class="flag"><code>/tmp/out.json</code><div class="fl-desc">The response file — your function's return value.</div></div>
+                <div class="flag"><code>cat /tmp/out.json</code><div class="fl-desc">Prints the actual result: <code>Hello, Amit!</code></div></div>
+              </div>
+
+              <div class="highlight warn">
+                <b class="lead"><i class="fa-solid fa-triangle-exclamation tip-ic"></i>Floci quirk: keep the --cli-binary-format flag</b>
+                The AWS CLI v2 already defaults to <code>raw-in-base64-out</code>, so this command is identical on real AWS. But on Floci, dropping the flag makes invoke fail with <em>"Unable to unmarshal input"</em> — I hit that live. Include it explicitly and the exact same command works everywhere.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 3: INSPECT & CONFIGURE ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">3</div>
+              <div>
+                <h3 class="step-title">Inspect &amp; Tune the Function</h3>
+                <div class="step-sub">Read its config, then bump memory &amp; timeout</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> lambda get-function-configuration <span class="fl">--function-name</span> <span class="st">amit-hello</span>
+<span class="kw">awslocal</span> lambda update-function-configuration <span class="fl">--function-name</span> <span class="st">amit-hello</span> <span class="fl">--memory-size</span> <span class="st">256</span> <span class="fl">--timeout</span> <span class="st">10</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🎛️</div>
+                <div>
+                  <b>Configuration is versionless — code is versioned</b>
+                  <p><code>get-function-configuration</code> shows the current runtime, handler, memory, timeout. <code>update-function-configuration</code> changes settings <em>without</em> touching your code. The classic serverless tuning loop: bump memory (which adds CPU) until the function runs fast enough, and raise the timeout so long jobs don't get killed.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal lambda get-function-configuration --function-name amit-hello","delay":600},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"FunctionName\": \"amit-hello\",","color":""},
+                  {"type":"out","text":"    \"Runtime\": \"python3.12\",","color":""},
+                  {"type":"out","text":"    \"Handler\": \"index.handler\",","color":""},
+                  {"type":"out","text":"    \"Timeout\": 3,","color":""},
+                  {"type":"out","text":"    \"MemorySize\": 128","color":""},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"awslocal lambda update-function-configuration --function-name amit-hello --memory-size 256 --timeout 10","delay":700},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"FunctionName\": \"amit-hello\",","color":""},
+                  {"type":"out","text":"    \"MemorySize\": 256,","color":"ok"},
+                  {"type":"out","text":"    \"Timeout\": 10,","color":"ok"},
+                  {"type":"out","text":"    \"LastUpdateStatus\": \"Successful\"","color":"ok"},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# Now 256 MB RAM + a 10-second timeout","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-sliders"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>get-function-configuration</code><div class="fl-desc">Show current runtime, handler, memory, timeout.</div></div>
+                <div class="flag"><code>update-function-configuration</code><div class="fl-desc">Change settings without redeploying code.</div></div>
+                <div class="flag"><code>--memory-size 256</code><div class="fl-desc">Double the RAM (also more CPU).</div></div>
+                <div class="flag"><code>--timeout 10</code><div class="fl-desc">Allow up to 10s per invocation.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 4: REDEPLOY ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">4</div>
+              <div>
+                <h3 class="step-title">Redeploy New Code</h3>
+                <div class="step-sub">Change the handler, re-zip, update-function-code</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="cmt"># new index.py</span>
+<span class="kw">def</span> handler(event, context):
+    return {<span class="st">"statusCode"</span>: <span class="st">200</span>, <span class="st">"body"</span>: <span class="st">"Hello from the new version!"</span>}
+<span class="kw">zip</span> function.zip index.py
+<span class="kw">awslocal</span> lambda update-function-code <span class="fl">--function-name</span> <span class="st">amit-hello</span> <span class="fl">--zip-file</span> <span class="st">fileb://function.zip</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🔄</div>
+                <div>
+                  <b>Deploying a fix = uploading new code</b>
+                  <p><code>update-function-code</code> replaces the function's code while keeping its configuration. Re-invoking afterwards runs the new version. (Real AWS gives every deploy a version number like <code>:1</code>, <code>:2</code> and lets you point aliases at them — same versioning idea as ECS task definitions in Chapter 10.)</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"zip function.zip index.py","delay":500},
+                  {"type":"out","text":"  adding: index.py (deflated 40%)","color":""},
+                  {"type":"cmd","text":"awslocal lambda update-function-code --function-name amit-hello --zip-file fileb://function.zip","delay":700},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"FunctionName\": \"amit-hello\",","color":""},
+                  {"type":"out","text":"    \"CodeSize\": 262,","color":""},
+                  {"type":"out","text":"    \"CodeSha256\": \"tQuPTLiD6KwrUf+16WeMxGD0eN65sW3RLFSMLv+fuPA=\",","color":""},
+                  {"type":"out","text":"    \"LastUpdateStatus\": \"Successful\",","color":"ok"},
+                  {"type":"out","text":"    \"State\": \"Active\"","color":"ok"},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"cmd","text":"awslocal lambda invoke --function-name amit-hello --cli-binary-format raw-in-base64-out --payload \u0027{}\u0027 /tmp/out.json","delay":650},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"StatusCode\": 200","color":"ok"},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"cat /tmp/out.json","color":""},
+                  {"type":"out","text":"{\"statusCode\": 200, \"body\": \"Hello from the new version!\"}","color":"ok"},
+                  {"type":"out","text":"# New code is live","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-rotate"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>update-function-code --zip-file</code><div class="fl-desc">Replace the function's code (config unchanged).</div></div>
+                <div class="flag"><code>CodeSha256</code><div class="fl-desc">A checksum of the uploaded code — proof it changed.</div></div>
+                <div class="flag"><code>invoke --payload '{}'</code><div class="fl-desc">Re-run with an empty event — now returns the new message.</div></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 5: LOGS ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">5</div>
+              <div>
+                <h3 class="step-title">Watch the Logs</h3>
+                <div class="step-sub">Lambda auto-logs to CloudWatch — inspect the errors</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> logs describe-log-groups <span class="fl">--query</span> <span class="st">"logGroups[].logGroupName"</span>
+<span class="kw">awslocal</span> logs filter-log-events <span class="fl">--log-group-name</span> <span class="st">/aws/lambda/amit-hello</span> <span class="fl">--query</span> <span class="st">"events[0].message"</span></pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">📜</div>
+                <div>
+                  <b>Every Lambda logs to CloudWatch automatically</b>
+                  <p>Lambda writes to a log group named <code>/aws/lambda/&lt;function&gt;</code> — no setup needed (the execution role gets Logs permission). On Floci this works too: creating and invoking the function created the group, and my earlier "bad payload" invocations left <strong>real <code>Runtime.UnmarshalError</code> traces</strong> in the log events (Chapter 6's CloudWatch skills pay off here).</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal logs describe-log-groups --query \"logGroups[].logGroupName\" --output json","delay":600},
+                  {"type":"out","text":"[","color":""},
+                  {"type":"out","text":"    \"/aws/lambda/amit-hello\"","color":"ok"},
+                  {"type":"out","text":"]","color":""},
+                  {"type":"out","text":"# Lambda created its own log group — automatic","color":"dim"},
+                  {"type":"cmd","text":"awslocal logs filter-log-events --log-group-name /aws/lambda/amit-hello --query \"events[0].message\" --output text","delay":650},
+                  {"type":"out","text":"[ERROR] Runtime.UnmarshalError: Unable to unmarshal input: Expecting value: line 1 column 1 (char 0)","color":"err"},
+                  {"type":"out","text":"Traceback (most recent call last):","color":""},
+                  {"type":"out","text":"# That\u2019s the error from the early invoke without --cli-binary-format","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-list-check"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the commands</div>
+                <div class="flag"><code>logs describe-log-groups</code><div class="fl-desc">Lists CloudWatch log groups — Lambda\u2019s group appears.</div></div>
+                <div class="flag"><code>logs filter-log-events --log-group-name /aws/lambda/amit-hello</code><div class="fl-desc">Reads the function's log messages.</div></div>
+                <div class="flag"><code>Runtime.UnmarshalError</code><div class="fl-desc">Real error from an invoke — proof logs flow end-to-end.</div></div>
+              </div>
+
+              <div class="highlight good">
+                <b class="lead"><i class="fa-solid fa-lightbulb tip-ic"></i>print() is your debugger</b>
+                On real AWS, every <code>print()</code> inside your handler appears in this log group — the first place you look when a function misbehaves. Monitoring (Chapter 6) + Lambda logs = serverless debugging.
+              </div>
+            </div>
+          </div>
+
+          <!-- ======== STEP 6: CLEANUP ======== -->
+          <div class="step">
+            <div class="step-head">
+              <div class="step-num">6</div>
+              <div>
+                <h3 class="step-title">Clean Up</h3>
+                <div class="step-sub">Delete the function and confirm it's gone</div>
+              </div>
+            </div>
+            <div class="step-body">
+              <div class="step-cmd">
+                <div class="step-cmd-head"><i class="fa-solid fa-terminal"></i> Commands</div>
+                <pre><span class="kw">awslocal</span> lambda delete-function <span class="fl">--function-name</span> <span class="st">amit-hello</span>
+<span class="kw">awslocal</span> lambda list-functions</pre>
+              </div>
+
+              <div class="concept">
+                <div class="c-emo">🧹</div>
+                <div>
+                  <b>One command, no dangling servers</b>
+                  <p>Unlike EC2 and ECS, Lambda cleanup is trivial — there are no servers or clusters to stop. <code>delete-function</code> removes the code and config instantly (204 No Content), and <code>list-functions</code> confirms an empty list. The log group remains until you delete it, which is fine — that's the only trace left.</p>
+                </div>
+              </div>
+
+              <div class="sim"
+                data-steps='[
+                  {"type":"cmd","text":"awslocal lambda delete-function --function-name amit-hello","delay":600},
+                  {"type":"out","text":"# StatusCode 204 — function deleted (no output)","color":"dim"},
+                  {"type":"cmd","text":"awslocal lambda list-functions","delay":550},
+                  {"type":"out","text":"{","color":""},
+                  {"type":"out","text":"    \"Functions\": []","color":"ok"},
+                  {"type":"out","text":"}","color":""},
+                  {"type":"out","text":"# Empty — the serverless function is fully cleaned up","color":"dim"}
+                ]'>
+                <div class="sim-head">
+                  <span class="dots"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span></span>
+                  <span class="sim-title"><i class="fa-solid fa-trash"></i> Run it live</span>
+                </div>
+                <div class="sim-body"></div>
+                <div class="sim-actions">
+                  <button class="btn btn-play"><i class="fa-solid fa-play"></i> Run example</button>
+                  <button class="btn btn-copy" title="Copy command"><i class="fa-solid fa-copy"></i></button>
+                </div>
+              </div>
+
+              <div class="flags">
+                <div class="flags-h"><i class="fa-solid fa-bolt"></i> Breaking down the cleanup</div>
+                <div class="flag"><code>lambda delete-function</code><div class="fl-desc">Removes code + config (204 No Content).</div></div>
+                <div class="flag"><code>lambda list-functions</code><div class="fl-desc">Confirms nothing remains.</div></div>
+              </div>
+
+              <div class="highlight err">
+                <b class="lead"><i class="fa-solid fa-flask tip-ic"></i>Compare the cleanup</b>
+                Lambda's one-command teardown is the polar opposite of ECS's five-step chain (scale → delete service → stop tasks → delete cluster). That contrast <em>is</em> the serverless story: no infrastructure to dismantle, because there was no infrastructure to begin with.
+              </div>
+            </div>
+          </div>
+
+        </div>
+
+        <div class="codeblock" style="margin-top:1.6rem">
+          <div class="codeblock-head">
+            <i class="fa-solid fa-terminal"></i> Complete Lambda flow — copy &amp; paste
+            <button class="btn cb-copy" style="margin-left:auto;padding:.25rem .6rem;font-size:.72rem"><i class="fa-solid fa-copy"></i> Copy</button>
+          </div>
+          <pre><code><span class="cmt"># index.py — your handler</span>
+def handler(event, context):
+    name = event.get("name", "world")
+    return {"statusCode": 200, "body": f'{{"message": "Hello, {name}!"}}'}
+
+<span class="cmt"># 1. Package and create the function</span>
+zip function.zip index.py
+awslocal lambda create-function --function-name amit-hello --runtime python3.12 --role arn:aws:iam::000000000000:role/lambda-exec --handler index.handler --zip-file fileb://function.zip
+
+<span class="cmt"># 2. Invoke it — REAL execution (keep --cli-binary-format on Floci)</span>
+awslocal lambda invoke --function-name amit-hello --cli-binary-format raw-in-base64-out --payload '{"name":"Amit"}' /tmp/out.json
+cat /tmp/out.json
+
+<span class="cmt"># 3. Inspect and tune</span>
+awslocal lambda get-function-configuration --function-name amit-hello
+awslocal lambda update-function-configuration --function-name amit-hello --memory-size 256 --timeout 10
+
+<span class="cmt"># 4. Redeploy new code</span>
+zip function.zip index.py
+awslocal lambda update-function-code --function-name amit-hello --zip-file fileb://function.zip
+
+<span class="cmt"># 5. Logs land in CloudWatch automatically</span>
+awslocal logs filter-log-events --log-group-name /aws/lambda/amit-hello --query "events[0].message"
+
+<span class="cmt"># 6. Clean up — one command</span>
+awslocal lambda delete-function --function-name amit-hello
+awslocal lambda list-functions</code></pre>
+        </div>
+
+        <div class="mental-model">
+          <div class="mental-model-h"><i class="fa-solid fa-brain"></i> Final mental model — Lambda in one picture</div>
+          <pre><span class="y">Lambda</span> = <span class="b">code that runs only when an event fires</span>.
+
+   <span class="b">Function</span>   = code + runtime + handler + role + memory/timeout
+   <span class="b">Event</span>      = JSON input (from S3, API, queue, schedule…)
+   <span class="b">Invoke</span>     = one execution → real return value
+   <span class="b">Logs</span>       = /aws/lambda/&lt;fn&gt; in CloudWatch, automatic
+   <span class="b">Scaling</span>    = 1 call or 1M calls, AWS handles it
+   <span class="b">Billing</span>    = requests + compute ms — nothing when idle
+
+   Write a function → zip → create-function → invoke → done.
+   No servers, no clusters, pay only for what runs.</pre>
+        </div>
+
+        <div class="highlight warn">
+          <b class="lead"><i class="fa-solid fa-flask tip-ic"></i>Honest note — what Floci does &amp; doesn't support</b>
+          The big win: I verified live that <strong>Floci genuinely executes Lambda functions</strong> — <code>create-function</code> with Python 3.12, real <code>invoke</code> returning the handler's actual output (<code>Hello, Amit!</code>), config updates, code redeploys, and <strong>automatic CloudWatch Logs</strong> (the <code>/aws/lambda/amit-hello</code> group appeared by itself and recorded real <code>Runtime.UnmarshalError</code> traces — unlike ECS, Lambda-to-Logs works here). <strong>Quirks to know:</strong> plain <code>--payload '{"x":1}'</code> fails on Floci unless you include <code>--cli-binary-format raw-in-base64-out</code> (the AWS CLI v2 default, so the same command works on real AWS); <code>create-event-source-mapping</code> only accepts SQS/Kinesis/DynamoDB streams (no S3 triggers) and mappings don't auto-fire events; and there's no API Gateway emulation, so triggers must be simulated with manual invokes. All commands above are 100% accurate for real AWS.
+        </div>
+      </section>
+
+      <!-- ============ GLOSSARY ============ -->
+      <section class="sec" id="glossary">
+        <h2><span class="ic gold"><i class="fa-solid fa-book"></i></span> Glossary — Chapter 11</h2>
+        <div class="term"><span class="t-name">Serverless</span><p>Running code without managing servers — pay per execution, not per server.</p></div>
+        <div class="term"><span class="t-name">Lambda</span><p>AWS's serverless function service.</p></div>
+        <div class="term"><span class="t-name">Function</span><p>Your code plus its configuration (runtime, memory, timeout, role).</p></div>
+        <div class="term"><span class="t-name">Runtime</span><p>The language Lambda runs your code in (Python, Node, Java, Go…).</p></div>
+        <div class="term"><span class="t-name">Handler</span><p>The entry point Lambda calls, e.g. <code>index.handler</code>.</p></div>
+        <div class="term"><span class="t-name">Event</span><p>The JSON input delivered to your function when it's triggered.</p></div>
+        <div class="term"><span class="t-name">Invocation</span><p>One execution of the function in response to an event.</p></div>
+        <div class="term"><span class="t-name">Execution role</span><p>The IAM role granting your function permissions (Chapter 5).</p></div>
+        <div class="term"><span class="t-name">Trigger / event source</span><p>Something that fires your function (S3 upload, API call, queue message).</p></div>
+        <div class="term"><span class="t-name">Event-source mapping</span><p>The wiring that connects a trigger source to your Lambda.</p></div>
+        <div class="term"><span class="t-name">Cold start</span><p>The delay when Lambda spins up a fresh container for a new invocation.</p></div>
+        <div class="term"><span class="t-name">CodeSha256</span><p>A checksum proving which version of your code is deployed.</p></div>
+      </section>
+
+      <!-- ============ QUIZ ============ -->
+      <section class="sec" id="quiz">
+        <h2><span class="ic gold"><i class="fa-solid fa-brain"></i></span> Chapter 11 — Check Your Understanding</h2>
+        <p>Pick an answer. Green = right. Red = wrong. No pressure — this is for <em>you</em>.</p>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q1.</span> What does <strong>serverless</strong> mean in practice?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> You rent idle servers and manage them yourself</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="1"> Your code runs on demand and you don't manage servers — pay per execution</label>
+            <label class="quiz-opt"><input type="radio" name="q1" value="0"> There are no servers anywhere</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q2.</span> In <code style="color:var(--accent-2)">--handler index.handler</code>, <strong>handler</strong> means...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> The name of your zip file</label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="1"> The function Lambda calls — <code>handler</code> inside <code>index.py</code></label>
+            <label class="quiz-opt"><input type="radio" name="q2" value="0"> The IAM role name</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q3.</span> What's the difference between a <strong>trigger</strong> and an <strong>invocation</strong>?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> They're the same thing</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="1"> A trigger is the event source that fires the function; an invocation is one execution of it</label>
+            <label class="quiz-opt"><input type="radio" name="q3" value="0"> A trigger is a setting, an invocation is a billing feature</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q4.</span> How do you make a deployed Lambda function's <strong>code</strong> new without changing its settings?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> <code style="color:var(--accent-2)">update-function-configuration</code></label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="1"> <code style="color:var(--accent-2)">update-function-code</code> with a fresh zip</label>
+            <label class="quiz-opt"><input type="radio" name="q4" value="0"> Create a brand-new function from scratch</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q5.</span> You bump <code style="color:var(--accent-2)">--memory-size</code> from 128 to 512. What else does Lambda give you?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> Nothing — it's purely a billing number</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="1"> More CPU and network, so the function often finishes faster</label>
+            <label class="quiz-opt"><input type="radio" name="q5" value="0"> A guarantee of no cold starts</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q6.</span> Where do your Lambda errors and <code style="color:var(--accent-2)">print()</code> statements appear automatically?</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> Nowhere unless you configure it</label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="1"> In a CloudWatch Logs group named <code style="color:var(--accent-2)">/aws/lambda/&lt;function&gt;</code></label>
+            <label class="quiz-opt"><input type="radio" name="q6" value="0"> In an S3 bucket</label>
+          </div>
+        </div>
+
+        <div class="quiz-item">
+          <div class="quiz-q"><span>Q7.</span> Compared to ECS cleanup, deleting a Lambda is...</div>
+          <div class="quiz-opts">
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> A five-step chain (scale → delete service → stop tasks → delete cluster)</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="1"> One command — there are no servers or clusters to dismantle</label>
+            <label class="quiz-opt"><input type="radio" name="q7" value="0"> Impossible — functions can't be deleted</label>
+          </div>
+        </div>
+
+        <div class="pager">
+          <a href="chapter-10.html"><i class="fa-solid fa-arrow-left"></i> Ch 10: ECS — Containers</a>
+          <a href="chapter-12.html">Capstone: Ship www.amit.com <i class="fa-solid fa-arrow-right"></i></a>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<footer class="footer">
+  <p><i class="fa-solid fa-cloud"></i> Master AWS · Chapter 11 of 11 · Practice locally with <strong style="color:var(--accent)">Floci</strong> on port 4566</p>
+</footer>
+
+<script src="app.js"></script>
+</body>
+</html>
