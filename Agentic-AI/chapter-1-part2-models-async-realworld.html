@@ -1,0 +1,1257 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 1 — Model Selection, Async Ops & Real-World Agents</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: { primary: '#0f0f1a', card: '#1a1a2e', hover: '#252542', accent: '#16213e' },
+            txt: { body: '#c4c4d4', bright: '#e8e8f0', muted: '#8888a4' },
+            c1: '#00d2ff', c2: '#a855f7', c3: '#f97316', c4: '#22d3ee', c5: '#fb923c',
+            c6: '#34d399', c7: '#f472b6', c8: '#facc15', c9: '#38bdf8', c10: '#c084fc',
+            success: '#4ade80', warn: '#fbbf24', danger: '#f87171', info: '#60a5fa',
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'],
+          },
+          animation: {
+            'fade-up': 'fadeUp 0.6s ease-out forwards',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'slide-left': 'slideLeft 0.5s ease-out forwards',
+            'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideLeft: { '0%': { opacity: '0', transform: 'translateX(30px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+            pulseGlow: { '0%, 100%': { boxShadow: '0 0 5px rgba(0,210,255,0.3)' }, '50%': { boxShadow: '0 0 25px rgba(0,210,255,0.6)' } },
+            float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f1a; color: #c4c4d4; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+    .gradient-text { background: linear-gradient(135deg, #00d2ff, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gradient-text-orange { background: linear-gradient(135deg, #f97316, #facc15); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gradient-text-green { background: linear-gradient(135deg, #34d399, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gradient-text-pink { background: linear-gradient(135deg, #f472b6, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .glass-card { background: rgba(26, 26, 46, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); }
+    .glow-blue { box-shadow: 0 0 20px rgba(0, 210, 255, 0.15); }
+    .glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.15); }
+    .glow-orange { box-shadow: 0 0 20px rgba(249, 115, 22, 0.15); }
+    .glow-green { box-shadow: 0 0 20px rgba(52, 211, 153, 0.15); }
+    .glow-pink { box-shadow: 0 0 20px rgba(244, 114, 182, 0.15); }
+    .code-block { background: #12121f; border: 1px solid rgba(255,255,255,0.08); font-family: 'JetBrains Mono', monospace; }
+    .flow-line { position: relative; }
+    .flow-line::before { content: ''; position: absolute; left: 19px; top: 40px; bottom: -20px; width: 2px; background: linear-gradient(to bottom, #00d2ff, #a855f7); opacity: 0.4; }
+    .flow-node { position: relative; padding-left: 50px; padding-bottom: 20px; }
+    .flow-node::before { content: ''; position: absolute; left: 12px; top: 8px; width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, #00d2ff, #a855f7); box-shadow: 0 0 10px rgba(0,210,255,0.5); }
+    .flow-node:last-child::before { background: linear-gradient(135deg, #4ade80, #22d3ee); box-shadow: 0 0 10px rgba(74,222,128,0.5); }
+    .section-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(0,210,255,0.3), rgba(168,85,247,0.3), transparent); margin: 3rem 0; }
+    .hover-lift { transition: all 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .scroll-reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease; }
+    .scroll-reveal.visible { opacity: 1; transform: translateY(0); }
+    .arrow-pulse { animation: arrowPulse 1.5s ease-in-out infinite; }
+    @keyframes arrowPulse { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(4px); opacity: 1; } }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 3px; }
+    .toc-link { transition: all 0.2s ease; border-left: 2px solid transparent; }
+    .toc-link:hover { border-left-color: #00d2ff; background: rgba(0,210,255,0.05); }
+    .tag { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; }
+    .spectrum-bar { background: linear-gradient(90deg, #34d399, #fbbf24, #f87171); border-radius: 9999px; }
+    .parallel-box { border: 2px dashed rgba(0,210,255,0.3); border-radius: 12px; padding: 12px; background: rgba(0,210,255,0.03); }
+    .sync-box { border: 2px dashed rgba(248,113,113,0.3); border-radius: 12px; padding: 12px; background: rgba(248,113,113,0.03); }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Floating Particles -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute w-2 h-2 bg-c1 rounded-full opacity-20" style="top:10%; left:20%; animation: float 4s ease-in-out infinite;"></div>
+    <div class="absolute w-3 h-3 bg-c2 rounded-full opacity-15" style="top:30%; left:80%; animation: float 5s ease-in-out infinite 1s;"></div>
+    <div class="absolute w-2 h-2 bg-c3 rounded-full opacity-20" style="top:60%; left:15%; animation: float 3s ease-in-out infinite 0.5s;"></div>
+    <div class="absolute w-2 h-2 bg-c6 rounded-full opacity-15" style="top:80%; left:70%; animation: float 4.5s ease-in-out infinite 2s;"></div>
+    <div class="absolute w-1 h-1 bg-c7 rounded-full opacity-20" style="top:45%; left:50%; animation: float 3.5s ease-in-out infinite 1.5s;"></div>
+  </div>
+
+  <!-- Nav -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-c1 to-c2 flex items-center justify-center text-white font-bold text-sm">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div>
+          <span class="text-bright font-bold text-sm sm:text-base">Chapter 1 — Part 2</span>
+          <span class="text-txt-muted text-xs block sm:inline sm:ml-2">Models, Async & Real-World</span>
+        </div>
+      </div>
+      <a href="#top" class="text-txt-muted hover:text-c1 transition text-sm hidden sm:block">
+        <i class="fas fa-arrow-up mr-1"></i>Top
+      </a>
+    </div>
+  </nav>
+
+  <!-- Sidebar TOC -->
+  <aside class="hidden xl:block fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] overflow-y-auto z-40 p-4 pr-2">
+    <div class="glass-card rounded-xl p-4 border border-white/5">
+      <h3 class="text-xs font-bold text-txt-muted uppercase tracking-wider mb-3"><i class="fas fa-list-ul mr-2 text-c1"></i>Contents</h3>
+      <div class="space-y-1 text-xs">
+        <a href="#sec-model" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-brain mr-1"></i>Model Selection</a>
+        <a href="#sec-commercial" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-cloud mr-1"></i>Commercial vs Open</a>
+        <a href="#sec-small" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-compress-arrows-alt mr-1"></i>Small Models</a>
+        <a href="#sec-router" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-random mr-1"></i>Model Routing</a>
+        <a href="#sec-benchmark" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-chart-bar mr-1"></i>Benchmarks</a>
+        <a href="#sec-selection" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-crosshairs mr-1"></i>Selection Process</a>
+        <a href="#sec-sync" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-sync mr-1"></i>Sync → Async</a>
+        <a href="#sec-proactive" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-bolt mr-1"></i>Reactive → Proactive</a>
+        <a href="#sec-apps" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-industry mr-1"></i>Real-World Apps</a>
+        <a href="#sec-arch" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-sitemap mr-1"></i>Core Architecture</a>
+        <a href="#sec-hierarchy" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-layer-group mr-1"></i>Model → Agent → System</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-20 pb-20 xl:ml-64" id="top">
+
+    <!-- Hero -->
+    <section class="pt-10 pb-8 text-center scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c3/10 border border-c3/20 rounded-full px-4 py-1.5 text-c3 text-xs font-semibold mb-6">
+        <i class="fas fa-bolt"></i> Three Big Ideas
+      </div>
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black mb-4 leading-tight">
+        <span class="gradient-text-orange">Model Selection</span><br/>
+        <span class="text-bright">Async Operations</span> &
+        <span class="gradient-text-green">Real-World</span>
+      </h1>
+      <p class="text-txt-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+        Choosing the right model, shifting from synchronous to asynchronous, and understanding where agents are actually useful.
+      </p>
+      <div class="flex flex-wrap justify-center gap-3 mt-6">
+        <span class="tag bg-c1/10 text-c1 border border-c1/20"><i class="fas fa-brain mr-1"></i> Model Selection</span>
+        <span class="tag bg-c3/10 text-c3 border border-c3/20"><i class="fas fa-bolt mr-1"></i> Async Ops</span>
+        <span class="tag bg-c6/10 text-c6 border border-c6/20"><i class="fas fa-industry mr-1"></i> Real-World</span>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ======================== PART 1: MODEL SELECTION ======================== -->
+    <section class="mb-6 scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c1/10 border border-c1/20 rounded-full px-4 py-1.5 text-c1 text-xs font-bold mb-4">
+        <i class="fas fa-brain"></i> PART 1 — MODEL SELECTION
+      </div>
+    </section>
+
+    <!-- Model Landscape -->
+    <section id="sec-model" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c1/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">1</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Model Landscape</h2>
+      </div>
+
+      <blockquote class="glass-card rounded-xl p-5 mb-6 border-l-4 border-c1 glow-blue">
+        <p class="text-c1/90 italic text-sm sm:text-base leading-relaxed">
+          "Today, we are fortunate to have a proliferation of powerful models..."
+        </p>
+        <cite class="text-txt-muted text-xs mt-2 block">— Book</cite>
+      </blockquote>
+
+      <div class="glass-card rounded-xl p-5 mb-6 border border-white/5">
+        <h3 class="text-lg font-bold text-c8 mb-3"><i class="fas fa-lightbulb mr-2 text-c8"></i>The Real Question</h3>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="glass-card rounded-lg p-4 border border-danger/20 text-center">
+            <div class="text-danger text-xs font-bold mb-1"><i class="fas fa-times-circle mr-1"></i>Wrong Question</div>
+            <div class="text-bright font-semibold text-sm">"Which AI is best?"</div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-success/20 text-center glow-green">
+            <div class="text-success text-xs font-bold mb-1"><i class="fas fa-check-circle mr-1"></i>Right Question</div>
+            <div class="text-bright font-semibold text-sm">"Which model is best for <span class="text-c1">THIS</span> particular job?"</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Model Map -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5">
+        <h4 class="text-bright font-bold mb-4 text-center">Model Ecosystem</h4>
+        <div class="grid sm:grid-cols-3 gap-4">
+          <div class="glass-card rounded-lg p-4 border border-c1/20 text-center hover-lift">
+            <div class="text-c1 font-bold mb-2"><i class="fas fa-building mr-1"></i>OpenAI</div>
+            <div class="space-y-1 text-xs text-txt-body">
+              <div>GPT-5</div>
+              <div>GPT-5 mini</div>
+              <div>o3 / o4-mini</div>
+            </div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-c2/20 text-center hover-lift">
+            <div class="text-c2 font-bold mb-2"><i class="fas fa-mountain mr-1"></i>Anthropic</div>
+            <div class="space-y-1 text-xs text-txt-body">
+              <div>Claude 4 Opus</div>
+              <div>Claude Sonnet</div>
+              <div>Claude Haiku</div>
+            </div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-c3/20 text-center hover-lift">
+            <div class="text-c3 font-bold mb-2"><i class="fas fa-gem mr-1"></i>Google</div>
+            <div class="space-y-1 text-xs text-txt-body">
+              <div>Gemini 2.5 Pro</div>
+              <div>Gemini Flash</div>
+              <div>Gemma</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 glass-card rounded-lg p-4 border border-c6/20">
+          <div class="text-c6 font-bold text-sm mb-2 text-center"><i class="fas fa-lock-open mr-1"></i>Open-Weight Models</div>
+          <div class="flex flex-wrap justify-center gap-2 text-xs">
+            <span class="bg-c6/10 text-c6 border border-c6/20 rounded px-3 py-1">Llama</span>
+            <span class="bg-c6/10 text-c6 border border-c6/20 rounded px-3 py-1">Mistral</span>
+            <span class="bg-c6/10 text-c6 border border-c6/20 rounded px-3 py-1">Gemma</span>
+            <span class="bg-c6/10 text-c6 border border-c6/20 rounded px-3 py-1">Qwen</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Commercial vs Open-weight -->
+    <section id="sec-commercial" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c2/20 to-c2/5 border border-c2/30 flex items-center justify-center text-c2 font-bold text-sm">2</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Commercial vs Open-Weight</h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Commercial -->
+        <div class="glass-card rounded-xl p-5 border border-c1/20 hover-lift glow-blue">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-cloud text-c1 text-lg"></i>
+            <h4 class="text-bright font-bold">Commercial / API Models</h4>
+          </div>
+          <div class="text-center py-3">
+            <div class="inline-block glass-card rounded-lg px-4 py-2 border border-c1/30 mb-2">
+              <span class="text-c3 text-xs font-semibold">Your Application</span>
+            </div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="inline-block bg-c1/10 border border-c1/20 rounded px-4 py-1.5 my-2">
+              <span class="text-c1 text-xs font-bold">API Call</span>
+            </div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="inline-block glass-card rounded-lg px-4 py-2 border border-c2/30 mt-2">
+              <span class="text-c2 text-xs font-semibold">Provider's GPU Infrastructure</span>
+            </div>
+          </div>
+          <div class="mt-3 space-y-1.5 text-xs">
+            <div class="flex items-center gap-2 text-success"><i class="fas fa-check w-4"></i> No GPU management</div>
+            <div class="flex items-center gap-2 text-success"><i class="fas fa-check w-4"></i> Easy scaling</div>
+            <div class="flex items-center gap-2 text-success"><i class="fas fa-check w-4"></i> Always updated</div>
+            <div class="flex items-center gap-2 text-danger"><i class="fas fa-times w-4"></i> Vendor lock-in risk</div>
+            <div class="flex items-center gap-2 text-danger"><i class="fas fa-times w-4"></i> Ongoing API costs</div>
+          </div>
+        </div>
+
+        <!-- Open-weight -->
+        <div class="glass-card rounded-xl p-5 border border-c6/20 hover-lift glow-green">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-server text-c6 text-lg"></i>
+            <h4 class="text-bright font-bold">Open-Weight Models</h4>
+          </div>
+          <div class="text-center py-3">
+            <div class="inline-block glass-card rounded-lg px-4 py-2 border border-c3/30 mb-2">
+              <span class="text-c3 text-xs font-semibold">Your Application</span>
+            </div>
+            <div class="arrow-pulse text-c6"><i class="fas fa-arrow-down"></i></div>
+            <div class="inline-block bg-c6/10 border border-c6/20 rounded px-4 py-1.5 my-2">
+              <span class="text-c6 text-xs font-bold">Your Server / GPU</span>
+            </div>
+            <div class="arrow-pulse text-c6"><i class="fas fa-arrow-down"></i></div>
+            <div class="inline-block glass-card rounded-lg px-4 py-2 border border-c6/30 mt-2">
+              <span class="text-c6 text-xs font-semibold">Open-Weight Model</span>
+            </div>
+          </div>
+          <div class="mt-3 space-y-1.5 text-xs">
+            <div class="flex items-center gap-2 text-success"><i class="fas fa-check w-4"></i> Full control</div>
+            <div class="flex items-center gap-2 text-success"><i class="fas fa-check w-4"></i> Data privacy</div>
+            <div class="flex items-center gap-2 text-success"><i class="fas fa-check w-4"></i> No vendor lock-in</div>
+            <div class="flex items-center gap-2 text-danger"><i class="fas fa-times w-4"></i> GPU requirements</div>
+            <div class="flex items-center gap-2 text-danger"><i class="fas fa-times w-4"></i> Quantization / scaling</div>
+            <div class="flex items-center gap-2 text-danger"><i class="fas fa-times w-4"></i> Infrastructure overhead</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Small Models -->
+    <section id="sec-small" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">3</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Small Models Are Getting Good <span class="text-c8 text-lg">🤏</span></h2>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-4 mb-6">
+        <!-- Distillation -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-c1/10 flex items-center justify-center text-c1 text-xl mb-4">
+            <i class="fas fa-graduation-cap"></i>
+          </div>
+          <h4 class="text-bright font-bold mb-3">Distillation</h4>
+          <div class="text-center">
+            <div class="inline-block bg-c1/10 border border-c1/20 rounded-lg px-4 py-2 text-xs text-c1 font-semibold mb-2">
+              <i class="fas fa-brain mr-1"></i> Large Teacher Model
+            </div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="text-txt-muted text-xs my-1">teaches smaller model</div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="inline-block bg-c6/10 border border-c6/20 rounded-lg px-4 py-2 text-xs text-c6 font-semibold mt-2">
+              <i class="fas fa-compress-arrows-alt mr-1"></i> Small Student Model
+            </div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3">Small model learns to <span class="text-c1 font-semibold">imitate</span> key capabilities.</p>
+        </div>
+
+        <!-- Quantization -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-c3/10 flex items-center justify-center text-c3 text-xl mb-4">
+            <i class="fas fa-compress-alt"></i>
+          </div>
+          <h4 class="text-bright font-bold mb-3">Quantization</h4>
+          <div class="space-y-3 text-xs">
+            <div>
+              <div class="text-txt-muted mb-1">Full precision:</div>
+              <div class="flex gap-0.5">
+                <span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span><span class="w-3 h-3 rounded-sm bg-c3/60"></span>
+              </div>
+            </div>
+            <div>
+              <div class="text-txt-muted mb-1">Quantized:</div>
+              <div class="flex gap-0.5">
+                <span class="w-3 h-3 rounded-sm bg-c8/60"></span><span class="w-3 h-3 rounded-sm bg-c8/60"></span><span class="w-3 h-3 rounded-sm bg-c8/60"></span><span class="w-3 h-3 rounded-sm bg-c8/60"></span>
+              </div>
+            </div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3">Fewer bits = <span class="text-c3 font-semibold">less memory</span>, faster inference. Tradeoff: quality.</p>
+        </div>
+
+        <!-- Synthetic Data -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-c6/10 flex items-center justify-center text-c6 text-xl mb-4">
+            <i class="fas fa-database"></i>
+          </div>
+          <h4 class="text-bright font-bold mb-3">Synthetic Data</h4>
+          <div class="space-y-1.5 text-xs text-txt-body">
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-c6 w-4"></i> Human data</div>
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-c6 w-4"></i> Large model generates examples</div>
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-c6 w-4"></i> Train smaller model</div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3">Makes smaller models <span class="text-c6 font-semibold">much more capable</span> without manual labeling.</p>
+        </div>
+      </div>
+
+      <!-- Why it matters for agents -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c8/20 bg-c8/5">
+        <h4 class="text-bright font-bold mb-4"><i class="fas fa-lightbulb text-c8 mr-2"></i>Why This Matters for Agents</h4>
+        <p class="text-txt-body text-sm mb-4">Agents don't need the most expensive model for every step.</p>
+
+        <div class="glass-card rounded-lg p-4 border border-white/5 mb-4">
+          <div class="text-center text-xs text-txt-muted mb-2">Agent's 10 operations — do you need a large model for all?</div>
+          <div class="grid grid-cols-2 sm:grid-cols-5 gap-2 text-xs">
+            <div class="glass-card rounded p-2 border border-white/5 text-center text-txt-body">Understand user</div>
+            <div class="glass-card rounded p-2 border border-success/20 text-center text-success">Format date <span class="text-[10px]">(simple)</span></div>
+            <div class="glass-card rounded p-2 border border-white/5 text-center text-txt-body">Search docs</div>
+            <div class="glass-card rounded p-2 border border-success/20 text-center text-success">Classify <span class="text-[10px]">(simple)</span></div>
+            <div class="glass-card rounded p-2 border border-c1/20 text-center text-c1">Reason about problem</div>
+            <div class="glass-card rounded p-2 border border-success/20 text-center text-success">Generate SQL</div>
+            <div class="glass-card rounded p-2 border border-success/20 text-center text-success">Summarize</div>
+            <div class="glass-card rounded p-2 border border-white/5 text-center text-txt-body">Check policy</div>
+            <div class="glass-card rounded p-2 border border-c1/20 text-center text-c1">Complex reasoning</div>
+            <div class="glass-card rounded p-2 border border-success/20 text-center text-success">Final answer</div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-lg p-4 border border-c8/30 text-center">
+          <span class="text-c8 font-bold">Do you really need your most expensive model for:</span>
+          <div class="code-block rounded-lg p-3 text-xs mt-2 inline-block">
+            <span class="text-txt-body">"Convert 17 August 2026 into YYYY-MM-DD"</span>
+          </div>
+          <div class="text-danger text-sm font-bold mt-2"><i class="fas fa-times mr-1"></i> Probably not!</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Model Routing -->
+    <section id="sec-router" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c4/20 to-c4/5 border border-c4/30 flex items-center justify-center text-c4 font-bold text-sm">4</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Automated Model Routing <span class="text-c4 text-lg">🚦</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c4/20 bg-c4/5 mb-6">
+        <div class="text-center py-2">
+          <div class="inline-block bg-c3/10 border border-c3/30 rounded-xl px-6 py-3 mb-3">
+            <span class="text-c3 font-bold"><i class="fas fa-user mr-2"></i>User Request</span>
+          </div>
+          <div class="arrow-pulse text-c4"><i class="fas fa-arrow-down text-lg"></i></div>
+          <div class="inline-block glass-card rounded-xl px-8 py-4 border border-c4/30 my-4">
+            <span class="text-c4 font-bold text-lg"><i class="fas fa-random mr-2"></i>Router Model</span>
+          </div>
+          <div class="flex justify-center gap-8 sm:gap-16 mt-2 flex-wrap">
+            <div class="text-center">
+              <div class="arrow-pulse text-success"><i class="fas fa-arrow-down"></i></div>
+              <div class="glass-card rounded-lg px-4 py-3 border border-success/30 mt-2">
+                <div class="text-success text-xs font-bold mb-1">Simple Task</div>
+                <div class="text-bright text-sm font-semibold">🤏 Small Model</div>
+                <div class="text-success text-xs mt-1">Fast / Cheap</div>
+              </div>
+            </div>
+            <div class="text-center">
+              <div class="arrow-pulse text-danger"><i class="fas fa-arrow-down"></i></div>
+              <div class="glass-card rounded-lg px-4 py-3 border border-danger/30 mt-2">
+                <div class="text-danger text-xs font-bold mb-1">Complex Task</div>
+                <div class="text-bright text-sm font-semibold">🧠 Large Model</div>
+                <div class="text-danger text-xs mt-1">Slow / Expensive</div>
+              </div>
+            </div>
+          </div>
+          <div class="arrow-pulse text-c4 mt-4"><i class="fas fa-arrow-down"></i></div>
+          <div class="inline-block bg-success/10 border border-success/30 rounded-xl px-6 py-2 mt-3">
+            <span class="text-success font-bold"><i class="fas fa-check-circle mr-1"></i>Result</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Examples -->
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-4 border border-success/20 hover-lift">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-check-circle text-success"></i>
+            <span class="text-success font-bold text-sm">Simple Request</span>
+          </div>
+          <div class="code-block rounded p-2 text-xs text-c8 mb-2">"Convert 5 km to miles"</div>
+          <div class="text-txt-body text-xs">→ Small model / calculator</div>
+          <div class="text-success text-xs font-semibold mt-1">Cheap</div>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c1/20 hover-lift">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-brain text-c1"></i>
+            <span class="text-c1 font-bold text-sm">Complex Request</span>
+          </div>
+          <div class="code-block rounded p-2 text-xs text-c3 mb-2">"Analyze 500 pages of legal docs for conflicts"</div>
+          <div class="text-txt-body text-xs">→ Large reasoning model</div>
+          <div class="text-c3 text-xs font-semibold mt-1">Expensive but justified</div>
+        </div>
+      </div>
+
+      <!-- Economics -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c8/20 bg-c8/5">
+        <h4 class="text-bright font-bold mb-4"><i class="fas fa-dollar-sign text-c8 mr-2"></i>Economic Impact</h4>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="glass-card rounded-lg p-4 border border-danger/20">
+            <div class="text-danger text-xs font-bold mb-2"><i class="fas fa-times-circle mr-1"></i>Without Routing</div>
+            <div class="code-block rounded p-2 text-xs">
+              <span class="text-txt-body">1,000,000 × expensive model</span><br/>
+              <span class="text-danger">💸💸💸 = Very costly</span>
+            </div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-success/20">
+            <div class="text-success text-xs font-bold mb-2"><i class="fas fa-check-circle mr-1"></i>With Routing</div>
+            <div class="code-block rounded p-2 text-xs">
+              <span class="text-txt-body">700K → small model</span><br/>
+              <span class="text-txt-body">250K → medium model</span><br/>
+              <span class="text-txt-body">50K → large model</span><br/>
+              <span class="text-success">💰 Huge cost reduction</span>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 text-center">
+          <span class="text-c8 font-bold text-sm">"The future is almost certainly <span class="gradient-text-orange">multimodel</span>"</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Benchmark Warning -->
+    <section id="sec-benchmark" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-danger/20 to-danger/5 border border-danger/30 flex items-center justify-center text-danger font-bold text-sm">5</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Benchmark ≠ Your Application <span class="text-danger text-lg">⚠️</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-danger/20 bg-danger/5 mb-6">
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <div class="text-danger text-xs font-bold mb-2"><i class="fas fa-chart-bar mr-1"></i>Benchmarks Answer:</div>
+            <div class="text-txt-body text-sm">"How does this model perform on <span class="text-bright font-semibold">these particular tests</span>?"</div>
+          </div>
+          <div>
+            <div class="text-success text-xs font-bold mb-2"><i class="fas fa-bullseye mr-1"></i>Your Application Asks:</div>
+            <div class="text-txt-body text-sm">"Can this model reliably accomplish <span class="text-bright font-semibold">my actual task</span>?"</div>
+          </div>
+        </div>
+        <div class="text-center mt-4">
+          <span class="text-danger font-bold text-sm"><i class="fas fa-not-equal mr-2"></i>These aren't the same thing!</span>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 border border-white/5">
+        <h4 class="text-bright font-bold mb-3">Correct Model-Selection Process</h4>
+        <div class="flow-line">
+          <div class="flow-node"><span class="text-c3 text-sm font-semibold">Your Task</span></div>
+          <div class="flow-node"><span class="text-txt-body text-sm">Define requirements</span></div>
+          <div class="flow-node">
+            <div class="flex flex-wrap gap-2">
+              <span class="tag bg-c1/10 text-c1 border border-c1/20">Quality</span>
+              <span class="tag bg-c8/10 text-c8 border border-c8/20">Cost</span>
+              <span class="tag bg-c6/10 text-c6 border border-c6/20">Latency</span>
+            </div>
+          </div>
+          <div class="flow-node"><span class="text-txt-body text-sm">Test candidates</span></div>
+          <div class="flow-node"><span class="text-txt-body text-sm">Evaluate</span></div>
+          <div class="flow-node"><span class="text-c6 text-sm font-semibold">Choose model</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Selection Criteria -->
+    <section id="sec-selection" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">6</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">What to Evaluate</h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-4 gap-3 mb-6">
+        <div class="glass-card rounded-lg p-4 border border-white/5 text-center hover-lift">
+          <i class="fas fa-brain text-c1 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Intelligence</div>
+          <div class="text-txt-muted text-[10px]">Can it solve the task?</div>
+        </div>
+        <div class="glass-card rounded-lg p-4 border border-white/5 text-center hover-lift">
+          <i class="fas fa-wrench text-c3 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Tool Calling</div>
+          <div class="text-txt-muted text-[10px]">Reliable tool selection?</div>
+        </div>
+        <div class="glass-card rounded-lg p-4 border border-white/5 text-center hover-lift">
+          <i class="fas fa-code text-c2 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Structured Output</div>
+          <div class="text-txt-muted text-[10px]">Valid JSON/schema?</div>
+        </div>
+        <div class="glass-card rounded-lg p-4 border border-white/5 text-center hover-lift">
+          <i class="fas fa-bolt text-c8 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Latency</div>
+          <div class="text-txt-muted text-[10px]">Response speed?</div>
+        </div>
+        <div class="glass-card rounded-lg p-4 border border-white/5 text-center hover-lift">
+          <i class="fas fa-dollar-sign text-c6 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Cost</div>
+          <div class="text-txt-muted text-[10px]">Price per task?</div>
+        </div>
+        <div class="glass-card rounded-lg p-4 border border-white/5 text-center hover-lift">
+          <i class="fas fa-chart-line text-c9 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Reliability</div>
+          <div class="text-txt-muted text-[10px]">95% or 60% success?</div>
+        </div>
+        <div class="glass-card rounded-lg p-4 border border-white/5 text-center hover-lift">
+          <i class="fas fa-expand-arrows-alt text-c7 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Context Handling</div>
+          <div class="text-txt-muted text-[10px]">Large input support?</div>
+        </div>
+        <div class="glass-card rounded-lg p-4 border border-c1/20 bg-c1/5 text-center hover-lift glow-blue">
+          <i class="fas fa-cogs text-c1 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Cost × Quality</div>
+          <div class="text-txt-muted text-[10px]">Best value overall?</div>
+        </div>
+      </div>
+
+      <!-- Realistic Example -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5">
+        <h4 class="text-bright font-bold mb-4"><i class="fas fa-flask text-c6 mr-2"></i>Realistic Example: Coding Agent</h4>
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-2 px-3 text-txt-muted">Model</th>
+                <th class="text-left py-2 px-3 text-txt-muted">Success</th>
+                <th class="text-left py-2 px-3 text-txt-muted">Cost</th>
+                <th class="text-left py-2 px-3 text-txt-muted">Latency</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-white/5">
+                <td class="py-2 px-3 text-success font-semibold">Small</td>
+                <td class="py-2 px-3 text-txt-body">82%</td>
+                <td class="py-2 px-3 text-success">₹</td>
+                <td class="py-2 px-3 text-success">Very fast</td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="py-2 px-3 text-c8 font-semibold">Medium</td>
+                <td class="py-2 px-3 text-txt-body">94%</td>
+                <td class="py-2 px-3 text-c8">₹₹</td>
+                <td class="py-2 px-3 text-c8">Fast</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 text-danger font-semibold">Large</td>
+                <td class="py-2 px-3 text-txt-body">96%</td>
+                <td class="py-2 px-3 text-danger">₹₹₹₹</td>
+                <td class="py-2 px-3 text-danger">Slow</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <div class="mt-4 glass-card rounded-lg p-4 border border-success/20">
+          <div class="text-success text-xs font-bold mb-2"><i class="fas fa-check-circle mr-1"></i>Best Strategy:</div>
+          <div class="text-txt-body text-xs">
+            Small model → simple tasks + Large model → difficult tasks = <span class="text-success font-semibold">95% quality at much lower cost</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 border border-c8/20 bg-c8/5 mt-6">
+        <h4 class="text-bright font-bold mb-2"><i class="fas fa-quote-left text-c8 mr-2"></i>Author's Practical Advice</h4>
+        <div class="text-txt-body text-sm">
+          Don't spend 6 months optimizing before you have a working system. <span class="text-c8 font-semibold">Start strong, measure, then optimize.</span>
+        </div>
+        <div class="flex flex-wrap gap-2 mt-3 text-xs">
+          <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-3 py-1">1. Latest strong model</span>
+          <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-3 py-1">2. Build prototype</span>
+          <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-3 py-1">3. Measure performance</span>
+          <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-3 py-1">4. Identify weak areas</span>
+          <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-3 py-1">5. Optimize</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ======================== PART 2: SYNC → ASYNC ======================== -->
+    <section class="mb-6 scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c3/10 border border-c3/20 rounded-full px-4 py-1.5 text-c3 text-xs font-bold mb-4">
+        <i class="fas fa-bolt"></i> PART 2 — FROM SYNCHRONOUS TO ASYNCHRONOUS
+      </div>
+    </section>
+
+    <section id="sec-sync" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c3/20 to-c3/5 border border-c3/30 flex items-center justify-center text-c3 font-bold text-sm">7</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Sync → Async Operations <span class="text-c3 text-lg">⚡</span></h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <!-- Synchronous -->
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-link text-danger"></i>
+            <h4 class="text-danger font-bold">Synchronous (Serial)</h4>
+          </div>
+          <div class="sync-box">
+            <div class="space-y-1 text-xs">
+              <div class="flex items-center gap-2"><span class="text-c3 font-semibold w-16">Task A</span><span class="text-txt-body">→ execute</span></div>
+              <div class="flex items-center gap-2 text-danger"><i class="fas fa-clock w-16"></i> WAIT...</div>
+              <div class="flex items-center gap-2"><span class="text-c1 font-semibold w-16">Task B</span><span class="text-txt-body">→ execute</span></div>
+              <div class="flex items-center gap-2 text-danger"><i class="fas fa-clock w-16"></i> WAIT...</div>
+              <div class="flex items-center gap-2"><span class="text-c6 font-semibold w-16">Task C</span><span class="text-txt-body">→ execute</span></div>
+            </div>
+          </div>
+          <div class="code-block rounded-lg p-3 text-xs mt-4">
+            <span class="text-txt-body">const user = </span><span class="text-danger">await</span><span class="text-txt-body"> getUser();</span><br/>
+            <span class="text-txt-body">const orders = </span><span class="text-danger">await</span><span class="text-txt-body"> getOrders(user.id);</span><br/>
+            <span class="text-txt-body">const recs = </span><span class="text-danger">await</span><span class="text-txt-body"> getRecommendations(user);</span>
+          </div>
+          <p class="text-txt-muted text-xs mt-3"><span class="text-danger font-semibold">Next thing waits for previous.</span> Wastes time on independent ops.</p>
+        </div>
+
+        <!-- Asynchronous -->
+        <div class="glass-card rounded-xl p-5 border border-success/20 hover-lift glow-green">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-random text-success"></i>
+            <h4 class="text-success font-bold">Asynchronous (Parallel)</h4>
+          </div>
+          <div class="parallel-box">
+            <div class="text-center text-xs text-txt-muted mb-2">Agent fires all three simultaneously</div>
+            <div class="flex justify-center gap-3 flex-wrap">
+              <div class="glass-card rounded p-2 border border-c1/20 text-center">
+                <div class="text-c1 text-xs font-semibold">Search</div>
+                <div class="text-txt-muted text-[10px]">docs</div>
+              </div>
+              <div class="glass-card rounded p-2 border border-c2/20 text-center">
+                <div class="text-c2 text-xs font-semibold">Check</div>
+                <div class="text-txt-muted text-[10px]">database</div>
+              </div>
+              <div class="glass-card rounded p-2 border border-c3/20 text-center">
+                <div class="text-c3 text-xs font-semibold">Fetch</div>
+                <div class="text-txt-muted text-[10px]">GitHub</div>
+              </div>
+            </div>
+            <div class="arrow-pulse text-success text-center my-2"><i class="fas fa-arrow-down"></i></div>
+            <div class="text-center text-success text-xs font-semibold">All results → Analyze</div>
+          </div>
+          <div class="code-block rounded-lg p-3 text-xs mt-4">
+            <span class="text-c1">const</span><span class="text-txt-body"> [docs, users, issues] = </span><span class="text-c1">await</span><span class="text-txt-body"> Promise.</span><span class="text-c6">all</span><span class="text-txt-body">([</span><br/>
+            <span class="text-txt-body ml-4">searchDocs(),</span><br/>
+            <span class="text-txt-body ml-4">getUsers(),</span><br/>
+            <span class="text-txt-body ml-4">getGithubIssues()</span><br/>
+            <span class="text-txt-body">]);</span>
+          </div>
+          <p class="text-txt-muted text-xs mt-3"><span class="text-success font-semibold">Independent operations run simultaneously.</span> Much faster.</p>
+        </div>
+      </div>
+
+      <!-- Agent parallel example -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c1/20 bg-c1/5">
+        <h4 class="text-bright font-bold mb-4"><i class="fas fa-shield-alt text-c1 mr-2"></i>Security Agent — Parallel Investigation</h4>
+        <div class="text-center">
+          <div class="inline-block bg-danger/10 border border-danger/30 rounded-xl px-6 py-3 mb-3">
+            <span class="text-danger font-bold"><i class="fas fa-exclamation-triangle mr-2"></i>Alert: Suspicious Login</span>
+          </div>
+          <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down text-lg"></i></div>
+          <div class="inline-block glass-card rounded-xl px-6 py-3 border border-c1/30 my-3">
+            <span class="text-c1 font-bold"><i class="fas fa-robot mr-2"></i>Agent — Fires all in parallel</span>
+          </div>
+          <div class="flex justify-center gap-3 flex-wrap mt-2">
+            <div class="glass-card rounded-lg px-4 py-3 border border-c1/20 text-center hover-lift">
+              <i class="fas fa-globe text-c1 text-lg mb-1"></i>
+              <div class="text-c1 text-xs font-bold">IP Lookup</div>
+              <div class="text-txt-muted text-[10px]">→ Threat DB</div>
+            </div>
+            <div class="glass-card rounded-lg px-4 py-3 border border-c2/20 text-center hover-lift">
+              <i class="fas fa-user text-c2 text-lg mb-1"></i>
+              <div class="text-c2 text-xs font-bold">User Data</div>
+              <div class="text-txt-muted text-[10px]">→ Account check</div>
+            </div>
+            <div class="glass-card rounded-lg px-4 py-3 border border-c3/20 text-center hover-lift">
+              <i class="fas fa-file-alt text-c3 text-lg mb-1"></i>
+              <div class="text-c3 text-xs font-bold">Logs</div>
+              <div class="text-txt-muted text-[10px]">→ SIEM query</div>
+            </div>
+          </div>
+          <div class="arrow-pulse text-c1 mt-3"><i class="fas fa-arrow-down"></i></div>
+          <div class="inline-block bg-success/10 border border-success/30 rounded-xl px-6 py-2 mt-2">
+            <span class="text-success font-semibold"><i class="fas fa-brain mr-1"></i>Agent Analysis → Enriched Report</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Reactive → Proactive -->
+    <section id="sec-proactive" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">8</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Reactive → Proactive <span class="text-c8 text-lg">🚀</span></h2>
+      </div>
+
+      <blockquote class="glass-card rounded-xl p-5 mb-6 border-l-4 border-c8 glow-orange">
+        <p class="text-c8/90 italic text-sm sm:text-base leading-relaxed">
+          "These agents make it much easier for human roles to be proactive rather than reactive."
+        </p>
+      </blockquote>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Email Example -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-envelope text-c3"></i>
+            <h4 class="text-bright font-bold">Email — Before vs After</h4>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="text-danger text-xs font-bold mb-2"><i class="fas fa-times-circle mr-1"></i>Traditional</div>
+              <div class="space-y-1 text-[11px] text-txt-body">
+                <div>📧 Email arrives</div>
+                <div>👤 Human opens</div>
+                <div>👤 Reads & understands</div>
+                <div>👤 Searches info</div>
+                <div>👤 Writes reply</div>
+              </div>
+            </div>
+            <div>
+              <div class="text-success text-xs font-bold mb-2"><i class="fas fa-check-circle mr-1"></i>Agentic</div>
+              <div class="space-y-1 text-[11px] text-txt-body">
+                <div>📧 Email arrives</div>
+                <div class="text-c1">🤖 Agent reads</div>
+                <div class="text-c1">🤖 Understands</div>
+                <div class="text-c1">🤖 Searches info</div>
+                <div class="text-c1">🤖 Drafts reply</div>
+                <div class="text-success">👤 Reviews & sends</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SOC Example -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-shield-alt text-c9"></i>
+            <h4 class="text-bright font-bold">SOC Analyst — Before vs After</h4>
+          </div>
+          <div class="grid grid-cols-2 gap-3">
+            <div>
+              <div class="text-danger text-xs font-bold mb-2"><i class="fas fa-times-circle mr-1"></i>Traditional</div>
+              <div class="space-y-1 text-[11px] text-txt-body">
+                <div>🚨 Alert fires</div>
+                <div>👤 Analyst investigates</div>
+                <div>👤 Search IP</div>
+                <div>👤 Check logs</div>
+                <div>👤 Check threat intel</div>
+                <div>👤 Determine severity</div>
+              </div>
+            </div>
+            <div>
+              <div class="text-success text-xs font-bold mb-2"><i class="fas fa-check-circle mr-1"></i>Agentic</div>
+              <div class="space-y-1 text-[11px] text-txt-body">
+                <div>🚨 Alert fires</div>
+                <div class="text-c1">🤖 Agent investigates</div>
+                <div class="text-c1">🤖 Threat intel + Logs</div>
+                <div class="text-c1">🤖 User history</div>
+                <div class="text-c1">🤖 Network activity</div>
+                <div class="text-success">👤 Reviews enriched report</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Software Engineering -->
+      <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift mt-4">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-code text-c1"></i>
+          <h4 class="text-bright font-bold">Software Engineering — Before vs After</h4>
+        </div>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div>
+            <div class="text-danger text-xs font-bold mb-2"><i class="fas fa-times-circle mr-1"></i>Traditional</div>
+            <div class="space-y-1 text-xs text-txt-body">
+              <div>🎫 Ticket arrives</div>
+              <div>👤 Developer reads</div>
+              <div>👤 Understands problem</div>
+              <div>👤 Searches codebase</div>
+              <div>👤 Writes solution</div>
+              <div>👤 Writes tests</div>
+            </div>
+          </div>
+          <div>
+            <div class="text-success text-xs font-bold mb-2"><i class="fas fa-check-circle mr-1"></i>Agent-Assisted</div>
+            <div class="space-y-1 text-xs text-txt-body">
+              <div>🎫 Ticket arrives</div>
+              <div class="text-c1">🤖 Agent investigates</div>
+              <div class="text-c1">🤖 Finds relevant files</div>
+              <div class="text-c1">🤖 Proposes code change</div>
+              <div class="text-c1">🤖 Creates tests</div>
+              <div class="text-success">👨‍💻 Developer reviews & merges</div>
+            </div>
+          </div>
+        </div>
+        <div class="mt-4 glass-card rounded-lg p-3 border border-c8/20 text-center">
+          <span class="text-c8 text-sm font-semibold">The developer becomes more of a <span class="text-c1">reviewer / decision-maker</span>.</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ======================== PART 3: REAL-WORLD APPS ======================== -->
+    <section class="mb-6 scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c6/10 border border-c6/20 rounded-full px-4 py-1.5 text-c6 text-xs font-bold mb-4">
+        <i class="fas fa-industry"></i> PART 3 — REAL-WORLD APPLICATIONS
+      </div>
+    </section>
+
+    <section id="sec-apps" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">9</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Real-World Agent Examples <span class="text-c6 text-lg">🏭</span></h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <!-- 1. Customer Support -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c7/10 flex items-center justify-center text-c7"><i class="fas fa-headset"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">1. Customer Support</h4>
+              <span class="text-txt-muted text-xs">💬 Handle returns & issues</span>
+            </div>
+          </div>
+          <div class="space-y-1 text-[11px] text-txt-body">
+            <div>"I received the wrong color phone"</div>
+            <div class="text-c1">→ Find order & check status</div>
+            <div class="text-c1">→ Check return policy</div>
+            <div class="text-c1">→ Determine eligibility</div>
+            <div class="text-c1">→ Offer replacement</div>
+            <div class="text-success">→ Create return request</div>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <span class="tag bg-c7/10 text-c7 border border-c7/20 text-[10px]">Order DB</span>
+            <span class="tag bg-c7/10 text-c7 border border-c7/20 text-[10px]">Refund API</span>
+            <span class="tag bg-c7/10 text-c7 border border-c7/20 text-[10px]">Ticket System</span>
+          </div>
+        </div>
+
+        <!-- 2. Financial Services -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c8/10 flex items-center justify-center text-c8"><i class="fas fa-wallet"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">2. Financial Services</h4>
+              <span class="text-txt-muted text-xs">💰 Fraud detection & queries</span>
+            </div>
+          </div>
+          <div class="space-y-1 text-[11px] text-txt-body">
+            <div>"Why was my transaction declined?"</div>
+            <div class="text-c8">→ Check transaction & account</div>
+            <div class="text-c8">→ Check fraud signals</div>
+            <div class="text-c8">→ Risk assessment</div>
+            <div class="text-success">→ Explain & resolve</div>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <span class="tag bg-c8/10 text-c8 border border-c8/20 text-[10px]">Bank API</span>
+            <span class="tag bg-danger/10 text-danger border border-danger/20 text-[10px]">⚠️ Needs human approval</span>
+          </div>
+        </div>
+
+        <!-- 3. Healthcare -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c6/10 flex items-center justify-center text-c6"><i class="fas fa-heartbeat"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">3. Healthcare Triage</h4>
+              <span class="text-txt-muted text-xs">🏥 Patient intake & scheduling</span>
+            </div>
+          </div>
+          <div class="space-y-1 text-[11px] text-txt-body">
+            <div class="text-c6">→ Register patient</div>
+            <div class="text-c6">→ Verify insurance</div>
+            <div class="text-c6">→ Collect symptoms</div>
+            <div class="text-c6">→ Prioritize care</div>
+            <div class="text-c6">→ Schedule appointment</div>
+            <div class="text-success">→ Coordinate referral</div>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <span class="tag bg-c6/10 text-c6 border border-c6/20 text-[10px]">Assists, doesn't replace doctor</span>
+          </div>
+        </div>
+
+        <!-- 4. IT Help Desk -->
+        <div class="glass-card rounded-xl p-5 border border-c1/20 hover-lift glow-blue">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c1/10 flex items-center justify-center text-c1"><i class="fas fa-laptop"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">4. IT Help Desk</h4>
+              <span class="text-txt-muted text-xs">🖥️ Diagnose & fix issues</span>
+            </div>
+          </div>
+          <div class="space-y-1 text-[11px] text-txt-body">
+            <div>"I can't connect to VPN"</div>
+            <div class="text-c1">→ Check account & VPN status</div>
+            <div class="text-c1">→ Check known incidents</div>
+            <div class="text-c1">→ Run diagnostics</div>
+            <div class="text-c1">→ Suggest / apply fix</div>
+            <div class="text-c8">→ If unresolved → escalate</div>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <span class="tag bg-c1/10 text-c1 border border-c1/20 text-[10px]">Data + Tools + Diagnostics + Escalation</span>
+          </div>
+        </div>
+
+        <!-- 5. Legal -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c10/10 flex items-center justify-center text-c10"><i class="fas fa-gavel"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">5. Legal Document Agent</h4>
+              <span class="text-txt-muted text-xs">⚖️ Contract review & risk flagging</span>
+            </div>
+          </div>
+          <div class="space-y-1 text-[11px] text-txt-body">
+            <div class="text-c10">→ Extract clauses</div>
+            <div class="text-c10">→ Identify obligations</div>
+            <div class="text-c10">→ Find unusual clauses</div>
+            <div class="text-c10">→ Flag risks</div>
+            <div class="text-c10">→ Generate summary</div>
+            <div class="text-success">→ Lawyer reviews</div>
+          </div>
+          <div class="mt-2"><span class="tag bg-c10/10 text-c10 border border-c10/20 text-[10px]">Assistance, not replacement</span></div>
+        </div>
+
+        <!-- 6. SOC Analyst -->
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-danger/10 flex items-center justify-center text-danger"><i class="fas fa-shield-alt"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">6. SOC Analyst Agent</h4>
+              <span class="text-txt-muted text-xs">🛡️ Security investigation</span>
+            </div>
+          </div>
+          <div class="space-y-1 text-[11px] text-txt-body">
+            <div>🚨 Security alert</div>
+            <div class="text-danger">→ Query SIEM + Threat Intel</div>
+            <div class="text-danger">→ Check IP, DNS, endpoint</div>
+            <div class="text-danger">→ Correlate events</div>
+            <div class="text-danger">→ Determine likely attack</div>
+            <div class="text-success">→ Recommend response</div>
+          </div>
+          <div class="mt-2 flex flex-wrap gap-1">
+            <span class="tag bg-danger/10 text-danger border border-danger/20 text-[10px]">SIEM</span>
+            <span class="tag bg-danger/10 text-danger border border-danger/20 text-[10px]">Threat Intel</span>
+            <span class="tag bg-danger/10 text-danger border border-danger/20 text-[10px]">EDR</span>
+          </div>
+        </div>
+
+        <!-- 7. Supply Chain -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift sm:col-span-2">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c5/10 flex items-center justify-center text-c5"><i class="fas fa-truck"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">7. Supply Chain Agent</h4>
+              <span class="text-txt-muted text-xs">🚚 Monitor & optimize logistics</span>
+            </div>
+          </div>
+          <div class="grid sm:grid-cols-2 gap-4">
+            <div class="space-y-1 text-[11px] text-txt-body">
+              <div class="text-c5 font-semibold">Scenario: Supplier X delayed 5 days</div>
+              <div>→ Check inventory levels</div>
+              <div>→ Check upcoming orders</div>
+              <div>→ Forecast shortage</div>
+              <div>→ Find alternative supplier</div>
+              <div>→ Compare cost & recommend</div>
+            </div>
+            <div class="space-y-1.5 text-xs">
+              <div class="text-txt-muted font-semibold">Signals monitored:</div>
+              <div class="flex flex-wrap gap-1.5">
+                <span class="tag bg-c5/10 text-c5 border border-c5/20 text-[10px]">Warehouse</span>
+                <span class="tag bg-c5/10 text-c5 border border-c5/20 text-[10px]">Ships</span>
+                <span class="tag bg-c5/10 text-c5 border border-c5/20 text-[10px]">Suppliers</span>
+                <span class="tag bg-c5/10 text-c5 border border-c5/20 text-[10px]">Inventory</span>
+                <span class="tag bg-c5/10 text-c5 border border-c5/20 text-[10px]">Weather</span>
+                <span class="tag bg-c5/10 text-c5 border border-c5/20 text-[10px]">Demand</span>
+              </div>
+              <div class="code-block rounded p-2 text-[10px] mt-2">
+                <span class="text-danger">❌</span> <span class="text-txt-body">if supplier_delay: send_email()</span><br/>
+                <span class="text-success">✅</span> <span class="text-txt-body">Agent reasons about consequences</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Core Architecture -->
+    <section id="sec-arch" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c2/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">10</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Core Architecture <span class="text-c1 text-lg">🏗️</span></h2>
+      </div>
+
+      <p class="text-txt-body text-sm mb-6">Although industries differ completely, the <span class="text-bright font-semibold">underlying architecture is remarkably similar</span>:</p>
+
+      <div class="glass-card rounded-xl p-5 sm:p-8 border border-c1/20 animate-pulse-glow">
+        <div class="text-center">
+          <div class="inline-block bg-gradient-to-r from-c3/20 to-c7/20 border border-c3/30 rounded-xl px-8 py-3 mb-3">
+            <span class="text-bright font-bold text-lg"><i class="fas fa-user mr-2 text-c3"></i>USER / EVENT</span>
+          </div>
+          <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down text-lg"></i></div>
+          <div class="inline-block bg-c8/10 border border-c8/30 rounded-xl px-8 py-3 my-3">
+            <span class="text-c8 font-bold"><i class="fas fa-bullseye mr-2"></i>GOAL</span>
+          </div>
+          <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down text-lg"></i></div>
+          <div class="inline-block glass-card rounded-2xl px-6 sm:px-8 py-5 border border-c1/30 my-4 glow-blue">
+            <div class="text-c1 font-bold text-xl mb-4"><i class="fas fa-brain mr-2"></i>FOUNDATION MODEL</div>
+            <div class="flex justify-center gap-3 flex-wrap mb-4">
+              <span class="text-xs bg-c6/10 text-c6 border border-c6/20 rounded-lg px-3 py-1.5"><i class="fas fa-memory mr-1"></i>Memory</span>
+              <span class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded-lg px-3 py-1.5"><i class="fas fa-wrench mr-1"></i>Tools</span>
+              <span class="text-xs bg-c2/10 text-c2 border border-c2/20 rounded-lg px-3 py-1.5"><i class="fas fa-book mr-1"></i>Knowledge</span>
+            </div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="text-c8 font-semibold my-2"><i class="fas fa-clipboard-list mr-1"></i>Planning</div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="text-c10 font-semibold my-2"><i class="fas fa-music mr-1"></i>Orchestration</div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="text-c6 font-semibold my-2"><i class="fas fa-sync-alt mr-1"></i>Action Loop</div>
+            <div class="flex justify-center gap-6 mt-3">
+              <div class="text-center">
+                <div class="text-c6 text-xs">Observe</div>
+                <i class="fas fa-eye text-c6"></i>
+              </div>
+              <div class="text-center">
+                <div class="text-c1 text-xs">Reason</div>
+                <i class="fas fa-brain text-c1"></i>
+              </div>
+            </div>
+            <div class="flex justify-center gap-8 mt-3">
+              <div class="text-center">
+                <span class="text-c3 text-xs font-bold">Continue</span><br/>
+                <span class="text-c3"><i class="fas fa-redo"></i></span>
+              </div>
+              <div class="text-center">
+                <span class="text-success text-xs font-bold">Done</span><br/>
+                <span class="text-success"><i class="fas fa-check-circle"></i></span>
+              </div>
+            </div>
+          </div>
+          <div class="inline-block bg-c7/10 border border-c7/30 rounded-xl px-6 py-2">
+            <span class="text-c7 font-bold"><i class="fas fa-user-shield mr-2"></i>HUMAN OVERSIGHT</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Hierarchy: Model → Agent → System -->
+    <section id="sec-hierarchy" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c10/20 to-c10/5 border border-c10/30 flex items-center justify-center text-c10 font-bold text-sm">11</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Critical Hierarchy <span class="text-c10 text-lg">🔥</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c10/20 bg-c10/5 mb-6">
+        <div class="text-center space-y-4">
+          <!-- Model -->
+          <div class="glass-card rounded-xl p-5 border border-c9/20 max-w-md mx-auto hover-lift">
+            <div class="text-c9 font-bold text-xl mb-2"><i class="fas fa-brain mr-2"></i>MODEL</div>
+            <div class="text-txt-body text-sm">"I can <span class="text-c9 font-semibold">reason</span>"</div>
+          </div>
+          <div class="arrow-pulse text-c10"><i class="fas fa-arrow-down text-lg"></i></div>
+          <!-- Agent -->
+          <div class="glass-card rounded-xl p-5 border border-c10/20 max-w-md mx-auto hover-lift glow-purple">
+            <div class="text-c10 font-bold text-xl mb-2"><i class="fas fa-robot mr-2"></i>AGENT</div>
+            <div class="text-txt-body text-sm">"I can <span class="text-c10 font-semibold">decide what to do next</span>"</div>
+          </div>
+          <div class="arrow-pulse text-c10"><i class="fas fa-arrow-down text-lg"></i></div>
+          <!-- System -->
+          <div class="glass-card rounded-xl p-5 border border-c10/20 max-w-lg mx-auto hover-lift glow-pink">
+            <div class="text-c10 font-bold text-xl mb-2"><i class="fas fa-project-diagram mr-2"></i>AGENTIC SYSTEM</div>
+            <div class="text-txt-body text-sm mb-3">"I have <span class="text-c10 font-semibold">tools, memory, data, orchestration, evaluation, security, monitoring</span>"</div>
+            <div class="flex flex-wrap justify-center gap-2 text-xs">
+              <span class="bg-c9/10 text-c9 border border-c9/20 rounded px-2 py-1">Model</span>
+              <span class="bg-c3/10 text-c3 border border-c3/20 rounded px-2 py-1">Tools</span>
+              <span class="bg-c6/10 text-c6 border border-c6/20 rounded px-2 py-1">Memory</span>
+              <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-2 py-1">Planning</span>
+              <span class="bg-c10/10 text-c10 border border-c10/20 rounded px-2 py-1">Orchestration</span>
+              <span class="bg-c7/10 text-c7 border border-c7/20 rounded px-2 py-1">Evaluation</span>
+              <span class="bg-danger/10 text-danger border border-danger/20 rounded px-2 py-1">Security</span>
+              <span class="bg-c1/10 text-c1 border border-c1/20 rounded px-2 py-1">Monitoring</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 border border-c8/20 bg-c8/5 text-center">
+        <p class="text-c8 font-bold text-sm">
+          "If you understand that hierarchy, you're already starting to think like an <span class="gradient-text-orange">AI systems engineer</span>."
+        </p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- 5 Engineering Principles -->
+    <section class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">12</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">5 Engineering Principles <span class="text-c8 text-lg">⭐</span></h2>
+      </div>
+
+      <div class="space-y-3">
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c1/10 flex items-center justify-center text-c1 font-bold text-sm flex-shrink-0">1</div>
+          <div>
+            <h4 class="text-bright font-bold">Model selection is an optimization problem</h4>
+            <p class="text-txt-muted text-sm mt-1">Not "which model is #1" but <span class="text-c1 font-semibold">Quality × Cost × Latency × Reliability × Task requirements</span>.</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c6/10 flex items-center justify-center text-c6 font-bold text-sm flex-shrink-0">2</div>
+          <div>
+            <h4 class="text-bright font-bold">One model doesn't need to do everything</h4>
+            <p class="text-txt-muted text-sm mt-1">Simple → 🤏 small model &nbsp;|&nbsp; Medium → 🧠 medium &nbsp;|&nbsp; Complex → 🧠🔥 large reasoning</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c3/10 flex items-center justify-center text-c3 font-bold text-sm flex-shrink-0">3</div>
+          <div>
+            <h4 class="text-bright font-bold">Agents can work asynchronously</h4>
+            <p class="text-txt-muted text-sm mt-1">Independent operations run in parallel instead of sequential WAIT chains.</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c8/10 flex items-center justify-center text-c8 font-bold text-sm flex-shrink-0">4</div>
+          <div>
+            <h4 class="text-bright font-bold">Agents prepare work, not just perform it</h4>
+            <p class="text-txt-muted text-sm mt-1"><span class="text-danger">OLD:</span> Human → Task → Result &nbsp;&nbsp;|&nbsp;&nbsp; <span class="text-success">NEW:</span> Event → Agent → Prepared work → Human decision</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c7/10 flex items-center justify-center text-c7 font-bold text-sm flex-shrink-0">5</div>
+          <div>
+            <h4 class="text-bright font-bold">The real-world pattern is surprisingly repetitive</h4>
+            <p class="text-txt-muted text-sm mt-1">Whether 💬 support, 💰 finance, 🏥 healthcare, 🖥️ IT, ⚖️ legal, 🛡️ security, 🚚 supply chain — the architecture is the same: <span class="text-c7 font-semibold">Observe → Reason → Plan → Tools → Observe → Continue/Finish → Human oversight</span>.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Footer -->
+    <footer class="text-center py-8">
+      <div class="glass-card rounded-xl p-6 border border-white/5 inline-block">
+        <div class="text-txt-muted text-sm mb-2">
+          <i class="fas fa-robot mr-2 text-c1"></i>Chapter 1 — Model Selection, Async Ops & Real-World Agents
+        </div>
+        <div class="text-txt-muted text-xs">
+          Agentic AI Study Notes <span class="text-c2 mx-1">•</span> Built for revision & understanding
+        </div>
+        <div class="flex justify-center gap-3 mt-4">
+          <a href="#top" class="text-c1 hover:text-c2 transition text-sm"><i class="fas fa-arrow-up"></i></a>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Scroll Reveal Script -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.classList.add('visible');
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+
+</body>
+</html>

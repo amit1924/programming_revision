@@ -1,0 +1,763 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Agentic AI — Course Hub</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: { primary: '#0f0f1a', card: '#1a1a2e', hover: '#252542', accent: '#16213e', sidebar: '#12122a' },
+            txt: { body: '#c4c4d4', bright: '#e8e8f0', muted: '#8888a4' },
+            c1: '#00d2ff', c2: '#a855f7', c3: '#f97316', c4: '#22d3ee', c5: '#fb923c',
+            c6: '#34d399', c7: '#f472b6', c8: '#facc15', c9: '#38bdf8', c10: '#c084fc',
+          },
+          fontFamily: { mono: ['"JetBrains Mono"', 'monospace'] },
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f1a; color: #c4c4d4; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+
+    .gradient-text { background: linear-gradient(135deg, #00d2ff, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+
+    .glass { background: rgba(26, 26, 46, 0.7); backdrop-filter: blur(16px); border: 1px solid rgba(255,255,255,0.06); }
+    .card-glow:hover { box-shadow: 0 0 30px rgba(0, 210, 255, 0.08); }
+
+    .sidebar-overlay { opacity: 0; pointer-events: none; transition: opacity 0.3s ease; }
+    .sidebar-overlay.open { opacity: 1; pointer-events: auto; }
+
+    .hamburger span { display: block; width: 24px; height: 2px; background: #e8e8f0; transition: all 0.3s ease; border-radius: 2px; }
+    .hamburger.active span:nth-child(1) { transform: rotate(45deg) translate(5px, 6px); }
+    .hamburger.active span:nth-child(2) { opacity: 0; }
+    .hamburger.active span:nth-child(3) { transform: rotate(-45deg) translate(5px, -6px); }
+
+    .chapter-card { transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1); }
+    .chapter-card:hover { transform: translateY(-6px); }
+
+    .topic-item { transition: all 0.2s ease; }
+    .topic-item:hover { padding-left: 12px; }
+
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #333; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #555; }
+
+    .fade-in { animation: fadeIn 0.6s ease-out forwards; opacity: 0; }
+    @keyframes fadeIn { to { opacity: 1; } }
+
+    .slide-up { animation: slideUp 0.5s ease-out forwards; opacity: 0; transform: translateY(20px); }
+    @keyframes slideUp { to { opacity: 1; transform: translateY(0); } }
+
+    .pulse-dot { animation: pulseDot 2s ease-in-out infinite; }
+    @keyframes pulseDot { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }
+
+    .sidebar-link { transition: all 0.2s ease; }
+    .sidebar-link:hover { background: rgba(255,255,255,0.05); }
+
+    .nav-badge { font-size: 0.65rem; padding: 2px 8px; border-radius: 9999px; }
+
+    /* Desktop: sidebar always visible */
+    @media (min-width: 768px) {
+      .desktop-sidebar { position: fixed; top: 0; left: 0; height: 100vh; width: 300px; z-index: 40; }
+      .desktop-main { margin-left: 300px; }
+    }
+
+    /* Mobile: sidebar is overlay */
+    @media (max-width: 767px) {
+      .mobile-sidebar {
+        position: fixed; top: 0; left: 0; height: 100vh; width: 280px; z-index: 50;
+        transform: translateX(-100%); transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+      .mobile-sidebar.open { transform: translateX(0); }
+    }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- NAVBAR -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass border-b border-white/5" style="height: 64px;">
+    <div class="max-w-7xl mx-auto px-4 h-16 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <button id="hamburger" class="hamburger md:hidden flex flex-col gap-1.5 p-2" onclick="toggleSidebar()">
+          <span></span><span></span><span></span>
+        </button>
+        <div class="flex items-center gap-2">
+          <div class="w-9 h-9 rounded-xl flex items-center justify-center" style="background: linear-gradient(135deg, #00d2ff, #a855f7);">
+            <i class="fa-solid fa-brain text-white text-sm"></i>
+          </div>
+          <div class="hidden sm:block">
+            <h1 class="text-sm font-bold text-white tracking-wide">Agentic AI</h1>
+            <p class="text-[10px] text-txt-muted -mt-0.5">Complete Course Notes</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="flex items-center gap-3">
+        <div class="hidden md:flex items-center gap-1 bg-bg-card rounded-full px-3 py-1.5 border border-white/5">
+          <i class="fa-solid fa-book-open text-c1 text-xs"></i>
+          <span class="text-xs text-txt-muted">5 Chapters</span>
+          <span class="text-white/20 mx-1">|</span>
+          <i class="fa-solid fa-list text-c2 text-xs"></i>
+          <span class="text-xs text-txt-muted">12 Parts</span>
+          <span class="text-white/20 mx-1">|</span>
+          <i class="fa-solid fa-tags text-c3 text-xs"></i>
+          <span class="text-xs text-txt-muted">169 Topics</span>
+        </div>
+        <button onclick="toggleSearch()" class="w-9 h-9 rounded-xl bg-bg-card border border-white/5 flex items-center justify-center hover:border-c1/30 transition">
+          <i class="fa-solid fa-search text-txt-muted text-sm"></i>
+        </button>
+      </div>
+    </div>
+
+    <!-- Search Bar -->
+    <div id="searchBar" class="hidden border-t border-white/5 px-4 py-3">
+      <div class="max-w-2xl mx-auto relative">
+        <i class="fa-solid fa-search absolute left-3 top-1/2 -translate-y-1/2 text-txt-muted text-sm"></i>
+        <input id="searchInput" type="text" placeholder="Search chapters, topics..."
+          class="w-full bg-bg-card border border-white/10 rounded-xl pl-10 pr-4 py-2.5 text-sm text-white placeholder-txt-muted focus:outline-none focus:border-c1/50 transition"
+          oninput="filterContent(this.value)">
+      </div>
+    </div>
+  </nav>
+
+  <!-- MOBILE SIDEBAR OVERLAY -->
+  <div id="sidebarOverlay" class="sidebar-overlay fixed inset-0 bg-black/60 z-50 md:hidden" onclick="toggleSidebar()"></div>
+
+  <!-- MOBILE SIDEBAR -->
+  <aside id="mobileSidebar" class="mobile-sidebar bg-bg-sidebar border-r border-white/5 overflow-y-auto md:hidden" style="padding-top: 64px;">
+    <div class="p-4">
+      <p class="text-[10px] uppercase tracking-widest text-txt-muted mb-3 font-semibold">Navigation</p>
+      <div id="mobileNavContent"></div>
+    </div>
+  </aside>
+
+  <!-- DESKTOP SIDEBAR -->
+  <aside class="desktop-sidebar hidden md:block bg-bg-sidebar border-r border-white/5 overflow-y-auto" style="padding-top: 64px;">
+    <div class="p-4">
+      <p class="text-[10px] uppercase tracking-widest text-txt-muted mb-3 font-semibold">Navigation</p>
+      <div id="desktopNavContent"></div>
+    </div>
+  </aside>
+
+  <!-- MAIN CONTENT -->
+  <main class="pt-20 pb-16 px-4 desktop-main">
+    <div class="max-w-4xl mx-auto">
+
+      <!-- Hero -->
+      <div class="text-center mb-12 slide-up">
+        <div class="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-bg-card border border-white/5 mb-5">
+          <span class="w-2 h-2 rounded-full bg-c6 pulse-dot"></span>
+          <span class="text-[11px] text-txt-muted font-medium">169 topics across 5 chapters</span>
+        </div>
+        <h1 class="text-3xl sm:text-4xl md:text-5xl font-black text-white mb-3">
+          Agentic <span class="gradient-text">AI</span> Course
+        </h1>
+        <p class="text-txt-muted text-sm max-w-xl mx-auto leading-relaxed">
+          Complete notes on building autonomous AI agents — from foundational concepts to production deployment and orchestration.
+        </p>
+      </div>
+
+      <!-- Progress Bar -->
+      <div class="mb-10 fade-in" style="animation-delay: 0.2s;">
+        <div class="glass rounded-2xl p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-semibold text-white">Course Progress</span>
+            <span class="text-xs text-txt-muted">5 / 10 Chapters</span>
+          </div>
+          <div class="w-full h-2 bg-bg-primary rounded-full overflow-hidden">
+            <div class="h-full rounded-full" style="width: 50%; background: linear-gradient(90deg, #00d2ff, #a855f7, #f97316);"></div>
+          </div>
+          <div class="flex items-center justify-between mt-2">
+            <span class="text-[10px] text-c1">50% Complete</span>
+            <span class="text-[10px] text-txt-muted">5 chapters remaining</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Chapter Cards -->
+      <div class="space-y-6" id="chapterGrid">
+
+        <!-- Chapter 1 -->
+        <div class="chapter-card glass rounded-2xl overflow-hidden card-glow fade-in" data-topics="introduction agents models async real-world workflows architecture reasoning planning reflection" style="animation-delay: 0.1s;">
+          <div class="p-6 sm:p-8">
+            <div class="flex items-start gap-4 mb-5">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, rgba(0,210,255,0.2), rgba(168,85,247,0.2));">
+                <i class="fa-solid fa-robot text-xl" style="color: #00d2ff;"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <h2 class="text-lg font-bold text-white">Chapter 1</h2>
+                  <span class="nav-badge" style="background: rgba(0,210,255,0.15); color: #00d2ff;">48 topics</span>
+                </div>
+                <p class="text-sm text-txt-muted leading-relaxed">What agents are, how they think, the models that power them, async patterns, and production deployment.</p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <a href="chapter-1-introduction-to-agents.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c1/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c1 transition">Introduction to Agents</h3>
+                  <span class="text-[10px] text-txt-muted">19 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Agent Definition</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Reasoning</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Planning</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Reflection</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+15 more</span>
+                </div>
+              </a>
+
+              <a href="chapter-1-part2-models-async-realworld.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c1/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c1 transition">Models, Async & Real-World</h3>
+                  <span class="text-[10px] text-txt-muted">14 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">LLM Selection</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Async Patterns</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+12 more</span>
+                </div>
+              </a>
+
+              <a href="chapter-1-part3-workflows-agents-architecture.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c1/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c1 transition">Workflows, Agents & Architecture</h3>
+                  <span class="text-[10px] text-txt-muted">15 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Workflows</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Architecture</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+13 more</span>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chapter 2 -->
+        <div class="chapter-card glass rounded-2xl overflow-hidden card-glow fade-in" data-topics="agentic frameworks designing agent systems tools memory orchestration langchain crewai autogen" style="animation-delay: 0.2s;">
+          <div class="p-6 sm:p-8">
+            <div class="flex items-start gap-4 mb-5">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, rgba(249,115,22,0.2), rgba(244,114,182,0.2));">
+                <i class="fa-solid fa-layer-group text-xl" style="color: #f97316;"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <h2 class="text-lg font-bold text-white">Chapter 2</h2>
+                  <span class="nav-badge" style="background: rgba(249,115,22,0.15); color: #f97316;">43 topics</span>
+                </div>
+                <p class="text-sm text-txt-muted leading-relaxed">Frameworks for building agents, system design patterns, tools integration, memory systems, and orchestration strategies.</p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <a href="chapter-2-agentic-frameworks.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c3/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c3 transition">Agentic Frameworks</h3>
+                  <span class="text-[10px] text-txt-muted">16 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">LangChain</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">CrewAI</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">AutoGen</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+13 more</span>
+                </div>
+              </a>
+
+              <a href="chapter-2-part2-designing-agent-systems.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c3/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c3 transition">Designing Agent Systems</h3>
+                  <span class="text-[10px] text-txt-muted">13 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">System Design</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Patterns</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+11 more</span>
+                </div>
+              </a>
+
+              <a href="chapter-2-part3-tools-memory-orchestration.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c3/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c3 transition">Tools, Memory & Orchestration</h3>
+                  <span class="text-[10px] text-txt-muted">14 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Memory Systems</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Orchestration</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+12 more</span>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chapter 3 -->
+        <div class="chapter-card glass rounded-2xl overflow-hidden card-glow fade-in" data-topics="ux ai agents gui voice video combining interfaces user experience design interaction" style="animation-delay: 0.3s;">
+          <div class="p-6 sm:p-8">
+            <div class="flex items-start gap-4 mb-5">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, rgba(52,211,153,0.2), rgba(56,189,248,0.2));">
+                <i class="fa-solid fa-desktop text-xl" style="color: #34d399;"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <h2 class="text-lg font-bold text-white">Chapter 3</h2>
+                  <span class="nav-badge" style="background: rgba(52,211,153,0.15); color: #34d399;">40 topics</span>
+                </div>
+                <p class="text-sm text-txt-muted leading-relaxed">Designing interfaces for AI agents — GUI, voice, video, and combining multiple modalities.</p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <a href="chapter-3-ux-for-ai-agents.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c6/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c6 transition">UX for AI Agents</h3>
+                  <span class="text-[10px] text-txt-muted">13 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">UX Principles</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Interaction Design</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+11 more</span>
+                </div>
+              </a>
+
+              <a href="chapter-3-part2-gui-voice-video.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c6/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c6 transition">GUI, Voice & Video</h3>
+                  <span class="text-[10px] text-txt-muted">13 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">GUI Design</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Voice Interfaces</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+11 more</span>
+                </div>
+              </a>
+
+              <a href="chapter-3-part3-combining-interfaces.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c6/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c6 transition">Combining Interfaces</h3>
+                  <span class="text-[10px] text-txt-muted">14 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Multi-Modal</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Integration</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+12 more</span>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chapter 4 -->
+        <div class="chapter-card glass rounded-2xl overflow-hidden card-glow fade-in" data-topics="tool use mcp security advanced model context protocol api integration" style="animation-delay: 0.4s;">
+          <div class="p-6 sm:p-8">
+            <div class="flex items-start gap-4 mb-5">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, rgba(250,204,21,0.2), rgba(251,146,60,0.2));">
+                <i class="fa-solid fa-wrench text-xl" style="color: #facc15;"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <h2 class="text-lg font-bold text-white">Chapter 4</h2>
+                  <span class="nav-badge" style="background: rgba(250,204,21,0.15); color: #facc15;">26 topics</span>
+                </div>
+                <p class="text-sm text-txt-muted leading-relaxed">How agents use tools, the Model Context Protocol (MCP), security considerations, and advanced tool patterns.</p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <a href="chapter-4-tool-use.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c8/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c8 transition">Tool Use</h3>
+                  <span class="text-[10px] text-txt-muted">13 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Tool Design</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">API Integration</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+11 more</span>
+                </div>
+              </a>
+
+              <a href="chapter-4-part2-mcp-security-advanced.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c8/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c8 transition">MCP, Security & Advanced Topics</h3>
+                  <span class="text-[10px] text-txt-muted">13 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">MCP Protocol</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Security</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+11 more</span>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+        <!-- Chapter 5 -->
+        <div class="chapter-card glass rounded-2xl overflow-hidden card-glow fade-in" data-topics="orchestration multi-agent workflows coordination scalable architectures patterns" style="animation-delay: 0.5s;">
+          <div class="p-6 sm:p-8">
+            <div class="flex items-start gap-4 mb-5">
+              <div class="w-14 h-14 rounded-2xl flex items-center justify-center flex-shrink-0" style="background: linear-gradient(135deg, rgba(192,132,252,0.2), rgba(244,114,182,0.2));">
+                <i class="fa-solid fa-network-wired text-xl" style="color: #c084fc;"></i>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="flex items-center gap-2 flex-wrap mb-1">
+                  <h2 class="text-lg font-bold text-white">Chapter 5</h2>
+                  <span class="nav-badge" style="background: rgba(192,132,252,0.15); color: #c084fc;">12 topics</span>
+                </div>
+                <p class="text-sm text-txt-muted leading-relaxed">Orchestrating multi-agent systems, workflows, coordination patterns, and scalable architectures.</p>
+              </div>
+            </div>
+
+            <div class="space-y-3">
+              <a href="chapter-5-orchestration.html" class="block p-4 rounded-xl bg-bg-primary/50 border border-white/5 hover:border-c10/20 transition group">
+                <div class="flex items-center justify-between mb-2">
+                  <h3 class="text-sm font-semibold text-white group-hover:text-c10 transition">Orchestration</h3>
+                  <span class="text-[10px] text-txt-muted">12 topics</span>
+                </div>
+                <div class="flex flex-wrap gap-1.5">
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Multi-Agent</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">Workflows</span>
+                  <span class="topic-item text-[10px] px-2 py-0.5 rounded-md bg-white/5 text-txt-muted hover:text-white">+10 more</span>
+                </div>
+              </a>
+            </div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- Coming Soon -->
+      <div class="mt-10">
+        <div class="flex items-center gap-3 mb-6 fade-in" style="animation-delay: 0.6s;">
+          <div class="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+          <h2 class="text-sm font-bold text-txt-muted uppercase tracking-widest">Coming Soon</h2>
+          <div class="h-px flex-1 bg-gradient-to-r from-transparent via-white/10 to-transparent"></div>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 fade-in" style="animation-delay: 0.7s;">
+          <div class="glass rounded-2xl p-5 border border-dashed border-white/10 opacity-60">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5">
+                <i class="fa-solid fa-graduation-cap text-txt-muted text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white/60">Chapter 6</h3>
+                <p class="text-[10px] text-txt-muted">Learning</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-txt-muted/50 leading-relaxed">Adaptive learning, feedback loops, fine-tuning, and continuous improvement strategies.</p>
+          </div>
+
+          <div class="glass rounded-2xl p-5 border border-dashed border-white/10 opacity-60">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5">
+                <i class="fa-solid fa-code-branch text-txt-muted text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white/60">Chapter 7</h3>
+                <p class="text-[10px] text-txt-muted">Single to Multi-Agent</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-txt-muted/50 leading-relaxed">Scaling from single agents to multi-agent systems with delegation and collaboration.</p>
+          </div>
+
+          <div class="glass rounded-2xl p-5 border border-dashed border-white/10 opacity-60">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5">
+                <i class="fa-solid fa-chart-bar text-txt-muted text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white/60">Chapter 8</h3>
+                <p class="text-[10px] text-txt-muted">Validation & Measurement</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-txt-muted/50 leading-relaxed">Evaluating agent performance, benchmarks, testing frameworks, and quality metrics.</p>
+          </div>
+
+          <div class="glass rounded-2xl p-5 border border-dashed border-white/10 opacity-60">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5">
+                <i class="fa-solid fa-rocket text-txt-muted text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white/60">Chapter 9</h3>
+                <p class="text-[10px] text-txt-muted">Production</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-txt-muted/50 leading-relaxed">Deploying agents at scale, monitoring, error handling, and production best practices.</p>
+          </div>
+
+          <div class="glass rounded-2xl p-5 border border-dashed border-white/10 opacity-60">
+            <div class="flex items-center gap-3 mb-3">
+              <div class="w-10 h-10 rounded-xl flex items-center justify-center bg-white/5">
+                <i class="fa-solid fa-sync-alt text-txt-muted text-sm"></i>
+              </div>
+              <div>
+                <h3 class="text-sm font-bold text-white/60">Chapter 10</h3>
+                <p class="text-[10px] text-txt-muted">Improvement</p>
+              </div>
+            </div>
+            <p class="text-[11px] text-txt-muted/50 leading-relaxed">Iterative improvement, A/B testing, prompt optimization, and evolution strategies.</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Footer -->
+      <div class="mt-12 pt-8 border-t border-white/5 text-center fade-in" style="animation-delay: 0.8s;">
+        <p class="text-[11px] text-txt-muted">Agentic AI Course Notes — 5 Chapters, 12 Parts, 169 Topics</p>
+        <div class="flex items-center justify-center gap-3 mt-3">
+          <span class="w-1.5 h-1.5 rounded-full bg-c1"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-c3"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-c6"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-c8"></span>
+          <span class="w-1.5 h-1.5 rounded-full bg-c10"></span>
+        </div>
+      </div>
+
+    </div>
+  </main>
+
+  <script>
+    // Sidebar navigation HTML (shared between desktop and mobile)
+    const navHTML = `
+      <div class="mb-3">
+        <button onclick="toggleChapter(this)" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-left">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: rgba(0,210,255,0.15);">
+              <i class="fa-solid fa-robot text-xs" style="color: #00d2ff;"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-white">Introduction to Agents</p>
+              <p class="text-[10px] text-txt-muted">48 topics</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-txt-muted transition-transform"></i>
+        </button>
+        <div class="chapter-topics hidden ml-4 mt-1 space-y-0.5 border-l border-white/5 pl-3">
+          <a href="chapter-1-introduction-to-agents.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 1 — Introduction to Agents</a>
+          <a href="chapter-1-part2-models-async-realworld.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 2 — Models, Async & Real-World</a>
+          <a href="chapter-1-part3-workflows-agents-architecture.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 3 — Workflows, Agents & Architecture</a>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <button onclick="toggleChapter(this)" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-left">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: rgba(249,115,22,0.15);">
+              <i class="fa-solid fa-layer-group text-xs" style="color: #f97316;"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-white">Agentic Frameworks</p>
+              <p class="text-[10px] text-txt-muted">43 topics</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-txt-muted transition-transform"></i>
+        </button>
+        <div class="chapter-topics hidden ml-4 mt-1 space-y-0.5 border-l border-white/5 pl-3">
+          <a href="chapter-2-agentic-frameworks.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 1 — Agentic Frameworks</a>
+          <a href="chapter-2-part2-designing-agent-systems.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 2 — Designing Agent Systems</a>
+          <a href="chapter-2-part3-tools-memory-orchestration.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 3 — Tools, Memory & Orchestration</a>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <button onclick="toggleChapter(this)" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-left">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: rgba(52,211,153,0.15);">
+              <i class="fa-solid fa-desktop text-xs" style="color: #34d399;"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-white">UX for AI Agents</p>
+              <p class="text-[10px] text-txt-muted">40 topics</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-txt-muted transition-transform"></i>
+        </button>
+        <div class="chapter-topics hidden ml-4 mt-1 space-y-0.5 border-l border-white/5 pl-3">
+          <a href="chapter-3-ux-for-ai-agents.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 1 — UX for AI Agents</a>
+          <a href="chapter-3-part2-gui-voice-video.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 2 — GUI, Voice & Video</a>
+          <a href="chapter-3-part3-combining-interfaces.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 3 — Combining Interfaces</a>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <button onclick="toggleChapter(this)" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-left">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: rgba(250,204,21,0.15);">
+              <i class="fa-solid fa-wrench text-xs" style="color: #facc15;"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-white">Tool Use & MCP</p>
+              <p class="text-[10px] text-txt-muted">26 topics</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-txt-muted transition-transform"></i>
+        </button>
+        <div class="chapter-topics hidden ml-4 mt-1 space-y-0.5 border-l border-white/5 pl-3">
+          <a href="chapter-4-tool-use.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 1 — Tool Use</a>
+          <a href="chapter-4-part2-mcp-security-advanced.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 2 — MCP, Security & Advanced</a>
+        </div>
+      </div>
+
+      <div class="mb-3">
+        <button onclick="toggleChapter(this)" class="w-full flex items-center justify-between px-3 py-2.5 rounded-xl hover:bg-white/5 transition text-left">
+          <div class="flex items-center gap-2.5">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center" style="background: rgba(192,132,252,0.15);">
+              <i class="fa-solid fa-network-wired text-xs" style="color: #c084fc;"></i>
+            </div>
+            <div>
+              <p class="text-xs font-semibold text-white">Orchestration</p>
+              <p class="text-[10px] text-txt-muted">12 topics</p>
+            </div>
+          </div>
+          <i class="fa-solid fa-chevron-down text-[10px] text-txt-muted transition-transform"></i>
+        </button>
+        <div class="chapter-topics hidden ml-4 mt-1 space-y-0.5 border-l border-white/5 pl-3">
+          <a href="chapter-5-orchestration.html" class="sidebar-link block py-1.5 px-2 rounded-lg text-[11px] text-txt-body hover:text-white">Part 1 — Orchestration</a>
+        </div>
+      </div>
+
+      <div class="mt-4 pt-4 border-t border-white/5">
+        <p class="text-[10px] uppercase tracking-widest text-txt-muted mb-3 font-semibold">Remaining</p>
+        <div class="space-y-2">
+          <div class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.02] border border-dashed border-white/10">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5">
+              <i class="fa-solid fa-graduation-cap text-xs text-txt-muted"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-txt-muted">Chapter 6 — Learning</p>
+              <p class="text-[9px] text-txt-muted/60">Coming soon</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.02] border border-dashed border-white/10">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5">
+              <i class="fa-solid fa-code-branch text-xs text-txt-muted"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-txt-muted">Chapter 7 — Single → Multi-Agent</p>
+              <p class="text-[9px] text-txt-muted/60">Coming soon</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.02] border border-dashed border-white/10">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5">
+              <i class="fa-solid fa-chart-bar text-xs text-txt-muted"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-txt-muted">Chapter 8 — Validation & Measurement</p>
+              <p class="text-[9px] text-txt-muted/60">Coming soon</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.02] border border-dashed border-white/10">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5">
+              <i class="fa-solid fa-rocket text-xs text-txt-muted"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-txt-muted">Chapter 9 — Production</p>
+              <p class="text-[9px] text-txt-muted/60">Coming soon</p>
+            </div>
+          </div>
+          <div class="flex items-center gap-2.5 px-3 py-2 rounded-xl bg-white/[0.02] border border-dashed border-white/10">
+            <div class="w-7 h-7 rounded-lg flex items-center justify-center bg-white/5">
+              <i class="fa-solid fa-sync-alt text-xs text-txt-muted"></i>
+            </div>
+            <div>
+              <p class="text-[11px] font-medium text-txt-muted">Chapter 10 — Improvement</p>
+              <p class="text-[9px] text-txt-muted/60">Coming soon</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // Inject nav into both sidebars
+    document.getElementById('desktopNavContent').innerHTML = navHTML;
+    document.getElementById('mobileNavContent').innerHTML = navHTML;
+
+    // Mobile sidebar toggle
+    function toggleSidebar() {
+      document.getElementById('mobileSidebar').classList.toggle('open');
+      document.getElementById('sidebarOverlay').classList.toggle('open');
+      document.getElementById('hamburger').classList.toggle('active');
+    }
+
+    // Chapter accordion
+    function toggleChapter(btn) {
+      const topics = btn.nextElementSibling;
+      const icon = btn.querySelector('.fa-chevron-down');
+      const isOpen = !topics.classList.contains('hidden');
+
+      // Close all in same sidebar
+      const sidebar = btn.closest('aside');
+      sidebar.querySelectorAll('.chapter-topics').forEach(el => el.classList.add('hidden'));
+      sidebar.querySelectorAll('.fa-chevron-down').forEach(el => el.style.transform = '');
+
+      if (!isOpen) {
+        topics.classList.remove('hidden');
+        icon.style.transform = 'rotate(180deg)';
+      }
+    }
+
+    // Search toggle
+    function toggleSearch() {
+      const bar = document.getElementById('searchBar');
+      bar.classList.toggle('hidden');
+      if (!bar.classList.contains('hidden')) {
+        document.getElementById('searchInput').focus();
+      }
+    }
+
+    // Search filter
+    function filterContent(query) {
+      const q = query.toLowerCase().trim();
+      const cards = document.querySelectorAll('.chapter-card');
+      cards.forEach(card => {
+        if (!q) { card.style.display = ''; return; }
+        const text = card.textContent.toLowerCase() + (card.dataset.topics || '').toLowerCase();
+        card.style.display = text.includes(q) ? '' : 'none';
+      });
+    }
+
+    // Keyboard shortcuts
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') {
+        document.getElementById('mobileSidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('open');
+        document.getElementById('hamburger').classList.remove('active');
+        document.getElementById('searchBar').classList.add('hidden');
+      }
+      if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        toggleSearch();
+      }
+    });
+
+    // Close mobile sidebar on resize to desktop
+    window.addEventListener('resize', () => {
+      if (window.innerWidth >= 768) {
+        document.getElementById('mobileSidebar').classList.remove('open');
+        document.getElementById('sidebarOverlay').classList.remove('open');
+        document.getElementById('hamburger').classList.remove('active');
+      }
+    });
+
+    // Scroll animations
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) entry.target.style.animationPlayState = 'running';
+      });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.fade-in, .slide-up').forEach(el => {
+      el.style.animationPlayState = 'paused';
+      observer.observe(el);
+    });
+  </script>
+</body>
+</html>

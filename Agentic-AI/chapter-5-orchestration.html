@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 5 — Orchestration</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config={theme:{extend:{colors:{bg:{primary:'#0f0f1a',card:'#1a1a2e'},txt:{body:'#c4c4d4',bright:'#e8e8f0',muted:'#8888a4'},c1:'#00d2ff',c2:'#a855f7',c3:'#f97316',c6:'#34d399',c7:'#f472b6',c8:'#facc15',c9:'#38bdf8',c10:'#c084fc',success:'#4ade80',danger:'#f87171'},fontFamily:{mono:['"JetBrains Mono"','monospace']},animation:{'pulse-glow':'pulseGlow 2s ease-in-out infinite','float':'float 3s ease-in-out infinite'},keyframes:{pulseGlow:{'0%,100%':{boxShadow:'0 0 5px rgba(0,210,255,0.3)'},'50%':{boxShadow:'0 0 25px rgba(0,210,255,0.6)'}},float:{'0%,100%':{transform:'translateY(0)'},'50%':{transform:'translateY(-8px)'}}}}}}
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box;}body{background:#0f0f1a;color:#c4c4d4;font-family:'Inter',sans-serif;overflow-x:hidden;}
+    .gt{background:linear-gradient(135deg,#00d2ff,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gt-o{background:linear-gradient(135deg,#f97316,#facc15);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gt-g{background:linear-gradient(135deg,#34d399,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gt-p{background:linear-gradient(135deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gc{background:rgba(26,26,46,0.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);}
+    .glb{box-shadow:0 0 20px rgba(0,210,255,0.15);}.glp{box-shadow:0 0 20px rgba(168,85,247,0.15);}
+    .glo{box-shadow:0 0 20px rgba(249,115,22,0.15);}.glgn{box-shadow:0 0 20px rgba(52,211,153,0.15);}
+    .cb{background:#12121f;border:1px solid rgba(255,255,255,0.08);font-family:'JetBrains Mono',monospace;}
+    .sd{height:1px;background:linear-gradient(90deg,transparent,rgba(0,210,255,0.3),rgba(168,85,247,0.3),transparent);margin:3rem 0;}
+    .hl{transition:all 0.3s ease;}.hl:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.3);}
+    .sr{opacity:0;transform:translateY(30px);transition:all 0.6s ease;}.sr.v{opacity:1;transform:translateY(0);}
+    .ap{animation:ap 1.5s ease-in-out infinite;}@keyframes ap{0%,100%{transform:translateY(0);opacity:0.5;}50%{transform:translateY(4px);opacity:1;}}
+    ::-webkit-scrollbar{width:6px;}::-webkit-scrollbar-track{background:#0f0f1a;}::-webkit-scrollbar-thumb{background:#2a2a4a;border-radius:3px;}
+    .tl{transition:all 0.2s ease;border-left:2px solid transparent;}.tl:hover{border-left-color:#00d2ff;background:rgba(0,210,255,0.05);}
+    .tg{display:inline-block;padding:2px 10px;border-radius:9999px;font-size:0.7rem;font-weight:600;}
+    .gn{background:rgba(26,26,46,0.9);border:2px solid rgba(0,210,255,0.3);border-radius:12px;padding:8px 16px;text-align:center;font-size:0.75rem;font-weight:600;}
+    .ge{width:2px;height:20px;background:linear-gradient(to bottom,rgba(0,210,255,0.5),rgba(168,85,247,0.5));margin:0 auto;}
+    .cbu{border-radius:16px;padding:10px 16px;font-size:0.8rem;max-width:85%;}
+    .cbb{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);border-bottom-left-radius:4px;}
+  </style>
+</head>
+<body class="min-h-screen">
+  <nav class="fixed top-0 left-0 right-0 z-50 gc border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-c10 to-c3 flex items-center justify-center text-white font-bold text-sm"><i class="fas fa-music"></i></div>
+        <div><span class="text-bright font-bold text-sm sm:text-base">Chapter 5</span><span class="text-txt-muted text-xs block sm:inline sm:ml-2">Orchestration</span></div>
+      </div>
+      <a href="#top" class="text-txt-muted hover:text-c1 transition text-sm hidden sm:block"><i class="fas fa-arrow-up mr-1"></i>Top</a>
+    </div>
+  </nav>
+
+  <aside class="hidden xl:block fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] overflow-y-auto z-40 p-4 pr-2">
+    <div class="gc rounded-xl p-4 border border-white/5">
+      <h3 class="text-xs font-bold text-txt-muted uppercase tracking-wider mb-3"><i class="fas fa-list-ul mr-2 text-c10"></i>Contents</h3>
+      <div class="space-y-1 text-xs">
+        <a href="#s1" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">🎼 What is Orchestration?</a>
+        <a href="#s2" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">🟢 Reflex Agent</a>
+        <a href="#s3" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">🔵 ReAct Agent</a>
+        <a href="#s4" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">🟠 Planner-Executor</a>
+        <a href="#s5" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">🟡 Query Decomposition</a>
+        <a href="#s6" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">🟣 Reflection</a>
+        <a href="#s7" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">🔴 Deep Research</a>
+        <a href="#s8" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">📊 Agent Comparison</a>
+        <a href="#s9" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">🎯 Tool Selection</a>
+        <a href="#s10" class="tl block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">⭐ Cheat Sheet</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-20 pb-20 xl:ml-64" id="top">
+
+    <section class="pt-10 pb-8 text-center sr">
+      <div class="inline-flex items-center gap-2 bg-c10/10 border border-c10/20 rounded-full px-4 py-1.5 text-c10 text-xs font-semibold mb-6"><i class="fas fa-music"></i> Chapter 5</div>
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black mb-4 leading-tight"><span class="gt">Orchestration</span></h1>
+      <p class="text-txt-muted text-base sm:text-lg max-w-2xl mx-auto">How the agent decides what to do, in what order, and how to combine tools to solve a real problem.</p>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- What is Orchestration -->
+    <section id="s1" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c10/20 to-c10/5 border border-c10/30 flex items-center justify-center text-c10 font-bold text-sm">1</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">What is Orchestration? <span class="text-c10">🎼</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 mb-6 border border-c10/20 glp">
+        <p class="text-bright text-sm italic">"The logic that coordinates the model, tools, databases, context, planning, and execution."</p>
+      </div>
+      <div class="gc rounded-xl p-5 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-music text-c10 mr-2"></i>Like an Orchestra</h4>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs">
+          <div class="gc rounded p-3 border border-danger/20 text-center">
+            <div class="text-danger font-bold mb-1">Without conductor 🎺💥🎻😵</div>
+            <div class="text-txt-body">Everyone plays randomly = noise</div>
+          </div>
+          <div class="gc rounded p-3 border border-success/20 glgn text-center">
+            <div class="text-success font-bold mb-1">With conductor 🎼🎻🎺🥁🎹</div>
+            <div class="text-txt-body">Conductor coordinates = music</div>
+          </div>
+        </div>
+      </div>
+      <div class="gc rounded-xl p-5 border border-c1/20" style="background:rgba(0,210,255,0.03)">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-cloud-sun text-c1 mr-2"></i>Example: Weather + Email</h4>
+        <p class="text-txt-body text-xs text-center mb-3">"Find tomorrow's weather in Patna and email me a summary."</p>
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="gn text-c9 w-56"><i class="fas fa-user mr-2"></i>👤 User</div>
+          <div class="ge"></div>
+          <div class="gn text-c10 w-56"><i class="fas fa-brain mr-2"></i>🧠 Orchestrator</div>
+          <div class="ge"></div>
+          <div class="flex gap-3">
+            <div class="gn text-c3 w-28"><i class="fas fa-cloud mr-1"></i>Get weather</div>
+            <div class="gn text-c6 w-28"><i class="fas fa-envelope mr-1"></i>Send email</div>
+          </div>
+          <div class="ge"></div>
+          <div class="gn text-c8 w-56"><i class="fas fa-paper-plane mr-2"></i>Result: ✉️ Sent</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Reflex -->
+    <section id="s2" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">2</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Reflex Agent <span class="text-c6">🟢</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 mb-6 border border-c6/20 glgn">
+        <p class="text-bright text-sm"><span class="text-c6 font-semibold">IF</span> condition <span class="text-c6 font-semibold">THEN</span> action. No AI reasoning needed.</p>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="gc rounded-xl p-4 border border-white/5">
+          <div class="cb rounded-lg p-3 text-[10px]">
+            <span class="text-c1">if</span> <span class="text-c7">"weather"</span> <span class="text-c1">in</span> msg:<br/>&nbsp;&nbsp;get_weather()<br/>
+            <span class="text-c1">elif</span> <span class="text-c7">"logout"</span> <span class="text-c1">in</span> msg:<br/>&nbsp;&nbsp;logout_user()
+          </div>
+        </div>
+        <div class="gc rounded-xl p-4 border border-c6/20 glgn">
+          <h4 class="text-success font-bold text-sm mb-2"><i class="fas fa-thumbs-up mr-2"></i>Why use it?</h4>
+          <p class="text-txt-body text-xs">Don't waste expensive LLM calls deciding if "logout" means logout. 😂</p>
+          <p class="text-txt-muted text-[10px] mt-2">Best for: keyword routing, simple lookups, basic automation.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- ReAct -->
+    <section id="s3" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c1/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">3</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">ReAct Agent <span class="text-c1">🔵</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 mb-6 border border-c1/20 glb">
+        <p class="text-bright text-sm font-semibold">ReAct = <span class="text-c1">Reason</span> + <span class="text-c3">Act</span></p>
+        <p class="text-txt-muted text-xs mt-1">The most fundamental agent loop. Think → Do → See → Think again.</p>
+      </div>
+      <div class="gc rounded-xl p-5 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-sync text-c1 mr-2"></i>The ReAct Loop</h4>
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="gn text-c9 w-48"><i class="fas fa-lightbulb mr-2"></i>🤔 Reason</div>
+          <div class="ge"></div>
+          <div class="gn text-c3 w-48"><i class="fas fa-wrench mr-2"></i>🔧 Act</div>
+          <div class="ge"></div>
+          <div class="gn text-c6 w-48"><i class="fas fa-eye mr-2"></i>👀 Observe</div>
+          <div class="ge"></div>
+          <div class="gn text-c9 w-48"><i class="fas fa-redo mr-2"></i>Reason again...</div>
+        </div>
+      </div>
+      <div class="gc rounded-xl p-5 border border-c1/20" style="background:rgba(0,210,255,0.03)">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-umbrella text-c1 mr-2"></i>Example: Should I carry an umbrella?</h4>
+        <div class="grid sm:grid-cols-2 gap-3 text-xs mb-3">
+          <div class="gc rounded p-2 border border-white/5"><div class="text-c1 font-bold">Step 1 🤔</div><div class="text-txt-body">"I need current weather."</div></div>
+          <div class="gc rounded p-2 border border-white/5"><div class="text-c3 font-bold">Step 2 🔧</div><div class="text-txt-body">get_weather("Patna")</div></div>
+          <div class="gc rounded p-2 border border-white/5"><div class="text-c6 font-bold">Step 3 👀</div><div class="text-txt-body">Result: 🌧️ Rain expected</div></div>
+          <div class="gc rounded p-2 border border-white/5"><div class="text-c1 font-bold">Step 4 🤔</div><div class="text-txt-body">"Rain → recommend umbrella."</div></div>
+        </div>
+        <div class="cbu cbb text-xs">"Rain is expected tomorrow, so yes — I'd recommend carrying an umbrella."</div>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Planner-Executor -->
+    <section id="s4" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c3/20 to-c3/5 border border-c3/30 flex items-center justify-center text-c3 font-bold text-sm">4</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Planner-Executor <span class="text-c3">🟠</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 mb-6 border border-c3/20 glo">
+        <p class="text-bright text-sm">Create an <span class="text-c3 font-semibold">explicit plan first</span>, then execute each step.</p>
+      </div>
+      <div class="gc rounded-xl p-5 border border-white/5 mb-6">
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="gn text-c7 w-56"><i class="fas fa-user mr-2"></i>👤 "Analyze my business"</div>
+          <div class="ge"></div>
+          <div class="gn text-c3 w-56"><i class="fas fa-brain mr-2"></i>🧠 Planner</div>
+          <div class="ge"></div>
+          <div class="flex gap-2">
+            <div class="gn text-c8 w-24 text-[10px]">Step 1</div>
+            <div class="gn text-c8 w-24 text-[10px]">Step 2</div>
+            <div class="gn text-c8 w-24 text-[10px]">Step 3</div>
+          </div>
+          <div class="ge"></div>
+          <div class="gn text-c6 w-56"><i class="fas fa-file-alt mr-2"></i>📄 Report</div>
+        </div>
+      </div>
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="gc rounded-xl p-4 border border-success/20">
+          <h4 class="text-success font-bold text-xs mb-2"><i class="fas fa-check mr-1"></i>Advantages</h4>
+          <div class="space-y-1 text-txt-body text-[10px]">
+            <div>✅ Clear decomposition</div><div>✅ Easy to debug</div><div>✅ Cost efficient</div>
+          </div>
+        </div>
+        <div class="gc rounded-xl p-4 border border-c8/20" style="background:rgba(250,204,21,0.03)">
+          <h4 class="text-c8 font-bold text-xs mb-2"><i class="fas fa-dollar-sign mr-1"></i>Cost Advantage</h4>
+          <div class="text-txt-body text-[10px]">🧠 Powerful model → Create plan<br/>⚙️ Smaller models → Execute steps</div>
+          <p class="text-txt-muted text-[10px] mt-1">Reserve big models for planning.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Query Decomposition -->
+    <section id="s5" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">5</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Query Decomposition <span class="text-c8">🟡</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 mb-6 border border-c8/20 glo">
+        <p class="text-bright text-sm">Break one big question into <span class="text-c8 font-semibold">smaller sub-questions</span>, answer each, then synthesize.</p>
+      </div>
+      <div class="gc rounded-xl p-5 border border-white/5 mb-6">
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="gn text-c8 w-64"><i class="fas fa-question-circle mr-2"></i>Big Question</div>
+          <div class="ge"></div>
+          <div class="gn text-c10 w-48"><i class="fas fa-divide mr-2"></i>🧠 Decompose</div>
+          <div class="ge"></div>
+          <div class="flex gap-4">
+            <div class="text-center"><div class="gn text-c9 w-20 text-[10px]">X age?</div><div class="ap text-c9"><i class="fas fa-arrow-down text-[8px]"></i></div><div class="text-c6 text-[10px]">🔍→85</div></div>
+            <div class="text-center"><div class="gn text-c9 w-20 text-[10px]">Y age?</div><div class="ap text-c9"><i class="fas fa-arrow-down text-[8px]"></i></div><div class="text-c6 text-[10px]">🔍→90</div></div>
+          </div>
+          <div class="ge"></div>
+          <div class="gn text-c6 w-48"><i class="fas fa-balance-scale mr-2"></i>🧠 Compare → Answer</div>
+        </div>
+      </div>
+      <div class="gc rounded-xl p-4 border border-c8/20" style="background:rgba(250,204,21,0.03)">
+        <p class="text-txt-body text-xs text-center">Giant questions are hard for one search. <span class="text-c8 font-semibold">Decompose → Search each → Synthesize.</span></p>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Reflection -->
+    <section id="s6" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c10/20 to-c10/5 border border-c10/30 flex items-center justify-center text-c10 font-bold text-sm">6</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Reflection Agent <span class="text-c10">🟣</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 mb-6 border border-c10/20 glp">
+        <p class="text-bright text-sm">The agent <span class="text-c10 font-semibold">checks its own work</span>. Act → Check → Correct → Continue.</p>
+      </div>
+      <div class="gc rounded-xl p-5 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-search text-c10 mr-2"></i>Reflection Loop</h4>
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="gn text-c9 w-48"><i class="fas fa-lightbulb mr-2"></i>🤔 Think</div>
+          <div class="ge"></div>
+          <div class="gn text-c3 w-48"><i class="fas fa-wrench mr-2"></i>🔧 Act</div>
+          <div class="ge"></div>
+          <div class="gn text-c6 w-48"><i class="fas fa-eye mr-2"></i>👀 Observe</div>
+          <div class="ge" style="background:linear-gradient(to bottom,rgba(192,132,252,0.5),rgba(248,113,113,0.5))"></div>
+          <div class="gn text-c10 w-48" style="border-color:rgba(192,132,252,0.3)"><i class="fas fa-search mr-2"></i>🔍 Check my work</div>
+          <div class="flex gap-6 mt-1">
+            <div class="text-center"><span class="text-success text-[10px] font-bold">Correct</span><div class="ge mx-auto" style="height:12px;background:rgba(74,222,128,0.5)"></div><div class="gn text-c6 w-16 text-[10px]">Continue</div></div>
+            <div class="text-center"><span class="text-danger text-[10px] font-bold">Wrong</span><div class="ge mx-auto" style="height:12px;background:rgba(248,113,113,0.5)"></div><div class="gn text-c3 w-16 text-[10px]">Fix/Replan</div></div>
+          </div>
+        </div>
+      </div>
+      <div class="gc rounded-xl p-5 border border-white/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-bug text-c3 mr-2"></i>Coding Agent Example</h4>
+        <div class="space-y-1 text-xs">
+          <div class="gc rounded p-2 border border-white/5"><span class="text-c1 font-bold">🔍</span> Read code → <span class="text-c3 font-bold">✏️</span> Fix bug → <span class="text-c6 font-bold">🧪</span> Run tests</div>
+          <div class="gc rounded p-2 border border-danger/20"><span class="text-danger font-bold">❌</span> 3 tests failed → <span class="text-c10 font-bold">🤔</span> "Null handling is wrong"</div>
+          <div class="gc rounded p-2 border border-success/20 glgn"><span class="text-c3 font-bold">✏️</span> Revise → <span class="text-c6 font-bold">🧪</span> Test → <span class="text-success font-bold">✅</span> All pass!</div>
+        </div>
+      </div>
+      <div class="gc rounded-xl p-4 border border-c8/20 mt-4" style="background:rgba(250,204,21,0.03)">
+        <p class="text-txt-body text-xs text-center">⚠️ More reflection = more LLM calls = <span class="text-c3 font-semibold">more cost & latency</span>. Use when mistakes are expensive (finance, medical, critical systems).</p>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Deep Research -->
+    <section id="s7" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c3/20 to-c3/5 border border-c3/30 flex items-center justify-center text-c3 font-bold text-sm">7</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Deep Research Agent <span class="text-c3">🔴</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 mb-6 border border-c3/20 glo">
+        <p class="text-bright text-sm">Combines <span class="text-c3 font-semibold">Planner + Query Decomposition + ReAct + Reflection</span> for large open-ended investigations.</p>
+      </div>
+      <div class="gc rounded-xl p-5 border border-white/5 mb-6">
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="gn text-c7 w-56"><i class="fas fa-user mr-2"></i>👤 Research question</div>
+          <div class="ge"></div>
+          <div class="gn text-c3 w-56"><i class="fas fa-brain mr-2"></i>🧠 Planner</div>
+          <div class="ge"></div>
+          <div class="flex gap-2"><div class="gn text-c9 w-28 text-[10px]">Sub Q1 🔍</div><div class="gn text-c9 w-28 text-[10px]">Sub Q2 🔍</div></div>
+          <div class="ge"></div>
+          <div class="gn text-c10 w-56" style="border-color:rgba(192,132,252,0.3)"><i class="fas fa-search mr-2"></i>🔍 Reflection: Reliable?</div>
+          <div class="ge"></div>
+          <div class="gn text-c6 w-56"><i class="fas fa-file-alt mr-2"></i>📄 Final report</div>
+        </div>
+      </div>
+      <div class="gc rounded-xl p-4 border border-danger/20">
+        <h4 class="text-danger font-bold text-xs mb-2"><i class="fas fa-exclamation-triangle mr-2"></i>Weaknesses</h4>
+        <div class="flex flex-wrap gap-1.5 text-[10px]">
+          <span class="tg bg-danger/10 text-danger border border-danger/20">💰 High cost</span>
+          <span class="tg bg-danger/10 text-danger border border-danger/20">⏳ High latency</span>
+          <span class="tg bg-danger/10 text-danger border border-danger/20">💥 Fragile</span>
+        </div>
+        <p class="text-txt-muted text-[10px] mt-2">More intelligence ≠ always better architecture.</p>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Agent Comparison Table -->
+    <section id="s8" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">8</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Agent Comparison <span class="text-c8">📊</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 border border-white/5 overflow-x-auto">
+        <table class="w-full text-xs min-w-[400px]">
+          <thead><tr class="border-b border-white/10">
+            <th class="text-left py-2 px-3 text-txt-muted font-bold">Agent</th>
+            <th class="text-left py-2 px-3 text-txt-muted font-bold">How it works</th>
+            <th class="text-left py-2 px-3 text-txt-muted font-bold">Example</th>
+          </tr></thead>
+          <tbody>
+            <tr class="border-b border-white/5"><td class="py-2 px-3 text-c6 font-bold">🟢 Reflex</td><td class="py-2 px-3 text-txt-body">Input → Action</td><td class="py-2 px-3 text-txt-muted">"weather" → weather API</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 px-3 text-c1 font-bold">🔵 ReAct</td><td class="py-2 px-3 text-txt-body">Reason → Act → Observe</td><td class="py-2 px-3 text-txt-muted">Troubleshooting</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 px-3 text-c3 font-bold">🟠 Planner-Executor</td><td class="py-2 px-3 text-txt-body">Plan → Execute steps</td><td class="py-2 px-3 text-txt-muted">Business report</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 px-3 text-c8 font-bold">🟡 Query Decomposition</td><td class="py-2 px-3 text-txt-body">Big Q → Small Qs</td><td class="py-2 px-3 text-txt-muted">Research / Q&A</td></tr>
+            <tr class="border-b border-white/5"><td class="py-2 px-3 text-c10 font-bold">🟣 Reflection</td><td class="py-2 px-3 text-txt-body">Act → Check → Fix</td><td class="py-2 px-3 text-txt-muted">Coding / security</td></tr>
+            <tr><td class="py-2 px-3 text-c3 font-bold">🔴 Deep Research</td><td class="py-2 px-3 text-txt-body">Combines several</td><td class="py-2 px-3 text-txt-muted">Literature / market</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Tool Selection -->
+    <section id="s9" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c1/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">9</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Tool Selection <span class="text-c1">🎯</span></h2>
+      </div>
+      <div class="gc rounded-xl p-5 mb-6 border border-c1/20 glb">
+        <p class="text-bright text-sm">The agent must <span class="text-c1 font-semibold">select the right tool</span> from many available options.</p>
+      </div>
+
+      <!-- Three strategies -->
+      <div class="grid sm:grid-cols-3 gap-4 mb-6">
+        <div class="gc rounded-xl p-4 border border-c6/20 glgn hover-lift">
+          <h4 class="text-success font-bold text-sm mb-2"><i class="fas fa-check mr-1"></i>Standard</h4>
+          <p class="text-txt-body text-[10px]">LLM sees all tools, picks best one.</p>
+          <p class="text-txt-muted text-[10px] mt-1">Small library (≤10 tools)</p>
+        </div>
+        <div class="gc rounded-xl p-4 border border-c1/20 glb hover-lift">
+          <h4 class="text-c1 font-bold text-sm mb-2"><i class="fas fa-search mr-1"></i>Semantic</h4>
+          <p class="text-txt-body text-[10px]">Embedding search → only send relevant tools to LLM.</p>
+          <p class="text-txt-muted text-[10px] mt-1">Large library (5000+)</p>
+        </div>
+        <div class="gc rounded-xl p-4 border border-c10/20 glp hover-lift">
+          <h4 class="text-c10 font-bold text-sm mb-2"><i class="fas fa-sitemap mr-1"></i>Hierarchical</h4>
+          <p class="text-txt-body text-[10px]">Category → Subcategory → Tool.</p>
+          <p class="text-txt-muted text-[10px] mt-1">Huge / organized library</p>
+        </div>
+      </div>
+
+      <!-- Descriptions matter -->
+      <div class="gc rounded-xl p-5 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-tag text-c8 mr-2"></i>Tool Descriptions Matter A LOT</h4>
+        <div class="grid sm:grid-cols-2 gap-3 text-xs">
+          <div class="gc rounded p-2 border border-danger/20">
+            <div class="text-danger font-bold text-[10px]">❌ Bad:</div>
+            <div class="cb rounded p-2 text-[10px]">def process_numbers(x, y):<br/>"""Processes numbers."""</div>
+            <p class="text-txt-muted text-[10px] mt-1">😐 What does "processes" mean?</p>
+          </div>
+          <div class="gc rounded p-2 border border-success/20 glgn">
+            <div class="text-success font-bold text-[10px]">✅ Good:</div>
+            <div class="cb rounded p-2 text-[10px]">def calculate_sum(x, y):<br/>"""Returns sum of two integers.<br/>Example: calculate_sum(5,3)→8"""</div>
+            <p class="text-txt-muted text-[10px] mt-1">Name + Description + Example + Constraints</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Selection summary -->
+      <div class="gc rounded-xl p-4 border border-c8/20" style="background:rgba(250,204,21,0.03)">
+        <h4 class="text-bright font-bold text-xs mb-2 text-center">Selection Strategy Rule</h4>
+        <div class="flex justify-center gap-3 text-xs text-center">
+          <div><span class="tg bg-success/10 text-success border border-success/20">≤10 tools</span><div class="text-txt-muted text-[10px]">Standard</div></div>
+          <div><span class="tg bg-c1/10 text-c1 border border-c1/20">500+ tools</span><div class="text-txt-muted text-[10px]">Semantic</div></div>
+          <div><span class="tg bg-c10/10 text-c10 border border-c10/20">5000+ organized</span><div class="text-txt-muted text-[10px]">Hierarchical</div></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Summary -->
+    <section id="s10" class="mb-16 sr">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">⭐</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Cheat Sheet <span class="text-c8">🏆</span></h2>
+      </div>
+
+      <div class="gc rounded-xl p-5 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-sitemap text-c10 mr-2"></i>Orchestration Map</h4>
+        <div class="text-xs text-txt-body space-y-1.5">
+          <div class="flex items-center gap-2"><span class="text-c6">●</span> <span class="text-c6 font-bold">Reflex</span> — Input → Action</div>
+          <div class="flex items-center gap-2"><span class="text-c1">●</span> <span class="text-c1 font-bold">ReAct</span> — Reason → Act → Observe → Repeat</div>
+          <div class="flex items-center gap-2"><span class="text-c3">●</span> <span class="text-c3 font-bold">Planner-Executor</span> — Plan → Execute steps</div>
+          <div class="flex items-center gap-2"><span class="text-c8">●</span> <span class="text-c8 font-bold">Query Decomposition</span> — Big Q → Small Qs</div>
+          <div class="flex items-center gap-2"><span class="text-c10">●</span> <span class="text-c10 font-bold">Reflection</span> — Act → Check → Correct</div>
+          <div class="flex items-center gap-2"><span class="text-c3">●</span> <span class="text-c3 font-bold">Deep Research</span> — Combines several patterns</div>
+        </div>
+        <div class="mt-4 text-xs text-txt-body space-y-1">
+          <div><span class="text-c1">●</span> <span class="text-c1 font-bold">Standard Selection</span> — LLM picks from small list</div>
+          <div><span class="text-c1">●</span> <span class="text-c1 font-bold">Semantic Selection</span> — Embedding search for large list</div>
+          <div><span class="text-c10">●</span> <span class="text-c10 font-bold">Hierarchical Selection</span> — Category → Tool</div>
+        </div>
+      </div>
+
+      <!-- The One Rule -->
+      <div class="gc rounded-xl p-5 border border-c3/20" style="background:rgba(249,115,22,0.03)">
+        <div class="gc rounded-lg p-4 border border-c3/30 text-center">
+          <p class="text-bright font-bold text-base">Use the <span class="gt-o">simplest orchestration pattern</span> that can reliably solve the problem.</p>
+        </div>
+        <p class="text-txt-muted text-xs mt-2 text-center">You don't need a Deep Research Agent to answer "What is 2 + 2?" 😂</p>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- The Most Important -->
+    <section class="mb-16 sr">
+      <div class="gc rounded-xl p-5 sm:p-6 border border-c8/20" style="background:rgba(250,204,21,0.03)">
+        <h3 class="text-bright font-bold text-lg mb-3 text-center">The Most Important Thing</h3>
+        <div class="gc rounded-lg p-4 border border-c8/30 text-center max-w-xl mx-auto mb-3">
+          <p class="text-bright font-bold">Orchestration ≠ just calling tools.</p>
+        </div>
+        <p class="text-txt-body text-sm text-center">Orchestration = deciding <span class="text-c1 font-semibold">how</span> to use models, tools, context, memory, and intermediate results to accomplish a task.</p>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <!-- Mini Challenge -->
+    <section class="mb-16 sr">
+      <div class="gc rounded-xl p-5 border border-c1/20" style="background:rgba(0,210,255,0.03)">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-dumbbell text-c1 mr-2"></i>Mini Challenge</h4>
+        <p class="text-txt-body text-xs text-center mb-3">"Find the bug in my Node.js API, fix it, run the tests, and if tests fail, revise the fix."</p>
+        <div class="flex flex-col items-center space-y-1 text-xs mb-3">
+          <div class="gn text-c1 w-48"><i class="fas fa-search mr-2"></i>🔍 Find bug</div>
+          <div class="ge"></div>
+          <div class="gn text-c3 w-48"><i class="fas fa-edit mr-2"></i>✏️ Fix</div>
+          <div class="ge"></div>
+          <div class="gn text-c6 w-48"><i class="fas fa-flask mr-2"></i>🧪 Test</div>
+          <div class="ge"></div>
+          <div class="gn text-c10 w-48" style="border-color:rgba(192,132,252,0.3)"><i class="fas fa-redo mr-2"></i>🔄 Revise if needed</div>
+        </div>
+        <div class="gc rounded p-3 border border-c3/30 text-center text-xs">
+          <span class="text-bright font-bold">Answer:</span> <span class="text-c10 font-bold">ReAct + Reflection</span> — Think → Act → Observe → Check → Revise
+        </div>
+      </div>
+    </section>
+
+    <div class="sd"></div>
+
+    <footer class="text-center py-8">
+      <div class="gc rounded-xl p-6 border border-white/5 inline-block">
+        <div class="text-txt-muted text-sm mb-2"><i class="fas fa-music mr-2 text-c10"></i>Chapter 5 — Orchestration</div>
+        <div class="text-txt-muted text-xs">Agentic AI Study Notes <span class="text-c2 mx-1">•</span> Built for revision & understanding</div>
+        <div class="flex justify-center gap-3 mt-4"><a href="#top" class="text-c1 hover:text-c2 transition text-sm"><i class="fas fa-arrow-up"></i></a></div>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    const o=new IntersectionObserver(e=>{e.forEach(x=>{if(x.isIntersecting)x.target.classList.add('v')})},{threshold:0.1});
+    document.querySelectorAll('.sr').forEach(el=>o.observe(el));
+    document.querySelectorAll('a[href^="#"]').forEach(a=>{a.addEventListener('click',function(e){e.preventDefault();const t=document.querySelector(this.getAttribute('href'));if(t)t.scrollIntoView({behavior:'smooth',block:'start'})})});
+  </script>
+</body>
+</html>

@@ -1,0 +1,912 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 2 — Tools, Memory, Orchestration & Engineering</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: { primary: '#0f0f1a', card: '#1a1a2e', hover: '#252542', accent: '#16213e' },
+            txt: { body: '#c4c4d4', bright: '#e8e8f0', muted: '#8888a4' },
+            c1: '#00d2ff', c2: '#a855f7', c3: '#f97316', c4: '#22d3ee', c5: '#fb923c',
+            c6: '#34d399', c7: '#f472b6', c8: '#facc15', c9: '#38bdf8', c10: '#c084fc',
+            success: '#4ade80', warn: '#fbbf24', danger: '#f87171', info: '#60a5fa',
+          },
+          fontFamily: { mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'] },
+          animation: {
+            'fade-up': 'fadeUp 0.6s ease-out forwards',
+            'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            pulseGlow: { '0%, 100%': { boxShadow: '0 0 5px rgba(0,210,255,0.3)' }, '50%': { boxShadow: '0 0 25px rgba(0,210,255,0.6)' } },
+            float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:#0f0f1a;color:#c4c4d4;font-family:'Inter',sans-serif;overflow-x:hidden;}
+    .gradient-text{background:linear-gradient(135deg,#00d2ff,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gradient-text-orange{background:linear-gradient(135deg,#f97316,#facc15);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gradient-text-green{background:linear-gradient(135deg,#34d399,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gradient-text-pink{background:linear-gradient(135deg,#f472b6,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .glass-card{background:rgba(26,26,46,0.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);}
+    .glow-blue{box-shadow:0 0 20px rgba(0,210,255,0.15);}
+    .glow-purple{box-shadow:0 0 20px rgba(168,85,247,0.15);}
+    .glow-orange{box-shadow:0 0 20px rgba(249,115,22,0.15);}
+    .glow-green{box-shadow:0 0 20px rgba(52,211,153,0.15);}
+    .glow-pink{box-shadow:0 0 20px rgba(244,114,182,0.15);}
+    .code-block{background:#12121f;border:1px solid rgba(255,255,255,0.08);font-family:'JetBrains Mono',monospace;}
+    .section-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,210,255,0.3),rgba(168,85,247,0.3),transparent);margin:3rem 0;}
+    .hover-lift{transition:all 0.3s ease;}
+    .hover-lift:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.3);}
+    .scroll-reveal{opacity:0;transform:translateY(30px);transition:all 0.6s ease;}
+    .scroll-reveal.visible{opacity:1;transform:translateY(0);}
+    .arrow-pulse{animation:arrowPulse 1.5s ease-in-out infinite;}
+    @keyframes arrowPulse{0%,100%{transform:translateY(0);opacity:0.5;}50%{transform:translateY(4px);opacity:1;}}
+    ::-webkit-scrollbar{width:6px;}
+    ::-webkit-scrollbar-track{background:#0f0f1a;}
+    ::-webkit-scrollbar-thumb{background:#2a2a4a;border-radius:3px;}
+    .toc-link{transition:all 0.2s ease;border-left:2px solid transparent;}
+    .toc-link:hover{border-left-color:#00d2ff;background:rgba(0,210,255,0.05);}
+    .tag{display:inline-block;padding:2px 10px;border-radius:9999px;font-size:0.7rem;font-weight:600;letter-spacing:0.05em;}
+    .graph-node{background:rgba(26,26,46,0.9);border:2px solid rgba(0,210,255,0.3);border-radius:12px;padding:8px 16px;text-align:center;font-size:0.75rem;font-weight:600;}
+    .graph-edge{width:2px;height:20px;background:linear-gradient(to bottom,rgba(0,210,255,0.5),rgba(168,85,247,0.5));margin:0 auto;}
+    .slide-window{display:flex;gap:4px;overflow:hidden;}
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute w-2 h-2 bg-c1 rounded-full opacity-20" style="top:10%;left:20%;animation:float 4s ease-in-out infinite;"></div>
+    <div class="absolute w-3 h-3 bg-c2 rounded-full opacity-15" style="top:30%;left:80%;animation:float 5s ease-in-out infinite 1s;"></div>
+    <div class="absolute w-2 h-2 bg-c3 rounded-full opacity-20" style="top:60%;left:15%;animation:float 3s ease-in-out infinite 0.5s;"></div>
+    <div class="absolute w-2 h-2 bg-c6 rounded-full opacity-15" style="top:80%;left:70%;animation:float 4.5s ease-in-out infinite 2s;"></div>
+  </div>
+
+  <nav class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-c8 to-c3 flex items-center justify-center text-white font-bold text-sm"><i class="fas fa-tools"></i></div>
+        <div>
+          <span class="text-bright font-bold text-sm sm:text-base">Chapter 2 — Part 3</span>
+          <span class="text-txt-muted text-xs block sm:inline sm:ml-2">Tools, Memory, Orchestration & Engineering</span>
+        </div>
+      </div>
+      <a href="#top" class="text-txt-muted hover:text-c1 transition text-sm hidden sm:block"><i class="fas fa-arrow-up mr-1"></i>Top</a>
+    </div>
+  </nav>
+
+  <aside class="hidden xl:block fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] overflow-y-auto z-40 p-4 pr-2">
+    <div class="glass-card rounded-xl p-4 border border-white/5">
+      <h3 class="text-xs font-bold text-txt-muted uppercase tracking-wider mb-3"><i class="fas fa-list-ul mr-2 text-c8"></i>Contents</h3>
+      <div class="space-y-1 text-xs">
+        <a href="#sec-tools" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-wrench mr-1"></i>Tools — Agent's Hands</a>
+        <a href="#sec-local" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-home mr-1"></i>Local Tools</a>
+        <a href="#sec-api" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-globe mr-1"></i>API Tools</a>
+        <a href="#sec-mcp" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-plug mr-1"></i>MCP Tools</a>
+        <a href="#sec-modular" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-puzzle-piece mr-1"></i>Modular Tools</a>
+        <a href="#sec-memory" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-memory mr-1"></i>Memory</a>
+        <a href="#sec-orchestration" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-music mr-1"></i>Orchestration</a>
+        <a href="#sec-tradeoffs" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-balance-scale mr-1"></i>Design Trade-offs</a>
+        <a href="#sec-scalability" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-chart-line mr-1"></i>Scalability</a>
+        <a href="#sec-reliability" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-shield-alt mr-1"></i>Reliability</a>
+        <a href="#sec-cost" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-dollar-sign mr-1"></i>Cost</a>
+        <a href="#sec-summary" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-star mr-1"></i>Summary</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-20 pb-20 xl:ml-64" id="top">
+
+    <!-- Hero -->
+    <section class="pt-10 pb-8 text-center scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c8/10 border border-c8/20 rounded-full px-4 py-1.5 text-c8 text-xs font-semibold mb-6">
+        <i class="fas fa-tools"></i> Chapter 2 — Part 3
+      </div>
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black mb-4 leading-tight">
+        <span class="gradient-text-orange">Tools</span>,
+        <span class="text-bright">Memory</span> &
+        <span class="gradient-text">Orchestration</span>
+      </h1>
+      <p class="text-txt-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+        The building blocks of a real agent system — tools, memory, orchestration, and the engineering concerns that make or break production agents.
+      </p>
+      <div class="mt-6 glass-card inline-block rounded-xl px-6 py-4 border border-c8/20 glow-orange">
+        <p class="text-c8 font-bold text-sm"><i class="fas fa-lightbulb mr-2"></i>LLM = Brain · Tools = Hands · Memory = Notebook</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ======================== TOOLS ======================== -->
+    <section class="mb-6 scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c2/10 border border-c2/20 rounded-full px-4 py-1.5 text-c2 text-xs font-bold mb-4">
+        <i class="fas fa-wrench"></i> TOOLS — THE AGENT'S HANDS
+      </div>
+    </section>
+
+    <section id="sec-tools" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c2/20 to-c2/5 border border-c2/30 flex items-center justify-center text-c2 font-bold text-sm">1</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Tools — The Agent's Hands <span class="text-c2 text-lg">🔧</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c2/20 glow-purple mb-6">
+        <p class="text-bright text-sm leading-relaxed italic">
+          "Tools are the capabilities that allow an agent to <span class="text-c2 font-semibold">actually do things</span>, rather than merely generate text."
+        </p>
+      </div>
+
+      <!-- Brain / Hands / Notebook -->
+      <div class="grid sm:grid-cols-3 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-5 border border-c9/20 hover-lift text-center">
+          <div class="text-3xl mb-2">🧠</div>
+          <h4 class="text-c9 font-bold">LLM = Brain</h4>
+          <p class="text-txt-muted text-xs mt-1">Thinks & decides</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border border-c2/20 hover-lift text-center glow-purple">
+          <div class="text-3xl mb-2">🔧</div>
+          <h4 class="text-c2 font-bold">Tools = Hands</h4>
+          <p class="text-txt-muted text-xs mt-1">Actually do things</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border border-c6/20 hover-lift text-center glow-green">
+          <div class="text-3xl mb-2">📒</div>
+          <h4 class="text-c6 font-bold">Memory = Notebook</h4>
+          <p class="text-txt-muted text-xs mt-1">Stores information</p>
+        </div>
+      </div>
+
+      <!-- Why tools matter -->
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <h4 class="text-danger font-bold text-sm mb-2"><i class="fas fa-times-circle mr-2"></i>LLM Without Tools</h4>
+          <div class="glass-card rounded p-3 border border-white/5 text-center">
+            <span class="text-txt-body text-xs">"Your order has been cancelled."</span>
+          </div>
+          <p class="text-danger text-xs mt-2">Just text — nothing actually happened.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border border-success/20 hover-lift glow-green">
+          <h4 class="text-success font-bold text-sm mb-2"><i class="fas fa-check-circle mr-2"></i>LLM With Tools</h4>
+          <div class="text-center text-xs">
+            <div class="glass-card rounded px-3 py-1 border border-c9/20 text-c9 mb-1">LLM decides to cancel</div>
+            <div class="arrow-pulse text-c2"><i class="fas fa-arrow-down"></i></div>
+            <div class="glass-card rounded px-3 py-1 border border-c2/20 text-c2 my-1">🔧 cancel_order()</div>
+            <div class="arrow-pulse text-c2"><i class="fas fa-arrow-down"></i></div>
+            <div class="text-success font-semibold mt-1">Order actually cancelled ✅</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Three Types of Tools -->
+    <section class="mb-6 scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c3/10 border border-c3/20 rounded-full px-4 py-1.5 text-c3 text-xs font-bold mb-4">
+        <i class="fas fa-list"></i> THREE TYPES OF TOOLS
+      </div>
+    </section>
+
+    <!-- Local Tools -->
+    <section id="sec-local" class="mb-12 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">2</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">🏠 Local Tools <span class="text-c6 text-lg"></span></h2>
+      </div>
+      <div class="glass-card rounded-xl p-5 mb-6 border border-white/5">
+        <p class="text-txt-body text-sm mb-4">A local tool <span class="text-c6 font-semibold">runs inside your application</span>. No internet required.</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="code-block rounded-lg p-4 text-xs">
+            <div class="text-c1">def</div> <div class="text-c8">add</div><span class="text-txt-body">(a, b):</span>
+            <div class="ml-4 text-txt-body">return a + b</div>
+            <div class="mt-2 text-c8">add</div><span class="text-txt-body">(25, 37) </span><span class="text-c6">→ 62</span>
+          </div>
+          <div class="code-block rounded-lg p-4 text-xs">
+            <div class="text-c1">def</div> <div class="text-c8">is_adult</div><span class="text-txt-body">(age):</span>
+            <div class="ml-4 text-txt-body">return age >= 18</div>
+            <div class="mt-2 text-c8">is_adult</div><span class="text-txt-body">(20) </span><span class="text-c6">→ True</span>
+          </div>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-4 border border-c6/20 bg-c6/5 text-center">
+        <p class="text-c6 text-sm font-semibold">🧠 Local tool = your own code does the work.</p>
+        <p class="text-txt-muted text-xs mt-1">Examples: calculations, local DB queries, rule-based decisions.</p>
+      </div>
+    </section>
+
+    <!-- API Tools -->
+    <section id="sec-api" class="mb-12 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c1/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">3</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">🌐 API-Based Tools <span class="text-c1 text-lg"></span></h2>
+      </div>
+      <div class="glass-card rounded-xl p-5 mb-6 border border-white/5">
+        <p class="text-txt-body text-sm mb-4">When your agent needs <span class="text-c1 font-semibold">real-world information</span> it doesn't have.</p>
+        <div class="text-center mb-4">
+          <div class="inline-block bg-c1/10 border border-c1/20 rounded px-4 py-2 text-xs text-c1 font-bold"><i class="fas fa-robot mr-1"></i>Agent</div>
+          <span class="text-txt-muted mx-2">→</span>
+          <span class="text-c3 text-xs">🌐 Weather API</span>
+          <span class="text-txt-muted mx-2">→</span>
+          <span class="text-c8 text-xs font-bold">☀️ 32°C</span>
+        </div>
+        <div class="code-block rounded-lg p-3 text-xs">
+          <span class="text-c1">def</span> <span class="text-c8">get_weather</span><span class="text-txt-body">(city):</span><br/>
+          <span class="ml-4 text-txt-body">response = requests.get(f"https://api.weather.com/{city}")</span><br/>
+          <span class="ml-4 text-txt-body">return response.json()</span>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-4 border border-c1/20 bg-c1/5 text-center">
+        <p class="text-c1 text-sm font-semibold">🌐 Your Agent → External API → Real-world info</p>
+        <p class="text-txt-muted text-xs mt-1">Examples: weather, stock prices, social media data.</p>
+      </div>
+    </section>
+
+    <!-- MCP Tools -->
+    <section id="sec-mcp" class="mb-12 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c10/20 to-c10/5 border border-c10/30 flex items-center justify-center text-c10 font-bold text-sm">4</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">🔌 MCP Tools <span class="text-c10 text-lg"></span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c10/20 glow-purple mb-6">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-plug text-c10 mr-2"></i>Model Context Protocol (MCP)</h4>
+        <p class="text-txt-body text-sm mb-4">A <span class="text-c10 font-semibold">standardized way</span> for AI systems to interact with external capabilities and context.</p>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger text-xs font-bold mb-2">Without a standard:</div>
+            <div class="code-block rounded p-2 text-[10px] text-txt-body">
+              🤖 AI → Custom API → Custom code → Custom integration<br/>
+              <span class="text-danger">Each one is different 😵</span>
+            </div>
+          </div>
+          <div class="glass-card rounded p-3 border border-success/20">
+            <div class="text-success text-xs font-bold mb-2">With MCP:</div>
+            <div class="text-center text-[10px]">
+              <span class="text-c10 font-bold">🤖 AI</span> → <span class="text-c10 font-bold">🔌 MCP</span> → <span class="text-txt-body">Files | Data | Tools</span>
+              <div class="text-success mt-1">Standard interface ✅</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-4 border border-white/5">
+        <h4 class="text-bright font-bold text-xs mb-2">MCP can provide:</h4>
+        <div class="flex flex-wrap gap-1.5">
+          <span class="tag bg-c10/10 text-c10 border border-c10/20">User info</span>
+          <span class="tag bg-c10/10 text-c10 border border-c10/20">Conversation history</span>
+          <span class="tag bg-c10/10 text-c10 border border-c10/20">External knowledge</span>
+          <span class="tag bg-c10/10 text-c10 border border-c10/20">Current state</span>
+          <span class="tag bg-c10/10 text-c10 border border-c10/20">Task-specific info</span>
+        </div>
+        <p class="text-txt-muted text-xs mt-2">Just remember: MCP = standardized way for AI to connect with external context/capabilities.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Modular Tools -->
+    <section id="sec-modular" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">5</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Why Tools Should Be Modular <span class="text-c8 text-lg">🧩</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 mb-6 border border-c8/20 glow-orange">
+        <p class="text-bright text-sm italic">"Each tool should be a self-contained module that can be easily integrated or <span class="text-c2 font-semibold">replaced</span>."</p>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <h4 class="text-danger font-bold text-sm mb-3"><i class="fas fa-times-circle mr-2"></i>Bad Architecture</h4>
+          <div class="code-block rounded p-3 text-[10px] text-txt-body">
+            Agent<br/>
+            └── Everything mixed together 😵
+          </div>
+          <p class="text-danger text-xs mt-2">Replace email provider → <span class="font-semibold">rewrite everything</span>.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border border-success/20 hover-lift glow-green">
+          <h4 class="text-success font-bold text-sm mb-3"><i class="fas fa-check-circle mr-2"></i>Good Architecture</h4>
+          <div class="text-center text-[10px]">
+            <div class="inline-block glass-card rounded px-3 py-1 border border-c1/30 text-c1 font-bold">🤖 Agent</div>
+            <div class="arrow-pulse text-c6"><i class="fas fa-arrow-down"></i></div>
+            <div class="inline-block glass-card rounded px-3 py-1 border border-c2/30 text-c2 my-1">📧 Email Tool</div>
+            <div class="arrow-pulse text-c6"><i class="fas fa-arrow-down"></i></div>
+            <div class="text-c3 text-[10px]">Swap provider</div>
+            <div class="text-success text-[10px] font-bold mt-1">Agent doesn't need rewrite ✅</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 border border-white/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-code text-c8 mr-2"></i>Simple Code Example</h4>
+        <div class="code-block rounded-lg p-4 text-xs">
+          <div class="text-c8">send_email</div><span class="text-txt-body">(</span><br/>
+          <span class="ml-4 text-c7">"customer@example.com"</span><span class="text-txt-body">,</span><br/>
+          <span class="ml-4 text-c7">"Your order has been cancelled."</span><br/>
+          <span class="text-txt-body">)</span>
+        </div>
+        <p class="text-txt-muted text-xs mt-2">The agent only needs to think: <span class="text-c8 font-semibold">"Call the tool"</span> — it doesn't need to know how the email provider works internally.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ======================== MEMORY ======================== -->
+    <section class="mb-6 scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c6/10 border border-c6/20 rounded-full px-4 py-1.5 text-c6 text-xs font-bold mb-4">
+        <i class="fas fa-memory"></i> MEMORY
+      </div>
+    </section>
+
+    <section id="sec-memory" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">6</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Memory <span class="text-c6 text-lg">💾</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 mb-6 border border-c6/20 glow-green">
+        <p class="text-txt-body text-sm">Memory allows agents to store, retrieve, maintain context, learn from interactions, and <span class="text-c6 font-semibold">improve decisions over time</span>.</p>
+      </div>
+
+      <!-- Short vs Long -->
+      <div class="grid md:grid-cols-2 gap-6 mb-6">
+        <!-- Short-term -->
+        <div class="glass-card rounded-xl p-5 border border-success/20 hover-lift glow-green">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">🟢</span>
+            <h4 class="text-bright font-bold">Short-Term Memory</h4>
+          </div>
+          <p class="text-txt-muted text-xs mb-3">Remember what is happening <span class="text-success font-semibold">right now</span>.</p>
+          <div class="glass-card rounded p-3 border border-white/5 text-xs space-y-2">
+            <div class="flex items-start gap-2"><span class="text-c7 font-semibold">Message 1:</span><span class="text-txt-body">"My name is Amit."</span></div>
+            <div class="flex items-center gap-2"><span class="text-c8 font-semibold">💾 Short-term memory stores it</span></div>
+            <div class="flex items-start gap-2"><span class="text-c7 font-semibold">Message 2:</span><span class="text-txt-body">"What is my name?"</span></div>
+            <div class="flex items-center gap-2"><span class="text-success font-semibold">🤖 "Your name is Amit."</span></div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3">Maintains context during the <span class="text-success font-semibold">current conversation/task</span>.</p>
+        </div>
+
+        <!-- Long-term -->
+        <div class="glass-card rounded-xl p-5 border border-c1/20 hover-lift glow-blue">
+          <div class="flex items-center gap-2 mb-3">
+            <span class="text-2xl">🔵</span>
+            <h4 class="text-bright font-bold">Long-Term Memory</h4>
+          </div>
+          <p class="text-txt-muted text-xs mb-3">Remember something across <span class="text-c1 font-semibold">future interactions</span>.</p>
+          <div class="glass-card rounded p-3 border border-white/5 text-xs space-y-2">
+            <div class="flex items-start gap-2"><span class="text-c3 font-semibold">Today:</span><span class="text-txt-body">"I prefer simple code examples."</span></div>
+            <div class="flex items-center gap-2"><span class="text-c6 font-semibold">💾 Database stores preference</span></div>
+            <div class="flex items-start gap-2"><span class="text-c1 font-semibold">Next week:</span><span class="text-txt-body">Agent remembers preference</span></div>
+            <div class="flex items-center gap-2"><span class="text-success font-semibold">🤖 Responds accordingly ✅</span></div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3">Uses databases, knowledge graphs, or fine-tuning.</p>
+        </div>
+      </div>
+
+      <!-- Comparison table -->
+      <div class="glass-card rounded-xl p-5 border border-white/5 mb-6">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[400px]">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-2 px-3 text-txt-muted font-bold"></th>
+                <th class="text-left py-2 px-3 text-success font-bold">🟢 Short-Term</th>
+                <th class="text-left py-2 px-3 text-c1 font-bold">🔵 Long-Term</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-white/5">
+                <td class="py-2 px-3 text-txt-muted font-semibold">Purpose</td>
+                <td class="py-2 px-3 text-txt-body">Current task</td>
+                <td class="py-2 px-3 text-txt-body">Future tasks</td>
+              </tr>
+              <tr class="border-b border-white/5">
+                <td class="py-2 px-3 text-txt-muted font-semibold">Duration</td>
+                <td class="py-2 px-3 text-txt-body">Short</td>
+                <td class="py-2 px-3 text-txt-body">Long</td>
+              </tr>
+              <tr>
+                <td class="py-2 px-3 text-txt-muted font-semibold">Storage</td>
+                <td class="py-2 px-3 text-txt-body">Context/messages</td>
+                <td class="py-2 px-3 text-txt-body">Database/knowledge store</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Rolling Window -->
+      <div class="glass-card rounded-xl p-5 border border-c8/20 bg-c8/5 mb-6">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-sync text-c8 mr-2"></i>Rolling Context Window</h4>
+        <p class="text-txt-body text-xs mb-3">Agent remembers only the latest N messages:</p>
+        <div class="text-center text-xs">
+          <div class="flex justify-center gap-1 mb-2">
+            <span class="glass-card rounded px-2 py-1 border border-danger/20 text-danger line-through opacity-50">Msg 1</span>
+            <span class="glass-card rounded px-2 py-1 border border-danger/20 text-danger line-through opacity-50">Msg 2</span>
+            <span class="glass-card rounded px-2 py-1 border border-success/20 text-success">Msg 5</span>
+            <span class="glass-card rounded px-2 py-1 border border-success/20 text-success">Msg 6</span>
+            <span class="glass-card rounded px-2 py-1 border border-success/20 text-success">Msg 7</span>
+            <span class="glass-card rounded px-2 py-1 border border-success/20 text-success">Msg 8</span>
+          </div>
+          <div class="text-txt-muted text-[10px]">As new messages arrive, old ones slide out:</div>
+          <div class="flex justify-center gap-1 mt-2 text-[10px]">
+            <span class="text-txt-muted">[1,2,3,4]</span>
+            <span class="text-txt-muted">→</span>
+            <span class="text-txt-muted">[2,3,4,5]</span>
+            <span class="text-txt-muted">→</span>
+            <span class="text-txt-muted">[3,4,5,6]</span>
+            <span class="text-txt-muted">→</span>
+            <span class="text-txt-muted">[4,5,6,7]</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memory ≠ Remember Everything -->
+      <div class="glass-card rounded-xl p-5 border border-c8/20 bg-c8/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-exclamation-triangle text-c8 mr-2"></i>Memory ≠ Remember Everything</h4>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs">
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger font-bold mb-1">Wrong approach:</div>
+            <div class="text-txt-body">100 purchase records → 😵</div>
+          </div>
+          <div class="glass-card rounded p-3 border border-success/20">
+            <div class="text-success font-bold mb-1">Right approach:</div>
+            <div class="text-txt-body">Recent + relevant → ✅</div>
+          </div>
+        </div>
+        <p class="text-txt-muted text-xs mt-2">Memory needs to distinguish <span class="text-c8 font-semibold">relevant vs irrelevant</span> info and sometimes <span class="text-c8 font-semibold">forget outdated</span> information.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ======================== ORCHESTRATION ======================== -->
+    <section class="mb-6 scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c10/10 border border-c10/20 rounded-full px-4 py-1.5 text-c10 text-xs font-bold mb-4">
+        <i class="fas fa-music"></i> ORCHESTRATION
+      </div>
+    </section>
+
+    <section id="sec-orchestration" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c10/20 to-c10/5 border border-c10/30 flex items-center justify-center text-c10 font-bold text-sm">7</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Orchestration <span class="text-c10 text-lg">🎼</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 mb-6 border border-c10/20 glow-purple">
+        <p class="text-bright text-sm italic">The logic that <span class="text-c10 font-semibold">composes, schedules, and supervises</span> multiple skills/actions so they work toward a goal.</p>
+      </div>
+
+      <!-- Conductor Analogy -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-4 text-center"><i class="fas fa-music text-c10 mr-2"></i>The Orchestra Conductor Analogy</h4>
+        <div class="grid sm:grid-cols-2 gap-6">
+          <div>
+            <div class="text-c8 font-bold text-xs mb-3 text-center">🎻 Real Orchestra</div>
+            <div class="flex justify-center gap-2 flex-wrap text-[10px]">
+              <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-2 py-1">🎻 Violin</span>
+              <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-2 py-1">🎺 Trumpet</span>
+              <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-2 py-1">🥁 Drums</span>
+              <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-2 py-1">🎹 Piano</span>
+            </div>
+            <div class="text-center text-c10 text-xs font-bold mt-2">🎼 Conductor coordinates them</div>
+          </div>
+          <div>
+            <div class="text-c1 font-bold text-xs mb-3 text-center">🤖 Agent Orchestra</div>
+            <div class="flex justify-center gap-2 flex-wrap text-[10px]">
+              <span class="bg-c1/10 text-c1 border border-c1/20 rounded px-2 py-1">🔍 Search</span>
+              <span class="bg-c2/10 text-c2 border border-c2/20 rounded px-2 py-1">🔧 Cancel</span>
+              <span class="bg-c3/10 text-c3 border border-c3/20 rounded px-2 py-1">📧 Email</span>
+            </div>
+            <div class="text-center text-c10 text-xs font-bold mt-2">🎼 Orchestrator decides when & how</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic Orchestration -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c10/20 bg-c10/5 mb-6">
+        <h4 class="text-bright font-bold mb-4 text-center"><i class="fas fa-random text-c10 mr-2"></i>Dynamic Orchestration — Path Changes</h4>
+        <div class="text-center text-xs">
+          <div class="glass-card rounded px-3 py-1.5 border border-c1/20 text-c1 inline-block">Find Order</div>
+          <div class="arrow-pulse text-c10"><i class="fas fa-arrow-down"></i></div>
+          <div class="glass-card rounded px-3 py-1.5 border border-c8/30 text-c8 inline-block my-2">Is it shipped?</div>
+          <div class="flex justify-center gap-8 mt-2 flex-wrap">
+            <div class="text-center">
+              <span class="text-success text-[10px] font-bold">NO →</span>
+              <div class="glass-card rounded px-3 py-1 border border-success/20 text-success text-[10px] mt-1">Cancel</div>
+              <div class="arrow-pulse text-success"><i class="fas fa-arrow-down"></i></div>
+              <div class="text-success text-[10px]">Confirmation</div>
+            </div>
+            <div class="text-center">
+              <span class="text-danger text-[10px] font-bold">YES →</span>
+              <div class="glass-card rounded px-3 py-1 border border-c3/20 text-c3 text-[10px] mt-1">Return process</div>
+              <div class="arrow-pulse text-c3"><i class="fas fa-arrow-down"></i></div>
+              <div class="text-c3 text-[10px]">Confirmation</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Replanning -->
+      <div class="glass-card rounded-xl p-5 border border-white/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-redo text-c3 mr-2"></i>What if Something Changes?</h4>
+        <div class="glass-card rounded p-3 border border-white/5 text-xs text-center mb-3">
+          <span class="text-txt-body">Plan: Search → Book flight → Pay</span>
+          <span class="text-danger font-bold mx-2">→</span>
+          <span class="text-danger">Flight unavailable ❌</span>
+        </div>
+        <div class="flex justify-center gap-2 flex-wrap text-xs">
+          <span class="glass-card rounded px-2 py-1 border border-danger/20 text-danger">STOP</span>
+          <span class="text-txt-muted">→</span>
+          <span class="glass-card rounded px-2 py-1 border border-c8/20 text-c8">Reconsider</span>
+          <span class="text-txt-muted">→</span>
+          <span class="glass-card rounded px-2 py-1 border border-c1/20 text-c1">Search another flight</span>
+          <span class="text-txt-muted">→</span>
+          <span class="glass-card rounded px-2 py-1 border border-success/20 text-success">Continue</span>
+        </div>
+        <p class="text-txt-muted text-xs mt-3 text-center">Agent orchestration isn't always A → B → C. It can be <span class="text-c10 font-semibold">A → B → C → fail → B → D</span>.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- ======================== DESIGN TRADE-OFFS ======================== -->
+    <section class="mb-6 scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c3/10 border border-c3/20 rounded-full px-4 py-1.5 text-c3 text-xs font-bold mb-4">
+        <i class="fas fa-balance-scale"></i> ENGINEERING CONCERNS
+      </div>
+    </section>
+
+    <!-- Trade-offs -->
+    <section id="sec-tradeoffs" class="mb-12 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c3/20 to-c3/5 border border-c3/30 flex items-center justify-center text-c3 font-bold text-sm">8</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Design Trade-offs <span class="text-c3 text-lg">⚖️</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5 mb-6">
+        <div class="flex flex-wrap justify-center gap-2 text-xs mb-4">
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">⚡ Fast</span>
+          <span class="tag bg-c8/10 text-c8 border border-c8/20">🎯 Accurate</span>
+          <span class="tag bg-c6/10 text-c6 border border-c6/20">💰 Cheap</span>
+          <span class="tag bg-c2/10 text-c2 border border-c2/20">📈 Scalable</span>
+          <span class="tag bg-c3/10 text-c3 border border-c3/20">🛡️ Reliable</span>
+        </div>
+        <p class="text-center text-txt-body text-xs">Improving one can hurt another. That's engineering.</p>
+      </div>
+
+      <!-- Speed vs Accuracy -->
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-4 border border-c1/20 hover-lift glow-blue">
+          <h4 class="text-c1 font-bold text-sm mb-2">⚡ Model A</h4>
+          <div class="space-y-1 text-xs text-txt-body">
+            <div>Response: <span class="text-success font-semibold">0.5 seconds</span></div>
+            <div>Accuracy: <span class="text-c8 font-semibold">85%</span></div>
+          </div>
+          <p class="text-txt-muted text-[10px] mt-2">Good for: autonomous driving (speed critical)</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c3/20 hover-lift glow-orange">
+          <h4 class="text-c3 font-bold text-sm mb-2">🧠 Model B</h4>
+          <div class="space-y-1 text-xs text-txt-body">
+            <div>Response: <span class="text-danger font-semibold">8 seconds</span></div>
+            <div>Accuracy: <span class="text-success font-semibold">98%</span></div>
+          </div>
+          <p class="text-txt-muted text-[10px] mt-2">Good for: legal analysis (accuracy critical)</p>
+        </div>
+      </div>
+
+      <!-- Hybrid -->
+      <div class="glass-card rounded-xl p-5 border border-c6/20 bg-c6/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-random text-c6 mr-2"></i>Hybrid Approach: Fast First, Accurate Later</h4>
+        <div class="flex flex-col items-center text-xs">
+          <div class="glass-card rounded px-3 py-1 border border-c7/20 text-c7">User asks question</div>
+          <div class="arrow-pulse text-c6"><i class="fas fa-arrow-down"></i></div>
+          <div class="glass-card rounded px-3 py-1 border border-success/20 text-success my-1">🤏 Small model → Quick recommendation</div>
+          <div class="arrow-pulse text-c6"><i class="fas fa-arrow-down"></i></div>
+          <div class="glass-card rounded px-3 py-1 border border-c1/20 text-c1 my-1">🧠 Large model → Verify</div>
+          <div class="arrow-pulse text-c6"><i class="fas fa-arrow-down"></i></div>
+          <div class="glass-card rounded px-3 py-1 border border-success/20 text-success mt-1">✅ Final answer</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Scalability -->
+    <section id="sec-scalability" class="mb-12 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c9/20 to-c9/5 border border-c9/30 flex items-center justify-center text-c9 font-bold text-sm">9</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Scalability <span class="text-c9 text-lg">📈</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5 mb-6">
+        <div class="grid sm:grid-cols-3 gap-3 text-center text-xs mb-4">
+          <div class="glass-card rounded p-3 border border-success/20">
+            <div class="text-success font-bold">Normal</div>
+            <div class="text-txt-body">10 req/min</div>
+          </div>
+          <div class="glass-card rounded p-3 border border-c8/20">
+            <div class="text-c8 font-bold">Growing</div>
+            <div class="text-txt-body">1,000 req/min</div>
+          </div>
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger font-bold">Burst</div>
+            <div class="text-txt-body">10,000 req/min 😱</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Dynamic GPU -->
+      <div class="glass-card rounded-xl p-5 border border-c9/20 bg-c9/5 mb-4">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-microchip text-c9 mr-2"></i>Dynamic GPU Allocation</h4>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs">
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger font-bold mb-1">❌ Static:</div>
+            <div class="text-txt-body">Agent A → GPU 1 (always)</div>
+            <div class="text-txt-body">Agent B → GPU 2 (always)</div>
+          </div>
+          <div class="glass-card rounded p-3 border border-success/20">
+            <div class="text-success font-bold mb-1">✅ Dynamic:</div>
+            <div class="text-txt-body">GPU Pool → Assign on demand</div>
+            <div class="text-txt-body">Busy? More resources. Idle? Free them.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Parallel -->
+      <div class="glass-card rounded-xl p-5 border border-white/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-random text-c1 mr-2"></i>Async Parallel Execution</h4>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs text-center">
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger font-bold mb-2">Sequential (~15s)</div>
+            <div class="text-txt-body">A(5s) → B(5s) → C(5s)</div>
+          </div>
+          <div class="glass-card rounded p-3 border border-success/20 glow-green">
+            <div class="text-success font-bold mb-2">Parallel (~5s) ⚡</div>
+            <div class="text-txt-body flex justify-center gap-1">
+              <span>┌→ A</span>
+              <span>├→ B</span>
+              <span>└→ C</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Reliability -->
+    <section id="sec-reliability" class="mb-12 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c3/20 to-c3/5 border border-c3/30 flex items-center justify-center text-c3 font-bold text-sm">10</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Reliability <span class="text-c3 text-lg">🛡️</span></h2>
+      </div>
+
+      <!-- Fault Tolerance -->
+      <div class="glass-card rounded-xl p-5 mb-6 border border-white/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-shield-alt text-c3 mr-2"></i>Fault Tolerance</h4>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs">
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger font-bold mb-1">Bad: 💥 Crash</div>
+            <div class="text-txt-body">API fails → Agent dies</div>
+          </div>
+          <div class="glass-card rounded p-3 border border-success/20">
+            <div class="text-success font-bold mb-1">Resilient:</div>
+            <div class="text-txt-body">API fails → Retry → Fallback → 👤 Human</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Testing -->
+      <div class="glass-card rounded-xl p-5 border border-c8/20 bg-c8/5 mb-6">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-flask text-c8 mr-2"></i>Testing — You Must Test All Cases</h4>
+        <div class="flex flex-wrap justify-center gap-2 text-xs">
+          <span class="tag bg-success/10 text-success border border-success/20">Normal input ✅</span>
+          <span class="tag bg-success/10 text-success border border-success/20">Wrong input ✅</span>
+          <span class="tag bg-success/10 text-success border border-success/20">Empty input ✅</span>
+          <span class="tag bg-success/10 text-success border border-success/20">Unexpected ✅</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">API failure ✅</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">Tool failure ✅</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">Huge workload ✅</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">Malicious ✅</span>
+        </div>
+        <div class="glass-card rounded-lg p-3 border border-white/5 mt-4 text-xs">
+          <div class="text-txt-body mb-2">You shouldn't only test <span class="text-success font-semibold">divide(10, 2)</span>. You should also test <span class="text-danger font-semibold">divide(10, 0)</span> — because 💥.</div>
+        </div>
+      </div>
+
+      <!-- Monitoring -->
+      <div class="glass-card rounded-xl p-5 border border-white/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-chart-line text-c1 mr-2"></i>Testing vs Monitoring</h4>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs">
+          <div class="glass-card rounded p-3 border border-c8/20 text-center">
+            <div class="text-c8 font-bold mb-1">🧪 Before Production</div>
+            <div class="text-txt-body">Testing</div>
+          </div>
+          <div class="glass-card rounded p-3 border border-c1/20 text-center">
+            <div class="text-c1 font-bold mb-1">📊 After Production</div>
+            <div class="text-txt-body">Monitoring</div>
+          </div>
+        </div>
+        <div class="flex flex-wrap justify-center gap-2 text-xs mt-3">
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">Tool success rate</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">Avg latency</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">Token usage</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">Error rate</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">Task success rate</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Cost -->
+    <section id="sec-cost" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">11</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Cost <span class="text-c6 text-lg">💰</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-calculator text-c6 mr-2"></i>Cost Sources</h4>
+        <div class="flex flex-wrap justify-center gap-2 text-xs">
+          <span class="tag bg-c9/10 text-c9 border border-c9/20">🧠 Model API</span>
+          <span class="tag bg-c6/10 text-c6 border border-c6/20">💾 Storage</span>
+          <span class="tag bg-c3/10 text-c3 border border-c3/20">🖥️ GPU</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">🌐 Network</span>
+          <span class="tag bg-c2/10 text-c2 border border-c2/20">📊 Monitoring</span>
+          <span class="tag bg-c7/10 text-c7 border border-c7/20">👨‍💻 Development</span>
+          <span class="tag bg-c8/10 text-c8 border border-c8/20">🔧 Maintenance</span>
+        </div>
+      </div>
+
+      <!-- Cost Example -->
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-5 border border-success/20 hover-lift glow-green">
+          <h4 class="text-success font-bold text-sm mb-2">🤏 Small Model</h4>
+          <div class="code-block rounded p-2 text-xs text-txt-body">
+            100,000 × ₹0.05 = <span class="text-success font-bold">₹5,000</span>
+          </div>
+        </div>
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <h4 class="text-danger font-bold text-sm mb-2">🧠 Large Model</h4>
+          <div class="code-block rounded p-2 text-xs text-txt-body">
+            100,000 × ₹1 = <span class="text-danger font-bold">₹100,000</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Cost vs Value -->
+      <div class="glass-card rounded-xl p-5 border border-c6/20 bg-c6/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-balance-scale text-c6 mr-2"></i>Cost vs Value</h4>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs">
+          <div class="glass-card rounded p-3 border border-success/20">
+            <div class="text-success font-bold mb-1">👍 Worth it</div>
+            <div class="text-txt-body">Saves ₹10 lakh/month · Costs ₹1 lakh/month</div>
+          </div>
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger font-bold mb-1">😬 Not worth it</div>
+            <div class="text-txt-body">Saves ₹5,000/month · Costs ₹50,000/month</div>
+          </div>
+        </div>
+        <p class="text-center text-txt-body text-xs mt-3">The cost of the agent should be <span class="text-c6 font-semibold">justified by the value it creates</span>.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Summary -->
+    <section id="sec-summary" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">⭐</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Summary — 9 Concepts to Remember <span class="text-c8 text-lg">🏆</span></h2>
+      </div>
+
+      <!-- The Big Picture -->
+      <div class="glass-card rounded-xl p-5 sm:p-8 border border-c8/20 bg-c8/5 mb-6 animate-pulse-glow">
+        <div class="text-center">
+          <div class="inline-block bg-gradient-to-r from-c1/20 to-c2/20 border border-c2/30 rounded-xl px-8 py-3 mb-4">
+            <span class="text-bright font-bold text-lg"><i class="fas fa-robot mr-2 text-c1"></i>AGENT</span>
+          </div>
+          <div class="flex justify-center gap-3 flex-wrap mt-2 mb-3">
+            <span class="text-xs bg-c9/10 text-c9 border border-c9/20 rounded-lg px-4 py-2"><i class="fas fa-brain mr-1"></i>Model</span>
+            <span class="text-xs bg-c2/10 text-c2 border border-c2/20 rounded-lg px-4 py-2"><i class="fas fa-wrench mr-1"></i>Tools</span>
+            <span class="text-xs bg-c6/10 text-c6 border border-c6/20 rounded-lg px-4 py-2"><i class="fas fa-memory mr-1"></i>Memory</span>
+          </div>
+          <div class="arrow-pulse text-c10"><i class="fas fa-arrow-down text-lg"></i></div>
+          <div class="inline-block glass-card rounded-lg px-6 py-2 border border-c10/30 my-2">
+            <span class="text-c10 font-bold"><i class="fas fa-music mr-2"></i>Orchestration</span>
+          </div>
+          <div class="flex justify-center gap-3 flex-wrap mt-3">
+            <span class="text-xs bg-c8/10 text-c8 border border-c8/20 rounded-lg px-3 py-1.5"><i class="fas fa-flask mr-1"></i>Evaluation</span>
+            <span class="text-xs bg-c1/10 text-c1 border border-c1/20 rounded-lg px-3 py-1.5"><i class="fas fa-chart-line mr-1"></i>Monitoring</span>
+            <span class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded-lg px-3 py-1.5"><i class="fas fa-shield-alt mr-1"></i>Reliability</span>
+            <span class="text-xs bg-c9/10 text-c9 border border-c9/20 rounded-lg px-3 py-1.5"><i class="fas fa-chart-line mr-1"></i>Scalability</span>
+            <span class="text-xs bg-c6/10 text-c6 border border-c6/20 rounded-lg px-3 py-1.5"><i class="fas fa-dollar-sign mr-1"></i>Cost</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- 9 Concepts -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5 mb-6">
+        <div class="overflow-x-auto">
+          <table class="w-full text-xs min-w-[400px]">
+            <thead>
+              <tr class="border-b border-white/10">
+                <th class="text-left py-2 px-3 text-txt-muted font-bold">Concept</th>
+                <th class="text-left py-2 px-3 text-txt-muted font-bold">Simple Meaning</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr class="border-b border-white/5"><td class="py-2 px-3 text-c2 font-bold">🔧 Tool</td><td class="py-2 px-3 text-txt-body">Something the agent can use to perform an action</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-3 text-c6 font-bold">🏠 Local tool</td><td class="py-2 px-3 text-txt-body">Your own function/code</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-3 text-c1 font-bold">🌐 API tool</td><td class="py-2 px-3 text-txt-body">External service call</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-3 text-c10 font-bold">🔌 MCP</td><td class="py-2 px-3 text-txt-body">Standardized external context/capabilities</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-3 text-success font-bold">💾 Short-term</td><td class="py-2 px-3 text-txt-body">Current conversation/task</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-3 text-c1 font-bold">📚 Long-term</td><td class="py-2 px-3 text-txt-body">Useful info for the future</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-3 text-c10 font-bold">🎼 Orchestration</td><td class="py-2 px-3 text-txt-body">What happens, in what order</td></tr>
+              <tr class="border-b border-white/5"><td class="py-2 px-3 text-c3 font-bold">🛡️ Reliability</td><td class="py-2 px-3 text-txt-body">Keep working despite failures</td></tr>
+              <tr><td class="py-2 px-3 text-c9 font-bold">📈 Scalability</td><td class="py-2 px-3 text-txt-body">Handle increasing workload</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- The Big Engineering Lesson -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c8/20 bg-c8/5 text-center">
+        <h3 class="gradient-text-orange font-bold text-lg mb-3">
+          The Big Engineering Lesson
+        </h3>
+        <div class="glass-card rounded-xl p-5 border border-c8/30 max-w-2xl mx-auto">
+          <p class="text-bright font-bold text-base sm:text-lg leading-relaxed">
+            A good agent isn't just an LLM. It's an <span class="text-c9">LLM</span> + <span class="text-c2">tools</span> + <span class="text-c6">memory</span> + <span class="text-c10">orchestration</span> + <span class="text-c8">testing</span> + <span class="text-c1">monitoring</span> + <span class="text-c3">infrastructure</span>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <footer class="text-center py-8">
+      <div class="glass-card rounded-xl p-6 border border-white/5 inline-block">
+        <div class="text-txt-muted text-sm mb-2">
+          <i class="fas fa-tools mr-2 text-c8"></i>Chapter 2 — Tools, Memory, Orchestration & Engineering
+        </div>
+        <div class="text-txt-muted text-xs">
+          Agentic AI Study Notes <span class="text-c2 mx-1">•</span> Built for revision & understanding
+        </div>
+        <div class="flex justify-center gap-3 mt-4">
+          <a href="#top" class="text-c1 hover:text-c2 transition text-sm"><i class="fas fa-arrow-up"></i></a>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+
+</body>
+</html>

@@ -1,0 +1,1279 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 1 — Introduction to Agents</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: { primary: '#0f0f1a', card: '#1a1a2e', hover: '#252542', accent: '#16213e' },
+            txt: { body: '#c4c4d4', bright: '#e8e8f0', muted: '#8888a4' },
+            c1: '#00d2ff', c2: '#a855f7', c3: '#f97316', c4: '#22d3ee', c5: '#fb923c',
+            c6: '#34d399', c7: '#f472b6', c8: '#facc15', c9: '#38bdf8', c10: '#c084fc',
+            success: '#4ade80', warn: '#fbbf24', danger: '#f87171', info: '#60a5fa',
+          },
+          fontFamily: {
+            mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'],
+          },
+          animation: {
+            'fade-up': 'fadeUp 0.6s ease-out forwards',
+            'fade-in': 'fadeIn 0.5s ease-out forwards',
+            'slide-left': 'slideLeft 0.5s ease-out forwards',
+            'slide-right': 'slideRight 0.5s ease-out forwards',
+            'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+            'float': 'float 3s ease-in-out infinite',
+            'bounce-slow': 'bounceSlow 2s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            fadeIn: { '0%': { opacity: '0' }, '100%': { opacity: '1' } },
+            slideLeft: { '0%': { opacity: '0', transform: 'translateX(30px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+            slideRight: { '0%': { opacity: '0', transform: 'translateX(-30px)' }, '100%': { opacity: '1', transform: 'translateX(0)' } },
+            pulseGlow: { '0%, 100%': { boxShadow: '0 0 5px rgba(0,210,255,0.3)' }, '50%': { boxShadow: '0 0 25px rgba(0,210,255,0.6)' } },
+            float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+            bounceSlow: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-5px)' } },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { background: #0f0f1a; color: #c4c4d4; font-family: 'Inter', sans-serif; overflow-x: hidden; }
+    .gradient-text { background: linear-gradient(135deg, #00d2ff, #a855f7); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gradient-text-2 { background: linear-gradient(135deg, #f97316, #f472b6); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .gradient-text-3 { background: linear-gradient(135deg, #34d399, #38bdf8); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+    .glass-card { background: rgba(26, 26, 46, 0.7); backdrop-filter: blur(12px); border: 1px solid rgba(255,255,255,0.06); }
+    .glow-blue { box-shadow: 0 0 20px rgba(0, 210, 255, 0.15); }
+    .glow-purple { box-shadow: 0 0 20px rgba(168, 85, 247, 0.15); }
+    .glow-orange { box-shadow: 0 0 20px rgba(249, 115, 22, 0.15); }
+    .glow-green { box-shadow: 0 0 20px rgba(52, 211, 153, 0.15); }
+    .glow-pink { box-shadow: 0 0 20px rgba(244, 114, 182, 0.15); }
+    .border-glow { border: 1px solid rgba(0, 210, 255, 0.2); }
+    .code-block { background: #12121f; border: 1px solid rgba(255,255,255,0.08); font-family: 'JetBrains Mono', monospace; }
+    .flow-line { position: relative; }
+    .flow-line::before { content: ''; position: absolute; left: 19px; top: 40px; bottom: -20px; width: 2px; background: linear-gradient(to bottom, #00d2ff, #a855f7); opacity: 0.4; }
+    .flow-node { position: relative; padding-left: 50px; padding-bottom: 24px; }
+    .flow-node::before { content: ''; position: absolute; left: 12px; top: 8px; width: 16px; height: 16px; border-radius: 50%; background: linear-gradient(135deg, #00d2ff, #a855f7); box-shadow: 0 0 10px rgba(0,210,255,0.5); }
+    .flow-node:last-child::before { background: linear-gradient(135deg, #4ade80, #22d3ee); }
+    .flow-node:last-child::before, .flow-node:last-child .flow-line::before { display: none; }
+    .section-divider { height: 1px; background: linear-gradient(90deg, transparent, rgba(0,210,255,0.3), rgba(168,85,247,0.3), transparent); margin: 3rem 0; }
+    .hover-lift { transition: all 0.3s ease; }
+    .hover-lift:hover { transform: translateY(-4px); box-shadow: 0 8px 30px rgba(0,0,0,0.3); }
+    .scroll-reveal { opacity: 0; transform: translateY(30px); transition: all 0.6s ease; }
+    .scroll-reveal.visible { opacity: 1; transform: translateY(0); }
+    .arrow-pulse { animation: arrowPulse 1.5s ease-in-out infinite; }
+    @keyframes arrowPulse { 0%, 100% { transform: translateY(0); opacity: 0.5; } 50% { transform: translateY(4px); opacity: 1; } }
+    .spectrum-bar { background: linear-gradient(90deg, #f87171, #fbbf24, #34d399, #38bdf8, #a855f7); border-radius: 9999px; }
+    ::-webkit-scrollbar { width: 6px; }
+    ::-webkit-scrollbar-track { background: #0f0f1a; }
+    ::-webkit-scrollbar-thumb { background: #2a2a4a; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #3a3a5a; }
+    .toc-link { transition: all 0.2s ease; border-left: 2px solid transparent; }
+    .toc-link:hover { border-left-color: #00d2ff; background: rgba(0,210,255,0.05); }
+    .stat-card { background: linear-gradient(135deg, rgba(26,26,46,0.9), rgba(15,15,26,0.9)); border: 1px solid rgba(255,255,255,0.06); }
+    .typing-text { border-right: 2px solid #00d2ff; animation: blink 1s step-end infinite; }
+    @keyframes blink { 50% { border-color: transparent; } }
+    .tag { display: inline-block; padding: 2px 10px; border-radius: 9999px; font-size: 0.7rem; font-weight: 600; letter-spacing: 0.05em; }
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <!-- Floating Particles Background -->
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute w-2 h-2 bg-c1 rounded-full opacity-20" style="top:10%; left:20%; animation: float 4s ease-in-out infinite;"></div>
+    <div class="absolute w-3 h-3 bg-c2 rounded-full opacity-15" style="top:30%; left:80%; animation: float 5s ease-in-out infinite 1s;"></div>
+    <div class="absolute w-2 h-2 bg-c3 rounded-full opacity-20" style="top:60%; left:15%; animation: float 3s ease-in-out infinite 0.5s;"></div>
+    <div class="absolute w-2 h-2 bg-c6 rounded-full opacity-15" style="top:80%; left:70%; animation: float 4.5s ease-in-out infinite 2s;"></div>
+    <div class="absolute w-1 h-1 bg-c7 rounded-full opacity-20" style="top:45%; left:50%; animation: float 3.5s ease-in-out infinite 1.5s;"></div>
+  </div>
+
+  <!-- Navigation -->
+  <nav class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-c1 to-c2 flex items-center justify-center text-white font-bold text-sm">
+          <i class="fas fa-robot"></i>
+        </div>
+        <div>
+          <span class="text-bright font-bold text-sm sm:text-base">Chapter 1</span>
+          <span class="text-txt-muted text-xs block sm:inline sm:ml-2">Introduction to Agents</span>
+        </div>
+      </div>
+      <a href="#top" class="text-txt-muted hover:text-c1 transition text-sm hidden sm:block">
+        <i class="fas fa-arrow-up mr-1"></i>Back to top
+      </a>
+    </div>
+  </nav>
+
+  <!-- Table of Contents (Sidebar - Desktop) -->
+  <aside class="hidden xl:block fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] overflow-y-auto z-40 p-4 pr-2">
+    <div class="glass-card rounded-xl p-4 border border-white/5">
+      <h3 class="text-xs font-bold text-txt-muted uppercase tracking-wider mb-3"><i class="fas fa-list-ul mr-2 text-c1"></i>Contents</h3>
+      <div class="space-y-1 text-xs">
+        <a href="#sec1" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">1. Tech Transformation</a>
+        <a href="#sec2" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">2. Traditional vs Agent</a>
+        <a href="#sec3" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">3. Interpret & Adapt</a>
+        <a href="#sec4" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">4. Defining AI Agents</a>
+        <a href="#sec5" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">5. Term Dilution</a>
+        <a href="#sec6" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">6. Agent vs Workflow</a>
+        <a href="#sec7" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">7. Agency Spectrum</a>
+        <a href="#sec8" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">8. True Agent Test</a>
+        <a href="#sec9" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">9. Foundation Models</a>
+        <a href="#sec10" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">10. Orchestration</a>
+        <a href="#sec11" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">11. Agentic System</a>
+        <a href="#sec12" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">12. MCP & Multi-Agent</a>
+        <a href="#sec13" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">13. Responsibility</a>
+        <a href="#sec14" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">14. Pretraining Rev</a>
+        <a href="#sec15" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">15. Lowered Barrier</a>
+        <a href="#sec16" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">16. Agent Types</a>
+        <a href="#sec17" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">17. Final Mental Model</a>
+        <a href="#sec18" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg">18. 7 Key Ideas</a>
+      </div>
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-20 pb-20 xl:ml-64" id="top">
+
+    <!-- Hero Section -->
+    <section class="pt-10 pb-8 text-center scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c1/10 border border-c1/20 rounded-full px-4 py-1.5 text-c1 text-xs font-semibold mb-6">
+        <i class="fas fa-book-open"></i> Chapter 1 — Deep Dive
+      </div>
+      <h1 class="text-4xl sm:text-5xl lg:text-6xl font-black mb-4 leading-tight">
+        <span class="gradient-text">Introduction to</span><br/>
+        <span class="text-bright">Agents</span>
+        <span class="inline-block ml-2 animate-float"><i class="fas fa-robot text-c2"></i></span>
+      </h1>
+      <p class="text-txt-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+        Understanding autonomous AI systems — from definitions to architecture, from single agents to agentic systems.
+      </p>
+      <div class="flex flex-wrap justify-center gap-3 mt-6">
+        <span class="tag bg-c1/10 text-c1 border border-c1/20"><i class="fas fa-brain mr-1"></i> AI Agents</span>
+        <span class="tag bg-c2/10 text-c2 border border-c2/20"><i class="fas fa-code mr-1"></i> Orchestration</span>
+        <span class="tag bg-c3/10 text-c3 border border-c3/20"><i class="fas fa-wrench mr-1"></i> Tools</span>
+        <span class="tag bg-c6/10 text-c6 border border-c6/20"><i class="fas fa-project-diagram mr-1"></i> Architecture</span>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 1: Tech Transformation -->
+    <section id="sec1" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c1/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">1</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Tech Transformation</h2>
+      </div>
+
+      <blockquote class="glass-card rounded-xl p-5 mb-6 border-l-4 border-c1 glow-blue">
+        <p class="text-c1/90 italic text-sm sm:text-base leading-relaxed">
+          "We are witnessing a profound technological transformation driven by autonomous agents — intelligent software systems capable of independent reasoning, decision-making, and interacting effectively within dynamic environments."
+        </p>
+        <cite class="text-txt-muted text-xs mt-2 block">— Book Definition</cite>
+      </blockquote>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 mb-6 border border-white/5">
+        <h3 class="text-lg font-bold text-c8 mb-3"><i class="fas fa-lightbulb mr-2 text-c8"></i>In Simple English</h3>
+        <p class="text-txt-body leading-relaxed">
+          AI is moving from software that <span class="text-bright font-semibold">waits for exact instructions</span> → software that can <span class="text-c1 font-semibold">figure out what needs to be done</span> and <span class="text-c6 font-semibold">take actions itself</span>.
+        </p>
+      </div>
+
+      <!-- Traditional Flow -->
+      <div class="grid md:grid-cols-2 gap-6">
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-cog text-txt-muted"></i>
+            <h4 class="font-bold text-bright">Traditional Software</h4>
+            <span class="tag bg-c3/10 text-c3 border border-c3/20 ml-auto">Fixed</span>
+          </div>
+          <div class="flow-line">
+            <div class="flow-node"><span class="text-c3 text-sm font-semibold">User</span><br/><span class="text-txt-muted text-xs">Click "Buy"</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Backend receives request</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Check inventory</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Create order</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Charge payment</span></div>
+            <div class="flow-node"><span class="text-c6 text-sm font-semibold">Send email</span></div>
+          </div>
+          <p class="text-txt-muted text-xs mt-2">Every step is <span class="text-c3 font-semibold">explicitly programmed</span>.</p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-c1/20 hover-lift glow-blue">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-robot text-c1"></i>
+            <h4 class="font-bold text-bright">Agent-Based</h4>
+            <span class="tag bg-c1/10 text-c1 border border-c1/20 ml-auto">Dynamic</span>
+          </div>
+          <div class="text-center py-2">
+            <div class="inline-block glass-card rounded-lg px-4 py-2 border border-c3/30 mb-3">
+              <span class="text-c3 text-xs font-semibold">User says:</span><br/>
+              <span class="text-bright text-sm">"Find me the cheapest laptop under ₹70K"</span>
+            </div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="glass-card rounded-lg px-4 py-3 border border-c1/30 my-3">
+              <span class="text-c1 font-bold text-sm"><i class="fas fa-robot mr-1"></i> Agent</span>
+            </div>
+            <div class="flex justify-center gap-3 mt-2 flex-wrap">
+              <span class="text-xs bg-c2/10 text-c2 border border-c2/20 rounded-lg px-3 py-1.5"><i class="fas fa-search mr-1"></i>Search</span>
+              <span class="text-xs bg-c6/10 text-c6 border border-c6/20 rounded-lg px-3 py-1.5"><i class="fas fa-balance-scale mr-1"></i>Compare</span>
+              <span class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded-lg px-3 py-1.5"><i class="fas fa-star mr-1"></i>Reviews</span>
+            </div>
+            <div class="arrow-pulse text-c1 mt-2"><i class="fas fa-arrow-down"></i></div>
+            <div class="inline-block bg-success/10 text-success border border-success/30 rounded-lg px-4 py-2 mt-2 text-sm font-semibold">
+              <i class="fas fa-check-circle mr-1"></i>Make decision & purchase
+            </div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3 text-center">Agent <span class="text-c1 font-semibold">determines what steps are necessary</span>.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 2: Interpret, Adapt, Perform -->
+    <section id="sec3" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c2/20 to-c2/5 border border-c2/30 flex items-center justify-center text-c2 font-bold text-sm">2</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Interpret, Adapt, Perform</h2>
+      </div>
+
+      <blockquote class="glass-card rounded-xl p-5 mb-6 border-l-4 border-c2 glow-purple">
+        <p class="text-c2/90 italic text-sm sm:text-base leading-relaxed">
+          "Agents can interpret contexts, adapt to changing scenarios, and perform sophisticated actions with minimal human oversight."
+        </p>
+      </blockquote>
+
+      <div class="grid sm:grid-cols-3 gap-4">
+        <!-- Interpret Context -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-c1/10 flex items-center justify-center text-c1 text-xl mb-4">
+            <i class="fas fa-puzzle-piece"></i>
+          </div>
+          <h4 class="text-bright font-bold mb-2">A. Interpret Context</h4>
+          <div class="code-block rounded-lg p-3 text-xs mb-3">
+            <span class="text-txt-muted">Input:</span> <span class="text-c8">temperature = 40</span><br/>
+            <span class="text-txt-muted">Traditional:</span> <span class="text-danger">Doesn't understand</span><br/>
+            <span class="text-txt-muted">Agent:</span> <span class="text-success">"40°C is extremely hot. Need cooling advice."</span>
+          </div>
+          <p class="text-txt-muted text-xs"><span class="text-c1 font-semibold">Context</span> changes interpretation.</p>
+        </div>
+
+        <!-- Adapt -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-c6/10 flex items-center justify-center text-c6 text-xl mb-4">
+            <i class="fas fa-sync-alt"></i>
+          </div>
+          <h4 class="text-bright font-bold mb-2">B. Adapt</h4>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center gap-2"><span class="text-success"><i class="fas fa-check"></i></span><span class="text-txt-body">Laptop A → Out of stock</span><span class="text-danger">❌</span></div>
+            <div class="flex items-center gap-2"><span class="text-warn"><i class="fas fa-arrow-right"></i></span><span class="text-txt-body">Laptop B → Over budget</span><span class="text-danger">❌</span></div>
+            <div class="flex items-center gap-2"><span class="text-success"><i class="fas fa-arrow-right"></i></span><span class="text-txt-body">Laptop C → Perfect</span><span class="text-success">✅</span></div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3">Agent <span class="text-c6 font-semibold">tries another strategy</span>.</p>
+        </div>
+
+        <!-- Perform Actions -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="w-12 h-12 rounded-xl bg-c3/10 flex items-center justify-center text-c3 text-xl mb-4">
+            <i class="fas fa-tools"></i>
+          </div>
+          <h4 class="text-bright font-bold mb-2">C. Perform Actions</h4>
+          <div class="space-y-1.5 text-xs">
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-search text-c1 w-4"></i> Search Tool</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-database text-c2 w-4"></i> Database Tool</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-envelope text-c3 w-4"></i> Email Tool</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fab fa-github text-bright w-4"></i> GitHub Tool</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-globe text-c4 w-4"></i> Browser Tool</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-calculator text-c8 w-4"></i> Calculator</div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3">LLM <span class="text-c3 font-semibold">decides which tool to use</span>.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 3: Defining AI Agents -->
+    <section id="sec4" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">3</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Defining AI Agents</h2>
+      </div>
+
+      <blockquote class="glass-card rounded-xl p-5 mb-6 border-l-4 border-c6 glow-green">
+        <p class="text-c6/90 italic text-sm sm:text-base leading-relaxed">
+          "Autonomous agents are intelligent systems designed to independently analyze data, interpret their environment, and make context-driven decisions."
+        </p>
+      </blockquote>
+
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-chart-bar text-c1 text-lg"></i>
+            <h4 class="text-bright font-bold">Analyze Data</h4>
+          </div>
+          <div class="flex flex-wrap gap-2 text-xs">
+            <span class="bg-c1/10 text-c1 border border-c1/20 rounded px-2 py-1">Email</span>
+            <span class="bg-c2/10 text-c2 border border-c2/20 rounded px-2 py-1">PDF</span>
+            <span class="bg-c3/10 text-c3 border border-c3/20 rounded px-2 py-1">Database</span>
+            <span class="bg-c6/10 text-c6 border border-c6/20 rounded px-2 py-1">API</span>
+            <span class="bg-c7/10 text-c7 border border-c7/20 rounded px-2 py-1">Web page</span>
+            <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-2 py-1">Image</span>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-globe text-c3 text-lg"></i>
+            <h4 class="text-bright font-bold">Interpret Environment</h4>
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center gap-2 text-txt-body"><i class="fab fa-github text-bright w-4"></i> GitHub repo</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-code text-c2 w-4"></i> Existing code</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-vial text-c6 w-4"></i> Test results</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-exclamation-triangle text-c3 w-4"></i> Build errors</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-bug text-danger w-4"></i> Issue description</div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-brain text-c2 text-lg"></i>
+            <h4 class="text-bright font-bold">Context-Driven Decisions</h4>
+          </div>
+          <div class="code-block rounded-lg p-3 text-xs space-y-1">
+            <div><span class="text-danger">❌ npm test → 3 failed</span></div>
+            <div class="text-txt-body">→ Read failing tests</div>
+            <div class="text-txt-body">→ Inspect source code</div>
+            <div class="text-txt-body">→ Find bug & fix</div>
+            <div class="text-txt-body">→ Run tests again</div>
+            <div><span class="text-success">✅ Tests pass → Done</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 4: Term Dilution Warning -->
+    <section id="sec5" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-danger/20 to-danger/5 border border-danger/30 flex items-center justify-center text-danger font-bold text-sm">4</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Dilution Warning</h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-danger/20 bg-danger/5 mb-6">
+        <div class="flex items-start gap-3">
+          <i class="fas fa-exclamation-triangle text-danger text-xl mt-1"></i>
+          <div>
+            <h4 class="text-bright font-bold mb-2">"The meaning has become diluted..."</h4>
+            <p class="text-txt-body text-sm leading-relaxed">
+              Everyone is calling everything an <span class="text-c1 font-semibold">"AI agent"</span> now. But many things marketed as agents aren't particularly autonomous.
+            </p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-times-circle text-danger"></i>
+            <h4 class="text-danger font-bold">NOT an Agent</h4>
+          </div>
+          <div class="code-block rounded-lg p-3 text-xs">
+            <span class="text-txt-body">User → LLM → Generate response</span>
+          </div>
+          <p class="text-txt-muted text-xs mt-2">Just a <span class="text-danger font-semibold">single LLM call</span>. No decision-making.</p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-times-circle text-danger"></i>
+            <h4 class="text-danger font-bold">NOT an Agent</h4>
+          </div>
+          <div class="code-block rounded-lg p-3 text-xs">
+            <span class="text-txt-body">Step 1 → Step 2 → Step 3 → Step 4</span>
+          </div>
+          <p class="text-txt-muted text-xs mt-2">Fixed sequence = <span class="text-c3 font-semibold">workflow</span>, not agent.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 5: Agent vs Workflow -->
+    <section id="sec6" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c3/20 to-c3/5 border border-c3/30 flex items-center justify-center text-c3 font-bold text-sm">5</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Agent vs Workflow <span class="text-danger text-lg">🔥</span></h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Workflow -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-sitemap text-c3"></i>
+            <h4 class="text-bright font-bold">Traditional Workflow</h4>
+          </div>
+          <div class="flow-line">
+            <div class="flow-node"><span class="text-c6 text-sm font-semibold">START</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Get customer</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Check balance</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">If balance &gt; 0</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Process payment</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Send email</span></div>
+            <div class="flow-node"><span class="text-c6 text-sm font-semibold">END</span></div>
+          </div>
+          <p class="text-txt-muted text-xs mt-2"><span class="text-c3 font-semibold">The developer determines the path.</span></p>
+        </div>
+
+        <!-- Agent -->
+        <div class="glass-card rounded-xl p-5 border border-c1/20 hover-lift glow-blue">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-robot text-c1"></i>
+            <h4 class="text-bright font-bold">Agent-Based</h4>
+          </div>
+          <div class="text-center py-2">
+            <div class="glass-card rounded-lg px-4 py-2 border border-c1/30 mb-2">
+              <span class="text-c1 text-sm font-semibold"><i class="fas fa-robot mr-1"></i> Agent</span>
+            </div>
+            <div class="text-xs text-txt-body mb-2">Understand objective → Observe state → Decide</div>
+            <div class="flex justify-center gap-3 flex-wrap mb-3">
+              <span class="text-xs bg-c2/10 text-c2 border border-c2/20 rounded-lg px-3 py-1.5">Search</span>
+              <span class="text-xs bg-c6/10 text-c6 border border-c6/20 rounded-lg px-3 py-1.5">DB</span>
+              <span class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded-lg px-3 py-1.5">API</span>
+            </div>
+            <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down"></i></div>
+            <div class="text-xs text-txt-body mt-2 mb-2">Observe result → Decide again</div>
+            <div class="inline-block bg-success/10 text-success border border-success/30 rounded-lg px-4 py-2 text-sm font-semibold">
+              <i class="fas fa-check-circle mr-1"></i>DONE
+            </div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3"><span class="text-c1 font-semibold">Agent has control over the path.</span></p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 6: Agency Spectrum -->
+    <section id="sec7" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">6</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Agency Spectrum <span class="text-c8 text-lg">📈</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 mb-6 border border-white/5">
+        <p class="text-txt-body text-sm mb-4">Don't think binary. Think <span class="text-bright font-bold">spectrum</span>:</p>
+
+        <!-- Spectrum Bar -->
+        <div class="spectrum-bar h-3 mb-4"></div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-5 gap-3">
+          <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+            <div class="text-danger font-bold text-sm">Level 1</div>
+            <div class="text-bright text-xs font-semibold mt-1">Script</div>
+            <div class="text-txt-muted text-xs mt-1">Fixed steps</div>
+            <code class="text-[10px] text-txt-muted block mt-1 bg-bg-primary rounded px-2 py-1">send_email()</code>
+          </div>
+          <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+            <div class="text-c5 font-bold text-sm">Level 2</div>
+            <div class="text-bright text-xs font-semibold mt-1">Workflow</div>
+            <div class="text-txt-muted text-xs mt-1">Mostly fixed</div>
+            <div class="text-[10px] text-txt-muted mt-1">Branching logic</div>
+          </div>
+          <div class="glass-card rounded-lg p-3 border border-c8/20 text-center hover-lift bg-c8/5">
+            <div class="text-c8 font-bold text-sm">Level 3</div>
+            <div class="text-bright text-xs font-semibold mt-1">LLM Workflow</div>
+            <div class="text-txt-muted text-xs mt-1">Some decisions</div>
+            <div class="text-[10px] text-txt-muted mt-1">LLM in pipeline</div>
+          </div>
+          <div class="glass-card rounded-lg p-3 border border-c9/20 text-center hover-lift bg-c9/5">
+            <div class="text-c9 font-bold text-sm">Level 4</div>
+            <div class="text-bright text-xs font-semibold mt-1">Tool Agent</div>
+            <div class="text-txt-muted text-xs mt-1">Dynamic planning</div>
+            <div class="text-[10px] text-txt-muted mt-1">Tool selection</div>
+          </div>
+          <div class="glass-card rounded-lg p-3 border border-c2/20 text-center hover-lift bg-c2/5 glow-purple">
+            <div class="text-c2 font-bold text-sm">Level 5</div>
+            <div class="text-bright text-xs font-semibold mt-1">Autonomous</div>
+            <div class="text-txt-muted text-xs mt-1">Full planning</div>
+            <div class="text-[10px] text-c2 mt-1">Self-directed</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Investigation Example -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c9/20 bg-c9/5">
+        <div class="flex items-center gap-2 mb-4">
+          <i class="fas fa-search text-c9"></i>
+          <h4 class="text-bright font-bold">Level 3 Example — Investigation Agent</h4>
+        </div>
+        <div class="code-block rounded-lg p-4 text-xs space-y-2">
+          <div class="text-c3 font-semibold">User: "Investigate why our website is slow."</div>
+          <div class="text-c1">Agent: "What should I inspect?"</div>
+          <div class="text-txt-body">→ Check server metrics</div>
+          <div class="text-txt-body">→ Check logs</div>
+          <div class="text-txt-body">→ Check database</div>
+          <div class="text-txt-body">→ Compare historical performance</div>
+          <div class="text-txt-body">→ Identify suspicious query</div>
+          <div class="text-txt-body">→ Investigate query</div>
+          <div class="text-success font-semibold">→ Report finding</div>
+        </div>
+        <p class="text-txt-muted text-xs mt-3">The <span class="text-c9 font-semibold">agent determines the investigation path</span>.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 7: True Agent Test -->
+    <section id="sec8" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-danger/20 to-c7/5 border border-c7/30 flex items-center justify-center text-c7 font-bold text-sm">7</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The True Agent Test <span class="text-c7 text-lg">🔥</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border-l-4 border-c7 glow-pink mb-6">
+        <p class="text-c7/90 italic text-sm sm:text-base leading-relaxed">
+          "Does it demonstrate real decision making rather than following static scripts?"
+        </p>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5 mb-4">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-question-circle text-c7 mr-2"></i>Ask this whenever someone says "I built an AI agent":</h4>
+        <div class="inline-block glass-card rounded-lg px-5 py-3 border border-c7/30 bg-c7/5">
+          <span class="text-c7 text-lg font-bold">"What decisions does the AI actually make?"</span>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-times-circle text-danger"></i>
+            <h4 class="text-danger font-bold">Fake-ish Agent</h4>
+          </div>
+          <div class="code-block rounded-lg p-3 text-xs">
+            <span class="text-txt-body">LLM → Step 1 → Step 2 → Step 3 → Step 4</span>
+          </div>
+          <p class="text-txt-muted text-xs mt-2">LLM just fills text into a <span class="text-danger font-semibold">predetermined pipeline</span>.</p>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-success/20 hover-lift glow-green">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-check-circle text-success"></i>
+            <h4 class="text-success font-bold">Genuinely Agentic</h4>
+          </div>
+          <div class="code-block rounded-lg p-3 text-xs space-y-1">
+            <div><span class="text-c1">Goal</span></div>
+            <div><span class="text-success">↓ LLM decides: "Need info"</span></div>
+            <div><span class="text-c2">↓ Choose search tool</span></div>
+            <div><span class="text-c6">↓ Observe result</span></div>
+            <div><span class="text-success">↓ LLM decides: "Need more"</span></div>
+            <div><span class="text-c2">↓ Choose database</span></div>
+            <div><span class="text-success">↓ LLM decides: "Enough info"</span></div>
+            <div><span class="text-c8">↓ Generate answer</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 8: Foundation Models -->
+    <section id="sec9" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c4/20 to-c4/5 border border-c4/30 flex items-center justify-center text-c4 font-bold text-sm">8</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Foundation Models Changed the Game <span class="text-c4 text-lg">🧠</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3">The evolution is driven by three forces:</h4>
+        <div class="flex flex-wrap gap-3">
+          <span class="tag bg-c4/10 text-c4 border border-c4/20 text-sm px-4 py-2"><i class="fas fa-brain mr-1"></i> Foundation Models</span>
+          <span class="tag bg-c6/10 text-c6 border border-c6/20 text-sm px-4 py-2"><i class="fas fa-gamepad mr-1"></i> Reinforcement Learning</span>
+          <span class="tag bg-c3/10 text-c3 border border-c3/20 text-sm px-4 py-2"><i class="fas fa-wrench mr-1"></i> Tool/Function Calling</span>
+        </div>
+      </div>
+
+      <!-- Tool Calling Flow -->
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c4/20 bg-c4/5">
+        <h4 class="text-bright font-bold mb-4"><i class="fas fa-plug text-c4 mr-2"></i>Tool Calling — The Fundamental Building Block</h4>
+
+        <div class="grid md:grid-cols-2 gap-4">
+          <div class="glass-card rounded-lg p-4 border border-danger/20">
+            <span class="text-danger text-xs font-bold">OLD WAY — No Tool Calling</span>
+            <div class="code-block rounded-lg p-3 text-xs mt-2">
+              <span class="text-txt-body">Input: "What is the weather?"</span><br/>
+              <span class="text-danger">Output: "I don't know the current weather."</span>
+            </div>
+            <p class="text-txt-muted text-xs mt-2">Model can only <span class="text-danger font-semibold">generate text</span>.</p>
+          </div>
+
+          <div class="glass-card rounded-lg p-4 border border-success/20 glow-green">
+            <span class="text-success text-xs font-bold">NEW WAY — Tool Calling</span>
+            <div class="code-block rounded-lg p-3 text-xs mt-2">
+              <span class="text-c1">LLM produces structured call:</span><br/>
+              <span class="text-c8">{</span><br/>
+              <span class="text-txt-body ml-2">"tool": "get_weather",</span><br/>
+              <span class="text-txt-body ml-2">"arguments": {"city": "Patna"}</span><br/>
+              <span class="text-c8">}</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-4 flow-line">
+          <div class="flow-node"><span class="text-c3 text-sm font-semibold">User</span> <span class="text-txt-muted text-xs">"What's the weather?"</span></div>
+          <div class="flow-node"><span class="text-c1 text-sm font-semibold"><i class="fas fa-robot mr-1"></i> LLM</span> <span class="text-txt-muted text-xs">"I need weather info"</span></div>
+          <div class="flow-node"><span class="text-c2 text-sm font-semibold"><i class="fas fa-wrench mr-1"></i> get_weather("Patna")</span></div>
+          <div class="flow-node"><span class="text-c4 text-sm font-semibold"><i class="fas fa-cloud mr-1"></i> Weather API</span> <span class="text-txt-muted text-xs">→ 40°C</span></div>
+          <div class="flow-node"><span class="text-c1 text-sm font-semibold"><i class="fas fa-robot mr-1"></i> LLM</span> <span class="text-txt-muted text-xs">"Patna is currently 40°C..."</span></div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 9: Orchestration -->
+    <section id="sec10" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c10/20 to-c10/5 border border-c10/30 flex items-center justify-center text-c10 font-bold text-sm">9</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Orchestration <span class="text-c10 text-lg">🎼</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c10/20 bg-c10/5">
+        <p class="text-txt-body text-sm mb-4">
+          Think of an <span class="text-c10 font-semibold">orchestra conductor</span>. Something needs to coordinate all the pieces.
+        </p>
+
+        <div class="text-center py-4">
+          <div class="inline-block glass-card rounded-xl px-6 py-3 border border-c10/30 mb-3">
+            <span class="text-c10 text-lg"><i class="fas fa-brain mr-2"></i>LLM</span>
+          </div>
+          <div class="arrow-pulse text-c10"><i class="fas fa-arrow-down"></i></div>
+          <div class="flex justify-center gap-4 mt-3 flex-wrap">
+            <span class="text-xs bg-c1/10 text-c1 border border-c1/20 rounded-lg px-4 py-2"><i class="fas fa-search mr-1"></i>Search</span>
+            <span class="text-xs bg-c2/10 text-c2 border border-c2/20 rounded-lg px-4 py-2"><i class="fas fa-database mr-1"></i>DB</span>
+            <span class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded-lg px-4 py-2"><i class="fas fa-calculator mr-1"></i>Calculator</span>
+          </div>
+          <div class="arrow-pulse text-c10 mt-3"><i class="fas fa-arrow-down"></i></div>
+          <div class="inline-block glass-card rounded-xl px-6 py-3 border border-c10/30 mt-3">
+            <span class="text-c10 text-lg"><i class="fas fa-brain mr-2"></i>LLM</span>
+          </div>
+        </div>
+
+        <div class="mt-4 glass-card rounded-lg p-4 border border-white/5">
+          <p class="text-txt-body text-sm">
+            Frameworks like <span class="text-c1 font-semibold">LangGraph</span> help you construct these <span class="text-c10 font-semibold">stateful workflows / agent loops</span>.
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 10: Agent vs Agentic System -->
+    <section id="sec11" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c9/20 to-c9/5 border border-c9/30 flex items-center justify-center text-c9 font-bold text-sm">10</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Agent vs Agentic System</h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c9/20 bg-c9/5">
+        <p class="text-txt-body text-sm mb-6">
+          The <span class="text-c1 font-semibold">LLM isn't the entire agent</span>. That's a huge conceptual point.
+        </p>
+
+        <div class="text-center">
+          <div class="inline-block bg-gradient-to-r from-c9/20 to-c2/20 border border-c9/30 rounded-xl px-8 py-3 mb-4">
+            <span class="text-bright font-bold text-lg"><i class="fas fa-project-diagram mr-2 text-c9"></i>AGENTIC SYSTEM</span>
+          </div>
+        </div>
+
+        <div class="grid sm:grid-cols-3 gap-3 mt-4">
+          <div class="glass-card rounded-lg p-4 border border-c9/20 text-center hover-lift">
+            <i class="fas fa-brain text-c9 text-2xl mb-2"></i>
+            <div class="text-bright font-bold text-sm">Foundation Model</div>
+            <div class="text-txt-muted text-xs">Core reasoning</div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-c3/20 text-center hover-lift">
+            <i class="fas fa-wrench text-c3 text-2xl mb-2"></i>
+            <div class="text-bright font-bold text-sm">Tools</div>
+            <div class="text-txt-muted text-xs">External capabilities</div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-c6/20 text-center hover-lift">
+            <i class="fas fa-memory text-c6 text-2xl mb-2"></i>
+            <div class="text-bright font-bold text-sm">Memory</div>
+            <div class="text-txt-muted text-xs">State persistence</div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-c8/20 text-center hover-lift">
+            <i class="fas fa-clipboard-list text-c8 text-2xl mb-2"></i>
+            <div class="text-bright font-bold text-sm">Planning</div>
+            <div class="text-txt-muted text-xs">Goal decomposition</div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-c10/20 text-center hover-lift">
+            <i class="fas fa-music text-c10 text-2xl mb-2"></i>
+            <div class="text-bright font-bold text-sm">Orchestration</div>
+            <div class="text-txt-muted text-xs">Coordination layer</div>
+          </div>
+          <div class="glass-card rounded-lg p-4 border border-c7/20 text-center hover-lift">
+            <i class="fas fa-chart-line text-c7 text-2xl mb-2"></i>
+            <div class="text-bright font-bold text-sm">Observability</div>
+            <div class="text-txt-muted text-xs">Monitoring & logging</div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-lg p-4 border border-danger/20 mt-4 text-center">
+          <i class="fas fa-shield-alt text-danger mr-2"></i>
+          <span class="text-bright font-semibold">Security / Infrastructure</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 11: MCP & Multi-Agent -->
+    <section id="sec12" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c4/20 to-c1/5 border border-c4/30 flex items-center justify-center text-c4 font-bold text-sm">11</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">MCP & Multi-Agent Architecture</h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <!-- MCP -->
+        <div class="glass-card rounded-xl p-5 border border-c4/20 hover-lift">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-plug text-c4"></i>
+            <h4 class="text-bright font-bold">MCP — Model Context Protocol</h4>
+          </div>
+          <p class="text-txt-body text-sm mb-4">Standardized way for AI to interact with external tools & data sources.</p>
+          <div class="text-center">
+            <div class="inline-block glass-card rounded-lg px-4 py-2 border border-c1/30 mb-2">
+              <span class="text-c1 text-sm font-semibold"><i class="fas fa-robot mr-1"></i> Agent</span>
+            </div>
+            <div class="arrow-pulse text-c4"><i class="fas fa-arrow-down"></i></div>
+            <div class="inline-block bg-c4/10 border border-c4/20 rounded-lg px-4 py-1.5 mt-2 mb-2">
+              <span class="text-c4 text-xs font-bold">MCP</span>
+            </div>
+            <div class="flex justify-center gap-3 mt-2 flex-wrap">
+              <span class="text-xs bg-bright/10 text-bright border border-bright/20 rounded px-2 py-1"><i class="fab fa-github mr-1"></i>GitHub</span>
+              <span class="text-xs bg-c2/10 text-c2 border border-c2/20 rounded px-2 py-1"><i class="fas fa-database mr-1"></i>DB</span>
+              <span class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded px-2 py-1"><i class="fas fa-folder mr-1"></i>Files</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- Agent-to-Agent -->
+        <div class="glass-card rounded-xl p-5 border border-c2/20 hover-lift glow-purple">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-users-cog text-c2"></i>
+            <h4 class="text-bright font-bold">Agent-to-Agent</h4>
+          </div>
+          <p class="text-txt-body text-sm mb-4">Instead of User → Agent, you can have <span class="text-c2 font-semibold">multi-agent architecture</span>.</p>
+          <div class="text-center">
+            <div class="inline-block glass-card rounded-lg px-4 py-2 border border-c2/30 mb-2">
+              <span class="text-c2 text-sm font-semibold"><i class="fas fa-crown mr-1"></i> Manager Agent</span>
+            </div>
+            <div class="flex justify-center gap-2 mt-2 flex-wrap">
+              <div class="text-center">
+                <div class="arrow-pulse text-c2"><i class="fas fa-arrow-down"></i></div>
+                <div class="text-xs bg-c1/10 text-c1 border border-c1/20 rounded px-3 py-1.5 mt-1"><i class="fas fa-search mr-1"></i>Research</div>
+              </div>
+              <div class="text-center">
+                <div class="arrow-pulse text-c2"><i class="fas fa-arrow-down"></i></div>
+                <div class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded px-3 py-1.5 mt-1"><i class="fas fa-code mr-1"></i>Coding</div>
+              </div>
+              <div class="text-center">
+                <div class="arrow-pulse text-c2"><i class="fas fa-arrow-down"></i></div>
+                <div class="text-xs bg-c6/10 text-c6 border border-c6/20 rounded px-3 py-1.5 mt-1"><i class="fas fa-vial mr-1"></i>Testing</div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 12: Responsibility -->
+    <section id="sec13" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-danger/20 to-danger/5 border border-danger/30 flex items-center justify-center text-danger font-bold text-sm">12</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Responsibility Factor</h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-danger/20 bg-danger/5 mb-6">
+        <div class="flex items-start gap-3">
+          <i class="fas fa-shield-alt text-danger text-xl mt-1"></i>
+          <div>
+            <h4 class="text-bright font-bold mb-2">Greater autonomy = Greater responsibility</h4>
+            <p class="text-txt-body text-sm">Imagine an agent with access to <span class="text-danger font-semibold">Email, Bank API, Database, Production Server, GitHub</span>. A wrong decision could be <span class="text-danger font-semibold">catastrophic</span>.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+          <i class="fas fa-key text-c1 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Permissions</div>
+        </div>
+        <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+          <i class="fas fa-flask text-c6 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Evaluation</div>
+        </div>
+        <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+          <i class="fas fa-chart-bar text-c2 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Monitoring</div>
+        </div>
+        <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+          <i class="fas fa-file-alt text-c3 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Logging</div>
+        </div>
+        <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+          <i class="fas fa-traffic-light text-c8 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Approval Gates</div>
+        </div>
+        <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+          <i class="fas fa-dollar-sign text-c5 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Cost Controls</div>
+        </div>
+        <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+          <i class="fas fa-lock text-danger text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Security</div>
+        </div>
+        <div class="glass-card rounded-lg p-3 border border-white/5 text-center hover-lift">
+          <i class="fas fa-user-shield text-c9 text-xl mb-2"></i>
+          <div class="text-bright text-xs font-bold">Human Oversight</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 13: Pretraining Revolution -->
+    <section id="sec14" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">13</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Pretraining Revolution <span class="text-c8 text-lg">🧠</span></h2>
+      </div>
+
+      <div class="grid md:grid-cols-2 gap-6">
+        <!-- Traditional ML -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-clock text-danger"></i>
+            <h4 class="text-bright font-bold">Traditional ML</h4>
+          </div>
+          <div class="flow-line">
+            <div class="flow-node"><span class="text-txt-body text-sm">Collect thousands of emails</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Clean data</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Label data</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Engineer features</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Train model</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Evaluate</span></div>
+            <div class="flow-node"><span class="text-txt-body text-sm">Deploy</span></div>
+          </div>
+          <p class="text-txt-muted text-xs mt-2">Another capability? <span class="text-danger font-semibold">Another entire pipeline</span>.</p>
+        </div>
+
+        <!-- Foundation Model -->
+        <div class="glass-card rounded-xl p-5 border border-c8/20 hover-lift glow-orange">
+          <div class="flex items-center gap-2 mb-4">
+            <i class="fas fa-rocket text-c8"></i>
+            <h4 class="text-bright font-bold">Foundation Model Approach</h4>
+          </div>
+          <div class="text-center py-2">
+            <div class="inline-block bg-gradient-to-r from-c8/20 to-c3/20 border border-c8/30 rounded-xl px-6 py-3 mb-4">
+              <span class="text-bright font-bold"><i class="fas fa-brain mr-2 text-c8"></i>Foundation Model</span>
+            </div>
+            <div class="flex justify-center gap-3 flex-wrap">
+              <span class="text-xs bg-c1/10 text-c1 border border-c1/20 rounded-lg px-3 py-1.5"><i class="fas fa-code mr-1"></i>Coding</span>
+              <span class="text-xs bg-c2/10 text-c2 border border-c2/20 rounded-lg px-3 py-1.5"><i class="fas fa-pen mr-1"></i>Writing</span>
+              <span class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded-lg px-3 py-1.5"><i class="fas fa-chart-line mr-1"></i>Analysis</span>
+              <span class="text-xs bg-c6/10 text-c6 border border-c6/20 rounded-lg px-3 py-1.5"><i class="fas fa-search mr-1"></i>Research</span>
+              <span class="text-xs bg-c8/10 text-c8 border border-c8/20 rounded-lg px-3 py-1.5"><i class="fas fa-clipboard mr-1"></i>Planning</span>
+            </div>
+          </div>
+          <p class="text-txt-muted text-xs mt-4 text-center">Use a <span class="text-c8 font-semibold">pretrained model as general-purpose foundation</span>.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 14: Lowered Barrier -->
+    <section id="sec15" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-success/20 to-success/5 border border-success/30 flex items-center justify-center text-success font-bold text-sm">14</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Dramatically Lowered Barrier</h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4">
+        <div class="glass-card rounded-xl p-5 border border-danger/20 hover-lift">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-building text-danger"></i>
+            <h4 class="text-danger font-bold">Old Approach</h4>
+          </div>
+          <div class="space-y-1.5 text-xs text-txt-body">
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-danger w-4"></i> Hire ML engineers</div>
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-danger w-4"></i> Collect dataset</div>
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-danger w-4"></i> Clean dataset</div>
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-danger w-4"></i> Train model</div>
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-danger w-4"></i> Buy/maintain GPUs</div>
+            <div class="flex items-center gap-2"><i class="fas fa-arrow-right text-danger w-4"></i> Deploy model</div>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-success/20 hover-lift glow-green">
+          <div class="flex items-center gap-2 mb-3">
+            <i class="fas fa-user text-success"></i>
+            <h4 class="text-success font-bold">Modern Application</h4>
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-arrow-right text-success w-4"></i> Developer</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-arrow-right text-success w-4"></i> API call</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-arrow-right text-success w-4"></i> Foundation model</div>
+            <div class="flex items-center gap-2 text-txt-body"><i class="fas fa-arrow-right text-success w-4"></i> Application</div>
+          </div>
+          <p class="text-txt-muted text-xs mt-3"><span class="text-success font-semibold">Massive reduction in cost & complexity</span>.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 15: Types of Agents -->
+    <section id="sec16" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c5/20 to-c5/5 border border-c5/30 flex items-center justify-center text-c5 font-bold text-sm">15</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Types of Agents <span class="text-c5 text-lg">📋</span></h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        <!-- Business-task -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c3/10 flex items-center justify-center text-c3"><i class="fas fa-building"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">Business-task</h4>
+              <span class="text-txt-muted text-xs">Less autonomous</span>
+            </div>
+          </div>
+          <div class="code-block rounded-lg p-3 text-xs space-y-1">
+            <div class="text-txt-body">New customer registered</div>
+            <div class="text-txt-body">→ Create CRM record</div>
+            <div class="text-txt-body">→ Send welcome email</div>
+            <div class="text-txt-body">→ Create Slack notification</div>
+            <div class="text-txt-body">→ Create task</div>
+          </div>
+          <div class="mt-2"><span class="tag bg-c3/10 text-c3 border border-c3/20 text-[10px]">Example: Power Automate</span></div>
+        </div>
+
+        <!-- Conversational -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c7/10 flex items-center justify-center text-c7"><i class="fas fa-comments"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">Conversational</h4>
+              <span class="text-txt-muted text-xs">Talks with users</span>
+            </div>
+          </div>
+          <div class="space-y-2 text-xs">
+            <div class="glass-card rounded p-2 border border-c7/20 text-c7">"I want to return my order"</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c7"></i> Check order</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c7"></i> Check return policy</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c7"></i> Initiate return</div>
+            <div class="text-success flex items-center gap-1"><i class="fas fa-check"></i> Send confirmation</div>
+          </div>
+          <div class="mt-2"><span class="tag bg-c7/10 text-c7 border border-c7/20 text-[10px]">Example: Customer Support</span></div>
+        </div>
+
+        <!-- Research -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c1/10 flex items-center justify-center text-c1"><i class="fas fa-search"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">Research</h4>
+              <span class="text-txt-muted text-xs">Find & synthesize</span>
+            </div>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Search web</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Read documents</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Extract info</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Compare sources</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Synthesize</div>
+            <div class="text-success flex items-center gap-1"><i class="fas fa-check"></i> Generate report</div>
+          </div>
+          <div class="mt-2">
+            <span class="tag bg-c1/10 text-c1 border border-c1/20 text-[10px]">Example: Perplexity</span>
+            <span class="tag bg-c6/10 text-c6 border border-c6/20 text-[10px] mt-1">RAG is a component</span>
+          </div>
+        </div>
+
+        <!-- Analytics -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c8/10 flex items-center justify-center text-c8"><i class="fas fa-chart-pie"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">Analytics</h4>
+              <span class="text-txt-muted text-xs">Analyze business data</span>
+            </div>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div class="text-c8 font-semibold">"Why did sales decrease last month?"</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c8"></i> Generate SQL</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c8"></i> Execute SQL</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c8"></i> Analyze results</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c8"></i> Create chart</div>
+            <div class="text-success flex items-center gap-1"><i class="fas fa-check"></i> Explain findings</div>
+          </div>
+          <div class="mt-2"><span class="tag bg-c8/10 text-c8 border border-c8/20 text-[10px]">Example: Power BI Copilot</span></div>
+        </div>
+
+        <!-- Developer -->
+        <div class="glass-card rounded-xl p-5 border border-c1/20 hover-lift glow-blue">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c1/10 flex items-center justify-center text-c1"><i class="fas fa-code"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">Developer</h4>
+              <span class="text-txt-muted text-xs">Write & fix software</span>
+            </div>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Understand issue</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Inspect repo</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Modify files</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c1"></i> Run tests</div>
+            <div class="text-danger flex items-center gap-1"><i class="fas fa-times"></i> Test fails → investigate</div>
+            <div class="text-success flex items-center gap-1"><i class="fas fa-check"></i> Tests pass → commit/PR</div>
+          </div>
+          <div class="mt-2">
+            <span class="tag bg-c1/10 text-c1 border border-c1/20 text-[10px]">Cursor</span>
+            <span class="tag bg-c2/10 text-c2 border border-c2/20 text-[10px]">Windsurf</span>
+            <span class="tag bg-c6/10 text-c6 border border-c6/20 text-[10px]">Copilot</span>
+          </div>
+        </div>
+
+        <!-- Domain-specific -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c6/10 flex items-center justify-center text-c6"><i class="fas fa-balance-scale"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">Domain-specific</h4>
+              <span class="text-txt-muted text-xs">Specialized work</span>
+            </div>
+          </div>
+          <div class="text-xs text-txt-body space-y-2">
+            <div class="glass-card rounded p-2 border border-white/5">
+              <span class="text-c6 font-semibold">Legal Agent:</span> General LLM + domain knowledge + specialized tools
+            </div>
+            <div class="glass-card rounded p-2 border border-white/5">
+              <span class="text-c8 font-semibold">Finance Agent:</span> General LLM + financial data + financial tools
+            </div>
+          </div>
+          <p class="text-txt-muted text-xs mt-2">No need to <span class="text-c6 font-semibold">train new model</span> — build specialized system.</p>
+        </div>
+
+        <!-- Browser-using -->
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift sm:col-span-2 lg:col-span-1">
+          <div class="flex items-center gap-3 mb-3">
+            <div class="w-10 h-10 rounded-lg bg-c4/10 flex items-center justify-center text-c4"><i class="fas fa-globe"></i></div>
+            <div>
+              <h4 class="text-bright font-bold text-sm">Browser-using</h4>
+              <span class="text-txt-muted text-xs">Navigate websites</span>
+            </div>
+          </div>
+          <div class="space-y-1.5 text-xs">
+            <div class="text-c4 font-semibold">Goal: "Book a flight to Delhi"</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c4"></i> Open website</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c4"></i> Understand page</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c4"></i> Enter destination</div>
+            <div class="text-txt-body flex items-center gap-1"><i class="fas fa-arrow-right text-c4"></i> Compare flights</div>
+            <div class="text-success flex items-center gap-1"><i class="fas fa-check"></i> Book flight</div>
+          </div>
+          <p class="text-txt-muted text-xs mt-2">Combines <span class="text-c4 font-semibold">language + vision + planning + interaction</span>.</p>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 16: Final Mental Model -->
+    <section id="sec17" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c2/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">16</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Complete Mental Model <span class="text-c1 text-lg">🧠</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-8 border border-c1/20 animate-pulse-glow">
+        <div class="text-center">
+          <div class="inline-block bg-gradient-to-r from-c1/20 to-c3/20 border border-c1/30 rounded-xl px-8 py-3 mb-4">
+            <span class="text-bright font-bold text-xl"><i class="fas fa-user mr-2 text-c3"></i>USER</span>
+          </div>
+          <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down text-lg"></i></div>
+          <div class="inline-block bg-c8/10 border border-c8/30 rounded-xl px-8 py-3 my-3">
+            <span class="text-c8 font-bold"><i class="fas fa-bullseye mr-2"></i>GOAL</span>
+          </div>
+          <div class="arrow-pulse text-c1"><i class="fas fa-arrow-down text-lg"></i></div>
+
+          <div class="inline-block glass-card rounded-2xl px-8 py-5 border border-c1/30 my-4 glow-blue">
+            <div class="text-c1 font-bold text-xl mb-3"><i class="fas fa-robot mr-2"></i>AGENT / LLM</div>
+            <div class="text-txt-body text-sm mb-2">↓ Understand context</div>
+            <div class="text-c2 font-semibold mb-2">↓ PLAN <i class="fas fa-clipboard-list ml-1"></i></div>
+            <div class="text-txt-body text-sm mb-2">↓ Choose an action</div>
+            <div class="flex justify-center gap-3 flex-wrap my-3">
+              <span class="text-xs bg-c1/10 text-c1 border border-c1/20 rounded-lg px-3 py-1.5"><i class="fas fa-search mr-1"></i>Search</span>
+              <span class="text-xs bg-c2/10 text-c2 border border-c2/20 rounded-lg px-3 py-1.5"><i class="fas fa-database mr-1"></i>DB</span>
+              <span class="text-xs bg-c3/10 text-c3 border border-c3/20 rounded-lg px-3 py-1.5"><i class="fas fa-code mr-1"></i>Code</span>
+            </div>
+            <div class="text-c6 font-semibold mb-2">↓ OBSERVE <i class="fas fa-eye ml-1"></i></div>
+            <div class="text-txt-body text-sm">↓ Evaluate result</div>
+            <div class="flex justify-center gap-6 mt-3">
+              <div class="text-center">
+                <span class="text-c3 text-xs font-bold">More work?</span><br/>
+                <span class="text-c3 text-lg"><i class="fas fa-redo"></i></span>
+              </div>
+              <div class="text-center">
+                <span class="text-success text-xs font-bold">Finished</span><br/>
+                <span class="text-success text-lg"><i class="fas fa-check-circle"></i></span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="mt-6 glass-card rounded-xl p-5 border border-c9/20 bg-c9/5 text-center">
+          <div class="text-c9 font-bold text-sm mb-3"><i class="fas fa-project-diagram mr-2"></i>AGENTIC SYSTEM SURROUNDS ALL OF THIS</div>
+          <div class="flex flex-wrap justify-center gap-2 text-xs">
+            <span class="bg-c9/10 text-c9 border border-c9/20 rounded px-3 py-1.5"><i class="fas fa-brain mr-1"></i>Model</span>
+            <span class="bg-c3/10 text-c3 border border-c3/20 rounded px-3 py-1.5"><i class="fas fa-wrench mr-1"></i>Tools</span>
+            <span class="bg-c6/10 text-c6 border border-c6/20 rounded px-3 py-1.5"><i class="fas fa-memory mr-1"></i>Memory</span>
+            <span class="bg-c8/10 text-c8 border border-c8/20 rounded px-3 py-1.5"><i class="fas fa-clipboard mr-1"></i>Planning</span>
+            <span class="bg-c10/10 text-c10 border border-c10/20 rounded px-3 py-1.5"><i class="fas fa-music mr-1"></i>Orchestration</span>
+            <span class="bg-c7/10 text-c7 border border-c7/20 rounded px-3 py-1.5"><i class="fas fa-chart-line mr-1"></i>Evaluation</span>
+            <span class="bg-danger/10 text-danger border border-danger/20 rounded px-3 py-1.5"><i class="fas fa-shield-alt mr-1"></i>Security</span>
+            <span class="bg-c1/10 text-c1 border border-c1/20 rounded px-3 py-1.5"><i class="fas fa-eye mr-1"></i>Observability</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Section 17: 7 Key Ideas -->
+    <section id="sec18" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">17</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">7 Key Ideas to Remember <span class="text-c8 text-lg">⭐</span></h2>
+      </div>
+
+      <div class="space-y-3">
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c1/10 flex items-center justify-center text-c1 font-bold text-sm flex-shrink-0">1</div>
+          <div>
+            <h4 class="text-bright font-bold">An LLM is not automatically an agent</h4>
+            <p class="text-txt-muted text-sm mt-1">Simply calling an LLM does not make something an agent. There must be autonomy.</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c2/10 flex items-center justify-center text-c2 font-bold text-sm flex-shrink-0">2</div>
+          <div>
+            <h4 class="text-bright font-bold">An agent has some ability to decide what to do next</h4>
+            <p class="text-txt-muted text-sm mt-1">Decision-making is the core differentiator between scripts and agents.</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c3/10 flex items-center justify-center text-c3 font-bold text-sm flex-shrink-0">3</div>
+          <div>
+            <h4 class="text-bright font-bold">Agency exists on a spectrum</h4>
+            <p class="text-txt-muted text-sm mt-1">From simple scripts to fully autonomous agents — it's not binary.</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c6/10 flex items-center justify-center text-c6 font-bold text-sm flex-shrink-0">4</div>
+          <div>
+            <h4 class="text-bright font-bold">Tool calling is a fundamental capability</h4>
+            <p class="text-txt-muted text-sm mt-1">Modern agents are built on the ability to call external tools via structured outputs.</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c8/10 flex items-center justify-center text-c8 font-bold text-sm flex-shrink-0">5</div>
+          <div>
+            <h4 class="text-bright font-bold">An agentic system is much bigger than the LLM</h4>
+            <p class="text-txt-muted text-sm mt-1">Tools, memory, planning, orchestration, security — all surround the model.</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-white/5 hover-lift flex items-start gap-4">
+          <div class="w-10 h-10 rounded-full bg-c7/10 flex items-center justify-center text-c7 font-bold text-sm flex-shrink-0">6</div>
+          <div>
+            <h4 class="text-bright font-bold">RAG, memory, tools, planning are components — not synonyms</h4>
+            <p class="text-txt-muted text-sm mt-1">RAG is a component inside an agent, not the agent itself.</p>
+          </div>
+        </div>
+
+        <div class="glass-card rounded-xl p-5 border border-c8/20 bg-c8/5 hover-lift flex items-start gap-4 glow-orange">
+          <div class="w-10 h-10 rounded-full bg-c8/10 flex items-center justify-center text-c8 font-bold text-sm flex-shrink-0">7</div>
+          <div>
+            <h4 class="text-bright font-bold">The real challenge is production reliability</h4>
+            <p class="text-txt-muted text-sm mt-1">Making an agent work once is easy. Making it <span class="text-c8 font-semibold">reliable in production</span> is the hard part.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Footer -->
+    <footer class="text-center py-8">
+      <div class="glass-card rounded-xl p-6 border border-white/5 inline-block">
+        <div class="text-txt-muted text-sm mb-2">
+          <i class="fas fa-robot mr-2 text-c1"></i>Chapter 1 — Introduction to Agents
+        </div>
+        <div class="text-txt-muted text-xs">
+          Agentic AI Study Notes <span class="text-c2 mx-1">•</span> Built for revision & understanding
+        </div>
+        <div class="flex justify-center gap-3 mt-4">
+          <a href="#top" class="text-c1 hover:text-c2 transition text-sm"><i class="fas fa-arrow-up"></i></a>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <!-- Scroll Reveal Script -->
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('visible');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+
+    // Mobile TOC toggle
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function (e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) {
+          target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+        }
+      });
+    });
+  </script>
+
+</body>
+</html>

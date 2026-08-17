@@ -1,0 +1,727 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Chapter 4 — Tool Use</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css" />
+  <script>
+    tailwind.config = {
+      theme: {
+        extend: {
+          colors: {
+            bg: { primary: '#0f0f1a', card: '#1a1a2e', hover: '#252542', accent: '#16213e' },
+            txt: { body: '#c4c4d4', bright: '#e8e8f0', muted: '#8888a4' },
+            c1: '#00d2ff', c2: '#a855f7', c3: '#f97316', c4: '#22d3ee', c5: '#fb923c',
+            c6: '#34d399', c7: '#f472b6', c8: '#facc15', c9: '#38bdf8', c10: '#c084fc',
+            success: '#4ade80', warn: '#fbbf24', danger: '#f87171', info: '#60a5fa',
+          },
+          fontFamily: { mono: ['"JetBrains Mono"', 'Fira Code', 'monospace'] },
+          animation: {
+            'fade-up': 'fadeUp 0.6s ease-out forwards',
+            'pulse-glow': 'pulseGlow 2s ease-in-out infinite',
+            'float': 'float 3s ease-in-out infinite',
+          },
+          keyframes: {
+            fadeUp: { '0%': { opacity: '0', transform: 'translateY(30px)' }, '100%': { opacity: '1', transform: 'translateY(0)' } },
+            pulseGlow: { '0%, 100%': { boxShadow: '0 0 5px rgba(0,210,255,0.3)' }, '50%': { boxShadow: '0 0 25px rgba(0,210,255,0.6)' } },
+            float: { '0%, 100%': { transform: 'translateY(0)' }, '50%': { transform: 'translateY(-8px)' } },
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap');
+    *{margin:0;padding:0;box-sizing:border-box;}
+    body{background:#0f0f1a;color:#c4c4d4;font-family:'Inter',sans-serif;overflow-x:hidden;}
+    .gradient-text{background:linear-gradient(135deg,#00d2ff,#a855f7);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gradient-text-orange{background:linear-gradient(135deg,#f97316,#facc15);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .gradient-text-green{background:linear-gradient(135deg,#34d399,#38bdf8);-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;}
+    .glass-card{background:rgba(26,26,46,0.7);backdrop-filter:blur(12px);border:1px solid rgba(255,255,255,0.06);}
+    .glow-blue{box-shadow:0 0 20px rgba(0,210,255,0.15);}
+    .glow-purple{box-shadow:0 0 20px rgba(168,85,247,0.15);}
+    .glow-orange{box-shadow:0 0 20px rgba(249,115,22,0.15);}
+    .glow-green{box-shadow:0 0 20px rgba(52,211,153,0.15);}
+    .glow-pink{box-shadow:0 0 20px rgba(244,114,182,0.15);}
+    .code-block{background:#12121f;border:1px solid rgba(255,255,255,0.08);font-family:'JetBrains Mono',monospace;}
+    .section-divider{height:1px;background:linear-gradient(90deg,transparent,rgba(0,210,255,0.3),rgba(168,85,247,0.3),transparent);margin:3rem 0;}
+    .hover-lift{transition:all 0.3s ease;}
+    .hover-lift:hover{transform:translateY(-4px);box-shadow:0 8px 30px rgba(0,0,0,0.3);}
+    .scroll-reveal{opacity:0;transform:translateY(30px);transition:all 0.6s ease;}
+    .scroll-reveal.visible{opacity:1;transform:translateY(0);}
+    .arrow-pulse{animation:arrowPulse 1.5s ease-in-out infinite;}
+    @keyframes arrowPulse{0%,100%{transform:translateY(0);opacity:0.5;}50%{transform:translateY(4px);opacity:1;}}
+    ::-webkit-scrollbar{width:6px;}
+    ::-webkit-scrollbar-track{background:#0f0f1a;}
+    ::-webkit-scrollbar-thumb{background:#2a2a4a;border-radius:3px;}
+    .toc-link{transition:all 0.2s ease;border-left:2px solid transparent;}
+    .toc-link:hover{border-left-color:#00d2ff;background:rgba(0,210,255,0.05);}
+    .tag{display:inline-block;padding:2px 10px;border-radius:9999px;font-size:0.7rem;font-weight:600;letter-spacing:0.05em;}
+    .chat-bubble{border-radius:16px;padding:10px 16px;font-size:0.8rem;max-width:85%;}
+    .chat-user{background:rgba(0,210,255,0.1);border:1px solid rgba(0,210,255,0.2);border-bottom-right-radius:4px;}
+    .chat-bot{background:rgba(168,85,247,0.1);border:1px solid rgba(168,85,247,0.2);border-bottom-left-radius:4px;}
+    .graph-node{background:rgba(26,26,46,0.9);border:2px solid rgba(0,210,255,0.3);border-radius:12px;padding:8px 16px;text-align:center;font-size:0.75rem;font-weight:600;}
+    .graph-edge{width:2px;height:20px;background:linear-gradient(to bottom,rgba(0,210,255,0.5),rgba(168,85,247,0.5));margin:0 auto;}
+  </style>
+</head>
+<body class="min-h-screen">
+
+  <div class="fixed inset-0 pointer-events-none overflow-hidden z-0">
+    <div class="absolute w-2 h-2 bg-c1 rounded-full opacity-20" style="top:10%;left:20%;animation:float 4s ease-in-out infinite;"></div>
+    <div class="absolute w-3 h-3 bg-c2 rounded-full opacity-15" style="top:30%;left:80%;animation:float 5s ease-in-out infinite 1s;"></div>
+    <div class="absolute w-2 h-2 bg-c3 rounded-full opacity-20" style="top:60%;left:15%;animation:float 3s ease-in-out infinite 0.5s;"></div>
+    <div class="absolute w-2 h-2 bg-c6 rounded-full opacity-15" style="top:80%;left:70%;animation:float 4.5s ease-in-out infinite 2s;"></div>
+  </div>
+
+  <nav class="fixed top-0 left-0 right-0 z-50 glass-card border-b border-white/5">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 py-3 flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-9 h-9 rounded-lg bg-gradient-to-br from-c3 to-c8 flex items-center justify-center text-white font-bold text-sm"><i class="fas fa-wrench"></i></div>
+        <div>
+          <span class="text-bright font-bold text-sm sm:text-base">Chapter 4</span>
+          <span class="text-txt-muted text-xs block sm:inline sm:ml-2">Tool Use</span>
+        </div>
+      </div>
+      <a href="#top" class="text-txt-muted hover:text-c1 transition text-sm hidden sm:block"><i class="fas fa-arrow-up mr-1"></i>Top</a>
+    </div>
+  </nav>
+
+  <aside class="hidden xl:block fixed left-0 top-16 w-64 h-[calc(100vh-4rem)] overflow-y-auto z-40 p-4 pr-2">
+    <div class="glass-card rounded-xl p-4 border border-white/5">
+      <h3 class="text-xs font-bold text-txt-muted uppercase tracking-wider mb-3"><i class="fas fa-list-ul mr-2 text-c3"></i>Contents</h3>
+      <div class="space-y-1 text-xs">
+        <a href="#sec-problem" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-question mr-1"></i>The Problem</a>
+        <a href="#sec-tool" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-wrench mr-1"></i>What Is a Tool?</a>
+        <a href="#sec-not-magic" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-exclamation mr-1"></i>LLM Doesn't Execute</a>
+        <a href="#sec-langchain" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-link mr-1"></i>LangChain Pieces</a>
+        <a href="#sec-creating" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-plus mr-1"></i>Creating a Tool</a>
+        <a href="#sec-naming" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-tag mr-1"></i>Naming & Design</a>
+        <a href="#sec-loop" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-sync mr-1"></i>The Complete Tool Loop</a>
+        <a href="#sec-local" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-home mr-1"></i>Local Tools</a>
+        <a href="#sec-api" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-globe mr-1"></i>API Tools</a>
+        <a href="#sec-security" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-shield-alt mr-1"></i>Security</a>
+        <a href="#sec-summary" class="toc-link block py-1.5 px-3 text-txt-muted hover:text-c1 rounded-r-lg"><i class="fas fa-star mr-1"></i>7 Things to Remember</a>
+      </div>
+    </div>
+  </aside>
+
+  <main class="max-w-5xl mx-auto px-4 sm:px-6 pt-20 pb-20 xl:ml-64" id="top">
+
+    <!-- Hero -->
+    <section class="pt-10 pb-8 text-center scroll-reveal">
+      <div class="inline-flex items-center gap-2 bg-c3/10 border border-c3/20 rounded-full px-4 py-1.5 text-c3 text-xs font-semibold mb-6">
+        <i class="fas fa-wrench"></i> Chapter 4
+      </div>
+      <h1 class="text-3xl sm:text-5xl lg:text-6xl font-black mb-4 leading-tight">
+        <span class="gradient-text-orange">Tool Use</span>
+      </h1>
+      <p class="text-txt-muted text-base sm:text-lg max-w-2xl mx-auto leading-relaxed">
+        Where an LLM goes from "I can tell you how" to "I can actually do something" — the bridge between reasoning and the real world.
+      </p>
+      <div class="mt-6 glass-card inline-block rounded-xl px-6 py-4 border border-c3/20 glow-orange">
+        <p class="text-c3 font-bold text-sm"><i class="fas fa-key mr-2"></i>LLM provides reasoning; tools give the ability to interact with the real world.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- The Problem -->
+    <section id="sec-problem" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c3/20 to-c3/5 border border-c3/30 flex items-center justify-center text-c3 font-bold text-sm">1</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Problem <span class="text-c3 text-lg">🤔</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 mb-6 border border-white/5">
+        <p class="text-txt-body text-sm mb-3">A normal LLM:</p>
+        <div class="text-center">
+          <div class="glass-card rounded-lg px-4 py-2 border border-c7/20 text-xs inline-block"><span class="text-c7">👤 User</span> → <span class="text-c9">🧠 LLM</span> → <span class="text-c1">💬 Text</span></div>
+        </div>
+      </div>
+
+      <div class="grid sm:grid-cols-3 gap-4">
+        <div class="glass-card rounded-xl p-4 border border-success/20 text-center hover-lift">
+          <div class="text-success font-bold text-xs mb-1">✅ Can answer</div>
+          <div class="text-txt-body text-xs">"What is 25 × 40?"</div>
+          <div class="text-success mt-1">1000</div>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-danger/20 text-center hover-lift">
+          <div class="text-danger font-bold text-xs mb-1">❌ Needs live data</div>
+          <div class="text-txt-body text-xs">"Apple's stock price?"</div>
+          <div class="text-danger mt-1">No real-time access</div>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-danger/20 text-center hover-lift">
+          <div class="text-danger font-bold text-xs mb-1">❌ Needs action</div>
+          <div class="text-txt-body text-xs">"Send this email."</div>
+          <div class="text-danger mt-1">No email access</div>
+        </div>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 border border-c3/20 bg-c3/5 mt-6 text-center">
+        <p class="text-bright text-sm font-semibold">Solution: Introduce <span class="text-c2">tools</span> the LLM can call.</p>
+        <div class="flex justify-center gap-3 flex-wrap mt-3 text-xs">
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">🌐 API</span>
+          <span class="tag bg-c6/10 text-c6 border border-c6/20">🗄️ Database</span>
+          <span class="tag bg-c8/10 text-c8 border border-c8/20">💻 Code</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- What Is a Tool? -->
+    <section id="sec-tool" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c2/20 to-c2/5 border border-c2/30 flex items-center justify-center text-c2 font-bold text-sm">2</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">What Exactly Is a Tool? <span class="text-c2 text-lg">🔧</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 mb-6 border border-c2/20 glow-purple">
+        <p class="text-bright text-sm italic">"A tool is a capability or set of actions that an agent can perform to achieve an outcome."</p>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-code text-c8 mr-2"></i>Simplest tool = a Python function</h4>
+        <div class="code-block rounded-lg p-4 text-xs mb-3">
+          <span class="text-c1">def</span> <span class="text-c8">add</span><span class="text-txt-body">(x, y):</span><br/>
+          <span class="ml-4 text-txt-body">return x + y</span>
+        </div>
+        <p class="text-txt-muted text-xs">Normal usage: <span class="text-c8 font-semibold">result = add(5, 3) → 8</span></p>
+      </div>
+
+      <!-- With agent -->
+      <div class="glass-card rounded-xl p-5 border border-c3/20 bg-c3/5">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-robot text-c3 mr-2"></i>With an Agent — The Interesting Part</h4>
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="chat-bubble chat-user text-[10px] inline-block ml-auto">"What is 5 + 3?"</div>
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM decides to use add tool</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c2 w-56"><i class="fas fa-wrench mr-2"></i>🔧 add(5, 3)</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c6 w-56"><i class="fas fa-check mr-2"></i>8</div>
+          <div class="graph-edge"></div>
+          <div class="chat-bubble chat-bot text-[10px]">"5 + 3 = 8."</div>
+        </div>
+        <p class="text-center text-c8 font-bold text-xs mt-3">🔥 The model <span class="text-c3">decides</span> to use the function.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- LLM Doesn't Execute -->
+    <section id="sec-not-magic" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-danger/20 to-danger/5 border border-danger/30 flex items-center justify-center text-danger font-bold text-sm">3</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">LLM Doesn't Execute <span class="text-danger text-lg">⚠️</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 border border-c3/20 glow-orange mb-6">
+        <p class="text-bright text-sm">The LLM <span class="text-danger font-semibold">doesn't directly run</span> your Python function. <span class="text-c6 font-semibold">Your application sits between</span> the model and the actual tool.</p>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-white/5">
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM "I want to call add"</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c10 w-56"><i class="fas fa-exchange-alt mr-2"></i>Tool call request</div>
+          <div class="graph-edge" style="background:linear-gradient(to bottom,rgba(192,132,252,0.5),rgba(52,211,153,0.5))"></div>
+          <div class="graph-node text-c8 w-56" style="border-color:rgba(250,204,21,0.3)"><i class="fab fa-python mr-2"></i>Your Python program</div>
+          <div class="graph-edge" style="background:linear-gradient(to bottom,rgba(250,204,21,0.5),rgba(52,211,153,0.5))"></div>
+          <div class="graph-node text-c6 w-56"><i class="fas fa-check mr-2"></i>add(5, 3) → 8</div>
+          <div class="graph-edge" style="background:linear-gradient(to bottom,rgba(52,211,153,0.5),rgba(0,210,255,0.5))"></div>
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM receives result</div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- LangChain Pieces -->
+    <section id="sec-langchain" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c1/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">4</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">LangChain Fundamentals <span class="text-c1 text-lg">🔗</span></h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <!-- Chat Model -->
+        <div class="glass-card rounded-xl p-4 border border-c9/20 hover-lift">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-brain text-c9"></i>
+            <h4 class="text-bright font-bold text-sm">🧠 Chat Model</h4>
+          </div>
+          <div class="code-block rounded p-2 text-[10px]">
+            <span class="text-c1">from</span> langchain_openai <span class="text-c1">import</span> ChatOpenAI<br/>
+            llm = ChatOpenAI(model_name=<span class="text-c7">"gpt-4o"</span>)
+          </div>
+        </div>
+        <!-- Messages -->
+        <div class="glass-card rounded-xl p-4 border border-c2/20 hover-lift glow-purple">
+          <div class="flex items-center gap-2 mb-2">
+            <i class="fas fa-comments text-c2"></i>
+            <h4 class="text-bright font-bold text-sm">💬 Messages</h4>
+          </div>
+          <div class="text-xs space-y-1">
+            <div class="flex items-center gap-2"><span class="tag bg-c7/10 text-c7 border border-c7/20 text-[10px]">HumanMessage</span><span class="text-txt-body">👤 User says</span></div>
+            <div class="flex items-center gap-2"><span class="tag bg-c1/10 text-c1 border border-c1/20 text-[10px]">AIMessage</span><span class="text-txt-body">🤖 AI says</span></div>
+            <div class="flex items-center gap-2"><span class="tag bg-c6/10 text-c6 border border-c6/20 text-[10px]">ToolMessage</span><span class="text-txt-body">🔧 Tool result</span></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Message Pattern -->
+      <div class="glass-card rounded-xl p-5 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-exchange-alt text-c8 mr-2"></i>Tool Conversation Pattern</h4>
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="graph-node text-c7 w-48"><i class="fas fa-user mr-2"></i>HumanMessage</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c1 w-48"><i class="fas fa-robot mr-2"></i>AIMessage</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c6 w-48"><i class="fas fa-wrench mr-2"></i>ToolMessage</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c1 w-48"><i class="fas fa-robot mr-2"></i>AIMessage</div>
+        </div>
+        <p class="text-center text-c8 font-bold text-xs mt-3">🔥 Remember this pattern.</p>
+      </div>
+
+      <!-- Building Blocks -->
+      <div class="glass-card rounded-xl p-5 border border-c8/20 bg-c8/5">
+        <h4 class="text-bright font-bold mb-3 text-center">Foundational Building Blocks</h4>
+        <div class="flex flex-wrap justify-center gap-2 text-xs">
+          <span class="tag bg-c9/10 text-c9 border border-c9/20">🧠 Chat Model</span>
+          <span class="tag bg-c2/10 text-c2 border border-c2/20">💬 Messages</span>
+          <span class="tag bg-c3/10 text-c3 border border-c3/20">🔧 Tools</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">🔗 bind_tools()</span>
+          <span class="tag bg-c6/10 text-c6 border border-c6/20">▶️ invoke()</span>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Creating a Tool -->
+    <section id="sec-creating" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">5</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Creating a Tool <span class="text-c6 text-lg">🛠️</span></h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-5 border border-white/5">
+          <h4 class="text-danger font-bold text-sm mb-2"><i class="fas fa-times mr-2"></i>Without @tool</h4>
+          <div class="code-block rounded p-3 text-xs text-txt-body">
+            def add_numbers(x, y):<br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;return x + y
+          </div>
+          <p class="text-txt-muted text-[10px] mt-2">Just a normal function. LLM can't see it.</p>
+        </div>
+        <div class="glass-card rounded-xl p-5 border border-success/20 glow-green">
+          <h4 class="text-success font-bold text-sm mb-2"><i class="fas fa-check mr-2"></i>With @tool</h4>
+          <div class="code-block rounded p-3 text-xs">
+            <span class="text-c2">@tool</span><br/>
+            <span class="text-c1">def</span> <span class="text-c8">add_numbers</span><span class="text-txt-body">(x: </span><span class="text-c6">int</span><span class="text-txt-body">, y: </span><span class="text-c6">int</span><span class="text-txt-body">) -> </span><span class="text-c6">int</span><span class="text-txt-body">:</span><br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;<span class="text-c7">"""Adds two numbers and returns the sum."""</span><br/>
+            &nbsp;&nbsp;&nbsp;&nbsp;return x + y
+          </div>
+          <p class="text-success text-[10px] mt-2">LLM can now see & select this tool. ✅</p>
+        </div>
+      </div>
+
+      <!-- Description matters -->
+      <div class="glass-card rounded-xl p-5 border border-c8/20 bg-c8/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-info-circle text-c8 mr-2"></i>Why the Description Matters</h4>
+        <div class="glass-card rounded p-3 border border-white/5 text-xs text-center">
+          <div class="flex justify-center gap-3 flex-wrap mb-2">
+            <span class="tag bg-c8/10 text-c8 border border-c8/20">Tool name</span>
+            <span class="text-txt-muted">+</span>
+            <span class="tag bg-c2/10 text-c2 border border-c2/20">Description</span>
+            <span class="text-txt-muted">+</span>
+            <span class="tag bg-c1/10 text-c1 border border-c1/20">Input schema</span>
+          </div>
+          <div class="arrow-pulse text-c8"><i class="fas fa-arrow-down"></i></div>
+          <div class="text-bright font-semibold mt-1">🧠 LLM decides: "Should I use this?"</div>
+        </div>
+        <p class="text-txt-muted text-xs mt-2 text-center">The docstring <span class="text-c8 font-semibold">isn't just for humans</span> — the model uses it to decide when the tool is appropriate.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Naming & Design -->
+    <section id="sec-naming" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">6</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Naming & Design <span class="text-c8 text-lg">🏷️</span></h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-4 border border-danger/20">
+          <h4 class="text-danger font-bold text-xs mb-2"><i class="fas fa-times mr-1"></i>Bad Names</h4>
+          <div class="code-block rounded p-2 text-[10px] text-txt-body">
+            @tool<br/>
+            def do_something(...):  ← 🤷
+          </div>
+          <p class="text-danger text-[10px] mt-1">Model doesn't know what this means.</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-success/20 glow-green">
+          <h4 class="text-success font-bold text-xs mb-2"><i class="fas fa-check mr-1"></i>Good Names</h4>
+          <div class="code-block rounded p-2 text-[10px]">
+            @tool<br/>
+            def <span class="text-c8">calculate_shipping_cost</span>(weight: float) -> float:
+          </div>
+          <p class="text-success text-[10px] mt-1">Obvious what it does.</p>
+        </div>
+      </div>
+
+      <!-- Single Responsibility -->
+      <div class="glass-card rounded-xl p-5 border border-white/5 mb-6">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-puzzle-piece text-c3 mr-2"></i>Single Responsibility Principle for Tools</h4>
+        <div class="grid sm:grid-cols-2 gap-4">
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger font-bold text-xs mb-1">❌ One giant tool:</div>
+            <div class="text-txt-body text-[10px]">
+              🔧 database_tool<br/>
+              <span class="ml-4 text-txt-muted">delete · update · insert · search · drop · change</span>
+            </div>
+            <p class="text-danger text-[10px] mt-1">Dangerous & confusing.</p>
+          </div>
+          <div class="glass-card rounded p-3 border border-success/20 glow-green">
+            <div class="text-success font-bold text-xs mb-1">✅ Focused tools:</div>
+            <div class="flex flex-wrap gap-1 text-[10px]">
+              <span class="tag bg-success/10 text-success border border-success/20">get_customer()</span>
+              <span class="tag bg-success/10 text-success border border-success/20">update_address()</span>
+              <span class="tag bg-success/10 text-success border border-success/20">search_orders()</span>
+              <span class="tag bg-success/10 text-success border border-success/20">cancel_order()</span>
+            </div>
+            <p class="text-success text-[10px] mt-1">Clear responsibility. ✅</p>
+          </div>
+        </div>
+      </div>
+
+      <!-- Overlapping descriptions -->
+      <div class="glass-card rounded-xl p-4 border border-c8/20 bg-c8/5">
+        <p class="text-txt-body text-xs text-center">⚠️ Broad or <span class="text-danger font-semibold">overlapping tool descriptions</span> can cause confusion and poor tool selection. Make each tool's purpose <span class="text-c8 font-semibold">distinct</span>.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- The Complete Tool Loop -->
+    <section id="sec-loop" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c1/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">7</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">The Complete Tool Loop <span class="text-c1 text-lg">🔄</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 sm:p-8 border border-c1/20 glow-blue animate-pulse-glow mb-6">
+        <h4 class="text-bright font-bold mb-6 text-center text-lg">🔥 The Most Important Pattern</h4>
+        <div class="flex flex-col items-center space-y-1">
+          <div class="graph-node text-c7 w-56"><i class="fas fa-user mr-2"></i>👤 User</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM — "Use add_numbers"</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c2 w-56"><i class="fas fa-wrench mr-2"></i>🔧 Tool call</div>
+          <div class="graph-edge" style="background:linear-gradient(to bottom,rgba(168,85,247,0.5),rgba(250,204,21,0.5))"></div>
+          <div class="graph-node text-c8 w-56" style="border-color:rgba(250,204,21,0.3)"><i class="fab fa-python mr-2"></i>🐍 Python executes</div>
+          <div class="graph-edge" style="background:linear-gradient(to bottom,rgba(250,204,21,0.5),rgba(52,211,153,0.5))"></div>
+          <div class="graph-node text-c6 w-56"><i class="fas fa-check mr-2"></i>Result: 30</div>
+          <div class="graph-edge" style="background:linear-gradient(to bottom,rgba(52,211,153,0.5),rgba(0,210,255,0.5))"></div>
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM — "The answer is 30"</div>
+        </div>
+      </div>
+
+      <!-- bind_tools + invoke -->
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-4 border border-c1/20">
+          <h4 class="text-c1 font-bold text-xs mb-2"><i class="fas fa-link mr-1"></i>bind_tools()</h4>
+          <div class="code-block rounded p-2 text-[10px]">
+            llm_with_tools = llm.bind_tools([add_numbers])
+          </div>
+          <p class="text-txt-muted text-[10px] mt-1">Before: no tools → After: 🔧 add_numbers()</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c6/20">
+          <h4 class="text-c6 font-bold text-xs mb-2"><i class="fas fa-play mr-1"></i>invoke()</h4>
+          <div class="code-block rounded p-2 text-[10px]">
+            ai_msg = llm_with_tools.invoke(messages)
+          </div>
+          <p class="text-txt-muted text-[10px] mt-1">Model returns <span class="text-c6 font-semibold">tool_calls</span> if it decides to use a tool.</p>
+        </div>
+      </div>
+
+      <!-- Simple version -->
+      <div class="glass-card rounded-xl p-5 border border-white/5">
+        <h4 class="text-bright font-bold mb-3"><i class="fas fa-feather text-c6 mr-2"></i>The Simple Mental Model</h4>
+        <div class="glass-card rounded p-3 border border-white/5 text-xs text-center">
+          User: "What is 7 + 5?" → 🧠 LLM → tool = add, x = 7, y = 5 → <span class="text-c8">add(7, 5) = 12</span> → 🧠 LLM → "7 + 5 = 12"
+        </div>
+        <p class="text-txt-muted text-xs mt-2 text-center">That's it. LangChain/LangGraph code makes this loop easier to manage.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Calculator Point -->
+    <section class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">8</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Why Use a Calculator Tool? <span class="text-c8 text-lg">🧮</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 border border-c8/20 glow-orange">
+        <p class="text-txt-body text-sm mb-3">LLMs <span class="text-txt-muted">can</span> do arithmetic, but normal programming is <span class="text-c8 font-semibold">much better at exact deterministic calculations</span>.</p>
+        <div class="grid sm:grid-cols-2 gap-4 text-xs">
+          <div class="glass-card rounded p-3 border border-danger/20">
+            <div class="text-danger font-bold mb-1">Trusting LLM:</div>
+            <div class="text-txt-body">393 × 12.25 = <span class="text-danger">??? (may be wrong)</span></div>
+          </div>
+          <div class="glass-card rounded p-3 border border-success/20">
+            <div class="text-success font-bold mb-1">Using tool:</div>
+            <div class="text-txt-body">multiply(393, 12.25) = <span class="text-success">4814.25 ✅</span></div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Local vs API Tools -->
+    <section id="sec-local" class="mb-12 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c6/20 to-c6/5 border border-c6/30 flex items-center justify-center text-c6 font-bold text-sm">9</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Local Tools <span class="text-c6 text-lg">🏠</span></h2>
+      </div>
+      <div class="glass-card rounded-xl p-5 border border-white/5 mb-6">
+        <p class="text-txt-body text-sm mb-3">Run inside your application. Best where <span class="text-c6 font-semibold">traditional programming is more precise</span> than an LLM.</p>
+        <div class="flex flex-wrap justify-center gap-2 text-xs">
+          <span class="tag bg-c8/10 text-c8 border border-c8/20">🧮 Calculator</span>
+          <span class="tag bg-c8/10 text-c8 border border-c8/20">📅 Date calculation</span>
+          <span class="tag bg-c8/10 text-c8 border border-c8/20">🌍 Timezone</span>
+          <span class="tag bg-c8/10 text-c8 border border-c8/20">📐 Unit conversion</span>
+        </div>
+      </div>
+      <div class="glass-card rounded-xl p-4 border border-c6/20 bg-c6/5 text-center">
+        <p class="text-txt-body text-xs">"Convert 100 miles to km" → <span class="text-c8 font-semibold">miles_to_km(100) = 160.934</span> — Precise. ✅</p>
+      </div>
+    </section>
+
+    <section id="sec-api" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c1/20 to-c1/5 border border-c1/30 flex items-center justify-center text-c1 font-bold text-sm">10</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">API-Based Tools <span class="text-c1 text-lg">🌐</span></h2>
+      </div>
+      <div class="glass-card rounded-xl p-5 border border-white/5 mb-6">
+        <p class="text-txt-body text-sm mb-3">Access <span class="text-c1 font-semibold">live external data</span> — information not feasible locally.</p>
+        <div class="flex flex-wrap justify-center gap-2 text-xs">
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">🌦️ Weather</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">📈 Stocks</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">🌍 Translation</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">🗺️ Maps</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">📧 Email</span>
+          <span class="tag bg-c1/10 text-c1 border border-c1/20">💳 Payment</span>
+        </div>
+      </div>
+
+      <!-- Weather Example -->
+      <div class="glass-card rounded-xl p-5 border border-c1/20 bg-c1/5">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-cloud-sun text-c1 mr-2"></i>Weather Agent Example</h4>
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="chat-bubble chat-user text-[10px] inline-block ml-auto">"What's the weather in Patna?"</div>
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c2 w-56"><i class="fas fa-wrench mr-2"></i>🔧 get_weather("Patna")</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c1 w-56"><i class="fas fa-globe mr-2"></i>🌐 Weather API</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c6 w-56"><i class="fas fa-sun mr-2"></i>32°C, Sunny</div>
+          <div class="graph-edge"></div>
+          <div class="chat-bubble chat-bot text-[10px]">"Patna is currently 32°C and sunny."</div>
+        </div>
+      </div>
+
+      <!-- API Problems -->
+      <div class="glass-card rounded-xl p-5 border border-danger/20 mt-6">
+        <h4 class="text-danger font-bold text-sm mb-3"><i class="fas fa-exclamation-triangle mr-2"></i>APIs Introduce Real-World Problems</h4>
+        <div class="flex flex-wrap gap-2 text-xs">
+          <span class="tag bg-danger/10 text-danger border border-danger/20">❌ Go down</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">❌ Timeout</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">❌ Bad data</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">❌ Rate limits</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">❌ Auth required</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20">❌ Format changes</span>
+        </div>
+        <p class="text-txt-muted text-xs mt-2">Your agent needs to handle failures: reliability, security, fallback providers, graceful error handling.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Security -->
+    <section id="sec-security" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-danger/20 to-danger/5 border border-danger/30 flex items-center justify-center text-danger font-bold text-sm">11</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">Security <span class="text-danger text-lg">🛡️</span></h2>
+      </div>
+
+      <div class="glass-card rounded-xl p-5 border border-danger/20 glow-orange">
+        <p class="text-bright text-sm mb-3">Suppose your agent has:</p>
+        <div class="flex gap-3 mb-3">
+          <span class="tag bg-danger/10 text-danger border border-danger/20 text-sm">🔧 delete_user()</span>
+          <span class="tag bg-danger/10 text-danger border border-danger/20 text-sm">🔧 send_money()</span>
+        </div>
+        <p class="text-txt-body text-sm mb-3">The LLM can potentially select these. That's powerful.</p>
+        <div class="glass-card rounded-lg p-3 border border-danger/30 text-center">
+          <p class="text-danger font-bold text-base">Power + Autonomy = <span class="text-danger">Risk</span></p>
+        </div>
+        <p class="text-txt-muted text-xs mt-3">Only give models tools whose execution can be <span class="text-c6 font-semibold">responsibly controlled</span> and whose benefits <span class="text-c8 font-semibold">outweigh the harms</span>.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Summary -->
+    <section id="sec-summary" class="mb-16 scroll-reveal">
+      <div class="flex items-center gap-3 mb-6">
+        <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-c8/20 to-c8/5 border border-c8/30 flex items-center justify-center text-c8 font-bold text-sm">⭐</div>
+        <h2 class="text-2xl sm:text-3xl font-bold text-bright">7 Things to Remember <span class="text-c8 text-lg">🏆</span></h2>
+      </div>
+
+      <div class="grid sm:grid-cols-2 gap-4 mb-6">
+        <div class="glass-card rounded-xl p-4 border border-c2/20 hover-lift glow-purple">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">1️⃣</span>
+            <h4 class="text-bright font-bold text-sm">Tool</h4>
+          </div>
+          <p class="text-txt-muted text-xs">A capability the agent can use: <span class="text-c8 font-mono text-[10px]">def add(a, b): return a+b</span></p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c6/20 hover-lift glow-green">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">2️⃣</span>
+            <h4 class="text-bright font-bold text-sm">@tool</h4>
+          </div>
+          <p class="text-txt-muted text-xs">Tells LangChain to expose the function as an AI-callable tool.</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c8/20 hover-lift glow-orange">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">3️⃣</span>
+            <h4 class="text-bright font-bold text-sm">Description</h4>
+          </div>
+          <p class="text-txt-muted text-xs">Helps the LLM know when the tool should be used.</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c1/20 hover-lift glow-blue">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">4️⃣</span>
+            <h4 class="text-bright font-bold text-sm">bind_tools()</h4>
+          </div>
+          <p class="text-txt-muted text-xs">Makes tools available to the model.</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c10/20 hover-lift glow-purple">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">5️⃣</span>
+            <h4 class="text-bright font-bold text-sm">Tool call</h4>
+          </div>
+          <p class="text-txt-muted text-xs">Model says: "I want to call add(a=5, b=3)"</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c3/20 hover-lift glow-orange">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">6️⃣</span>
+            <h4 class="text-bright font-bold text-sm">Your app executes</h4>
+          </div>
+          <p class="text-txt-muted text-xs">Your Python program runs: add(5, 3) → 8</p>
+        </div>
+        <div class="glass-card rounded-xl p-4 border border-c9/20 hover-lift glow-blue sm:col-span-2">
+          <div class="flex items-center gap-2 mb-2">
+            <span class="text-lg">7️⃣</span>
+            <h4 class="text-bright font-bold text-sm">Result → LLM → Response</h4>
+          </div>
+          <p class="text-txt-muted text-xs">Tool result goes back to the model, which generates the final answer.</p>
+        </div>
+      </div>
+
+      <!-- Big Picture -->
+      <div class="glass-card rounded-xl p-5 sm:p-8 border border-c8/20 bg-c8/5 mb-6 animate-pulse-glow">
+        <h4 class="text-bright font-bold mb-4 text-center text-lg">The Complete Architecture</h4>
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="graph-node text-c7 w-56"><i class="fas fa-user mr-2"></i>👤 USER</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM — "What should I do?"</div>
+          <div class="graph-edge"></div>
+          <div class="flex gap-2">
+            <div class="graph-node text-c8 w-28 text-[10px]"><i class="fas fa-home mr-1"></i>Local</div>
+            <div class="graph-node text-c1 w-28 text-[10px]"><i class="fas fa-globe mr-1"></i>API</div>
+            <div class="graph-node text-c10 w-28 text-[10px]"><i class="fas fa-plug mr-1"></i>MCP</div>
+          </div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c6 w-56"><i class="fas fa-check mr-2"></i>Result</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM — Final answer</div>
+        </div>
+      </div>
+
+      <!-- The One Sentence -->
+      <div class="glass-card rounded-xl p-5 border border-c3/20 bg-c3/5 text-center">
+        <p class="gradient-text-orange font-bold text-lg">
+          "An LLM provides the reasoning; tools give the agent the ability to interact with the real world."
+        </p>
+        <p class="text-txt-muted text-xs mt-2">Chapter 4 is teaching you how to build that bridge.</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <!-- Exercise -->
+    <section class="mb-16 scroll-reveal">
+      <div class="glass-card rounded-xl p-5 sm:p-6 border border-c1/20 bg-c1/5">
+        <h4 class="text-bright font-bold mb-3 text-center"><i class="fas fa-dumbbell text-c1 mr-2"></i>Quick Exercise</h4>
+        <p class="text-txt-body text-xs text-center mb-3">"Convert 10 USD to INR using the latest exchange rate."</p>
+        <div class="flex flex-col items-center space-y-1 text-xs">
+          <div class="chat-bubble chat-user text-[10px] inline-block ml-auto">"Convert 10 USD to INR"</div>
+          <div class="graph-node text-c9 w-56"><i class="fas fa-brain mr-2"></i>🧠 LLM</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c2 w-56"><i class="fas fa-wrench mr-2"></i>🔧 exchange_rate("USD","INR")</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c1 w-56"><i class="fas fa-globe mr-2"></i>🌐 Exchange-rate API</div>
+          <div class="graph-edge"></div>
+          <div class="graph-node text-c6 w-56"><i class="fas fa-rupee-sign mr-2"></i>₹ current rate</div>
+          <div class="graph-edge"></div>
+          <div class="chat-bubble chat-bot text-[10px]">"₹X approximately"</div>
+        </div>
+        <p class="text-c8 text-xs mt-3 text-center font-bold">That is tool use. 🎯</p>
+      </div>
+    </section>
+
+    <div class="section-divider"></div>
+
+    <footer class="text-center py-8">
+      <div class="glass-card rounded-xl p-6 border border-white/5 inline-block">
+        <div class="text-txt-muted text-sm mb-2">
+          <i class="fas fa-wrench mr-2 text-c3"></i>Chapter 4 — Tool Use
+        </div>
+        <div class="text-txt-muted text-xs">
+          Agentic AI Study Notes <span class="text-c2 mx-1">•</span> Built for revision & understanding
+        </div>
+        <div class="flex justify-center gap-3 mt-4">
+          <a href="#top" class="text-c1 hover:text-c2 transition text-sm"><i class="fas fa-arrow-up"></i></a>
+        </div>
+      </div>
+    </footer>
+
+  </main>
+
+  <script>
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => { if (entry.isIntersecting) entry.target.classList.add('visible'); });
+    }, { threshold: 0.1 });
+    document.querySelectorAll('.scroll-reveal').forEach(el => observer.observe(el));
+    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+      anchor.addEventListener('click', function(e) {
+        e.preventDefault();
+        const target = document.querySelector(this.getAttribute('href'));
+        if (target) target.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      });
+    });
+  </script>
+
+</body>
+</html>
